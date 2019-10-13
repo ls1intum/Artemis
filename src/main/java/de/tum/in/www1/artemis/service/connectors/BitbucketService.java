@@ -31,6 +31,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @Profile("bitbucket")
 public class BitbucketService implements VersionControlService {
 
+    private static final int MAX_FORK_RETRIES = 5;
+
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
     @Value("${artemis.jira.admin-group-name}")
@@ -189,20 +191,40 @@ public class BitbucketService implements VersionControlService {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
-        final Map<String, Object> body = new HashMap<>();
+        final var body = new HashMap<String, Object>();
         body.put("name", targetRepoSlug);
         final var projectMap = new HashMap<>();
         projectMap.put("key", targetProjectKey);
         body.put("project", projectMap);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
         log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
         final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
+
         try {
-            final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
-            if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-                return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
+            /*
+             * There is an edge case occurring when multiple students fork a repository leading to a race condition on the filelock for the gitconfig of the base repository since
+             * Bitbucket always tries to set pruneexpire to never as soon as one forks a repository. We only catch this case and loop over the request until we managed to fork the
+             * repository, or the maximum amount of retries has been exceeded. There is no direct other solution as of now since this is a default Bitbucket behavior we cannot
+             * control
+             */
+            for (int i = 0; i < MAX_FORK_RETRIES; i++) {
+                try {
+                    final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
+                    if (response.getStatusCode().equals(HttpStatus.CREATED)) {
+                        return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
+                    }
+                }
+                catch (HttpServerErrorException.InternalServerError e) {
+
+                    if (e.getResponseBodyAsString().contains("code 255 saying: error: could not lock config file config: File exists")) {
+                        log.warn("Could not acquire lock for gitconfig in Bitbucket while forking the repository. Trying again");
+                    }
+                    else {
+                        throw e;
+                    }
+                }
             }
         }
         catch (URISyntaxException e) {
