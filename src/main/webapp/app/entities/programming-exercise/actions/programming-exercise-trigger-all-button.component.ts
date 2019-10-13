@@ -4,7 +4,6 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 import { of } from 'rxjs';
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 
 /**

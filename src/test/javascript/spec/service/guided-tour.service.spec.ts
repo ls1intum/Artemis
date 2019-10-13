@@ -26,7 +26,7 @@ import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 
 chai.use(sinonChai);
@@ -97,7 +97,7 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule],
+                imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
                 providers: [GuidedTourService, { provide: DeviceDetectorService }],
             });
 
@@ -253,13 +253,11 @@ describe('GuidedTourService', () => {
             const exercise1 = {
                 id: 1,
                 shortName: 'git',
-                type: ExerciseType.PROGRAMMING,
             } as Exercise;
 
             const exercise2 = {
                 id: 1,
                 shortName: 'test',
-                type: ExerciseType.PROGRAMMING,
             } as Exercise;
 
             const course1 = {

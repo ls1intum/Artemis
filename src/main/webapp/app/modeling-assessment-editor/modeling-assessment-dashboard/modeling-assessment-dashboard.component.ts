@@ -7,7 +7,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Subscription } from 'rxjs';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Result, ResultDetailComponent, ResultService } from 'app/entities/result';
+import { ResultService } from 'app/entities/result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core';
 import { HttpResponse } from '@angular/common/http';
@@ -154,11 +154,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
-    }
-
-    showDetails(result: Result) {
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = result;
     }
 
     refresh() {

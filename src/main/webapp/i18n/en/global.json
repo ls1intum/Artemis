@@ -191,7 +191,7 @@
             "close": "Close",
             "import": "Import",
             "export": "Export",
-            "lecture": "Lecture",
+            "lecture": "Lectures",
             "attachments": "Attachments",
             "saveAttachment": "Save attachment",
             "addAttachment": "Add attachment",
@@ -200,7 +200,7 @@
             "newResult": "New Result",
             "cleanupBuildPlan": "Cleanup Build Plan",
             "registerForCourse": "Register For Course",
-            "exercise": "Exercise",
+            "exercise": "Exercises",
             "scores": "Scores",
             "manageHints": "Manage Hints"
         },

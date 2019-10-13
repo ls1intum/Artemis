@@ -15,7 +15,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour } from 'app/guided-tour/tours/general-tour';
 
@@ -57,7 +57,7 @@ export class GuidedTourService {
 
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
-            if (event instanceof NavigationStart) {
+            if (this.currentTour && event instanceof NavigationStart) {
                 this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
             }
@@ -187,7 +187,7 @@ export class GuidedTourService {
      * and calling the reset tour method to remove current tour elements
      *
      */
-    private finishGuidedTour() {
+    public finishGuidedTour() {
         if (!this.currentTour) {
             return;
         }
@@ -218,7 +218,7 @@ export class GuidedTourService {
      * Show the cancel hint every time a user skips a tour
      */
     private showCancelHint(): void {
-        clickOnElement('#account-menu');
+        clickOnElement('#account-menu[aria-expanded="false"]');
         setTimeout(() => {
             this.currentTour = cloneDeep(cancelTour);
             // Proceed with tour if it has tour steps and the tour display is allowed for current window size
@@ -319,14 +319,6 @@ export class GuidedTourService {
                         });
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
-                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
-                    mutations.forEach(() => {
-                        this.enableNextStepClick();
-                    });
-                });
-            } else if (userInteraction === UserInteractionEvent.MODELING) {
-                targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
                 from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
                     mutations.forEach(() => {
                         this.enableNextStepClick();
@@ -342,9 +334,9 @@ export class GuidedTourService {
      * @param userInteraction the user interaction to complete the tour step
      */
     private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
-        return new Promise(() => {
+        return new Promise(resolve => {
             const observer = new MutationObserver(mutations => {
-                if (userInteraction === UserInteractionEvent.CLICK || userInteraction === UserInteractionEvent.MODELING) {
+                if (userInteraction === UserInteractionEvent.CLICK) {
                     observer.disconnect();
                     this.enableNextStepClick();
                 } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
@@ -656,9 +648,7 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) {
-            this.enableTour(guidedTour);
-        } else if (exercise.title === guidedTour.exerciseShortName) {
+        if (exercise.shortName === guidedTour.exerciseShortName) {
             this.enableTour(guidedTour);
         }
     }
@@ -669,45 +659,49 @@ export class GuidedTourService {
      * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
      */
     public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
-        const totalCount = this.currentTour!.steps.length;
+        if (this.currentTour!.steps.length < this.maxDots) {
+            return;
+        }
+
         const transformXIntervalNext = -26;
         const transformXIntervalPrev = 26;
 
-        if (totalCount > this.maxDots) {
-            const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
-            const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
-            const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
-            const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
-            const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
+        const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
+        const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
+        const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
+        const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
+        const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
 
-            if (currentIndex < nextIndex) {
-                if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
-                    this.transformCount += transformXIntervalNext;
-                    nextDot.classList.remove('n-small');
-                    nextPlusOneDot.classList.add('n-small');
-                    dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
-                    dotList.querySelectorAll('li').forEach((node, index) => {
-                        if (index === nextIndex - 4) {
-                            node.classList.remove('p-small');
-                        } else if (index === nextIndex - 3) {
-                            node.classList.add('p-small');
-                        }
-                    });
-                }
-            } else {
-                if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
-                    this.transformCount += transformXIntervalPrev;
-                    nextDot.classList.remove('p-small');
-                    nextPlusOneDot.classList.add('p-small');
-                    dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
-                    dotList.querySelectorAll('li').forEach((node, index) => {
-                        if (index === currentIndex + 3) {
-                            node.classList.remove('n-small');
-                        } else if (index === currentIndex + 2) {
-                            node.classList.add('n-small');
-                        }
-                    });
-                }
+        // Handles forward navigation
+        if (currentIndex < nextIndex) {
+            // Moves the n-small and p-small class one dot further
+            if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
+                this.transformCount += transformXIntervalNext;
+                nextDot.classList.remove('n-small');
+                nextPlusOneDot.classList.add('n-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex - 4) {
+                        node.classList.remove('p-small');
+                    } else if (index === nextIndex - 3) {
+                        node.classList.add('p-small');
+                    }
+                });
+            }
+        } else {
+            // Handles backwards navigation
+            if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
+                this.transformCount += transformXIntervalPrev;
+                nextDot.classList.remove('p-small');
+                nextPlusOneDot.classList.add('p-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex + 4) {
+                        node.classList.remove('n-small');
+                    } else if (index === nextIndex + 3) {
+                        node.classList.add('n-small');
+                    }
+                });
             }
         }
     }
