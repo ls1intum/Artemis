@@ -19,27 +19,22 @@
         <div *ngIf="currentTourStep.highlightSelector" class="tour-arrow"></div>
         <div class="tour-block">
             <div class="tour-block__header">
-                <h3 jhiTranslate="{{ currentTourStep.headlineTranslateKey }}" class="headline" *ngIf="currentTourStep.headlineTranslateKey"></h3>
+                <h3 class="headline" *ngIf="currentTourStep.headlineTranslateKey">
+                    <span *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
+                        >{{ 'tour.step' | translate: { string: guidedTourService.getCurrentStepString() } }} </span
+                    >{{ currentTourStep.headlineTranslateKey | translate }}
+                </h3>
                 <div *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" class="close" (click)="guidedTourService.skipTour()"></div>
             </div>
             <div class="tour-block__content">
                 <h5 jhiTranslate="{{ currentTourStep.subHeadlineTranslateKey }}" class="sub-headline" *ngIf="currentTourStep.subHeadlineTranslateKey"></h5>
-                <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForMarkdown"></div>
-                <div class="step-link" *ngIf="currentTourStep.externalUrl && currentTourStep.externalUrlTranslateKey">
-                    <a
-                        [ngClass]="{ 'btn btn-primary': currentTourStep.linkType === LinkType.BUTTON }"
-                        jhiTranslate="{{ currentTourStep.externalUrlTranslateKey }}"
-                        [href]="currentTourStep.externalUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    ></a>
-                </div>
+                <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                 <div *ngIf="currentTourStep.hintTranslateKey" class="step-hint">
                     <div class="step-hint__icon">
                         <fa-icon icon="info-circle"></fa-icon>
                     </div>
                     <div class="step-hint__label">
-                        <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForMarkdown"></div>
+                        <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
@@ -71,7 +66,7 @@
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.videoUrl">
-                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
+                    <iframe [src]="currentTourStep.videoUrl | translate | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
             <div class="tour-block__buttons">

@@ -1,5 +1,6 @@
 {
     "tour": {
+        "step": "Schritt {{ string }}:",
         "navigation": {
             "back": "Zurück",
             "next": "Weiter",

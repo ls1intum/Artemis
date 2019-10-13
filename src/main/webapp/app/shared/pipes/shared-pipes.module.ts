@@ -13,6 +13,7 @@ import {
     TypeCheckPipe,
 } from './';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { HtmlForGuidedTourMarkdownPipe } from 'app/shared';
 
 @NgModule({
     declarations: [
@@ -25,6 +26,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
         TypeCheckPipe,
         RemovePositiveAutomaticFeedbackPipe,
         HtmlForMarkdownPipe,
+        HtmlForGuidedTourMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
         AverageByPipe,
@@ -38,6 +40,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
         TypeCheckPipe,
         RemovePositiveAutomaticFeedbackPipe,
         HtmlForMarkdownPipe,
+        HtmlForGuidedTourMarkdownPipe,
         TruncatePipe,
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,
