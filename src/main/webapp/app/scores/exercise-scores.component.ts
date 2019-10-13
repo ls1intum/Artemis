@@ -36,7 +36,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     results: Result[];
     allResults: Result[];
     eventSubscriber: Subscription;
-    newResultAllowed: boolean;
+    newManualResultAllowed: boolean;
 
     isLoading: boolean;
 
@@ -72,7 +72,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 zip(this.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
                     .subscribe(() => (this.isLoading = false));
-                this.newResultAllowed = areManualResultsAllowed(this.exercise);
+                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             });
         });
         this.registerChangeInCourses();

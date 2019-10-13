@@ -27,7 +27,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     exercise: Exercise;
     predicate: string;
     reverse: boolean;
-    newResultAllowed: boolean;
+    newManualResultAllowed: boolean;
 
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
@@ -64,7 +64,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 if (this.exercise.type === this.PROGRAMMING) {
                     this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
-                this.newResultAllowed = areManualResultsAllowed(this.exercise);
+                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
             });
         });
