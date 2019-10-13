@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -217,6 +218,16 @@ public class BitbucketService implements VersionControlService {
                 log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, e);
                 throw new BitbucketException("Error while forking repository", e);
             }
+        }
+        catch (HttpServerErrorException e) {
+            if (e instanceof HttpServerErrorException.InternalServerError) {
+                var internalServerError = (HttpServerErrorException.InternalServerError) e;
+                log.error("Internal Server Error on Bitbucket with message: '" + internalServerError.getMessage() + "', body: '" + internalServerError.getResponseBodyAsString()
+                        + "', headers: '" + internalServerError.getResponseHeaders() + "', status text: '" + internalServerError.getStatusText() + "'.");
+            }
+            var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
+            log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, e);
+            throw new BitbucketException("Error while forking repository", e);
         }
         catch (Exception emAll) {
             var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
