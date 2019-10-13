@@ -207,7 +207,7 @@ public class BitbucketService implements VersionControlService {
              * repository, or the maximum amount of retries has been exceeded. There is no direct other solution as of now since this is a default Bitbucket behavior we cannot
              * control
              */
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 5; i++) {
                 try {
                     final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
