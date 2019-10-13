@@ -89,7 +89,7 @@
                             </ng-container>
                             <button
                                 type="submit"
-                                *ngIf="newResultAllowed"
+                                *ngIf="newManualResultAllowed"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
                                 class="btn btn-warning btn-sm mr-1"
                             >
