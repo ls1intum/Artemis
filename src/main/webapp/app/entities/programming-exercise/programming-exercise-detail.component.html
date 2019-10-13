@@ -5,6 +5,41 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
+            <div class="text-right">
+                <!--                <div class="btn-group flex-btn-group-container">-->
+                <button
+                    type="submit"
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    routerLink="/exercise/{{ programmingExercise.id }}/hints"
+                    class="btn btn-info btn-sm mr-1 mb-1"
+                >
+                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
+                </button>
+                <button
+                    type="submit"
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/archive' } }]"
+                    replaceUrl="true"
+                    queryParamsHandling="merge"
+                    class="btn btn-danger btn-sm mr-1 mb-1"
+                >
+                    <fa-icon [icon]="'archive'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
+                </button>
+                <button
+                    type="submit"
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/cleanup' } }]"
+                    replaceUrl="true"
+                    queryParamsHandling="merge"
+                    class="btn btn-danger btn-sm mr-1 mb-1"
+                >
+                    <fa-icon [icon]="'eraser'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>
+                </button>
+                <!--                </div>-->
+            </div>
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
                 <dd>
@@ -23,7 +58,7 @@
                     <span>{{ programmingExercise.dueDate | date: 'medium' }}</span>
                 </dd>
                 <ng-container *ngIf="programmingExercise.dueDate">
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate.title">Automatic Submission Run After Due Date</span></dt>
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
                         <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | date: 'medium' }}</span>
                     </dd>
@@ -39,23 +74,43 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
-                    <span>{{ programmingExercise.templateParticipation.repositoryUrl }}</span>
+                    <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl"
+                        ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">{{
+                            programmingExercise.templateParticipation.repositoryUrl
+                        }}</a></span
+                    >
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
                 <dd>
-                    <span>{{ programmingExercise.solutionParticipation.repositoryUrl }}</span>
+                    <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl"
+                        ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">{{
+                            programmingExercise.solutionParticipation.repositoryUrl
+                        }}</a></span
+                    >
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
                 <dd>
-                    <span>{{ programmingExercise.testRepositoryUrl }}</span>
+                    <span *ngIf="programmingExercise.testRepositoryUrl"
+                        ><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">{{ programmingExercise.testRepositoryUrl }}</a></span
+                    >
                 </dd>
+
+                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
-                    <span>{{ programmingExercise.templateParticipation.buildPlanId }}</span>
+                    <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
+                        ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.templateParticipation.buildPlanId }}" target="_blank">{{
+                            programmingExercise.templateParticipation.buildPlanId
+                        }}</a></span
+                    >
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
-                    <span>{{ programmingExercise.solutionParticipation.buildPlanId }}</span>
+                    <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
+                        ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.solutionParticipation.buildPlanId }}" target="_blank">{{
+                            programmingExercise.solutionParticipation.buildPlanId
+                        }}</a></span
+                    >
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Sequential Test Runs</span></dt>
                 <dd>

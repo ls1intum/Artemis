@@ -146,7 +146,7 @@ Desktop.ini
 .dbus/
 repos/
 repos-download/
-compass/
+/compass
 
 ######################
 # Gradle Wrapper

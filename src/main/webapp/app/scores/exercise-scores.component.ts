@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { Course, CourseService } from 'app/entities/course';
-import { Result, ResultDetailComponent, ResultService } from 'app/entities/result';
+import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
@@ -134,12 +134,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     goToRepository(result: Result) {
         window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
-    }
-
-    showDetails(result: Result) {
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.result = result;
-        modalRef.componentInstance.showTestNames = true;
     }
 
     toggleShowAllResults(newValue: string) {

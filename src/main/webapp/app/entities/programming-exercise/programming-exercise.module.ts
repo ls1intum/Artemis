@@ -28,8 +28,12 @@ import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programmi
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammingExerciseDueDateSelectComponent } from 'app/entities/programming-exercise/form';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
+import { ProgrammingExerciseLifecycleComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
+import { OwlDateTimeModule } from 'ng-pick-datetime';
+import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/entities/programming-exercise/programming-exercise-plans-and-repositories-preview.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -50,6 +54,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         // Other entity modules.
         ArtemisResultModule,
         ArtemisSharedComponentModule,
+        ArtemisPresentationScoreModule,
+        OwlDateTimeModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -60,8 +66,10 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseCleanupDialogComponent,
         ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseImportComponent,
+        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         // Form components
-        ProgrammingExerciseDueDateSelectComponent,
+        ProgrammingExerciseLifecycleComponent,
+        ProgrammingExerciseTestScheduleDatePickerComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,

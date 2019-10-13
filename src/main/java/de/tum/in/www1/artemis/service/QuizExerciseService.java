@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.*;
 
 @Service
-@Transactional
 public class QuizExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
@@ -69,7 +68,6 @@ public class QuizExerciseService {
      * @param quizExercise the quiz exercise to save
      * @return the saved quiz exercise
      */
-    @Transactional
     public QuizExercise save(QuizExercise quizExercise) {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
@@ -87,13 +85,12 @@ public class QuizExerciseService {
             }
         }
 
-        // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
-        QuizExercise result = quizExerciseRepository.save(quizExercise);
+        quizExercise = quizExerciseRepository.save(quizExercise);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
-        for (QuizQuestion quizQuestion : result.getQuizQuestions()) {
+        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
                 // restore references from index after save
@@ -105,18 +102,7 @@ public class QuizExerciseService {
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
-        return result;
-    }
-
-    /**
-     * Save the given quizExercise to the database Note: Use this method if you are sure that there are no new entities
-     *
-     * @param quizExercise the quiz exercise to save
-     * @return the saved quiz exercise
-     */
-    @Transactional
-    public QuizExercise saveWithNoNewEntities(QuizExercise quizExercise) {
-        return quizExerciseRepository.save(quizExercise);
+        return quizExercise;
     }
 
     /**
@@ -139,59 +125,48 @@ public class QuizExerciseService {
     /**
      * Get one quiz exercise by id.
      *
-     * @param id the id of the entity
+     * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
-    public Optional<QuizExercise> findById(Long id) {
-        log.debug("Request to get Quiz Exercise : {}", id);
-        return quizExerciseRepository.findById(id);
+    public Optional<QuizExercise> findById(Long quizExerciseId) {
+        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        return quizExerciseRepository.findById(quizExerciseId);
+    }
+
+    /**
+     * Get one quiz exercise
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    public QuizExercise findOne(Long quizExerciseId) {
+        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        Optional<QuizExercise> quizExercise = quizExerciseRepository.findById(quizExerciseId);
+        return quizExercise.orElse(null);
     }
 
     /**
      * Get one quiz exercise by id and eagerly load questions
      *
-     * @param id the id of the entity
+     * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
-    public QuizExercise findOneWithQuestions(Long id) {
-        log.debug("Request to get Quiz Exercise : {}", id);
-        long start = System.currentTimeMillis();
-        Optional<QuizExercise> quizExercise = quizExerciseRepository.findById(id);
-        log.debug("    loaded quiz after {} ms", System.currentTimeMillis() - start);
-        if (quizExercise.isPresent()) {
-            quizExercise.get().getQuizQuestions().size();
-            log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
-            return quizExercise.get();
-        }
-        return null;
+    public QuizExercise findOneWithQuestions(Long quizExerciseId) {
+        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        Optional<QuizExercise> quizExercise = quizExerciseRepository.findWithEagerQuestionsById(quizExerciseId);
+        return quizExercise.orElse(null);
     }
 
     /**
      * Get one quiz exercise by id and eagerly load questions and statistics
      *
-     * @param id the id of the entity
+     * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
-    public QuizExercise findOneWithQuestionsAndStatistics(Long id) {
-        log.debug("Request to get Quiz Exercise : {}", id);
-        long start = System.currentTimeMillis();
-        Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findById(id);
-        if (optionalQuizExercise.isPresent()) {
-            QuizExercise quizExercise = optionalQuizExercise.get();
-            quizExercise.getQuizQuestions().size();
-            log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
-            quizExercise.getQuizPointStatistic().getPointCounters().size();
-            log.debug("    loaded quiz point statistic after {} ms", System.currentTimeMillis() - start);
-            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-                quizQuestion.getQuizQuestionStatistic().getRatedCorrectCounter();
-            }
-            log.debug("    loaded question statistics after {} ms", System.currentTimeMillis() - start);
-            return quizExercise;
-        }
-        return null;
+    public QuizExercise findOneWithQuestionsAndStatistics(Long quizExerciseId) {
+        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExerciseId);
+        return optionalQuizExercise.orElse(null);
     }
 
     /**

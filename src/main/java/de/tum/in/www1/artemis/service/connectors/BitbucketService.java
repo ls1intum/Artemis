@@ -13,8 +13,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import com.google.common.base.Joiner;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
@@ -185,16 +188,17 @@ public class BitbucketService implements VersionControlService {
     public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
-        final var sourceRepoSlug = sourceProjectKey.toLowerCase() + "-" + sourceRepositoryName;
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
         final Map<String, Object> body = new HashMap<>();
         body.put("name", targetRepoSlug);
-        body.put("project", new HashMap<>());
-        ((Map) body.get("project")).put("key", targetProjectKey);
+        final var projectMap = new HashMap<>();
+        projectMap.put("key", targetProjectKey);
+        body.put("project", projectMap);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
-        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepoSlug;
+        log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
+        final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
         try {
             final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
             if (response.getStatusCode().equals(HttpStatus.CREATED)) {
@@ -207,15 +211,28 @@ public class BitbucketService implements VersionControlService {
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
                 log.info("Repository already exists. Going to recover repository information...");
-                return new BitbucketRepositoryUrl(sourceProjectKey, sourceRepoSlug);
+                return new BitbucketRepositoryUrl(sourceProjectKey, sourceRepositoryName);
             }
             else {
-                throw e;
+                var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
+                log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, e);
+                throw new BitbucketException("Error while forking repository", e);
             }
         }
+        catch (HttpServerErrorException e) {
+            if (e instanceof HttpServerErrorException.InternalServerError) {
+                var internalServerError = (HttpServerErrorException.InternalServerError) e;
+                log.error("Internal Server Error on Bitbucket with message: '" + internalServerError.getMessage() + "', body: '" + internalServerError.getResponseBodyAsString()
+                        + "', headers: '" + internalServerError.getResponseHeaders() + "', status text: '" + internalServerError.getStatusText() + "'.");
+            }
+            var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
+            log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, e);
+            throw new BitbucketException("Error while forking repository", e);
+        }
         catch (Exception emAll) {
-            log.error("Could not fork base repository" + targetRepoSlug, emAll);
-            throw new BitbucketException("Error while forking repository");
+            var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
+            log.error("Could not fork base repository on " + repoUrl + " using " + bodyString, emAll);
+            throw new BitbucketException("Error while forking repository", emAll);
         }
 
         return null;
@@ -246,7 +263,7 @@ public class BitbucketService implements VersionControlService {
      * @return The repository slug
      * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
      */
-    private String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
+    public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         if (urlParts.length > 3) {
@@ -351,11 +368,12 @@ public class BitbucketService implements VersionControlService {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
+        String url = baseUrl + username + "&permission=REPO_WRITE";
         try {
-            restTemplate.exchange(baseUrl + username + "&permission=REPO_WRITE", HttpMethod.PUT, entity, Map.class);
+            restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
         }
         catch (Exception e) {
-            log.error("Could not give write permission", e);
+            log.error("Could not give write permission using " + url, e);
             throw new BitbucketException("Error while giving repository permissions");
         }
     }
@@ -372,11 +390,12 @@ public class BitbucketService implements VersionControlService {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
+        String url = baseUrl + username + "&permission=REPO_" + permissionString;
         try {
-            restTemplate.exchange(baseUrl + username + "&permission=REPO_" + permissionString, HttpMethod.PUT, entity, Map.class);
+            restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
         }
         catch (Exception e) {
-            log.error("Could not give " + repositoryPermission + " permissions", e);
+            log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
             throw new BitbucketException("Error while giving repository permissions");
         }
     }

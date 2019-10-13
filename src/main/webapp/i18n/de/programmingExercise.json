@@ -36,11 +36,6 @@
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
-            "buildAndTestStudentSubmissionsAfterDueDate": {
-                "title": "Automatischer Build & Testlauf aller Studentenabgaben nach dem Abgabedatum",
-                "description": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist.",
-                "invalid": "Bitte gebe ein vaildes Datum nach dem Abgabedatum ein."
-            },
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
@@ -124,6 +119,25 @@
             "failedSubmissions": "Gescheiterte Abgaben: {{number}}",
             "resultETA": "Ergebnis Wartezeit: {{eta}}",
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
+            "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
+            "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
+            "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die geählten Bezeichnungen konsistent zu nutzen, da sie auch für Studenten sichtbar sind",
+            "timeline": {
+                "manualReview": "Manuelle Review",
+                "automaticTests": "Automatische Tests",
+                "afterDueDate": "Testlauf nach dem Abgabedatum",
+                "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
+                "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden",
+                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmers löst alle in dem Testrepository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach dem Abgabedatum ausgeführt werden sollen)",
+                "automaticTestsAfterDueDateTooltip": "Sobald das Abgabedatum abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Testrepository gespeicherten Tests.",
+                "manualReviewTooltip": "Nachdem alle automatischen Tests durchgelaufen sind, müssen die Tutoren noch einmal alle Abgaben manuell bewerten",
+                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studenten können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
+                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgabgen und Commits für Studenten gesperrt werden",
+                "afterDueDateTooltip": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist",
+                "alertNewDueDate": "Das Abgabedatum wurde auf das Releasedatum gesetzt!",
+                "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
+                "notSet": "nicht gesetzt"
+            },
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
@@ -138,6 +152,17 @@
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
                 "tooltip": "Dein Repository ist gesperrt, weil das Abgabedatum abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
+            },
+            "preview": {
+                "label": "Vorschau",
+                "tooltip": "Für jede Programmieraufgabe, werden verschieden Repositories und Build Pläne erstellt. Links befinden sich deren generierte Namen basierend auf dem Kurznamen der Aufgabe",
+                "repositories": "Repositories",
+                "buildPlans": "Build Pläne",
+                "templateRepoTooltip": "Das Repository, welches die Vorlage der Aufgabe beinhaltet",
+                "solutionRepoTooltip": "Das Repository, welches die Lösung der Aufgabe beinhaltet",
+                "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
+                "templateBuildPlanTooltip": "Der Build Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
+                "solutionBuildPlanTooltip": "Der Build Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
             }
         },
         "error": {

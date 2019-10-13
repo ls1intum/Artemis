@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -12,7 +13,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
-import com.google.common.collect.Sets;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
@@ -93,8 +93,9 @@ public abstract class Exercise implements Serializable {
     @Column(name = "difficulty")
     private DifficultyLevel difficulty;
 
+    @Nullable
     @Column(name = "presentation_score_enabled")
-    private Boolean presentationScoreEnabled;
+    private Boolean presentationScoreEnabled = false;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -452,7 +453,7 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * find a relevant participation for this exercise (relevancy depends on InitializationState)
+     * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
@@ -488,14 +489,19 @@ public abstract class Exercise implements Serializable {
      * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
      * @return the latest relevant result in the given participation, or null, if none exist
      */
+    @Nullable
     public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
-        for (Result result : participation.getResults()) {
+        // we get the results over the submissions
+        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
+            return null;
+        }
+        var results = participation.getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).collect(Collectors.toSet());
+        for (Result result : results) {
             // NOTE: for the dashboard we only use rated results with completion date
-            Boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-            // TODO: result.isRated() == null is a compatibility mechanism that we should deactivate soon
-            if (result.getCompletionDate() != null && (result.isRated() == null || result.isRated() == Boolean.TRUE) && isAssessmentOver) {
+            boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
+            if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
                 if (latestResult == null) {
                     latestResult = result;
@@ -556,12 +562,11 @@ public abstract class Exercise implements Serializable {
      * @param isStudent defines if the current user is a student
      */
     public void filterForCourseDashboard(List<StudentParticipation> participations, String username, boolean isStudent) {
-
         // remove the unnecessary inner course attribute
         setCourse(null);
 
         // get user's participation for the exercise
-        StudentParticipation participation = findRelevantParticipation(participations);
+        StudentParticipation participation = participations != null ? findRelevantParticipation(participations) : null;
 
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
@@ -573,31 +578,86 @@ public abstract class Exercise implements Serializable {
             }
         }
 
-        // add results to participation
+        // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
+            // find the latest submission with a rated result, otherwise the latest submission with
+            // an unrated result or alternatively the latest submission without a result
+            Set<Submission> submissions = participation.getSubmissions();
+            Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
 
             // only transmit the relevant result
             Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
 
-            Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
+            Set<Result> results = result != null ? Set.of(result) : Set.of();
 
-            // add results to json
             if (result != null) {
                 // remove inner participation from result
                 result.setParticipation(null);
-
                 // filter sensitive information about the assessor if the current user is a student
                 if (isStudent) {
                     result.filterSensitiveInformation();
                 }
             }
+
+            // filter sensitive information in submission's result
+            if (isStudent && submission != null && submission.getResult() != null) {
+                submission.getResult().filterSensitiveInformation();
+            }
+
+            // add submission to participation
+            if (submission != null) {
+                participation.setSubmissions(Set.of(submission));
+            }
+
             participation.setResults(results);
+
             // remove inner exercise from participation
             participation.setExercise(null);
 
             // add participation into an array
-            setStudentParticipations(Sets.newHashSet(participation));
+            setStudentParticipations(Set.of(participation));
         }
+    }
+
+    /**
+     * Filter for appropriate submission. Relevance in the following order:
+     * - submission with rated result
+     * - submission with unrated result (late submission)
+     * - no submission with any result > latest submission
+     *
+     * @param submissions that need to be filtered
+     * @return filtered submission
+     */
+    private Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+        List<Submission> submissionsWithRatedResult = new ArrayList<>();
+        List<Submission> submissionsWithUnratedResult = new ArrayList<>();
+        List<Submission> submissionsWithoutResult = new ArrayList<>();
+
+        for (Submission submission : submissions) {
+            Result result = submission.getResult();
+            if (result != null) {
+                if (result.isRated() == Boolean.TRUE) {
+                    submissionsWithRatedResult.add(submission);
+                }
+                else {
+                    submissionsWithUnratedResult.add(submission);
+                }
+            }
+            else {
+                submissionsWithoutResult.add(submission);
+            }
+        }
+
+        if (submissionsWithRatedResult.size() > 0) {
+            return submissionsWithRatedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }
+        else if (submissionsWithUnratedResult.size() > 0) {
+            return submissionsWithUnratedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }
+        else if (submissionsWithoutResult.size() > 0) {
+            return submissionsWithoutResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }
+        return null;
     }
 
     @Override
