@@ -53,7 +53,7 @@
             },
             "cloneRepository": {
                 "headline": "Clone repository in SourceTree",
-                "content": "Watch the following video to understand how to clone a git repository in SourceTree. After this step you should click on the <tt>X</tt> button to cancel the tutorial for now and apply the steps that you have seen in the video. Afterwards just continue the tutorial from your account menu",
+                "content": "Watch the following video to understand how to clone a git repository in SourceTree. After this step you should click on the <tt>X</tt> button on the top right to cancel the tutorial for now and apply the steps that you have seen in the video. Afterwards just continue the tutorial from your account menu",
                 "videoUrl": "https://www.youtube.com/embed/pDBl-vSCveM"
             },
             "inspectSourceTree": {
