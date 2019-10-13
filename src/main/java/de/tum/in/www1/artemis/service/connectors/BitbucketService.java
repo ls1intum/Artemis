@@ -189,12 +189,12 @@ public class BitbucketService implements VersionControlService {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
-        final Map<String, Object> body = new HashMap<String, Object>();
+        final var body = new HashMap<String, Object>();
         body.put("name", targetRepoSlug);
         final var projectMap = new HashMap<>();
         projectMap.put("key", targetProjectKey);
         body.put("project", projectMap);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
         log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
