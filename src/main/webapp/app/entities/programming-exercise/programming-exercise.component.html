@@ -234,13 +234,17 @@
                                     <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportRepos.title">Download Repos</span>
                                 </button>
                                 <button
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [disabled]="isDeleting"
-                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/cleanup' } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
-                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                    jhiDeleteButton
+                                    [entityTitle]="programmingExercise.title"
+                                    deleteQuestion="instructorDashboard.cleanup.question"
+                                    (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
+                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    [additionalChecks]="{
+                                        deleteRepositories: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                    }"
+                                    class="mb-1"
                                 >
                                     <fa-icon [icon]="'eraser'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>

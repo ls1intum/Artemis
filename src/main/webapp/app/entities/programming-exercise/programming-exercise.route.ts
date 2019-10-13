@@ -4,9 +4,6 @@ import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@a
 import { UserRouteAccessService } from 'app/core';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
-
-import { PendingChangesGuard } from 'app/shared';
-
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
@@ -14,7 +11,6 @@ import { ProgrammingExerciseDetailComponent } from './programming-exercise-detai
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
-import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 
 @Injectable({ providedIn: 'root' })
@@ -97,16 +93,6 @@ export const programmingExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [CanDeactivateGuard],
-    },
-    {
-        path: 'exercise/:id/cleanup',
-        component: ProgrammingExerciseCleanupPopupComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];
 
