@@ -20,6 +20,7 @@ import { ExerciseService } from 'app/entities/exercise';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     isDeleting: boolean;
+    isCleaning: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -77,7 +78,13 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
+    /**
+     * Cleans up programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     * @param $event passed from delete dialog to represent if checkboxes were checked
+     */
     cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        this.isCleaning = true;
         this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
             () => {
                 if ($event.deleteRepositories) {
@@ -89,6 +96,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             (error: HttpErrorResponse) => {
                 this.jhiAlertService.error(error.message);
             },
+            () => (this.isCleaning = false),
         );
     }
 
