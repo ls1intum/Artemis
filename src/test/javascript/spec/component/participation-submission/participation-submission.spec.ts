@@ -32,6 +32,7 @@ import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { participationSubmissionRoute } from 'app/entities/participation-submission';
 import { TranslateService, TranslateStore, TranslateLoader, TranslateCompiler, TranslateParser, TranslateModule, MissingTranslationHandler } from '@ngx-translate/core';
+import { StudentParticipation } from 'app/entities/participation';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -92,6 +93,8 @@ describe('ParticipationSubmissionComponent', () => {
 
     it('Submissions are correctly loaded from server', fakeAsync(() => {
         // set all attributes for comp
+        const participation = new StudentParticipation();
+        participation.id = 1;
         const submissions = [
             {
                 submissionExerciseType: SubmissionExerciseType.TEXT,
@@ -100,9 +103,9 @@ describe('ParticipationSubmissionComponent', () => {
                 type: SubmissionType.MANUAL,
                 submissionDate: moment('2019-07-09T10:47:33.244Z'),
                 text: 'asdfasdfasdfasdf',
-                participation: { id: 1 },
             },
         ] as TextSubmission[];
+        submissions[0].participation = participation;
 
         // check if findAllSubmissionsOfParticipationStub() is called and works
         findAllSubmissionsOfParticipationStub.returns(of({ body: submissions }));

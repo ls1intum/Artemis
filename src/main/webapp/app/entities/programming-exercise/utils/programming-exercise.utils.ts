@@ -15,9 +15,12 @@ export const isLegacyResult = (result: Result) => {
 };
 
 export const hasBuildAndTestAfterDueDatePassed = (programmingExercise: ProgrammingExercise) => {
+    if (!programmingExercise) {
+        return false;
+    }
     return !programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment.now());
 };
 
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
-    return participation.type === ParticipationType.PROGRAMMING;
+    return participation && participation.type === ParticipationType.PROGRAMMING;
 };

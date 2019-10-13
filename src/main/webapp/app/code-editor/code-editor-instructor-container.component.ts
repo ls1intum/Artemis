@@ -25,7 +25,7 @@ import {
     CodeEditorSessionService,
 } from 'app/code-editor';
 import { UpdatingResultComponent } from 'app/entities/result';
-import { ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { ButtonSize } from 'app/shared/components';
 
 enum REPOSITORY {
@@ -71,7 +71,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     // Can only be null when the test repository is selected.
     selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
     // Stores which repository is selected atm.
-    // Needs to be set additionaly to selectedParticipation as the test repository does not have a participation
+    // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
     selectedRepository: REPOSITORY;
 
     // Fires when the selected domain changes.
@@ -200,14 +200,16 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         const exercise = this.exercise;
         if (participationId === this.exercise.templateParticipation.id) {
             this.selectedRepository = REPOSITORY.TEMPLATE;
-            this.selectedParticipation = { ...this.exercise.templateParticipation, exercise };
+            this.selectedParticipation = this.exercise.templateParticipation;
+            this.selectedParticipation.programmingExercise = exercise;
         } else if (participationId === this.exercise.solutionParticipation.id) {
             this.selectedRepository = REPOSITORY.SOLUTION;
-            this.selectedParticipation = { ...this.exercise.solutionParticipation, exercise };
+            this.selectedParticipation = this.exercise.solutionParticipation;
+            this.selectedParticipation.programmingExercise = exercise;
         } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = REPOSITORY.ASSIGNMENT;
             this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
-            this.selectedParticipation = { ...(this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation), exercise };
+            this.selectedParticipation.exercise = exercise;
         } else {
             this.onError('participationNotFound');
         }
@@ -234,11 +236,14 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
      **/
     selectParticipationDomainById(participationId: number) {
         if (participationId === this.exercise.templateParticipation.id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, { programmingExercise: this.exercise, ...this.exercise.templateParticipation }]);
+            this.exercise.templateParticipation.programmingExercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation]);
         } else if (participationId === this.exercise.solutionParticipation.id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, { programmingExercise: this.exercise, ...this.exercise.solutionParticipation }]);
+            this.exercise.solutionParticipation.programmingExercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
         } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
-            this.domainService.setDomain([DomainType.PARTICIPATION, { exercise: this.exercise, ...this.exercise.studentParticipations[0] }]);
+            this.exercise.studentParticipations[0].exercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.studentParticipations[0]]);
         } else {
             this.onError('participationNotFound');
         }
