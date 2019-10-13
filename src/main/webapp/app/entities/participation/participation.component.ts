@@ -10,6 +10,7 @@ import { ExerciseService } from '../exercise/exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-participation',
@@ -20,6 +21,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly ActionType = ActionType;
 
     participations: StudentParticipation[];
     eventSubscriber: Subscription;
@@ -126,6 +128,19 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             },
             error => this.onError(error),
         );
+    }
+
+    /**
+     * Cleans programming exercise participation
+     * @param programmingExerciseParticipation the id of the participation that we want to delete
+     */
+    cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: StudentParticipation) {
+        this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe(() => {
+            this.eventManager.broadcast({
+                name: 'participationListModification',
+                content: 'Cleanup the build plan of an participation',
+            });
+        });
     }
 
     private onError(error: HttpErrorResponse) {
