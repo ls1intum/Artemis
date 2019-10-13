@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -103,10 +105,11 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
-        Participation participation = result.getParticipation();
-        Course course = participation.getExercise().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermissions(course, user))
+        final var participation = result.getParticipation();
+        final var course = participation.getExercise().getCourse();
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var exercise = exerciseService.findOne(participation.getExercise().getId());
+        if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
             return forbidden();
 
         if (result.getId() != null) {
@@ -280,16 +283,31 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
-        Participation participation = result.getParticipation();
-        Course course = participation.getExercise().getCourse();
-        if (!userHasPermissions(course))
+        final var participation = result.getParticipation();
+        final var course = participation.getExercise().getCourse();
+        final var exercise = exerciseService.findOne(participation.getExercise().getId());
+        if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
             return forbidden();
+        }
         if (result.getId() == null) {
             return createResult(result);
         }
+
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+    }
+
+    private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
+        // Only allow manual results for programming exercises if option was enabled and due dates have passed
+        if (exerciseToBeChecked instanceof ProgrammingExercise) {
+            final var exercise = (ProgrammingExercise) exerciseToBeChecked;
+            final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
+                    : exercise.getDueDate();
+            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && !relevantDueDate.isBefore(ZonedDateTime.now());
+        }
+
+        return true;
     }
 
     /**
