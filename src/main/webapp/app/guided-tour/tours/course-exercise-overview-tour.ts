@@ -16,7 +16,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.content',
             hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.hint',
-            videoUrl: 'https://www.youtube.com/embed/KKGuYVRIe-Y',
+            videoUrl: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.videoUrl',
         }),
         new TextTourStep({
             highlightSelector: '.tab-item.exercises',

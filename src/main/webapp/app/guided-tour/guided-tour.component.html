@@ -64,7 +64,7 @@
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.videoUrl">
-                    <iframe [src]="currentTourStep.videoUrl | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
+                    <iframe [src]="currentTourStep.videoUrl | translate | safeResourceUrl" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
             <div class="tour-block__buttons">

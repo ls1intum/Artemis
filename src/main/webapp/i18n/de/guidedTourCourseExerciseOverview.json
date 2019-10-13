@@ -8,6 +8,7 @@
                 "sourceTreeSetup": {
                     "headline": "Konfiguriere SourceTree",
                     "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
+                    "videoUrl": "https://www.youtube.com/embed/wfT_QX4jlZ0",
                     "hint": "Kopiere und füge <tt>https://bitbucket.ase.in.tum.de</tt> als URL ein."
                 }
             },
@@ -49,32 +50,32 @@
             },
             "startExercise": {
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",
-                "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
+                "content": "Klicke auf den Button <tt>Aufgabe starten</tt> um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird. Danach solltest du auf das <tt>X</tt> klicken um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Account Menü aus fortsetzen."
             },
             "cloneRepository": {
                 "headline": "Klone das Repository in SourceTree",
                 "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont.",
-                "videoUrl": "https://www.youtube.com/embed/pDBl-vSCveM"
+                "videoUrl": "https://www.youtube.com/embed/FefFxHkXVc0"
             },
             "inspectSourceTree": {
                 "headline": "Lerne SourceTree kennen",
                 "content": "Schau dir das folgende Video, um die grundlegenden Funktionen von SourceTree kennenzulernen.",
-                "videoUrl": "https://www.youtube.com/embed/7ugt0k0Qa7Y"
+                "videoUrl": "https://www.youtube.com/embed/mQ3yvgxcrSY"
             },
             "importEclipse": {
                 "headline": "Importiere das Java Projekt in Eclipse",
                 "content": "Schau dir das folgende Video an, um zu sehen, wie man ein Projekt in Eclipse importiert.",
-                "videoUrl": "https://www.youtube.com/embed/xl0lyV_IHzY"
+                "videoUrl": "https://www.youtube.com/embed/vXRHF1ECIJc"
             },
             "inspectProject": {
                 "headline": "Untersuche das Projekt",
                 "content": "In diesem Video schauen wir uns das Projekt an und lösen die darin gegebene Aufgabe.",
-                "videoUrl": "https://www.youtube.com/embed/qW9Tc-AYBH8"
+                "videoUrl": "https://www.youtube.com/embed/o3ITPmYVS-0"
             },
             "commitAndPush": {
                 "headline": "Reiche deine Änderungen ein",
                 "content": "Schau dir das folgende Video an, um zu verstehen, wie man Änderungen committed und pushed.",
-                "videoUrl": "https://www.youtube.com/embed/iFRHdp8ozh4"
+                "videoUrl": "https://www.youtube.com/embed/xoWoDWhhZ68"
             },
             "reviewResult": {
                 "headline": "Überprüfe dein Ergebnis",

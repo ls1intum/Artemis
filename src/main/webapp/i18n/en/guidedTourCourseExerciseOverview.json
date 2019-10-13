@@ -49,11 +49,11 @@
             },
             "startExercise": {
                 "headline": "Start with your first programming exercise",
-                "content": "Click on the 'Start exercise' button to start working on the exercise. This action takes a few seconds, since a personal repository is setup for you in the background."
+                "content": "Click on the <tt>Start exercise</tt> button to start working on the exercise. This action takes a few seconds, since a personal repository is setup for you in the background"
             },
             "cloneRepository": {
                 "headline": "Clone repository in SourceTree",
-                "content": "Watch the following video to understand how to clone a git repository in SourceTree.",
+                "content": "Watch the following video to understand how to clone a git repository in SourceTree. After this step you should click on the <tt>X</tt> button to cancel the tutorial for now and apply the steps that you have seen in the video. Afterwards just continue the tutorial from your account menu",
                 "videoUrl": "https://www.youtube.com/embed/pDBl-vSCveM"
             },
             "inspectSourceTree": {
