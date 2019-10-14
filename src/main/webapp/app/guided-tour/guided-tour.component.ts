@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation, Output, EventEmitter } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 
 import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
-import { ImageTourStep, TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 @Component({
     selector: 'jhi-guided-tour',
