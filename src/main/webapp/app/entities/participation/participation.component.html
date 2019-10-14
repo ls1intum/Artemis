@@ -91,7 +91,7 @@
                             </ng-container>
                             <button
                                 type="submit"
-                                *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastTutor"
+                                *ngIf="newManualResultAllowed"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
                                 class="btn btn-warning btn-sm mr-1"
                             >
