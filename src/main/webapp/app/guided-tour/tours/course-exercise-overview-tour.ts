@@ -4,7 +4,7 @@ import { TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.mo
 
 export const courseExerciseOverviewTour: GuidedTour = {
     courseShortName: 'artemistutorial',
-    exerciseShortName: 'tutorial',
+    exerciseShortName: 'test',
     settingsKey: 'course_exercise_overview_tour',
     steps: [
         new TextTourStep({
