@@ -616,11 +616,12 @@ export class GuidedTourService {
          * to prevent ExpressionChangedAfterItHasBeenCheckedError
          */
         setTimeout(() => {
-            this.currentTour = cloneDeep(guidedTour);
-            this.availableTourForComponent = this.currentTour;
+            this.availableTourForComponent = cloneDeep(guidedTour);
             this.guidedTourAvailability.next(true);
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
+            // Only start tour automatically if the user has never seen it before
             if (!hasStartedOrFinishedTour) {
+                this.currentTour = this.availableTourForComponent;
                 this.startTour();
             }
         }, 500);
