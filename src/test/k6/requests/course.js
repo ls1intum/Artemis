@@ -7,3 +7,21 @@ export function newCourseShortName(artemis, courseId) {
     course.shortName = "TEST" + nextAlphanumeric(5);
     artemis.put(COURSES, course);
 }
+
+export function newCourse(artemis) {
+    const course = {
+        title: "K6 Test Course",
+        description: "K6 performance tests generated course",
+        shortName: nextAlphanumeric(5),
+        studentGroupName: "artemis-test",
+        teachingAssistantGroupName: "artemis-test",
+        instructorGroupName: "artemis-test",
+        registrationEnabled: true
+    };
+
+    return JSON.parse(artemis.post(COURSES, course)[0].body).id;
+}
+
+export function deleteCourse(artemis, courseId) {
+    artemis.delete(COURSE(courseId));
+}

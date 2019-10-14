@@ -27,6 +27,14 @@ while (( "$#" )); do
       baseUsername=$2
       shift 2
       ;;
+    --admin-username)
+      adminUsername=$2
+      shift 2
+      ;;
+    --admin-password)
+      adminPassword=$2
+      shift 2
+      ;;
     --) # end argument parsing
       shift
       break
@@ -48,12 +56,15 @@ eval set -- "$PARAMS"
 baseUrl=${baseUrl:?You have to specify the base URL}
 basePassword=${basePassword:?"You have to specify the test user's base password"}
 baseUsername=${baseUsername:?"You have to specify the test user's username"}
+adminUsername=${adminUsername:?You have to specify the username of one admin}
+adminPassword=${adminPassword:?You have to specify the password of one admin}
 iterations=${iterations:-10}
 timeout=${timeout:-40}
 
 echo "################### STARTING API Tests ###################"
 docker run -i --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT="$timeout" \
+  -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" \
   loadimpact/k6 run /src/ProgrammingExerciseInstructor.js
 docker wait api-tests
 result=$(docker logs api-tests 2>&1)

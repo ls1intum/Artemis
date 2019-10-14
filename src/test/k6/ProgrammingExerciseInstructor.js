@@ -1,6 +1,7 @@
 import { group, sleep } from 'k6';
 import { login } from "./requests/requests.js";
-import { createExercise, deleteExercise, startExercise } from "./requests/programmingExercise.js";
+import { createExercise, startExercise } from "./requests/programmingExercise.js";
+import { deleteCourse, newCourse } from "./requests/course.js";
 
 export let options = {
     maxRedirects: 0,
@@ -8,14 +9,20 @@ export let options = {
     vus: __ENV.ITERATIONS
 };
 
-let instructorUsername = "artemis_test_user_1";
+let adminUsername = __ENV.ADMIN_USERNAME;
+let adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
-let courseId = 45; // id of the course where the exercise is located
 
 export function setup() {
+    let artemis, exerciseId, courseId;
+
+    // Create course
+    artemis = login(adminUsername, adminPassword);
+    courseId = newCourse(artemis);
+
+    const instructorUsername = baseUsername.replace("USERID", "1");
     const instructorPassword = basePassword.replace("USERID", "1");
-    let artemis, exerciseId;
 
     // Login to Artemis
     artemis = login(instructorUsername, instructorPassword);
@@ -23,7 +30,7 @@ export function setup() {
     // Create new exercise
     exerciseId = createExercise(artemis, courseId);
 
-    return { exerciseId: exerciseId };
+    return { exerciseId: exerciseId, courseId: courseId };
 }
 
 export default function (data) {
@@ -33,6 +40,7 @@ export default function (data) {
     let currentPassword = basePassword.replace("USERID", userId);
     let artemis = login(currentUsername, currentPassword);
     let exerciseId = data.exerciseId;
+    let courseId = data.courseId;
 
     // Wait some time for builds to finish and test results to come in
     sleep(15);
@@ -48,9 +56,8 @@ export default function (data) {
 }
 
 export function teardown(data) {
-    const instructorPassword = basePassword.replace("USERID", "1");
-    let artemis = login(instructorUsername, instructorPassword);
-    let exerciseId = data.exerciseId;
+    let artemis = login(adminUsername, adminPassword);
+    let courseId = data.courseId;
 
-    deleteExercise(artemis, exerciseId);
+    deleteCourse(artemis, courseId);
 }
