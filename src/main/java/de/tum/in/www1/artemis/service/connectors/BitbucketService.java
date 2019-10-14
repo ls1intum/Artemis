@@ -233,7 +233,7 @@ public class BitbucketService implements VersionControlService {
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
                 log.info("Repository already exists. Going to recover repository information...");
-                return new BitbucketRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+                return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
             }
             else {
                 var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
