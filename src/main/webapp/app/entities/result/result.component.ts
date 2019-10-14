@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ParticipationService, StudentParticipation, isModelingOrTextOrFileUpload } from 'app/entities/participation';
+import { isModelingOrTextOrFileUpload, ParticipationService, ParticipationType, StudentParticipation } from 'app/entities/participation';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
 import { isSubmissionInDueTime } from 'app/entities/submission/submission-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
@@ -10,7 +10,9 @@ import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import * as moment from 'moment';
+import { hasBuildAndTestAfterDueDatePassed, isProgrammingExerciseStudentParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
@@ -185,13 +187,18 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultString() {
         if (this.result!.resultString === 'No tests found') {
             return this.translate.instant('artemisApp.editor.buildFailed');
+            // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
+        } else if (isProgrammingExerciseStudentParticipation(this.participation) && !hasBuildAndTestAfterDueDatePassed(this.participation.exercise as ProgrammingExercise)) {
+            const preliminary = this.translate.instant('artemisApp.result.preliminary');
+            return `${this.result!.resultString} ${preliminary}`;
         }
         return this.result!.resultString;
     }
 
     buildResultTooltip() {
-        if (this.result && this.result.resultString.includes('(preliminary)')) {
-            return this.translate.instant('artemisApp.result.preliminary');
+        // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
+        if (isProgrammingExerciseStudentParticipation(this.participation) && !hasBuildAndTestAfterDueDatePassed(this.participation.exercise as ProgrammingExercise)) {
+            return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
     }
 
