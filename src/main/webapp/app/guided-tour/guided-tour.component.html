@@ -75,11 +75,12 @@
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup">
-                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1">
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" [ngStyle]="{ transform: 'translateX(' + this.transformX + 'px)' }">
                         <li
                             class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
                             [class.current]="guidedTourService.isCurrentStep(i)"
-                            [class.n-small]="guidedTourService.currentTour.steps.indexOf(i) + 1 === guidedTourService.maxDots"
+                            [class.n-small]="guidedTourService.calculateNSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
+                            [class.p-small]="guidedTourService.calculatePSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
                             *ngFor="let i of guidedTourService.currentTour.steps"
                         >
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
