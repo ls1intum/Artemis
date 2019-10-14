@@ -25,7 +25,7 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
-    public maxDots = 5;
+    public maxDots = 10;
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
@@ -124,6 +124,18 @@ export class GuidedTourService {
             return this.currentTourStepDisplay === this.currentTour.steps.indexOf(tourStep) + 1;
         }
         return false;
+    }
+
+    /**
+     * Get the current step string for the headline, that shows which step is currently displayed, `currentStep / totalStep`
+     */
+    public getCurrentStepString() {
+        if (!this.currentTour) {
+            return;
+        }
+        const currentStep = this.currentTourStepIndex + 1;
+        const totalSteps = this.currentTour.steps.length;
+        return `${currentStep} / ${totalSteps}`;
     }
 
     /**
@@ -247,7 +259,6 @@ export class GuidedTourService {
             .subscribe(guidedTourSettings => {
                 this.guidedTourSettings = guidedTourSettings.body!;
             });
-
         this.resetTour();
     }
 
@@ -402,6 +413,10 @@ export class GuidedTourService {
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
+            if (!this.currentTour.steps[this.currentTourStepIndex]) {
+                // Set current tour step index to 0 if the current tour step cannot be found
+                this.currentTourStepIndex = 0;
+            }
             const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.action) {
                 currentStep.action();
@@ -681,9 +696,9 @@ export class GuidedTourService {
                 nextPlusOneDot.classList.add('n-small');
                 dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
                 dotList.querySelectorAll('li').forEach((node, index) => {
-                    if (index === nextIndex - 4) {
+                    if (index === nextIndex - 9) {
                         node.classList.remove('p-small');
-                    } else if (index === nextIndex - 3) {
+                    } else if (index === nextIndex - 8) {
                         node.classList.add('p-small');
                     }
                 });
@@ -696,9 +711,9 @@ export class GuidedTourService {
                 nextPlusOneDot.classList.add('p-small');
                 dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
                 dotList.querySelectorAll('li').forEach((node, index) => {
-                    if (index === nextIndex + 4) {
+                    if (index === nextIndex + 9) {
                         node.classList.remove('n-small');
-                    } else if (index === nextIndex + 3) {
+                    } else if (index === nextIndex + 8) {
                         node.classList.add('n-small');
                     }
                 });

@@ -43,20 +43,6 @@ export class TextTourStep extends TourStep {
     }
 }
 
-export class TextLinkTourStep extends TextTourStep {
-    /** External url **/
-    externalUrl: string;
-    /** Text for external url **/
-    externalUrlTranslateKey: string;
-    /** Link type, either link or button **/
-    linkType: LinkType;
-
-    constructor(tourStep: TextLinkTourStep) {
-        super(tourStep);
-        Object.assign(this, tourStep);
-    }
-}
-
 export class ImageTourStep extends TextTourStep {
     /** Image url **/
     imageUrl: string;
