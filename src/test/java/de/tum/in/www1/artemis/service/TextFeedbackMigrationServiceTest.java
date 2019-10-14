@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +31,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis")
-public class TextFeedbackMigrationTest {
+public class TextFeedbackMigrationServiceTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
@@ -49,7 +48,7 @@ public class TextFeedbackMigrationTest {
     private TextExercise textExercise;
 
     @Autowired
-    TextFeedbackMigration classUnderTest;
+    TextFeedbackMigrationService classUnderTest;
 
     @BeforeEach
     public void prepare() {

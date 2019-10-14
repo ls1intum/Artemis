@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 
 @Service
-public class TextFeedbackMigration {
+public class TextFeedbackMigrationService {
 
-    private final Logger log = LoggerFactory.getLogger(TextFeedbackMigration.class);
+    private final Logger log = LoggerFactory.getLogger(TextFeedbackMigrationService.class);
 
     private final String textBlockIdRegex = "^[a-f0-9]{40}$";
 
@@ -35,7 +35,7 @@ public class TextFeedbackMigration {
 
     private final TextBlockRepository textBlockRepository;
 
-    public TextFeedbackMigration(FeedbackRepository feedbackRepository, TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository) {
+    public TextFeedbackMigrationService(FeedbackRepository feedbackRepository, TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository) {
         this.feedbackRepository = feedbackRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.textBlockRepository = textBlockRepository;
