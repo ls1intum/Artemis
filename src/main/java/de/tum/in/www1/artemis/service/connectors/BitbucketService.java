@@ -394,10 +394,17 @@ public class BitbucketService implements VersionControlService {
         try {
             restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
         }
-        catch (Exception e) {
+        catch (HttpClientErrorException e) {
+            log.error("Server Error on Bitbucket with message: '" + e.getMessage() + "', body: '" + e.getResponseBodyAsString() + "', headers: '" + e.getResponseHeaders()
+                    + "', status text: '" + e.getStatusText() + "'.");
             log.error("Could not give write permission using " + url, e);
-            throw new BitbucketException("Error while giving repository permissions");
+            throw new BitbucketException("Error while giving repository permissions", e);
         }
+        catch (Exception emAll) {
+            log.error("Could not give write permission using " + url, emAll);
+            throw new BitbucketException("Error while giving repository permissions", emAll);
+        }
+
     }
 
     @Override
@@ -418,7 +425,7 @@ public class BitbucketService implements VersionControlService {
         }
         catch (Exception e) {
             log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
-            throw new BitbucketException("Error while giving repository permissions");
+            throw new BitbucketException("Error while giving repository permissions", e);
         }
     }
 
@@ -533,7 +540,7 @@ public class BitbucketService implements VersionControlService {
         }
         catch (Exception e) {
             log.error("Could not give project permission", e);
-            throw new BitbucketException("Error while giving project permissions");
+            throw new BitbucketException("Error while giving project permissions", e);
         }
     }
 
