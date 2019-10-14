@@ -28,7 +28,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" class="btn btn-danger" [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle)" [ngSwitch]="dialogType">
+        <button type="submit" class="btn btn-danger" [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle)" [ngSwitch]="actionType">
             <fa-icon icon="times"></fa-icon>&nbsp;
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
