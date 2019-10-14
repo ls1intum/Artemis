@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
@@ -67,11 +69,15 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final Optional<LdapUserService> ldapUserService;
 
-    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository, Optional<LdapUserService> ldapUserService) {
+    private final AuditEventRepository auditEventRepository;
+
+    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository, Optional<LdapUserService> ldapUserService,
+            AuditEventRepository auditEventRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.ldapUserService = ldapUserService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     @Override
@@ -260,7 +266,9 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
             userRepository.save(user);
-
+            var auditEvent = new AuditEvent(user.getLogin(), "REGISTER_FOR_COURSE", "course=" + course.getTitle());
+            auditEventRepository.add(auditEvent);
+            log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
         }
         try {
             addUserToGroup(user.getLogin(), courseStudentGroupName);
@@ -278,7 +286,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
      *
      * @param email The JIRA user email address
      * @return Optional String of JIRA username
-     * @throws ArtemisAuthenticationException
+     * @throws ArtemisAuthenticationException an exception occurred in JIRA and the username for the email address could not be retrieved
      */
     @Override
     public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
@@ -289,8 +297,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             ResponseEntity<ArrayList> authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, entity,
                     ArrayList.class);
 
-            List results = authenticationResponse.getBody();
-            if (results.size() == 0) {
+            var results = authenticationResponse.getBody();
+            if (results == null || results.size() == 0) {
                 // no result
                 return Optional.empty();
             }
@@ -299,7 +307,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         }
         catch (HttpClientErrorException e) {
             log.error("Could not get JIRA username for email address " + email, e);
-            throw new ArtemisAuthenticationException("Error while checking eMail address");
+            throw new ArtemisAuthenticationException("Error while checking eMail address", e);
         }
 
     }
