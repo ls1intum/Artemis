@@ -184,7 +184,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [entityTitle]="quizExercise.id"
+                                    [entityTitle]="quizExercise.title"
                                     [actionType]="ActionType.Reset"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     (delete)="resetQuizExercise(quizExercise.id)"
