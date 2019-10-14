@@ -1,6 +1,6 @@
 <form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" [ngSwitch]="dialogType">
+        <h4 class="modal-title" [ngSwitch]="actionType">
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.delete.title">Confirm delete operation</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.reset.title">Confirm reset operation</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>

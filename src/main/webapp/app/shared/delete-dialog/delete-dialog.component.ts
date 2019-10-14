@@ -16,7 +16,7 @@ export class DeleteDialogComponent implements OnInit {
     deleteConfirmationText: string;
     additionalChecks?: { [key: string]: string };
     additionalChecksValues: { [key: string]: boolean } = {};
-    dialogType: ActionType = ActionType.Delete;
+    actionType: ActionType;
 
     // used by *ngFor in the template
     objectKeys = Object.keys;
