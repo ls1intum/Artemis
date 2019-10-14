@@ -15,7 +15,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour } from 'app/guided-tour/tours/general-tour';
 
@@ -335,6 +335,13 @@ export class GuidedTourService {
                         this.enableNextStepClick();
                     });
                 });
+            } else if (userInteraction === UserInteractionEvent.MODELING) {
+                targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
+                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
+                    mutations.forEach(() => {
+                        this.enableNextStepClick();
+                    });
+                });
             }
         }
     }
@@ -347,7 +354,7 @@ export class GuidedTourService {
     private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
         return new Promise(resolve => {
             const observer = new MutationObserver(mutations => {
-                if (userInteraction === UserInteractionEvent.CLICK) {
+                if (userInteraction === UserInteractionEvent.CLICK || userInteraction === UserInteractionEvent.MODELING) {
                     observer.disconnect();
                     this.enableNextStepClick();
                 } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
@@ -635,7 +642,9 @@ export class GuidedTourService {
         if (!guidedTour.exerciseShortName || !course || !course.exercises) {
             return null;
         }
-        const exerciseForGuidedTour = course.exercises.find(exercise => exercise.shortName === guidedTour.exerciseShortName);
+        const exerciseForGuidedTour = course.exercises.find(
+            exercise => (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) || exercise.title === guidedTour.exerciseShortName,
+        );
         if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
             return exerciseForGuidedTour;
@@ -663,7 +672,11 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (exercise.shortName === guidedTour.exerciseShortName) {
+        console.log('enable?');
+        if (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) {
+            this.enableTour(guidedTour);
+        } else if (exercise.title === guidedTour.exerciseShortName) {
+            console.log('enable tour');
             this.enableTour(guidedTour);
         }
     }

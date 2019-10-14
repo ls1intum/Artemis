@@ -4,7 +4,7 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 
 export const modelingTour: GuidedTour = {
     courseShortName: 'artemistutorial',
-    exerciseShortName: 'modeling',
+    exerciseShortName: 'Modeling',
     settingsKey: 'modeling_tour',
     steps: [
         new TextTourStep({

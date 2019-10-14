@@ -11,6 +11,7 @@ import {
     faArrowLeft,
     faArrowRight,
     faArrowsAltV,
+    faArrowsAlt,
     faAsterisk,
     faBan,
     faBars,
@@ -164,6 +165,7 @@ export class ArtemisIconsModule {
         library.addIcons(faTimes);
         library.addIcons(faArrowLeft);
         library.addIcons(faArrowRight);
+        library.addIcons(faArrowsAlt);
         library.addIcons(faSave);
         library.addIcons(faPlus);
         library.addIcons(faPencilAlt);
