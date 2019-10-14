@@ -1,7 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 
+// TODO this can probably be moved to one of our generic delete components
 @Component({
-    selector: 'jhi-confirm-button',
+    selector: 'jhi-confirm-delete-button',
     templateUrl: './confirm-button.component.html',
     styles: [
         `
