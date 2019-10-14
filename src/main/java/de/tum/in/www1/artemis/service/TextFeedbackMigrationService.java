@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
+import static java.util.stream.Collectors.toList;
+
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -48,7 +48,7 @@ public class TextFeedbackMigrationService {
 
     @NotNull
     private List<Long> findAllTextExerciseIds() {
-        return findAllTextExercises().parallelStream().map(TextExercise::getId).collect(Collectors.toList());
+        return findAllTextExercises().parallelStream().map(TextExercise::getId).collect(toList());
     }
 
     @NotNull
@@ -59,7 +59,7 @@ public class TextFeedbackMigrationService {
     @NotNull
     private List<Feedback> findAllTextFeedbacksNeedingMigration() {
         return findAllTextFeedbacks().parallelStream().filter(feedback -> feedback.getReference() != null && !textBlockIdPattern.matcher(feedback.getReference()).matches())
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     /**
@@ -68,12 +68,12 @@ public class TextFeedbackMigrationService {
     @PostConstruct()
     public void migrate() {
         log.info("Starting Migration of Text Feedback");
+        final long start = System.currentTimeMillis();
 
         final List<Feedback> feedbackList = findAllTextFeedbacksNeedingMigration();
         log.info("Found {} Feedback Elements in need of a migration.", feedbackList.size());
 
-        final List<TextBlock> textBlockList = new ArrayList<>();
-        for (Feedback feedback : feedbackList) {
+        final List<TextBlock> textBlockList = feedbackList.parallelStream().map(feedback -> {
             final TextBlock textBlock = new TextBlock();
             final TextSubmission submission = (TextSubmission) feedback.getResult().getSubmission();
             final String submissionText = submission.getText();
@@ -87,14 +87,15 @@ public class TextFeedbackMigrationService {
             textBlock.setStartIndex(startIndex);
             textBlock.setEndIndex(endIndex);
             textBlock.computeId();
-            textBlockList.add(textBlock);
 
             feedback.setReference(textBlock.getId());
-        }
+            return textBlock;
+        }).collect(toList());
 
         feedbackRepository.saveAll(feedbackList);
         textBlockRepository.saveAll(textBlockList);
 
-        log.info("Finished migrating {} Feedback Elements and created {} new Text Blocks.", feedbackList.size(), textBlockList.size());
+        log.info("Finished migrating {} Feedback Elements and created {} new Text Blocks in {}ms.", feedbackList.size(), textBlockList.size(),
+                (System.currentTimeMillis() - start));
     }
 }
