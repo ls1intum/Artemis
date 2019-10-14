@@ -589,7 +589,7 @@ export class GuidedTourService {
         return new TextTourStep({
             headlineTranslateKey: step.headlineTranslateKey,
             contentTranslateKey: step.contentTranslateKey,
-            hintTranslateKey: 'tour.stepAlreadyExecutedHint.text',
+            alreadyExecutedTranslateKey: 'tour.stepAlreadyExecutedHint.text',
         });
     }
 

@@ -37,6 +37,14 @@
                         <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
+                <div *ngIf="currentTourStep.alreadyExecutedTranslateKey" class="step-hint interaction alert alert-success">
+                    <div class="step-hint__icon">
+                        <fa-icon icon="check"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                    </div>
+                </div>
                 <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
                     <div class="step-hint__icon" *ngIf="this.userInteractionFinished; else userInteractionIcons">
                         <fa-icon icon="check"></fa-icon>
