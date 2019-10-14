@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <div *ngIf="tutorParticipationStatus === NOT_PARTICIPATED || exercise.type === ExerciseType_TEXT">
+    <div class="markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED || exercise.type === ExerciseType_TEXT">
         <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.problemStatement' | translate }}</h4>
 

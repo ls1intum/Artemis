@@ -34,7 +34,7 @@
                 "columns": {
                     "submissionDate": "Submission date",
                     "result": "Result",
-                    "submissionCount": "Submission count",
+                    "submissionCount": "Submissions",
                     "score": "Score",
                     "duration": "Duration",
                     "assessmentType": "Assessment Type",
