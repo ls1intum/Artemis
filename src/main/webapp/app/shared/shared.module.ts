@@ -18,7 +18,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
     declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService, DeleteDialogService],
     entryComponents: [DeleteDialogComponent],
-    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent, TranslateModule, DeleteButtonDirective],
+    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent, TranslateModule, DeleteButtonDirective, DeleteDialogComponent],
 })
 export class ArtemisSharedModule {
     static forRoot() {
