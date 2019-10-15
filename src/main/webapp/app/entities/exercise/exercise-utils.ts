@@ -114,19 +114,17 @@ const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise
 
 /**
  * Checks whether the given exercise is eligible for receiving manual results.
- * This is the case if the user is at least a tutor and the exercise itself is a regular exercise, or a programming
- * exercise for which manual reviews have been enabled. For programming exercises, the due date also has to be in the
- * past.
+ * This is the case if the user is at least a tutor and the exercise itself is a programming
+ * exercise for which manual reviews have been enabled. The due date also has to be in the past.
  *
  * @param exercise
  */
 export const areManualResultsAllowed = (exercise: Exercise) => {
-    if (exercise.type === ExerciseType.PROGRAMMING) {
-        // Only allow new results if manual reviews are activated and the due date/after due date has passed
-        const exc = exercise as ProgrammingExercise;
-        const relevantDueDate = exc.buildAndTestStudentSubmissionsAfterDueDate ? exc.buildAndTestStudentSubmissionsAfterDueDate : exc.dueDate;
-        return exc.isAtLeastTutor && exc.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || moment(relevantDueDate).isBefore(now()));
+    if (exercise.type !== ExerciseType.PROGRAMMING) {
+        return false;
     }
-
-    return exercise.isAtLeastTutor;
+    // Only allow new results if manual reviews are activated and the due date/after due date has passed
+    const exc = exercise as ProgrammingExercise;
+    const relevantDueDate = exc.buildAndTestStudentSubmissionsAfterDueDate ? exc.buildAndTestStudentSubmissionsAfterDueDate : exc.dueDate;
+    return exc.isAtLeastTutor && exc.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || moment(relevantDueDate).isBefore(now()));
 };
