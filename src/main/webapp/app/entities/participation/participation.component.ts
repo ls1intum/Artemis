@@ -117,7 +117,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param deleteBuildPlan if true build plan for this participation will be deleted
      * @param deleteRepository if true repository for this participation will be deleted
      */
-    deleteParticipation = (participationId: number, deleteBuildPlan: boolean = false, deleteRepository: boolean = false) => {
+    deleteParticipation = (participationId: number, deleteBuildPlan = false, deleteRepository = false) => {
         return this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).pipe(
             tap(() => {
                 this.eventManager.broadcast({
