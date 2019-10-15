@@ -1,6 +1,7 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourTask } from 'app/guided-tour/guided-tour-task.model';
 
 export const modelingTour: GuidedTour = {
     courseShortName: 'artemistutorial',
@@ -23,6 +24,12 @@ export const modelingTour: GuidedTour = {
             highlightPadding: 5,
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.MODELING,
+            taskList: [
+                new GuidedTourTask('tour.modelingExercise.executeTasks.personClass', false),
+                new GuidedTourTask('tour.modelingExercise.executeTasks.studentClass', false),
+                new GuidedTourTask('tour.modelingExercise.executeTasks.professorClass', false),
+                new GuidedTourTask('tour.modelingExercise.executeTasks.associations', false),
+            ],
         }),
         new ImageTourStep({
             headlineTranslateKey: 'tour.modelingExercise.editUmlElement.headline',

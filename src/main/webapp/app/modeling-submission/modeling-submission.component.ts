@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType, UMLElement, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -96,6 +96,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     ngOnInit(): void {
+        this.guidedTourService.checkModelingComponent().subscribe(() => {
+            this.assessModelForGuidedTour(this.modelingEditor.getCurrentModel());
+        });
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
                 this.modelingSubmissionService.getDataForModelingEditor(params['participationId']).subscribe(
@@ -361,6 +364,46 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.submission && diagramJson) {
             this.submission.model = diagramJson;
         }
+    }
+
+    assessModelForGuidedTour(umlModel: UMLModel): void {
+        // find all required classes
+        const personClass = umlModel.elements.find((element: UMLElement) => element.name.trim().toLowerCase() === 'person' && element.type === 'Class');
+        const studentClass = umlModel.elements.find((element: UMLElement) => element.name.trim().toLowerCase() === 'student' && element.type === 'Class');
+        const professorClass = umlModel.elements.find((element: UMLElement) => element.name.trim().toLowerCase() === 'professor' && element.type === 'Class');
+
+        // find all required attributes
+        const nameAttribute = umlModel.elements.find((element: UMLElement) => element.name.toLowerCase().includes('name: string') && element.type === 'ClassAttribute');
+        const majorAttribute = umlModel.elements.find((element: UMLElement) => element.name.toLowerCase().includes('major: string') && element.type === 'ClassAttribute');
+        const salaryAttribute = umlModel.elements.find((element: UMLElement) => element.name.toLowerCase().includes('salary: double') && element.type === 'ClassAttribute');
+
+        // find all required methods
+        const visitLectureMethod = umlModel.elements.find((element: UMLElement) => element.name.toLowerCase().includes('visitlecture()') && element.type === 'ClassMethod');
+        const giveLectureMethod = umlModel.elements.find((element: UMLElement) => element.name.toLowerCase().includes('givelecture()') && element.type === 'ClassMethod');
+
+        // find all required associations
+        let personStudent;
+        let personProfessor;
+        if (personClass && professorClass && studentClass) {
+            personStudent = umlModel.relationships.find(
+                (relationship: UMLRelationship) =>
+                    relationship.source.element === studentClass.id && relationship.target.element === personClass.id && relationship.type === 'ClassInheritance',
+            );
+            personProfessor = umlModel.relationships.find(
+                (relationship: UMLRelationship) =>
+                    relationship.source.element === professorClass.id && relationship.target.element === personClass.id && relationship.type === 'ClassInheritance',
+            );
+        }
+
+        const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id : false;
+        const studentClassCorrect =
+            studentClass && majorAttribute && visitLectureMethod ? majorAttribute.owner === studentClass.id && visitLectureMethod.owner === studentClass.id : false;
+        const professorClassCorrect =
+            professorClass && salaryAttribute && giveLectureMethod ? salaryAttribute.owner === professorClass.id && giveLectureMethod.owner === professorClass.id : false;
+        const associationsCorrect = !!(personStudent && personProfessor);
+
+        const result = { personClassCorrect, studentClassCorrect, professorClassCorrect, associationsCorrect };
+        this.guidedTourService.checkModelingResult(result);
     }
 
     /**

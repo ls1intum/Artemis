@@ -1,6 +1,12 @@
 {
     "tour": {
         "modelingExercise": {
+            "executeTasks": {
+                "personClass": "Create the UML class <tt>Person</tt> with the attribute <tt>name: String</tt>",
+                "studentClass": "Create the UML class <tt>Student</tt> with the attribute <tt>major: String</tt> and method <tt>visitLecture()</tt>.",
+                "professorClass": "Create the UML class <tt>Professor</tt> with the attribute <tt>salary: Double</tt> and method <tt>giveLecture()</tt>.",
+                "associations": "Make sure that <tt>Student</tt> and <tt>Professor</tt> are subclasses of <tt>Person</tt>."
+            },
             "editorArea": {
                 "headline": "Modeling Exercise",
                 "content": "Here on this page you have to solve a modeling exercise. You can see a checkered canvas - the editor area - where you can drag and drop the UML elements, which are displayed on the right side of the canvas, into."

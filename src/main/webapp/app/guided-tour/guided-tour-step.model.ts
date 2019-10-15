@@ -1,4 +1,5 @@
-import { LinkType, Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourTask } from 'app/guided-tour/guided-tour-task.model';
 
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
@@ -25,6 +26,8 @@ export abstract class TourStep {
     userInteractionEvent?: UserInteractionEvent;
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;
+    /** List of tasks that have to be completed */
+    taskList?: GuidedTourTask[];
 }
 
 export class TextTourStep extends TourStep {

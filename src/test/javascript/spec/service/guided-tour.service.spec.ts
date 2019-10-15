@@ -26,7 +26,7 @@ import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 
 chai.use(sinonChai);

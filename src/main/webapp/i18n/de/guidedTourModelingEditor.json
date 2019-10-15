@@ -1,6 +1,12 @@
 {
     "tour": {
         "modelingExercise": {
+            "executeTasks": {
+                "personClass": "Erstelle die UML Klasse <tt>Person</tt> mit dem Attribut <tt>name: String</tt>",
+                "studentClass": "Erstelle die UML Klasse <tt>Student</tt> mit dem Attribut <tt>major: String</tt> und der Methode <tt>visitLecture()</tt>.",
+                "professorClass": "Erstelle die UML Klasse <tt>Professor</tt> mit dem Attribut <tt>salary: Double</tt> und der Methode <tt>giveLecture()</tt>.",
+                "associations": "Stelle sicher dass <tt>Student</tt> und <tt>Professor</tt> Subklassen von <tt>Person</tt> sind."
+            },
             "editorArea": {
                 "headline": "Modellierungsaufgabe ",
                 "content": "Hier auf dieser Seite sollst du eine Modellierungsaufgabe lösen. Auf der linken Seite siehst du eine karierte Fläche - die Editierfläche - auf welche du die UML Elemente, die auf neben der Editierfläche aufgelistet sind, per Drag and Drop hinzufügen kannst."
