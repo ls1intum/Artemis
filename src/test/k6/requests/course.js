@@ -1,5 +1,5 @@
 import { COURSES } from './endpoints.js';
-import { nextAlphanumeric } from './random.js';
+import { nextAlphanumeric } from '../util/utils.js';
 import { COURSE } from './endpoints.js';
 import { fail } from 'k6';
 

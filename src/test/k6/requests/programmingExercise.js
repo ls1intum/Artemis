@@ -1,4 +1,4 @@
-import { nextAlphanumeric } from './random.js';
+import { nextAlphanumeric } from '../util/utils.js';
 import { PROGRAMMING_EXERCISES_SETUP } from './endpoints.js';
 import { sleep, fail } from 'k6';
 import { PARTICIPATIONS, PROGRAMMING_EXERCISE } from './endpoints.js';

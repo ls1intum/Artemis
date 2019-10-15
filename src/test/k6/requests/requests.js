@@ -105,82 +105,85 @@ export function login(username, password) {
     // A new XSRF Token is needed now, we have to extract it from the cookies
     let xsrftoken = res[0].headers['Set-Cookie'].match('XSRF-TOKEN=(.*); path=\/(; secure)?')[1];
 
-    return {
-        get: function(endpoint, params) {
-            return request('get', endpoint, authToken, xsrftoken, null, params);
-            },
-        post: function(endpoint, body, params) {
-            return request('post', endpoint, authToken, xsrftoken, body, params);
-        },
-        put: function(endpoint, body, params) {
-            return request('put', endpoint, authToken, xsrftoken, body, params);
-        },
-        delete: function(endpoint, params) {
-            return request('delete', endpoint, authToken, xsrftoken, null, params);
-        },
-        // Migrated from CodeEditor.js -- Still has to be refactored at some point in time
-        simulateSubmissionChanges(exerciseId, participationId, connectionTime) {
-            let websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
-            let websocketUrl = websocketEndpoint + '?access_token=' + authToken;
+    return new Artemis(authToken, xsrftoken);
+}
 
-            let response = ws.connect(websocketUrl, {'tags': {'name': websocketEndpoint}}, function(socket) {
-                socket.on('open', function open() {
-                    socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
-                });
-
-                function getSubscriptionId() {
-                    return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 12);
-                }
-
-                function submitChange(participationId) {
-                    // console.log('Sending changes via WebSocket!');
-                    let changeMessage = 'SEND\ndestination:/topic/repository/' + participationId + '/files\ncontent-length:73\n\n[{"fileName":"src/de/tum/in/ase/eist/BubbleSort.java","fileContent":"a"}]\u0000';
-                    // console.log('Change message is ' + changeMessage);
-                    socket.send(changeMessage);
-                    socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/user/topic/repository/' + participationId + '/files\n\n\u0000');
-                }
-
-                function subscribe(exerciseId, participationId) {
-                    // console.log('Subscribing for changes!');
-                    socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/topic/participation/' + participationId +'/newResults\n\n\u0000');
-                    socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
-                }
-
-                socket.setInterval(function timeout() {
-                    socket.ping();
-                    // console.log('Pinging every 10sec (setInterval test)');
-                }, 10000);
-
-                // Send destination and subscription after 1 second
-                socket.setTimeout(function() {
-                    socket.send('SEND\ndestination:/topic/activity\ncontent-length:20\n\n{"page":"/overview"}\u0000');
-                }, 1 * 1000);
-
-                socket.setTimeout(function() {
-                    subscribe(exerciseId, participationId);
-                }, 5 * 1000);
-
-                socket.setTimeout(function() {
-                    submitChange(participationId);
-                }, 10 * 1000);
-
-                socket.setTimeout(function() {
-                    // console.log('Committing changes');
-                    res = request('post', COMMIT(participationId), authToken, xsrftoken, null, null);
-                }, 15 * 1000);
-
-                socket.on('message', function (message) {
-                    if (message.startsWith('MESSAGE\ndestination:/topic/participation/' + participationId + '/newResults')) {
-                        socket.close();
-                        console.log(`RECEIVED new result for test user ` + __VU);
-                    }
-                });
-
-                socket.setTimeout(function() {
-                    socket.close();
-                    fail('ERROR: Did not receive result for test user ' + __VU);
-                }, connectionTime * 1000);
-            });
-        }
+export function Artemis(authToken, xsrftoken) {
+    this.get = function(endpoint, params) {
+        return request('get', endpoint, authToken, xsrftoken, null, params);
     };
+    this.post = function(endpoint, body, params) {
+        return request('post', endpoint, authToken, xsrftoken, body, params);
+    };
+    this.put = function(endpoint, body, params) {
+        return request('put', endpoint, authToken, xsrftoken, body, params);
+    };
+    this.delete = function(endpoint, params) {
+        return request('delete', endpoint, authToken, xsrftoken, null, params);
+    };
+
+    // Migrated from CodeEditor.js -- Still has to be refactored at some point in time
+    this.simulateSubmissionChanges = function(exerciseId, participationId, connectionTime) {
+        const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
+        const websocketUrl = websocketEndpoint + '?access_token=' + authToken;
+
+        let response = ws.connect(websocketUrl, {'tags': {'name': websocketEndpoint}}, function(socket) {
+            socket.on('open', function open() {
+                socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
+            });
+
+            function getSubscriptionId() {
+                return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 12);
+            }
+
+            function submitChange(participationId) {
+                // console.log('Sending changes via WebSocket!');
+                let changeMessage = 'SEND\ndestination:/topic/repository/' + participationId + '/files\ncontent-length:73\n\n[{"fileName":"src/de/tum/in/ase/eist/BubbleSort.java","fileContent":"a"}]\u0000';
+                // console.log('Change message is ' + changeMessage);
+                socket.send(changeMessage);
+                socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/user/topic/repository/' + participationId + '/files\n\n\u0000');
+            }
+
+            function subscribe(exerciseId, participationId) {
+                // console.log('Subscribing for changes!');
+                socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/topic/participation/' + participationId +'/newResults\n\n\u0000');
+                socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/user/topic/exercise/' + exerciseId + '/participation\n\n\u0000');
+            }
+
+            socket.setInterval(function timeout() {
+                socket.ping();
+                // console.log('Pinging every 10sec (setInterval test)');
+            }, 10000);
+
+            // Send destination and subscription after 1 second
+            socket.setTimeout(function() {
+                socket.send('SEND\ndestination:/topic/activity\ncontent-length:20\n\n{"page":"/overview"}\u0000');
+            }, 1 * 1000);
+
+            socket.setTimeout(function() {
+                subscribe(exerciseId, participationId);
+            }, 5 * 1000);
+
+            socket.setTimeout(function() {
+                submitChange(participationId);
+            }, 10 * 1000);
+
+            socket.setTimeout(function() {
+                // console.log('Committing changes');
+                request('post', COMMIT(participationId), authToken, xsrftoken, null, null);
+            }, 15 * 1000);
+
+            socket.on('message', function (message) {
+                if (message.startsWith('MESSAGE\ndestination:/topic/participation/' + participationId + '/newResults')) {
+                    socket.close();
+                    console.log(`RECEIVED new result for test user ` + __VU);
+                }
+            });
+
+            socket.setTimeout(function() {
+                socket.close();
+                fail('ERROR: Did not receive result for test user ' + __VU);
+            }, connectionTime * 1000);
+        });
+    }
 }
