@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import { Participation, ParticipationType, StudentParticipation } from 'app/entities/participation';
 import { ExerciseType } from 'app/entities/exercise';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { isMoment } from 'moment';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
@@ -32,9 +33,13 @@ export const isResultPreliminary = (result: Result, programmingExercise: Program
     }
     const { submission } = result;
     // We use the result completionDate as a fallback when the submissionDate is not available (edge case, every result should have a submission).
-    const referenceDate = submission && submission.submissionDate ? submission.submissionDate : result.completionDate;
+    let referenceDate = submission && submission.submissionDate ? submission.submissionDate : result.completionDate;
+    // If not a moment date already, try to convert it (e.g. when it is a string).
+    if (referenceDate && !isMoment(referenceDate)) {
+        referenceDate = moment(referenceDate);
+    }
     // When the result completionDate would be null, we have to return here (edge case, every result should have a completionDate).
-    if (!referenceDate) {
+    if (!referenceDate || !referenceDate.isValid()) {
         return false;
     }
     return !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && referenceDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
