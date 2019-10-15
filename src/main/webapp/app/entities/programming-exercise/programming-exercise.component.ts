@@ -10,9 +10,8 @@ import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { ExerciseService } from 'app/entities/exercise';
-import { finalize } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
@@ -66,52 +65,42 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     /**
      * Deletes programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event passed from delete dialog to represent if checkboxes were checked
+     * @param deleteStudentReposBuildPlans true if student repos and build plans should be deleted
+     * @param deleteBaseReposBuildPlans true if base repos and build plans should be deleted
      */
-    deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        this.isDeleting = true;
-        this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
-            () => {
+    deleteProgrammingExercise = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => {
+        this.programmingExerciseService.delete(programmingExerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
-            },
-            error => this.onError(error),
-            () => (this.isDeleting = false),
+            }),
         );
-    }
+    };
 
     /**
      * Cleans up programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event passed from delete dialog to represent if checkboxes were checked
+     * @param deleteRepositories true if repositories should be deleted
      */
-    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        this.isCleaning = true;
-        this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
-            () => {
-                if ($event.deleteRepositories) {
+    cleanupProgrammingExercise = (programmingExerciseId: number, deleteRepositories: boolean) => {
+        this.exerciseService.cleanup(programmingExerciseId, deleteRepositories).pipe(
+            tap(() => {
+                if (deleteRepositories) {
                     this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
                 } else {
                     this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
                 }
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
-            },
-            () => (this.isCleaning = false),
+            }),
         );
-    }
+    };
 
     /**
      * Resets programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
-    resetProgrammingExercise(programmingExerciseId: number) {
-        this.isResetting = true;
-        this.exerciseService.reset(programmingExerciseId).pipe(finalize(() => (this.isResetting = false)));
-    }
+    resetProgrammingExercise = (programmingExerciseId: number) => this.exerciseService.reset(programmingExerciseId);
 
     /**
      * Check if we are performing any critical operations, so the user can click on the buttons
@@ -129,14 +118,4 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     callback() {}
-
-    openImportModal() {
-        const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(
-            (result: ProgrammingExercise) => {
-                this.router.navigate(['course', this.courseId, 'programming-exercise', 'import', result.id]);
-            },
-            reason => {},
-        );
-    }
 }

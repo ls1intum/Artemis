@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -61,17 +62,16 @@ export class TextExerciseComponent extends ExerciseComponent {
      * Deletes text exercise
      * @param textExerciseId id of the exercise that will be deleted
      */
-    deleteTextExercise(textExerciseId: number) {
-        this.textExerciseService.delete(textExerciseId).subscribe(
-            response => {
+    deleteTextExercise = (textExerciseId: number) => {
+        this.textExerciseService.delete(textExerciseId).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
                     content: 'Deleted an textExercise',
                 });
-            },
-            error => this.onError(error),
+            }),
         );
-    }
+    };
 
     protected getChangeEventName(): string {
         return 'textExerciseListModification';

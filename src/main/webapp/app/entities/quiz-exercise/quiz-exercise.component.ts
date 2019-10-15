@@ -11,6 +11,7 @@ import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -185,33 +186,31 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * Deletes quiz exercise
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
-    deleteQuizExercise(quizExerciseId: number) {
-        this.quizExerciseService.delete(quizExerciseId).subscribe(
-            () => {
+    deleteQuizExercise = (quizExerciseId: number) => {
+        this.quizExerciseService.delete(quizExerciseId).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
-            },
-            (error: HttpErrorResponse) => this.onError(error),
+            }),
         );
-    }
+    };
 
     /**
      * Resets quiz exercise
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
-    resetQuizExercise(quizExerciseId: number) {
-        this.quizExerciseService.reset(quizExerciseId).subscribe(
-            response => {
+    resetQuizExercise = (quizExerciseId: number) => {
+        this.quizExerciseService.reset(quizExerciseId).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
-            },
-            (error: HttpErrorResponse) => this.onError(error),
+            }),
         );
-    }
+    };
 
     callback() {}
 }

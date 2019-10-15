@@ -1,5 +1,5 @@
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit, Output, EventEmitter } from '@angular/core';
+import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
@@ -13,7 +13,6 @@ export class DeleteButtonDirective implements OnInit {
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() deleteAction: Observable<any>;
     @Input() entityParameter?: any;
-    @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
 
     deleteTextSpan: HTMLElement;
 
@@ -57,9 +56,7 @@ export class DeleteButtonDirective implements OnInit {
             delete: this.deleteAction,
             entityParameter: this.entityParameter,
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe((additionalChecksValues: { [key: string]: boolean }) => {
-            this.delete.emit(additionalChecksValues);
-        });
+        this.deleteDialogService.openDeleteDialog(deleteDialogData);
     }
 
     @HostListener('click')

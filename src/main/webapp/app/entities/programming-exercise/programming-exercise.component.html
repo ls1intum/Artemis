@@ -241,7 +241,8 @@
                                     [actionType]="ActionType.Cleanup"
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="instructorDashboard.cleanup.question"
-                                    (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
+                                    [deleteAction]="cleanupProgrammingExercise"
+                                    [entityParameter]="programmingExercise.id"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
@@ -260,7 +261,8 @@
                                     [actionType]="ActionType.Reset"
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.exercise.reset.question"
-                                    (delete)="resetProgrammingExercise(programmingExercise.id)"
+                                    [deleteAction]="resetProgrammingExercise"
+                                    [entityParameter]="programmingExercise.id"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     class="mb-1"
                                 >
@@ -270,10 +272,10 @@
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [disabled]="isButtonDisabled()"
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
-                                    (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
+                                    [deleteAction]="deleteProgrammingExercise"
+                                    [entityParameter]="programmingExercise.id"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
@@ -281,8 +283,7 @@
                                     }"
                                     class="mb-1"
                                 >
-                                    <span *ngIf="isDeleting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                    <fa-icon *ngIf="!isDeleting" [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                             </div>
                         </div>

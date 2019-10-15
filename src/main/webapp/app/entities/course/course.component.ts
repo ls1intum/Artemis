@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-course',
@@ -54,17 +55,16 @@ export class CourseComponent implements OnInit, OnDestroy {
      * Deletes the course
      * @param courseId id the course that will be deleted
      */
-    deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe(
-            () => {
+    deleteCourse = (courseId: number) => {
+        this.courseService.delete(courseId).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',
                     content: 'Deleted an course',
                 });
-            },
-            error => this.onError(error),
+            }),
         );
-    }
+    };
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);

@@ -84,7 +84,8 @@
                                 [entityTitle]="textExercise.title"
                                 deleteQuestion="artemisApp.exercise.delete.question"
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                (delete)="deleteTextExercise(textExercise.id)"
+                                [deleteAction]="deleteTextExercise"
+                                [entityParameter]="textExercise.id"
                             >
                                 <fa-icon icon="times"></fa-icon>
                             </button>

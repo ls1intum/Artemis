@@ -187,7 +187,8 @@
                                     [entityTitle]="quizExercise.title"
                                     [actionType]="ActionType.Reset"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    (delete)="resetQuizExercise(quizExercise.id)"
+                                    [deleteAction]="resetQuizExercise"
+                                    [entityParameter]="quizExercise.id"
                                     deleteQuestion="artemisApp.quizExercise.reset.question"
                                     class="mb-1"
                                 >
@@ -199,7 +200,8 @@
                                     [entityTitle]="quizExercise.title"
                                     deleteQuestion="artemisApp.quizExercise.delete.question"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    (delete)="deleteQuizExercise(quizExercise.id)"
+                                    [deleteAction]="deleteQuizExercise"
+                                    [entityParameter]="quizExercise.id"
                                     id="delete-quiz-{{ quizExercise.id }}"
                                     class="mb-1"
                                 >
