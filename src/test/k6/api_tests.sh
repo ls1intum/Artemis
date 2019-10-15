@@ -71,7 +71,7 @@ result=$(docker logs api-tests 2>&1)
 docker rm api-tests
 
 echo "########## FINISHED testing - evaluating result ##########"
-if [[ $result == *"ERROR"* ]]; then
+if echo "$result" | grep -iqF error; then
   echo "################### ERROR in API tests ###################"
   exit 1
 fi
