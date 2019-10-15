@@ -91,3 +91,17 @@ export const buildErrorContent = [
         fileContent: 'a'
     }
 ];
+
+export const testErrorContent = [
+    {
+        fileName: 'src/de/test/BubbleSort.java',
+        fileContent: 'package de.test;\n' +
+            '\n' +
+            'import java.util.*;\n' +
+            '\n' +
+            'public class BubbleSort {\n' +
+            '\n' +
+            '    public void performSort(List<Date> input) {}\n' +
+            '}'
+    }
+];

@@ -1,10 +1,42 @@
-import { nextAlphanumeric } from '../util/utils.js';
-import { PROGRAMMING_EXERCISES_SETUP } from './endpoints.js';
+import { nextAlphanumeric, nextWSSubscriptionId } from '../util/utils.js';
+import { PROGRAMMING_EXERCISES_SETUP, COMMIT } from './endpoints.js';
 import { sleep, fail } from 'k6';
 import { PARTICIPATIONS, PROGRAMMING_EXERCISE } from './endpoints.js';
 import { programmingExerciseProblemStatement } from "../resource/constants.js";
-import { nextWSSubscriptionId } from "../util/utils.js";
-import { COMMIT } from "./endpoints.js";
+
+export function ParticipationSimulation(timeout, exerciseId, participationId, content) {
+    this.timeout = timeout;
+    this.exerciseId = exerciseId;
+    this.participationId = participationId;
+    this.content = content;
+
+    this.returnsExpectedResult = function(message, expectedResult, resultString) {
+        const resReg = /(.*content-length:[0-9]+\n\n)(.*)(\u0000)/g;
+        const match =resReg.exec(message);
+        const result = JSON.parse(match[2]);
+
+        switch (expectedResult) {
+            case TestResult.SUCCESS: {
+                if(!result.successful) fail(`ERROR: The result for participation ${participationId} was not successful!`);
+            }
+            break;
+            case TestResult.FAIL: {
+                if(result.successful || !result.hasFeedback || result.resultString !== resultString)
+                    fail(`ERROR: The result for participation ${participationId} did not fail with ${resultString}!`)
+            }
+            break;
+            default: {
+                if(result.successful || result.hasFeedback) fail(`ERROR: The result for participation ${participationId} contained no build errors!`)
+            }
+        }
+    }
+}
+
+export const TestResult = {
+    SUCCESS: 'success',
+    FAIL: 'failure',
+    BUILD_ERROR: 'error'
+};
 
 export function createExercise(artemis, courseId) {
     let res;
@@ -67,14 +99,14 @@ export function startExercise(artemis, courseId, exerciseId) {
     return JSON.parse(res[0].body).id;
 }
 
-export function simulateParticipation(artemis, timeout, exerciseId, participationId, content) {
+export function simulateParticipation(artemis, participationSimulation, expectedResult, resultString) {
     artemis.websocket(function (socket) {
         // Send changes via websocket
         function submitChange() {
-            const contentString = JSON.stringify(content);
-            const changeMessage = 'SEND\ndestination:/topic/repository/' + participationId + '/files\ncontent-length:' + contentString.length + '\n\n' + contentString + '\u0000';
+            const contentString = JSON.stringify(participationSimulation.content);
+            const changeMessage = 'SEND\ndestination:/topic/repository/' + participationSimulation.participationId + '/files\ncontent-length:' + contentString.length + '\n\n' + contentString + '\u0000';
             socket.send(changeMessage);
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/repository/' + participationId + '/files\n\n\u0000');
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/repository/' + participationSimulation.participationId + '/files\n\n\u0000');
         }
 
         // Subscribe to new results and participations
@@ -89,23 +121,23 @@ export function simulateParticipation(artemis, timeout, exerciseId, participatio
         }, 10000);
 
         socket.setTimeout(function() {
-            subscribe(exerciseId, participationId);
+            subscribe(participationSimulation.exerciseId, participationSimulation.participationId);
         }, 5 * 1000);
 
         socket.setTimeout(function() {
-            submitChange(participationId);
+            submitChange(participationSimulation.participationId);
         }, 10 * 1000);
 
         // Commit changes
         socket.setTimeout(function() {
-            artemis.post(COMMIT(participationId));
+            artemis.post(COMMIT(participationSimulation.participationId));
         }, 15 * 1000);
 
         // Wait for new result
         socket.on('message', function (message) {
-            if (message.startsWith('MESSAGE\ndestination:/topic/participation/' + participationId + '/newResults')) {
-                console.log(message);
+            if (message.startsWith('MESSAGE\ndestination:/topic/participation/' + participationSimulation.participationId + '/newResults')) {
                 socket.close();
+                participationSimulation.returnsExpectedResult(message, expectedResult, resultString);
                 console.log(`RECEIVED new result for test user ` + __VU);
             }
         });
@@ -114,6 +146,6 @@ export function simulateParticipation(artemis, timeout, exerciseId, participatio
         socket.setTimeout(function() {
             socket.close();
             fail('ERROR: Did not receive result for test user ' + __VU);
-        }, timeout * 1000);
+        }, participationSimulation.timeout * 1000);
     });
 }
