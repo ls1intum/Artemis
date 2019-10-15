@@ -58,18 +58,13 @@ public class ExerciseResource {
 
     private final TextSubmissionService textSubmissionService;
 
-    private final ModelingSubmissionService modelingSubmissionService;
-
-    private final FileUploadSubmissionService fileUploadSubmissionService;
-
     private final ResultService resultService;
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService) {
+            TextSubmissionService textSubmissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -78,9 +73,7 @@ public class ExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.complaintRepository = complaintRepository;
         this.textSubmissionService = textSubmissionService;
-        this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
-        this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
     }
 
@@ -174,8 +167,7 @@ public class ExerciseResource {
         Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);

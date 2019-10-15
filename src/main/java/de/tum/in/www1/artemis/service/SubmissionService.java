@@ -2,13 +2,18 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
+import java.util.Arrays;
+
+import org.springframework.transaction.annotation.Transactional;
+
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-abstract class SubmissionService {
+public abstract class SubmissionService {
 
     protected SubmissionRepository submissionRepository;
 
@@ -126,5 +131,23 @@ abstract class SubmissionService {
             submission.getResult().setAssessor(null);
         }
         return submission;
+    }
+
+    /**
+     * @param courseId the course we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId, Arrays.asList(ModelingSubmission.class, TextSubmission.class, FileUploadSubmission.class));
+    }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId, Arrays.asList(ModelingSubmission.class, TextSubmission.class, FileUploadSubmission.class));
     }
 }

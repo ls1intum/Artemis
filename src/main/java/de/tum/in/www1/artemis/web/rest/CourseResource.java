@@ -81,10 +81,6 @@ public class CourseResource {
 
     private final TextSubmissionService textSubmissionService;
 
-    private final ModelingSubmissionService modelingSubmissionService;
-
-    private final FileUploadSubmissionService fileUploadSubmissionService;
-
     private final ResultService resultService;
 
     private final ComplaintService complaintService;
@@ -94,8 +90,7 @@ public class CourseResource {
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
-            FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
+            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
         this.env = env;
         this.userService = userService;
@@ -111,11 +106,9 @@ public class CourseResource {
         this.lectureService = lectureService;
         this.notificationService = notificationService;
         this.textSubmissionService = textSubmissionService;
-        this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.fileUploadSubmissionService = fileUploadSubmissionService;
     }
 
     /**
@@ -348,17 +341,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            long numberOfSubmissions = 0L;
-            if (exercise instanceof TextExercise) {
-                numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof ModelingExercise) {
-                numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof FileUploadExercise) {
-                numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-
+            long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
@@ -389,8 +372,7 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId)
-                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -466,16 +448,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfParticipations = 0L;
-            if (exercise instanceof TextExercise) {
-                numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof ModelingExercise) {
-                numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof FileUploadExercise) {
-                numberOfParticipations += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
+            long numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
 
             long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
             long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
@@ -528,8 +501,6 @@ public class CourseResource {
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
         long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
