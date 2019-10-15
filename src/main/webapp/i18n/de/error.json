@@ -9,6 +9,10 @@
             "500": "Interner Serverfehler."
         },
         "concurrencyFailure": "Ein anderer Benutzer hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
-        "validation": "Validierungsfehler auf dem Server."
+        "validation": "Validierungsfehler auf dem Server.",
+        "scoreNull": "Fehler! Score ist erforderlich.",
+        "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnis mit Punktzahl 100% kann erfolgreich sein.",
+        "feedbackTextOrDetailTextNull": "Fehler! Wenn Feedback vorhanden ist, sind Feedback-Text und Detailtext obligatorisch.",
+        "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden."
     }
 }
