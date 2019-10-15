@@ -36,6 +36,8 @@ export class TextTourStep extends TourStep {
     contentTranslateKey: string;
     /** Translation key for the hint content **/
     hintTranslateKey?: string;
+    /** Translation key for the already executed hint content **/
+    alreadyExecutedTranslateKey?: string;
 
     constructor(tourStep: TextTourStep) {
         super();
