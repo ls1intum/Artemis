@@ -7,6 +7,7 @@ import { ProgrammingExercise, programmingExerciseRoute } from 'app/entities/prog
 import * as moment from 'moment';
 import { Participation, ParticipationType, StudentParticipation } from 'app/entities/participation';
 import { ExerciseType } from 'app/entities/exercise';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
@@ -14,11 +15,29 @@ export const isLegacyResult = (result: Result) => {
     return result.completionDate!.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
 };
 
-export const hasBuildAndTestAfterDueDatePassed = (programmingExercise: ProgrammingExercise) => {
-    if (!programmingExercise) {
+/**
+ * A result is preliminary if:
+ * - The programming exercise buildAndTestAfterDueDate is set
+ * - The submission date of the result is before the buildAndTestAfterDueDate
+ *
+ * Note: We check some error cases in this method as a null value for the given parameters, because the clients using this method might unwillingly provide them (result component).
+ * TODO: Remove the null checks when the result component is refactored.
+ *
+ * @param result Result with attached Submission - if submission is null, method will return false.
+ * @param programmingExercise ProgrammingExercise
+ */
+export const isResultPreliminary = (result: Result | null, programmingExercise: ProgrammingExercise | null) => {
+    if (!programmingExercise || !result) {
         return false;
     }
-    return !programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment.now());
+    const { submission } = result;
+    if (!submission || !submission.submissionDate) {
+        return false;
+    }
+    return (
+        !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate &&
+        submission.submissionDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate))
+    );
 };
 
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
