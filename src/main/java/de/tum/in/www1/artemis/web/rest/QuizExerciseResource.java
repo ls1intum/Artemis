@@ -254,9 +254,9 @@ public class QuizExerciseResource {
      * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 204 if quiz was started, appropriate error code otherwise
      */
-    @PostMapping("/quiz-exercises/{quizExerciseId}/{action}")
+    @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
+    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
         // find quiz exercise
@@ -275,7 +275,8 @@ public class QuizExerciseResource {
         case "start-now":
             // check if quiz hasn't already started
             if (quizExercise.isStarted()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz has already started.\"}");
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started."))
+                        .build();
             }
 
             // set release date to now
@@ -286,7 +287,8 @@ public class QuizExerciseResource {
         case "set-visible":
             // check if quiz is already visible
             if (quizExercise.isVisibleToStudents()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz is already visible to students.\"}");
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyVisible", "Quiz is already visible to students.")).build();
             }
 
             // set quiz to visible
@@ -295,11 +297,13 @@ public class QuizExerciseResource {
         case "open-for-practice":
             // check if quiz has ended
             if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz hasn't ended yet.\"}");
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
+                        .build();
             }
             // check if quiz is already open for practice
             if (quizExercise.isIsOpenForPractice()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz is already open for practice.\"}");
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyOpenForPractice", "Quiz is already open for practice.")).build();
             }
 
             // set quiz to open for practice
@@ -307,7 +311,7 @@ public class QuizExerciseResource {
             groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
             break;
         default:
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Unknown action: " + action + "\"}");
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "unknownAction", "Unknown action: " + action)).build();
         }
 
         // save quiz exercise
@@ -316,8 +320,7 @@ public class QuizExerciseResource {
 
         // notify websocket channel of changes to the quiz exercise
         quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise);
-
-        return ResponseEntity.noContent().build();
+        return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 
     /**
