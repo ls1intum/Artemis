@@ -110,11 +110,6 @@ public class TextSegmentationServiceTest {
         assumeTrue(isTextSegmentationAvailable());
     }
 
-    @BeforeAll
-    public static void runClassOnlyIfEmbeddingIsAvailable() {
-        assumeTrue(isEmbeddingAvailable());
-    }
-
     private static boolean isTextSegmentationAvailable() {
         try {
             HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(SEGMENTATION_ENDPOINT).openConnection();
@@ -129,17 +124,4 @@ public class TextSegmentationServiceTest {
         }
     }
 
-    private static boolean isEmbeddingAvailable() {
-        try {
-            HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(EMBEDDING_ENDPOINT).openConnection();
-            httpURLConnection.setRequestMethod("HEAD");
-            httpURLConnection.setConnectTimeout(1000);
-            final int responseCode = httpURLConnection.getResponseCode();
-
-            return (responseCode == 405);
-        }
-        catch (IOException e) {
-            return false;
-        }
-    }
 }
