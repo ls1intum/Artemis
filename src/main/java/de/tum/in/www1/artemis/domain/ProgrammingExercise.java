@@ -62,7 +62,7 @@ public class ProgrammingExercise extends Exercise {
 
     @Nullable
     @Column(name = "test_cases_changed", table = "programming_exercise_details")
-    private Boolean testCasesChanged = false;
+    private Boolean testCasesChanged = false;   // default value
 
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
@@ -396,7 +396,7 @@ public class ProgrammingExercise extends Exercise {
         this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
     }
 
-    public boolean haveTestCasesChanged() {
+    public boolean getTestCasesChanged() {
         if (testCasesChanged == null) {
             return false;
         }

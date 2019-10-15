@@ -73,6 +73,22 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', (response: any) => this.loadAllByExerciseId());
     }
 
+    /**
+     * Deletes exercise hint
+     * @param exerciseHintId the id of the exercise hint that we want to delete
+     */
+    deleteExerciseHint(exerciseHintId: number) {
+        this.exerciseHintService.delete(exerciseHintId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'exerciseHintListModification',
+                    content: 'Deleted an exerciseHint',
+                });
+            },
+            error => this.onError(error),
+        );
+    }
+
     protected onError(errorMessage: string) {
         this.jhiAlertService.error(errorMessage, null, undefined);
     }

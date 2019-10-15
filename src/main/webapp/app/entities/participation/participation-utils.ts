@@ -1,6 +1,8 @@
 import { SimpleChanges } from '@angular/core';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result';
+import { getExercise, InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 /**
  * Check if the participation has changed.
@@ -33,4 +35,31 @@ export const hasSolutionParticipationChanged = (changes: SimpleChanges) => {
 
 export const getLatestResult = (participation: Participation): Result | null => {
     return participation.results ? participation.results.reduce((currentMax, result) => (result.id > currentMax.id ? result : currentMax)) : null;
+};
+
+/**
+ * Checks if given participation is related to a modeling, text or file_upload exercise.
+ *
+ * @param participation
+ */
+export const isModelingOrTextOrFileUpload = (participation: Participation) => {
+    if (!participation) {
+        return false;
+    }
+    const exercise = getExercise(participation);
+    return (
+        participation.initializationState === InitializationState.FINISHED &&
+        exercise &&
+        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD)
+    );
+};
+
+/**
+ * Checks if given participation has results.
+ *
+ * @param participation
+ * @return {boolean}
+ */
+export const hasResults = (participation: Participation) => {
+    return participation.results && participation.results.length > 0;
 };

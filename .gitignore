@@ -145,6 +145,7 @@ Desktop.ini
 .merge_file*
 .dbus/
 repos/
+repos-download/
 /compass
 
 ######################

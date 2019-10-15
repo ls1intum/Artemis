@@ -17,6 +17,7 @@ export * from './pipes/remove-keys.pipe';
 export * from './pipes/keys.pipe';
 export * from './pipes/type-check.pipe';
 export * from './pipes/html-for-markdown.pipe';
+export * from './pipes/html-for-guided-tour-markdown.pipe';
 export * from './pipes/truncate.pipe';
 export * from './shared-libs.module';
 export * from './shared-common.module';

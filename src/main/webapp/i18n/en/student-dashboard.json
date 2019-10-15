@@ -13,7 +13,8 @@
                 "cancel": "Cancel",
                 "noCourse": "No course available to register to",
                 "courseLoading": "Courses are loading...",
-                "pleaseSelectCourse": "# Select a course"
+                "pleaseSelectCourse": "# Select a course",
+                "examSignupConfirmation": "By signing up for this course you also register bindingly to the exam."
             }
         },
         "courseOverview": {
@@ -40,6 +41,11 @@
                 "live": "Live",
                 "noDueDate": "No due date",
                 "userNotStartedExercise": "You have not started this exercise yet.",
+                "exerciseSubmitted": "Submitted, waiting for grading.",
+                "exerciseNotSubmitted": "No Submission",
+                "exerciseMissedDeadline": "You have missed the deadline.",
+                "exerciseLateSubmission": "Late submission, waiting for feedback.",
+                "exerciseLateFeedback": "Late submission with feedback.",
                 "quizNotStarted": "The quiz hasn't started yet.",
                 "userNotStartedQuiz": "You have not started this quiz yet.",
                 "userNotParticipated": "You have not participated in this live quiz.",
@@ -68,6 +74,7 @@
             "statistics": {
                 "totalScore": "Your total score",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
+                "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
                 "exerciseCount": "{{ number }} {{type}}",
                 "absoluteScore": "Absolute score: {{ number }} Pts",
                 "maxScore": "Total max score: {{ number }} Pts",

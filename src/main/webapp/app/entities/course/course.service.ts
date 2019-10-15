@@ -67,6 +67,7 @@ export class CourseService {
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.reconnectObjects(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
@@ -167,6 +168,15 @@ export class CourseService {
         if (res.body) {
             res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body);
             res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body);
+        }
+        return res;
+    }
+
+    private reconnectObjects(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((course: Course) => {
+                // TODO: implement
+            });
         }
         return res;
     }

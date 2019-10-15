@@ -15,11 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -39,6 +39,8 @@ public class QuizExerciseResource {
 
     private final QuizExerciseService quizExerciseService;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final CourseService courseService;
 
     private final QuizStatisticService quizStatisticService;
@@ -49,9 +51,11 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    public QuizExerciseResource(QuizExerciseService quizExerciseService, CourseService courseService, QuizStatisticService quizStatisticService,
-            AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService, QuizScheduleService quizScheduleService) {
+    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
+            QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
+            QuizScheduleService quizScheduleService) {
         this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
         this.quizStatisticService = quizStatisticService;
         this.authCheckService = authCheckService;
@@ -82,7 +86,7 @@ public class QuizExerciseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
                     .body(null);
         }
-        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
@@ -92,13 +96,13 @@ public class QuizExerciseResource {
         }
 
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
-        QuizExercise result = quizExerciseService.save(quizExercise);
-        quizScheduleService.scheduleQuizStart(result);
+        quizExercise = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(quizExercise);
 
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(quizExercise);
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 
     /**
@@ -126,7 +130,7 @@ public class QuizExerciseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
                     .body(null);
         }
-        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
@@ -137,7 +141,7 @@ public class QuizExerciseResource {
 
         // check if quiz is has already started
         Optional<QuizExercise> originalQuiz = quizExerciseService.findById(quizExercise.getId());
-        if (!originalQuiz.isPresent()) {
+        if (originalQuiz.isEmpty()) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotFound",
                     "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }
@@ -149,17 +153,17 @@ public class QuizExerciseResource {
         quizExercise.reconnectJSONIgnoreAttributes();
 
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
-        QuizExercise result = quizExerciseService.save(quizExercise);
-        quizScheduleService.scheduleQuizStart(result);
+        quizExercise = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(result);
+        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise);
 
         // NOTE: it does not make sense to notify students here!
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(result, notificationText);
+            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(quizExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 
     /**
@@ -170,7 +174,6 @@ public class QuizExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         List<QuizExercise> result = quizExerciseService.findByCourseId(courseId);
@@ -220,17 +223,17 @@ public class QuizExerciseResource {
     }
 
     /**
-     * GET /quiz-exercises/:id/for-student : get the "id" quizExercise. (information filtered for students)
+     * GET /quiz-exercises/:quizExerciseId/for-student : get the "id" quizExercise. (information filtered for students)
      *
-     * @param id the id of the quizExercise to retrieve
+     * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{id}/for-student")
+    @GetMapping("/quiz-exercises/{quizExerciseId}/for-student")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
-        log.debug("REST request to get QuizExercise : {}", id);
+    public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
+        log.debug("REST request to get QuizExercise : {}", quizExerciseId);
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
         if (quizExercise == null) {
             return notFound();
         }
@@ -245,26 +248,26 @@ public class QuizExerciseResource {
     }
 
     /**
-     * POST /quiz-exercises/:id/:action : perform the specified action for the quiz now
+     * POST /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
-     * @param id     the id of the quiz exercise to start
+     * @param quizExerciseId     the id of the quiz exercise to start
      * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 204 if quiz was started, appropriate error code otherwise
      */
-    @PostMapping("/quiz-exercises/{id}/{action}")
+    @PostMapping("/quiz-exercises/{quizExerciseId}/{action}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> performActionForQuizExercise(@PathVariable Long id, @PathVariable String action) {
-        log.debug("REST request to immediately start QuizExercise : {}", id);
+    public ResponseEntity<String> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
+        log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizExerciseId);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
 
         // check permissions
         Course course = quizExercise.getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
 
@@ -308,7 +311,7 @@ public class QuizExerciseResource {
         }
 
         // save quiz exercise
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseRepository.save(quizExercise);
         quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
@@ -318,31 +321,31 @@ public class QuizExerciseResource {
     }
 
     /**
-     * DELETE /quiz-exercises/:id : delete the "id" quizExercise.
+     * DELETE /quiz-exercises/:quizExerciseId : delete the "id" quizExercise.
      *
-     * @param id the id of the quizExercise to delete
+     * @param quizExerciseId the id of the quizExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/quiz-exercises/{id}")
+    @DeleteMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
-        log.debug("REST request to delete QuizExercise : {}", id);
+    public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
+        log.debug("REST request to delete QuizExercise : {}", quizExerciseId);
 
-        Optional<QuizExercise> quizExercise = quizExerciseService.findById(id);
-        if (!quizExercise.isPresent()) {
+        Optional<QuizExercise> quizExercise = quizExerciseService.findById(quizExerciseId);
+        if (quizExercise.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         Course course = quizExercise.get().getCourse();
-        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
-        quizExerciseService.delete(id);
-        quizScheduleService.cancelScheduledQuizStart(id);
-        quizScheduleService.clearQuizData(id);
+        quizExerciseService.delete(quizExerciseId);
+        quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
+        quizScheduleService.clearQuizData(quizExerciseId);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExerciseId.toString())).build();
     }
 
     /**
@@ -380,7 +383,7 @@ public class QuizExerciseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
                     .body(null);
         }
-        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
@@ -392,16 +395,16 @@ public class QuizExerciseResource {
 
         // needed in case the instructor adds a new solution to the question, the quizExercise has to be
         // saved again so that no PersistencyExceptions can appear
-        QuizExercise updatedQuizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.save(quizExercise);
 
         // adjust existing results if an answer or and question was deleted and recalculate them
-        quizExerciseService.adjustResultsOnQuizChanges(updatedQuizExercise);
+        quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // update Statistics
-            quizStatisticService.recalculateStatistics(updatedQuizExercise);
+            quizStatisticService.recalculateStatistics(quizExercise);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(updatedQuizExercise);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
 }

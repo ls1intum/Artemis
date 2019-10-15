@@ -246,6 +246,11 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
+    public Result addResultToParticipation(Participation participation, Submission submission) {
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L).submission(submission);
+        return resultRepo.save(result);
+    }
+
     public Result addFeedbacksToResult(Result result) {
         Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
         Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
@@ -273,6 +278,7 @@ public class DatabaseUtilService {
         assertThat(exerciseRepo.count()).as("one exercise got stored").isEqualTo(currentExerciseRepoSize + 1L);
         assertThat(courseRepo.count()).as("a course got stored").isEqualTo(currentCourseRepoSize + 1L);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
+        assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
     }
 
     public void addCourseWithOneTextExercise() {
@@ -286,6 +292,7 @@ public class DatabaseUtilService {
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+        assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
     }
 
     public void addCourseWithOneTextExerciseDueDateReached() {
@@ -361,6 +368,7 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.sgiinssdgdg-tests.git");
+        programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         courseRepo.save(course);
         programmingExerciseRepository.save(programmingExercise);
@@ -368,6 +376,8 @@ public class DatabaseUtilService {
         courseRepo.save(course);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return courseRepo.findById(course.getId()).get();
     }
@@ -500,6 +510,18 @@ public class DatabaseUtilService {
         return submission;
     }
 
+    @Transactional
+    public ProgrammingSubmission addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, Result result, String login) {
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
+        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
+        submission.setResult(result);
+        programmingSubmissionRepo.save(submission);
+        participation.addResult(result);
+        participationRepo.save(participation);
+        return submission;
+    }
+
     public Submission addSubmission(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
@@ -561,8 +583,8 @@ public class DatabaseUtilService {
     }
 
     @Transactional
-    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
-            String assessorLogin) {
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin, List<Feedback> feedbacks) {
         StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
         participation.addSubmissions(fileUploadSubmission);
         Result result = new Result();
@@ -570,6 +592,7 @@ public class DatabaseUtilService {
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
         result.setCompletionDate(fileUploadExercise.getReleaseDate());
+        result.setFeedbacks(feedbacks);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.setResult(result);
         fileUploadSubmission.getParticipation().addResult(result);
@@ -577,6 +600,12 @@ public class DatabaseUtilService {
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return fileUploadSubmission;
+    }
+
+    @Transactional
+    public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
+            String assessorLogin) {
+        return addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<Feedback>());
     }
 
     @Transactional

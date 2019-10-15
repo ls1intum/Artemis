@@ -1,6 +1,17 @@
 {
     "tour": {
         "courseExerciseOverview": {
+            "installPrerequisites": {
+                "headline": "Installiere die notwendigen Tools",
+                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren.<ul><li>Installiere das neueste <a href='https://www.oracle.com/technetwork/java/javase/downloads/index.html' target='_blank' rel='noopener noreferrer'>Java JDK</a> (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und <span class='red bold'>nicht</span> JRE auswählst.</li><li>Installiere die <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>Eclipse IDE für Java Entwickler</a> (2019‐09 oder neuer)</li><li>Installiere die neueste Version von <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>SourceTree</a> mit git (3.2.1 oder neuer für macOS oder Windows)</li></ul>",
+                "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden.",
+                "sourceTreeSetup": {
+                    "headline": "Konfiguriere SourceTree",
+                    "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
+                    "videoUrl": "https://www.youtube.com/embed/zVw-mMgQjPU",
+                    "hint": "Kopiere und füge <tt>https://bitbucket.ase.in.tum.de</tt> als URL ein."
+                }
+            },
             "exercises": {
                 "headline": "Aufgaben",
                 "content": "In diesem Reiter werden alle freigegebenen Aufgaben dieses Kurses angezeigt."
@@ -9,9 +20,13 @@
                 "headline": "Aktuelle Woche",
                 "content": "Die Aufgaben der aktuellen Woche werden in diesem Reiter an oberster Stelle gelistet."
             },
+            "currentExercise": {
+                "headline": "Aktuelle Aufgabe",
+                "content": "In diesem Tutorial schauen wir uns die Aufgabe <tt>Hello World</tt> an."
+            },
             "exerciseType": {
                 "headline": "Aufgabentyp",
-                "content": "Du erkennst den Typ einer Aufgabe anhand des Icons."
+                "content": "Du erkennst den Typ einer Aufgabe anhand des Icons. Hier handelt es sich um eine Programmieraufgabe."
             },
             "exerciseTags": {
                 "headline": "Aufgabenkategorien",
@@ -19,7 +34,7 @@
             },
             "courseInformation": {
                 "headline": "Kursinformation",
-                "content": "Diese Box listet Kursinformationen, wie etwa die Anzahl der Aufgaben und den Zeitraum des Kurses, auf"
+                "content": "Diese Box listet Kursinformationen, wie etwa die Anzahl der Aufgaben und den Zeitraum des Kurses, auf."
             },
             "upcomingDeadlines": {
                 "headline": "Bevorstehende Termine",
@@ -35,21 +50,36 @@
             },
             "startExercise": {
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",
-                "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
-            }
-        },
-        "cloneRepository": {
-            "clone": {
-                "headline": "Repository klonen",
-                "content": "Klicke auf den Button 'Repository klonen' um das Repository für the aktuelle Aufgabe zu klonen."
+                "content": "Klicke auf den Button <tt>Aufgabe starten</tt> um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
             },
-            "useSourceTree": {
-                "headline": "In SourceTree klonen",
-                "content": "Klicke auf den Button 'In SourceTree klonen' um das Repository in SourceTree zu klonen. Als Alternative kannst du auch die angegebene URL kopieren und es in deiner git Anwendung zu verwenden."
+            "cloneRepository": {
+                "headline": "Klone das Repository in SourceTree",
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Account Menü aus fortsetzen.",
+                "videoUrl": "https://www.youtube.com/embed/0YYxgs14S6A"
             },
-            "sourceTreeTutorial": {
-                "headline": "SourceTree Anleitung",
-                "content": "Wenn du mit SourceTree noch nicht vertraut bist, dann werfe doch einen Blick in unser Anleitungsvideo für SourceTree."
+            "inspectSourceTree": {
+                "headline": "Lerne SourceTree kennen",
+                "content": "Schau dir das folgende Video, um die grundlegenden Funktionen von SourceTree kennenzulernen.",
+                "videoUrl": "https://www.youtube.com/embed/Piu_UBK6d7c"
+            },
+            "importEclipse": {
+                "headline": "Importiere das Java Projekt in Eclipse",
+                "content": "Schau dir das folgende Video an, um zu sehen, wie man ein Projekt in Eclipse importiert.",
+                "videoUrl": "https://www.youtube.com/embed/5VrNNlEuCBo"
+            },
+            "inspectProject": {
+                "headline": "Untersuche das Projekt",
+                "content": "In diesem Video schauen wir uns das Projekt an und lösen die darin gegebene Aufgabe.",
+                "videoUrl": "https://www.youtube.com/embed/K-mX03gmNSk"
+            },
+            "commitAndPush": {
+                "headline": "Reiche deine Änderungen ein",
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man Änderungen committed und pushed.",
+                "videoUrl": "https://www.youtube.com/embed/sjT-S6AhQvM"
+            },
+            "reviewResult": {
+                "headline": "Überprüfe dein Ergebnis",
+                "content": "Nachdem du deine Änderungen, wie im vorherigen Video demonstriert, eingereicht hast, wird das Ergebnis automatisch aktualisiert und hier angezeigt. Artemis nutzt Testfälle um deine Lösung automatisch zu bewerten. Klicke nun auf Aufgabenkachel, um auf die Detailseite der Aufgabe gelangen, in der du deine Testfälle überprüfen kannst."
             }
         }
     }

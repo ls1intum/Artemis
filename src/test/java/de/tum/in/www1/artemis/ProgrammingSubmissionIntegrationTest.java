@@ -76,11 +76,15 @@ public class ProgrammingSubmissionIntegrationTest {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        when(gitServiceMock.getLastCommitHash(null)).thenReturn(new ObjectId(4, 5, 2, 5, 3));
         exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addParticipationWithResultForExercise(exercise, "student1");
         exercise.setTestCasesChanged(true);
         exerciseRepository.save(exercise);
+
+        when(gitServiceMock.getLastCommitHash(null)).thenReturn(new ObjectId(4, 5, 2, 5, 3));
+        when(gitServiceMock.getLastCommitHash(exercise.getTemplateParticipation().getRepositoryUrlAsUrl())).thenReturn(new ObjectId(4, 5, 2, 5, 3));
     }
 
     @AfterEach
@@ -147,11 +151,11 @@ public class ProgrammingSubmissionIntegrationTest {
         exerciseRepository.save(exercise);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
-        await().until(() -> submissionRepository.count() == 3);
+        await().until(() -> submissionRepository.count() == 4);
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
 
-        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
+        List<ProgrammingExerciseParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
             assertThat(submission.getResult()).isNull();
             assertThat(submission.isSubmitted()).isTrue();
@@ -159,15 +163,15 @@ public class ProgrammingSubmissionIntegrationTest {
             assertThat(submission.getParticipation()).isNotNull();
             // There should be no participation assigned to two submissions.
             assertThat(participations.stream().noneMatch(p -> p.equals(submission.getParticipation()))).isTrue();
-            participations.add((ProgrammingExerciseStudentParticipation) submission.getParticipation());
+            participations.add((ProgrammingExerciseParticipation) submission.getParticipation());
 
             // Check that the CI build was triggered for the given submission.
-            verify(continuousIntegrationServiceMock).triggerBuild((ProgrammingExerciseStudentParticipation) submission.getParticipation());
+            verify(continuousIntegrationServiceMock).triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
         }
 
         SecurityUtils.setAuthorizationObject();
         ProgrammingExercise updatedProgrammingExercise = exerciseRepository.findById(exercise.getId()).get();
-        assertThat(updatedProgrammingExercise.haveTestCasesChanged()).isFalse();
+        assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
     }

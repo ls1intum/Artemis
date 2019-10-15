@@ -28,6 +28,7 @@ import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -508,11 +509,10 @@ public class BambooService implements ContinuousIntegrationService {
             // Save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
             resultRepository.save(result);
 
+            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
                 programmingSubmission = latestMatchingPendingSubmission.get();
-                // In this case we know the submission time, so we use it for determining the rated state.
-                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), programmingSubmission);
             } else {
                 // There can be two reasons for the case that there is no programmingSubmission:
                 // 1) Manual build triggered from Bamboo.
@@ -525,16 +525,15 @@ public class BambooService implements ContinuousIntegrationService {
                 programmingSubmission.setSubmitted(true);
                 programmingSubmission.setType(SubmissionType.OTHER);
                 programmingSubmission.setCommitHash(commitHash);
+                // In this case we don't know the submission time, so we use the result completion time as a fallback.
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 // Save to avoid TransientPropertyValueException.
                 programmingSubmissionRepository.save(programmingSubmission);
-                // In this case we don't know the submission time, so we use the result completion time for determining the rated state.
-                result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), result.getCompletionDate());
             }
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
-            resultRepository.save(result);
-            return result;
+            result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
+            return resultRepository.save(result);
         } catch (Exception e) {
             log.error("Error when getting build result: " + e.getMessage());
             throw new BambooException("Could not get build result", e);
@@ -684,7 +683,8 @@ public class BambooService implements ContinuousIntegrationService {
      * @param jobs   the jobs list of the requestBody
      * @return a list of feedbacks itemsstored in a result
      */
-    public Result addFeedbackToResultNew(Result result, List<Object> jobs) {
+    @SuppressWarnings("unchecked")
+    private Result addFeedbackToResultNew(Result result, List<Object> jobs) {
         if (jobs == null) {
             return null;
         }

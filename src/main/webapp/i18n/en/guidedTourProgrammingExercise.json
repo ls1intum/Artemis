@@ -1,0 +1,70 @@
+{
+    "tour": {
+        "programmingExercise": {
+            "codeEditor": {
+                "fileBrowser": {
+                    "headline": "File Browser",
+                    "content": "In the file browser you can view the project structure with all its folders and files. Additionally, you can also create your own folders and files if necessary."
+                },
+                "exerciseFile": {
+                    "headline": "Class file",
+                    "content": "Click on the class file, so that its source code will be displayed in the code editor."
+                },
+                "aceEditor": {
+                    "headline": "Code editor",
+                    "content": "The source code is now displayed in the code editor. You can read through the <tt>TODO</tt> and try to solve it. Or alternatively you can enter any code for this test round. If you are done with the implementation, just click on the <tt>Next</tt> button to proceed."
+                },
+                "saveChanges": {
+                    "headline": "Save changes",
+                    "content": "You can save your changes in the code editor by clicking on <tt>Save</tt>."
+                },
+                "submitChanges": {
+                    "headline": "Submit changes",
+                    "content": "If you are satisfied with your implementation, then you can submit your current code by clicking <tt>Submit</tt>.",
+                    "hint": "Here is a quick note: You can submit multiple times within the due date of the programming exercise, so you can always solve your tasks one by one and submit them or do everything in one commit based on your preference."
+                }
+            },
+            "buildLoading": {
+                "headline": "Build and tests",
+                "content": "After submitting your changes, Artemis will automatically trigger the build and the tests."
+            },
+            "buildStatus": {
+                "headline": "Build status",
+                "content": "Now you see your build status here and identify which tasks have passed the tests and are therefore successfully solved.",
+                "hint": "It is possible that some additional tests are run after the due date. That means that passing all displayed tests does not necessarily guarantee a 100% score in the end. Therefore please double check your submission."
+            },
+            "testCases": {
+                "headline": "Feedback",
+                "content": "In this window you can view the feedback related to your submission. Please try to solve all errors to pass this programming exercise successfully."
+            },
+            "testSuccess": {
+                "headline": "Task solved",
+                "content": "Here you can see, that you have successfully solved this task and all tests have been executed successfully."
+            },
+            "testFailure": {
+                "headline": "Task unsolved",
+                "content": "Here you can see the failing test cases of every individual task."
+            },
+            "umlSuccess": {
+                "headline": "Review your implementation in the UML diagram",
+                "content": "Now you can also see, whether you have successfully implemented the UML class diagram!"
+            },
+            "umlFailure": {
+                "headline": "Review your failed tests in the UML diagram",
+                "content": "Now you can also see, which tests have passed and failed in the UML class diagram."
+            },
+            "resolveTasks": {
+                "headline": "Complete exercise",
+                "content": "Please open Eclipse again and resolve the remaining tasks to complete the exercise."
+            },
+            "reviewResult": {
+                "headline": "Review your result",
+                "content": "Please check if all tests have been executed successfully."
+            },
+            "exerciseSuccess": {
+                "headline": "Congratulations!",
+                "content": "You have successfully solved your first programming exercise on Artemis with git!"
+            }
+        }
+    }
+}
