@@ -715,7 +715,6 @@ export class GuidedTourService {
                 nextPlusOneDot.classList.add('n-small');
                 dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
                 dotList.querySelectorAll('li').forEach((node, index) => {
-                    console.log('nextIndex - 8: ', nextIndex - 8);
                     if (index === nextIndex - 9) {
                         node.classList.remove('p-small');
                     } else if (index === nextIndex - 8) {

@@ -113,7 +113,9 @@
             "confirmpassword": "New password confirmation",
             "confirmpassword.placeholder": "Confirm the new password",
             "email": "Email",
-            "email.placeholder": "Your email"
+            "email.placeholder": "Your email",
+            "cancel": "Cancel",
+            "confirm": "Confirm"
         },
         "messages": {
             "info": {

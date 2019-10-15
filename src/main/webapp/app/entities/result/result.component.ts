@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import * as moment from 'moment';
-import { hasBuildAndTestAfterDueDatePassed, isProgrammingExerciseStudentParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { isResultPreliminary, isProgrammingExerciseStudentParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
@@ -203,7 +203,7 @@ export class ResultComponent implements OnInit, OnChanges {
         } else if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
-            !hasBuildAndTestAfterDueDatePassed(getExercise(this.participation) as ProgrammingExercise)
+            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
             const preliminary = this.translate.instant('artemisApp.result.preliminary');
             return `${this.result!.resultString} ${preliminary}`;
@@ -216,7 +216,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
-            !hasBuildAndTestAfterDueDatePassed(getExercise(this.participation) as ProgrammingExercise)
+            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }

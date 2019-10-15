@@ -115,10 +115,20 @@ jhi-guided-tour {
         }
 
         &.page-tour-step {
+            min-width: 500px;
             width: 80vh;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
+
+            @media (max-height: 600px) {
+                width: 100vh;
+            }
+
+            @media (max-width: 650px) {
+                min-width: initial;
+                width: 40vh;
+            }
 
             &.video-tour {
                 @media (max-width: 992px) {
@@ -129,7 +139,7 @@ jhi-guided-tour {
                     transform: none;
                 }
                 @media (min-width: 993px) and (max-width: 1200px) {
-                    width: 80%;
+                    width: 60%;
                 }
 
                 .tour-block__content {
@@ -194,13 +204,13 @@ jhi-guided-tour {
 
             &__content {
                 font-size: 16px;
-                min-height: 80px;
+                min-height: 40px;
                 max-height: 80vh;
                 overflow-y: scroll;
                 margin-bottom: 20px;
 
                 @media (max-height: 600px) {
-                    max-height: 50vh;
+                    max-height: 60vh;
                 }
 
                 p {

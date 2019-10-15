@@ -20,7 +20,7 @@
         <div class="tour-block">
             <div class="tour-block__header">
                 <h3 class="headline" *ngIf="currentTourStep.headlineTranslateKey">
-                    <span *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
+                    <span *ngIf="!guidedTourService.isOnResizeMessage && guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
                         >{{ 'tour.step' | translate: { string: guidedTourService.getCurrentStepString() } }} </span
                     >{{ currentTourStep.headlineTranslateKey | translate }}
                 </h3>
@@ -96,7 +96,7 @@
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
-                <div class="dotstyle dotstyle--scaleup">
+                <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">
                     <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" [ngStyle]="{ transform: 'translateX(' + this.transformX + 'px)' }">
                         <li
                             class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
