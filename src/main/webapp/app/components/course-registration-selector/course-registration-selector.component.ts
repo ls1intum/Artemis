@@ -3,6 +3,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { AccountService } from 'app/core';
 import { Course, CourseService } from 'app/entities/course';
+import { TranslateService } from '@ngx-translate/core';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -14,13 +15,18 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     @Input() courses: Course[];
     @Output() courseRegistered = new EventEmitter();
     public coursesToSelect: Course[] = [];
-    public courseToRegister: Course | null;
+    public courseToRegister: Course | undefined;
     public isTumStudent = false;
     showCourseSelection = false;
     addedSuccessful = false;
     loading = false;
 
-    constructor(private accountService: AccountService, private courseService: CourseService, private jhiAlertService: JhiAlertService) {}
+    constructor(
+        private accountService: AccountService,
+        private courseService: CourseService,
+        private jhiAlertService: JhiAlertService,
+        private translateService: TranslateService,
+    ) {}
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
@@ -51,32 +57,33 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     }
 
     startRegistration() {
-        this.showCourseSelection = true;
         this.loading = true;
         this.loadAndFilterCourses()
             .then(() => {
                 this.loading = false;
+                this.showCourseSelection = true;
                 if (this.coursesToSelect.length === 0) {
                     setTimeout(() => {
-                        this.courseToRegister = null;
+                        this.courseToRegister = undefined;
                         this.showCourseSelection = false;
                     }, 3000);
                 }
             })
             .catch(() => {
                 this.loading = false;
-                this.courseToRegister = null;
+                this.courseToRegister = undefined;
                 this.showCourseSelection = false;
             });
     }
 
     cancelRegistration() {
-        this.courseToRegister = null;
+        this.courseToRegister = undefined;
         this.showCourseSelection = false;
     }
 
     registerForCourse() {
-        if (this.courseToRegister) {
+        // Special case for PGdP where we have to have a confirmation regarding the exam registration before registering to the course
+        if (this.courseToRegister && (this.courseToRegister.id !== 37 || confirm(this.translateService.instant('artemisApp.studentDashboard.register.examSignupConfirmation')))) {
             this.showCourseSelection = false;
             this.loading = true;
             this.courseService.registerForCourse(this.courseToRegister.id).subscribe(
@@ -84,7 +91,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
                     this.addedSuccessful = true;
                     this.loading = false;
                     setTimeout(() => {
-                        this.courseToRegister = null;
+                        this.courseToRegister = undefined;
                         this.addedSuccessful = false;
                         this.coursesToSelect = [];
                     }, 3000);
@@ -93,7 +100,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
                 error => {
                     console.log(error);
                     this.loading = false;
-                    this.courseToRegister = null;
+                    this.courseToRegister = undefined;
                 },
             );
         }

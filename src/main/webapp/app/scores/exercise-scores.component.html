@@ -55,6 +55,9 @@
                     <th jhiSortBy="participation.student.firstName">
                         <a class="th-link">{{ 'artemisApp.exercise.studentName' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
+                    <th jhiSortBy="participation.student.login">
+                        <a class="th-link">{{ 'artemisApp.exercise.studentId' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th jhiSortBy="completionDate">
                         <a class="th-link">{{ 'artemisApp.exercise.completionDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
@@ -77,6 +80,7 @@
                 <tr [ngStyle]="result.optimal && { 'font-weight': 'bold' }" *ngFor="let result of results | sortBy: predicate:reverse; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</td>
+                    <td>{{ result.participation.student.login }}</td>
                     <td>{{ result.completionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td><jhi-updating-result [exercise]="exercise" [showTestNames]="true" [participation]="result.participation"></jhi-updating-result></td>
                     <td>
@@ -102,11 +106,11 @@
                             <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                         </button>
                         <button
-                            *ngIf="exercise.type === PROGRAMMING"
+                            *ngIf="newManualResultAllowed"
                             [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new' } }]"
                             class="btn btn-warning btn-sm mr-1"
                         >
-                            <fa-icon class="mr-1" icon="asterisk"></fa-icon>New result
+                            <fa-icon class="mr-1" icon="asterisk"></fa-icon>{{ 'entity.action.newResult' | translate }}
                         </button>
                     </td>
                 </tr>
