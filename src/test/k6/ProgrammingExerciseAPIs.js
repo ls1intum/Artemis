@@ -3,14 +3,14 @@ import { login } from "./requests/requests.js";
 import { createExercise, startExercise } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse } from "./requests/course.js";
 
-export let options = {
+export const options = {
     maxRedirects: 0,
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS
 };
 
-let adminUsername = __ENV.ADMIN_USERNAME;
-let adminPassword = __ENV.ADMIN_PASSWORD;
+const adminUsername = __ENV.ADMIN_USERNAME;
+const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 
@@ -35,12 +35,12 @@ export function setup() {
 
 export default function (data) {
     // The user is randomly selected
-    let userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
-    let currentUsername = baseUsername.replace('USERID', userId);
-    let currentPassword = basePassword.replace('USERID', userId);
-    let artemis = login(currentUsername, currentPassword);
-    let exerciseId = data.exerciseId;
-    let courseId = data.courseId;
+    const userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
+    const currentUsername = baseUsername.replace('USERID', userId);
+    const currentPassword = basePassword.replace('USERID', userId);
+    const artemis = login(currentUsername, currentPassword);
+    const exerciseId = data.exerciseId;
+    const courseId = data.courseId;
 
     // Wait some time for builds to finish and test results to come in
     sleep(15);
@@ -56,8 +56,8 @@ export default function (data) {
 }
 
 export function teardown(data) {
-    let artemis = login(adminUsername, adminPassword);
-    let courseId = data.courseId;
+    const artemis = login(adminUsername, adminPassword);
+    const courseId = data.courseId;
 
     deleteCourse(artemis, courseId);
 }

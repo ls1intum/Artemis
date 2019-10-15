@@ -4,7 +4,7 @@ import { COURSE } from './endpoints.js';
 import { fail } from 'k6';
 
 export function newCourseShortName(artemis, courseId) {
-    let course = JSON.parse(artemis.get(COURSE(courseId), null)[0].body);
+    const course = JSON.parse(artemis.get(COURSE(courseId), null)[0].body);
     course.shortName = 'TEST' + nextAlphanumeric(5);
     artemis.put(COURSES, course);
 }

@@ -76,7 +76,7 @@ export function login(username, password) {
         }
     }];
     res = http.batch(req);
-    let authToken = JSON.parse(res[0].body).id_token;
+    const authToken = JSON.parse(res[0].body).id_token;
     console.log('GOT authToken ' + authToken);
 
     // The user requests it own information of the account
@@ -103,7 +103,7 @@ export function login(username, password) {
     }];
     res = http.batch(req);
     // A new XSRF Token is needed now, we have to extract it from the cookies
-    let xsrftoken = res[0].headers['Set-Cookie'].match('XSRF-TOKEN=(.*); path=\/(; secure)?')[1];
+    const xsrftoken = res[0].headers['Set-Cookie'].match('XSRF-TOKEN=(.*); path=\/(; secure)?')[1];
 
     return new Artemis(authToken, xsrftoken);
 }
@@ -127,7 +127,7 @@ export function Artemis(authToken, xsrftoken) {
         const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
         const websocketUrl = websocketEndpoint + '?access_token=' + authToken;
 
-        let response = ws.connect(websocketUrl, {'tags': {'name': websocketEndpoint}}, function(socket) {
+        ws.connect(websocketUrl, {'tags': {'name': websocketEndpoint}}, function(socket) {
             socket.on('open', function open() {
                 socket.send('CONNECT\nX-XSRF-TOKEN:' + xsrftoken + '\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000');
             });
@@ -138,7 +138,7 @@ export function Artemis(authToken, xsrftoken) {
 
             function submitChange(participationId) {
                 // console.log('Sending changes via WebSocket!');
-                let changeMessage = 'SEND\ndestination:/topic/repository/' + participationId + '/files\ncontent-length:73\n\n[{"fileName":"src/de/tum/in/ase/eist/BubbleSort.java","fileContent":"a"}]\u0000';
+                const changeMessage = 'SEND\ndestination:/topic/repository/' + participationId + '/files\ncontent-length:73\n\n[{"fileName":"src/de/tum/in/ase/eist/BubbleSort.java","fileContent":"a"}]\u0000';
                 // console.log('Change message is ' + changeMessage);
                 socket.send(changeMessage);
                 socket.send('SUBSCRIBE\nid:sub-' + getSubscriptionId() + '\ndestination:/user/topic/repository/' + participationId + '/files\n\n\u0000');

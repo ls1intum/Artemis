@@ -5,7 +5,7 @@ import { PARTICIPATIONS, PROGRAMMING_EXERCISE } from './endpoints.js';
 
 export function createExercise(artemis, courseId) {
     let res;
-    let problemStatement = '# Sorting with the Strategy Pattern\n' +
+    const problemStatement = '# Sorting with the Strategy Pattern\n' +
         '\n' +
         'In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n' +
         '\n' +
@@ -93,7 +93,7 @@ export function createExercise(artemis, courseId) {
         '3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.\n';
 
     // The actual exercise
-    let exercise = {
+    const exercise = {
         title: 'TEST ' + nextAlphanumeric(10),
         shortName: 'TEST'+ nextAlphanumeric(5).toUpperCase(),
         maxScore: 42,
@@ -115,14 +115,14 @@ export function createExercise(artemis, courseId) {
     if (res[0].status !== 201) {
         fail('ERROR: Could not create exercise (' + res[0].status + ')! response was + ' + res[0].body);
     }
-    let exerciseId = JSON.parse(res[0].body).id;
+    const exerciseId = JSON.parse(res[0].body).id;
     console.log('CREATED new programming exercise, ID=' + exerciseId);
 
     return exerciseId;
 }
 
 export function deleteExercise(artemis, exerciseId) {
-    let res = artemis.delete(PROGRAMMING_EXERCISE(exerciseId), {
+    const res = artemis.delete(PROGRAMMING_EXERCISE(exerciseId), {
         deleteStudentReposBuildPlans: true,
         deleteBaseReposBuildPlans: true
     });
@@ -133,7 +133,7 @@ export function deleteExercise(artemis, exerciseId) {
 }
 
 export function startExercise(artemis, courseId, exerciseId) {
-    let res = artemis.post(PARTICIPATIONS(courseId, exerciseId), null, null);
+    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), null, null);
     // console.log('RESPONSE of starting exercise: ' + res[0].body);
 
     if (res[0].status === 400) {
