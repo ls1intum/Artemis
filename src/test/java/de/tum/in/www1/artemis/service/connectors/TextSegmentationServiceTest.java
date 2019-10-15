@@ -22,8 +22,6 @@ public class TextSegmentationServiceTest {
 
     private static String SEGMENTATION_ENDPOINT = "http://localhost:8080/segment";
 
-    private static String EMBEDDING_ENDPOINT = "http://localhost:8080/segment";
-
     @Test
     public void segmentSubmissions() throws NetworkingError {
         final TextSegmentationService segmentationService = new TextSegmentationService();
