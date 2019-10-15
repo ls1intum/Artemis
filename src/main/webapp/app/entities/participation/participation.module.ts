@@ -6,8 +6,6 @@ import {
     ParticipationCleanupBuildPlanDialogComponent,
     ParticipationCleanupBuildPlanPopupComponent,
     ParticipationComponent,
-    ParticipationDeleteDialogComponent,
-    ParticipationDeletePopupComponent,
     participationPopupRoute,
     ParticipationPopupService,
     participationRoute,
@@ -31,20 +29,8 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ArtemisParticipationSubmissionModule,
     ],
 
-    declarations: [
-        ParticipationComponent,
-        ParticipationDeleteDialogComponent,
-        ParticipationDeletePopupComponent,
-        ParticipationCleanupBuildPlanDialogComponent,
-        ParticipationCleanupBuildPlanPopupComponent,
-    ],
-    entryComponents: [
-        ParticipationComponent,
-        ParticipationDeleteDialogComponent,
-        ParticipationDeletePopupComponent,
-        ParticipationCleanupBuildPlanDialogComponent,
-        ParticipationCleanupBuildPlanPopupComponent,
-    ],
+    declarations: [ParticipationComponent, ParticipationCleanupBuildPlanDialogComponent, ParticipationCleanupBuildPlanPopupComponent],
+    entryComponents: [ParticipationComponent, ParticipationCleanupBuildPlanDialogComponent, ParticipationCleanupBuildPlanPopupComponent],
     providers: [ParticipationService, ParticipationPopupService],
 })
 export class ArtemisParticipationModule {

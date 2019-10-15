@@ -344,6 +344,41 @@ public class ProgrammingSubmissionService {
     }
 
     /**
+     * Trigger the template repository build with the given commitHash.
+     *
+     * @param programmingExerciseId     is used to retrieve the template participation.
+     * @param commitHash                will be used for the created submission.
+     * @param submissionType            will be used for the created submission.
+     * @throws EntityNotFoundException  if the programming exercise has no template participation (edge case).
+     */
+    public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, ObjectId commitHash, SubmissionType submissionType) throws EntityNotFoundException {
+        TemplateProgrammingExerciseParticipation templateParticipation;
+        templateParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(programmingExerciseId);
+        // If for some reason the programming exercise does not have a template participation, we can only log and abort.
+        createSubmissionTriggerBuildAndNotifyUser(templateParticipation, commitHash, submissionType);
+    }
+
+    /**
+     * Creates a submission with the given type and commitHash for the provided participation.
+     * Will notify the user about occurring errors when trying to trigger the build.
+     *
+     * @param participation  for which to create the submission.
+     * @param commitHash     to assign to the submission.
+     * @param submissionType to assign to the submission.
+     */
+    private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, ObjectId commitHash, SubmissionType submissionType) {
+        ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
+        try {
+            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            notifyUserAboutSubmission(submission);
+        }
+        catch (HttpException e) {
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
+            notifyUserAboutSubmissionError(submission, error);
+        }
+    }
+
+    /**
      * Executes setTestCasesChanged with testCasesChanged = true, also creates a submission for the solution participation and triggers its build.
      * This method should be used if the solution participation would otherwise not be built.
      *
@@ -388,7 +423,7 @@ public class ProgrammingSubmissionService {
 
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
-        if (testCasesChanged == programmingExercise.haveTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
+        if (testCasesChanged == programmingExercise.getTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
@@ -418,5 +453,10 @@ public class ProgrammingSubmissionService {
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
         String topic = Constants.PARTICIPATION_TOPIC_ROOT + submission.getParticipation().getId() + Constants.PROGRAMMING_SUBMISSION_TOPIC;
         messagingTemplate.convertAndSend(topic, error);
+    }
+
+    public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {
+        Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findByResultId(resultId);
+        return programmingSubmission.orElseThrow(() -> new EntityNotFoundException("Could not find programming submission for result id " + resultId));
     }
 }

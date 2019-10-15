@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { from, fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 
 import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
-import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -68,13 +68,18 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'ArrowLeft': {
-                if (this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
                     this.guidedTourService.backStep();
                 }
                 break;
             }
             case 'Escape': {
-                this.guidedTourService.skipTour();
+                if (this.currentTourStep && !this.isCancelTour()) {
+                    this.guidedTourService.skipTour();
+                } else if (this.currentTourStep && (this.isCancelTour() || this.guidedTourService.isOnLastStep)) {
+                    // The escape key event finishes the tour when the user is seeing the cancel tour step or last tour step
+                    this.guidedTourService.finishGuidedTour();
+                }
                 break;
             }
         }
@@ -107,7 +112,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Subscribe to guidedTourCurrentStepStream and scroll to set element if the user has the right permission
      */
     public subscribeToGuidedTourCurrentStepStream() {
-        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TextTourStep | TextLinkTourStep | ImageTourStep | VideoTourStep) => {
+        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TextTourStep | ImageTourStep | VideoTourStep) => {
             this.currentTourStep = step;
             if (!this.currentTourStep) {
                 return;
@@ -241,6 +246,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         } else {
             this.guidedTourService.nextStep();
         }
+        // When the user clicks on the backdrop or tour step while seeing the cancel tour step, the cancel tour will be finished automatically
+        if (this.isCancelTour()) {
+            this.guidedTourService.finishGuidedTour();
+        }
+    }
+
+    /**
+     * Determines if the cancel tour is currently displayed
+     */
+    private isCancelTour() {
+        return this.currentTourStep ? this.currentTourStep.headlineTranslateKey === 'tour.cancel.headline' : false;
     }
 
     /**

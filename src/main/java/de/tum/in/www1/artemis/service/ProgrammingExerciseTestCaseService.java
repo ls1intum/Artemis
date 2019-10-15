@@ -177,7 +177,7 @@ public class ProgrammingExerciseTestCaseService {
             updateScore(result, successfulTestCases, testCases);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, shouldTestsWithAfterDueDateFlagBeRemoved && testCases.size() > testCasesForCurrentDate.size());
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
@@ -252,11 +252,9 @@ public class ProgrammingExerciseTestCaseService {
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-            boolean hasAdditionalTestsAfterDueDate) {
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
         // Create a new result string that reflects passed, failed & not executed test cases.
         String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
-        newResultString = hasAdditionalTestsAfterDueDate ? newResultString + " (preliminary)" : newResultString;
         result.setResultString(newResultString);
     }
 

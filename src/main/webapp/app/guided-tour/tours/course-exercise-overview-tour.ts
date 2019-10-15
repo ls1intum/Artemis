@@ -1,6 +1,6 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { LinkType, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export const courseExerciseOverviewTour: GuidedTour = {
     courseShortName: 'artemistutorial',
@@ -10,35 +10,13 @@ export const courseExerciseOverviewTour: GuidedTour = {
         new TextTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.content',
-        }),
-        new TextLinkTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.content',
-            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.hint',
-            externalUrl: 'https://www.oracle.com/technetwork/java/javase/downloads/index.html',
-            externalUrlTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.java.linkText',
-            linkType: LinkType.LINK,
-        }),
-        new TextLinkTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.eclipse.content',
-            externalUrl: 'https://www.eclipse.org/downloads/packages/',
-            externalUrlTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.eclipse.linkText',
-            linkType: LinkType.LINK,
-        }),
-        new TextLinkTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.content',
-            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.hint',
-            externalUrl: 'https://www.sourcetreeapp.com',
-            externalUrlTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTree.linkText',
-            linkType: LinkType.LINK,
+            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.hint',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.content',
             hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.hint',
-            videoUrl: 'https://www.youtube.com/embed/KKGuYVRIe-Y',
+            videoUrl: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.videoUrl',
         }),
         new TextTourStep({
             highlightSelector: '.tab-item.exercises',
@@ -114,27 +92,27 @@ export const courseExerciseOverviewTour: GuidedTour = {
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.cloneRepository.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.cloneRepository.content',
-            videoUrl: 'https://www.youtube.com/embed/pDBl-vSCveM',
+            videoUrl: 'tour.courseExerciseOverview.cloneRepository.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.content',
-            videoUrl: 'https://www.youtube.com/embed/7ugt0k0Qa7Y',
+            videoUrl: 'tour.courseExerciseOverview.inspectSourceTree.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.importEclipse.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.importEclipse.content',
-            videoUrl: 'https://www.youtube.com/embed/xl0lyV_IHzY',
+            videoUrl: 'tour.courseExerciseOverview.importEclipse.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.inspectProject.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.inspectProject.content',
-            videoUrl: 'https://www.youtube.com/embed/qW9Tc-AYBH8',
+            videoUrl: 'tour.courseExerciseOverview.inspectProject.videoUrl',
         }),
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.commitAndPush.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.commitAndPush.content',
-            videoUrl: 'https://www.youtube.com/embed/iFRHdp8ozh4',
+            videoUrl: 'tour.courseExerciseOverview.commitAndPush.videoUrl',
         }),
         new TextTourStep({
             highlightSelector: '.row.guided-tour',

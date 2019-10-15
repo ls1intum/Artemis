@@ -9,6 +9,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisTestModule } from '../test.module';
@@ -25,7 +26,8 @@ import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise';
+import { MockTranslateService } from '../mocks/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -147,6 +149,7 @@ describe('GuidedTourService', () => {
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: DeviceDetectorService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')

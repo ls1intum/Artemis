@@ -69,7 +69,9 @@
                     <td>{{ 'artemisApp.InitializationState.' + participation.initializationState | translate }}</td>
                     <td>{{ participation.initializationDate | date: 'medium' }}</td>
                     <td>
-                        <a routerLink="/user-management/{{ participation.student?.login }}/view">{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a>
+                        <a routerLink="/admin/user-management/{{ participation.student?.login }}/view"
+                            >{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a
+                        >
                     </td>
                     <td *ngIf="this.presentationScoreEnabled">
                         <span>{{ participation.presentationScore ? participation.presentationScore : 0 }}</span>
@@ -89,7 +91,7 @@
                             </ng-container>
                             <button
                                 type="submit"
-                                *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastTutor"
+                                *ngIf="newManualResultAllowed"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
                                 class="btn btn-warning btn-sm mr-1"
                             >
@@ -97,15 +99,18 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.newResult">New Result</span>
                             </button>
                             <button
-                                type="submit"
                                 *ngIf="exercise.isAtLeastInstructor"
-                                [routerLink]="['/', { outlets: { popup: 'participation/' + participation.id + '/delete' } }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1"
+                                jhiDeleteButton
+                                [entityTitle]="participation.student.name"
+                                deleteQuestion="artemisApp.participation.delete.question"
+                                (delete)="deleteParticipation(participation.id, $event)"
+                                [additionalChecks]="
+                                    exercise.type === PROGRAMMING
+                                        ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
+                                        : null
+                                "
                             >
                                 <fa-icon icon="times"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>
                             <button
                                 type="submit"

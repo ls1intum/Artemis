@@ -27,7 +27,11 @@
             >
         </div>
         <div class="form-group">
-            <jhi-date-time-picker labelName="Completion Date" [(ngModel)]="result.completionDate" name="completionDate"></jhi-date-time-picker>
+            <jhi-date-time-picker
+                labelName="{{ 'artemisApp.exercise.completionDate' | translate }}"
+                [(ngModel)]="result.completionDate"
+                name="completionDate"
+            ></jhi-date-time-picker>
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">

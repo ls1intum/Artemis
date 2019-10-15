@@ -105,6 +105,7 @@ jhi-guided-tour {
 
     .tour-step {
         min-width: 400px;
+        max-width: 1000px;
         position: fixed;
         z-index: $tour-zIndex + 2;
 
@@ -131,6 +132,10 @@ jhi-guided-tour {
                     left: 10%;
                     top: 10%;
                     transform: translate(0%, 0%);
+                }
+
+                @media (max-height: 700px) {
+                    top: 0;
                 }
             }
         }
@@ -186,12 +191,34 @@ jhi-guided-tour {
             &__content {
                 min-height: 80px;
                 font-size: 16px;
-                padding-bottom: 28px;
+                padding-bottom: 20px;
+
+                p {
+                    margin-bottom: 0;
+                }
+
+                tt {
+                    background-color: #f2f2f2;
+                    padding: 4px;
+                    margin: 0 5px;
+                }
+
+                ul {
+                    margin-right: 15px;
+
+                    li {
+                        padding: 4px;
+                    }
+                }
+
+                .red {
+                    color: #ca2024;
+                }
 
                 div > .btn,
+                .step-link a,
                 iframe,
-                img,
-                a {
+                img {
                     display: block;
                     margin-top: 10px;
                     margin-left: auto;
@@ -201,7 +228,7 @@ jhi-guided-tour {
                 .step-hint {
                     border-radius: 3px;
                     display: flex;
-                    margin: 15px 0 0 0;
+                    margin: 10px 0 0 0;
                     padding: 8px;
 
                     &:not(.interaction) {
@@ -225,7 +252,7 @@ jhi-guided-tour {
                     }
                 }
 
-                .subHeadline {
+                .sub-headline {
                     padding-bottom: 10px;
                 }
 

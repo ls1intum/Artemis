@@ -10,7 +10,7 @@
             "updated": "The Participation of {{ param }} was updated",
             "deleted": "The Participation of {{ param }} was deleted",
             "delete": {
-                "question": "Are you sure you want to delete the participation of {{ student }}?"
+                "question": "Are you sure you want to delete the participation of <strong>{{ title }}</strong>?"
             },
             "cleanupBuildPlan": {
                 "question": "Are you sure you want to delete the build plan of the participation of {{ student }}?"

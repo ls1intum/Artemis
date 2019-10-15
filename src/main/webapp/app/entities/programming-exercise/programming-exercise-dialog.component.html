@@ -11,11 +11,17 @@
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
+                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
+            </div>
             <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="programmingExercise.title" />
         </div>
         <div class="form-group-narrow position-relative">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+            <div>
+                <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.categoriesTooltip"></jhi-help-icon>
+            </div>
             <jhi-category-selector
                 [exerciseCategories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -28,20 +34,14 @@
                 <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
             </div>
         </div>
-        <div class="d-flex">
-            <div class="form-group-narrow flex-grow-1 flex-shrink-1 flex-basis-50">
-                <jhi-date-time-picker
-                    labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
-                    [(ngModel)]="programmingExercise.releaseDate"
-                    name="releaseDate"
-                ></jhi-date-time-picker>
+        <div class="form-group-narrow mt-2">
+            <div>
+                <label class="label-narrow label-timeline" jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline">
+                    Timeline for the whole programming exercise
+                </label>
+                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
             </div>
-            <jhi-programming-exercise-due-date-select
-                class="form-group-narrow flex-grow-1 flex-shrink-1 flex-basis-50 ml-3"
-                [exercise]="programmingExercise"
-                (onProgrammingExerciseUpdate)="onProgrammingExerciseUpdate($event)"
-                (onDueDateValidationChange)="dueDateInvalid = $event"
-            ></jhi-programming-exercise-due-date-select>
+            <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise"> </jhi-programming-exercise-lifecycle>
         </div>
         <div class="form-group-narrow">
             <label class="label-narrow" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
@@ -134,12 +134,7 @@
                         checked
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
-                    <fa-icon
-                        icon="question-circle"
-                        class="text-secondary"
-                        placement="top"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.sequentialTestRuns.description' | translate }}"
-                    ></fa-icon>
+                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
@@ -182,7 +177,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="dueDateInvalid || editForm.form.invalid || isSaving" class="btn btn-primary">
+        <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
             <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>

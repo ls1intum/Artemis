@@ -53,7 +53,7 @@
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon icon="eye"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                             </button>
                             <button
                                 type="submit"
@@ -85,14 +85,14 @@
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
-                                type="submit"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
-                                (click)="openDeleteModelingExerciseDialog(modelingExercise)"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1"
+                                jhiDeleteButton
+                                [entityTitle]="modelingExercise.title"
+                                deleteQuestion="artemisApp.exercise.delete.question"
+                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                (delete)="deleteModelingExercise(modelingExercise.id)"
                             >
                                 <fa-icon icon="times"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>
                         </div>
                     </td>
