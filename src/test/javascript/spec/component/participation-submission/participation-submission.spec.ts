@@ -17,7 +17,7 @@ import { of } from 'rxjs';
 import { TextSubmission } from 'app/entities/text-submission';
 import { TextAssessmentEditorComponent } from 'app/text-assessment/text-assessment-editor/text-assessment-editor.component';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
-import { TextAssessmentDetailComponent } from 'app/text-assessment/text-assessment-detail/text-assessment-detail.component';
+import { AssessmentDetailComponent } from 'app/assessment-shared/assessment-detail/assessment-detail.component';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -32,6 +32,7 @@ import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { participationSubmissionRoute } from 'app/entities/participation-submission';
 import { TranslateService, TranslateStore, TranslateLoader, TranslateCompiler, TranslateParser, TranslateModule, MissingTranslationHandler } from '@ngx-translate/core';
+import { StudentParticipation } from 'app/entities/participation';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,7 +61,7 @@ describe('ParticipationSubmissionComponent', () => {
                 MockComponent(UpdatingResultComponent),
                 MockComponent(TextAssessmentEditorComponent),
                 MockComponent(ResizableInstructionsComponent),
-                MockComponent(TextAssessmentDetailComponent),
+                MockComponent(AssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
             ],
             providers: [
@@ -92,6 +93,8 @@ describe('ParticipationSubmissionComponent', () => {
 
     it('Submissions are correctly loaded from server', fakeAsync(() => {
         // set all attributes for comp
+        const participation = new StudentParticipation();
+        participation.id = 1;
         const submissions = [
             {
                 submissionExerciseType: SubmissionExerciseType.TEXT,
@@ -100,9 +103,9 @@ describe('ParticipationSubmissionComponent', () => {
                 type: SubmissionType.MANUAL,
                 submissionDate: moment('2019-07-09T10:47:33.244Z'),
                 text: 'asdfasdfasdfasdf',
-                participation: { id: 1 },
             },
         ] as TextSubmission[];
+        submissions[0].participation = participation;
 
         // check if findAllSubmissionsOfParticipationStub() is called and works
         findAllSubmissionsOfParticipationStub.returns(of({ body: submissions }));

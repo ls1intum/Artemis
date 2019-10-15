@@ -26,12 +26,15 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     private final FeedbackRepository feedbackRepository;
 
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            FeedbackRepository feedbackRepository) {
+            FeedbackRepository feedbackRepository, ProgrammingSubmissionService programmingSubmissionService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
+        this.programmingSubmissionService = programmingSubmissionService;
         this.feedbackRepository = feedbackRepository;
     }
 
@@ -83,7 +86,7 @@ public class ProgrammingExerciseTestCaseService {
             updatedTests.add(matchingTestCase);
         }
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
-        programmingExerciseService.setTestCasesChanged(exerciseId, true);
+        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
     }
 
@@ -100,7 +103,7 @@ public class ProgrammingExerciseTestCaseService {
             testCase.setWeight(1);
         }
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
-        programmingExerciseService.setTestCasesChanged(exerciseId, true);
+        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return testCases;
     }
 
@@ -174,7 +177,7 @@ public class ProgrammingExerciseTestCaseService {
             updateScore(result, successfulTestCases, testCases);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, shouldTestsWithAfterDueDateFlagBeRemoved && testCases.size() > testCasesForCurrentDate.size());
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0) {
@@ -249,11 +252,9 @@ public class ProgrammingExerciseTestCaseService {
      * @param successfulTestCases test cases with positive feedback.
      * @param allTests of the given programming exercise.
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-            boolean hasAdditionalTestsAfterDueDate) {
+    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests) {
         // Create a new result string that reflects passed, failed & not executed test cases.
         String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
-        newResultString = hasAdditionalTestsAfterDueDate ? newResultString + " (preliminary)" : newResultString;
         result.setResultString(newResultString);
     }
 

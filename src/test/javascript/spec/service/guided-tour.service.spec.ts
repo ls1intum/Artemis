@@ -9,6 +9,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisTestModule } from '../test.module';
@@ -24,12 +25,17 @@ import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { Course } from 'app/entities/course';
+import { Exercise } from 'app/entities/exercise';
+import { MockTranslateService } from '../mocks/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('GuidedTourService', () => {
     const courseOverviewTour: GuidedTour = {
+        courseShortName: '',
+        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -47,6 +53,8 @@ describe('GuidedTourService', () => {
     };
 
     const courseOverviewTourWithUserInteraction: GuidedTour = {
+        courseShortName: '',
+        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -55,6 +63,24 @@ describe('GuidedTourService', () => {
                 headlineTranslateKey: '',
                 contentTranslateKey: '',
                 userInteractionEvent: UserInteractionEvent.CLICK,
+            }),
+            new TextTourStep({
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                orientation: Orientation.TOPLEFT,
+            }),
+        ],
+    };
+
+    const tourWithCourseAndExercise: GuidedTour = {
+        courseShortName: 'tutorial',
+        exerciseShortName: 'git',
+        settingsKey: 'tour_with_course_and_exericse',
+        preventBackdropFromAdvancing: true,
+        steps: [
+            new TextTourStep({
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
             }),
             new TextTourStep({
                 headlineTranslateKey: '',
@@ -123,6 +149,7 @@ describe('GuidedTourService', () => {
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: DeviceDetectorService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
@@ -139,15 +166,20 @@ describe('GuidedTourService', () => {
                 });
         });
 
-        async function prepareGuidedTour(tour: GuidedTour) {
+        function prepareGuidedTour(tour: GuidedTour) {
             // Prepare GuidedTourService and GuidedTourComponent
-            spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
+            spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+            spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
+            spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+                guidedTourService['availableTourForComponent'] = tour;
                 guidedTourService.currentTour = tour;
             });
+        }
 
+        async function startCourseOverviewTour(tour: GuidedTour) {
             guidedTourComponent.ngAfterViewInit();
 
             await guidedTourComponentFixture.ngZone!.run(() => {
@@ -167,7 +199,8 @@ describe('GuidedTourService', () => {
 
         describe('Tours without user interaction', () => {
             beforeEach(async () => {
-                await prepareGuidedTour(courseOverviewTour);
+                prepareGuidedTour(courseOverviewTour);
+                await startCourseOverviewTour(courseOverviewTour);
             });
 
             it('should start and finish the course overview guided tour', async () => {
@@ -205,13 +238,77 @@ describe('GuidedTourService', () => {
 
         describe('Tours with user interaction', () => {
             beforeEach(async () => {
-                await prepareGuidedTour(courseOverviewTourWithUserInteraction);
+                prepareGuidedTour(courseOverviewTourWithUserInteraction);
+                await startCourseOverviewTour(courseOverviewTourWithUserInteraction);
             });
 
             it('should disable the next button', () => {
                 guidedTourComponentFixture.detectChanges();
                 const nextButton = guidedTourComponentFixture.debugElement.nativeElement.querySelector('.next-button').disabled;
                 expect(nextButton).to.exist;
+            });
+        });
+
+        describe('Tour for a certain course and exercise', () => {
+            const exercise1 = {
+                id: 1,
+                shortName: 'git',
+            } as Exercise;
+
+            const exercise2 = {
+                id: 1,
+                shortName: 'test',
+            } as Exercise;
+
+            const course1 = {
+                id: 1,
+                shortName: 'tutorial',
+                exercises: [exercise2, exercise1],
+            } as Course;
+
+            const course2 = {
+                id: 1,
+                shortName: 'test',
+            } as Course;
+
+            beforeEach(async () => {
+                prepareGuidedTour(tourWithCourseAndExercise);
+            });
+
+            it('should start the tour for the matching course title', () => {
+                let courses = [course1];
+                // enable tour for matching course title
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                guidedTourService.currentTour = null;
+
+                courses = [course2];
+                // tour not available for not matching titles
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+            });
+
+            it('should start the tour for the matching exercise short name', () => {
+                let courses = [course1];
+                // enable tour for matching course title
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                guidedTourService.currentTour = null;
+
+                courses = [course2];
+                // tour not available for not matching titles
+                guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+            });
+
+            it('should start the tour for the matching course / exercise short name', () => {
+                // enable tour for matching course / exercise short name
+                let currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise) as Exercise;
+                expect(currentExercise.shortName).to.equal(tourWithCourseAndExercise.exerciseShortName);
+
+                // tour not available for not matching course / exercise short name
+                currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise) as Exercise;
+                expect(currentExercise).to.be.null;
             });
         });
     });

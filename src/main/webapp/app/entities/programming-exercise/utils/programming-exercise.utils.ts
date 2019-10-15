@@ -3,9 +3,24 @@
 // In some cases it needs to be checked explicitly wether a result is legacy or not.
 // The date used is the date of the merge: 2019-05-10T22:12:28Z.
 import { Result } from 'app/entities/result';
+import { ProgrammingExercise, programmingExerciseRoute } from 'app/entities/programming-exercise';
+import * as moment from 'moment';
+import { Participation, ParticipationType, StudentParticipation } from 'app/entities/participation';
+import { ExerciseType } from 'app/entities/exercise';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
 export const isLegacyResult = (result: Result) => {
     return result.completionDate!.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
+};
+
+export const hasBuildAndTestAfterDueDatePassed = (programmingExercise: ProgrammingExercise) => {
+    if (!programmingExercise) {
+        return false;
+    }
+    return !programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment.now());
+};
+
+export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
+    return participation && participation.type === ParticipationType.PROGRAMMING;
 };

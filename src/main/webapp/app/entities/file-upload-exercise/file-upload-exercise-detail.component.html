@@ -2,7 +2,7 @@
     <h2><span jhiTranslate="artemisApp.fileUploadExercise.detail.title">File Upload Exercise</span> {{ fileUploadExercise.id }}</h2>
     <hr />
     <jhi-alert-error></jhi-alert-error>
-    <dl class="row-md jh-entity-details">
+    <dl class="row-md jh-entity-details markdown-preview">
         <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
         <dd>
             <span>{{ fileUploadExercise.title }}</span>
@@ -27,6 +27,11 @@
         <dd>
             <span>{{ fileUploadExercise.maxScore }}</span>
         </dd>
+        <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
+        <dd>
+            <span *ngIf="fileUploadExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
+            <span *ngIf="!fileUploadExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
+        </dd>
         <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
         <dd>
             <div *ngIf="fileUploadExercise.course">
@@ -39,12 +44,6 @@
         <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
         <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
         <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.gradingInstructions! | htmlForMarkdown"></dd>
-
-        <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span></dt>
-        <dd>
-            <span>{{ fileUploadExercise.maxScore }}</span>
-        </dd>
-
         <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
         <dd>
             <span>{{ fileUploadExercise.filePattern }}</span>

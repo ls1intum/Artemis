@@ -1,95 +1,101 @@
-import { LinkType, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextLinkTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
  */
 export const courseOverviewTour: GuidedTour = {
+    courseShortName: 'artemistutorial',
+    exerciseShortName: 'tutorial',
     settingsKey: 'course_overview_tour',
     steps: [
         new ImageTourStep({
-            headlineTranslateKey: 'tour.course-overview.welcome.headline',
-            subHeadlineTranslateKey: 'tour.course-overview.welcome.subHeadline',
-            contentTranslateKey: 'tour.course-overview.welcome.content',
+            headlineTranslateKey: 'tour.courseOverview.welcome.headline',
+            subHeadlineTranslateKey: 'tour.courseOverview.welcome.subHeadline',
+            contentTranslateKey: 'tour.courseOverview.welcome.content',
             imageUrl: 'https://ase.in.tum.de/lehrstuhl_1/images/teaching/interactive/InteractiveLearning.png',
         }),
         new TextTourStep({
             highlightSelector: '#overview-menu',
-            headlineTranslateKey: 'tour.course-overview.overview-menu.headline',
-            contentTranslateKey: 'tour.course-overview.overview-menu.content',
+            headlineTranslateKey: 'tour.courseOverview.overviewMenu.headline',
+            contentTranslateKey: 'tour.courseOverview.overviewMenu.content',
             highlightPadding: 10,
-            orientation: Orientation.BOTTOMLEFT,
+            orientation: Orientation.BOTTOM,
         }),
         new TextTourStep({
             highlightSelector: '#course-admin-menu',
-            headlineTranslateKey: 'tour.course-overview.course-admin-menu.headline',
-            contentTranslateKey: 'tour.course-overview.course-admin-menu.content',
-            orientation: Orientation.BOTTOMLEFT,
+            headlineTranslateKey: 'tour.courseOverview.courseAdminMenu.headline',
+            contentTranslateKey: 'tour.courseOverview.courseAdminMenu.content',
+            orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
             permission: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
         }),
         new TextTourStep({
             highlightSelector: '#admin-menu',
-            headlineTranslateKey: 'tour.course-overview.admin-menu.headline',
-            contentTranslateKey: 'tour.course-overview.admin-menu.content',
-            orientation: Orientation.LEFT,
+            headlineTranslateKey: 'tour.courseOverview.adminMenu.headline',
+            contentTranslateKey: 'tour.courseOverview.adminMenu.content',
+            orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
             permission: ['ROLE_ADMIN'],
         }),
         new TextTourStep({
             highlightSelector: '#notificationsNavBarDropdown',
-            headlineTranslateKey: 'tour.course-overview.notification-menu.headline',
-            contentTranslateKey: 'tour.course-overview.notification-menu.content',
-            orientation: Orientation.LEFT,
+            headlineTranslateKey: 'tour.courseOverview.notificationMenu.headline',
+            contentTranslateKey: 'tour.courseOverview.notificationMenu.content',
+            orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
         }),
         new TextTourStep({
             highlightSelector: '#account-menu',
-            headlineTranslateKey: 'tour.course-overview.account-menu.headline',
-            contentTranslateKey: 'tour.course-overview.account-menu.content',
-            orientation: Orientation.LEFT,
+            headlineTranslateKey: 'tour.courseOverview.accountMenuClick.headline',
+            contentTranslateKey: 'tour.courseOverview.accountMenuClick.content',
+            orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
+            userInteractionEvent: UserInteractionEvent.CLICK,
+            disableStep: true,
+        }),
+        new TextTourStep({
+            highlightSelector: '#account-menu',
+            headlineTranslateKey: 'tour.courseOverview.accountMenu.headline',
+            contentTranslateKey: 'tour.courseOverview.accountMenu.content',
+            orientation: Orientation.BOTTOMRIGHT,
+            highlightPadding: 10,
+        }),
+        new TextTourStep({
+            highlightSelector: '.card.guided-tour',
+            headlineTranslateKey: 'tour.courseOverview.course.headline',
+            contentTranslateKey: 'tour.courseOverview.course.content',
+            orientation: Orientation.RIGHT,
+        }),
+        new TextTourStep({
+            highlightSelector: '.guided-tour .card-footer',
+            headlineTranslateKey: 'tour.courseOverview.courseFooter.headline',
+            contentTranslateKey: 'tour.courseOverview.courseFooter.content',
+            orientation: Orientation.TOPLEFT,
+        }),
+        new TextTourStep({
+            highlightSelector: '.card.guided-tour',
+            eventListenerSelector: 'body',
+            headlineTranslateKey: 'tour.courseOverview.courseClick.headline',
+            contentTranslateKey: 'tour.courseOverview.courseClick.content',
+            orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
         new TextTourStep({
-            highlightSelector: '.nav-item .dropdown-menu.show',
-            headlineTranslateKey: 'tour.course-overview.startTourOption.headline',
-            contentTranslateKey: 'tour.course-overview.startTourOption.content',
-            orientation: Orientation.LEFT,
-            highlightPadding: 10,
-            closeAction: () => {
-                clickOnElement('.dropdown-menu.show #account-menu');
-            },
-        }),
-        new TextTourStep({
-            highlightSelector: 'jhi-overview-course-card .card',
-            headlineTranslateKey: 'tour.course-overview.course.headline',
-            contentTranslateKey: 'tour.course-overview.course.content',
-            orientation: Orientation.RIGHT,
-        }),
-        new TextTourStep({
-            highlightSelector: '.card-footer',
-            headlineTranslateKey: 'tour.course-overview.course-footer.headline',
-            contentTranslateKey: 'tour.course-overview.course-footer.content',
-            orientation: Orientation.RIGHT,
-        }),
-        new TextTourStep({
             highlightSelector: 'jhi-course-registration-selector button',
-            headlineTranslateKey: 'tour.course-overview.register.headline',
-            contentTranslateKey: 'tour.course-overview.register.content',
+            headlineTranslateKey: 'tour.courseOverview.register.headline',
+            contentTranslateKey: 'tour.courseOverview.register.content',
             orientation: Orientation.LEFT,
             highlightPadding: 10,
+            disableStep: true,
         }),
-        new TextLinkTourStep({
+        new TextTourStep({
             highlightSelector: '.footer .col-sm-6',
-            headlineTranslateKey: 'tour.course-overview.contact.headline',
-            contentTranslateKey: 'tour.course-overview.contact.content',
-            externalUrlTranslateKey: 'tour.course-overview.contact.link',
-            externalUrl: 'https://github.com/ls1intum/ArTEMiS',
-            linkType: LinkType.BUTTON,
+            headlineTranslateKey: 'tour.courseOverview.contact.headline',
+            contentTranslateKey: 'tour.courseOverview.contact.content',
             orientation: Orientation.TOPLEFT,
+            disableStep: true,
         }),
     ],
 };

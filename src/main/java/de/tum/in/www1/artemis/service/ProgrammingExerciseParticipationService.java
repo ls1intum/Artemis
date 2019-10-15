@@ -64,6 +64,36 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Retrieve the solution participation of the given programming exercise.
+     *
+     * @param programmingExerciseId ProgrammingExercise id
+     * @return the SolutionProgrammingExerciseParticipation of programming exercise.
+     * @throws EntityNotFoundException if the SolutionParticipation can't be found (could be that the programming exercise does not exist or it does not have a SolutionParticipation).
+     */
+    public SolutionProgrammingExerciseParticipation findSolutionParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<SolutionProgrammingExerciseParticipation> solutionParticipation = solutionParticipationRepository.findByProgrammingExerciseId(programmingExerciseId);
+        if (solutionParticipation.isEmpty()) {
+            throw new EntityNotFoundException("Could not find solution participation for programming exercise with id " + programmingExerciseId);
+        }
+        return solutionParticipation.get();
+    }
+
+    /**
+     * Retrieve the template participation of the given programming exercise.
+     *
+     * @param programmingExerciseId ProgrammingExercise id
+     * @return the TemplateProgrammingExerciseParticipation of programming exercise.
+     * @throws EntityNotFoundException if the TemplateParticipation can't be found (could be that the programming exercise does not exist or it does not have a TemplateParticipation).
+     */
+    public TemplateProgrammingExerciseParticipation findTemplateParticipationByProgrammingExerciseId(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<TemplateProgrammingExerciseParticipation> templateParticipation = templateParticipationRepository.findByProgrammingExerciseId(programmingExerciseId);
+        if (templateParticipation.isEmpty()) {
+            throw new EntityNotFoundException("Could not find solution participation for programming exercise with id " + programmingExerciseId);
+        }
+        return templateParticipation.get();
+    }
+
+    /**
      * Tries to retrieve a student participation for the given exercise id and username.
      *
      * @param exerciseId id of the exercise.

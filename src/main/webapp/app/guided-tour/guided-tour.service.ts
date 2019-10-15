@@ -3,17 +3,21 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { fromEvent, Observable, Subject } from 'rxjs';
+import { from, fromEvent, Observable, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
-import { AccountService } from 'app/core';
-import { TextTourStep, TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { AccountService, User } from 'app/core';
+import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { filter } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { Course } from 'app/entities/course';
+import { Exercise } from 'app/entities/exercise';
+import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { cancelTour } from 'app/guided-tour/tours/general-tour';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -21,12 +25,16 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
+    public maxDots = 10;
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private guidedTourAvailability = new Subject<boolean>();
+    private isUserInteractionFinished = new Subject<boolean>();
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
+    private availableTourForComponent: GuidedTour | null;
+    private transformCount = 0;
 
     constructor(
         private http: HttpClient,
@@ -40,14 +48,17 @@ export class GuidedTourService {
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
      */
     public init() {
-        // Retrieve the guided tour setting from the account service
-        this.accountService.identity().then(user => {
-            this.guidedTourSettings = user ? user.guidedTourSettings : [];
+        // Retrieve the guided tour setting from the account service after the user is logged in
+        this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+            if (user) {
+                this.guidedTourSettings = user ? user.guidedTourSettings : [];
+            }
         });
 
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
-            if (event instanceof NavigationStart) {
+            if (this.currentTour && event instanceof NavigationStart) {
+                this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
             }
         });
@@ -58,8 +69,8 @@ export class GuidedTourService {
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this.currentTour && this.currentTourStepIndex > 0) {
-                    if (this.currentTour.minimumScreenSize && this.currentTour.minimumScreenSize >= window.innerWidth) {
+                if (this.currentTour && this.deviceService.isDesktop()) {
+                    if (this.tourMinimumScreenSize >= window.innerWidth && !(this.currentTour.steps[this.currentTourStepIndex] instanceof VideoTourStep)) {
                         this.onResizeMessage = true;
                         this.guidedTourCurrentStepSubject.next(
                             new TextTourStep({
@@ -68,11 +79,17 @@ export class GuidedTourService {
                             }),
                         );
                     } else {
-                        this.onResizeMessage = false;
-                        this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
+                        if (this.onResizeMessage) {
+                            this.onResizeMessage = false;
+                            this.setPreparedTourStep();
+                        }
                     }
                 }
             });
+    }
+
+    private get tourMinimumScreenSize(): number {
+        return this.currentTour && this.currentTour.minimumScreenSize ? this.currentTour.minimumScreenSize : 1000;
     }
 
     /**
@@ -92,6 +109,13 @@ export class GuidedTourService {
     }
 
     /**
+     * @return Observable(true) if the required user interaction for the guided tour step has been executed, otherwise Observable(false)
+     */
+    public userInteractionFinishedState(): Observable<boolean> {
+        return this.isUserInteractionFinished.asObservable();
+    }
+
+    /**
      * Check if the provided tour step is the currently active one
      * @param tourStep: current tour step of the guided tour
      */
@@ -100,6 +124,18 @@ export class GuidedTourService {
             return this.currentTourStepDisplay === this.currentTour.steps.indexOf(tourStep) + 1;
         }
         return false;
+    }
+
+    /**
+     * Get the current step string for the headline, that shows which step is currently displayed, `currentStep / totalStep`
+     */
+    public getCurrentStepString() {
+        if (!this.currentTour) {
+            return;
+        }
+        const currentStep = this.currentTourStepIndex + 1;
+        const totalSteps = this.currentTour.steps.length;
+        return `${currentStep} / ${totalSteps}`;
     }
 
     /**
@@ -112,6 +148,8 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex - 1);
+
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -121,11 +159,7 @@ export class GuidedTourService {
                 previousStep.action();
             }
             setTimeout(() => {
-                if (this.checkSelectorValidity()) {
-                    this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-                } else {
-                    this.backStep();
-                }
+                this.setPreparedTourStep();
             });
         } else {
             this.resetTour();
@@ -141,6 +175,8 @@ export class GuidedTourService {
         }
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
+
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -151,11 +187,7 @@ export class GuidedTourService {
             }
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
-                if (this.checkSelectorValidity()) {
-                    this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-                } else {
-                    this.nextStep();
-                }
+                this.setPreparedTourStep();
             });
         } else {
             this.finishGuidedTour();
@@ -167,7 +199,7 @@ export class GuidedTourService {
      * and calling the reset tour method to remove current tour elements
      *
      */
-    private finishGuidedTour() {
+    public finishGuidedTour() {
         if (!this.currentTour) {
             return;
         }
@@ -185,8 +217,31 @@ export class GuidedTourService {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
-            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
         }
+        if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
+            this.finishGuidedTour();
+        } else {
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
+            this.showCancelHint();
+        }
+    }
+
+    /**
+     * Show the cancel hint every time a user skips a tour
+     */
+    private showCancelHint(): void {
+        clickOnElement('#account-menu[aria-expanded="false"]');
+        setTimeout(() => {
+            this.currentTour = cloneDeep(cancelTour);
+            // Proceed with tour if it has tour steps and the tour display is allowed for current window size
+            if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
+                const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+                if (currentStep.action) {
+                    currentStep.action();
+                }
+                this.setPreparedTourStep();
+            }
+        });
     }
 
     /**
@@ -197,25 +252,38 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
-        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, guidedTourState)
+        // If the tour was already finished, then keep the state
+        const updatedTourState = this.checkTourState(this.currentTour, GuidedTourState.FINISHED) ? GuidedTourState.FINISHED : guidedTourState;
+        this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, updatedTourState)
             .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
             .subscribe(guidedTourSettings => {
                 this.guidedTourSettings = guidedTourSettings.body!;
             });
-
         this.resetTour();
     }
 
     /**
      * Check if the current user has already finished a given guided tour by filtering the user's guided tour settings and comp
-     * @param guidedTour that should be checked for the finished state
+     * @param guidedTour that should be checked for the state
+     * @param state that should be checked, if no state is given, then true is returned if the tour has been started or finished
      */
-    public checkTourStateFinished(guidedTour: GuidedTour): boolean {
+    public checkTourState(guidedTour: GuidedTour, state?: GuidedTourState): boolean {
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
-        if (tourSetting.length > 0 && tourSetting[0].guidedTourState.toString() === GuidedTourState[GuidedTourState.FINISHED]) {
-            return true;
+        if (state) {
+            return !!(tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[state]);
         }
-        return false;
+        return tourSetting.length >= 1;
+    }
+
+    /**
+     * Get the last step that the user visited during the given tour
+     */
+    public getLastSeenTourStepIndex(): number {
+        if (!this.availableTourForComponent) {
+            return 0;
+        }
+        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
+        return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
     }
 
     /**
@@ -225,6 +293,7 @@ export class GuidedTourService {
     public resetTour(): void {
         document.body.classList.remove('tour-open');
         this.currentTourStepIndex = 0;
+        this.currentTour = null;
         this.guidedTourCurrentStepSubject.next(null);
     }
 
@@ -234,59 +303,83 @@ export class GuidedTourService {
      * @param userInteraction the user interaction to complete the tour step
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
+        this.isUserInteractionFinished.next(false);
         if (!this.currentTour) {
             return;
         }
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
 
-        if (nextStep && userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            if (nextStep.highlightSelector) {
-                this.waitForElement(nextStep.highlightSelector);
+        if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
+            if (nextStep && nextStep.highlightSelector) {
+                if (afterNextStep && afterNextStep.highlightSelector) {
+                    this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
+                } else {
+                    this.waitForElement(nextStep.highlightSelector);
+                }
             } else {
                 this.enableNextStepClick();
             }
         } else {
-            const observer = new MutationObserver(mutations => {
-                let mutationCount = 0;
-                mutations.forEach(mutation => {
-                    switch (userInteraction) {
-                        case UserInteractionEvent.CLICK: {
-                            if (mutationCount < 1) {
-                                // A click can trigger multiple events and trigger the next step. Therefore we need to limit the next step trigger to one mutation event
-                                mutationCount += 1;
-                                observer.disconnect();
-                                this.nextStep();
-                            }
-                            break;
-                        }
-                        case UserInteractionEvent.ACE_EDITOR: {
-                            if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                                observer.disconnect();
-                                this.enableNextStepClick();
-                            }
-                            break;
-                        }
-                    }
+            if (userInteraction === UserInteractionEvent.CLICK) {
+                from(this.observeDomMutations(targetNode, userInteraction))
+                    .pipe(take(1))
+                    .subscribe((mutations: MutationRecord[]) => {
+                        mutations.forEach(() => {
+                            this.enableNextStepClick();
+                        });
+                    });
+            } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
+                    mutations.forEach(() => {
+                        this.enableNextStepClick();
+                    });
                 });
+            }
+        }
+    }
+
+    /**
+     * Wraps the mutation observer in a promise
+     * @param targetNode an HTMLElement of which DOM changes should be observed
+     * @param userInteraction the user interaction to complete the tour step
+     */
+    private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
+        return new Promise(resolve => {
+            const observer = new MutationObserver(mutations => {
+                if (userInteraction === UserInteractionEvent.CLICK) {
+                    observer.disconnect();
+                    this.enableNextStepClick();
+                } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+                    mutations.forEach(mutation => {
+                        if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
+                            observer.disconnect();
+                            this.enableNextStepClick();
+                        }
+                    });
+                }
             });
             observer.observe(targetNode, {
                 attributes: true,
                 childList: true,
                 characterData: true,
+                subtree: false,
             });
-        }
+        });
     }
 
     /**
      * Wait for the next step selector to appear in the DOM and continue with the next step
      * @param nextStepSelector the selector string of the next element that should appear in the DOM
+     * @param afterNextStepSelector if the nextSelector does not show up in the DOM then wait for the step afterwards as well
      */
-    private waitForElement(nextStepSelector: string) {
+    private waitForElement(nextStepSelector: string, afterNextStepSelector?: string) {
         const interval = setInterval(() => {
             const nextElement = document.querySelector(nextStepSelector);
-            if (nextElement) {
+            const afterNextElement = afterNextStepSelector ? document.querySelector(afterNextStepSelector) : null;
+            if (nextElement || afterNextElement) {
                 clearInterval(interval);
-                this.nextStep();
+                this.enableNextStepClick();
             }
         }, 1000);
     }
@@ -295,6 +388,7 @@ export class GuidedTourService {
      * Remove the disabled attribute so that the next button is clickable again
      */
     private enableNextStepClick() {
+        this.isUserInteractionFinished.next(true);
         const nextButton = document.querySelector('.next-button');
         if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
             nextButton.attributes.removeNamedItem('disabled');
@@ -305,26 +399,37 @@ export class GuidedTourService {
      * Start guided tour for given guided tour
      */
     public startTour(): void {
-        if (!this.currentTour) {
+        if (!this.availableTourForComponent) {
             return;
         }
+        // Keep current tour null until start tour is triggered, else it could be somehow accessed through nextStep() calls
+        this.currentTour = this.availableTourForComponent;
+
+        this.transformCount = 0;
 
         // Filter tour steps according to permissions
-        this.currentTour.steps = this.currentTour.steps.filter(step => !step.skipStep || !step.permission || this.accountService.hasAnyAuthorityDirect(step.permission));
-        this.currentTourStepIndex = 0;
+        this.currentTour.steps = this.getFilteredTourSteps();
+        this.currentTourStepIndex = this.getLastSeenTourStepIndex();
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
+            if (!this.currentTour.steps[this.currentTourStepIndex]) {
+                // Set current tour step index to 0 if the current tour step cannot be found
+                this.currentTourStepIndex = 0;
+            }
             const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.action) {
                 currentStep.action();
             }
-            if (this.checkSelectorValidity()) {
-                this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep(this.currentTourStepIndex));
-            } else {
-                this.nextStep();
-            }
+            this.setPreparedTourStep();
         }
+    }
+
+    private getFilteredTourSteps(): TourStep[] {
+        if (!this.availableTourForComponent) {
+            return [];
+        }
+        return this.availableTourForComponent.steps.filter(step => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
     }
 
     /**
@@ -345,7 +450,8 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return false;
         }
-        const selector = this.currentTour.steps[this.currentTourStepIndex].highlightSelector;
+        const currentTourStep = this.currentTour.steps[this.currentTourStepIndex];
+        const selector = currentTourStep.highlightSelector;
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
@@ -361,7 +467,7 @@ export class GuidedTourService {
     }
 
     /**
-     * @return {boolean} if the current step is the last tour step
+     * @return true if the current step is the last tour step, otherwise false
      */
     public get isOnLastStep(): boolean {
         if (!this.currentTour) {
@@ -371,7 +477,7 @@ export class GuidedTourService {
     }
 
     /**
-     * @return {boolean} if the current step is the first tour step
+     * @return true if the current step is the first tour step, otherwise false
      */
     public get isOnFirstStep(): boolean {
         return this.currentTourStepIndex === 0;
@@ -412,14 +518,26 @@ export class GuidedTourService {
 
     /**
      * Get the tour step with defined orientation
-     * @param index current tour step index
      * @return prepared current tour step or null
      */
-    private getPreparedTourStep(index: number): TourStep | null {
-        if (this.currentTour) {
-            return this.setTourOrientation(this.currentTour.steps[index]);
-        } else {
+    private getPreparedTourStep(): TourStep | null {
+        if (!this.currentTour) {
             return null;
+        }
+        return this.checkSelectorValidity()
+            ? this.setTourOrientation(this.currentTour.steps[this.currentTourStepIndex])
+            : this.setStepAlreadyFinishedHint(this.currentTour.steps[this.currentTourStepIndex]);
+    }
+
+    /**
+     * Set the next prepared tour step
+     */
+    private setPreparedTourStep(): void {
+        const preparedTourStep = this.getPreparedTourStep();
+        if (preparedTourStep) {
+            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+        } else {
+            this.nextStep();
         }
     }
 
@@ -451,6 +569,17 @@ export class GuidedTourService {
             convertedStep.orientation = currentOrientation;
         }
         return convertedStep;
+    }
+
+    private setStepAlreadyFinishedHint(step: any): TourStep | null {
+        if (step.skipStepIfNoSelector) {
+            return null;
+        }
+        return new TextTourStep({
+            headlineTranslateKey: step.headlineTranslateKey,
+            contentTranslateKey: step.contentTranslateKey,
+            hintTranslateKey: 'tour.stepAlreadyExecutedHint.text',
+        });
     }
 
     /**
@@ -488,7 +617,107 @@ export class GuidedTourService {
          */
         setTimeout(() => {
             this.currentTour = cloneDeep(guidedTour);
+            this.availableTourForComponent = this.currentTour;
             this.guidedTourAvailability.next(true);
-        });
+            const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
+            if (!hasStartedOrFinishedTour) {
+                this.startTour();
+            }
+        }, 500);
+    }
+
+    /**
+     * Check if the course and exercise for the tour are available on the course-exercise component
+     * @param course for which the guided tour availability should be checked
+     * @param guidedTour that should be enabled
+     */
+    public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour): Exercise | null {
+        if (!guidedTour.exerciseShortName || !course || !course.exercises) {
+            return null;
+        }
+        const exerciseForGuidedTour = course.exercises.find(exercise => exercise.shortName === guidedTour.exerciseShortName);
+        if (exerciseForGuidedTour) {
+            this.enableTour(guidedTour);
+            return exerciseForGuidedTour;
+        }
+        return null;
+    }
+
+    /**
+     * Check if the course list contains the course for which the tour is available
+     * @param courses which can contain the needed course for the tour
+     * @param guidedTour that should be enabled
+     */
+    public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
+        const courseForTour = courses.find(course => course.shortName === guidedTour.courseShortName);
+        if (courseForTour) {
+            this.enableTour(guidedTour);
+            return courseForTour;
+        }
+        return null;
+    }
+
+    /**
+     * Check if the exercise list contains the exercise for which the tour is available
+     * @param exercise which can contain the needed exercise for the tour
+     * @param guidedTour that should be enabled
+     */
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
+        if (exercise.shortName === guidedTour.exerciseShortName) {
+            this.enableTour(guidedTour);
+        }
+    }
+
+    /**
+     * Display only as many dots as defined in GuidedTourComponent.maxDots
+     * @param currentIndex index of the current step
+     * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
+     */
+    public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
+        if (this.currentTour!.steps.length < this.maxDots) {
+            return;
+        }
+
+        const transformXIntervalNext = -26;
+        const transformXIntervalPrev = 26;
+
+        const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
+        const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
+        const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
+        const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
+        const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
+
+        // Handles forward navigation
+        if (currentIndex < nextIndex) {
+            // Moves the n-small and p-small class one dot further
+            if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
+                this.transformCount += transformXIntervalNext;
+                nextDot.classList.remove('n-small');
+                nextPlusOneDot.classList.add('n-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex - 9) {
+                        node.classList.remove('p-small');
+                    } else if (index === nextIndex - 8) {
+                        node.classList.add('p-small');
+                    }
+                });
+            }
+        } else {
+            // Handles backwards navigation
+            if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
+                this.transformCount += transformXIntervalPrev;
+                nextDot.classList.remove('p-small');
+                nextPlusOneDot.classList.add('p-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex + 9) {
+                        node.classList.remove('n-small');
+                    } else if (index === nextIndex + 8) {
+                        node.classList.add('n-small');
+                    }
+                });
+            }
+        }
     }
 }

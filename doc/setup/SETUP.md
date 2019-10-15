@@ -21,19 +21,19 @@ artemis:
   repo-clone-path: ./repos/
   encryption-password: <encrypt-password>
   jira:
-    url: https://jirabruegge.in.tum.de
+    url: https://jira.ase.in.tum.de
     user: <username>
     password: <password>
     admin-group-name: tumuser
   version-control:
-    url: https://repobruegge.in.tum.de
+    url: https://bitbucket.ase.in.tum.de
     user: <username>
     secret: <password>
   bamboo:
     url: https://bamboobruegge.in.tum.de
-    bitbucket-application-link-id: <link-id>
     user: <username>
     password: <password>
+    vcs-application-link-name: <name>
     empty-commit-necessary: true
     authentication-token: <token>
   lti:

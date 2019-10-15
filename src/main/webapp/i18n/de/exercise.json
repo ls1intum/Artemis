@@ -6,7 +6,7 @@
                 "createLabel": "Übung erstellen",
                 "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
-            "resultCount": "{{resultsLength}} Ergrbnisse",
+            "resultCount": "{{resultsLength}} Ergebnisse",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
@@ -48,11 +48,12 @@
             "dndType": "Drag und Drop Fragen",
             "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch einen Account für dich erstellt. Klicke auf den <i>Aufgabe starten</i> Button um zu starten!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
-            "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in ein paar Sekunden nochmal.</strong>",
-            "studentName": "Studenten Name",
-            "completionDate": "Fertigstellungsdatum",
+            "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
+            "studentName": "Name",
+            "studentId": "Login",
+            "completionDate": "Abgabedatum",
             "result": "Ergebnis",
-            "submissionCount": "Anzahl an Abgaben",
+            "submissionCount": "Abgaben",
             "score": "Punktzahl",
             "duration": "Dauer",
             "showUnsuccessful": "Nur unerfolgreiche anzeigen",
@@ -65,6 +66,10 @@
             "isText": "Das ist eine Textübung",
             "isFileUpload": "Das ist eine Datei-Upload-Übung",
             "notificiationText": "Optional: Mitteilung über die Änderung",
+            "presentationScoreEnabled": {
+                "title": "Präsentationsergebnis aktiviert",
+                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutoren auf der Seite \"Teilnahmen\" dieser Übung eine Punkt für Präsentation von Studenten eintragen."
+            },
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
             },

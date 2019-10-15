@@ -35,7 +35,6 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     public CustomAuditEventRepository(PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter) {
-
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
     }

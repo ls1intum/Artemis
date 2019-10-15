@@ -4,7 +4,7 @@
 ![Travis Develop Status](https://img.shields.io/travis/com/ls1intum/Artemis/develop.svg?style=flat)
 ![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat)
 
-This application was generated using JHipster 6.3.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.3.1](http://www.jhipster.tech/documentation-archive/v6.3.1).
+This application was generated using JHipster 6.4.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v6.4.1](http://www.jhipster.tech/documentation-archive/v6.4.1).
 
 ![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)
 

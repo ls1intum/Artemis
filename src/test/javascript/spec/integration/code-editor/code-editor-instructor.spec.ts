@@ -344,15 +344,15 @@ describe('CodeEditorInstructorIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.selectedRepository).to.equal(container.REPOSITORY.ASSIGNMENT);
-        expect(container.selectedParticipation).to.deep.equal({ ...exercise.studentParticipations[0], exercise });
+        expect(container.selectedParticipation).to.deep.equal(exercise.studentParticipations[0]);
         expect(container.grid).to.exist;
         expect(container.fileBrowser).to.exist;
         expect(container.actions).to.exist;
         expect(container.instructions).to.exist;
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
-        expect(container.buildOutput.participation).to.deep.equal({ ...exercise.studentParticipations[0], exercise });
-        expect(container.instructions.participation).to.deep.equal({ ...exercise.studentParticipations[0], exercise });
+        expect(container.buildOutput.participation).to.deep.equal(exercise.studentParticipations[0]);
+        expect(container.instructions.participation).to.deep.equal(exercise.studentParticipations[0]);
 
         // New select solution repository
         // @ts-ignore
@@ -362,15 +362,15 @@ describe('CodeEditorInstructorIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.selectedRepository).to.equal(container.REPOSITORY.SOLUTION);
-        expect(container.selectedParticipation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
+        expect(container.selectedParticipation).to.deep.equal(exercise.solutionParticipation);
         expect(container.grid).to.exist;
         expect(container.fileBrowser).to.exist;
         expect(container.actions).to.exist;
         expect(container.instructions).to.exist;
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
-        expect(container.buildOutput.participation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
-        expect(container.instructions.participation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
+        expect(container.buildOutput.participation).to.deep.equal(exercise.solutionParticipation);
+        expect(container.instructions.participation).to.deep.equal(exercise.solutionParticipation);
 
         expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(setDomainSpy).to.have.been.calledTwice;
@@ -403,14 +403,14 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(setDomainSpy).to.have.been.calledOnce;
         expect(setDomainSpy).to.have.been.calledOnceWithExactly([DomainType.PARTICIPATION, exercise.solutionParticipation]);
         expect(container.selectedRepository).to.equal(container.REPOSITORY.SOLUTION);
-        expect(container.selectedParticipation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
+        expect(container.selectedParticipation).to.deep.equal(exercise.solutionParticipation);
         expect(container.grid).to.exist;
         expect(container.fileBrowser).to.exist;
         expect(container.actions).to.exist;
         expect(container.instructions).to.exist;
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
-        expect(container.buildOutput.participation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
-        expect(container.instructions.participation).to.deep.equal({ ...exercise.solutionParticipation, exercise });
+        expect(container.buildOutput.participation).to.deep.equal(exercise.solutionParticipation);
+        expect(container.instructions.participation).to.deep.equal(exercise.solutionParticipation);
     });
 });
