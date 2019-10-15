@@ -151,7 +151,6 @@ public class ResultResource {
      *
      * @param planKey the plan key of the plan which is notifying about a new result
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "/results/{planKey}")
     @Transactional
