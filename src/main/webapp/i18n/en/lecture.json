@@ -42,6 +42,7 @@
             }
         },
         "attachment": {
+            "deleteQuestion": "Do you really want to delete the attachment?",
             "created": "A new attachment is created with identifier {{ param }}",
             "updated": "A attachment is updated with identifier {{ param }}",
             "deleted": "A attachment is deleted with identifier {{ param }}"
