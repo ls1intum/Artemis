@@ -41,8 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 @Service
 @Profile("bamboo")
@@ -664,11 +663,15 @@ public class BambooService implements ContinuousIntegrationService {
      * @param result to which the feedback belongs.
      * @param methodName test case method name.
      * @param positive if the test case was successful.
-     * @param errorMessageString if there was an error what the error is.
+     * @param errorMessageString if there was an error what the error is. Will be shortened if longer than FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS.
      */
     private void createAutomaticFeedback(Result result, String methodName, boolean positive, String errorMessageString) {
         Feedback feedback = new Feedback();
         feedback.setText(methodName);
+        // The assertion message can be longer than the allowed char limit, so we shorten it here if needed.
+        if(errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+            errorMessageString = errorMessageString.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+        }
         feedback.setDetailText(errorMessageString);
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setPositive(positive);
