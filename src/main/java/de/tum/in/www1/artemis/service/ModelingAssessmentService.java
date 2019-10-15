@@ -12,8 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.StudentParticipation;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -28,8 +26,6 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentService.class);
 
-    private final UserService userService;
-
     private final ModelingSubmissionService modelingSubmissionService;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
@@ -40,8 +36,7 @@ public class ModelingAssessmentService extends AssessmentService {
             ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
             ModelingSubmissionService modelingSubmissionService) {
-        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
-        this.userService = userService;
+        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService, userService);
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.modelingSubmissionService = modelingSubmissionService;
@@ -83,28 +78,9 @@ public class ModelingAssessmentService extends AssessmentService {
         if (result == null) {
             result = modelingSubmissionService.setNewResult(modelingSubmission, modelingSubmissionRepository);
         }
-        // check the assessment due date if the user tries to override an existing submitted result
-        if (result.getCompletionDate() != null) {
-            checkAssessmentDueDate(modelingExercise);
-        }
         checkGeneralFeedback(modelingAssessment);
 
-        result.setHasComplaint(false);
-        result.setExampleResult(modelingSubmission.isExampleSubmission());
-        result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userService.getUser();
-        result.setAssessor(user);
-        result.updateAllFeedbackItems(modelingAssessment);
-        // Note: this boolean flag is only used for programming exercises
-        result.setHasFeedback(false);
-
-        if (result.getSubmission() == null) {
-            result.setSubmission(modelingSubmission);
-            modelingSubmission.setResult(result);
-            modelingSubmissionRepository.save(modelingSubmission);
-        }
-        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
-        return resultRepository.save(result);
+        return saveAssessment(result, modelingAssessment, modelingSubmission, modelingExercise, modelingSubmissionRepository);
     }
 
     /**

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -17,21 +16,14 @@ public class FileUploadAssessmentService extends AssessmentService {
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
-    private final UserService userService;
-
     private final FileUploadSubmissionService fileUploadSubmissionService;
-
-    private final FeedbackRepository feedbackRepository;
 
     public FileUploadAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-            ResultService resultService, AuthorizationCheckService authCheckService, FileUploadSubmissionService fileUploadSubmissionService,
-            FeedbackRepository feedbackRepository) {
-        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
+            ResultService resultService, AuthorizationCheckService authCheckService, FileUploadSubmissionService fileUploadSubmissionService) {
+        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService, userService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
-        this.userService = userService;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -54,10 +46,6 @@ public class FileUploadAssessmentService extends AssessmentService {
         return result;
     }
 
-    public List<Feedback> getAssessmentsForResult(Result result) {
-        return this.feedbackRepository.findByResult(result);
-    }
-
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database.
@@ -73,32 +61,11 @@ public class FileUploadAssessmentService extends AssessmentService {
         if (result == null) {
             result = fileUploadSubmissionService.setNewResult(fileUploadSubmission, fileUploadSubmissionRepository);
         }
-        // check the assessment due date if the user tries to override an existing submitted result
-        if (result.getCompletionDate() != null) {
-            checkAssessmentDueDate(fileUploadExercise);
-        }
         final long generalFeedbackCount = fileUploadAssessment.stream().filter(feedback -> feedback.getCredits() == 0).count();
         if (generalFeedbackCount > 1) {
             throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
         }
-
-        result.setHasComplaint(false);
-        result.setExampleResult(fileUploadSubmission.isExampleSubmission());
-        result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userService.getUser();
-        result.setAssessor(user);
-        result.updateAllFeedbackItems(fileUploadAssessment);
-        // Note: this boolean flag is only used for programming exercises
-        result.setHasFeedback(false);
-
-        if (result.getSubmission() == null) {
-            result.setSubmission(fileUploadSubmission);
-            fileUploadSubmission.setResult(result);
-            fileUploadSubmissionRepository.save(fileUploadSubmission);
-        }
-        // Note: This also saves the feedback objects in the database because of the 'cascade =
-        // CascadeType.ALL' option.
-        return resultRepository.save(result);
+        return saveAssessment(result, fileUploadAssessment, fileUploadSubmission, fileUploadExercise, fileUploadSubmissionRepository);
     }
 
 }

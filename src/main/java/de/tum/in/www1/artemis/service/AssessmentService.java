@@ -8,9 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -28,14 +27,17 @@ abstract class AssessmentService {
 
     private final AuthorizationCheckService authCheckService;
 
+    protected final UserService userService;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService, UserService userService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
+        this.userService = userService;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -124,5 +126,29 @@ abstract class AssessmentService {
     private double calculateTotalScore(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
+    }
+
+    protected Result saveAssessment(Result result, List<Feedback> assessment, Submission submission, Exercise exercise, GenericSubmissionRepository submissionRepository) {
+        // check the assessment due date if the user tries to override an existing submitted result
+        if (result.getCompletionDate() != null) {
+            checkAssessmentDueDate(exercise);
+        }
+        result.setHasComplaint(false);
+        result.setExampleResult(submission.isExampleSubmission());
+        result.setAssessmentType(AssessmentType.MANUAL);
+        User user = userService.getUser();
+        result.setAssessor(user);
+        result.updateAllFeedbackItems(assessment);
+        // Note: this boolean flag is only used for programming exercises
+        result.setHasFeedback(false);
+
+        if (result.getSubmission() == null) {
+            result.setSubmission(submission);
+            submission.setResult(result);
+            submissionRepository.save(submission);
+        }
+        // Note: This also saves the feedback objects in the database because of the 'cascade =
+        // CascadeType.ALL' option.
+        return resultRepository.save(result);
     }
 }
