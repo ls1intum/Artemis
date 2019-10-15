@@ -3,12 +3,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { AccountService } from 'app/core';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -62,17 +63,16 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * Deletes file upload exercise
      * @param fileUploadExerciseId id of the exercise that will be deleted
      */
-    deleteFileUploadExercise(fileUploadExerciseId: number) {
-        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(
-            () => {
+    deleteFileUploadExercise = (fileUploadExerciseId: number): Observable<HttpResponse<void>> => {
+        return this.fileUploadExerciseService.delete(fileUploadExerciseId).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted an fileUploadExercise',
                 });
-            },
-            error => this.onError(error),
+            }),
         );
-    }
+    };
 
     protected getChangeEventName(): string {
         return 'fileUploadExerciseListModification';

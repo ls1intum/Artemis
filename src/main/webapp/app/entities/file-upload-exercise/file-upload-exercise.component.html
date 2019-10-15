@@ -90,9 +90,10 @@
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 jhiDeleteButton
                                 [entityTitle]="fileUploadExercise.title"
+                                [entityParameter]="fileUploadExercise.id"
                                 deleteQuestion="artemisApp.exercise.delete.question"
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                (delete)="deleteFileUploadExercise(fileUploadExercise.id)"
+                                [deleteAction]="deleteFileUploadExercise"
                             >
                                 <fa-icon icon="times"></fa-icon>
                             </button>

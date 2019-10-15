@@ -22,6 +22,8 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
         this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
+        this.modalRef.componentInstance.delete = deleteDialogData.delete;
+        this.modalRef.componentInstance.entityParameter = deleteDialogData.entityParameter;
         return from(this.modalRef.result).pipe(finalize(() => (this.modalRef = null)));
     }
 }
