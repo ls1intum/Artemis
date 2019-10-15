@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
-abstract class AssessmentService {
+public abstract class AssessmentService {
 
     private final ComplaintResponseService complaintResponseService;
 

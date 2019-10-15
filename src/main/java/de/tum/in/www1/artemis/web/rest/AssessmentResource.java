@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
+import org.springframework.http.ResponseEntity;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -35,4 +39,18 @@ public abstract class AssessmentResource {
             throw new BadRequestAlertException("The course belonging to this exercise does not exist", getEntityName(), "courseNotFound");
         }
     }
+
+    protected ResponseEntity cancelAssessment(Submission submission, AssessmentService assessmentService) {
+        if (submission.getResult() == null) {
+            // if there is no result everything is fine
+            return ResponseEntity.ok().build();
+        }
+        if (!userService.getUser().getId().equals(submission.getResult().getAssessor().getId())) {
+            // you cannot cancel the assessment of other tutors
+            return forbidden();
+        }
+        assessmentService.cancelAssessmentOfSubmission(submission);
+        return ResponseEntity.ok().build();
+    }
+
 }

@@ -41,8 +41,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with existing assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
 
-    private static final String PUT_ASSESSMENT_200_REASON = "Given assessment has been saved but is not used for automatic assessment by Compass";
-
     private static final String PUT_SUBMIT_ASSESSMENT_200_REASON = "Given assessment has been saved and used for automatic assessment by Compass";
 
     private static final String POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON = "Assessment has been updated after complaint";
@@ -53,8 +51,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final CourseService courseService;
-
     private final ModelingAssessmentService modelingAssessmentService;
 
     private final ModelingSubmissionService modelingSubmissionService;
@@ -63,22 +59,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final ModelAssessmentConflictService conflictService;
-
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
-            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, CourseService courseService,
-            ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService,
-            SimpMessageSendingOperations messagingTemplate, ModelAssessmentConflictService conflictService) {
+            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService1, ModelingAssessmentService modelingAssessmentService,
+            ModelingSubmissionService modelingSubmissionService, ExampleSubmissionService exampleSubmissionService, SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService1;
-        this.courseService = courseService;
         this.modelingAssessmentService = modelingAssessmentService;
         this.modelingSubmissionService = modelingSubmissionService;
         this.messagingTemplate = messagingTemplate;
         this.exampleSubmissionService = exampleSubmissionService;
-        this.conflictService = conflictService;
     }
 
     /**
@@ -313,16 +304,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findByIdWithEagerResultAndAssessor(submissionId);
-        if (modelingSubmission.getResult() == null) {
-            // if there is no result everything is fine
-            return ResponseEntity.ok().build();
-        }
-        if (!userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId())) {
-            // you cannot cancel the assessment of other tutors
-            return forbidden();
-        }
-        modelingAssessmentService.cancelAssessmentOfSubmission(modelingSubmission);
-        return ResponseEntity.ok().build();
+        return cancelAssessment(modelingSubmission, modelingAssessmentService);
     }
 
     @Override
