@@ -10,7 +10,6 @@ import { ArtemisSharedModule } from 'app/shared';
 import { Lecture, LectureAttachmentsComponent } from 'app/entities/lecture';
 import { ActivatedRoute } from '@angular/router';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ArtemisConfirmButtonModule } from 'app/components/confirm-button/confirm-button.module';
 import { Attachment, AttachmentService } from 'app/entities/attachment';
 import { By } from '@angular/platform-browser';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -77,15 +76,7 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [
-                TranslateModule.forRoot(),
-                ArtemisTestModule,
-                TreeviewModule.forRoot(),
-                RouterTestingModule.withRoutes([]),
-                ArtemisSharedModule,
-                FormDateTimePickerModule,
-                ArtemisConfirmButtonModule,
-            ],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, FormDateTimePickerModule],
             declarations: [LectureAttachmentsComponent],
             providers: [
                 {

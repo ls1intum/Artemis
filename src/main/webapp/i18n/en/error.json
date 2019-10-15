@@ -14,6 +14,11 @@
         "scoreNull": "Error! Score is required.",
         "scoreAndSuccessfulNotMatching": "Error! Only result with score 100% can be successful.",
         "feedbackTextOrDetailTextNull": "Error! In case feedback is present, feedback text and detail text are mandatory.",
+        "quizAlreadyVisible": "The quiz is already visible.",
+        "quizAlreadyStarted": "The quiz has already been started.",
+        "quizNotEndedYet": "The quiz has not ended yet.",
+        "quizAlreadyOpenForPractice": "The quiz is alreay open for practice.",
+        "unknownAction": "This action cannot be performed.",
         "groupNotFound": "The group you entered was not found."
     }
 }

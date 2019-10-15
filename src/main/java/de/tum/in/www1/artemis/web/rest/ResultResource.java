@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -76,10 +77,12 @@ public class ResultResource {
 
     private final LtiService ltiService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, FeedbackService feedbackService, UserService userService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SimpMessageSendingOperations messagingTemplate, LtiService ltiService) {
+            SimpMessageSendingOperations messagingTemplate, LtiService ltiService, ProgrammingSubmissionService programmingSubmissionService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -91,6 +94,7 @@ public class ResultResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingTemplate = messagingTemplate;
         this.ltiService = ltiService;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
@@ -103,7 +107,7 @@ public class ResultResource {
      */
     @PostMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
+    public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         final var participation = result.getParticipation();
         final var course = participation.getExercise().getCourse();
@@ -111,6 +115,9 @@ public class ResultResource {
         final var exercise = participation.getExercise();
         if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
             return forbidden();
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
+            return badRequest();
+        }
 
         if (result.getId() != null) {
             throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
@@ -128,6 +135,10 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
+        // Create manual submission with last commit hash und current time stamp.
+        ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
+                SubmissionType.MANUAL);
+        result.setSubmission(submission);
         resultService.createNewManualResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
@@ -281,7 +292,7 @@ public class ResultResource {
      */
     @PutMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
+    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
         final var participation = result.getParticipation();
         final var course = participation.getExercise().getCourse();
@@ -290,7 +301,7 @@ public class ResultResource {
             return forbidden();
         }
         if (result.getId() == null) {
-            return createResult(result);
+            return createProgrammingExerciseManualResult(result);
         }
 
         // have a look how quiz-exercise handles this case with the contained questions
