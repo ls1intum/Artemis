@@ -29,6 +29,7 @@ import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -665,11 +666,11 @@ public class BambooService implements ContinuousIntegrationService {
      * @param positive if the test case was successful.
      * @param errorMessageString if there was an error what the error is. Will be shortened if longer than FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS.
      */
-    private void createAutomaticFeedback(Result result, String methodName, boolean positive, String errorMessageString) {
+    private void createAutomaticFeedback(Result result, String methodName, boolean positive, @Nullable String errorMessageString) {
         Feedback feedback = new Feedback();
         feedback.setText(methodName);
         // The assertion message can be longer than the allowed char limit, so we shorten it here if needed.
-        if(errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+        if(errorMessageString != null && errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
             errorMessageString = errorMessageString.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
         }
         feedback.setDetailText(errorMessageString);
