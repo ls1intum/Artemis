@@ -253,11 +253,13 @@ describe('GuidedTourService', () => {
             const exercise1 = {
                 id: 1,
                 shortName: 'git',
+                type: ExerciseType.PROGRAMMING,
             } as Exercise;
 
             const exercise2 = {
                 id: 1,
                 shortName: 'test',
+                type: ExerciseType.PROGRAMMING,
             } as Exercise;
 
             const course1 = {
