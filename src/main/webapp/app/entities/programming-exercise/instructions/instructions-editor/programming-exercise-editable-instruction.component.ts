@@ -152,7 +152,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             });
 
         // If forced to render, generate the instruction HTML.
-        this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
+        if (this.forceRender) {
+            this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
+        }
     }
 
     /**
