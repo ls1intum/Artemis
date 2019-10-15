@@ -203,7 +203,7 @@ export class ResultComponent implements OnInit, OnChanges {
         } else if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
-            !isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
+            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
             const preliminary = this.translate.instant('artemisApp.result.preliminary');
             return `${this.result!.resultString} ${preliminary}`;
@@ -216,7 +216,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
-            !isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
+            isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
