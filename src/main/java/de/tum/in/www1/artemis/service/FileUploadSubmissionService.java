@@ -134,6 +134,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         fileUploadSubmission.setParticipation(participation);
+        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
         fileUploadSubmissionRepository.save(fileUploadSubmission);
 
@@ -161,7 +162,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final var submissionId = submission.getId();
         final var filename = file.getOriginalFilename().replaceAll("\\s", "");
         final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
-        final var filePath = dirPath + File.separator + filename;
+        final var filePath = dirPath + filename;
         final var savedFile = new java.io.File(filePath);
         final var dir = new java.io.File(dirPath);
 
@@ -264,8 +265,8 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    public FileUploadSubmission findOneWithEagerResult(Long submissionId) {
-        return fileUploadSubmissionRepository.findByIdWithEagerResult(submissionId)
+    public FileUploadSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
+        return fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
 

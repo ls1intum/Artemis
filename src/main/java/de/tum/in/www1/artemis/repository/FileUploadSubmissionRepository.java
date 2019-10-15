@@ -9,5 +9,4 @@ import de.tum.in.www1.artemis.domain.FileUploadSubmission;
  */
 @Repository
 public interface FileUploadSubmissionRepository extends GenericSubmissionRepository<FileUploadSubmission> {
-
 }
