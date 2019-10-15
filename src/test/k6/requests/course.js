@@ -1,27 +1,39 @@
-import { COURSES } from "./endpoints.js";
-import { nextAlphanumeric } from "./random.js";
-import { COURSE } from "./endpoints.js";
+import { COURSES } from './endpoints.js';
+import { nextAlphanumeric } from './random.js';
+import { COURSE } from './endpoints.js';
+import { fail } from 'k6';
 
 export function newCourseShortName(artemis, courseId) {
     let course = JSON.parse(artemis.get(COURSE(courseId), null)[0].body);
-    course.shortName = "TEST" + nextAlphanumeric(5);
+    course.shortName = 'TEST' + nextAlphanumeric(5);
     artemis.put(COURSES, course);
 }
 
 export function newCourse(artemis) {
     const course = {
-        title: "K6 Test Course",
-        description: "K6 performance tests generated course",
+        title: 'K6 Test Course',
+        description: 'K6 performance tests generated course',
         shortName: nextAlphanumeric(5),
-        studentGroupName: "artemis-test",
-        teachingAssistantGroupName: "artemis-test",
-        instructorGroupName: "artemis-test",
+        studentGroupName: 'artemis-test',
+        teachingAssistantGroupName: 'artemis-test',
+        instructorGroupName: 'artemis-test',
         registrationEnabled: true
     };
 
-    return JSON.parse(artemis.post(COURSES, course)[0].body).id;
+    const res = artemis.post(COURSES, course);
+    if (res[0].status !== 201) {
+        fail('ERROR: Unable to generate new course');
+    }
+    console.log('SUCCESS: Generated new course');
+
+    return JSON.parse(res[0].body).id;
 }
 
 export function deleteCourse(artemis, courseId) {
-    artemis.delete(COURSE(courseId));
+    const res = artemis.delete(COURSE(courseId));
+
+    if (res[0].status !== 200) {
+        fail('ERROR: Unable to delete course ' + courseId);
+    }
+    console.log('SUCCESS: Deleted course ' + courseId);
 }

@@ -25,11 +25,11 @@ export default function() {
   // Delay so that not all users start at the same time, batches of 3 users per second
   sleep(Math.floor(__VU / 3));
 
-	group("Artemis Programming Exercise Participation Loadtest", function() {
+	group('Artemis Programming Exercise Participation Loadtest', function() {
       // The user is randomly selected
       let userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
-      let currentUsername = username.replace("USERID", userId);
-      let currentPassword = password.replace("USERID", userId);
+      let currentUsername = username.replace('USERID', userId);
+      let currentPassword = password.replace('USERID', userId);
       let artemis = login(currentUsername, currentPassword);
 
       // Start exercise

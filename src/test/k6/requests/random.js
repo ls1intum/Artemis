@@ -7,7 +7,7 @@ const randString = function randomString(length, chars) {
 
 export function nextAlphanumeric(length) {
     // helpers for random titles
-    let allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let allowedChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     return randString(length, allowedChars);
 }

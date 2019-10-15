@@ -21,8 +21,8 @@ export function setup() {
     artemis = login(adminUsername, adminPassword);
     courseId = newCourse(artemis);
 
-    const instructorUsername = baseUsername.replace("USERID", "1");
-    const instructorPassword = basePassword.replace("USERID", "1");
+    const instructorUsername = baseUsername.replace('USERID', '1');
+    const instructorPassword = basePassword.replace('USERID', '1');
 
     // Login to Artemis
     artemis = login(instructorUsername, instructorPassword);
@@ -36,8 +36,8 @@ export function setup() {
 export default function (data) {
     // The user is randomly selected
     let userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
-    let currentUsername = baseUsername.replace("USERID", userId);
-    let currentPassword = basePassword.replace("USERID", userId);
+    let currentUsername = baseUsername.replace('USERID', userId);
+    let currentPassword = basePassword.replace('USERID', userId);
     let artemis = login(currentUsername, currentPassword);
     let exerciseId = data.exerciseId;
     let courseId = data.courseId;
@@ -45,7 +45,7 @@ export default function (data) {
     // Wait some time for builds to finish and test results to come in
     sleep(15);
 
-    group("Participate in Programming Exercise", function() {
+    group('Participate in Programming Exercise', function() {
         let participationId = startExercise(artemis, courseId, exerciseId);
         if (participationId) {
             artemis.simulateSubmissionChanges(exerciseId, participationId, __ENV.TIMEOUT);
