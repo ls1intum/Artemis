@@ -56,7 +56,7 @@ export class CourseComponent implements OnInit, OnDestroy {
      * @param courseId id the course that will be deleted
      */
     deleteCourse = (courseId: number) => {
-        this.courseService.delete(courseId).pipe(
+        return this.courseService.delete(courseId).pipe(
             tap(() => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',

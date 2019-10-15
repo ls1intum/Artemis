@@ -63,7 +63,7 @@ export class TextExerciseComponent extends ExerciseComponent {
      * @param textExerciseId id of the exercise that will be deleted
      */
     deleteTextExercise = (textExerciseId: number) => {
-        this.textExerciseService.delete(textExerciseId).pipe(
+        return this.textExerciseService.delete(textExerciseId).pipe(
             tap(() => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',

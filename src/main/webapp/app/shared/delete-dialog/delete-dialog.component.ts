@@ -45,12 +45,9 @@ export class DeleteDialogComponent implements OnInit {
      * Closes the dialog with a 'confirm' message, so the user of the service can use this message to delete the entity
      */
     confirmDelete() {
-        let observable: Observable<HttpResponse<void>>;
-        if (this.additionalChecksValues !== {}) {
-            observable = this.delete(this.entityParameter, ...values(this.additionalChecksValues));
-        } else {
-            observable = this.delete(this.entityParameter);
-        }
-        observable.subscribe(() => this.activeModal.close(this.additionalChecksValues), error => this.jhiAlertService.error(error.message));
+        this.delete(this.entityParameter, ...values(this.additionalChecksValues)).subscribe(
+            () => this.activeModal.close(this.additionalChecksValues),
+            error => this.jhiAlertService.error(error.message),
+        );
     }
 }

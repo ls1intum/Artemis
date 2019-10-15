@@ -69,7 +69,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param deleteBaseReposBuildPlans true if base repos and build plans should be deleted
      */
     deleteProgrammingExercise = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => {
-        this.programmingExerciseService.delete(programmingExerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans).pipe(
+        return this.programmingExerciseService.delete(programmingExerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans).pipe(
             tap(() => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
@@ -85,7 +85,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param deleteRepositories true if repositories should be deleted
      */
     cleanupProgrammingExercise = (programmingExerciseId: number, deleteRepositories: boolean) => {
-        this.exerciseService.cleanup(programmingExerciseId, deleteRepositories).pipe(
+        return this.exerciseService.cleanup(programmingExerciseId, deleteRepositories).pipe(
             tap(() => {
                 if (deleteRepositories) {
                     this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');

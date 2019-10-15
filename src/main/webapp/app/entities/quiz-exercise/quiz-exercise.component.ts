@@ -187,7 +187,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     deleteQuizExercise = (quizExerciseId: number) => {
-        this.quizExerciseService.delete(quizExerciseId).pipe(
+        return this.quizExerciseService.delete(quizExerciseId).pipe(
             tap(() => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
@@ -202,7 +202,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     resetQuizExercise = (quizExerciseId: number) => {
-        this.quizExerciseService.reset(quizExerciseId).pipe(
+        return this.quizExerciseService.reset(quizExerciseId).pipe(
             tap(() => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
