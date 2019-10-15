@@ -37,6 +37,14 @@
                         <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
+                <div *ngIf="currentTourStep.alreadyExecutedTranslateKey" class="step-hint interaction alert alert-success">
+                    <div class="step-hint__icon">
+                        <fa-icon icon="check"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                    </div>
+                </div>
                 <div
                     *ngIf="currentTourStep.userInteractionEvent && !currentTourStep.taskList"
                     class="step-hint interaction alert"
@@ -89,11 +97,12 @@
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup">
-                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1">
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" [ngStyle]="{ transform: 'translateX(' + this.transformX + 'px)' }">
                         <li
                             class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
                             [class.current]="guidedTourService.isCurrentStep(i)"
-                            [class.n-small]="guidedTourService.currentTour.steps.indexOf(i) + 1 === guidedTourService.maxDots"
+                            [class.n-small]="guidedTourService.calculateNSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
+                            [class.p-small]="guidedTourService.calculatePSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
                             *ngFor="let i of guidedTourService.currentTour.steps"
                         >
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>

@@ -31,7 +31,7 @@
             "text": "While watching the video, follow the steps on your computer side-by-side."
         },
         "stepAlreadyExecutedHint": {
-            "text": "This step has already been executed, therefore you do not need to do anything here. Just click on next to proceed with the tutorial"
+            "text": "You have already successfully completed this step, therefore you do not need to do anything here. Just click on next to proceed with the tutorial"
         }
     }
 }
