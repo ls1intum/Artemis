@@ -8,7 +8,10 @@
         <p jhiTranslate="instructorDashboard.exportRepos.question" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">Confirm export</p>
         <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required [disabled]="repositoryExportOptions.exportAllStudents"></textarea>
         <p jhiTranslate="instructorDashboard.exportRepos.timeWarning">(This action can take several minutes depending on number and size of repositories.)</p>
-        <div class="checkbox">
+        <!--
+        Only show download all checkbox for instructors & admins.
+-->
+        <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
             <label class="control-label">
                 <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllStudents" />
                 <strong jhiTranslate="artemisApp.programmingExercise.export.downloadAllStudents">Download the repositories of all students</strong>
