@@ -484,7 +484,7 @@ public class ParticipationService {
     public Participation findOne(Long participationId) throws EntityNotFoundException {
         log.debug("Request to get Participation : {}", participationId);
         Optional<Participation> participation = participationRepository.findById(participationId);
-        if (!participation.isPresent()) {
+        if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
         return participation.get();
