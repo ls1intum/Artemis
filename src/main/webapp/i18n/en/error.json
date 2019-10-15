@@ -18,6 +18,7 @@
         "quizAlreadyStarted": "The quiz has already been started.",
         "quizNotEndedYet": "The quiz has not ended yet.",
         "quizAlreadyOpenForPractice": "The quiz is alreay open for practice.",
-        "unknownAction": "This action cannot be performed."
+        "unknownAction": "This action cannot be performed.",
+        "groupNotFound": "The group you entered was not found."
     }
 }
