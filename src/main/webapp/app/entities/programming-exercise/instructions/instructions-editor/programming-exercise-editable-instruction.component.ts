@@ -105,6 +105,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.setupTestCaseSubscription();
             if (this.exercise.id) {
                 this.loadExerciseHints(this.exercise.id);
+            } else {
+                this.exerciseHints = [];
             }
         }
     }
