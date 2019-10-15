@@ -108,7 +108,9 @@
             "confirmpassword": "Neues Passwort bestätigen",
             "confirmpassword.placeholder": "Bestätige dein neues Passwort",
             "email": "Email Adresse",
-            "email.placeholder": "Email Adresse"
+            "email.placeholder": "Email Adresse",
+            "cancel": "Abbruch",
+            "confirm": "Bestätigen"
         },
         "messages": {
             "info": {
