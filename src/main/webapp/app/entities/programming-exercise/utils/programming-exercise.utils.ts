@@ -18,26 +18,26 @@ export const isLegacyResult = (result: Result) => {
 /**
  * A result is preliminary if:
  * - The programming exercise buildAndTestAfterDueDate is set
- * - The submission date of the result is before the buildAndTestAfterDueDate
+ * - The submission date of the result / result completionDate is before the buildAndTestAfterDueDate
  *
  * Note: We check some error cases in this method as a null value for the given parameters, because the clients using this method might unwillingly provide them (result component).
  * TODO: Remove the null checks when the result component is refactored.
  *
- * @param result Result with attached Submission - if submission is null, method will return false.
+ * @param result Result with attached Submission - if submission is null, method will use the result completionDate as a reference.
  * @param programmingExercise ProgrammingExercise
  */
-export const isResultPreliminary = (result: Result | null, programmingExercise: ProgrammingExercise | null) => {
-    if (!programmingExercise || !result) {
+export const isResultPreliminary = (result: Result, programmingExercise: ProgrammingExercise | null) => {
+    if (!programmingExercise) {
         return false;
     }
     const { submission } = result;
-    if (!submission || !submission.submissionDate) {
+    // We use the result completionDate as a fallback when the submissionDate is not available (edge case, every result should have a submission).
+    const referenceDate = submission && submission.submissionDate ? submission.submissionDate : result.completionDate;
+    // When the result completionDate would be null, we have to return here (edge case, every result should have a completionDate).
+    if (!referenceDate) {
         return false;
     }
-    return (
-        !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate &&
-        submission.submissionDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate))
-    );
+    return !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && referenceDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 };
 
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
