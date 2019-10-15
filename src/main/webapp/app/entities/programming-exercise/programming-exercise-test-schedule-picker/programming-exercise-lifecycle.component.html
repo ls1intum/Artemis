@@ -47,7 +47,7 @@
                     <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.manualReviewTooltip"></jhi-help-icon>
                 </div>
                 <div
-                    *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC"
+                    *ngIf="!exercise.assessmentType || exercise.assessmentType === assessmentType.AUTOMATIC"
                     class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle btn-lifecycle--deactivated"
                     (click)="toggleHasManualTests()"
                 >
@@ -61,7 +61,11 @@
                     <fa-icon class="icon-static" icon="user-check" size="lg"></fa-icon>
                     <fa-icon class="icon-remove" icon="user-minus" size="lg"></fa-icon>
                 </div>
-                <div *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC" class="text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">
+                <div
+                    *ngIf="!exercise.assessmentType || exercise.assessmentType === assessmentType.AUTOMATIC"
+                    class="text-danger"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.notSet"
+                >
                     not set
                 </div>
             </div>
