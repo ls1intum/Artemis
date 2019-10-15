@@ -8,7 +8,7 @@
                 "sourceTreeSetup": {
                     "headline": "Setup SourceTree",
                     "content": "Watch the following video and follow the steps to setup SourceTree. Afterwards we are done with the setup and can have a look at the course page and its content.",
-                    "videoUrl": "https://www.youtube.com/embed/YSywEAXKFVk",
+                    "videoUrl": "https://www.youtube.com/embed/YSywEAXKFVk?rel=0",
                     "hint": "Copy and insert <tt>https://bitbucket.ase.in.tum.de</tt> as your base URL"
                 }
             },
@@ -55,27 +55,27 @@
             "cloneRepository": {
                 "headline": "Clone repository in SourceTree",
                 "content": "Watch the following video to understand how to clone a git repository in SourceTree. After this step you should click on the <tt>X</tt> button on the top right to cancel the tutorial for now and apply the steps that you have seen in the video. Afterwards just continue the tutorial from your account menu",
-                "videoUrl": "https://www.youtube.com/embed/MtwpehC7fcA"
+                "videoUrl": "https://www.youtube.com/embed/MtwpehC7fcA?rel=0"
             },
             "inspectSourceTree": {
                 "headline": "Inspect SourceTree",
                 "content": "Watch the following video to understand the basic functions in SourceTree.",
-                "videoUrl": "https://www.youtube.com/embed/zky4NnIVzLw"
+                "videoUrl": "https://www.youtube.com/embed/zky4NnIVzLw?rel=0"
             },
             "importEclipse": {
                 "headline": "Import the Java project in Eclipse",
                 "content": "Watch the following video to understand how to import the project in Eclipse.",
-                "videoUrl": "https://www.youtube.com/embed/VOEJ84cWgK4"
+                "videoUrl": "https://www.youtube.com/embed/VOEJ84cWgK4?rel=0"
             },
             "inspectProject": {
                 "headline": "Inspect Project",
                 "content": "In this video step we will inspect the project and solve the given task.",
-                "videoUrl": "https://www.youtube.com/embed/DwSqaraLWIc"
+                "videoUrl": "https://www.youtube.com/embed/DwSqaraLWIc?rel=0"
             },
             "commitAndPush": {
                 "headline": "Submit your changes",
                 "content": "Watch the following video to understand how to commit and push your changes.",
-                "videoUrl": "https://www.youtube.com/embed/3bmaLuT7RNI"
+                "videoUrl": "https://www.youtube.com/embed/3bmaLuT7RNI?rel=0"
             },
             "reviewResult": {
                 "headline": "Review your result",
