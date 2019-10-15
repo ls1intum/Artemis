@@ -2,7 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
@@ -38,6 +38,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     domainCommandsGradingInstructions = [new KatexCommand()];
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
+    rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
 
@@ -68,6 +69,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language);
+            // Rerender the instructions as the template has changed.
+            this.rerenderSubject.next();
         }
     }
 
