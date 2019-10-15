@@ -46,6 +46,7 @@ public abstract class SubmissionService {
      * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
      * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
      * database without explicitly saving them.
+     * @param submission that we want to hide sensitive information for
      */
     public void hideDetails(Submission submission) {
         // do not send old submissions or old results to the client
@@ -94,6 +95,7 @@ public abstract class SubmissionService {
      * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
      * @param submission the submission for which a new result should be created
+     * @param submissionRepository concrete submission repository
      * @return the newly created result
      */
     public Result setNewResult(Submission submission, GenericSubmissionRepository submissionRepository) {
