@@ -145,7 +145,9 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     private evaluateTemplateStatusForModelingTextFileUploadExercises() {
         const submissionInDueTime =
+            // The exercise has no due date. Therefore the submission is "in" due date.
             !getExercise(this.participation).dueDate ||
+            // The exercise has a due date. We use the first submission of the participation to evaluate if it is in the exercise's due date.
             (this.participation.submissions != null &&
                 this.participation.submissions.length > 0 &&
                 isSubmissionInDueTime(this.participation.submissions[0], getExercise(this.participation)));
