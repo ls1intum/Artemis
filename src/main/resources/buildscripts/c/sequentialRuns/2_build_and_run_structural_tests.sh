@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Actual build process:
-cd tests
+cd tests || exit 1
 
 # Structural tests
 cp structural/Tests.py ./
@@ -14,10 +14,7 @@ if ! grep -P '(errors|failures)="[1-9]+' ../test-reports/structural-results.xml 
   rm Tests.py
   rm -rf ./tests
 
-  # Start behavior tests
-  cp behavioral/Tests.py ./
-  cp -r behavioral/tests ./tests
-  python3 Tests.py behavior
+  exit 0
 fi
 
-exit 0
+exit 1

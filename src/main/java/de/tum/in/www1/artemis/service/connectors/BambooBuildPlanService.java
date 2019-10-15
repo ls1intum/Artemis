@@ -139,9 +139,8 @@ public class BambooBuildPlanService {
             final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
             var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
             tasks.add(0, checkoutTask);
-            tasks.add(tasks.size(), testParserTask);
 
-            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).requirements(new Requirement("Python3")));
+            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).requirements(new Requirement("Python3")).finalTasks(testParserTask));
         }
         default:
             throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
