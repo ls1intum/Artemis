@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
@@ -114,20 +114,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     /**
      * Cleans up programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event passed from delete dialog to represent if checkboxes were checked
+     * @param deleteRepositories if true repositories for this exercise will be deleted
      */
-    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
-            () => {
-                if ($event.deleteRepositories) {
+    cleanupProgrammingExercise = (programmingExerciseId: number, deleteRepositories: boolean) => {
+        return this.exerciseService.cleanup(programmingExerciseId, deleteRepositories).pipe(
+            tap(() => {
+                if (deleteRepositories) {
                     this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
                 } else {
                     this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
                 }
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
-            },
+            }),
         );
-    }
+    };
 }

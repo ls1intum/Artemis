@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
@@ -77,17 +77,16 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      * Deletes exercise hint
      * @param exerciseHintId the id of the exercise hint that we want to delete
      */
-    deleteExerciseHint(exerciseHintId: number) {
-        this.exerciseHintService.delete(exerciseHintId).subscribe(
-            () => {
+    deleteExerciseHint = (exerciseHintId: number) => {
+        return this.exerciseHintService.delete(exerciseHintId).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
-            },
-            error => this.onError(error),
+            }),
         );
-    }
+    };
 
     protected onError(errorMessage: string) {
         this.jhiAlertService.error(errorMessage, null, undefined);

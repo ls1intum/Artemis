@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-user-management',
@@ -152,14 +153,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Deletes a user
      * @param login of the user that should be deleted
      */
-    deleteUser(login: string) {
-        this.userService.delete(login).subscribe(() => {
-            this.eventManager.broadcast({
-                name: 'userListModification',
-                content: 'Deleted a user',
-            });
-        });
-    }
+    deleteUser = (login: string) => {
+        return this.userService.delete(login).pipe(
+            tap(() => {
+                this.eventManager.broadcast({
+                    name: 'userListModification',
+                    content: 'Deleted a user',
+                });
+            }),
+        );
+    };
 
     private onSuccess(data: User[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link')!);

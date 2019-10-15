@@ -10,6 +10,7 @@ import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-notification-mgmt',
@@ -78,14 +79,16 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      * Deletes notification
      * @param notificationId the id of the notification that we want to delete
      */
-    deleteNotification(notificationId: number) {
-        this.systemNotificationService.delete(notificationId).subscribe(() => {
-            this.eventManager.broadcast({
-                name: 'notificationListModification',
-                content: 'Deleted a system notification',
-            });
-        });
-    }
+    deleteNotification = (notificationId: number) => {
+        return this.systemNotificationService.delete(notificationId).pipe(
+            tap(() => {
+                this.eventManager.broadcast({
+                    name: 'notificationListModification',
+                    content: 'Deleted a system notification',
+                });
+            }),
+        );
+    };
 
     /**
      * Loads system notifications

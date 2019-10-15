@@ -7,10 +7,10 @@ import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from '../exercise/exercise.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-participation',
@@ -114,38 +114,34 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     /**
      * Deletes participation
      * @param participationId the id of the participation that we want to delete
-     * @param $event passed from delete dialog to represent if checkboxes were checked
+     * @param deleteBuildPlan if true build plan for this participation will be deleted
+     * @param deleteRepository if true repository for this participation will be deleted
      */
-    deleteParticipation(participationId: number, $event: { [key: string]: boolean }) {
-        const deleteBuildPlan = $event.deleteBuildPlan ? $event.deleteBuildPlan : false;
-        const deleteRepository = $event.deleteRepository ? $event.deleteRepository : false;
-        this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).subscribe(
-            () => {
+    deleteParticipation = (participationId: number, deleteBuildPlan: boolean = false, deleteRepository: boolean = false) => {
+        return this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).pipe(
+            tap(() => {
                 this.eventManager.broadcast({
                     name: 'participationListModification',
                     content: 'Deleted an participation',
                 });
-            },
-            error => this.onError(error),
+            }),
         );
-    }
+    };
 
     /**
      * Cleans programming exercise participation
      * @param programmingExerciseParticipation the id of the participation that we want to delete
      */
-    cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: StudentParticipation) {
-        this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe(() => {
-            this.eventManager.broadcast({
-                name: 'participationListModification',
-                content: 'Cleanup the build plan of an participation',
-            });
-        });
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
-    }
+    cleanupProgrammingExerciseParticipation = (programmingExerciseParticipation: StudentParticipation) => {
+        return this.participationService.cleanupBuildPlan(programmingExerciseParticipation).pipe(
+            tap(() => {
+                this.eventManager.broadcast({
+                    name: 'participationListModification',
+                    content: 'Cleanup the build plan of an participation',
+                });
+            }),
+        );
+    };
 
     callback() {}
 }

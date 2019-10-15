@@ -64,7 +64,8 @@
                                 jhiDeleteButton
                                 [entityTitle]="user.login"
                                 deleteQuestion="userManagement.delete.question"
-                                (delete)="deleteUser(user.login)"
+                                [deleteAction]="deleteUser"
+                                [entityParameter]="user.login"
                                 [disabled]="currentAccount.login === user.login"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
