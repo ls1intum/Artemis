@@ -1,7 +1,8 @@
 import { group, sleep } from 'k6';
 import { login } from "./requests/requests.js";
-import { createExercise, startExercise } from "./requests/programmingExercise.js";
+import { createExercise, startExercise, simulateParticipation } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse } from "./requests/course.js";
+import { buildErrorContent } from "./resource/constants.js";
 
 export const options = {
     maxRedirects: 0,
@@ -48,7 +49,7 @@ export default function (data) {
     group('Participate in Programming Exercise', function() {
         let participationId = startExercise(artemis, courseId, exerciseId);
         if (participationId) {
-            artemis.simulateSubmissionChanges(exerciseId, participationId, __ENV.TIMEOUT);
+            simulateParticipation(artemis, __ENV.TIMEOUT, exerciseId, participationId, buildErrorContent);
         }
     });
 
