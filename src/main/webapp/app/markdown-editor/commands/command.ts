@@ -79,4 +79,31 @@ export abstract class Command {
     }
 
     abstract execute(input?: string): void;
+
+    protected ignoreWhiteSpace(text: string) {
+        const textLength = text.length;
+        let startSpace = '';
+        let endSpace = '';
+        let startIndx = 0;
+        let endIndx = 0;
+
+        for (let i = 0; i < textLength; i++) {
+            if (text.charAt(i) === ' ') {
+                startSpace = startSpace + ' ';
+            } else {
+                startIndx = i;
+                break;
+            }
+        }
+
+        for (let j = textLength; j >= 0; j--) {
+            if (text.charAt(j - 1) === ' ') {
+                endSpace = endSpace + ' ';
+            } else {
+                endIndx = j;
+                break;
+            }
+        }
+        return [text.slice(startIndx, endIndx), startSpace, endSpace];
+    }
 }
