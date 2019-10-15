@@ -100,9 +100,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (problemStatementHasChanged(changes)) {
-            this.generateHtml();
-        }
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
             if (this.exercise.id) {
