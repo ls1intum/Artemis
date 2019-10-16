@@ -3,24 +3,13 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Install required tools",
-                "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools. You can find the instructions in the next few steps.",
-                "java": {
-                    "content": "Please download and install the newest Java JDK (at least Java JDK 12). Make sure to choose JDK and NOT JRE.",
-                    "linkText": "Download Java JDK"
-                },
-                "eclipse": {
-                    "content": "Please download and install Eclipse IDE for Java Developers (2019‐09 or later)",
-                    "linkText": "Download Eclipse IDE"
-                },
-                "sourceTree": {
-                    "content": "Please download and install SourceTree with git (3.2.1 or later for macOS or Windows).",
-                    "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use Git Kraken or the command line.",
-                    "linkText": "Download SourceTree"
-                },
+                "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools.<ul><li>Please download and install the newest <a href='https://www.oracle.com/technetwork/java/javase/downloads/index.html' target='_blank' rel='noopener noreferrer'>Java JDK</a> (at least Java JDK 12). Make sure to choose JDK and <span class='red bold'>not</span> JRE.</li><li>Please download and install <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>Eclipse IDE for Java Developers</a> (2019‐09 or later)</li><li>Please download and install <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>SourceTree</a> with git (3.2.1 or later for macOS or Windows).</li></ul>",
+                "hint": "Make sure that the git command line tools are also installed during the installation of SourceTree. In case you are using Linux, you can e.g. use <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> or the <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>command line</a>.",
                 "sourceTreeSetup": {
                     "headline": "Setup SourceTree",
                     "content": "Watch the following video and follow the steps to setup SourceTree. Afterwards we are done with the setup and can have a look at the course page and its content.",
-                    "hint": "Copy and insert https://bitbucket.ase.in.tum.de as your base URL"
+                    "videoUrl": "https://www.youtube.com/embed/UMGDMqE0RyE?rel=0",
+                    "hint": "Copy and insert <tt>https://bitbucket.ase.in.tum.de</tt> as your base URL"
                 }
             },
             "exercises": {
@@ -33,7 +22,7 @@
             },
             "currentExercise": {
                 "headline": "Current Exercise",
-                "content": "In this tutorial we will have a look at the 'Hello World' exercise."
+                "content": "In this tutorial we will have a look at the <tt>Hello World</tt> exercise."
             },
             "exerciseType": {
                 "headline": "Exercise type",
@@ -61,27 +50,32 @@
             },
             "startExercise": {
                 "headline": "Start with your first programming exercise",
-                "content": "Click on the 'Start exercise' button to start working on the exercise. This action takes a few seconds, since a personal repository is setup for you in the background."
+                "content": "Click on the <tt>Start exercise</tt> button to start working on the exercise. This action takes a few seconds, since a personal repository is setup for you in the background"
             },
             "cloneRepository": {
                 "headline": "Clone repository in SourceTree",
-                "content": "Watch the following video to understand how to clone a git repository in SourceTree."
+                "content": "Watch the following video to understand how to clone a git repository in SourceTree. After this step you should click on the <tt>X</tt> button on the top right to cancel the tutorial for now and apply the steps that you have seen in the video. Afterwards just continue the tutorial from your account menu",
+                "videoUrl": "https://www.youtube.com/embed/MtwpehC7fcA?rel=0"
             },
             "inspectSourceTree": {
                 "headline": "Inspect SourceTree",
-                "content": "Watch the following video to understand the basic functions in SourceTree."
+                "content": "Watch the following video to understand the basic functions in SourceTree.",
+                "videoUrl": "https://www.youtube.com/embed/zky4NnIVzLw?rel=0"
             },
             "importEclipse": {
                 "headline": "Import the Java project in Eclipse",
-                "content": "Watch the following video to understand how to import the project in Eclipse."
+                "content": "Watch the following video to understand how to import the project in Eclipse.",
+                "videoUrl": "https://www.youtube.com/embed/VOEJ84cWgK4?rel=0"
             },
             "inspectProject": {
                 "headline": "Inspect Project",
-                "content": "In this video step we will inspect the project and solve the given task."
+                "content": "In this video step we will inspect the project and solve the given task.",
+                "videoUrl": "https://www.youtube.com/embed/DwSqaraLWIc?rel=0"
             },
             "commitAndPush": {
                 "headline": "Submit your changes",
-                "content": "Watch the following video to understand how to commit and push your changes."
+                "content": "Watch the following video to understand how to commit and push your changes.",
+                "videoUrl": "https://www.youtube.com/embed/3bmaLuT7RNI?rel=0"
             },
             "reviewResult": {
                 "headline": "Review your result",

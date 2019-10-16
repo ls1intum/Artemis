@@ -9,6 +9,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { CookieService } from 'ngx-cookie';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisTestModule } from '../test.module';
@@ -26,6 +27,7 @@ import { AccountService } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { MockTranslateService } from '../mocks/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -147,6 +149,7 @@ describe('GuidedTourService', () => {
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: DeviceDetectorService },
+                    { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
@@ -250,11 +253,13 @@ describe('GuidedTourService', () => {
             const exercise1 = {
                 id: 1,
                 shortName: 'git',
+                type: ExerciseType.PROGRAMMING,
             } as Exercise;
 
             const exercise2 = {
                 id: 1,
                 shortName: 'test',
+                type: ExerciseType.PROGRAMMING,
             } as Exercise;
 
             const course1 = {
@@ -306,6 +311,25 @@ describe('GuidedTourService', () => {
                 // tour not available for not matching course / exercise short name
                 currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise) as Exercise;
                 expect(currentExercise).to.be.null;
+            });
+        });
+
+        describe('Dot calculation', () => {
+            it('should calculate the n-small dot display', () => {
+                // Initially the getLastSeenTourStepIndex is 0 because we don't access the user guided settings
+                expect(guidedTourService.calculateNSmallDot(0)).to.be.false;
+                expect(guidedTourService.calculateNSmallDot(10)).to.be.true;
+
+                // We update the getLastSeenTourStepIndex to check whether it is called correctly if the last seen step is bigger than the max dots value
+                spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(12);
+                expect(guidedTourService.calculateNSmallDot(14)).to.be.true;
+            });
+
+            it('should calculate the p-small dot', () => {
+                // The p-small class is not displayed if the total count of steps is smaller than the max dots value
+                expect(guidedTourService.calculatePSmallDot(0)).to.be.false;
+                spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(15);
+                expect(guidedTourService.calculatePSmallDot(8)).to.be.true;
             });
         });
     });

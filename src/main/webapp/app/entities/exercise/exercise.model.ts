@@ -30,12 +30,12 @@ export const enum ParticipationStatus {
     QUIZ_NOT_STARTED = 'quiz-not-started',
     QUIZ_NOT_PARTICIPATED = 'quiz-not-participated',
     QUIZ_FINISHED = 'quiz-finished',
-    MODELING_EXERCISE = 'modeling-exercise',
-    TEXT_EXERCISE = 'text-exercise',
-    FILE_UPLOAD_EXERCISE = 'file-upload-exercise',
     UNINITIALIZED = 'uninitialized',
     INITIALIZED = 'initialized',
     INACTIVE = 'inactive',
+    EXERCISE_ACTIVE = 'exercise-active',
+    EXERCISE_SUBMITTED = 'exercise-submitted',
+    EXERCISE_MISSED = 'exercise-missed',
 }
 
 export interface ExerciseCategory {

@@ -33,8 +33,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.google.common.collect.Sets;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -137,13 +135,8 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-        if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()).isPresent()) {
-            // participation already exists
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "participation", "participationAlreadyExists",
-                    "There is already a participation for the given exercise and user.")).body(null);
         }
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
@@ -215,7 +208,9 @@ public class ParticipationResource {
         participation = participationService.findOneWithEagerResults(participation.getId());
 
         Result result = participation.findLatestResult();
-        participation.setResults(Sets.newHashSet(result));
+        if (result != null) {
+            participation.setResults(Set.of(result));
+        }
     }
 
     /**
@@ -515,7 +510,7 @@ public class ParticipationResource {
         }
         else if (exercise instanceof ModelingExercise) {
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            if (!optionalParticipation.isPresent()) {
+            if (optionalParticipation.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
             }
             Participation participation = optionalParticipation.get();

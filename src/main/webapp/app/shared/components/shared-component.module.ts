@@ -1,10 +1,11 @@
 import { NgModule } from '@angular/core';
-import { ButtonComponent } from './';
+import { ButtonComponent, ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent, HelpIconComponent } from './';
 import { ArtemisSharedModule } from 'app/shared';
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    declarations: [ButtonComponent],
-    exports: [ButtonComponent],
+    entryComponents: [ConfirmAutofocusModalComponent],
+    declarations: [ButtonComponent, HelpIconComponent, ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent],
+    exports: [ButtonComponent, HelpIconComponent, ConfirmAutofocusButtonComponent],
 })
 export class ArtemisSharedComponentModule {}

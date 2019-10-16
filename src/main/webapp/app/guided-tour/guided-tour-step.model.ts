@@ -36,23 +36,11 @@ export class TextTourStep extends TourStep {
     contentTranslateKey: string;
     /** Translation key for the hint content **/
     hintTranslateKey?: string;
+    /** Translation key for the already executed hint content **/
+    alreadyExecutedTranslateKey?: string;
 
     constructor(tourStep: TextTourStep) {
         super();
-        Object.assign(this, tourStep);
-    }
-}
-
-export class TextLinkTourStep extends TextTourStep {
-    /** External url **/
-    externalUrl: string;
-    /** Text for external url **/
-    externalUrlTranslateKey: string;
-    /** Link type, either link or button **/
-    linkType: LinkType;
-
-    constructor(tourStep: TextLinkTourStep) {
-        super(tourStep);
         Object.assign(this, tourStep);
     }
 }

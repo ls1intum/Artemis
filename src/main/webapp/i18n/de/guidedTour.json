@@ -1,5 +1,6 @@
 {
     "tour": {
+        "step": "Schritt {{ string }}:",
         "navigation": {
             "back": "Zurück",
             "next": "Weiter",
@@ -12,7 +13,7 @@
         },
         "cancel": {
             "headline": "Tutorial abgebrochen",
-            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf \"Tutorial fortsetzen\" im Account-Menü."
+            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial fortsetzen</tt> im Account-Menü."
         },
         "clickHint": {
             "text": "Klicke auf das Element um die Tour fortzusetzen."
@@ -27,7 +28,7 @@
             "text": "Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
         },
         "stepAlreadyExecutedHint": {
-            "text": "Dieser Tutorialschritt wurde übersprungen, da er bereits durchgeführt wurde. Navigiere einfach zum nächsten Schritt, um mit dem Tutorial fortzufahren."
+            "text": "Du hast diesen Tutorialschritt bereits erfolgreich durchgeführt, deswegen brauchst du hier nichts mehr tun. Navigiere einfach zum nächsten Schritt, um mit dem Tutorial fortzufahren."
         }
     }
 }
