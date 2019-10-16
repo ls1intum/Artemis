@@ -106,7 +106,7 @@ public class UMLMethod extends UMLElement {
      * @return true if the parent classes are similar/equal, false otherwise
      */
     private boolean parentsSimilar(UMLMethod referenceMethod) {
-        if (parentClass.getSimilarityID() >= 0 && referenceMethod.getParentClass().getSimilarityID() >= 0) {
+        if (parentClass.getSimilarityID() != -1 && referenceMethod.getParentClass().getSimilarityID() != -1) {
             return parentClass.getSimilarityID() == referenceMethod.getParentClass().getSimilarityID();
         }
 
