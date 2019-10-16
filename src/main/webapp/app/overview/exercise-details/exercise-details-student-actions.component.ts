@@ -93,13 +93,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     startExercise() {
-        this.exercise.loading = true;
-
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
             return this.router.navigate(['/quiz', this.exercise.id]);
         }
 
+        this.exercise.loading = true;
         this.courseExerciseService
             .startExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))

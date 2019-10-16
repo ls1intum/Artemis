@@ -328,8 +328,8 @@ public class GitService {
             fetchAll(repo);
             reset(repo, "origin/master");
         }
-        catch (GitAPIException ex) {
-            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex);
+        catch (GitAPIException | JGitInternalException ex) {
+            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex.getMessage());
         }
     }
 
@@ -433,10 +433,9 @@ public class GitService {
             git.close();
 
             reset(repository, commitHash);
-
         }
-        catch (GitAPIException ex) {
-            log.error("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
+        catch (GitAPIException | JGitInternalException ex) {
+            log.error("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
         }
     }
 

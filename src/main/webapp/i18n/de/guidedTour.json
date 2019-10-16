@@ -28,7 +28,7 @@
             "text": "Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
         },
         "stepAlreadyExecutedHint": {
-            "text": "Dieser Tutorialschritt wurde übersprungen, da er bereits durchgeführt wurde. Navigiere einfach zum nächsten Schritt, um mit dem Tutorial fortzufahren."
+            "text": "Du hast diesen Tutorialschritt bereits erfolgreich durchgeführt, deswegen brauchst du hier nichts mehr tun. Navigiere einfach zum nächsten Schritt, um mit dem Tutorial fortzufahren."
         }
     }
 }
