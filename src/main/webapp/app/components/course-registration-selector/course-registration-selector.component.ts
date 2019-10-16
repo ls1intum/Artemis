@@ -3,7 +3,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { AccountService } from 'app/core';
 import { Course, CourseService } from 'app/entities/course';
-import { TranslateService } from '@ngx-translate/core';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -21,12 +20,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     addedSuccessful = false;
     loading = false;
 
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseService,
-        private jhiAlertService: JhiAlertService,
-        private translateService: TranslateService,
-    ) {}
+    constructor(private accountService: AccountService, private courseService: CourseService, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
@@ -82,8 +76,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     }
 
     registerForCourse() {
-        // Special case for PGdP where we have to have a confirmation regarding the exam registration before registering to the course
-        if (this.courseToRegister && (this.courseToRegister.id !== 37 || confirm(this.translateService.instant('artemisApp.studentDashboard.register.examSignupConfirmation')))) {
+        if (this.courseToRegister) {
             this.showCourseSelection = false;
             this.loading = true;
             this.courseService.registerForCourse(this.courseToRegister.id).subscribe(
