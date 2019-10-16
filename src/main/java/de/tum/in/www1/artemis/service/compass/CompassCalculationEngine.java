@@ -434,16 +434,14 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private boolean hasConflict(int elementId) {
         Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(elementId);
-        if (optionalAssessment.isPresent()) {
-            double uniqueScore = -1;
-            for (Feedback feedback : optionalAssessment.get().getFeedbackList()) {
-                if (uniqueScore != -1 && uniqueScore != feedback.getCredits()) {
-                    return true;
-                }
-                uniqueScore = feedback.getCredits();
-            }
+
+        if (optionalAssessment.isEmpty() || optionalAssessment.get().getFeedbackList() == null || optionalAssessment.get().getFeedbackList().isEmpty()) {
+            return false;
         }
-        return false;
+
+        List<Feedback> feedbackList = optionalAssessment.get().getFeedbackList();
+        // if not all feedback entries have the same score as the first feedback, i.e. not all scores are the same, there is a conflict in the assessment
+        return !feedbackList.stream().allMatch(feedback -> feedback.getCredits().equals(feedbackList.get(0).getCredits()));
     }
 
     private boolean scoresAreConsideredEqual(double score1, double score2) {
