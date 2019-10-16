@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { from, fromEvent, Observable, Subject } from 'rxjs';
+import { fromEvent, Observable, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -31,12 +31,13 @@ export class GuidedTourService {
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private guidedTourAvailabilitySubject = new Subject<boolean>();
     private isUserInteractionFinishedSubject = new Subject<boolean>();
-    private checkModelingComponentSubject = new Subject<boolean>();
+    private checkModelingComponentSubject = new Subject<string | null>();
     private transformSubject = new Subject<number>();
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
     private availableTourForComponent: GuidedTour | null;
     private transformCount = 0;
+    private modelingResultCorrect = false;
 
     // Variables for the dot navigation
     private transformXIntervalNext = -26;
@@ -123,16 +124,21 @@ export class GuidedTourService {
 
     /**
      */
-    public checkModelingComponent(): Observable<boolean> {
+    public checkModelingComponent(): Observable<string | null> {
         return this.checkModelingComponentSubject.asObservable();
     }
 
-    public checkModelingResult(result: any) {
-        const personClassCorrect = result['personClassCorrect'];
-        const studentClassCorrect = result['studentClassCorrect'];
-        const professorClassCorrect = result['professorClassCorrect'];
-        const associationsCorrect = result['associationsCorrect'];
-        // TODO Display on guided tour component
+    public updateModelingResult(key: string, result: boolean) {
+        if (!this.currentStep || !this.currentStep.task) {
+            return;
+        }
+        if (result && this.currentStep.task.key === key) {
+            this.modelingResultCorrect = result;
+            setTimeout(() => {
+                this.enableNextStepClick();
+                this.checkModelingComponentSubject.next(null);
+            }, 100);
+        }
     }
 
     /**
@@ -151,6 +157,16 @@ export class GuidedTourService {
             return this.currentTourStepDisplay === this.currentTour.steps.indexOf(tourStep) + 1;
         }
         return false;
+    }
+
+    /**
+     * Check if the provided tour step is the currently active one
+     */
+    public get currentStep(): TourStep | null {
+        if (!this.currentTour || !this.currentTour.steps) {
+            return null;
+        }
+        return this.currentTour.steps[this.currentTourStepIndex];
     }
 
     /**
@@ -310,7 +326,7 @@ export class GuidedTourService {
             return 0;
         }
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
-        return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
+        return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep - 1 : 0;
     }
 
     /**
@@ -329,7 +345,7 @@ export class GuidedTourService {
      * @param targetNode an HTMLElement of which DOM changes should be observed
      * @param userInteraction the user interaction to complete the tour step
      */
-    public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
+    public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string): void {
         this.isUserInteractionFinishedSubject.next(false);
         if (!this.currentTour) {
             return;
@@ -351,8 +367,10 @@ export class GuidedTourService {
             if (userInteraction === UserInteractionEvent.CLICK || userInteraction === UserInteractionEvent.ACE_EDITOR) {
                 this.observeDomMutations(targetNode, userInteraction);
             } else if (userInteraction === UserInteractionEvent.MODELING) {
+                this.modelingResultCorrect = false;
+                this.checkModelingComponentSubject.next(modelingTask);
                 targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
-                this.observeDomMutations(targetNode, userInteraction);
+                this.observeDomMutations(targetNode, userInteraction, modelingTask);
             }
         }
     }
@@ -362,7 +380,7 @@ export class GuidedTourService {
      * @param targetNode an HTMLElement of which DOM changes should be observed
      * @param userInteraction the user interaction to complete the tour step
      */
-    private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
+    private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string) {
         const observer = new MutationObserver(mutations => {
             if (userInteraction === UserInteractionEvent.CLICK) {
                 observer.disconnect();
@@ -375,7 +393,10 @@ export class GuidedTourService {
                     }
                 });
             } else if (userInteraction === UserInteractionEvent.MODELING) {
-                this.checkModelingComponentSubject.next(true);
+                this.checkModelingComponentSubject.next(modelingTask);
+                if (this.modelingResultCorrect) {
+                    observer.disconnect();
+                }
             }
         });
         observer.observe(targetNode, {
@@ -407,10 +428,6 @@ export class GuidedTourService {
      */
     private enableNextStepClick() {
         this.isUserInteractionFinishedSubject.next(true);
-        const nextButton = document.querySelector('.next-button');
-        if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
-            nextButton.attributes.removeNamedItem('disabled');
-        }
     }
 
     /**

@@ -27,7 +27,7 @@ export abstract class TourStep {
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;
     /** List of tasks that have to be completed */
-    taskList?: GuidedTourTask[];
+    task?: GuidedTourTask;
 }
 
 export class TextTourStep extends TourStep {

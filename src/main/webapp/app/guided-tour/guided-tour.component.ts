@@ -5,6 +5,7 @@ import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tou
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { GuidedTourTask } from 'app/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -543,7 +544,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 if (clickEventListenerElement) {
                     selectedElement = clickEventListenerElement;
                 }
-                this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
+                if (this.currentTourStep.task) {
+                    this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent, this.currentTourStep.task.key);
+                } else {
+                    this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
+                }
             }
         }
         return selectedElementRect;

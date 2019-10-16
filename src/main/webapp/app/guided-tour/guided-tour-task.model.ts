@@ -1,9 +1,24 @@
 export class GuidedTourTask {
+    key: string;
     labelTranslateKey: string;
-    taskComplete: boolean;
 
-    constructor(labelTranslateKey: string, taskComplete: boolean) {
+    constructor(key: string, labelTranslateKey: string) {
+        this.key = key;
         this.labelTranslateKey = labelTranslateKey;
-        this.taskComplete = taskComplete;
     }
 }
+
+export const personUML = {
+    name: 'person',
+    attribute: 'name: string',
+};
+
+export const studentUML = {
+    name: 'student',
+    attribute: 'major: string',
+    method: 'visitlecture()',
+};
+
+export const associationUML = {
+    name: 'association',
+};

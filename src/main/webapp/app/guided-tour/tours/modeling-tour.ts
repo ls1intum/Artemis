@@ -1,7 +1,7 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTourTask } from 'app/guided-tour/guided-tour-task.model';
+import { associationUML, GuidedTourTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 export const modelingTour: GuidedTour = {
     courseShortName: 'artemistutorial',
@@ -13,55 +13,43 @@ export const modelingTour: GuidedTour = {
             contentTranslateKey: 'tour.modelingExercise.editorArea.content',
         }),
         new ImageTourStep({
-            headlineTranslateKey: 'tour.modelingExercise.addUmlElement.headline',
-            contentTranslateKey: 'tour.modelingExercise.addUmlElement.description.content',
-            imageUrl: '/../../../content/images/guided-tour-images/uml-add-class.gif',
-        }),
-        new TextTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
-            headlineTranslateKey: 'tour.modelingExercise.addUmlElement.headline',
-            contentTranslateKey: 'tour.modelingExercise.addUmlElement.task.content',
-            highlightPadding: 5,
-            orientation: Orientation.TOP,
-            userInteractionEvent: UserInteractionEvent.MODELING,
-            taskList: [
-                new GuidedTourTask('tour.modelingExercise.executeTasks.personClass', false),
-                new GuidedTourTask('tour.modelingExercise.executeTasks.studentClass', false),
-                new GuidedTourTask('tour.modelingExercise.executeTasks.professorClass', false),
-                new GuidedTourTask('tour.modelingExercise.executeTasks.associations', false),
-            ],
-        }),
-        new ImageTourStep({
-            headlineTranslateKey: 'tour.modelingExercise.editUmlElement.headline',
-            contentTranslateKey: 'tour.modelingExercise.editUmlElement.content',
-            imageUrl: '/../../../content/images/guided-tour-images/uml-edit-class.gif',
+            headlineTranslateKey: 'tour.modelingExercise.addEditUmlElement.headline',
+            contentTranslateKey: 'tour.modelingExercise.addEditUmlElement.content',
+            imageUrl: '/../../../content/images/guided-tour-images/apollon-add-edit-element.gif',
         }),
         new ImageTourStep({
             headlineTranslateKey: 'tour.modelingExercise.createAssociation.headline',
-            contentTranslateKey: 'tour.modelingExercise.createAssociation.description.content',
-            imageUrl: '/../../../content/images/guided-tour-images/uml-create-association.gif',
+            contentTranslateKey: 'tour.modelingExercise.createAssociation.content',
+            imageUrl: '/../../../content/images/guided-tour-images/apollon-add-association.gif',
         }),
         new TextTourStep({
             highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
-            headlineTranslateKey: 'tour.modelingExercise.createAssociation.headline',
-            contentTranslateKey: 'tour.modelingExercise.createAssociation.task.content',
+            headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
+            contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             highlightPadding: 5,
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.MODELING,
+            task: new GuidedTourTask(personUML.name, 'tour.modelingExercise.executeTasks.personClass'),
         }),
         new TextTourStep({
-            highlightSelector: '.submission-buttons',
-            headlineTranslateKey: 'tour.modelingExercise.saveAndSubmit.headline',
-            contentTranslateKey: 'tour.modelingExercise.saveAndSubmit.content',
-            highlightPadding: 10,
-            orientation: Orientation.LEFT,
+            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
+            contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
+            orientation: Orientation.TOP,
+            userInteractionEvent: UserInteractionEvent.MODELING,
+            task: new GuidedTourTask(studentUML.name, 'tour.modelingExercise.executeTasks.studentClass'),
         }),
         new TextTourStep({
-            highlightSelector: '.modeling-editor .btn-warning',
-            headlineTranslateKey: 'tour.modelingExercise.help.headline',
-            contentTranslateKey: 'tour.modelingExercise.help.content',
-            highlightPadding: 10,
-            orientation: Orientation.RIGHT,
+            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
+            contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
+            orientation: Orientation.TOP,
+            userInteractionEvent: UserInteractionEvent.MODELING,
+            task: new GuidedTourTask(associationUML.name, 'tour.modelingExercise.executeTasks.association'),
+        }),
+        new TextTourStep({
+            headlineTranslateKey: 'tour.modelingExercise.finishedTasks.headline',
+            contentTranslateKey: 'tour.modelingExercise.finishedTasks.content',
         }),
     ],
 };
