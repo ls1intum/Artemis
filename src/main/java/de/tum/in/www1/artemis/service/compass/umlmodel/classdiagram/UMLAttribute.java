@@ -80,7 +80,7 @@ public class UMLAttribute extends UMLElement {
      * @return true if the parent classes are similar/equal, false otherwise
      */
     private boolean parentsSimilar(UMLAttribute referenceAttribute) {
-        if (parentClass.getSimilarityID() >= 0 && referenceAttribute.getParentClass().getSimilarityID() >= 0) {
+        if (parentClass.getSimilarityID() != -1 && referenceAttribute.getParentClass().getSimilarityID() != -1) {
             return parentClass.getSimilarityID() == referenceAttribute.getParentClass().getSimilarityID();
         }
 
