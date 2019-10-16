@@ -192,17 +192,18 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
+        var buildPlan = participation.getBuildPlanId();
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
             restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/queue/" + participation.getBuildPlanId(),
+                BAMBOO_SERVER_URL + "/rest/api/latest/queue/" + buildPlan,
                 HttpMethod.POST,
                 entity,
                 Map.class);
         } catch (RestClientException e) {
-            log.error("HttpError while triggering build", e);
-            throw new HttpException("Communication failed when trying to trigger the Bamboo build for participationId " + participation.getId() + " with the following error: " + e.getMessage());
+            log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
+            throw new HttpException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());
         }
     }
 
@@ -212,7 +213,7 @@ public class BambooService implements ContinuousIntegrationService {
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         final var entity = new HttpEntity<>(null, headers);
         final var planInfo = restTemplate.exchange(BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + planId, HttpMethod.GET, entity, Map.class, new HashMap<>()).getBody();
-        return planInfo.containsKey("enabled") && ((boolean) planInfo.get("enabled"));
+        return planInfo != null && planInfo.containsKey("enabled") && ((boolean) planInfo.get("enabled"));
     }
 
     /**
