@@ -1,5 +1,6 @@
 {
     "tour": {
+        "step": "Step {{ string }}:",
         "navigation": {
             "back": "Back",
             "next": "Next",
@@ -12,7 +13,7 @@
         },
         "cancel": {
             "headline": "Tutorial cancelled",
-            "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on \"Continue tutorial\" from the account menu."
+            "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on <tt>Continue tutorial</tt> from the account menu."
         },
         "clickHint": {
             "text": "Click on the highlighted element to proceed with the tour."
@@ -27,7 +28,7 @@
             "text": "While watching the video, follow the steps on your computer side-by-side."
         },
         "stepAlreadyExecutedHint": {
-            "text": "This step has already been executed, therefore you do not need to do anything here. Just click on next to proceed with the tutorial"
+            "text": "You have already successfully completed this step, therefore you do not need to do anything here. Just click on next to proceed with the tutorial"
         }
     }
 }

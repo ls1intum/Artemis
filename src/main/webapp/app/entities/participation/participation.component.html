@@ -69,7 +69,9 @@
                     <td>{{ 'artemisApp.InitializationState.' + participation.initializationState | translate }}</td>
                     <td>{{ participation.initializationDate | date: 'medium' }}</td>
                     <td>
-                        <a routerLink="/user-management/{{ participation.student?.login }}/view">{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a>
+                        <a routerLink="/admin/user-management/{{ participation.student?.login }}/view"
+                            >{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a
+                        >
                     </td>
                     <td *ngIf="this.presentationScoreEnabled">
                         <span>{{ participation.presentationScore ? participation.presentationScore : 0 }}</span>
@@ -89,7 +91,7 @@
                             </ng-container>
                             <button
                                 type="submit"
-                                *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastTutor"
+                                *ngIf="newManualResultAllowed"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
                                 class="btn btn-warning btn-sm mr-1"
                             >

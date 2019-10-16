@@ -15,13 +15,36 @@ export class BoldCommand extends Command {
     execute(): void {
         const selectedText = this.getSelectedText();
         let textToAdd = '';
+        let startSpace = '';
+        let endSpace = '';
+        let startIndx = 0;
+        let endIndx = 0;
+        const selectedTextLength = selectedText.length;
 
         if (selectedText.includes('**')) {
             textToAdd = selectedText.slice(2, -2);
             this.insertText(textToAdd);
         } else {
-            textToAdd = `**${selectedText}**`;
-            this.insertText(textToAdd);
+            for (let i = 0; i < selectedTextLength; i++) {
+                if (selectedText.charAt(i) === ' ') {
+                    startSpace = startSpace + ' ';
+                } else {
+                    startIndx = i;
+                    break;
+                }
+            }
+
+            for (let j = selectedTextLength; j >= 0; j--) {
+                if (selectedText.charAt(j - 1) === ' ') {
+                    endSpace = endSpace + ' ';
+                } else {
+                    endIndx = j;
+                    break;
+                }
+            }
+            const newTxt = selectedText.slice(startIndx, endIndx);
+            textToAdd = `**${newTxt}**`;
+            this.insertText(startSpace + textToAdd + endSpace);
         }
     }
 }

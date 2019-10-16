@@ -1,11 +1,10 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { from, fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 
-import { LinkType, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
+import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
-import { ImageTourStep, TextLinkTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -25,6 +24,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public minimalTourStepWidth = 500;
     // Sets the highlight padding around the selected .
     public highlightPadding = 4;
+    public transformX: number;
     /**
      * The current tour step should be of type the TourStep subclasses or null but have to be declared as any in this case
      * since the build would fail with Property 'x' does not exist on type 'y' when accessing properties of subclasses in the html template
@@ -38,7 +38,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
 
-    readonly LinkType = LinkType;
     readonly OverlayPosition = OverlayPosition;
     readonly UserInteractionEvent = UserInteractionEvent;
 
@@ -113,7 +112,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Subscribe to guidedTourCurrentStepStream and scroll to set element if the user has the right permission
      */
     public subscribeToGuidedTourCurrentStepStream() {
-        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TextTourStep | TextLinkTourStep | ImageTourStep | VideoTourStep) => {
+        this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TextTourStep | ImageTourStep | VideoTourStep) => {
             this.currentTourStep = step;
             if (!this.currentTourStep) {
                 return;
@@ -124,6 +123,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 return;
             }
             this.selectedElementRect = null;
+        });
+        this.guidedTourService.calculateTransformValue().subscribe(transformX => {
+            this.transformX = transformX;
         });
     }
 

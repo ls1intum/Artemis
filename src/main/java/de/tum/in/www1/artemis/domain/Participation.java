@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -193,6 +194,21 @@ public abstract class Participation implements Serializable {
         }
         List<Result> sortedResults = new ArrayList<>(results);
         sortedResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+        return sortedResults.get(0);
+    }
+
+    /**
+     * Finds the latest result for the participation using the submissions. Checks if the participation has any submissions. If there are no submissions, return null.
+     * Also see #findLatestResult()
+     *
+     * @return the latest result or null
+     */
+    public Result findLatestResultUsingSubmissions() {
+        if (submissions == null || submissions.size() == 0) {
+            return null;
+        }
+        List<Result> sortedResults = getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).distinct()
+                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
         return sortedResults.get(0);
     }
 

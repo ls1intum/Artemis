@@ -25,14 +25,21 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
 
+    public maxDots = 10;
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private guidedTourAvailability = new Subject<boolean>();
     private isUserInteractionFinished = new Subject<boolean>();
+    private transformSubject = new Subject<number>();
     private currentTourStepIndex = 0;
     private onResizeMessage = false;
     private availableTourForComponent: GuidedTour | null;
+    private transformCount = 0;
+
+    // Variables for the dot navigation
+    private transformXIntervalNext = -26;
+    private transformXIntervalPrev = 26;
 
     constructor(
         private http: HttpClient,
@@ -114,6 +121,13 @@ export class GuidedTourService {
     }
 
     /**
+     * Calculates initial translateX value for <ul> so that the right dots are displayed
+     */
+    public calculateTransformValue(): Observable<number> {
+        return this.transformSubject.asObservable();
+    }
+
+    /**
      * Check if the provided tour step is the currently active one
      * @param tourStep: current tour step of the guided tour
      */
@@ -122,6 +136,18 @@ export class GuidedTourService {
             return this.currentTourStepDisplay === this.currentTour.steps.indexOf(tourStep) + 1;
         }
         return false;
+    }
+
+    /**
+     * Get the current step string for the headline, that shows which step is currently displayed, `currentStep / totalStep`
+     */
+    public getCurrentStepString() {
+        if (!this.currentTour) {
+            return;
+        }
+        const currentStep = this.currentTourStepIndex + 1;
+        const totalSteps = this.currentTour.steps.length;
+        return `${currentStep} / ${totalSteps}`;
     }
 
     /**
@@ -134,6 +160,8 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex - 1);
+
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -159,6 +187,8 @@ export class GuidedTourService {
         }
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
+
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -241,7 +271,6 @@ export class GuidedTourService {
             .subscribe(guidedTourSettings => {
                 this.guidedTourSettings = guidedTourSettings.body!;
             });
-
         this.resetTour();
     }
 
@@ -394,11 +423,16 @@ export class GuidedTourService {
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
+            if (!this.currentTour.steps[this.currentTourStepIndex]) {
+                // Set current tour step index to 0 if the current tour step cannot be found
+                this.currentTourStepIndex = 0;
+            }
             const currentStep = this.currentTour.steps[this.currentTourStepIndex];
             if (currentStep.action) {
                 currentStep.action();
             }
             this.setPreparedTourStep();
+            this.calculateTranslateValue(currentStep);
         }
     }
 
@@ -555,7 +589,7 @@ export class GuidedTourService {
         return new TextTourStep({
             headlineTranslateKey: step.headlineTranslateKey,
             contentTranslateKey: step.contentTranslateKey,
-            hintTranslateKey: 'tour.stepAlreadyExecutedHint.text',
+            alreadyExecutedTranslateKey: 'tour.stepAlreadyExecutedHint.text',
         });
     }
 
@@ -593,11 +627,12 @@ export class GuidedTourService {
          * to prevent ExpressionChangedAfterItHasBeenCheckedError
          */
         setTimeout(() => {
-            this.currentTour = cloneDeep(guidedTour);
-            this.availableTourForComponent = this.currentTour;
+            this.availableTourForComponent = cloneDeep(guidedTour);
             this.guidedTourAvailability.next(true);
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
+            // Only start tour automatically if the user has never seen it before
             if (!hasStartedOrFinishedTour) {
+                this.currentTour = this.availableTourForComponent;
                 this.startTour();
             }
         }, 500);
@@ -643,5 +678,93 @@ export class GuidedTourService {
         if (exercise.shortName === guidedTour.exerciseShortName) {
             this.enableTour(guidedTour);
         }
+    }
+
+    /**
+     * Display only as many dots as defined in GuidedTourComponent.maxDots
+     * @param currentIndex index of the current step
+     * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
+     */
+    public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
+        if (this.currentTour!.steps.length < this.maxDots) {
+            return;
+        }
+
+        const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
+        const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
+        const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
+        const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
+        const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
+
+        // Handles forward navigation
+        if (currentIndex < nextIndex) {
+            // Moves the n-small and p-small class one dot further
+            if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
+                this.transformCount += this.transformXIntervalNext;
+                nextDot.classList.remove('n-small');
+                nextPlusOneDot.classList.add('n-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex - 9) {
+                        node.classList.remove('p-small');
+                    } else if (index === nextIndex - 8) {
+                        node.classList.add('p-small');
+                    }
+                });
+            }
+        } else {
+            // Handles backwards navigation
+            if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
+                this.transformCount += this.transformXIntervalPrev;
+                nextDot.classList.remove('p-small');
+                nextPlusOneDot.classList.add('p-small');
+                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
+                dotList.querySelectorAll('li').forEach((node, index) => {
+                    if (index === nextIndex + 9) {
+                        node.classList.remove('n-small');
+                    } else if (index === nextIndex + 8) {
+                        node.classList.add('n-small');
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Defines the translateX value for the <ul> transform style
+     * @param step  last seen tour step
+     */
+    public calculateTranslateValue(step: TourStep): void {
+        let transform = 0;
+        const lastSeenStep = this.getLastSeenTourStepIndex() + 1;
+        if (lastSeenStep > this.maxDots) {
+            transform = ((lastSeenStep % this.maxDots) + 1) * this.transformXIntervalNext;
+        }
+        this.transformCount = transform;
+        this.transformSubject.next(transform);
+    }
+
+    /**
+     * Defines if an <li> item should have the 'n-small' class
+     * @param stepNumber tour step number of the <li> item
+     */
+    public calculateNSmallDot(stepNumber: number): boolean {
+        if (this.getLastSeenTourStepIndex() < this.maxDots) {
+            return stepNumber === this.maxDots;
+        } else if (stepNumber > this.maxDots) {
+            return stepNumber - (this.getLastSeenTourStepIndex() + 1) === 1;
+        }
+        return false;
+    }
+
+    /**
+     * Defines if an <li> item should have the 'p-small' class
+     * @param stepNumber tour step number of the <li> item
+     */
+    public calculatePSmallDot(stepNumber: number): boolean {
+        if (this.getLastSeenTourStepIndex() < this.maxDots) {
+            return false;
+        }
+        return this.getLastSeenTourStepIndex() + 1 - stepNumber === 8;
     }
 }
