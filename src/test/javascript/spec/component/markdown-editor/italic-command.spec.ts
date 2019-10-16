@@ -24,7 +24,7 @@ describe('ItalicCommand', () => {
                 comp = fixture.componentInstance;
             });
     });
-    it('should add **** on execute', () => {
+    it('should add ** on execute', () => {
         const italicCommand = new ItalicCommand();
         comp.defaultCommands = [italicCommand];
         fixture.detectChanges();

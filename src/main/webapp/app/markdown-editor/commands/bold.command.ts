@@ -16,7 +16,7 @@ export class BoldCommand extends Command {
         const selectedText = this.getSelectedText();
         let textToAdd = '';
 
-        if (selectedText.includes('**')) {
+        if (selectedText.charAt(0) === '*' && selectedText.charAt(selectedText.length - 1) === '*') {
             textToAdd = selectedText.slice(2, -2);
             this.insertText(textToAdd);
         } else {
