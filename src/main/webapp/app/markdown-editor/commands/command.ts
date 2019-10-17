@@ -84,7 +84,7 @@ export abstract class Command {
         const textLength = text.length;
         let startSpace = '';
         let endSpace = '';
-        let startIndx = 0;
+        let startIndex = 0;
         let endIndx = 0;
 
         for (let i = 0; i < textLength; i++) {
