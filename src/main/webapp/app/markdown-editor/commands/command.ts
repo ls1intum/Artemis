@@ -91,7 +91,7 @@ export abstract class Command {
             if (text.charAt(i) === ' ') {
                 startSpace = startSpace + ' ';
             } else {
-                startIndx = i;
+                startIndex = i;
                 break;
             }
         }
@@ -100,10 +100,10 @@ export abstract class Command {
             if (text.charAt(j - 1) === ' ') {
                 endSpace = endSpace + ' ';
             } else {
-                endIndx = j;
+                endIndex = j;
                 break;
             }
         }
-        return [text.slice(startIndx, endIndx), startSpace, endSpace];
+        return [text.slice(startIndex, endIndex), startSpace, endSpace];
     }
 }
