@@ -62,10 +62,10 @@ iterations=${iterations:-10}
 timeout=${timeout:-40}
 
 echo "################### STARTING API Tests ###################"
-result=$(docker run -i --rm --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
+docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT="$timeout" \
   -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" \
-  loadimpact/k6 run /src/ProgrammingExerciseAPIs.js 2>&1)
+  loadimpact/k6 run /src/ProgrammingExerciseAPIs.js
 
 echo "########## FINISHED testing - evaluating result ##########"
 echo "$result"

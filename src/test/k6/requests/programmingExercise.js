@@ -1,18 +1,18 @@
 import { nextAlphanumeric, nextWSSubscriptionId } from '../util/utils.js';
-import { PROGRAMMING_EXERCISES_SETUP, COMMIT } from './endpoints.js';
+import { PROGRAMMING_EXERCISES_SETUP, COMMIT, PARTICIPATIONS, PROGRAMMING_EXERCISE, NEW_FILE } from './endpoints.js';
 import { sleep, fail } from 'k6';
-import { PARTICIPATIONS, PROGRAMMING_EXERCISE } from './endpoints.js';
 import { programmingExerciseProblemStatement } from "../resource/constants.js";
 
 export function ParticipationSimulation(timeout, exerciseId, participationId, content) {
     this.timeout = timeout;
     this.exerciseId = exerciseId;
     this.participationId = participationId;
-    this.content = content;
+    this.newFiles = content.newFiles;
+    this.content = content.content;
 
     this.returnsExpectedResult = function(message, expectedResult, resultString) {
-        const resReg = /(.*content-length:[0-9]+\n\n)(.*)(\u0000)/g;
-        const match =resReg.exec(message);
+        const resReg = /(.*\n\n)([^\u0000]*)(\u0000)/g;
+        const match = resReg.exec(message);
         const result = JSON.parse(match[2]);
 
         switch (expectedResult) {
@@ -22,7 +22,7 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
             break;
             case TestResult.FAIL: {
                 if(result.successful || !result.hasFeedback || result.resultString !== resultString)
-                    fail(`ERROR: The result for participation ${participationId} did not fail with ${resultString}!`)
+                    fail(`ERROR: The result for participation ${participationId} did not fail with ${resultString}! Was ${result.resultString}`)
             }
             break;
             default: {
@@ -99,7 +99,18 @@ export function startExercise(artemis, courseId, exerciseId) {
     return JSON.parse(res[0].body).id;
 }
 
+export function createNewFile(artemis, participationId, filename) {
+    const res = artemis.post(NEW_FILE(participationId), null, { file: filename });
+
+    if (res[0].status !== 200) {
+        fail('ERROR: Unable to create new file ' + filename);
+    }
+}
+
 export function simulateParticipation(artemis, participationSimulation, expectedResult, resultString) {
+    // First, we have to create all new files
+    participationSimulation.newFiles.forEach(file => createNewFile(artemis, participationSimulation.participationId, file));
+
     artemis.websocket(function (socket) {
         // Send changes via websocket
         function submitChange() {

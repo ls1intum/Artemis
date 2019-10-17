@@ -7,3 +7,4 @@ export const EXERCISES = (courseId) => `${COURSE(courseId)}/exercises`;
 export const EXERCISE = (courseId, exerciseId) => `${EXERCISES(courseId)}/${exerciseId}`;
 export const PARTICIPATIONS = (courseId, exerciseId) => `${EXERCISE(courseId, exerciseId)}/participations`;
 export const COMMIT = (participationId) => `/repository/${participationId}/commit`;
+export const NEW_FILE = (participationId) => `/repository/${participationId}/file`;

@@ -2,8 +2,8 @@ import http from 'k6/http';
 import ws from 'k6/ws';
 
 const defaultXSRFToken = "42d141b5-9e1c-4390-ae06-5143753b4459";
-const protocol = "https"; // https or http
-const websocketProtocol = "wss"; // wss if https is used; ws if http is used
+const protocol = "http"; // https or http
+const websocketProtocol = "ws"; // wss if https is used; ws if http is used
 const host = __ENV.BASE_URL; // host including port if differing from 80 (http) or 443 (https)
 const baseUrl = protocol + "://" + host;
 

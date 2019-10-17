@@ -85,15 +85,17 @@ export const programmingExerciseProblemStatement = '# Sorting with the Strategy 
     '\n' +
     '3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.\n';
 
-export const buildErrorContent = [
-    {
+export const buildErrorContent = {
+    newFiles: [],
+    content: [{
         fileName: 'src/de/test/BubbleSort.java',
         fileContent: 'a'
-    }
-];
+    }]
+};
 
-export const testErrorContent = [
-    {
+export const testErrorContent = {
+    newFiles: [],
+    content: [{
         fileName: 'src/de/test/BubbleSort.java',
         fileContent: 'package de.test;\n' +
             '\n' +
@@ -103,5 +105,21 @@ export const testErrorContent = [
             '\n' +
             '    public void performSort(List<Date> input) {}\n' +
             '}'
-    }
-];
+    }]
+};
+
+export const twoSuccessfulErrorContent = {
+    newFiles: ['src/de/test/SortStrategy.java'],
+    content: [{
+        fileName: 'src/de/test/SortStrategy.java',
+        fileContent: 'package de.test;\n' +
+            '\n' +
+            'import java.util.Date;\n' +
+            'import java.util.List;\n' +
+            '\n' +
+            'public interface SortStrategy {\n' +
+            '\n' +
+            '\tpublic void performSort(List<Date> input);\n' +
+            '}'
+    }]
+};

@@ -2,7 +2,7 @@ import { group, sleep } from 'k6';
 import { login } from "./requests/requests.js";
 import { createExercise, startExercise, simulateParticipation, ParticipationSimulation, TestResult } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse } from "./requests/course.js";
-import { buildErrorContent } from "./resource/constants.js";
+import { twoSuccessfulErrorContent } from "./resource/constants.js";
 
 export const options = {
     maxRedirects: 0,
@@ -49,8 +49,8 @@ export default function (data) {
     group('Participate in Programming Exercise', function() {
         let participationId = startExercise(artemis, courseId, exerciseId);
         if (participationId) {
-            const simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, buildErrorContent);
-            simulateParticipation(artemis, simulation, TestResult.BUILD_ERROR);
+            const simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, twoSuccessfulErrorContent);
+            simulateParticipation(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
         }
     });
 
