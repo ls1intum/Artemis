@@ -9,6 +9,8 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 export abstract class Command {
     buttonIcon: string;
     buttonTranslationString: string;
+    startSpace: string;
+    endSpace: string;
     protected aceEditorContainer: AceEditorComponent;
     protected markdownWrapper: ElementRef;
 
@@ -82,14 +84,14 @@ export abstract class Command {
 
     protected ignoreWhiteSpace(text: string) {
         const textLength = text.length;
-        let startSpace = '';
-        let endSpace = '';
         let startIndex = 0;
         let endIndex = 0;
+        this.startSpace = '';
+        this.endSpace = '';
 
         for (let i = 0; i < textLength; i++) {
             if (text.charAt(i) === ' ') {
-                startSpace = startSpace + ' ';
+                this.startSpace = this.startSpace + ' ';
             } else {
                 startIndex = i;
                 break;
@@ -98,12 +100,16 @@ export abstract class Command {
 
         for (let j = textLength; j >= 0; j--) {
             if (text.charAt(j - 1) === ' ') {
-                endSpace = endSpace + ' ';
+                this.endSpace = this.endSpace + ' ';
             } else {
                 endIndex = j;
                 break;
             }
         }
-        return [text.slice(startIndex, endIndex), startSpace, endSpace];
+        return text.slice(startIndex, endIndex);
+    }
+
+    protected addRefinedTxt(text: string) {
+        return this.insertText(this.startSpace + text + this.endSpace);
     }
 }

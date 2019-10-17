@@ -21,11 +21,8 @@ export class BoldCommand extends Command {
             this.insertText(textToAdd);
         } else {
             const refinedString = this.ignoreWhiteSpace(selectedText);
-            const newTxt = refinedString[0];
-            const startSpace = refinedString[1];
-            const endSpace = refinedString[2];
-            textToAdd = `**${newTxt}**`;
-            this.insertText(startSpace + textToAdd + endSpace);
+            textToAdd = `**${refinedString}**`;
+            this.addRefinedTxt(textToAdd);
         }
     }
 }
