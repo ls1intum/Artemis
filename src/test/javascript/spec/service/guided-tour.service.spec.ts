@@ -352,7 +352,7 @@ describe('GuidedTourService', () => {
                     const enableNextStep = spyOn<any>(guidedTourService, 'enableNextStepClick').and.returnValue(of());
                     guidedTourService.currentTour = tourWithModelingTask;
                     guidedTourService.updateModelingResult(personUML.name, true);
-                    tick(100);
+                    tick(0);
                     expect(enableNextStep.calls.count()).to.equal(1);
                 }),
             ));

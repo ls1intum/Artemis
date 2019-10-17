@@ -31,6 +31,7 @@ export class GuidedTourService {
     private availableTourForComponent: GuidedTour | null;
     private onResizeMessage = false;
     private modelingResultCorrect = false;
+    private mutationObserver: MutationObserver;
 
     /** Guided tour service subjects */
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
@@ -149,7 +150,7 @@ export class GuidedTourService {
             setTimeout(() => {
                 this.enableNextStepClick();
                 this.checkModelingComponentSubject.next(null);
-            }, 100);
+            }, 0);
         }
     }
 
@@ -350,6 +351,9 @@ export class GuidedTourService {
         this.currentTourStepIndex = 0;
         this.currentTour = null;
         this.guidedTourCurrentStepSubject.next(null);
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+        }
     }
 
     /**
@@ -382,7 +386,9 @@ export class GuidedTourService {
                 this.modelingResultCorrect = false;
                 this.checkModelingComponentSubject.next(modelingTask);
                 targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
+                const relationObserverNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg svg') as HTMLElement;
                 this.observeDomMutations(targetNode, userInteraction, modelingTask);
+                this.observeDomMutations(relationObserverNode, userInteraction, modelingTask);
             }
         }
     }
@@ -393,25 +399,25 @@ export class GuidedTourService {
      * @param userInteraction the user interaction to complete the tour step
      */
     private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string) {
-        const observer = new MutationObserver(mutations => {
+        this.mutationObserver = new MutationObserver(mutations => {
             if (userInteraction === UserInteractionEvent.CLICK) {
-                observer.disconnect();
+                this.mutationObserver.disconnect();
                 this.enableNextStepClick();
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
                 mutations.forEach(mutation => {
                     if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                        observer.disconnect();
+                        this.mutationObserver.disconnect();
                         this.enableNextStepClick();
                     }
                 });
             } else if (userInteraction === UserInteractionEvent.MODELING) {
                 this.checkModelingComponentSubject.next(modelingTask);
                 if (this.modelingResultCorrect) {
-                    observer.disconnect();
+                    this.mutationObserver.disconnect();
                 }
             }
         });
-        observer.observe(targetNode, {
+        this.mutationObserver.observe(targetNode, {
             attributes: true,
             childList: true,
             characterData: true,
