@@ -24,22 +24,24 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 @Injectable({ providedIn: 'root' })
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
-
-    public maxDots = 10;
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
+
+    private currentTourStepIndex = 0;
+    private availableTourForComponent: GuidedTour | null;
+    private onResizeMessage = false;
+    private modelingResultCorrect = false;
+
+    /** Guided tour service subjects */
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private guidedTourAvailabilitySubject = new Subject<boolean>();
     private isUserInteractionFinishedSubject = new Subject<boolean>();
     private checkModelingComponentSubject = new Subject<string | null>();
     private transformSubject = new Subject<number>();
-    private currentTourStepIndex = 0;
-    private onResizeMessage = false;
-    private availableTourForComponent: GuidedTour | null;
-    private transformCount = 0;
-    private modelingResultCorrect = false;
 
-    // Variables for the dot navigation
+    /** Variables for the dot navigation */
+    public maxDots = 10;
+    private transformCount = 0;
     private transformXIntervalNext = -26;
     private transformXIntervalPrev = 26;
 
@@ -95,6 +97,9 @@ export class GuidedTourService {
             });
     }
 
+    /**
+     * @return defined minimum screen size number
+     */
     private get tourMinimumScreenSize(): number {
         return this.currentTour && this.currentTour.minimumScreenSize ? this.currentTour.minimumScreenSize : 1000;
     }
@@ -123,16 +128,23 @@ export class GuidedTourService {
     }
 
     /**
+     * @return Observable of the current modeling task UML name
      */
     public checkModelingComponent(): Observable<string | null> {
         return this.checkModelingComponentSubject.asObservable();
     }
 
-    public updateModelingResult(key: string, result: boolean) {
-        if (!this.currentStep || !this.currentStep.task) {
+    /**
+     * Updates the modelingResultCorrect variable on whether the implemented UML model is correct and enables
+     * the next step button
+     * @param umlName   name of the UML element for the modeling task
+     * @param result    true if the UML element has been modeled correctly, otherwise false
+     */
+    public updateModelingResult(umlName: string, result: boolean) {
+        if (!this.currentStep || !this.currentStep.modelingTask) {
             return;
         }
-        if (result && this.currentStep.task.key === key) {
+        if (result && this.currentStep.modelingTask.umlName === umlName) {
             this.modelingResultCorrect = result;
             setTimeout(() => {
                 this.enableNextStepClick();
@@ -142,7 +154,7 @@ export class GuidedTourService {
     }
 
     /**
-     * Calculates initial translateX value for <ul> so that the right dots are displayed
+     * @return Observable of the initial translateX value for <ul> so that the right dots are displayed
      */
     public calculateTransformValue(): Observable<number> {
         return this.transformSubject.asObservable();
@@ -605,6 +617,9 @@ export class GuidedTourService {
         return convertedStep;
     }
 
+    /** If the current tour step cannot be displayed because it has already been successfully completed, then this
+     * extra TourStep should be displayed instead
+     */
     private setStepAlreadyFinishedHint(step: any): TourStep | null {
         if (step.skipStepIfNoSelector) {
             return null;
@@ -670,12 +685,12 @@ export class GuidedTourService {
         if (!guidedTour.exerciseShortName || !course || !course.exercises) {
             return null;
         }
-        const exerciseForGuidedTour = course.exercises.find(
+        const exerciseForGuidedTourExists = course.exercises.find(
             exercise => (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) || exercise.title === guidedTour.exerciseShortName,
         );
-        if (exerciseForGuidedTour) {
+        if (exerciseForGuidedTourExists) {
             this.enableTour(guidedTour);
-            return exerciseForGuidedTour;
+            return exerciseForGuidedTourExists;
         }
         return null;
     }
@@ -713,7 +728,7 @@ export class GuidedTourService {
      * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
      */
     public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
-        if (this.currentTour!.steps.length < this.maxDots) {
+        if (this.currentTour && this.currentTour.steps.length < this.maxDots) {
             return;
         }
 

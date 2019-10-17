@@ -1,7 +1,7 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { associationUML, GuidedTourTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 export const modelingTour: GuidedTour = {
     courseShortName: 'artemistutorial',
@@ -29,7 +29,7 @@ export const modelingTour: GuidedTour = {
             highlightPadding: 5,
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.MODELING,
-            task: new GuidedTourTask(personUML.name, 'tour.modelingExercise.executeTasks.personClass'),
+            modelingTask: new GuidedTourModelingTask(personUML.name, 'tour.modelingExercise.executeTasks.personClass'),
         }),
         new TextTourStep({
             highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
@@ -37,7 +37,7 @@ export const modelingTour: GuidedTour = {
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.MODELING,
-            task: new GuidedTourTask(studentUML.name, 'tour.modelingExercise.executeTasks.studentClass'),
+            modelingTask: new GuidedTourModelingTask(studentUML.name, 'tour.modelingExercise.executeTasks.studentClass'),
         }),
         new TextTourStep({
             highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
@@ -45,7 +45,7 @@ export const modelingTour: GuidedTour = {
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.MODELING,
-            task: new GuidedTourTask(associationUML.name, 'tour.modelingExercise.executeTasks.association'),
+            modelingTask: new GuidedTourModelingTask(associationUML.name, 'tour.modelingExercise.executeTasks.association'),
         }),
         new TextTourStep({
             headlineTranslateKey: 'tour.modelingExercise.finishedTasks.headline',

@@ -45,7 +45,11 @@
                         <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
-                <div *ngIf="currentTourStep.userInteractionEvent && !currentTourStep.task" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
+                <div
+                    *ngIf="currentTourStep.userInteractionEvent && !currentTourStep.modelingTask"
+                    class="step-hint interaction alert"
+                    [class.alert-success]="this.userInteractionFinished"
+                >
                     <div class="step-hint__icon" *ngIf="this.userInteractionFinished; else userInteractionIcons">
                         <fa-icon icon="check"></fa-icon>
                     </div>
@@ -64,7 +68,7 @@
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING" jhiTranslate="tour.modelingHint.text"></span>
                     </div>
                 </div>
-                <div *ngIf="currentTourStep.task" class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
+                <div *ngIf="currentTourStep.modelingTask" class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
                     <div class="step-hint__icon" *ngIf="!userInteractionFinished">
                         <fa-icon icon="clipboard-list"></fa-icon>
                     </div>
@@ -72,7 +76,7 @@
                         <fa-icon icon="check"></fa-icon>
                     </div>
                     <div class="step-hint__label">
-                        <div [innerHTML]="currentTourStep.task.labelTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                        <div [innerHTML]="currentTourStep.modelingTask.taskTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.imageUrl">

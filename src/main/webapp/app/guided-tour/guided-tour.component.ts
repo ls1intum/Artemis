@@ -5,7 +5,7 @@ import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tou
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { GuidedTourTask } from 'app/guided-tour/guided-tour-task.model';
+import { GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -59,17 +59,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                  * Check if the currentTourStep is defined so that the guided tour cannot be started by pressing the right arrow
                  * If the user interaction is enabled, then the user has can only move to the next step after doing the interaction
                  */
-                if (
-                    this.currentTourStep &&
-                    !this.currentTourStep.userInteractionEvent &&
-                    this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount
-                ) {
+                if (this.currentTourStep && this.userInteractionFinished && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
                     this.guidedTourService.nextStep();
                 }
                 break;
             }
             case 'ArrowLeft': {
-                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1 && this.userInteractionFinished) {
                     this.guidedTourService.backStep();
                 }
                 break;
@@ -544,8 +540,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 if (clickEventListenerElement) {
                     selectedElement = clickEventListenerElement;
                 }
-                if (this.currentTourStep.task) {
-                    this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent, this.currentTourStep.task.key);
+                if (this.currentTourStep.modelingTask) {
+                    this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent, this.currentTourStep.modelingTask.umlName);
                 } else {
                     this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
                 }

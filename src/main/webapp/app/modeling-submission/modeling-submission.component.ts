@@ -371,30 +371,33 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     /**
      * Assess the model for the modeling guided tutorial
-     * @param modelingTask
-     * @param umlModel
+     * @param umlName  the identifier of the UML element that has to be assessed
+     * @param umlModel  the current UML model in the editor
      */
-    assessModelForGuidedTour(modelingTask: string, umlModel: UMLModel): void {
-        const personClass = umlModel.elements.find(element => element.name.trim().toLowerCase() === personUML.name && element.type === 'Class');
-        const studentClass = umlModel.elements.find(element => element.name.trim().toLowerCase() === studentUML.name && element.type === 'Class');
+    assessModelForGuidedTour(umlName: string, umlModel: UMLModel): void {
+        // Find the required UML classes
+        const personClass = umlModel.elements.find(element => element.name.trim() === personUML.name && element.type === 'Class');
+        const studentClass = umlModel.elements.find(element => element.name.trim() === studentUML.name && element.type === 'Class');
         let personStudentAssociation: UMLRelationship | undefined;
-        if (modelingTask === personUML.name) {
+
+        if (umlName === personUML.name) {
             // Check if the Person class is correct
-            const nameAttribute = umlModel.elements.find(element => element.name.toLowerCase().includes(personUML.attribute) && element.type === 'ClassAttribute');
+            const nameAttribute = umlModel.elements.find(element => element.name.includes(personUML.attribute) && element.type === 'ClassAttribute');
             const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id : false;
-            this.guidedTourService.updateModelingResult(modelingTask, personClassCorrect);
-        } else if (modelingTask === studentUML.name) {
+            this.guidedTourService.updateModelingResult(umlName, personClassCorrect);
+        } else if (umlName === studentUML.name) {
             // Check if the Student class is correct
-            const majorAttribute = umlModel.elements.find(element => element.name.toLowerCase().includes(studentUML.attribute) && element.type === 'ClassAttribute');
-            const visitLectureMethod = umlModel.elements.find(element => element.name.toLowerCase().includes(studentUML.method) && element.type === 'ClassMethod');
+            const majorAttribute = umlModel.elements.find(element => element.name.includes(studentUML.attribute) && element.type === 'ClassAttribute');
+            const visitLectureMethod = umlModel.elements.find(element => element.name.includes(studentUML.method) && element.type === 'ClassMethod');
             const studentClassCorrect =
                 studentClass && majorAttribute && visitLectureMethod ? majorAttribute.owner === studentClass.id && visitLectureMethod.owner === studentClass.id : false;
-            this.guidedTourService.updateModelingResult(modelingTask, studentClassCorrect);
-        } else if (modelingTask === associationUML.name && studentClass && personClass) {
+            this.guidedTourService.updateModelingResult(umlName, studentClassCorrect);
+        } else if (umlName === associationUML.name && studentClass && personClass) {
+            // Check if the Inheritance association is correct
             personStudentAssociation = umlModel.relationships.find(
                 relationship => relationship.source.element === studentClass!.id && relationship.target.element === personClass!.id && relationship.type === 'ClassInheritance',
             );
-            this.guidedTourService.updateModelingResult(modelingTask, !!personStudentAssociation);
+            this.guidedTourService.updateModelingResult(umlName, !!personStudentAssociation);
         }
     }
 
