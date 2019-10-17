@@ -57,15 +57,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             case 'ArrowRight': {
                 /**
                  * Check if the currentTourStep is defined so that the guided tour cannot be started by pressing the right arrow
-                 * If the user interaction is enabled, then the user has can only move to the next step after doing the interaction
                  */
-                if (this.currentTourStep && this.userInteractionFinished && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
-                    this.guidedTourService.nextStep();
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
+                    /** If the user interaction is enabled, then the user has can only move to the next step after finishing the interaction */
+                    if (!this.currentTourStep.userInteractionEvent || (this.currentTourStep.userInteractionEvent && this.userInteractionFinished)) {
+                        this.guidedTourService.nextStep();
+                    }
                 }
                 break;
             }
             case 'ArrowLeft': {
-                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1 && this.userInteractionFinished) {
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1) {
                     this.guidedTourService.backStep();
                 }
                 break;
