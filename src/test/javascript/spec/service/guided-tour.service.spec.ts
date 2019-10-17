@@ -1,5 +1,5 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, tick, inject, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -28,16 +28,16 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
+import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('GuidedTourService', () => {
-    const courseOverviewTour: GuidedTour = {
+    const tour: GuidedTour = {
         courseShortName: '',
         exerciseShortName: '',
-        settingsKey: 'course_overview_tour',
-        preventBackdropFromAdvancing: true,
+        settingsKey: 'tour',
         steps: [
             new TextTourStep({
                 highlightSelector: '.random-selector',
@@ -52,11 +52,10 @@ describe('GuidedTourService', () => {
         ],
     };
 
-    const courseOverviewTourWithUserInteraction: GuidedTour = {
+    const tourWithUserInteraction: GuidedTour = {
         courseShortName: '',
         exerciseShortName: '',
-        settingsKey: 'course_overview_tour',
-        preventBackdropFromAdvancing: true,
+        settingsKey: 'tour_user_interaction',
         steps: [
             new TextTourStep({
                 highlightSelector: '.random-selector',
@@ -76,7 +75,6 @@ describe('GuidedTourService', () => {
         courseShortName: 'tutorial',
         exerciseShortName: 'git',
         settingsKey: 'tour_with_course_and_exericse',
-        preventBackdropFromAdvancing: true,
         steps: [
             new TextTourStep({
                 headlineTranslateKey: '',
@@ -86,6 +84,20 @@ describe('GuidedTourService', () => {
                 headlineTranslateKey: '',
                 contentTranslateKey: '',
                 orientation: Orientation.TOPLEFT,
+            }),
+        ],
+    };
+
+    const tourWithModelingTask: GuidedTour = {
+        courseShortName: '',
+        exerciseShortName: '',
+        settingsKey: 'tour_modeling_task',
+        preventBackdropFromAdvancing: true,
+        steps: [
+            new TextTourStep({
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                modelingTask: new GuidedTourModelingTask(personUML.name, ''),
             }),
         ],
     };
@@ -199,8 +211,8 @@ describe('GuidedTourService', () => {
 
         describe('Tours without user interaction', () => {
             beforeEach(async () => {
-                prepareGuidedTour(courseOverviewTour);
-                await startCourseOverviewTour(courseOverviewTour);
+                prepareGuidedTour(tour);
+                await startCourseOverviewTour(tour);
             });
 
             it('should start and finish the course overview guided tour', async () => {
@@ -238,8 +250,8 @@ describe('GuidedTourService', () => {
 
         describe('Tours with user interaction', () => {
             beforeEach(async () => {
-                prepareGuidedTour(courseOverviewTourWithUserInteraction);
-                await startCourseOverviewTour(courseOverviewTourWithUserInteraction);
+                prepareGuidedTour(tourWithUserInteraction);
+                await startCourseOverviewTour(tourWithUserInteraction);
             });
 
             it('should disable the next button', () => {
@@ -331,6 +343,19 @@ describe('GuidedTourService', () => {
                 spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(15);
                 expect(guidedTourService.calculatePSmallDot(8)).to.be.true;
             });
+        });
+
+        describe('Modeling check', () => {
+            it('should enable the next step if the results are correct', inject(
+                [],
+                fakeAsync(() => {
+                    const enableNextStep = spyOn<any>(guidedTourService, 'enableNextStepClick').and.returnValue(of());
+                    guidedTourService.currentTour = tourWithModelingTask;
+                    guidedTourService.updateModelingResult(personUML.name, true);
+                    tick(100);
+                    expect(enableNextStep.calls.count()).to.equal(1);
+                }),
+            ));
         });
     });
 });

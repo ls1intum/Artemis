@@ -16,7 +16,7 @@ export class GuidedTourModelingTask {
 /** Person class with attribute */
 export const personUML = {
     name: 'Person',
-    attribute: 'name: string',
+    attribute: 'name: String',
 };
 
 /** Student class with attribute and method */
