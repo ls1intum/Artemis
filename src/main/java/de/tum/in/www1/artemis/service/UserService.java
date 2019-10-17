@@ -428,7 +428,7 @@ public class UserService {
      * @return all users with roles other than ROLE_ANONYMOUS
      */
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
-        return userRepository.findAllByLoginNot(pageable, AuthoritiesConstants.ANONYMOUS).map(UserDTO::new);
+        return userRepository.findAll(pageable).map(UserDTO::new);
     }
 
     /**
@@ -438,15 +438,6 @@ public class UserService {
      */
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login);
-    }
-
-    /**
-     * Get user with groups and authorities by given user id
-     * @param id user id
-     * @return existing user with the given user id
-     */
-    public User getUserWithAuthorities(Long id) {
-        return userRepository.findOneWithAuthoritiesById(id).get();
     }
 
     /**
@@ -464,21 +455,6 @@ public class UserService {
      */
     public Optional<User> getUserByLogin(String login) {
         return userRepository.findOneByLogin(login);
-    }
-
-    /**
-     * Get user with user groups and authorities by login string
-     * @param login user login string
-     * @return existing user
-     */
-    public User getUserWithGroupsAndAuthoritiesByLogin(String login) {
-        return userRepository.findOneWithAuthoritiesByLogin(login).orElse(null);
-    }
-
-    public User getUserWithAuthorities() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithAuthoritiesByLogin(currentUserLogin).get();
-        return user;
     }
 
     /**
