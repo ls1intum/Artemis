@@ -29,7 +29,6 @@ import org.swift.common.cli.Base;
 import org.swift.common.cli.CliClient;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -149,11 +148,10 @@ public class BambooService implements ContinuousIntegrationService {
             planKey,
             ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
-            versionControlService.get().getRepositoryName(repositoryUrl)
+            versionControlService.get().getRepositoryName(repositoryUrl),
+            Optional.empty()
         );
         enablePlan(planKey);
-        // We need to trigger an initial update in order for Gitlab to work correctly
-        continuousIntegrationUpdateService.get().triggerUpdate(buildPlanId, true);
 
         // Empty commit - Bamboo bug workaround
 
@@ -349,8 +347,8 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
-        return continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
+    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy) throws BambooException {
+        return continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName, triggeredBy);
     }
 
     /**

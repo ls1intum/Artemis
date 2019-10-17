@@ -37,6 +37,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
@@ -886,7 +887,9 @@ public class ProgrammingExerciseService {
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
         // Copy all repositories
-        Arrays.stream(RepositoryType.values()).forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getName(), targetProjectKey, repo.getName()));
+        final var reposToCopy = List.of(Pair.of(RepositoryType.TEMPLATE, templateExercise.getTemplateRepositoryName()),
+                Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
+        reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
                 ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
@@ -921,13 +924,13 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
         continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryName());
+                newExercise.getTemplateRepositoryName(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryName());
+                newExercise.getTestRepositoryName(), Optional.empty());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getSolutionRepositoryName());
+                newExercise.getSolutionRepositoryName(), Optional.empty());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryName());
+                newExercise.getTestRepositoryName(), Optional.empty());
         try {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
             continuousIntegrationService.get().triggerBuild(solutionParticipation);

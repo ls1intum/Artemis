@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.util.List;
+import java.util.Optional;
+
 /**
  * This service manages the update of the Build plan on the Continuous Integration Service depending on the current VCS and CI profiles.
  */
@@ -13,9 +16,10 @@ public interface ContinuousIntegrationUpdateService {
      * @param ciRepositoryName The name of the configured repository in the CI plan.
      * @param repoProjectKey   The key of the project that contains the repository.
      * @param repoName         The lower level identifier of the repository.
+     * @param triggeredBy      Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      * @return a message that indicates the result of the plan repository update.
      */
-    public String updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName);
+    String updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName, Optional<List<String>> triggeredBy);
 
     /**
      * Triggers an build (if needed)
@@ -23,5 +27,5 @@ public interface ContinuousIntegrationUpdateService {
      * @param buildPlanId  The build plan id.
      * @param initialBuild Whether the build should be the initial build (might change if the build is actually triggered).
      */
-    public void triggerUpdate(String buildPlanId, boolean initialBuild);
+    void triggerUpdate(String buildPlanId, boolean initialBuild);
 }

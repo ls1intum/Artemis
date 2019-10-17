@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
@@ -182,7 +183,8 @@ public interface ContinuousIntegrationService {
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoName              The lower level identifier of the repository.
+     * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      * @return                      a message that indicates the result of the plan repository update.
      */
-    String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
+    String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy);
 }

@@ -1,7 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +64,8 @@ public class BambooUpdateService {
         }
 
         @Override
-        public String updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) {
+        public String updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository,
+                Optional<List<String>> triggeredBy) {
             try {
                 // get the repositoryId to find the correct value for field2 below
                 final BitbucketClient bitbucketClient = getBitbucketClient();
@@ -80,12 +87,38 @@ public class BambooUpdateService {
 
                 String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(remoteRepository.getSlug(), bambooRepositoryName, null, planKey, "BITBUCKET_SERVER", null,
                         false, true, true);
+
+                // Overwrite triggers if needed
+                triggeredBy.ifPresent(strings -> overwriteTriggers(planKey, bambooClient, strings));
+
                 log.info("Update plan repository for build plan " + planKey + " was successful: " + message);
                 return message;
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {
                 log.error(e.getMessage(), e);
                 throw new BambooException("Something went wrong while updating the plan repository", e);
+            }
+        }
+
+        public void overwriteTriggers(final String planKey, final BambooClient bambooClient, final List<String> triggeredBy) {
+            try {
+                final var triggersString = bambooClient.getTriggerHelper().getTriggerList(planKey, null, null, 99, Pattern.compile(".*"));
+                // Bamboo CLI returns a weird String, which is the reason for this way of parsing it
+                final var oldTriggers = Arrays.stream(triggersString.split("\n")).map(trigger -> trigger.replace("\"", "").split(","))
+                        .filter(trigger -> trigger.length > 2 && NumberUtils.isNumber(trigger[1])).map(trigger -> Long.parseLong(trigger[1])).collect(Collectors.toSet());
+
+                // Remove all old triggers
+                for (final var triggerId : oldTriggers) {
+                    bambooClient.getTriggerHelper().removeTrigger(planKey, null, null, triggerId, null, false);
+                }
+
+                // Add new triggers
+                for (final var repo : triggeredBy) {
+                    bambooClient.getTriggerHelper().addTrigger(planKey, null, "remoteBitbucketServer", null, null, repo, null, null, false);
+                }
+            }
+            catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+                throw new BambooException("Unable to overwrite triggers for " + planKey, e);
             }
         }
 
