@@ -113,8 +113,8 @@ export function simulateParticipation(artemis, participationSimulation, expected
 
     artemis.websocket(function (socket) {
         // Send changes via websocket
-        function submitChange() {
-            const contentString = JSON.stringify(participationSimulation.content);
+        function submitChange(content) {
+            const contentString = JSON.stringify(content);
             const changeMessage = 'SEND\ndestination:/topic/repository/' + participationSimulation.participationId + '/files\ncontent-length:' + contentString.length + '\n\n' + contentString + '\u0000';
             socket.send(changeMessage);
             socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/repository/' + participationSimulation.participationId + '/files\n\n\u0000');
@@ -136,7 +136,7 @@ export function simulateParticipation(artemis, participationSimulation, expected
         }, 5 * 1000);
 
         socket.setTimeout(function() {
-            submitChange(participationSimulation.participationId);
+            submitChange(participationSimulation.content);
         }, 10 * 1000);
 
         // Commit changes

@@ -1,6 +1,5 @@
-import { COURSES } from './endpoints.js';
+import { COURSE, COURSES } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
-import { COURSE } from './endpoints.js';
 import { fail } from 'k6';
 
 export function newCourseShortName(artemis, courseId) {
@@ -14,9 +13,9 @@ export function newCourse(artemis) {
         title: 'K6 Test Course',
         description: 'K6 performance tests generated course',
         shortName: nextAlphanumeric(5),
-        studentGroupName: 'students',
-        teachingAssistantGroupName: 'students',
-        instructorGroupName: 'students',
+        studentGroupName: 'artemis-test',
+        teachingAssistantGroupName: 'artemis-test',
+        instructorGroupName: 'artemis-test',
         registrationEnabled: true
     };
 
