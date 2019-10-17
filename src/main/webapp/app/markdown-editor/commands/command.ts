@@ -85,7 +85,7 @@ export abstract class Command {
         let startSpace = '';
         let endSpace = '';
         let startIndex = 0;
-        let endIndx = 0;
+        let endIndex = 0;
 
         for (let i = 0; i < textLength; i++) {
             if (text.charAt(i) === ' ') {
