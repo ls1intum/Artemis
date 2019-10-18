@@ -7,12 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.swift.bamboo.cli.BambooClient;
-import org.swift.bitbucket.cli.BitbucketClient;
-import org.swift.bitbucket.cli.objects.RemoteRepository;
-import org.swift.common.cli.Base;
-import org.swift.common.cli.CliClient;
 
+import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.bitbucket.cli.BitbucketClient;
+import com.appfire.bitbucket.cli.objects.RemoteRepository;
+import com.appfire.common.cli.Base;
+import com.appfire.common.cli.CliClient;
 import de.tum.in.www1.artemis.exception.BambooException;
 
 @Profile("bamboo")
@@ -72,7 +72,8 @@ public class BambooUpdateService {
                 bambooClient.doWork(args);
 
                 log.debug("Update plan repository for build plan " + planKey);
-                org.swift.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName, planKey, false);
+                com.appfire.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName, planKey,
+                        false);
                 // Workaround for old exercises which used a different repositoryName
                 if (bambooRemoteRepository == null) {
                     bambooRepositoryName = "Assignment";
