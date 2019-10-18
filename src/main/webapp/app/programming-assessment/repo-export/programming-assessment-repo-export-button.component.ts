@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ButtonType } from 'app/shared/components';
+import { ButtonSize, ButtonType } from 'app/shared/components';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export/programming-assessment-repo-export-dialog.component';
@@ -10,6 +10,7 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-
         <jhi-button
             [disabled]="!exerciseId"
             [btnType]="ButtonType.INFO"
+            [btnSize]="ButtonSize.SMALL"
             [icon]="'download'"
             [title]="'instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
@@ -18,6 +19,7 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {
     ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
 
     @Input() exerciseId: number;
 

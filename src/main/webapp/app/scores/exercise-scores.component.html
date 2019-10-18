@@ -18,16 +18,7 @@
                 <fa-icon [icon]="'download'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
             </button>
-            <button
-                *ngIf="exercise.type === PROGRAMMING"
-                class="btn btn-info btn-sm mr-1"
-                [routerLink]="['/', { outlets: { popup: 'exercise/' + exercise.id + '/exportRepos' } }]"
-                replaceUrl="true"
-                queryParamsHandling="merge"
-            >
-                <fa-icon [icon]="'download'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportRepos.title">Download Repos</span>
-            </button>
+            <jhi-programming-assessment-repo-export *ngIf="exercise.type === PROGRAMMING" [exerciseId]="exercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
             <button class="btn btn-primary btn-sm mr-1" (click)="refresh()">
                 <fa-icon [icon]="'sync'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
@@ -108,6 +99,7 @@
                         <jhi-programming-assessment-manual-result
                             *ngIf="newManualResultAllowed"
                             [participationId]="result.participation.id"
+                            class="mr-1"
                         ></jhi-programming-assessment-manual-result>
                     </td>
                 </tr>

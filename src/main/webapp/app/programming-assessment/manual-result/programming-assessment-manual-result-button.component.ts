@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ButtonType } from 'app/shared/components';
+import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 
@@ -9,6 +9,7 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
         <jhi-button
             [disabled]="!participationId"
             [btnType]="ButtonType.WARNING"
+            [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
             [title]="'entity.action.newResult'"
             (onClick)="openManualResultDialog($event)"
@@ -17,6 +18,7 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
 })
 export class ProgrammingAssessmentManualResultButtonComponent {
     ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
     @Input() participationId: number;
 
     constructor(private modalService: NgbModal) {}
