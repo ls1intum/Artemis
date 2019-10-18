@@ -70,7 +70,7 @@ public class BitbucketService implements VersionControlService {
         if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
             // It is an automatically created user
 
-            User user = userService.getUserByLogin(username).get();
+            User user = userService.getUserWithGroupsByLogin(username).get();
 
             if (!userExists(username)) {
                 log.debug("Bitbucket user {} does not exist yet", username);
