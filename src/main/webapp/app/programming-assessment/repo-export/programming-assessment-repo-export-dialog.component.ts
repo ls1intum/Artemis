@@ -1,37 +1,37 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, Input, OnInit } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-
-import { Moment } from 'moment';
-
-import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
-import { Exercise, ExerciseService } from '../entities/exercise';
-import { Subscription } from 'rxjs/Subscription';
+import { Exercise, ExerciseService } from '../../entities/exercise';
 import { WindowRef } from 'app/core/websocket/window.service';
-
-export type RepositoryExportOptions = {
-    exportAllStudents: boolean;
-    filterLateSubmissions: boolean;
-    filterLateSubmissionsDate: Moment | null;
-    addStudentName: boolean;
-    squashAfterInstructor: boolean;
-    normalizeCodeStyle: boolean;
-};
+import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming-assessment/repo-export/programming-assessment-repo-export.service';
+import { catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
-    templateUrl: './exercise-scores-repo-export-dialog.component.html',
+    templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
 })
-export class ExerciseScoresRepoExportComponent {
+export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
+    @Input() exerciseId: number;
+    @Input() studentIdList: string;
+    @Input() singleStudentMode = false;
     exercise: Exercise;
     exportInProgress: boolean;
-    studentIdList: string;
     repositoryExportOptions: RepositoryExportOptions;
+    isLoading = false;
 
-    constructor(private $window: WindowRef, private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
+    constructor(
+        private $window: WindowRef,
+        private exerciseService: ExerciseService,
+        private repoExportService: ProgrammingAssessmentRepoExportService,
+        public activeModal: NgbActiveModal,
+        private jhiAlertService: JhiAlertService,
+    ) {}
+
+    ngOnInit() {
+        this.isLoading = true;
         this.exportInProgress = false;
         this.repositoryExportOptions = {
             exportAllStudents: false,
@@ -41,6 +41,21 @@ export class ExerciseScoresRepoExportComponent {
             squashAfterInstructor: true,
             normalizeCodeStyle: true,
         };
+        this.exerciseService
+            .find(this.exerciseId)
+            .pipe(
+                tap(({ body: exercise }) => {
+                    this.exercise = exercise!;
+                }),
+                catchError(err => {
+                    this.jhiAlertService.error(err);
+                    this.clear();
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isLoading = false;
+            });
     }
 
     clear() {
@@ -50,7 +65,7 @@ export class ExerciseScoresRepoExportComponent {
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
         const studentIdList = this.studentIdList !== undefined && this.studentIdList !== '' ? this.studentIdList.split(',').map(e => e.trim()) : ['ALL'];
-        this.exerciseService.exportRepos(exerciseId, studentIdList, this.repositoryExportOptions).subscribe(
+        this.repoExportService.exportRepos(exerciseId, studentIdList, this.repositoryExportOptions).subscribe(
             response => {
                 this.jhiAlertService.success('Export of repos was successful. The exported zip file with all repositories is currently being downloaded');
                 this.activeModal.dismiss(true);
@@ -70,25 +85,5 @@ export class ExerciseScoresRepoExportComponent {
                 this.exportInProgress = false;
             },
         );
-    }
-}
-
-@Component({
-    selector: 'jhi-exercise-scores-export-repos-popup',
-    template: '',
-})
-export class ExerciseScoresRepoExportPopupComponent implements OnInit, OnDestroy {
-    routeSub: Subscription;
-
-    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}
-
-    ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(ExerciseScoresRepoExportComponent as Component, params['id'], true);
-        });
-    }
-
-    ngOnDestroy() {
-        this.routeSub.unsubscribe();
     }
 }
