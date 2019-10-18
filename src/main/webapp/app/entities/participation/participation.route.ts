@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core';
 import { ParticipationComponent } from './participation.component';
-import { ExerciseScoresResultResultPopupComponent } from 'app/scores/exercise-scores-result-dialog.component';
+import { ExerciseScoresResultResultPopupComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { ParticipationCleanupBuildPlanPopupComponent } from 'app/entities/participation/participation-cleanup-build-plan-dialog.component';
 
 export const participationRoute: Routes = [

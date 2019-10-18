@@ -2,10 +2,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseScoresPopupService } from './exercise-scores-popup.service';
-import { Result } from '../entities/result/result.model';
+import { ExerciseScoresPopupService } from '../../scores/exercise-scores-popup.service';
+import { Result } from '../../entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
-import { Feedback, FeedbackType } from '../entities/feedback';
+import { Feedback, FeedbackType } from '../../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
@@ -16,9 +16,9 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
-    templateUrl: './exercise-scores-result-dialog.component.html',
+    templateUrl: './programming-assessment-manual-result-dialog.component.html',
 })
-export class ExerciseScoresResultDialogComponent implements OnInit {
+export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
     participation: StudentParticipation;
     result: Result;
     feedbacks: Feedback[] = [];
@@ -90,7 +90,7 @@ export class ExerciseScoresResultResultPopupComponent implements OnInit, OnDestr
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(ExerciseScoresResultDialogComponent as Component, params['participationId'], false);
+            this.instructorDashboardPopupService.open(ProgrammingAssessmentManualResultDialogComponent as Component, params['participationId'], false);
         });
     }
 
