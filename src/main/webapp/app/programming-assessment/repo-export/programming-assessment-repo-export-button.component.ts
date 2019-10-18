@@ -22,6 +22,8 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
     ButtonSize = ButtonSize;
 
     @Input() exerciseId: number;
+    @Input() studentIdList: string; // comma separated
+    @Input() singleStudentMode = false;
 
     constructor(private modalService: NgbModal) {}
 
@@ -29,5 +31,7 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
         event.stopPropagation();
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.studentIdList = this.studentIdList;
+        modalRef.componentInstance.singleStudentMode = this.singleStudentMode;
     }
 }

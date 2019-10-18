@@ -15,9 +15,10 @@ import { of } from 'rxjs';
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     @Input() exerciseId: number;
+    @Input() studentIdList: string;
+    @Input() singleStudentMode = false;
     exercise: Exercise;
     exportInProgress: boolean;
-    studentIdList: string;
     repositoryExportOptions: RepositoryExportOptions;
     isLoading = false;
 

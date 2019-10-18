@@ -6,33 +6,45 @@
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <p jhiTranslate="instructorDashboard.exportRepos.question" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">Confirm export</p>
-        <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required [disabled]="repositoryExportOptions.exportAllStudents"></textarea>
-        <p jhiTranslate="instructorDashboard.exportRepos.timeWarning">(This action can take several minutes depending on number and size of repositories.)</p>
+        <textarea
+            name="studentIds"
+            class="export-textarea"
+            [(ngModel)]="studentIdList"
+            required
+            [disabled]="singleStudentMode || repositoryExportOptions.exportAllStudents"
+        ></textarea>
+        <p *ngIf="!singleStudentMode" jhiTranslate="instructorDashboard.exportRepos.timeWarning">
+            (This action can take several minutes depending on number and size of repositories.)
+        </p>
         <!--
         Only show download all checkbox for instructors & admins.
 -->
-        <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
-            <label class="control-label">
-                <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllStudents" />
-                <strong jhiTranslate="artemisApp.programmingExercise.export.downloadAllStudents">Download the repositories of all students</strong>
-            </label>
-        </div>
-        <div class="checkbox">
-            <label class="control-label">
-                <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
-                <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions">Filter late submissions</strong>
-            </label>
-        </div>
-        <div class="form-group">
-            <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissionsDate"
-                >Date for filter late submissions (defaults to exercise due date if not set)</strong
-            >
-            <jhi-date-time-picker
-                [(ngModel)]="this.repositoryExportOptions.filterLateSubmissionsDate"
-                [disabled]="!this.repositoryExportOptions.filterLateSubmissions"
-                name="filterLateSubmissionsDate"
-            ></jhi-date-time-picker>
-        </div>
+        <ng-container *ngIf="!singleStudentMode">
+            <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
+                <label class="control-label">
+                    <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllStudents" />
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.downloadAllStudents">Download the repositories of all students</strong>
+                </label>
+            </div>
+        </ng-container>
+        <ng-container *ngIf="!singleStudentMode">
+            <div class="checkbox">
+                <label class="control-label">
+                    <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions">Filter late submissions</strong>
+                </label>
+            </div>
+            <div class="form-group">
+                <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissionsDate"
+                    >Date for filter late submissions (defaults to exercise due date if not set)</strong
+                >
+                <jhi-date-time-picker
+                    [(ngModel)]="this.repositoryExportOptions.filterLateSubmissionsDate"
+                    [disabled]="!this.repositoryExportOptions.filterLateSubmissions"
+                    name="filterLateSubmissionsDate"
+                ></jhi-date-time-picker>
+            </div>
+        </ng-container>
         <div class="checkbox">
             <label class="control-label">
                 <input type="checkbox" name="addStudentName" [(ngModel)]="this.repositoryExportOptions.addStudentName" />
