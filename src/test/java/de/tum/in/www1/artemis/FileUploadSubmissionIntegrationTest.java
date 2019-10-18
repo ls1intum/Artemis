@@ -18,10 +18,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
@@ -120,6 +122,24 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getAllSubmissionsOfExerciseAssessedByTutor() throws Exception {
+        database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        submission = database.addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, submission, "student1", "tutor1", feedbacks);
+        database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("assessedByTutor", "true");
+
+        List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.OK,
+                FileUploadSubmission.class, params);
+
+        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
         database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
@@ -150,6 +170,24 @@ public class FileUploadSubmissionIntegrationTest {
 
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
         assertThat(storedSubmission.getResult()).as("result is not set").isNull();
+        checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionWithoutAssessment_lock() throws Exception {
+        FileUploadSubmission submission = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
+        database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
+                FileUploadSubmission.class, params);
+
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
+        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getResult().getAssessor().getLogin()).as("assessor is set").isEqualTo("tutor1");
+        assertThat(storedSubmission.getResult().getAssessmentType()).as("assessment type set to manual").isEqualTo(AssessmentType.MANUAL);
         checkDetailsHidden(storedSubmission, false);
     }
 
