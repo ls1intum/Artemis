@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core';
 import { ParticipationComponent } from './participation.component';
-import { ExerciseScoresResultResultPopupComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { ParticipationCleanupBuildPlanPopupComponent } from 'app/entities/participation/participation-cleanup-build-plan-dialog.component';
 
 export const participationRoute: Routes = [
@@ -32,16 +31,6 @@ export const participationPopupRoute: Routes = [
         component: ParticipationCleanupBuildPlanPopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.participation.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'participation/:participationId/result/new',
-        component: ExerciseScoresResultResultPopupComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],

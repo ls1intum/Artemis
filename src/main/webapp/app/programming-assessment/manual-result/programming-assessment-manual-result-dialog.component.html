@@ -1,4 +1,7 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="result.participation">
+<!--
+<ng-container *ngif="!isLoading; else loadingContainer">
+-->
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="result && result.participation">
     <div class="modal-header">
         <h4 class="modal-title" id="myResultLabel">
             <span jhiTranslate="artemisApp.result.createManual">Create manual result for </span> {{ participation.student.firstName }} {{ participation.student.lastName }} ({{
@@ -101,3 +104,11 @@
         </button>
     </div>
 </form>
+<!--
+</ng-container>
+<ng-template #loadingContainer>
+    <div class="d-flex justify-content-center mt-4">
+        <fa-icon icon="circle-notch" [spin]="true"></fa-icon>
+    </div>
+</ng-template>
+-->

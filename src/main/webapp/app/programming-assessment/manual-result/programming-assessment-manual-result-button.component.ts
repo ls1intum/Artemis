@@ -1,7 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { ButtonType } from 'app/shared/components';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 
 @Component({
-    selector: 'jhi-exercise-scores-result-dialog',
-    template: ``,
+    selector: 'jhi-programming-assessment-manual-result',
+    template: `
+        <jhi-button
+            *ngIf="show"
+            [disabled]="!participationId"
+            [btnType]="ButtonType.WARNING"
+            [icon]="'asterisk'"
+            [title]="'entity.action.newResult'"
+            (onClick)="openManualResultDialog($event)"
+        ></jhi-button>
+    `,
 })
-export class ProgrammingAssessmentManualResultButtonComponent {}
+export class ProgrammingAssessmentManualResultButtonComponent {
+    ButtonType = ButtonType;
+    @Input() show: boolean;
+    @Input() participationId: number;
+
+    constructor(private modalService: NgbModal) {}
+
+    openManualResultDialog(event: MouseEvent) {
+        event.stopPropagation();
+        // TODO: Open dialog.
+        const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.participationId = this.participationId;
+    }
+}

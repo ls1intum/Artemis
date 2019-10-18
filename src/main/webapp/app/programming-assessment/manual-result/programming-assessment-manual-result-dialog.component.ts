@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -6,34 +6,59 @@ import { ExerciseScoresPopupService } from '../../scores/exercise-scores-popup.s
 import { Result } from '../../entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
 import { Feedback, FeedbackType } from '../../entities/feedback';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { Subscription } from 'rxjs/Subscription';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ParticipationService } from 'app/entities/participation';
+import { catchError, tap } from 'rxjs/operators';
+import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
     templateUrl: './programming-assessment-manual-result-dialog.component.html',
 })
 export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
+    @Input() participationId: number;
     participation: StudentParticipation;
     result: Result;
     feedbacks: Feedback[] = [];
+    isLoading = false;
     isSaving = false;
     isOpenForSubmission = false;
 
-    constructor(private resultService: ResultService, public activeModal: NgbActiveModal, private datePipe: DatePipe, private eventManager: JhiEventManager) {}
+    constructor(
+        private participationService: ParticipationService,
+        private manualResultService: ProgrammingAssessmentManualResultService,
+        public activeModal: NgbActiveModal,
+        private datePipe: DatePipe,
+        private eventManager: JhiEventManager,
+        private alertService: JhiAlertService,
+    ) {}
 
     ngOnInit() {
-        if (this.participation) {
-            this.result.participation = this.participation;
-            this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
-        } else {
-            this.clear();
-        }
+        this.isLoading = true;
+        // TODO: Implement result update.
+        this.result = this.manualResultService.generateInitialManualResult();
+        this.participationService
+            .find(this.participationId)
+            .pipe(
+                tap(({ body: participation }) => {
+                    this.participation = participation!;
+                    this.result.participation = this.participation;
+                    this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
+                }),
+                catchError((err: any) => {
+                    this.alertService.error(err);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => {
+                this.isLoading = false;
+            });
     }
 
     clear() {
@@ -47,10 +72,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
         if (this.result.id != null) {
-            this.subscribeToSaveResponse(this.resultService.update(this.result));
+            this.subscribeToSaveResponse(this.manualResultService.update(this.result));
         } else {
             // in case id is null or undefined
-            this.subscribeToSaveResponse(this.resultService.create(this.result));
+            this.subscribeToSaveResponse(this.manualResultService.create(this.result));
         }
     }
 
@@ -76,25 +101,5 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.feedbacks.length > 0) {
             this.feedbacks.pop();
         }
-    }
-}
-
-@Component({
-    selector: 'jhi-exercise-scores-result-popup',
-    template: '',
-})
-export class ExerciseScoresResultResultPopupComponent implements OnInit, OnDestroy {
-    routeSub: Subscription;
-
-    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseScoresPopupService) {}
-
-    ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(ProgrammingAssessmentManualResultDialogComponent as Component, params['participationId'], false);
-        });
-    }
-
-    ngOnDestroy() {
-        this.routeSub.unsubscribe();
     }
 }
