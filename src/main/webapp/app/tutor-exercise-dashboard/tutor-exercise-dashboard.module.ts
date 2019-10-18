@@ -20,6 +20,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
 import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
 import { CourseScoreCalculationService } from 'app/overview';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
@@ -36,6 +37,7 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisSidePanelModule,
         ArtemisTutorLeaderboardModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
     exports: [ResultComponent],

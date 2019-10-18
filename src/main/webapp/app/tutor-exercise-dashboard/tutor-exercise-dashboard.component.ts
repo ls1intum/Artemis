@@ -24,6 +24,7 @@ import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-das
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -72,6 +73,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
     readonly ExerciseType_FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
 
     stats = {
         toReview: {
@@ -219,6 +221,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
                 break;
+            // TODO: Add case for programming exercises here.
         }
 
         submissionsObservable
@@ -263,6 +266,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
                 break;
+            // TODO: Add case for programming exercises here.
         }
 
         submissionObservable.subscribe(
@@ -346,6 +350,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
         }
         this.router.navigate([route]);
+    }
+
+    asProgrammingExercise(exercise: Exercise) {
+        return exercise as ProgrammingExercise;
     }
 
     back() {
