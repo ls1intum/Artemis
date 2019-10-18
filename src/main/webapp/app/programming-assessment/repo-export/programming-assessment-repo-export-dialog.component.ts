@@ -2,8 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-
-import { Moment } from 'moment';
 import { Exercise, ExerciseService } from '../../entities/exercise';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming-assessment/repo-export/programming-assessment-repo-export.service';
@@ -21,6 +19,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     exportInProgress: boolean;
     studentIdList: string;
     repositoryExportOptions: RepositoryExportOptions;
+    isLoading = false;
 
     constructor(
         private $window: WindowRef,
@@ -31,6 +30,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.isLoading = true;
         this.exportInProgress = false;
         this.repositoryExportOptions = {
             exportAllStudents: false,
@@ -48,10 +48,13 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 }),
                 catchError(err => {
                     this.jhiAlertService.error(err);
+                    this.clear();
                     return of(null);
                 }),
             )
-            .subscribe();
+            .subscribe(() => {
+                this.isLoading = false;
+            });
     }
 
     clear() {

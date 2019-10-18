@@ -53,6 +53,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 }),
                 catchError((err: any) => {
                     this.alertService.error(err);
+                    this.clear();
                     return of(null);
                 }),
             )
