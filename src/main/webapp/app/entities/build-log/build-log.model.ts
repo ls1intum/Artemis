@@ -22,6 +22,11 @@ type ParsedLogEntry = [string, string, string, string, string, string];
 export class BuildLogEntryArray extends Array<BuildLogEntry> {
     private errorLogRegex = /\[(ERROR)\].*\/(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
 
+    /**
+     * Factory method for creating an instance of the class. Prefer this method over the default constructor.
+     *
+     * @param buildLogs BuildLogEntry[]
+     */
     static fromBuildLogs(buildLogs: BuildLogEntry[]) {
         const mappedLogs = buildLogs.map(({ log, ...rest }) => {
             const logType = log && log.trimLeft().startsWith('[ERROR]') ? BuildLogType.ERROR : log.trimLeft().startsWith('[WARNING]') ? BuildLogType.WARNING : BuildLogType.OTHER;
