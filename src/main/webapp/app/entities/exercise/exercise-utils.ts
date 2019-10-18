@@ -62,6 +62,13 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
     if (!hasStudentParticipations(exercise)) {
         return ParticipationStatus.UNINITIALIZED;
+    } else if (
+        [InitializationState.REPO_COPIED, InitializationState.REPO_CONFIGURED, InitializationState.BUILD_PLAN_COPIED, InitializationState.BUILD_PLAN_CONFIGURED].includes(
+            exercise.studentParticipations[0].initializationState,
+        )
+    ) {
+        // in case the programming exercise is not configured properly, we assume it is uninitalized
+        return ParticipationStatus.UNINITIALIZED;
     } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
         return ParticipationStatus.INITIALIZED;
     }

@@ -145,7 +145,7 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl)) {
+        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
             createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
@@ -618,7 +618,7 @@ public class BitbucketService implements VersionControlService {
         throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
     }
 
-    private boolean webHookExists(String projectKey, String repositorySlug, String notificationUrl) {
+    private boolean webHookExists(String projectKey, String repositorySlug) {
         Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
         return !webHooks.isEmpty();
     }

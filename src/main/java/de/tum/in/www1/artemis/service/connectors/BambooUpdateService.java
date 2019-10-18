@@ -85,8 +85,8 @@ public class BambooUpdateService {
                 return message;
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-                log.error(e.getMessage(), e);
-                throw new BambooException("Something went wrong while updating the plan repository", e);
+                throw new BambooException(
+                        "Something went wrong while updating the template repository of the build plan " + planKey + " to the student repository : " + e.getMessage(), e);
             }
         }
 
