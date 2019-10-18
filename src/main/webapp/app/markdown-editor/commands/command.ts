@@ -9,8 +9,6 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 export abstract class Command {
     buttonIcon: string;
     buttonTranslationString: string;
-    startSpace: string;
-    endSpace: string;
     protected aceEditorContainer: AceEditorComponent;
     protected markdownWrapper: ElementRef;
 
@@ -82,34 +80,19 @@ export abstract class Command {
 
     abstract execute(input?: string): void;
 
-    protected ignoreWhiteSpace(text: string) {
-        const textLength = text.length;
-        let startIndex = 0;
-        let endIndex = 0;
-        this.startSpace = '';
-        this.endSpace = '';
-
-        for (let i = 0; i < textLength; i++) {
-            if (text.charAt(i) === ' ') {
-                this.startSpace = this.startSpace + ' ';
-            } else {
-                startIndex = i;
-                break;
-            }
-        }
-
-        for (let j = textLength; j >= 0; j--) {
-            if (text.charAt(j - 1) === ' ') {
-                this.endSpace = this.endSpace + ' ';
-            } else {
-                endIndex = j;
-                break;
-            }
-        }
-        return text.slice(startIndex, endIndex);
+    protected deleteWhiteSpace(text: string) {
+        return text.trim();
     }
 
-    protected addRefinedTxt(text: string) {
-        return this.insertText(this.startSpace + text + this.endSpace);
+    protected addRefinedTxt(selectedText: string, textToAdd: string) {
+        if (selectedText.charAt(0) === ' ' && selectedText.charAt(selectedText.length - 1) === ' ') {
+            return this.insertText(' ' + textToAdd + ' ');
+        } else if (selectedText.charAt(0) === ' ') {
+            return this.insertText(' ' + textToAdd);
+        } else if (selectedText.charAt(selectedText.length - 1) === ' ') {
+            return this.insertText(textToAdd + ' ');
+        } else {
+            return this.insertText(textToAdd);
+        }
     }
 }

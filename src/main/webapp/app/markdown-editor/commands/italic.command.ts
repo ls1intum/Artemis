@@ -20,9 +20,9 @@ export class ItalicCommand extends Command {
             textToAdd = selectedText.slice(1, -1);
             this.insertText(textToAdd);
         } else {
-            const refinedString = this.ignoreWhiteSpace(selectedText);
-            textToAdd = `*${refinedString}*`;
-            this.addRefinedTxt(textToAdd);
+            const trimmedText = this.deleteWhiteSpace(selectedText);
+            textToAdd = `*${trimmedText}*`;
+            this.addRefinedTxt(selectedText, textToAdd);
         }
     }
 }
