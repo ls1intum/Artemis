@@ -7,7 +7,6 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
     selector: 'jhi-programming-assessment-manual-result',
     template: `
         <jhi-button
-            *ngIf="show"
             [disabled]="!participationId"
             [btnType]="ButtonType.WARNING"
             [icon]="'asterisk'"
@@ -18,14 +17,12 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
 })
 export class ProgrammingAssessmentManualResultButtonComponent {
     ButtonType = ButtonType;
-    @Input() show: boolean;
     @Input() participationId: number;
 
     constructor(private modalService: NgbModal) {}
 
     openManualResultDialog(event: MouseEvent) {
         event.stopPropagation();
-        // TODO: Open dialog.
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = this.participationId;
     }

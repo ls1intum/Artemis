@@ -1,19 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
 import { Moment } from 'moment';
-import { Exercise } from '../../entities/exercise';
+import { Exercise, ExerciseService } from '../../entities/exercise';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming-assessment/repo-export/programming-assessment-repo-export.service';
+import { catchError, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
 })
-export class ProgrammingAssessmentRepoExportDialogComponent {
+export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
+    @Input() exerciseId: number;
     exercise: Exercise;
     exportInProgress: boolean;
     studentIdList: string;
@@ -21,10 +24,13 @@ export class ProgrammingAssessmentRepoExportDialogComponent {
 
     constructor(
         private $window: WindowRef,
+        private exerciseService: ExerciseService,
         private repoExportService: ProgrammingAssessmentRepoExportService,
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
-    ) {
+    ) {}
+
+    ngOnInit() {
         this.exportInProgress = false;
         this.repositoryExportOptions = {
             exportAllStudents: false,
@@ -34,6 +40,18 @@ export class ProgrammingAssessmentRepoExportDialogComponent {
             squashAfterInstructor: true,
             normalizeCodeStyle: true,
         };
+        this.exerciseService
+            .find(this.exerciseId)
+            .pipe(
+                tap(({ body: exercise }) => {
+                    this.exercise = exercise!;
+                }),
+                catchError(err => {
+                    this.jhiAlertService.error(err);
+                    return of(null);
+                }),
+            )
+            .subscribe();
     }
 
     clear() {

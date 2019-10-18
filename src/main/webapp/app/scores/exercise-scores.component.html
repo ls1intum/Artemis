@@ -105,13 +105,10 @@
                         >
                             <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                         </button>
-                        <button
+                        <jhi-programming-assessment-manual-result
                             *ngIf="newManualResultAllowed"
-                            [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new' } }]"
-                            class="btn btn-warning btn-sm mr-1"
-                        >
-                            <fa-icon class="mr-1" icon="asterisk"></fa-icon>{{ 'entity.action.newResult' | translate }}
-                        </button>
+                            [participationId]="result.participation.id"
+                        ></jhi-programming-assessment-manual-result>
                     </td>
                 </tr>
             </tbody>
