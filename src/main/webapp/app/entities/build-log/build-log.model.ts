@@ -1,9 +1,16 @@
 import { safeUnescape } from 'app/shared';
 import { AnnotationArray } from '../ace-editor';
 
+export enum BuildLogType {
+    ERROR = 'ERROR',
+    WARNING = 'WARNING',
+    OTHER = 'OTHER',
+}
+
 export type BuildLogEntry = {
     time: any;
     log: string;
+    type?: BuildLogType;
 };
 
 // flag(error, warning),filePath,fileName,line,row,error
@@ -14,6 +21,18 @@ type ParsedLogEntry = [string, string, string, string, string, string];
  */
 export class BuildLogEntryArray extends Array<BuildLogEntry> {
     private errorLogRegex = /\[(ERROR)\].*\/(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
+
+    static fromBuildLogs(buildLogs: BuildLogEntry[]) {
+        const mappedLogs = buildLogs.map(({ log, ...rest }) => {
+            const logType = log && log.trimLeft().startsWith('[ERROR]') ? BuildLogType.ERROR : log.trimLeft().startsWith('[WARNING]') ? BuildLogType.WARNING : BuildLogType.OTHER;
+            return {
+                log,
+                type: logType,
+                ...rest,
+            };
+        });
+        return new BuildLogEntryArray(...mappedLogs);
+    }
 
     /**
      * Filters compilation errors from build log and groups them by filename.
