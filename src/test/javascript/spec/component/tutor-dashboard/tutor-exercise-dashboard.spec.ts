@@ -26,6 +26,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment-instructions';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +44,7 @@ describe('TutorExerciseDashboardComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule, TranslateModule.forRoot()],
             declarations: [
                 TutorExerciseDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),
