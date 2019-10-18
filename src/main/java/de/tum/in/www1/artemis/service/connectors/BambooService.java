@@ -24,9 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.swift.bamboo.cli.BambooClient;
-import org.swift.common.cli.Base;
-import org.swift.common.cli.CliClient;
+import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.common.cli.Base;
+import com.appfire.common.cli.CliClient;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.Null;
