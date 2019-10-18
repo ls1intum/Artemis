@@ -65,6 +65,34 @@ public class TextSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "student1")
+    public void submitTextSubmission() throws Exception {
+        database.addParticipationForExercise(textExercise, "student1");
+        TextSubmission submission = ModelFactory.generateTextSubmission("d", Language.ENGLISH, false);
+        TextSubmission returnedSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", submission, TextSubmission.class,
+                HttpStatus.OK);
+        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
+        assertThat(returnedSubmission.getText()).as("text is set").isEqualTo("d");
+        assertThat(returnedSubmission.getLanguage()).as("language is set").isEqualTo(Language.ENGLISH);
+        checkDetailsHidden(returnedSubmission, true);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void updateTextSubmission() throws Exception {
+        database.addParticipationForExercise(textExercise, "student1");
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        textSubmission.setText("dddd");
+        textSubmission.setLanguage(Language.GERMAN);
+        TextSubmission returnedSubmission = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
+                HttpStatus.OK);
+        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
+        assertThat(returnedSubmission.getText()).isEqualTo("dddd");
+        assertThat(returnedSubmission.getLanguage()).isEqualTo(Language.GERMAN);
+        checkDetailsHidden(returnedSubmission, true);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextSubmissions_studentHidden() throws Exception {
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
@@ -114,4 +142,10 @@ public class TextSubmissionIntegrationTest {
         assertThat(participation.getSubmissions(), is(notNullValue()));
     }
 
+    private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {
+        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
+        if (isStudent) {
+            assertThat(submission.getResult()).isNull();
+        }
+    }
 }
