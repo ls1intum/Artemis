@@ -22,7 +22,7 @@
 }
 
 .quiz-footer {
-    height: 100px;
+    height: 90px;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -59,6 +59,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    > div {
+        @media (max-width: 599px) {
+            max-width: 33%;
+        }
+    }
 
     .form-control,
     .input-group-btn {
@@ -166,16 +172,29 @@
     white-space: nowrap;
 }
 
+.hide-mobile {
+    @media (min-width: 451px) {
+        display: none;
+    }
+}
+.show-mobile {
+    @media (max-width: 450px) {
+        display: none;
+    }
+}
+
 .stepwizardquiz {
     display: flex;
-    flex-wrap: wrap;
-    max-width: 300px;
     max-height: 57px;
     position: relative;
-    text-align: center;
+
+    @media (max-width: 450px) {
+        display: inline;
+        max-width: 100px;
+    }
 
     &__step {
-        display: table-cell;
+        display: inline-block;
         text-align: center;
         position: relative;
 
