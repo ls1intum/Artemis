@@ -3,13 +3,12 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { AccountService } from 'app/core';
-import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -17,7 +16,7 @@ import { Observable } from 'rxjs';
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[] = [];
-    closeDialog: boolean;
+    closeDialog: boolean | string;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -65,13 +64,19 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * @param fileUploadExerciseId id of the exercise that will be deleted
      */
     deleteFileUploadExercise(fileUploadExerciseId: number) {
-        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(() => {
-            this.closeDialog = true;
-            this.eventManager.broadcast({
-                name: 'fileUploadExerciseListModification',
-                content: 'Deleted an fileUploadExercise',
-            });
-        });
+        this.jhiAlertService.clear();
+        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(
+            () => {
+                this.closeDialog = true;
+                this.eventManager.broadcast({
+                    name: 'fileUploadExerciseListModification',
+                    content: 'Deleted an fileUploadExercise',
+                });
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialog = error.message;
+            },
+        );
     }
 
     protected getChangeEventName(): string {

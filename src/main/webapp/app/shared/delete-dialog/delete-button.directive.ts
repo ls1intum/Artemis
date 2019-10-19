@@ -12,9 +12,13 @@ export class DeleteButtonDirective implements OnInit {
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() deleteAction: any;
     @Output() delete = new EventEmitter<any>();
-    @Input('closeOnSuccess') set closeOnSuccess(value: boolean) {
+    @Input('close') set close(value: boolean | string) {
         if (value) {
-            this.deleteDialogService.closeDialog();
+            if (typeof value === 'string') {
+                this.deleteDialogService.showAlert(value);
+            } else {
+                this.deleteDialogService.closeDialog();
+            }
         }
     }
     @Input() entityParameter: any;
@@ -59,7 +63,6 @@ export class DeleteButtonDirective implements OnInit {
             additionalChecks: this.additionalChecks,
             actionType: this.actionType,
             delete: this.delete,
-            closeOnSuccess: this.closeOnSuccess,
         };
         this.deleteDialogService.openDeleteDialog(deleteDialogData);
     }

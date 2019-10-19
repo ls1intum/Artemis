@@ -25,6 +25,7 @@ export class DeleteDialogComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal, public jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
+        this.jhiAlertService.clear();
         if (this.additionalChecks) {
             this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
         }
@@ -46,5 +47,9 @@ export class DeleteDialogComponent implements OnInit {
 
     close() {
         this.activeModal.close();
+    }
+
+    showAlert(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage);
     }
 }

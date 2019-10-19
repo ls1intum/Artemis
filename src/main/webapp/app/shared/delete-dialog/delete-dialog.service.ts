@@ -21,12 +21,17 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
         this.modalRef.componentInstance.delete = deleteDialogData.delete;
-        this.modalRef.componentInstance.closeOnSuccess = deleteDialogData.closeOnSuccess;
     }
 
     closeDialog() {
         if (this.modalRef) {
             this.modalRef.componentInstance.close();
+        }
+    }
+
+    showAlert(errorMessage: string) {
+        if (this.modalRef) {
+            this.modalRef.componentInstance.showAlert(errorMessage);
         }
     }
 }
