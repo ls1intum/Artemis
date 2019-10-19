@@ -147,19 +147,6 @@ public class TextSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getTextSubmission_studentHidden() throws Exception {
-        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
-
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission/" + textSubmission.getId(), HttpStatus.OK,
-                TextSubmission.class);
-
-        assertThat(textSubmissionWithoutAssessment).as("text submission was found").isNotNull();
-        assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
 
