@@ -182,7 +182,6 @@ public interface ContinuousIntegrationService {
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoName              The lower level identifier of the repository.
-     * @return                      a message that indicates the result of the plan repository update.
      */
-    String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
+    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
 }
