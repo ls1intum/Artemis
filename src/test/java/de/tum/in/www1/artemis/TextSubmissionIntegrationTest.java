@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,11 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -53,7 +52,7 @@ public class TextSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 1, 0);
+        database.addUsers(2, 2, 0);
         database.addCourseWithOneTextExerciseDueDateReached();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
@@ -101,7 +100,62 @@ public class TextSubmissionIntegrationTest {
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+
+        checkDetailsHidden(textSubmission, false);
         assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getAllTextSubmissions_assessedByTutor() throws Exception {
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("d", Language.ENGLISH, true);
+        database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission2, "tutor2", "student2");
+        database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("assessedByTutor", "true");
+
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class, params);
+
+        assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
+        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+
+        checkDetailsHidden(textSubmissions.get(0), false);
+        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getAllTextSubmissions_submittedOnly() throws Exception {
+        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("d", Language.ENGLISH, false);
+        database.addTextSubmission(textExercise, textSubmission2, "student2");
+        database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("submittedOnly", "true");
+
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class, params);
+
+        assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
+        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+
+        checkDetailsHidden(textSubmissions.get(0), false);
+        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmission_studentHidden() throws Exception {
+        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission/" + textSubmission.getId(), HttpStatus.OK,
+                TextSubmission.class);
+
+        assertThat(textSubmissionWithoutAssessment).as("text submission was found").isNotNull();
+        assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(((StudentParticipation) textSubmissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test

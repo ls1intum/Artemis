@@ -124,7 +124,6 @@ public class FileUploadSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmissionsOfExerciseAssessedByTutor() throws Exception {
-        database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
         submission = database.addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, submission, "student1", "tutor1", feedbacks);
