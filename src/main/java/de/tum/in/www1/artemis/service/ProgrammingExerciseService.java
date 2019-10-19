@@ -825,7 +825,8 @@ public class ProgrammingExerciseService {
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin()
-                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, sorted)
+                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
+                        sorted)
                 : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
 
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
