@@ -34,9 +34,6 @@ enum ResultTemplateStatus {
  */
 export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
     readonly ResultTemplateStatus = ResultTemplateStatus;
 
     @Input() participation: Participation;
