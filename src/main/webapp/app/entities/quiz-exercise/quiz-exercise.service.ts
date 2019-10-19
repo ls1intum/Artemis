@@ -23,8 +23,6 @@ export class QuizExerciseService {
         OPEN_FOR_PRACTICE: 'Open for Practice',
     };
 
-    quizExercises: QuizExercise[];
-
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     create(quizExercise: QuizExercise): Observable<EntityResponseType> {
@@ -64,22 +62,27 @@ export class QuizExerciseService {
             .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
-    openForPractice(quizExerciseId: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${quizExerciseId}/open-for-practice`, { observe: 'response' });
-    }
-
     findForStudent(quizExerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/for-student`, { observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
-
-    start(quizExerciseId: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${quizExerciseId}/start-now`, { observe: 'response' });
+    openForPractice(quizExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/open-for-practice`, null, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    setVisible(quizExerciseId: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, { observe: 'response' });
+    start(quizExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/start-now`, null, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+    }
+
+    setVisible(quizExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

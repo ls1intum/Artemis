@@ -16,7 +16,17 @@
 </div>
 <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && isTumStudent">
     <div class="btn-group">
-        <button class="btn btn-primary" [disabled]="!courseToRegister" (click)="registerForCourse()">
+        <!-- Special case for PGdP where we have to have a confirmation regarding the exam registration before registering to the course -->
+        <jhi-confirm-button
+            *ngIf="courseToRegister && courseToRegister.id === 37"
+            [disabled]="!courseToRegister"
+            (onConfirm)="registerForCourse()"
+            title="artemisApp.studentDashboard.register.signUpForCourse"
+            confirmationText="artemisApp.studentDashboard.register.examSignupConfirmation"
+            confirmationTitle="artemisApp.studentDashboard.register.examSignupConfirmationTitle"
+        >
+        </jhi-confirm-button>
+        <button *ngIf="!courseToRegister || courseToRegister.id !== 37" class="btn btn-primary" [disabled]="!courseToRegister" (click)="registerForCourse()">
             {{ 'artemisApp.studentDashboard.register.signUpForCourse' | translate }}
         </button>
         <button class="btn btn-default" (click)="cancelRegistration()">

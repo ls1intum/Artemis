@@ -3,8 +3,8 @@ import { Result, ResultService } from './';
 import { RepositoryService } from 'app/entities/repository';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
-import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
-import { tap, catchError, switchMap, map } from 'rxjs/operators';
+import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise';
@@ -15,6 +15,8 @@ import { ExerciseType } from 'app/entities/exercise';
     templateUrl: './result-detail.component.html',
 })
 export class ResultDetailComponent implements OnInit {
+    BuildLogType = BuildLogType;
+
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
@@ -80,7 +82,7 @@ export class ResultDetailComponent implements OnInit {
     private fetchAndSetBuildLogs = (participationId: number) => {
         return this.repositoryService.buildlogs(participationId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
-                this.buildLogs = new BuildLogEntryArray(...repoResult);
+                this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
             }),
         );
     };
