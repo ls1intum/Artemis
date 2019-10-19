@@ -37,7 +37,7 @@ public class FileUploadSubmission extends Submission implements Serializable {
             // delete old file if necessary
             final var splittedPath = filePath.split("/");
             final var shouldBeExerciseId = splittedPath.length >= 5 ? splittedPath[4] : null;
-            if (!NumberUtils.isNumber(shouldBeExerciseId)) {
+            if (!NumberUtils.isCreatable(shouldBeExerciseId)) {
                 throw new FilePathParsingException("Unexpected String in upload file path. Should contain the exercise ID: " + shouldBeExerciseId);
             }
             final var exerciseId = Long.parseLong(shouldBeExerciseId);
