@@ -1,26 +1,18 @@
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit, EventEmitter, Output } from '@angular/core';
+import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Directive({ selector: '[jhiDeleteButton]' })
-export class DeleteButtonDirective implements OnInit {
+export class DeleteButtonDirective implements OnInit, OnChanges {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() deleteAction: any;
-    @Output() delete = new EventEmitter<any>();
-    @Input() set close(value: boolean | string) {
-        if (value) {
-            if (typeof value === 'string') {
-                this.deleteDialogService.showAlert(value);
-            } else {
-                this.deleteDialogService.closeDialog();
-            }
-        }
-    }
+    @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
+    @Input() close: boolean | string;
     @Input() entityParameter: any;
 
     deleteTextSpan: HTMLElement;
@@ -74,5 +66,15 @@ export class DeleteButtonDirective implements OnInit {
 
     private setTextContent() {
         this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant(`entity.action.${this.actionType}`));
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.close && changes.close.currentValue) {
+            if (typeof changes.close.currentValue === 'string') {
+                this.deleteDialogService.showAlert(changes.close.currentValue);
+            } else {
+                this.deleteDialogService.closeDialog();
+            }
+        }
     }
 }
