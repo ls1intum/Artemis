@@ -12,7 +12,7 @@ export class DeleteButtonDirective implements OnInit {
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() deleteAction: any;
     @Output() delete = new EventEmitter<any>();
-    @Input('close') set close(value: boolean | string) {
+    @Input() set close(value: boolean | string) {
         if (value) {
             if (typeof value === 'string') {
                 this.deleteDialogService.showAlert(value);
@@ -64,7 +64,7 @@ export class DeleteButtonDirective implements OnInit {
             actionType: this.actionType,
             delete: this.delete,
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData);
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe();
     }
 
     @HostListener('click')

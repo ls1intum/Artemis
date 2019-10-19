@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -10,7 +10,7 @@ import { JhiAlertService } from 'ng-jhipster';
 })
 export class DeleteDialogComponent implements OnInit {
     readonly actionTypes = ActionType;
-    @Output() delete: EventEmitter<any>;
+    @Output() delete: EventEmitter<{ [key: string]: boolean }>;
     confirmEntityName: string;
     entityTitle: string;
     deleteQuestion: string;

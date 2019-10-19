@@ -64,14 +64,13 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * @param fileUploadExerciseId id of the exercise that will be deleted
      */
     deleteFileUploadExercise(fileUploadExerciseId: number) {
-        this.jhiAlertService.clear();
         this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(
             () => {
-                this.closeDialog = true;
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted an fileUploadExercise',
                 });
+                this.closeDialog = true;
             },
             (error: HttpErrorResponse) => {
                 this.closeDialog = error.message;
