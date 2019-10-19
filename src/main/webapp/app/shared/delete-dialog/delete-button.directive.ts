@@ -1,8 +1,7 @@
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit } from '@angular/core';
+import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit, EventEmitter, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Observable } from 'rxjs';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
@@ -11,8 +10,14 @@ export class DeleteButtonDirective implements OnInit {
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
-    @Input() deleteAction: Observable<any>;
-    @Input() entityParameter?: any;
+    @Input() deleteAction: any;
+    @Output() delete = new EventEmitter<any>();
+    @Input('closeOnSuccess') set closeOnSuccess(value: boolean) {
+        if (value) {
+            this.deleteDialogService.closeDialog();
+        }
+    }
+    @Input() entityParameter: any;
 
     deleteTextSpan: HTMLElement;
 
@@ -53,8 +58,8 @@ export class DeleteButtonDirective implements OnInit {
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
             actionType: this.actionType,
-            delete: this.deleteAction,
-            entityParameter: this.entityParameter,
+            delete: this.delete,
+            closeOnSuccess: this.closeOnSuccess,
         };
         this.deleteDialogService.openDeleteDialog(deleteDialogData);
     }

@@ -1,5 +1,4 @@
-import { Observable } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { EventEmitter } from '@angular/core';
 
 /**
  * Defines the type of the action handled by delete dialog
@@ -29,7 +28,7 @@ export class DeleteDialogData {
     // type of the the action that delete dialog will handle
     actionType: ActionType;
 
-    delete: Observable<HttpResponse<void>>;
+    delete: EventEmitter<any>;
 
-    entityParameter?: any;
+    closeOnSuccess?: boolean;
 }

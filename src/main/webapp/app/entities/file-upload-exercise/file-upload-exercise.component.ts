@@ -17,6 +17,7 @@ import { Observable } from 'rxjs';
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[] = [];
+    closeDialog: boolean;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -63,16 +64,15 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * Deletes file upload exercise
      * @param fileUploadExerciseId id of the exercise that will be deleted
      */
-    deleteFileUploadExercise = (fileUploadExerciseId: number): Observable<HttpResponse<void>> => {
-        return this.fileUploadExerciseService.delete(fileUploadExerciseId).pipe(
-            tap(() => {
-                this.eventManager.broadcast({
-                    name: 'fileUploadExerciseListModification',
-                    content: 'Deleted an fileUploadExercise',
-                });
-            }),
-        );
-    };
+    deleteFileUploadExercise(fileUploadExerciseId: number) {
+        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(() => {
+            this.closeDialog = true;
+            this.eventManager.broadcast({
+                name: 'fileUploadExerciseListModification',
+                content: 'Deleted an fileUploadExercise',
+            });
+        });
+    }
 
     protected getChangeEventName(): string {
         return 'fileUploadExerciseListModification';

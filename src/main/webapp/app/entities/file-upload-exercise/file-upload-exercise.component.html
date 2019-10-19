@@ -93,7 +93,8 @@
                                 [entityParameter]="fileUploadExercise.id"
                                 deleteQuestion="artemisApp.exercise.delete.question"
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                [deleteAction]="deleteFileUploadExercise"
+                                (delete)="deleteFileUploadExercise(fileUploadExercise.id)"
+                                [closeOnSuccess]="closeDialog"
                             >
                                 <fa-icon icon="times"></fa-icon>
                             </button>
