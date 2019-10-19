@@ -1,6 +1,15 @@
 import { login } from './requests/requests.js';
-import { startExercise } from "./requests/programmingExercise.js";
 import { group, sleep } from 'k6';
+import { deleteCourse, newCourse } from './requests/course.js';
+import {
+    startExercise,
+    createExercise,
+    deleteExercise,
+    ParticipationSimulation,
+    simulateSubmission,
+    TestResult
+} from './requests/programmingExercise.js';
+import { buildErrorContent } from './resource/constants.js';
 
 // Version: 1.1
 // Creator: Firefox
@@ -8,40 +17,68 @@ import { group, sleep } from 'k6';
 
 export let options = {
     maxRedirects: 0,
-    iterations: 100,
-    vus: 100,
+    iterations: __ENV.ITERATIONS,
+    vus: __ENV.ITERATIONS,
     rps: 5
 };
 
-export default function() {
-  let websocketConnectionTime = 2000; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
+const adminUsername = __ENV.ADMIN_USERNAME;
+const adminPassword = __ENV.ADMIN_PASSWORD;
+let baseUsername = __ENV.BASE_USERNAME;
+let basePassword = __ENV.BASE_PASSWORD;
 
-  let username = __ENV.BASE_USERNAME; // USERID gets replaced with a random number between 1 and maxTestUser
-  let password = __ENV.BASE_PASSWORD; // USERID gets replaced with a random number between 1 and maxTestUser
+export function setup() {
+    // Create course
+    let artemis = login(adminUsername, adminPassword);
+    const courseId = newCourse(artemis);
 
-  let courseId = 10; // id of the course where the exercise is located
-  let exerciseId = 717; // id of the programming-exercise, code-editor must be enabled
+    const instructorUsername = baseUsername.replace('USERID', '1');
+    const instructorPassword = basePassword.replace('USERID', '1');
 
-  // Delay so that not all users start at the same time, batches of 3 users per second
-  sleep(Math.floor(__VU / 3));
+    // Login to Artemis
+    artemis = login(instructorUsername, instructorPassword);
 
-	group('Artemis Programming Exercise Participation Loadtest', function() {
-      // The user is randomly selected
-      let userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
-      let currentUsername = username.replace('USERID', userId);
-      let currentPassword = password.replace('USERID', userId);
-      let artemis = login(currentUsername, currentPassword);
+    // Create new exercise
+    const exerciseId = createExercise(artemis, courseId);
 
-      // Start exercise
-      let participationId = startExercise(artemis, courseId, exerciseId);
+    return { exerciseId: exerciseId, courseId: courseId };
+}
 
-      // Initiate websocket connection if connection time is set to value greater than 0
-      if (websocketConnectionTime > 0) {
-        if (participationId) {
-            artemis.simulateSubmissionChanges(exerciseId, participationId, websocketConnectionTime);
+export default function(data) {
+    const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
+
+    // Delay so that not all users start at the same time, batches of 3 users per second
+    const delay = Math.floor(__VU / 3);
+    sleep(delay);
+
+    group('Artemis Programming Exercise Participation Loadtest', function() {
+        // The user is randomly selected
+        const userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
+        const currentUsername = baseUsername.replace('USERID', userId);
+        const currentPassword = basePassword.replace('USERID', userId);
+        const artemis = login(currentUsername, currentPassword);
+
+        // Start exercise
+        const participationId = startExercise(artemis, data.courseId, data.exerciseId);
+
+        // Initiate websocket connection if connection time is set to value greater than 0
+        if (websocketConnectionTime > 0) {
+            if (participationId) {
+                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContent);
+                simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+            }
+            sleep(websocketConnectionTime - delay);
         }
-        sleep(websocketConnectionTime);
-      }
-	});
+    });
 
+  return data;
+}
+
+export function teardown(data) {
+    const artemis = login(adminUsername, adminPassword);
+    const courseId = data.courseId;
+    const exerciseId = data.exerciseId;
+
+    deleteExercise(artemis, exerciseId);
+    deleteCourse(artemis, courseId);
 }

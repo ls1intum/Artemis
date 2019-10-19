@@ -35,6 +35,10 @@ while (( "$#" )); do
       adminPassword=$2
       shift 2
       ;;
+    --tests)
+      tests=$2
+      shift 2
+      ;;
     --) # end argument parsing
       shift
       break
@@ -58,6 +62,7 @@ basePassword=${basePassword:?"You have to specify the test user's base password"
 baseUsername=${baseUsername:?"You have to specify the test user's username"}
 adminUsername=${adminUsername:?You have to specify the username of one admin}
 adminPassword=${adminPassword:?You have to specify the password of one admin}
+tests=${tests:?You have to specify which tests to run}
 iterations=${iterations:-10}
 timeout=${timeout:-40}
 
@@ -65,7 +70,7 @@ echo "################### STARTING API Tests ###################"
 result=$(docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT="$timeout" \
   -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" \
-  loadimpact/k6 run /src/ProgrammingExerciseAPIs.js 2>&1)
+  loadimpact/k6 run /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
 echo "$result"

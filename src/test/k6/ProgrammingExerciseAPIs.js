@@ -1,6 +1,6 @@
 import { group, sleep } from 'k6';
 import { login } from "./requests/requests.js";
-import { createExercise, startExercise, simulateParticipation, ParticipationSimulation, TestResult, deleteExercise } from "./requests/programmingExercise.js";
+import { createExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteExercise } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse } from "./requests/course.js";
 import { twoSuccessfulErrorContent, allSuccessfulContent, buildErrorContent } from "./resource/constants.js";
 
@@ -51,11 +51,11 @@ export default function (data) {
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
             let simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, twoSuccessfulErrorContent);
-            simulateParticipation(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
+            simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
             simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, allSuccessfulContent);
-            simulateParticipation(artemis, simulation, TestResult.SUCCESS);
+            simulateSubmission(artemis, simulation, TestResult.SUCCESS);
             simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, buildErrorContent);
-            simulateParticipation(artemis, simulation, TestResult.BUILD_ERROR);
+            simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
         }
     });
 

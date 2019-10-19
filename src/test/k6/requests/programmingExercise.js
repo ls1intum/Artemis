@@ -107,7 +107,7 @@ export function createNewFile(artemis, participationId, filename) {
     }
 }
 
-export function simulateParticipation(artemis, participationSimulation, expectedResult, resultString) {
+export function simulateSubmission(artemis, participationSimulation, expectedResult, resultString) {
     // First, we have to create all new files
     participationSimulation.newFiles.forEach(file => createNewFile(artemis, participationSimulation.participationId, file));
 
