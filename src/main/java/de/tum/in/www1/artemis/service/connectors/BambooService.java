@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.appfire.common.cli.Settings;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -24,12 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.swift.bamboo.cli.BambooClient;
-import org.swift.common.cli.Base;
-import org.swift.common.cli.CliClient;
+import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.common.cli.Base;
+import com.appfire.common.cli.CliClient;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -98,16 +101,26 @@ public class BambooService implements ContinuousIntegrationService {
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
     }
 
+    private Base createBase() {
+        // we override the out stream to prevent unnecessary log statements in our log files
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        var out = new PrintStream(outContent);
+        var settings = new Settings();
+        settings.setOut(out);
+        settings.setOverrideOut(out);
+        settings.setDebugOut(out);
+        settings.setErr(out);
+        return new Base(settings);
+    }
+
     /**
      * Create a BambooClient for communication with the Bamboo server.
      *
      * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
      */
-    private BambooClient getBambooClient() {
-        //TODO: we might prevent console log message by passing a Settings object into Base
-        final BambooClient bambooClient = new BambooClient(new Base());
+    private BambooClient createBambooClient() {
+        final BambooClient bambooClient = new BambooClient(createBase());
         //setup the Bamboo Client to use the correct username and password
-
         String[] args = new String[]{
             "-s", BAMBOO_SERVER_URL.toString(),
             "--user", BAMBOO_USER,
@@ -234,7 +247,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.info("Delete project " + projectKey);
             //TODO: use Bamboo REST API: DELETE "/rest/api/latest/project/{projectKey}"
-            String message = getBambooClient().getProjectHelper().deleteProject(projectKey);
+            String message = createBambooClient().getProjectHelper().deleteProject(projectKey);
             log.info("Delete project was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage());
@@ -315,18 +328,17 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
             //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = getBambooClient().getPlanHelper().clonePlan(sourcePlanKey, targetPlanKey, cleanPlanName, "", targetProjectName, true);
-            log.info("Clone build plan " + sourcePlanKey + " was successful." + message);
+            String message = createBambooClient().getPlanHelper().clonePlan(sourcePlanKey, targetPlanKey, cleanPlanName, "", targetProjectName, true);
+            log.info("Clone build plan " + sourcePlanKey + " was successful: " + message);
         } catch (CliClient.ClientException clientException) {
             if (clientException.getMessage().contains("already exists")) {
-                log.info("Build Plan already exists. Going to recover build plan information...");
+                log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
                 return targetPlanKey;
             } else {
-                log.error(clientException.getMessage(), clientException);
+                throw new BambooException("Something went wrong while cloning build plan " + sourcePlanKey + " to " + targetPlanKey + ":" + clientException.getMessage(), clientException);
             }
         } catch (CliClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while cloning build plan", e);
+            throw new BambooException("Something went wrong while cloning build plan: " + e.getMessage(), e);
         }
 
         return targetPlanKey;
@@ -337,7 +349,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.debug("Enable build plan " + planKey);
             //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = getBambooClient().getPlanHelper().enablePlan(planKey, true);
+            String message = createBambooClient().getPlanHelper().enablePlan(planKey, true);
             log.info("Enable build plan " + planKey + " was successful. " + message);
             return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -347,8 +359,8 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy) throws BambooException {
-        return continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName, triggeredBy);
+    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy) throws BambooException {
+        continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName, triggeredBy);
     }
 
     /**
@@ -360,7 +372,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.info("Delete build plan " + planKey);
             //TODO use REST API DELETE "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = getBambooClient().getPlanHelper().deletePlan(planKey);
+            String message = createBambooClient().getPlanHelper().deletePlan(planKey);
             log.info("Delete build plan was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage());

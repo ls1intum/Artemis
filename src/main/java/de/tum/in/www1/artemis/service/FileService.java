@@ -158,7 +158,7 @@ public class FileService {
             final var uploadSubpath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
             final var shouldBeExerciseId = uploadSubpath[0];
             final var shouldBeSubmissionId = uploadSubpath.length >= 3 ? uploadSubpath[2] : null;
-            if (!NumberUtils.isNumber(shouldBeExerciseId) || !NumberUtils.isNumber(shouldBeSubmissionId)) {
+            if (!NumberUtils.isCreatable(shouldBeExerciseId) || !NumberUtils.isCreatable(shouldBeSubmissionId)) {
                 throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicPath);
             }
             final var exerciseId = Long.parseLong(shouldBeExerciseId);

@@ -17,9 +17,8 @@ public interface ContinuousIntegrationUpdateService {
      * @param repoProjectKey   The key of the project that contains the repository.
      * @param repoName         The lower level identifier of the repository.
      * @param triggeredBy      Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
-     * @return a message that indicates the result of the plan repository update.
      */
-    String updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName, Optional<List<String>> triggeredBy);
+    void updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName, Optional<List<String>> triggeredBy);
 
     /**
      * Triggers an build (if needed)
