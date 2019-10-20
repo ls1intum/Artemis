@@ -125,7 +125,7 @@ public class ProgrammingSubmissionService {
         // There can't be two submissions for the same participation and commitHash!
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, lastCommitHash);
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + "already exists!");
+            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + " already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
