@@ -101,11 +101,11 @@
                 "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the test cases without having to trigger existing student submissions with the updated settings."
             },
             "export": {
-                "downloadAllStudents": "Download the repositories of all students",
+                "downloadAllStudents": "Or download the repositories of all students",
                 "filterLateSubmissions": "Filter late submissions",
                 "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
-                "addStudentName": "Add student name to project",
-                "squashAfterInstructor": "Squash all changes after instructor into one commit",
+                "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
+                "squashAfterInstructor": "Squash all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)"
             },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
