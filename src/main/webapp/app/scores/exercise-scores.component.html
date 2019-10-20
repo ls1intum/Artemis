@@ -18,22 +18,16 @@
                 <fa-icon [icon]="'download'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
             </button>
-            <button
-                *ngIf="exercise.type === PROGRAMMING"
-                class="btn btn-info btn-sm mr-1"
-                [routerLink]="['/', { outlets: { popup: 'exercise/' + exercise.id + '/exportRepos' } }]"
-                replaceUrl="true"
-                queryParamsHandling="merge"
-            >
-                <fa-icon [icon]="'download'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportRepos.title">Download Repos</span>
-            </button>
+            <jhi-programming-assessment-repo-export *ngIf="exercise.type === PROGRAMMING" [exerciseId]="exercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
             <button class="btn btn-primary btn-sm mr-1" (click)="refresh()">
                 <fa-icon [icon]="'sync'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
             </button>
         </div>
-
+        <label class="radio-inline">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'" />
+            {{ 'artemisApp.exercise.showAll' | translate }}
+        </label>
         <label class="radio-inline">
             <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')" [value]="'unsuccessful'" />
             {{ 'artemisApp.exercise.showUnsuccessful' | translate }}
@@ -42,9 +36,13 @@
             <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')" [value]="'successful'" />
             {{ 'artemisApp.exercise.showSuccessful' | translate }}
         </label>
-        <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'" />
-            {{ 'artemisApp.exercise.showAll' | translate }}
+        <label class="radio-inline" *ngIf="newManualResultAllowed">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('manual')" [value]="'manual'" />
+            {{ 'artemisApp.exercise.showManual' | translate }}
+        </label>
+        <label class="radio-inline" *ngIf="newManualResultAllowed">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('automatic')" [value]="'automatic'" />
+            {{ 'artemisApp.exercise.showAutomatic' | translate }}
         </label>
     </div>
     <div *ngIf="results && !isLoading; else loadingContainer" class="table-responsive">
@@ -55,11 +53,17 @@
                     <th jhiSortBy="participation.student.firstName">
                         <a class="th-link">{{ 'artemisApp.exercise.studentName' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
+                    <th jhiSortBy="participation.student.login">
+                        <a class="th-link">{{ 'artemisApp.exercise.studentId' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th jhiSortBy="completionDate">
                         <a class="th-link">{{ 'artemisApp.exercise.completionDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="score">
                         <a class="th-link">{{ 'artemisApp.exercise.result' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="score" *ngIf="newManualResultAllowed">
+                        <a class="th-link">{{ 'artemisApp.exercise.type' | translate }}</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="score">
                         <a class="th-link">{{ 'artemisApp.exercise.score' | translate }}</a> <fa-icon icon="sort"></fa-icon>
@@ -77,8 +81,10 @@
                 <tr [ngStyle]="result.optimal && { 'font-weight': 'bold' }" *ngFor="let result of results | sortBy: predicate:reverse; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</td>
+                    <td>{{ result.participation.student.login }}</td>
                     <td>{{ result.completionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td><jhi-updating-result [exercise]="exercise" [showTestNames]="true" [participation]="result.participation"></jhi-updating-result></td>
+                    <td *ngIf="newManualResultAllowed">{{ result.assessmentType }}</td>
                     <td>
                         <span *ngIf="result.score != null">{{ result.score }}%</span>
                     </td>
@@ -101,13 +107,11 @@
                         >
                             <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                         </button>
-                        <button
-                            *ngIf="exercise.type === PROGRAMMING"
-                            [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new' } }]"
-                            class="btn btn-warning btn-sm mr-1"
-                        >
-                            <fa-icon class="mr-1" icon="asterisk"></fa-icon>New result
-                        </button>
+                        <jhi-programming-assessment-manual-result
+                            *ngIf="newManualResultAllowed"
+                            [participationId]="result.participation.id"
+                            class="mr-1"
+                        ></jhi-programming-assessment-manual-result>
                     </td>
                 </tr>
             </tbody>

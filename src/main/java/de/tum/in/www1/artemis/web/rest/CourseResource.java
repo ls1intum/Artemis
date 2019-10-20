@@ -293,6 +293,10 @@ public class CourseResource {
         Set<Exercise> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
 
+        if (activeExercises.isEmpty()) {
+            return courses;
+        }
+
         List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultByStudentIdAndExercise(user.getId(), activeExercises);
         log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultByStudentIdAndExercise in " + (System.currentTimeMillis() - start) + "ms");
 

@@ -43,6 +43,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select distinct user from User user left join fetch user.authorities where user.id = :#{#userId}")
     Optional<User> findOneWithAuthoritiesById(@Param("userId") Long userId);
 
+    @Query("select distinct user from User user left join fetch user.groups where user.login = :#{#login}")
+    Optional<User> findOneWithGroupsByLogin(@Param("login") String login);
+
     @Query("select distinct user from User user left join fetch user.authorities where user.login = :#{#login}")
     @Cacheable(cacheNames = USERS_CACHE)
     Optional<User> findOneWithAuthoritiesByLogin(@Param("login") String login);

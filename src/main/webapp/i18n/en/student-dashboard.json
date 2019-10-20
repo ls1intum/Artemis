@@ -13,7 +13,9 @@
                 "cancel": "Cancel",
                 "noCourse": "No course available to register to",
                 "courseLoading": "Courses are loading...",
-                "pleaseSelectCourse": "# Select a course"
+                "pleaseSelectCourse": "# Select a course",
+                "examSignupConfirmation": "By signing up for this course you also register bindingly to the exam.",
+                "examSignupConfirmationTitle": "Confirm Exam Registration"
             }
         },
         "courseOverview": {

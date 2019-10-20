@@ -5,8 +5,8 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
-import { Exercise, ExerciseType } from '../exercise';
-import { ExerciseService } from '../exercise/exercise.service';
+import { areManualResultsAllowed, Exercise, ExerciseType } from '../exercise';
+import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
@@ -27,6 +27,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     exercise: Exercise;
     predicate: string;
     reverse: boolean;
+    newManualResultAllowed: boolean;
 
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
@@ -63,6 +64,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 if (this.exercise.type === this.PROGRAMMING) {
                     this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
+                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
             });
         });

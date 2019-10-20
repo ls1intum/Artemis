@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
@@ -37,6 +38,7 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @ExtendWith(SpringExtension.class)
@@ -178,6 +180,26 @@ public class ResultServiceIntegrationTest {
         result = database.addFeedbacksToResult(result);
 
         request.getList("/api/results/" + 66 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
+    public void programmingExerciseManualResultUpdate_noManualReviewsAllowed_forbidden() throws Exception {
+        final var result = ModelFactory.generateResult(true, 1);
+        result.setParticipation(programmingExerciseStudentParticipation);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        request.post("/api/manual-results", result, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
+    public void programmingExerciseManualResultNew_noManualReviewsAllowed_forbidden() throws Exception {
+        final var result = ModelFactory.generateResult(true, 1);
+        result.setParticipation(programmingExerciseStudentParticipation);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        request.put("/api/manual-results", result, HttpStatus.FORBIDDEN);
     }
 
     @ParameterizedTest

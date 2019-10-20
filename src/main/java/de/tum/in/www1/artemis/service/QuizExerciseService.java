@@ -266,7 +266,7 @@ public class QuizExerciseService {
             log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
         }
         catch (JsonProcessingException e) {
-            log.error("Exception occurred while serializing quiz exercise: {}", e);
+            log.error("Exception occurred while serializing quiz exercise", e);
         }
     }
 

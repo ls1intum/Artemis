@@ -1,7 +1,6 @@
-import { Orientation, UserInteractionEvent, LinkType } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep, TextLinkTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -91,13 +90,10 @@ export const courseOverviewTour: GuidedTour = {
             highlightPadding: 10,
             disableStep: true,
         }),
-        new TextLinkTourStep({
+        new TextTourStep({
             highlightSelector: '.footer .col-sm-6',
             headlineTranslateKey: 'tour.courseOverview.contact.headline',
             contentTranslateKey: 'tour.courseOverview.contact.content',
-            externalUrlTranslateKey: 'tour.courseOverview.contact.link',
-            externalUrl: 'https://github.com/ls1intum/ArTEMiS',
-            linkType: LinkType.BUTTON,
             orientation: Orientation.TOPLEFT,
             disableStep: true,
         }),
