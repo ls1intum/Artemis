@@ -94,8 +94,8 @@
                                 jhiDeleteButton
                                 [entityTitle]="participation.student.name"
                                 deleteQuestion="artemisApp.participation.delete.question"
-                                [deleteAction]="deleteParticipation"
-                                [entityParameter]="participation.id"
+                                (delete)="deleteParticipation(participation.id, $event)"
+                                [closeWithMessage]="closeDialogMessage"
                                 [additionalChecks]="
                                     exercise.type === PROGRAMMING
                                         ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
@@ -109,8 +109,8 @@
                                 jhiDeleteButton
                                 [actionType]="ActionType.Cleanup"
                                 deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
-                                [deleteAction]="cleanupProgrammingExerciseParticipation"
-                                [entityParameter]="participation"
+                                (delete)="cleanupProgrammingExerciseParticipation(participation)"
+                                [closeWithMessage]="closeDialogMessage"
                                 [entityTitle]="participation.student.name"
                             >
                                 <fa-icon [icon]="'eraser'"></fa-icon>

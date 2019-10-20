@@ -16,6 +16,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     exerciseId: number;
     exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;
+    closeDialogMessage: string;
 
     paramSub: Subscription;
 
@@ -77,16 +78,20 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      * Deletes exercise hint
      * @param exerciseHintId the id of the exercise hint that we want to delete
      */
-    deleteExerciseHint = (exerciseHintId: number) => {
-        return this.exerciseHintService.delete(exerciseHintId).pipe(
-            tap(() => {
+    deleteExerciseHint(exerciseHintId: number) {
+        this.exerciseHintService.delete(exerciseHintId).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     protected onError(errorMessage: string) {
         this.jhiAlertService.error(errorMessage, null, undefined);

@@ -11,7 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseService } from 'app/entities/exercise';
-import { tap } from 'rxjs/operators';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({

@@ -32,8 +32,8 @@
                     [actionType]="ActionType.Cleanup"
                     [entityTitle]="programmingExercise.title"
                     deleteQuestion="instructorDashboard.cleanup.question"
-                    [deleteAction]="cleanupProgrammingExercise"
-                    [entityParameter]="programmingExercise.id"
+                    (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
+                    [closeWithMessage]="closeDialogMessage"
                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                     [additionalChecks]="{
                         deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'

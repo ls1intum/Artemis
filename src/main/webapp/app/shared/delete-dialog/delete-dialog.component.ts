@@ -1,8 +1,7 @@
-import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -22,10 +21,9 @@ export class DeleteDialogComponent implements OnInit {
     // used by *ngFor in the template
     objectKeys = Object.keys;
 
-    constructor(public activeModal: NgbActiveModal, public jhiAlertService: JhiAlertService) {}
+    constructor(public activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
-        this.jhiAlertService.clear();
         if (this.additionalChecks) {
             this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
         }
@@ -43,13 +41,5 @@ export class DeleteDialogComponent implements OnInit {
      */
     confirmDelete() {
         this.delete.emit(this.additionalChecksValues);
-    }
-
-    close() {
-        this.activeModal.close();
-    }
-
-    showAlert(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage);
     }
 }

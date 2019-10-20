@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
@@ -26,6 +26,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
+    closeDialogMessage: string;
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
@@ -114,17 +115,21 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     /**
      * Cleans up programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param deleteRepositories if true repositories for this exercise will be deleted
+     * @param $event contains additional checks from the dialog
      */
-    cleanupProgrammingExercise = (programmingExerciseId: number, deleteRepositories: boolean) => {
-        return this.exerciseService.cleanup(programmingExerciseId, deleteRepositories).pipe(
-            tap(() => {
-                if (deleteRepositories) {
+    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        return this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
+            () => {
+                if ($event.deleteRepositories) {
                     this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
                 } else {
                     this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
                 }
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 }

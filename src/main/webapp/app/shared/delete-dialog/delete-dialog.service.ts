@@ -4,18 +4,20 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { from, Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
     modalRef: NgbModalRef | null;
 
-    constructor(private modalService: NgbModal) {}
+    constructor(private modalService: NgbModal, public jhiAlertService: JhiAlertService) {}
 
     /**
      * Opens delete dialog and returns a result after dialog is closed
      * @param deleteDialogData data that is used in dialog
      */
     openDeleteDialog(deleteDialogData: DeleteDialogData): Observable<any> {
+        this.jhiAlertService.clear();
         this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
         this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
@@ -31,7 +33,7 @@ export class DeleteDialogService {
      */
     closeDialog(): void {
         if (this.modalRef) {
-            this.modalRef.componentInstance.close();
+            this.modalRef.componentInstance.clear();
         }
     }
 
@@ -40,8 +42,6 @@ export class DeleteDialogService {
      * @param errorMessage message that is shown to the user on error
      */
     showAlert(errorMessage: string): void {
-        if (this.modalRef) {
-            this.modalRef.componentInstance.showAlert(errorMessage);
-        }
+        this.jhiAlertService.error(errorMessage);
     }
 }

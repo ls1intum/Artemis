@@ -48,8 +48,8 @@
                                 jhiDeleteButton
                                 [entityTitle]="exerciseHint.title"
                                 deleteQuestion="artemisApp.exerciseHint.delete.question"
-                                [deleteAction]="deleteExerciseHint"
-                                [entityParameter]="exerciseHint.id"
+                                (delete)="deleteExerciseHint(exerciseHint.id)"
+                                [closeWithMessage]="closeDialogMessage"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>

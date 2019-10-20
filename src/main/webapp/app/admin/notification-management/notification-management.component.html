@@ -52,8 +52,8 @@
                                 jhiDeleteButton
                                 [entityTitle]="notification.id"
                                 deleteQuestion="artemisApp.notificationManagement.delete.question"
-                                [deleteAction]="deleteNotification"
-                                [entityParameter]="notification.id"
+                                (delete)="deleteNotification(notification.id)"
+                                [closeWithMessage]="closeDialogMessage"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>

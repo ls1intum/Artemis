@@ -27,6 +27,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate: string;
     previousPage: number;
     reverse: boolean;
+    closeDialogMessage: string;
 
     constructor(
         private userService: UserService,
@@ -36,7 +37,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
-        private modalService: NgbModal,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -153,16 +153,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Deletes a user
      * @param login of the user that should be deleted
      */
-    deleteUser = (login: string) => {
-        return this.userService.delete(login).pipe(
-            tap(() => {
+    deleteUser(login: string) {
+        this.userService.delete(login).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
                     content: 'Deleted a user',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     private onSuccess(data: User[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link')!);

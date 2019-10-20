@@ -1,7 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
@@ -10,7 +8,6 @@ import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
-import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-notification-mgmt',
@@ -29,6 +26,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     predicate: string;
     previousPage: number;
     reverse: boolean;
+    closeDialogMessage: string;
 
     constructor(
         private userService: UserService,
@@ -39,7 +37,6 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
-        private modalService: NgbModal,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -79,16 +76,20 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      * Deletes notification
      * @param notificationId the id of the notification that we want to delete
      */
-    deleteNotification = (notificationId: number) => {
-        return this.systemNotificationService.delete(notificationId).pipe(
-            tap(() => {
+    deleteNotification(notificationId: number) {
+        this.systemNotificationService.delete(notificationId).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'notificationListModification',
                     content: 'Deleted a system notification',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     /**
      * Loads system notifications

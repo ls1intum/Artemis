@@ -10,7 +10,7 @@ import { ExerciseService } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { tap } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-participation',
@@ -33,6 +33,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
+
+    closeDialogMessage: string;
 
     constructor(
         private route: ActivatedRoute,
@@ -116,34 +118,43 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     /**
      * Deletes participation
      * @param participationId the id of the participation that we want to delete
-     * @param deleteBuildPlan if true build plan for this participation will be deleted
-     * @param deleteRepository if true repository for this participation will be deleted
+     * @param $event passed from delete dialog to represent if checkboxes were checked
      */
-    deleteParticipation = (participationId: number, deleteBuildPlan = false, deleteRepository = false) => {
-        return this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).pipe(
-            tap(() => {
+    deleteParticipation(participationId: number, $event: { [key: string]: boolean }) {
+        const deleteBuildPlan = $event.deleteBuildPlan;
+        const deleteRepository = $event.deleteRepository;
+        this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'participationListModification',
                     content: 'Deleted an participation',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     /**
      * Cleans programming exercise participation
      * @param programmingExerciseParticipation the id of the participation that we want to delete
      */
-    cleanupProgrammingExerciseParticipation = (programmingExerciseParticipation: StudentParticipation) => {
-        return this.participationService.cleanupBuildPlan(programmingExerciseParticipation).pipe(
-            tap(() => {
+    cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: StudentParticipation) {
+        this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'participationListModification',
                     content: 'Cleanup the build plan of an participation',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     callback() {}
 }
