@@ -4,7 +4,7 @@ import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { JhiAlertErrorComponent } from 'app/shared';
+import { JhiAlertComponent, JhiAlertErrorComponent } from 'app/shared';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -25,7 +25,7 @@ describe('DeleteDialogComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule],
-            declarations: [DeleteDialogComponent, JhiAlertErrorComponent],
+            declarations: [DeleteDialogComponent, JhiAlertComponent],
             providers: [JhiLanguageHelper, JhiAlertService],
         })
             .compileComponents()
