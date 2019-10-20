@@ -67,7 +67,7 @@ export class DeleteButtonDirective implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.closeWithMessage) {
+        if (changes.closeDialogTrigger) {
             this.deleteDialogService.closeDialog();
         }
     }
