@@ -11,6 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { ExerciseService } from 'app/entities/exercise';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -28,6 +30,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private accountService: AccountService,
         protected jhiAlertService: JhiAlertService,
         private router: Router,
+        private modalService: NgbModal,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -100,6 +103,12 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      */
     resetProgrammingExercise(programmingExerciseId: number) {
         this.exerciseService.reset(programmingExerciseId).subscribe(() => (this.closeDialogTrigger = !this.closeDialogTrigger), (error: HttpErrorResponse) => this.onError(error));
+    }
+
+    openRepoExportDialog(programmingExerciseId: number, $event: MouseEvent) {
+        $event.stopPropagation();
+        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.exerciseId = programmingExerciseId;
     }
 
     protected getChangeEventName(): string {
