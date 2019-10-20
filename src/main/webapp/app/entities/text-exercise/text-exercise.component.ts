@@ -9,7 +9,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
-import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -17,7 +16,7 @@ import { tap } from 'rxjs/operators';
 })
 export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
-    closeDialogWithMessage: string;
+    closeDialogTrigger: boolean;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -70,11 +69,9 @@ export class TextExerciseComponent extends ExerciseComponent {
                     name: 'textExerciseListModification',
                     content: 'Deleted an textExercise',
                 });
-                this.closeDialogWithMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogWithMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 

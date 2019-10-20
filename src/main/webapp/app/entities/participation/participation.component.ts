@@ -34,7 +34,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
 
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -129,11 +129,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     name: 'participationListModification',
                     content: 'Deleted an participation',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -148,12 +146,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     name: 'participationListModification',
                     content: 'Cleanup the build plan of an participation',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
+    }
+
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 
     callback() {}

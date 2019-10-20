@@ -1,14 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { AccountService } from 'app/core';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture';
 import { ActivatedRoute } from '@angular/router';
-import { errorRoute } from 'app/layouts';
 
 @Component({
     selector: 'jhi-lecture',
@@ -19,7 +18,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     currentAccount: any;
     eventSubscriber: Subscription;
     courseId: number;
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     constructor(
         protected lectureService: LectureService,
@@ -76,11 +75,9 @@ export class LectureComponent implements OnInit, OnDestroy {
                     name: 'lectureListModification',
                     content: 'Deleted an lecture',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error.message),
         );
     }
 

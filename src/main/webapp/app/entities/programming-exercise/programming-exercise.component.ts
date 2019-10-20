@@ -9,7 +9,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseService } from 'app/entities/exercise';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
@@ -20,7 +19,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -28,7 +27,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private exerciseService: ExerciseService,
         private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
-        private modalService: NgbModal,
         private router: Router,
         courseService: CourseService,
         translateService: TranslateService,
@@ -71,11 +69,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -92,11 +88,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 } else {
                     this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
                 }
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -105,12 +99,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
     resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe(
-            () => {},
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
-        );
+        this.exerciseService.reset(programmingExerciseId).subscribe(() => (this.closeDialogTrigger = !this.closeDialogTrigger), (error: HttpErrorResponse) => this.onError(error));
     }
 
     protected getChangeEventName(): string {

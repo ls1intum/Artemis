@@ -11,7 +11,6 @@ import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -19,7 +18,7 @@ import { tap } from 'rxjs/operators';
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     readonly ActionType = ActionType;
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     QuizStatus = {
         HIDDEN: 'Hidden',
@@ -197,11 +196,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -216,11 +213,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 

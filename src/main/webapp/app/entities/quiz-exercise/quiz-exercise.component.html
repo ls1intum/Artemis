@@ -188,7 +188,7 @@
                                     [actionType]="ActionType.Reset"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     (delete)="resetQuizExercise(quizExercise.id)"
-                                    [closeWithMessage]="closeDialogMessage"
+                                    [closeDialogTrigger]="closeDialogTrigger"
                                     deleteQuestion="artemisApp.quizExercise.reset.question"
                                     class="mb-1"
                                 >
@@ -201,7 +201,7 @@
                                     deleteQuestion="artemisApp.quizExercise.delete.question"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     (delete)="deleteQuizExercise(quizExercise.id)"
-                                    [closeWithMessage]="closeDialogMessage"
+                                    [closeDialogTrigger]="closeDialogTrigger"
                                     id="delete-quiz-{{ quizExercise.id }}"
                                     class="mb-1"
                                 >

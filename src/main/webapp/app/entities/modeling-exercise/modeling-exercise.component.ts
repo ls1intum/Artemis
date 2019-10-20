@@ -17,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -69,11 +69,9 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                     name: 'modelingExerciseListModification',
                     content: 'Deleted an modelingExercise',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -83,7 +81,6 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
-        console.log('Error: ' + error);
     }
 
     /**

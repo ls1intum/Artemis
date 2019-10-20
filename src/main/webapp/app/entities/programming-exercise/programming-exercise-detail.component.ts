@@ -26,7 +26,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
@@ -125,11 +125,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 } else {
                     this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
                 }
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.jhiAlertService.error(error.message),
         );
     }
 }

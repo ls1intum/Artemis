@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
@@ -16,7 +16,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     exerciseId: number;
     exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     paramSub: Subscription;
 
@@ -85,11 +85,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error.message),
         );
     }
 

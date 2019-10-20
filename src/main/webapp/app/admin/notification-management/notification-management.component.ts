@@ -26,7 +26,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     predicate: string;
     previousPage: number;
     reverse: boolean;
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     constructor(
         private userService: UserService,
@@ -83,11 +83,9 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
                     name: 'notificationListModification',
                     content: 'Deleted a system notification',
                 });
-                this.closeDialogMessage = '';
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 

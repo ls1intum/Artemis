@@ -17,7 +17,7 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     courses: Course[];
     eventSubscriber: Subscription;
-    closeDialogMessage: string;
+    closeDialogTrigger: boolean;
 
     constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
         this.predicate = 'id';
@@ -62,10 +62,9 @@ export class CourseComponent implements OnInit, OnDestroy {
                     name: 'courseListModification',
                     content: 'Deleted an course',
                 });
+                this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => {
-                this.closeDialogMessage = error.message;
-            },
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 

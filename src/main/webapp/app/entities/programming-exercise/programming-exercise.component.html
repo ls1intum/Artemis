@@ -232,7 +232,7 @@
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="instructorDashboard.cleanup.question"
                                     (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
-                                    [closeWithMessage]="closeDialogMessage"
+                                    [closeDialogTrigger]="closeDialogTrigger"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
@@ -250,7 +250,7 @@
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.exercise.reset.question"
                                     (delete)="resetProgrammingExercise(programmingExercise.id)"
-                                    [closeWithMessage]="closeDialogMessage"
+                                    [closeDialogTrigger]="closeDialogTrigger"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     class="mb-1"
                                 >
@@ -262,7 +262,7 @@
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
                                     (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
-                                    [closeWithMessage]="closeDialogMessage"
+                                    [closeDialogTrigger]="closeDialogTrigger"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',

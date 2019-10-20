@@ -33,7 +33,7 @@
                     [entityTitle]="programmingExercise.title"
                     deleteQuestion="instructorDashboard.cleanup.question"
                     (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
-                    [closeWithMessage]="closeDialogMessage"
+                    [closeDialogTrigger]="closeDialogTrigger"
                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                     [additionalChecks]="{
                         deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
