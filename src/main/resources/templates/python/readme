@@ -40,6 +40,15 @@ Create and implement a `Policy` class following the below class diagram with a s
 
 @startuml
 
+skinparam ArrowFontSize 16
+skinparam shadowing false
+skinparam class {
+    FontSize 20
+    AttributeFontSize 16
+	BorderColor black
+	ArrowColor black
+}
+
 class Client {
 }
 
