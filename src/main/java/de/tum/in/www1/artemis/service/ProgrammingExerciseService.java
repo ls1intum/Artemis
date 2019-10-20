@@ -1054,12 +1054,25 @@ public class ProgrammingExerciseService {
         // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
         String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
 
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOneLoadParticipations(exerciseId);
+
+        if (repositoryExportOptions.isExportAllStudents()) {
+            log.info("Request to export all student repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "'");
+        }
+        else {
+            log.info("Request to export the repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "' of the following students: "
+                    + participations.stream().map(p -> p.getStudent().getLogin()).collect(Collectors.joining(", ")));
+        }
+
         List<Path> zippedRepoFiles = new ArrayList<>();
-        Path zipFilePath = null;
         for (ProgrammingExerciseStudentParticipation participation : participations) {
+            Repository repo = null;
             try {
-                Repository repo = gitService.getOrCheckoutRepository(participation, repoDownloadClonePath);
+                if (participation.getRepositoryUrlAsUrl() == null) {
+                    log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
+                    continue;
+                }
+                repo = gitService.getOrCheckoutRepository(participation, repoDownloadClonePath);
                 gitService.resetToOriginMaster(repo); // start with clean state
 
                 if (repositoryExportOptions.isFilterLateSubmissions()) {
@@ -1073,54 +1086,77 @@ public class ProgrammingExerciseService {
 
                 if (repositoryExportOptions.isAddStudentName()) {
                     log.debug("Adding student name to participation {}", participation.toString());
-                    addStudentIdToProjectName(repo, (ProgrammingExercise) exercise, participation);
+                    addStudentIdToProjectName(repo, programmingExercise, participation);
                 }
 
                 if (repositoryExportOptions.isSquashAfterInstructor()) {
                     log.debug("Squashing commits for participation {}", participation.toString());
-                    gitService.squashAfterInstructor(repo, (ProgrammingExercise) exercise);
+                    gitService.squashAfterInstructor(repo, programmingExercise);
                 }
 
                 if (repositoryExportOptions.isNormalizeCodeStyle()) {
-                    log.debug("Normalizing code style for participation {}", participation.toString());
-                    fileService.normalizeLineEndingsDirectory(repo.getLocalPath().toString());
-                    fileService.convertToUTF8Directory(repo.getLocalPath().toString());
+                    try {
+                        log.debug("Normalizing code style for participation {}", participation.toString());
+                        fileService.normalizeLineEndingsDirectory(repo.getLocalPath().toString());
+                        fileService.convertToUTF8Directory(repo.getLocalPath().toString());
+                    }
+                    catch (Exception ex) {
+                        log.warn("Cannot normalize code style in the repo " + repo.getLocalPath() + " due to the following exception: " + ex.getMessage());
+                    }
                 }
 
                 log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                 Path zippedRepoFile = gitService.zipRepository(repo, repoDownloadClonePath);
                 zippedRepoFiles.add(zippedRepoFile);
-
-                // We can always delete the repository as it won't be used by the student (seperate path)
-                log.debug("Delete temporary repoistory " + repo.getLocalPath().toString());
-                gitService.deleteLocalRepository(participation, repoDownloadClonePath);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + participations.toString() + " and allStudents "
-                        + repositoryExportOptions.isExportAllStudents() + " did not work as expected: " + ex);
+                log.error("export student repository " + participation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
+                        + ex.getMessage());
+            }
+            finally {
+                // we do some cleanup here to prevent future errors with file handling
+                // We can always delete the repository as it won't be used by the student (separate path)
+                if (repo != null) {
+                    try {
+                        log.debug("Delete temporary repository " + repo.getLocalPath().toString());
+                        gitService.deleteLocalRepository(participation, repoDownloadClonePath);
+                    }
+                    catch (Exception ex) {
+                        log.warn("Could not delete temporary repository " + repo.getLocalPath().toString() + ": " + ex.getMessage());
+                    }
+                }
             }
         }
-        if (exercise.getStudentParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
-            log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
+        if (programmingExercise.getStudentParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
+            log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
             return null;
         }
         try {
             // create a large zip file with all zipped repos and provide it for download
             log.debug("Create zip file for all repositories");
-            zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                    exercise.getCourse().getTitle() + "-" + exercise.getTitle() + "-" + System.currentTimeMillis() + ".zip");
+            Path zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
+                    programmingExercise.getCourse().getTitle() + "-" + programmingExercise.getTitle() + "-" + System.currentTimeMillis() + ".zip");
             exerciseService.createZipFile(zipFilePath, zippedRepoFiles);
-            exerciseService.scheduleForDeletion(zipFilePath, 10);
-
+            exerciseService.scheduleForDeletion(zipFilePath, 15);
+            log.info("Export student repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
+            return new java.io.File(zipFilePath.toString());
+        }
+        catch (IOException ex) {
+            log.error("Export students repositories for exercise " + programmingExercise.getTitle() + " did not work as expected: " + ex.getMessage());
+        }
+        finally {
+            // we do some cleanup here to prevent future errors with file handling
             log.debug("Delete all temporary zip repo files");
             // delete the temporary zipped repo files
             for (Path zippedRepoFile : zippedRepoFiles) {
-                Files.delete(zippedRepoFile);
+                try {
+                    Files.delete(zippedRepoFile);
+                }
+                catch (Exception ex) {
+                    log.warn("Could not delete file " + zippedRepoFile + ". Error message: " + ex.getMessage());
+                }
             }
         }
-        catch (IOException ex) {
-            log.error("Archiving and deleting the local repositories did not work as expected");
-        }
-        return new java.io.File(zipFilePath.toString());
+        return null;
     }
 }
