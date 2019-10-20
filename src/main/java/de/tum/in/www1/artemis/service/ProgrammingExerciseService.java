@@ -1075,10 +1075,10 @@ public class ProgrammingExerciseService {
                 repo = gitService.getOrCheckoutRepository(participation, repoDownloadClonePath);
                 gitService.resetToOriginMaster(repo); // start with clean state
 
-                if (repositoryExportOptions.isFilterLateSubmissions()) {
+                if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
                     log.debug("Filter late submissions for participation {}", participation.toString());
                     Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                            .filter(s -> s.getSubmissionDate().isBefore(repositoryExportOptions.getFilterLateSubmissionsDate()))
+                            .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(repositoryExportOptions.getFilterLateSubmissionsDate()))
                             .max(Comparator.comparing(Submission::getSubmissionDate));
 
                     gitService.filterLateSubmissions(repo, lastValidSubmission, repositoryExportOptions.getFilterLateSubmissionsDate());
