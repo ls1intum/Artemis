@@ -67,7 +67,7 @@ export class GuidedTourService {
 
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
-            if (this.currentTour && event instanceof NavigationStart) {
+            if (this.availableTourForComponent && event instanceof NavigationStart) {
                 this.finishGuidedTour();
                 this.guidedTourAvailabilitySubject.next(false);
             }
