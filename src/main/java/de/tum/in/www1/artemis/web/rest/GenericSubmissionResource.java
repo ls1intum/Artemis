@@ -39,6 +39,11 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         this.participationService = participationService;
     }
 
+    /**
+     * Check if exercise is valid and the user can access it
+     * @param exercise that we want to check
+     * @return either null if exercise is valid or one of the error responses if it is not valid
+     */
     ResponseEntity<T> checkExerciseValidity(E exercise) {
         if (exercise == null) {
             return ResponseEntity.badRequest()
