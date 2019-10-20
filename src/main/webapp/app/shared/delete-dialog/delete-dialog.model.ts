@@ -28,7 +28,6 @@ export class DeleteDialogData {
     // type of the the action that delete dialog will handle
     actionType: ActionType;
 
+    // output event passed to the delete dialog component
     delete: EventEmitter<any>;
-
-    closeOnSuccess?: boolean;
 }

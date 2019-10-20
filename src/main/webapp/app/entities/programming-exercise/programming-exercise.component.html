@@ -140,7 +140,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
-                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -150,7 +149,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
-                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/exercise', programmingExercise.id, 'participation']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -162,7 +160,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
-                                    [disabled]="isButtonDisabled()"
                                     routerLink="/code-editor/{{ programmingExercise.id }}/admin/{{ programmingExercise.templateParticipation.id }}"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -172,7 +169,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isButtonDisabled()"
                                     routerLink="/exercise/{{ programmingExercise.id }}/hints"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -182,7 +178,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isButtonDisabled()"
                                     routerLink="programming-exercise/{{ programmingExercise.id }}/manage-test-cases"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -194,7 +189,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
@@ -204,7 +198,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.shortName != null && programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -214,7 +207,6 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.shortName == null && programmingExercise.isAtLeastInstructor"
-                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
@@ -225,7 +217,6 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     type="submit"
-                                    [disabled]="isButtonDisabled()"
                                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/exportRepos' } }]"
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
@@ -237,45 +228,41 @@
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [disabled]="isButtonDisabled()"
                                     [actionType]="ActionType.Cleanup"
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="instructorDashboard.cleanup.question"
-                                    [deleteAction]="cleanupProgrammingExercise"
-                                    [entityParameter]="programmingExercise.id"
+                                    (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
+                                    [closeWithMessage]="closeDialogMessage"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
                                     }"
                                     class="mb-1"
                                 >
-                                    <span *ngIf="isCleaning" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                    <fa-icon *ngIf="!isCleaning" [icon]="'eraser'"></fa-icon>
+                                    <fa-icon [icon]="'eraser'"></fa-icon>
                                 </button>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [disabled]="isButtonDisabled()"
                                     [actionType]="ActionType.Reset"
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.exercise.reset.question"
-                                    [deleteAction]="resetProgrammingExercise"
-                                    [entityParameter]="programmingExercise.id"
+                                    (delete)="resetProgrammingExercise(programmingExercise.id)"
+                                    [closeWithMessage]="closeDialogMessage"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     class="mb-1"
                                 >
-                                    <span *ngIf="isResetting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                    <fa-icon *ngIf="!isResetting" [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     jhiDeleteButton
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
-                                    [deleteAction]="deleteProgrammingExercise"
-                                    [entityParameter]="programmingExercise.id"
+                                    (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
+                                    [closeWithMessage]="closeDialogMessage"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',

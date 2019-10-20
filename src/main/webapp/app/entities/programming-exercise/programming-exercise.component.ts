@@ -21,9 +21,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    isDeleting: boolean;
-    isCleaning: boolean;
-    isResetting: boolean;
+    closeDialogMessage: string;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -65,48 +63,55 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     /**
      * Deletes programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param deleteStudentReposBuildPlans true if student repos and build plans should be deleted
-     * @param deleteBaseReposBuildPlans true if base repos and build plans should be deleted
+     * @param $event contains additional checks for deleting exercise
      */
-    deleteProgrammingExercise = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => {
-        return this.programmingExerciseService.delete(programmingExerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans).pipe(
-            tap(() => {
+    deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        return this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     /**
      * Cleans up programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param deleteRepositories true if repositories should be deleted
+     * @param $event true if repositories should be deleted
      */
-    cleanupProgrammingExercise = (programmingExerciseId: number, deleteRepositories: boolean) => {
-        return this.exerciseService.cleanup(programmingExerciseId, deleteRepositories).pipe(
-            tap(() => {
-                if (deleteRepositories) {
+    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
+            () => {
+                if ($event.deleteRepositories) {
                     this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
                 } else {
                     this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
                 }
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     /**
      * Resets programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
-    resetProgrammingExercise = (programmingExerciseId: number) => this.exerciseService.reset(programmingExerciseId);
-
-    /**
-     * Check if we are performing any critical operations, so the user can click on the buttons
-     */
-    isButtonDisabled() {
-        return this.isDeleting || this.isResetting || this.isCleaning;
+    resetProgrammingExercise(programmingExerciseId: number) {
+        this.exerciseService.reset(programmingExerciseId).subscribe(
+            () => {},
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
+        );
     }
 
     protected getChangeEventName(): string {

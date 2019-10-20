@@ -19,6 +19,7 @@ import { tap } from 'rxjs/operators';
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     readonly ActionType = ActionType;
+    closeDialogMessage: string;
 
     QuizStatus = {
         HIDDEN: 'Hidden',
@@ -189,31 +190,39 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * Deletes quiz exercise
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
-    deleteQuizExercise = (quizExerciseId: number) => {
-        return this.quizExerciseService.delete(quizExerciseId).pipe(
-            tap(() => {
+    deleteQuizExercise(quizExerciseId: number) {
+        return this.quizExerciseService.delete(quizExerciseId).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     /**
      * Resets quiz exercise
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
-    resetQuizExercise = (quizExerciseId: number) => {
-        return this.quizExerciseService.reset(quizExerciseId).pipe(
-            tap(() => {
+    resetQuizExercise(quizExerciseId: number) {
+        this.quizExerciseService.reset(quizExerciseId).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     callback() {}
 }

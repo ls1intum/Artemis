@@ -10,10 +10,8 @@ export class DeleteButtonDirective implements OnInit, OnChanges {
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
-    @Input() deleteAction: any;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
     @Input() closeWithMessage: string;
-    @Input() entityParameter: any;
 
     deleteTextSpan: HTMLElement;
 

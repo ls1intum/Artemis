@@ -26,12 +26,19 @@ export class DeleteDialogService {
         return from(this.modalRef.result).pipe(finalize(() => (this.modalRef = null)));
     }
 
+    /**
+     * Closes the delete dialog
+     */
     closeDialog(): void {
         if (this.modalRef) {
             this.modalRef.componentInstance.close();
         }
     }
 
+    /**
+     * Shows error message in the dialog
+     * @param errorMessage message that is shown to the user on error
+     */
     showAlert(errorMessage: string): void {
         if (this.modalRef) {
             this.modalRef.componentInstance.showAlert(errorMessage);
