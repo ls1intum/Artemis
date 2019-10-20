@@ -1,14 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -130,8 +125,8 @@ public class BambooUpdateService {
             bambooClient.getRepositoryHelper().addRepositoryDetails(bambooRemoteRepository);
 
             parameters.put("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
-            // IMPORTANT: this has to be assignment
-            parameters.put("repositoryName", ASSIGNMENT_REPO_NAME);
+            // IMPORTANT: Don't change the name of the repo! We depend on the naming (assignment, tests) in some other parts of the application
+            parameters.put("repositoryName", bambooRemoteRepository.getName());
             parameters.put("repositoryId", Long.toString(bambooRemoteRepository.getId()));
             parameters.put("confirm", "true");
             parameters.put("save", "Save repository");
@@ -213,7 +208,7 @@ public class BambooUpdateService {
             return message;
         }
 
-        public void overwriteTriggers(final String planKey, final BambooClient bambooClient, final List<String> triggeredBy) {
+        private void overwriteTriggers(final String planKey, final BambooClient bambooClient, final List<String> triggeredBy) {
             try {
                 final var triggersString = bambooClient.getTriggerHelper().getTriggerList(planKey, null, null, 99, Pattern.compile(".*"));
                 // Bamboo CLI returns a weird String, which is the reason for this way of parsing it
