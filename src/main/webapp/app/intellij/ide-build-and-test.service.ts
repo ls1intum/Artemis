@@ -7,7 +7,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { CodeEditorBuildLogService, DomainType } from 'app/code-editor';
 import { BuildLogEntryArray } from 'app/entities/build-log';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.
@@ -18,6 +18,9 @@ import { Observable, Subject } from 'rxjs';
 })
 export class IdeBuildAndTestService {
     private buildFinished = new Subject<void>();
+    private resultSubsription: Subscription;
+    private buildLogSubscription: Subscription;
+    private latestResult: Result;
 
     constructor(
         private submissionService: ProgrammingSubmissionService,
@@ -50,12 +53,20 @@ export class IdeBuildAndTestService {
         this.javaBridge.onBuildStarted();
 
         // Listen for the new result on the websocket
-        this.participationWebsocketService
+        if (this.resultSubsription) {
+            this.resultSubsription.unsubscribe();
+        }
+        if (this.buildLogSubscription) {
+            this.buildLogSubscription.unsubscribe();
+        }
+        this.resultSubsription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(participationId)
             .pipe(
                 filter(Boolean),
                 map(result => result as Result),
+                filter(result => !this.latestResult || this.latestResult.id < result.id),
                 tap(result => {
+                    this.latestResult = result;
                     // If there was no compile error, we can forward the test results, otherwise we have to fetch the error output
                     if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
                         result.feedbacks.forEach(feedback => this.javaBridge.onTestResult(!!feedback.positive, feedback.detailText!));
@@ -72,7 +83,7 @@ export class IdeBuildAndTestService {
     }
 
     private forwardBuildLogs() {
-        this.buildLogService
+        this.buildLogSubscription = this.buildLogService
             .getBuildLogs()
             .pipe(
                 map(logs => new BuildLogEntryArray(...logs)),
