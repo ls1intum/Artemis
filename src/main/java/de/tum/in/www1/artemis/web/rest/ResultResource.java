@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,8 +24,10 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -74,10 +77,12 @@ public class ResultResource {
 
     private final LtiService ltiService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, FeedbackService feedbackService, UserService userService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SimpMessageSendingOperations messagingTemplate, LtiService ltiService) {
+            SimpMessageSendingOperations messagingTemplate, LtiService ltiService, ProgrammingSubmissionService programmingSubmissionService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -89,6 +94,7 @@ public class ResultResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingTemplate = messagingTemplate;
         this.ltiService = ltiService;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
@@ -101,13 +107,17 @@ public class ResultResource {
      */
     @PostMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
+    public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
-        Participation participation = result.getParticipation();
-        Course course = participation.getExercise().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermissions(course, user))
+        final var participation = result.getParticipation();
+        final var course = participation.getExercise().getCourse();
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var exercise = participation.getExercise();
+        if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
             return forbidden();
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
+            return badRequest();
+        }
 
         if (result.getId() != null) {
             throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
@@ -125,6 +135,10 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
+        // Create manual submission with last commit hash und current time stamp.
+        ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
+                SubmissionType.MANUAL);
+        result.setSubmission(submission);
         resultService.createNewManualResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
@@ -137,7 +151,6 @@ public class ResultResource {
      *
      * @param planKey the plan key of the plan which is notifying about a new result
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "/results/{planKey}")
     @Transactional
@@ -278,18 +291,33 @@ public class ResultResource {
      */
     @PutMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
+    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
-        Participation participation = result.getParticipation();
-        Course course = participation.getExercise().getCourse();
-        if (!userHasPermissions(course))
+        final var participation = result.getParticipation();
+        final var course = participation.getExercise().getCourse();
+        final var exercise = participation.getExercise();
+        if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
             return forbidden();
-        if (result.getId() == null) {
-            return createResult(result);
         }
+        if (result.getId() == null) {
+            return createProgrammingExerciseManualResult(result);
+        }
+
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+    }
+
+    private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
+        // Only allow manual results for programming exercises if option was enabled and due dates have passed
+        if (exerciseToBeChecked instanceof ProgrammingExercise) {
+            final var exercise = (ProgrammingExercise) exerciseToBeChecked;
+            final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
+                    : exercise.getDueDate();
+            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || !relevantDueDate.isBefore(ZonedDateTime.now()));
+        }
+
+        return true;
     }
 
     /**

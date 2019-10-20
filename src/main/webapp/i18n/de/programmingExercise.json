@@ -101,11 +101,11 @@
                 "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher können die Testfälle geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
             },
             "export": {
-                "downloadAllStudents": "Lade Repositories von allen Studenten herunter",
+                "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
-                "addStudentName": "Name der Studenten zum Projekt hinzufügen",
-                "squashAfterInstructor": "Alle Commits des Studenten in ein Commit zusammenfassen",
+                "addStudentName": "Name der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "squashAfterInstructor": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)"
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",

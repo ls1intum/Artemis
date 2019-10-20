@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +21,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -430,7 +428,16 @@ public class UserService {
      * @return all users with roles other than ROLE_ANONYMOUS
      */
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
-        return userRepository.findAllByLoginNot(pageable, AuthoritiesConstants.ANONYMOUS).map(UserDTO::new);
+        return userRepository.findAll(pageable).map(UserDTO::new);
+    }
+
+    /**
+     * Get user with groups by given login string
+     * @param login user login string
+     * @return existing user with given login string or null
+     */
+    public Optional<User> getUserWithGroupsByLogin(String login) {
+        return userRepository.findOneWithGroupsByLogin(login);
     }
 
     /**
@@ -440,15 +447,6 @@ public class UserService {
      */
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneWithAuthoritiesByLogin(login);
-    }
-
-    /**
-     * Get user with groups and authorities by given user id
-     * @param id user id
-     * @return existing user with the given user id
-     */
-    public User getUserWithAuthorities(Long id) {
-        return userRepository.findOneWithAuthoritiesById(id).get();
     }
 
     /**
@@ -466,21 +464,6 @@ public class UserService {
      */
     public Optional<User> getUserByLogin(String login) {
         return userRepository.findOneByLogin(login);
-    }
-
-    /**
-     * Get user with user groups and authorities by login string
-     * @param login user login string
-     * @return existing user
-     */
-    public User getUserWithGroupsAndAuthoritiesByLogin(String login) {
-        return userRepository.findOneWithAuthoritiesByLogin(login).orElse(null);
-    }
-
-    public User getUserWithAuthorities() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithAuthoritiesByLogin(currentUserLogin).get();
-        return user;
     }
 
     /**
@@ -511,19 +494,6 @@ public class UserService {
      */
     public User getUserWithGroupsAndAuthorities(@NotNull Principal principal) {
         return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
-    }
-
-    /**
-     * Not activated users should be automatically deleted after 3 days.
-     * This is scheduled to get fired everyday, at 01:00 (am).
-     */
-    @Scheduled(cron = "0 0 1 * * ?")
-    public void removeNotActivatedUsers() {
-        userRepository.findAllByActivatedIsFalseAndCreatedDateBefore(Instant.now().minus(3, ChronoUnit.DAYS)).forEach(user -> {
-            log.debug("Deleting not activated user {}", user.getLogin());
-            userRepository.delete(user);
-            this.clearUserCaches(user);
-        });
     }
 
     /**

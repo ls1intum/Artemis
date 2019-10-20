@@ -1,8 +1,11 @@
 import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise/exercise.model';
-import { InitializationState, hasResults } from 'app/entities/participation';
+import { hasResults, InitializationState } from 'app/entities/participation';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import * as moment from 'moment';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { now } from 'moment';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 export const hasExerciseChanged = (changes: SimpleChanges) => {
     return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);
@@ -59,6 +62,13 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
     if (!hasStudentParticipations(exercise)) {
         return ParticipationStatus.UNINITIALIZED;
+    } else if (
+        [InitializationState.REPO_COPIED, InitializationState.REPO_CONFIGURED, InitializationState.BUILD_PLAN_COPIED, InitializationState.BUILD_PLAN_CONFIGURED].includes(
+            exercise.studentParticipations[0].initializationState,
+        )
+    ) {
+        // in case the programming exercise is not configured properly, we assume it is uninitalized
+        return ParticipationStatus.UNINITIALIZED;
     } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
         return ParticipationStatus.INITIALIZED;
     }
@@ -107,4 +117,21 @@ const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise
     } else {
         return ParticipationStatus.UNINITIALIZED;
     }
+};
+
+/**
+ * Checks whether the given exercise is eligible for receiving manual results.
+ * This is the case if the user is at least a tutor and the exercise itself is a programming
+ * exercise for which manual reviews have been enabled. The due date also has to be in the past.
+ *
+ * @param exercise
+ */
+export const areManualResultsAllowed = (exercise: Exercise) => {
+    if (exercise.type !== ExerciseType.PROGRAMMING) {
+        return false;
+    }
+    // Only allow new results if manual reviews are activated and the due date/after due date has passed
+    const exc = exercise as ProgrammingExercise;
+    const relevantDueDate = exc.buildAndTestStudentSubmissionsAfterDueDate ? exc.buildAndTestStudentSubmissionsAfterDueDate : exc.dueDate;
+    return exc.isAtLeastTutor && exc.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!relevantDueDate || moment(relevantDueDate).isBefore(now()));
 };

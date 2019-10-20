@@ -9,6 +9,16 @@
             "500": "Interner Serverfehler."
         },
         "concurrencyFailure": "Ein anderer Benutzer hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
-        "validation": "Validierungsfehler auf dem Server."
+        "validation": "Validierungsfehler auf dem Server.",
+        "resultStringNull": "Fehler! Ein Ergebnis Text ist erforderlich.",
+        "scoreNull": "Fehler! Eine Bewertung is erforderlich.",
+        "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnise mit 100% kann erfolgreich sein.",
+        "feedbackTextOrDetailTextNull": "Fehler! Wenn Feedback vorhanden ist, müssen der Feedback Text und die Feedback Details ausgefüllt werden.",
+        "quizAlreadyVisible": "Das Quiz ist bereits sichtbar.",
+        "quizAlreadyStarted": "Das Quiz wurde bereits gestartet.",
+        "quizNotEndedYet": "Das Quiz hat noch nicht geendet.",
+        "quizAlreadyOpenForPractice": "Das Quiz ist bereits zur Übung geöffnet.",
+        "unknownAction": "Diese Aktion kann nicht durchgeführt werden.",
+        "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden."
     }
 }

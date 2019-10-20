@@ -70,7 +70,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private addResultToParticipation = (result: Result) => {
         const cachedParticipation = this.cachedParticipations.get(result.participation!.id);
         if (cachedParticipation) {
-            this.cachedParticipations.set(result.participation!.id, { ...cachedParticipation, results: [...(cachedParticipation.results || []), result] });
+            // create a clone
+            this.cachedParticipations.set(result.participation!.id, { ...cachedParticipation, results: [...(cachedParticipation.results || []), result] } as StudentParticipation);
             return of(this.cachedParticipations.get(result.participation!.id));
         }
         return of();
@@ -85,7 +86,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
-        const participation = { ...newParticipation };
+        const participation = { ...newParticipation } as StudentParticipation;
         if (!participation.exercise && !exercise) {
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }

@@ -1,5 +1,5 @@
 import { SimpleChanges } from '@angular/core';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { getExercise, InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result/result.model';
 import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -42,11 +42,15 @@ export const getLatestResult = (participation: Participation): Result | null => 
  *
  * @param participation
  */
-export const isModelingOrTextOrFileUpload = (participation: StudentParticipation) => {
+export const isModelingOrTextOrFileUpload = (participation: Participation) => {
+    if (!participation) {
+        return false;
+    }
+    const exercise = getExercise(participation);
     return (
         participation.initializationState === InitializationState.FINISHED &&
-        participation.exercise &&
-        (participation.exercise.type === ExerciseType.MODELING || participation.exercise.type === ExerciseType.TEXT || participation.exercise.type === ExerciseType.FILE_UPLOAD)
+        exercise &&
+        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD)
     );
 };
 

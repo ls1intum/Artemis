@@ -1,0 +1,16 @@
+name: Pull Request Ready for Review
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  addToProject:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move to "Ready for review" column
+        if: github.event.label.name == 'ready for review'
+        uses: alex-page/github-project-automation-plus@v0.1.1
+        with:
+          project: Artemis Development
+          column: Ready for review
+          repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}

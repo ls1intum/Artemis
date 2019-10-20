@@ -106,16 +106,18 @@ public class ParticipationIntegrationTest {
 
     @Test
     @WithMockUser(username = "student1")
-    public void participateTwiceInModelingExercise_badRequest() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
-        request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    public void participateTwiceInModelingExercise_sameParticipation() throws Exception {
+        var participation1 = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        var participation2 = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        assertThat(participation1.equals(participation2));
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void participateTwiceInTextExercise_badRequest() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
-        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    public void participateTwiceInTextExercise_sameParticipation() throws Exception {
+        var participation1 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        var participation2 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+        assertThat(participation1.equals(participation2));
     }
 
     @Test

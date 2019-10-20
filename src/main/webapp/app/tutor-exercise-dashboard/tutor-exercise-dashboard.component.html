@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <div *ngIf="tutorParticipationStatus === NOT_PARTICIPATED || exercise.type === ExerciseType_TEXT">
+    <div class="markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED || exercise.type === ExerciseType_TEXT">
         <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.problemStatement' | translate }}</h4>
 
@@ -245,7 +245,7 @@
                             <td>{{ i + 1 }}</td>
                             <td>{{ complaint.submittedTime | date: 'MMM d, y HH:mm:ss' }}</td>
                             <td>
-                                <jhi-result [result]="complaint.result"></jhi-result>
+                                <jhi-result [result]="complaint.result" [participation]="complaint.result.participation"></jhi-result>
                             </td>
                             <td>
                                 <span *ngIf="complaint.accepted !== undefined">{{ 'artemisApp.tutorExerciseDashboard.complaintEvaluated' | translate }}</span>

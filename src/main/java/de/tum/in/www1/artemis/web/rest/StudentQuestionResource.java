@@ -69,6 +69,7 @@ public class StudentQuestionResource {
      */
     @PostMapping("/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     public ResponseEntity<StudentQuestion> createStudentQuestion(@RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
         if (studentQuestion.getId() != null) {
@@ -95,6 +96,7 @@ public class StudentQuestionResource {
      */
     @PutMapping("/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     public ResponseEntity<StudentQuestion> updateStudentQuestion(@RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
         if (studentQuestion.getId() == null) {
@@ -112,6 +114,7 @@ public class StudentQuestionResource {
      */
     @GetMapping("/student-questions/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     public ResponseEntity<StudentQuestion> getStudentQuestion(@PathVariable Long id) {
         log.debug("REST request to get StudentQuestion : {}", id);
         Optional<StudentQuestion> studentQuestion = studentQuestionRepository.findById(id);
@@ -127,6 +130,7 @@ public class StudentQuestionResource {
      */
     @GetMapping("/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     public ResponseEntity<List<StudentQuestion>> getAllQuestions(@RequestParam(value = "lecture", required = false) Long lectureId,
             @RequestParam(value = "exercise", required = false) Long exerciseId) {
         List<StudentQuestion> studentQuestions = null;
@@ -147,6 +151,7 @@ public class StudentQuestionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/student-questions/{id}")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();

@@ -69,13 +69,15 @@
                     <td>{{ 'artemisApp.InitializationState.' + participation.initializationState | translate }}</td>
                     <td>{{ participation.initializationDate | date: 'medium' }}</td>
                     <td>
-                        <a routerLink="/user-management/{{ participation.student?.login }}/view">{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a>
+                        <a routerLink="/admin/user-management/{{ participation.student?.login }}/view"
+                            >{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a
+                        >
                     </td>
                     <td *ngIf="this.presentationScoreEnabled">
                         <span>{{ participation.presentationScore ? participation.presentationScore : 0 }}</span>
                     </td>
                     <td class="text-right">
-                        <div class="btn-group flex-btn-group-container">
+                        <div class="btn-group">
                             <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
                                 <jhi-programming-exercise-instructor-trigger-build-button
                                     *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
@@ -87,15 +89,6 @@
                                     <fa-icon icon="circle-notch" [spin]="true" class="text-secondary"></fa-icon>
                                 </ng-template>
                             </ng-container>
-                            <button
-                                type="submit"
-                                *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastTutor"
-                                [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new'] } }]"
-                                class="btn btn-warning btn-sm mr-1"
-                            >
-                                <fa-icon icon="asterisk"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.newResult">New Result</span>
-                            </button>
                             <button
                                 *ngIf="exercise.isAtLeastInstructor"
                                 jhiDeleteButton
