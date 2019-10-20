@@ -11,7 +11,7 @@ import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
-import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
+import { Participation, ParticipationWebsocketService, StudentParticipation, TemplateProgrammingExerciseParticipation } from 'src/main/webapp/app/entities/participation';
 import { Result, ResultDetailComponent, ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise';
@@ -39,7 +39,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let getLatestResultWithFeedbacksStub: SinonStub;
     let generateHtmlSubjectStub: SinonStub;
 
-    const exercise = { id: 30, templateParticipation: { id: 99 } } as ProgrammingExercise;
+    const templateParticipation = new TemplateProgrammingExerciseParticipation();
+    templateParticipation.id = 99;
+
+    const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [{ testName: 'test1', active: true }, { testName: 'test2', active: true }, { testName: 'test3', active: false }];
 
@@ -185,14 +188,18 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         flush();
     }));
 
-    it('should re-render the preview html after changes to the problem statement have been made', fakeAsync(() => {
+    it('should re-render the preview html when forceRender has emitted', fakeAsync(() => {
+        const forceRenderSubject = new Subject<void>();
         comp.exercise = exercise;
         comp.participation = participation;
+        comp.forceRender = forceRenderSubject.asObservable();
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.detectChanges();
         tick();
+
+        forceRenderSubject.next();
 
         expect(generateHtmlSubjectStub).to.have.been.calledOnce;
 

@@ -3,23 +3,12 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Installiere die notwendigen Tools",
-                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Du findest die Anweisungen in den folgenden Tutorialschritten.",
-                "java": {
-                    "content": "Installiere das neueste Java JDK (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und <span class='red'>nicht</span> JRE auswählst.",
-                    "linkText": "Lade Java JDK herunter"
-                },
-                "eclipse": {
-                    "content": "Installiere Eclipse IDE für Java Entwickler (2019‐09 oder neuer)",
-                    "linkText": "Lade Eclipse IDE herunter"
-                },
-                "sourceTree": {
-                    "content": "Installiere die neueste Version von SourceTree mit git (3.2.1 oder neuer für macOS oder Windows)",
-                    "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden.",
-                    "linkText": "Lade SourceTree herunter"
-                },
+                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren.<ul><li>Installiere das neueste <a href='https://www.oracle.com/technetwork/java/javase/downloads/index.html' target='_blank' rel='noopener noreferrer'>Java JDK</a> (mind. Java JDK 12). Stelle dabei sicher, dass du JDK und <span class='red bold'>nicht</span> JRE auswählst.</li><li>Installiere die <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>Eclipse IDE für Java Entwickler</a> (2019‐09 oder neuer)</li><li>Installiere die neueste Version von <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>SourceTree</a> mit git (3.2.1 oder neuer für macOS oder Windows)</li></ul>",
+                "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden.",
                 "sourceTreeSetup": {
                     "headline": "Konfiguriere SourceTree",
                     "content": "Schau dir bitte das Video an und folge den Schritten, um SourceTree richtig aufzusetzen. Mit diesem Schritt haben wir das Setup abgeschlossen und können uns die Kursseite und dessen Elemente genauer unter die Lupe nehmen.",
+                    "videoUrl": "https://www.youtube.com/embed/8SQH98Y2MRk?rel=0",
                     "hint": "Kopiere und füge <tt>https://bitbucket.ase.in.tum.de</tt> als URL ein."
                 }
             },
@@ -61,27 +50,32 @@
             },
             "startExercise": {
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",
-                "content": "Klicke auf den Button 'Aufgabe starten' um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
+                "content": "Klicke auf den Button <tt>Aufgabe starten</tt> um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
             },
             "cloneRepository": {
                 "headline": "Klone das Repository in SourceTree",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont."
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Account Menü aus fortsetzen.",
+                "videoUrl": "https://www.youtube.com/embed/0YYxgs14S6A?rel=0"
             },
             "inspectSourceTree": {
                 "headline": "Lerne SourceTree kennen",
-                "content": "Schau dir das folgende Video, um die grundlegenden Funktionen von SourceTree kennenzulernen."
+                "content": "Schau dir das folgende Video, um die grundlegenden Funktionen von SourceTree kennenzulernen.",
+                "videoUrl": "https://www.youtube.com/embed/Piu_UBK6d7c?rel=0"
             },
             "importEclipse": {
                 "headline": "Importiere das Java Projekt in Eclipse",
-                "content": "Schau dir das folgende Video an, um zu sehen, wie man ein Projekt in Eclipse importiert."
+                "content": "Schau dir das folgende Video an, um zu sehen, wie man ein Projekt in Eclipse importiert.",
+                "videoUrl": "https://www.youtube.com/embed/5VrNNlEuCBo?rel=0"
             },
             "inspectProject": {
                 "headline": "Untersuche das Projekt",
-                "content": "In diesem Video schauen wir uns das Projekt an und lösen die darin gegebene Aufgabe."
+                "content": "In diesem Video schauen wir uns das Projekt an und lösen die darin gegebene Aufgabe.",
+                "videoUrl": "https://www.youtube.com/embed/K-mX03gmNSk?rel=0"
             },
             "commitAndPush": {
                 "headline": "Reiche deine Änderungen ein",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man Änderungen committed und pushed."
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man Änderungen committed und pushed.",
+                "videoUrl": "https://www.youtube.com/embed/sjT-S6AhQvM?rel=0"
             },
             "reviewResult": {
                 "headline": "Überprüfe dein Ergebnis",

@@ -68,7 +68,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        this.jhiAlertService.error(error.headers.get('X-artemisApp-error')!);
     }
 
     /**
@@ -102,8 +102,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     openForPractice(quizExerciseId: number) {
         this.quizExerciseService.openForPractice(quizExerciseId).subscribe(
-            () => {
-                this.loadOne(quizExerciseId);
+            (res: HttpResponse<QuizExercise>) => {
+                this.handleNewQuizExercise(res.body!);
             },
             (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -123,8 +123,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     startQuiz(quizExerciseId: number) {
         this.quizExerciseService.start(quizExerciseId).subscribe(
-            () => {
-                this.loadOne(quizExerciseId);
+            (res: HttpResponse<QuizExercise>) => {
+                this.handleNewQuizExercise(res.body!);
             },
             (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -140,17 +140,20 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     private loadOne(quizExerciseId: number) {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
-            const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
-            const exercise = res.body!;
-            exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course!);
-            exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course!);
-            exercise.status = this.quizExerciseService.statusForQuiz(exercise);
-            if (index === -1) {
-                this.quizExercises.push(exercise);
-            } else {
-                this.quizExercises[index] = exercise;
-            }
+            this.handleNewQuizExercise(res.body!);
         });
+    }
+
+    private handleNewQuizExercise(newQuizExercise: QuizExercise) {
+        const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === newQuizExercise.id);
+        newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course!);
+        newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course!);
+        newQuizExercise.status = this.quizExerciseService.statusForQuiz(newQuizExercise);
+        if (index === -1) {
+            this.quizExercises.push(newQuizExercise);
+        } else {
+            this.quizExercises[index] = newQuizExercise;
+        }
     }
 
     /**
@@ -172,8 +175,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     showQuiz(quizExerciseId: number) {
         this.quizExerciseService.setVisible(quizExerciseId).subscribe(
-            () => {
-                this.loadOne(quizExerciseId);
+            (res: HttpResponse<QuizExercise>) => {
+                this.handleNewQuizExercise(res.body!);
             },
             (res: HttpErrorResponse) => {
                 this.onError(res);

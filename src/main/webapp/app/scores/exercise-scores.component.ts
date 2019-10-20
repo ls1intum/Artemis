@@ -6,7 +6,7 @@ import { DifferencePipe } from 'ngx-moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
-import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
+import { areManualResultsAllowed, Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { Course, CourseService } from 'app/entities/course';
 import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
@@ -15,6 +15,7 @@ import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentP
 import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { tap, take } from 'rxjs/operators';
 import { zip, of } from 'rxjs';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 @Component({
     selector: 'jhi-exercise-scores',
@@ -36,6 +37,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     results: Result[];
     allResults: Result[];
     eventSubscriber: Subscription;
+    newManualResultAllowed: boolean;
 
     isLoading: boolean;
 
@@ -71,6 +73,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 zip(this.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
                     .subscribe(() => (this.isLoading = false));
+                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             });
         });
         this.registerChangeInCourses();
@@ -119,6 +122,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.results = this.allResults.filter(result => result.successful);
         } else if (this.showAllResults === 'unsuccessful') {
             this.results = this.allResults.filter(result => !result.successful);
+        } else if (this.showAllResults === 'manual') {
+            this.results = this.allResults.filter(result => result.assessmentType === AssessmentType.MANUAL);
+        } else if (this.showAllResults === 'automatic') {
+            this.results = this.allResults.filter(result => result.assessmentType === AssessmentType.AUTOMATIC);
         } else if (this.showAllResults === 'all') {
             this.results = this.allResults;
         }

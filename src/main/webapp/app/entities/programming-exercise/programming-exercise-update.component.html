@@ -1,5 +1,5 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col-lg-8 col-sm-12">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
             <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
                 Generate new Programming Exercise
@@ -165,8 +165,18 @@
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
                         (hasUnsavedChanges)="hashUnsavedChanges = $event"
+                        [forceRender]="rerenderSubject.asObservable()"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
+                </div>
+                <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group" id="field_gradingInstructions">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
+                    <jhi-markdown-editor
+                        class="markdown-editor"
+                        [domainCommands]="domainCommandsGradingInstructions"
+                        [(markdown)]="programmingExercise.gradingInstructions"
+                        [editorMode]="EditorMode.LATEX"
+                    ></jhi-markdown-editor>
                 </div>
                 <!--        It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
                 <div class="form-group-narrow">

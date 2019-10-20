@@ -92,7 +92,7 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
-            "guidedTour": "Guided Tour",
+            "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
             "continueTutorial": "Tutorial fortsetzen",
             "noNotifications": "Keine Mitteilungen verfügbar",
@@ -108,7 +108,9 @@
             "confirmpassword": "Neues Passwort bestätigen",
             "confirmpassword.placeholder": "Bestätige dein neues Passwort",
             "email": "Email Adresse",
-            "email.placeholder": "Email Adresse"
+            "email.placeholder": "Email Adresse",
+            "cancel": "Abbruch",
+            "confirm": "Bestätigen"
         },
         "messages": {
             "info": {

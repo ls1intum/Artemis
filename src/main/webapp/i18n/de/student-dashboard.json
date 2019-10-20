@@ -13,7 +13,9 @@
                 "cancel": "Abbrechen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
                 "courseLoading": "Kurse werden geladen...",
-                "pleaseSelectCourse": "# Wähle einen Kurs aus"
+                "pleaseSelectCourse": "# Wähle einen Kurs aus",
+                "examSignupConfirmation": "Mit Anmeldung zu diesem Kurs erfolgt eine verbindliche Anmeldung zur Prüfung.",
+                "examSignupConfirmationTitle": "Bestätigung der Prüfungsteilnahme"
             }
         },
         "courseOverview": {

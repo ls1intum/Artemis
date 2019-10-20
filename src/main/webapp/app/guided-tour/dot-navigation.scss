@@ -1,11 +1,12 @@
 /* Style for the navigation bubbles in the guided tour */
 
 .dotstyle {
-    width: 125px;
+    width: 260px;
     overflow: hidden;
     display: block;
     padding: 0;
     position: relative;
+    text-align: center;
 
     &.dotstyle--scaleup {
         li {

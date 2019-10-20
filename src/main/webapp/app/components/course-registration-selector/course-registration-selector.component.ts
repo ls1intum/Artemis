@@ -14,7 +14,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     @Input() courses: Course[];
     @Output() courseRegistered = new EventEmitter();
     public coursesToSelect: Course[] = [];
-    public courseToRegister: Course | null;
+    public courseToRegister: Course | undefined;
     public isTumStudent = false;
     showCourseSelection = false;
     addedSuccessful = false;
@@ -51,27 +51,27 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     }
 
     startRegistration() {
-        this.showCourseSelection = true;
         this.loading = true;
         this.loadAndFilterCourses()
             .then(() => {
                 this.loading = false;
+                this.showCourseSelection = true;
                 if (this.coursesToSelect.length === 0) {
                     setTimeout(() => {
-                        this.courseToRegister = null;
+                        this.courseToRegister = undefined;
                         this.showCourseSelection = false;
                     }, 3000);
                 }
             })
             .catch(() => {
                 this.loading = false;
-                this.courseToRegister = null;
+                this.courseToRegister = undefined;
                 this.showCourseSelection = false;
             });
     }
 
     cancelRegistration() {
-        this.courseToRegister = null;
+        this.courseToRegister = undefined;
         this.showCourseSelection = false;
     }
 
@@ -84,7 +84,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
                     this.addedSuccessful = true;
                     this.loading = false;
                     setTimeout(() => {
-                        this.courseToRegister = null;
+                        this.courseToRegister = undefined;
                         this.addedSuccessful = false;
                         this.coursesToSelect = [];
                     }, 3000);
@@ -93,7 +93,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
                 error => {
                     console.log(error);
                     this.loading = false;
-                    this.courseToRegister = null;
+                    this.courseToRegister = undefined;
                 },
             );
         }

@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -30,6 +31,10 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @Service
 @Profile("bitbucket")
 public class BitbucketService implements VersionControlService {
+
+    private static final int MAX_FORK_RETRIES = 5;
+
+    private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
@@ -65,7 +70,7 @@ public class BitbucketService implements VersionControlService {
         if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
             // It is an automatically created user
 
-            User user = userService.getUserByLogin(username).get();
+            User user = userService.getUserWithGroupsByLogin(username).get();
 
             if (!userExists(username)) {
                 log.debug("Bitbucket user {} does not exist yet", username);
@@ -140,7 +145,7 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl)) {
+        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
             createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
@@ -189,20 +194,44 @@ public class BitbucketService implements VersionControlService {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final var targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
-        final Map<String, Object> body = new HashMap<>();
+        final var body = new HashMap<String, Object>();
         body.put("name", targetRepoSlug);
         final var projectMap = new HashMap<>();
         projectMap.put("key", targetProjectKey);
         body.put("project", projectMap);
-        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
         log.info("Try to copy repository " + sourceProjectKey + "/repos/" + sourceRepositoryName + " into " + targetRepoSlug);
         final String repoUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + sourceProjectKey + "/repos/" + sourceRepositoryName;
+
         try {
-            final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
-            if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-                return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
+            /*
+             * There is an edge case occurring when multiple students fork a repository leading to a race condition on the filelock for the gitconfig of the base repository since
+             * Bitbucket always tries to set pruneexpire to never as soon as one forks a repository. We only catch this case and loop over the request until we managed to fork the
+             * repository, or the maximum amount of retries has been exceeded. There is no direct other solution as of now since this is a default Bitbucket behavior we cannot
+             * control
+             */
+            for (int i = 0; i < MAX_FORK_RETRIES; i++) {
+                try {
+                    final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
+                    if (response.getStatusCode().equals(HttpStatus.CREATED)) {
+                        return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
+                    }
+                }
+                catch (HttpServerErrorException.InternalServerError e) {
+
+                    if (e.getResponseBodyAsString().contains("code 255 saying: error: could not lock config file config: File exists")) {
+                        log.warn("Could not acquire lock for gitconfig in Bitbucket while forking the repository. Trying again");
+                        if (i == MAX_FORK_RETRIES - 1) {
+                            // if the last attempt fails, we throw an exception to make sure to exit this method with an exception
+                            throw e;
+                        }
+                    }
+                    else {
+                        throw e;
+                    }
+                }
             }
         }
         catch (URISyntaxException e) {
@@ -211,7 +240,7 @@ public class BitbucketService implements VersionControlService {
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
                 log.info("Repository already exists. Going to recover repository information...");
-                return new BitbucketRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+                return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
             }
             else {
                 var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
@@ -283,7 +312,7 @@ public class BitbucketService implements VersionControlService {
      *
      * @param username the Bitbucket username to check
      * @return true if it exists
-     * @throws BitbucketException
+     * @throws BitbucketException any exception occurred on the Bitbucket server
      */
     private Boolean userExists(String username) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
@@ -369,13 +398,51 @@ public class BitbucketService implements VersionControlService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         String url = baseUrl + username + "&permission=REPO_WRITE";
+
         try {
-            restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+            /*
+             * This is an edge case. If a new users logs in and clicks on Start Exercise within 1 minute, the user does not yet exist in Bitbucket.
+             */
+            User user = null;
+            for (int i = 0; i < MAX_GIVE_PERMISSIONS_RETRIES; i++) {
+                try {
+                    restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+                }
+                catch (HttpClientErrorException e) {
+
+                    if (e.getResponseBodyAsString().contains("No such user")) {
+                        if (user == null) {
+                            user = userService.getUser();
+                        }
+                        if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
+                            log.warn("Could not give write permissions to user " + username + ", because the user does not yet exist in Bitbucket. Trying again in 5s");
+                            Thread.sleep(5000);
+                            // if the last attempt fails, we throw an exception to make sure to exit this method with an exception
+                            if (i == MAX_GIVE_PERMISSIONS_RETRIES - 1) {
+                                throw e;
+                            }
+                        }
+                        else {
+                            throw e;
+                        }
+                    }
+                    else {
+                        throw e;
+                    }
+                }
+            }
         }
-        catch (Exception e) {
+        catch (HttpClientErrorException e) {
+            log.error("Server Error on Bitbucket with message: '" + e.getMessage() + "', body: '" + e.getResponseBodyAsString() + "', headers: '" + e.getResponseHeaders()
+                    + "', status text: '" + e.getStatusText() + "'.");
             log.error("Could not give write permission using " + url, e);
-            throw new BitbucketException("Error while giving repository permissions");
+            throw new BitbucketException("Error while giving repository permissions", e);
         }
+        catch (Exception emAll) {
+            log.error("Could not give write permission using " + url, emAll);
+            throw new BitbucketException("Error while giving repository permissions", emAll);
+        }
+
     }
 
     @Override
@@ -396,7 +463,7 @@ public class BitbucketService implements VersionControlService {
         }
         catch (Exception e) {
             log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
-            throw new BitbucketException("Error while giving repository permissions");
+            throw new BitbucketException("Error while giving repository permissions", e);
         }
     }
 
@@ -511,7 +578,7 @@ public class BitbucketService implements VersionControlService {
         }
         catch (Exception e) {
             log.error("Could not give project permission", e);
-            throw new BitbucketException("Error while giving project permissions");
+            throw new BitbucketException("Error while giving project permissions", e);
         }
     }
 
@@ -551,9 +618,9 @@ public class BitbucketService implements VersionControlService {
         throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
     }
 
-    private boolean webHookExists(String projectKey, String repositorySlug, String notificationUrl) {
+    private boolean webHookExists(String projectKey, String repositorySlug) {
         Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
-        return webHooks.values().contains(notificationUrl);
+        return !webHooks.isEmpty();
     }
 
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
