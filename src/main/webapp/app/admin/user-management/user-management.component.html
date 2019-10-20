@@ -65,7 +65,7 @@
                                 [entityTitle]="user.login"
                                 deleteQuestion="userManagement.delete.question"
                                 (delete)="deleteUser(user.login)"
-                                [closeWithMessage]="closeDialogMessage"
+                                [closeDialogTrigger]="closeDialogTrigger"
                                 [disabled]="currentAccount.login === user.login"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>

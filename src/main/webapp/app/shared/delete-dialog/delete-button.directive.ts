@@ -11,7 +11,7 @@ export class DeleteButtonDirective implements OnInit, OnChanges {
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
-    @Input() closeWithMessage: string;
+    @Input() closeDialogTrigger: boolean;
 
     deleteTextSpan: HTMLElement;
 
@@ -67,12 +67,8 @@ export class DeleteButtonDirective implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.closeWithMessage && !changes.closeWithMessage.firstChange) {
-            if (changes.close.currentValue) {
-                this.deleteDialogService.showAlert(changes.close.currentValue);
-            } else {
-                this.deleteDialogService.closeDialog();
-            }
+        if (changes.closeWithMessage) {
+            this.deleteDialogService.closeDialog();
         }
     }
 }

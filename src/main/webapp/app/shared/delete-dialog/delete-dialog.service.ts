@@ -36,12 +36,4 @@ export class DeleteDialogService {
             this.modalRef.componentInstance.clear();
         }
     }
-
-    /**
-     * Shows error message in the dialog
-     * @param errorMessage message that is shown to the user on error
-     */
-    showAlert(errorMessage: string): void {
-        this.jhiAlertService.error(errorMessage);
-    }
 }
