@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -8,7 +8,7 @@ import { JhiAlertService } from 'ng-jhipster';
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
 })
-export class DeleteDialogComponent implements OnInit {
+export class DeleteDialogComponent implements OnInit, OnDestroy {
     readonly actionTypes = ActionType;
     @Output() delete: EventEmitter<{ [key: string]: boolean }>;
     confirmEntityName: string;
@@ -29,6 +29,10 @@ export class DeleteDialogComponent implements OnInit {
         if (this.additionalChecks) {
             this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
         }
+    }
+
+    ngOnDestroy(): void {
+        this.jhiAlertService.clear();
     }
 
     /**
