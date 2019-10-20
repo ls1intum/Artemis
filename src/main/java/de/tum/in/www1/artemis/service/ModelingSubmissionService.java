@@ -239,7 +239,7 @@ public class ModelingSubmissionService extends SubmissionService {
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
-            result = setNewResult(modelingSubmission, modelingSubmissionRepository);
+            result = setNewResult(modelingSubmission);
         }
 
         if (result.getAssessor() == null) {

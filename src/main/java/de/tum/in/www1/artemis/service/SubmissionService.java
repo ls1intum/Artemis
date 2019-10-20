@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -95,10 +94,9 @@ public abstract class SubmissionService {
      * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
      * @param submission the submission for which a new result should be created
-     * @param submissionRepository concrete submission repository
      * @return the newly created result
      */
-    public Result setNewResult(Submission submission, GenericSubmissionRepository submissionRepository) {
+    public Result setNewResult(Submission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);

@@ -202,7 +202,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     private void lockSubmission(FileUploadSubmission fileUploadSubmission) {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
-            result = setNewResult(fileUploadSubmission, fileUploadSubmissionRepository);
+            result = setNewResult(fileUploadSubmission);
         }
 
         if (result.getAssessor() == null) {

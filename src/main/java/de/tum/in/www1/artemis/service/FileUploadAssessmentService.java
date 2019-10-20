@@ -71,7 +71,7 @@ public class FileUploadAssessmentService extends AssessmentService {
     public Result saveAssessment(FileUploadSubmission fileUploadSubmission, List<Feedback> fileUploadAssessment, FileUploadExercise fileUploadExercise) {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
-            result = fileUploadSubmissionService.setNewResult(fileUploadSubmission, fileUploadSubmissionRepository);
+            result = fileUploadSubmissionService.setNewResult(fileUploadSubmission);
         }
         // check the assessment due date if the user tries to override an existing submitted result
         if (result.getCompletionDate() != null) {

@@ -81,7 +81,7 @@ public class ModelingAssessmentService extends AssessmentService {
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
-            result = modelingSubmissionService.setNewResult(modelingSubmission, modelingSubmissionRepository);
+            result = modelingSubmissionService.setNewResult(modelingSubmission);
         }
         // check the assessment due date if the user tries to override an existing submitted result
         if (result.getCompletionDate() != null) {
