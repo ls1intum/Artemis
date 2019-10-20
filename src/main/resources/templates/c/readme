@@ -40,6 +40,12 @@ Create and implement a `Policy` class following the below class diagram with a s
 
 @startuml
 
+skinparam shadowing false
+skinparam class {
+	BorderColor black
+	ArrowColor black
+}
+
 class Client {
 }
 
