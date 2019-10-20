@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -32,6 +33,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 public class BitbucketService implements VersionControlService {
 
     private static final int MAX_FORK_RETRIES = 5;
+
+    private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
@@ -67,7 +70,7 @@ public class BitbucketService implements VersionControlService {
         if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
             // It is an automatically created user
 
-            User user = userService.getUserByLogin(username).get();
+            User user = userService.getUserWithGroupsByLogin(username).get();
 
             if (!userExists(username)) {
                 log.debug("Bitbucket user {} does not exist yet", username);
@@ -142,7 +145,7 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl)) {
+        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
             createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
@@ -220,6 +223,10 @@ public class BitbucketService implements VersionControlService {
 
                     if (e.getResponseBodyAsString().contains("code 255 saying: error: could not lock config file config: File exists")) {
                         log.warn("Could not acquire lock for gitconfig in Bitbucket while forking the repository. Trying again");
+                        if (i == MAX_FORK_RETRIES - 1) {
+                            // if the last attempt fails, we throw an exception to make sure to exit this method with an exception
+                            throw e;
+                        }
                     }
                     else {
                         throw e;
@@ -305,7 +312,7 @@ public class BitbucketService implements VersionControlService {
      *
      * @param username the Bitbucket username to check
      * @return true if it exists
-     * @throws BitbucketException
+     * @throws BitbucketException any exception occurred on the Bitbucket server
      */
     private Boolean userExists(String username) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
@@ -391,8 +398,39 @@ public class BitbucketService implements VersionControlService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         String url = baseUrl + username + "&permission=REPO_WRITE";
+
         try {
-            restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+            /*
+             * This is an edge case. If a new users logs in and clicks on Start Exercise within 1 minute, the user does not yet exist in Bitbucket.
+             */
+            User user = null;
+            for (int i = 0; i < MAX_GIVE_PERMISSIONS_RETRIES; i++) {
+                try {
+                    restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+                }
+                catch (HttpClientErrorException e) {
+
+                    if (e.getResponseBodyAsString().contains("No such user")) {
+                        if (user == null) {
+                            user = userService.getUser();
+                        }
+                        if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
+                            log.warn("Could not give write permissions to user " + username + ", because the user does not yet exist in Bitbucket. Trying again in 5s");
+                            Thread.sleep(5000);
+                            // if the last attempt fails, we throw an exception to make sure to exit this method with an exception
+                            if (i == MAX_GIVE_PERMISSIONS_RETRIES - 1) {
+                                throw e;
+                            }
+                        }
+                        else {
+                            throw e;
+                        }
+                    }
+                    else {
+                        throw e;
+                    }
+                }
+            }
         }
         catch (HttpClientErrorException e) {
             log.error("Server Error on Bitbucket with message: '" + e.getMessage() + "', body: '" + e.getResponseBodyAsString() + "', headers: '" + e.getResponseHeaders()
@@ -580,9 +618,9 @@ public class BitbucketService implements VersionControlService {
         throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
     }
 
-    private boolean webHookExists(String projectKey, String repositorySlug, String notificationUrl) {
+    private boolean webHookExists(String projectKey, String repositorySlug) {
         Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
-        return webHooks.values().contains(notificationUrl);
+        return !webHooks.isEmpty();
     }
 
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {

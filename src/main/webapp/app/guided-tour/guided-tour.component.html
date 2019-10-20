@@ -20,7 +20,7 @@
         <div class="tour-block">
             <div class="tour-block__header">
                 <h3 class="headline" *ngIf="currentTourStep.headlineTranslateKey">
-                    <span *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
+                    <span *ngIf="!guidedTourService.isOnResizeMessage && guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
                         >{{ 'tour.step' | translate: { string: guidedTourService.getCurrentStepString() } }} </span
                     >{{ currentTourStep.headlineTranslateKey | translate }}
                 </h3>
@@ -35,6 +35,14 @@
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
+                    </div>
+                </div>
+                <div *ngIf="currentTourStep.alreadyExecutedTranslateKey" class="step-hint interaction alert alert-success">
+                    <div class="step-hint__icon">
+                        <fa-icon icon="check"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
@@ -74,12 +82,13 @@
                     <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
-                <div class="dotstyle dotstyle--scaleup">
-                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1">
+                <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">
+                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" [ngStyle]="{ transform: 'translateX(' + this.transformX + 'px)' }">
                         <li
                             class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
                             [class.current]="guidedTourService.isCurrentStep(i)"
-                            [class.n-small]="guidedTourService.currentTour.steps.indexOf(i) + 1 === guidedTourService.maxDots"
+                            [class.n-small]="guidedTourService.calculateNSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
+                            [class.p-small]="guidedTourService.calculatePSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
                             *ngFor="let i of guidedTourService.currentTour.steps"
                         >
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>

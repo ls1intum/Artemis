@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -27,7 +27,7 @@ import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/inst
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges {
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
     participationValue: Participation;
     exerciseValue: ProgrammingExercise;
 
@@ -47,6 +47,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     interactResizable: Interactable;
 
     testCaseSubscription: Subscription;
+    forceRenderSubscription: Subscription;
 
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
 
@@ -56,6 +57,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() enableResize = true;
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
+    @Input() forceRender: Observable<void>;
     @Input()
     get exercise() {
         return this.exerciseValue;
@@ -98,14 +100,22 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (problemStatementHasChanged(changes)) {
-            this.generateHtml();
-        }
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
             if (this.exercise.id) {
                 this.loadExerciseHints(this.exercise.id);
+            } else {
+                this.exerciseHints = [];
             }
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+        if (this.forceRenderSubscription) {
+            this.forceRenderSubscription.unsubscribe();
         }
     }
 
@@ -139,6 +149,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     target.style.height = event.rect.height + 'px';
                 }
             });
+
+        // If forced to render, generate the instruction HTML.
+        if (this.forceRender) {
+            this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
+        }
     }
 
     /**
