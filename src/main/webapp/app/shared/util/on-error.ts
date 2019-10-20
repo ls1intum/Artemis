@@ -6,6 +6,8 @@ export abstract class OnError {
 
     onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+        // TODO: Check why these implementations are needed?
         // error.headers.get('X-artemisApp-error')
+        //                 const errorMessage = error.headers.get('X-artemisApp-alert');
     }
 }

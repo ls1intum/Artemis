@@ -7,12 +7,13 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
+import { OnError } from 'app/shared/util/on-error';
 
 @Component({
     selector: 'jhi-exercise-hint',
     templateUrl: './exercise-hint.component.html',
 })
-export class ExerciseHintComponent implements OnInit, OnDestroy {
+export class ExerciseHintComponent extends OnError implements OnInit, OnDestroy {
     exerciseId: number;
     exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;
@@ -25,7 +26,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         protected exerciseHintService: ExerciseHintService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
-    ) {}
+    ) {
+        super(jhiAlertService);
+    }
 
     /**
      * Subscribes to the route params to act on the currently selected exercise.
@@ -59,7 +62,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                 (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
                 },
-                (res: HttpErrorResponse) => this.onError(res.message),
+                (res: HttpErrorResponse) => this.onError(res),
             );
     }
 
@@ -87,11 +90,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error.message),
+            (error: HttpErrorResponse) => this.onError(error),
         );
-    }
-
-    protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, undefined);
     }
 }

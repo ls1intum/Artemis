@@ -6,12 +6,13 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
+import { OnError } from 'app/shared/util/on-error';
 
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
 })
-export class UserManagementComponent implements OnInit, OnDestroy {
+export class UserManagementComponent extends OnError implements OnInit, OnDestroy {
     currentAccount: User;
     users: User[];
     error: string | null;
@@ -28,13 +29,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     constructor(
         private userService: UserService,
-        private alertService: JhiAlertService,
+        protected alertService: JhiAlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
     ) {
+        super(alertService);
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
             this.page = data['pagingParams'].page;
@@ -167,9 +169,5 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.links = this.parseLinks.parse(headers.get('link')!);
         this.totalItems = headers.get('X-Total-Count')!;
         this.users = data;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.alertService.error(error.error, error.message, undefined);
     }
 }

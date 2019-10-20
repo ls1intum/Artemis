@@ -8,12 +8,13 @@ import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
+import { OnError } from 'app/shared/util/on-error';
 
 @Component({
     selector: 'jhi-notification-mgmt',
     templateUrl: './notification-management.component.html',
 })
-export class NotificationMgmtComponent implements OnInit, OnDestroy {
+export class NotificationMgmtComponent extends OnError implements OnInit, OnDestroy {
     currentAccount: User;
     notifications: SystemNotification[];
     error: string;
@@ -31,13 +32,14 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     constructor(
         private userService: UserService,
         private systemNotificationService: SystemNotificationService,
-        private alertService: JhiAlertService,
+        protected alertService: JhiAlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
     ) {
+        super(alertService);
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
             this.page = data['pagingParams'].page;
@@ -158,9 +160,5 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         this.links = this.parseLinks.parse(headers.get('link')!);
         this.totalItems = headers.get('X-Total-Count')!;
         this.notifications = data;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.alertService.error(error.error, error.message, undefined);
     }
 }

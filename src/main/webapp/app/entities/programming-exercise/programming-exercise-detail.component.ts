@@ -13,13 +13,14 @@ import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { OnError } from 'app/shared/util/on-error';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
 })
-export class ProgrammingExerciseDetailComponent implements OnInit {
+export class ProgrammingExerciseDetailComponent extends OnError implements OnInit {
     readonly ActionType = ActionType;
     readonly ParticipationType = ParticipationType;
     readonly JAVA = ProgrammingLanguage.JAVA;
@@ -37,9 +38,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private resultService: ResultService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        protected jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-    ) {}
+    ) {
+        super(jhiAlertService);
+    }
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
@@ -103,12 +106,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 const jhiAlert = this.jhiAlertService.success(res);
                 jhiAlert.msg = res;
             },
-            error => {
-                const errorMessage = error.headers.get('X-artemisApp-alert');
-                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
-            },
+            error => this.onError(error),
         );
     }
 
@@ -127,7 +125,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 }
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.jhiAlertService.error(error.message),
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 }
