@@ -32,6 +32,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
      */
     private loadAndInjectPlantUmls(plantUmls: string[]) {
         plantUmls.forEach((plantUml, index) => {
+            // TODO: use getPlantUmlSvg
             this.plantUmlService
                 .getPlantUmlImage(plantUml)
                 .pipe(

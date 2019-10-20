@@ -432,6 +432,15 @@ public class UserService {
     }
 
     /**
+     * Get user with groups by given login string
+     * @param login user login string
+     * @return existing user with given login string or null
+     */
+    public Optional<User> getUserWithGroupsByLogin(String login) {
+        return userRepository.findOneWithGroupsByLogin(login);
+    }
+
+    /**
      * Get user with authorities by given login string
      * @param login user login string
      * @return existing user with given login string or null

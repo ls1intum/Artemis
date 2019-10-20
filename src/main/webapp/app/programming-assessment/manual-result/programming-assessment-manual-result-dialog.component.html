@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="result.participation">
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isLoading; else loadingContainer">
     <div class="modal-header">
         <h4 class="modal-title" id="myResultLabel">
             <span jhiTranslate="artemisApp.result.createManual">Create manual result for </span> {{ participation.student.firstName }} {{ participation.student.lastName }} ({{
@@ -19,8 +19,12 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="result.id" readonly />
         </div>
+        <div class="form-group" *ngIf="participation.exercise.gradingInstructions">
+            <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
+            <span [innerHTML]="participation.exercise.gradingInstructions | htmlForMarkdown"></span>
+        </div>
         <div class="form-group">
-            <label class="control-label" jhiTranslate="artemisApp.result.resultString">Result Text</label>
+            <h4 class="control-label" jhiTranslate="artemisApp.result.resultString">Result Text</h4>
             <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
             <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired"
                 >Result text is required.</span
@@ -35,7 +39,7 @@
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">
-                <label class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</label>
+                <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</h4>
                 <input
                     type="number"
                     max="100"
@@ -57,8 +61,7 @@
                 </label>
             </div>
         </div>
-        <br />
-        <div class="form-group">
+        <div class="form-group mb-0">
             <a [hidden]="feedbacks.length > 0" (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">Add feedback</a>
         </div>
         <div *ngIf="feedbacks.length > 0">
@@ -83,10 +86,9 @@
                         </label>
                     </div>
                 </div>
-                <br />
             </div>
         </div>
-        <div class="form-group" *ngIf="feedbacks.length > 0">
+        <div class="form-group mb-0" *ngIf="feedbacks.length > 0">
             <a (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">More feedback</a>
             &nbsp;
             <a (click)="popFeedback()" jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</a>
@@ -101,3 +103,8 @@
         </button>
     </div>
 </form>
+<ng-template #loadingContainer>
+    <div class="d-flex justify-content-center mt-4 mb-4">
+        <fa-icon icon="circle-notch" [spin]="true"></fa-icon>
+    </div>
+</ng-template>

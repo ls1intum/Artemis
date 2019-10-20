@@ -15,8 +15,6 @@ export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
 
 export interface IResultService {
-    create: (result: Result) => Observable<EntityResponseType>;
-    update: (result: Result) => Observable<EntityResponseType>;
     find: (id: number) => Observable<EntityResponseType>;
     findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
     findResultsForParticipation: (courseId: number, exerciseId: number, participationId: number, req?: any) => Observable<EntityArrayResponseType>;
@@ -32,17 +30,6 @@ export class ResultService implements IResultService {
     private resultResourceUrl = SERVER_API_URL + 'api/results';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
-
-    create(result: Result): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(result);
-        // NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
-        return this.http.post<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
-    update(result: Result): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(result);
-        return this.http.put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
@@ -86,7 +73,7 @@ export class ResultService implements IResultService {
         return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
 
-    protected convertDateFromClient(result: Result): Result {
+    public convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
             completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null,
         });
@@ -103,7 +90,7 @@ export class ResultService implements IResultService {
         return res;
     }
 
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
             res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);

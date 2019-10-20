@@ -116,7 +116,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(loadSessionStub).to.have.been.calledOnceWithExactly();
         expect(getBuildLogsStub).to.have.been.calledOnce;
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id);
-        expect(comp.rawBuildLogs).to.deep.equal(new BuildLogEntryArray(...buildLogs));
+        expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
         expect(comp.buildLogErrors.errors).to.deep.equal(expectedBuildLogErrors.errors);
         expect(comp.buildLogErrors.timestamp).to.deep.equal(expectedBuildLogErrors.timestamp);
 
@@ -216,7 +216,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
         expect(loadSessionStub).to.not.have.been.called;
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
-        expect(comp.rawBuildLogs).to.deep.equal(new BuildLogEntryArray(...buildLogs));
+        expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
         expect(comp.buildLogErrors.errors).to.deep.equal(expectedBuildLogErrors.errors);
         expect(comp.buildLogErrors.timestamp).to.deep.equal(expectedBuildLogErrors.timestamp);
 

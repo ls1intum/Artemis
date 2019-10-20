@@ -13,9 +13,8 @@ public interface ContinuousIntegrationUpdateService {
      * @param ciRepositoryName The name of the configured repository in the CI plan.
      * @param repoProjectKey   The key of the project that contains the repository.
      * @param repoName         The lower level identifier of the repository.
-     * @return a message that indicates the result of the plan repository update.
      */
-    public String updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName);
+    public void updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName);
 
     /**
      * Triggers an build (if needed)

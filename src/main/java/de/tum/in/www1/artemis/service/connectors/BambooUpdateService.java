@@ -1,7 +1,17 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.net.URL;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nonnull;
+
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,8 +21,9 @@ import org.springframework.stereotype.Service;
 import com.appfire.bamboo.cli.BambooClient;
 import com.appfire.bitbucket.cli.BitbucketClient;
 import com.appfire.bitbucket.cli.objects.RemoteRepository;
-import com.appfire.common.cli.Base;
-import com.appfire.common.cli.CliClient;
+import com.appfire.common.cli.*;
+import com.appfire.common.cli.objects.RemoteApplicationLink;
+import com.appfire.common.cli.requesthelpers.DefaultRequestHelper;
 import de.tum.in.www1.artemis.exception.BambooException;
 
 @Profile("bamboo")
@@ -46,48 +57,150 @@ public class BambooUpdateService {
         @Value("${artemis.version-control.url}")
         private URL BITBUCKET_SERVER;
 
-        private BitbucketClient getBitbucketClient() {
-            // TODO: we might prevent console log message by passing a Settings object into Base
-            final BitbucketClient bitbucketClient = new BitbucketClient(new Base());
+        private Base createBase() {
+            // we override the out stream to prevent unnecessary log statements in our log files
+            ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+            var out = new PrintStream(outContent);
+            var settings = new Settings();
+            settings.setOut(out);
+            settings.setOverrideOut(out);
+            settings.setDebugOut(out);
+            settings.setErr(out);
+            return new Base(settings);
+        }
+
+        private BitbucketClient createBitbucketClient() {
+            final BitbucketClient bitbucketClient = new BitbucketClient(createBase());
             // setup the Bamboo Client to use the correct username and password
 
             String[] args = new String[] { "-s", BITBUCKET_SERVER_URL.toString(), "--user", BITBUCKET_USER, "--password", BITBUCKET_PASSWORD, };
-
-            bitbucketClient.doWork(args); // only invoke this to set server address, username and password so that the following action will work
+            bitbucketClient.doWork(args);   // only invoke this to set server address, username and password so that the following action will work
             return bitbucketClient;
         }
 
         @Override
-        public String updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) {
+        public void updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) {
             try {
-                // get the repositoryId to find the correct value for field2 below
-                final BitbucketClient bitbucketClient = getBitbucketClient();
-                RemoteRepository remoteRepository = bitbucketClient.getRepositoryHelper().getRemoteRepository(bitbucketProject, bitbucketRepository, true);
-
-                // TODO: we might prevent console log message by passing a Settings object into Base
-                final BambooClient bambooClient = new BambooClient(new Base());
-                String[] args = new String[] { "--field1", "repository.stash.projectKey", "--value1", bitbucketProject, "--targetServer", BITBUCKET_SERVER_URL.toString(), "-s",
-                        BAMBOO_SERVER_URL.toString(), "--user", BAMBOO_USER, "--password", BAMBOO_PASSWORD, };
+                final BambooClient bambooClient = new BambooClient(createBase());
+                String[] args = new String[] { "--targetServer", BITBUCKET_SERVER_URL.toString(), "-s", BAMBOO_SERVER_URL.toString(), "--user", BAMBOO_USER, "--password",
+                        BAMBOO_PASSWORD, "--targetUser", BITBUCKET_USER, "--targetPassword", BITBUCKET_PASSWORD, };
                 // workaround to pass additional fields
-                bambooClient.doWork(args);
+                bambooClient.doWork(args); // only invoke this to set server address, username and password so that the following action will work
+
+                // get the repositoryId to find the correct value for the remote repository below
+                RemoteRepository remoteRepository = createBitbucketClient().getRepositoryHelper().getRemoteRepository(bitbucketProject, bitbucketRepository, true);
 
                 log.debug("Update plan repository for build plan " + planKey);
                 com.appfire.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName, planKey,
                         false);
                 // Workaround for old exercises which used a different repositoryName
                 if (bambooRemoteRepository == null) {
-                    bambooRepositoryName = "Assignment";
+                    bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository("Assignment", planKey, false);
+                    if (bambooRemoteRepository == null) {
+                        throw new BambooException("Something went wrong while updating the template repository of the build plan " + planKey
+                                + " to the student repository : Could not find assignment nor Assignment repository");
+                    }
                 }
 
-                String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(remoteRepository.getSlug(), bambooRepositoryName, null, planKey, "BITBUCKET_SERVER", null,
-                        false, true, true);
-                log.info("Update plan repository for build plan " + planKey + " was successful: " + message);
-                return message;
+                updateRepository(bambooClient, bambooRemoteRepository, remoteRepository.getSlug(), bitbucketProject, planKey);
+                log.info("Update plan repository for build plan " + planKey + " was successful");
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-                log.error(e.getMessage(), e);
-                throw new BambooException("Something went wrong while updating the plan repository", e);
+                throw new BambooException(
+                        "Something went wrong while updating the template repository of the build plan " + planKey + " to the student repository : " + e.getMessage(), e);
             }
+        }
+
+        private void updateRepository(BambooClient bambooClient, @Nonnull com.appfire.bamboo.cli.objects.RemoteRepository bambooRemoteRepository, String bitbucketRepositoryName,
+                String bitbucketProjectKey, String completePlanName) throws CliClient.ClientException, CliClient.RemoteRestException {
+
+            Map<String, String> parameters = new HashMap<>();
+            parameters.put("planKey", completePlanName);
+
+            bambooClient.getRepositoryHelper().addRepositoryDetails(bambooRemoteRepository);
+
+            parameters.put("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
+            // IMPORTANT: this has to be assignment
+            parameters.put("repositoryName", ASSIGNMENT_REPO_NAME);
+            parameters.put("repositoryId", Long.toString(bambooRemoteRepository.getId()));
+            parameters.put("confirm", "true");
+            parameters.put("save", "Save repository");
+            parameters.put("bamboo.successReturnMode", "json");
+            parameters.put("repository.stash.branch", "master");
+
+            com.appfire.bitbucket.cli.objects.RemoteRepository bitbucketRepository;
+            try {
+                bitbucketRepository = bambooClient.getBitbucketClient().getRepositoryHelper().getRemoteRepository(bitbucketProjectKey, bitbucketRepositoryName, true);
+            }
+            catch (CliClient.ClientException | CliClient.RemoteRestException ex) {
+                throw new CliClient.ClientException("Bitbucket failed trying to get repository details: " + ex.getMessage());
+            }
+
+            RemoteApplicationLink link = bambooClient.getBitbucketClient().getApplicationLink();
+            if (link == null) {
+                link = bambooClient.getApplicationLinksRequestHelper().getApplicationLink(bambooClient.getString("targetServer"), "stash", true);
+            }
+
+            if (link != null) {
+                parameters.put("repository.stash.server", link.getId());
+            }
+
+            parameters.put("repository.stash.repositoryId", bitbucketRepository.getIdString());
+            parameters.put("repository.stash.repositorySlug", bitbucketRepository.getSlug());
+            parameters.put("repository.stash.projectKey", bitbucketRepository.getProject());
+            parameters.put("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
+
+            String responseData = "";
+
+            try {
+
+                DefaultRequestHelper helper = bambooClient.getPseudoRequestHelper();
+                helper.setRequestType(DefaultRequestHelper.RequestType.POST);
+                helper.setContentType(DefaultRequestHelper.RequestContentType.JSON);
+                helper.setParameters(parameters);
+                helper.makeRequest("/chain/admin/config/updateRepository.action");
+                responseData = helper.getResponseData();
+
+            }
+            catch (CliClient.RemoteInternalServerErrorException ex) {
+                String message = "Request failed on the server with response code 500. Make sure all required fields have been provided using the various field and value parameters. "
+                        + "The server log may provide insight into missing fields: " + ex.getMessage();
+                throw new CliClient.ClientException(message);
+            }
+
+            JSONObject json = bambooClient.getJsonWithVerboseLogging(responseData);
+            JSONObject repositoryJson = JsonUtils.getJsonOrNull(JsonUtils.getStringOrNull(json, "repositoryResult"));
+            if (repositoryJson == null) {
+                String error = checkForError(responseData);
+                throw new CliClient.ClientException(error.equals("") ? "Unknown error occurred." : error);
+            }
+        }
+
+        /**
+         * This method was taken from RepositoryHelper of the Bamboo CLI Plugin
+         * @param data the response from the server
+         * @return an error message
+         */
+        private String checkForError(String data) {
+            String message = CliUtils.matchRegex(data, "(?s)<div[^>]*class=\"aui-message error\">\\s+<p>([^<]*)<").trim();
+
+            String regex = "<div[^>]*class=\"error(?: control-form-error){0,1}\"[^>]*data-field-name=\"([^\"]+)\"[^<]*>([^<]*)</div>";
+            Pattern pattern = Pattern.compile(regex, 2);
+            Matcher matcher = pattern.matcher(data);
+            if (matcher.find()) {
+                String field = matcher.group(1);
+                message = CliUtils.endWithPeriod(matcher.group(2)) + (field == null ? "" : " Error field is " + field + ".");
+            }
+
+            if (message.equals("")) {
+                message = CliUtils.matchRegex(data, "<div[^>]*class=\"error(?: control-form-error){0,1}\"[^>]*>([^<]*)</div>").trim();
+            }
+
+            if (message.equals("")) {
+                message = CliUtils.matchRegex(data, "error[^>]*>\\s*<p class=\"title\"[^>]*>([^<]*)<").trim();
+            }
+
+            return message;
         }
 
         @Override
