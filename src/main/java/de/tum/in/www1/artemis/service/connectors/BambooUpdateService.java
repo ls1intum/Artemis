@@ -226,7 +226,7 @@ public class BambooUpdateService {
                 }
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-                throw new BambooException("Unable to overwrite triggers for " + planKey, e);
+                throw new BambooException("Unable to overwrite triggers for " + planKey + "\n" + e.getMessage(), e);
             }
         }
 
