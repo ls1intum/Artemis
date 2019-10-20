@@ -8,6 +8,7 @@ import { AccountService } from 'app/core';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture';
 import { ActivatedRoute } from '@angular/router';
+import { errorRoute } from 'app/layouts';
 
 @Component({
     selector: 'jhi-lecture',
@@ -18,6 +19,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     currentAccount: any;
     eventSubscriber: Subscription;
     courseId: number;
+    closeDialogMessage: string;
 
     constructor(
         protected lectureService: LectureService,
@@ -67,16 +69,20 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Deletes Lecture
      * @param lectureId the id of the lecture
      */
-    deleteLecture = (lectureId: number) => {
-        return this.lectureService.delete(lectureId).pipe(
-            tap(() => {
+    deleteLecture(lectureId: number) {
+        this.lectureService.delete(lectureId).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'lectureListModification',
                     content: 'Deleted an lecture',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     protected onError(errorMessage: string) {
         this.jhiAlertService.error(errorMessage, null, undefined);

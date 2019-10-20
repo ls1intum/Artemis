@@ -17,6 +17,7 @@ import { tap } from 'rxjs/operators';
 })
 export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
+    closeDialogWithMessage: string;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -62,16 +63,20 @@ export class TextExerciseComponent extends ExerciseComponent {
      * Deletes text exercise
      * @param textExerciseId id of the exercise that will be deleted
      */
-    deleteTextExercise = (textExerciseId: number) => {
-        return this.textExerciseService.delete(textExerciseId).pipe(
-            tap(() => {
+    deleteTextExercise(textExerciseId: number) {
+        this.textExerciseService.delete(textExerciseId).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
                     content: 'Deleted an textExercise',
                 });
-            }),
+                this.closeDialogWithMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogWithMessage = error.message;
+            },
         );
-    };
+    }
 
     protected getChangeEventName(): string {
         return 'textExerciseListModification';

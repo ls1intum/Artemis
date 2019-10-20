@@ -148,8 +148,8 @@
                                         [entityTitle]="course.title"
                                         deleteQuestion="artemisApp.course.delete.question"
                                         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-                                        [deleteAction]="deleteCourse"
-                                        [entityParameter]="course.id"
+                                        (delete)="deleteCourse(course.id)"
+                                        [closeWithMessage]="closeDialogMessage"
                                     >
                                         <fa-icon icon="times"></fa-icon>
                                     </button>

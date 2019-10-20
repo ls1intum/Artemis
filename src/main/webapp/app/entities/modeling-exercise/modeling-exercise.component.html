@@ -90,8 +90,8 @@
                                 [entityTitle]="modelingExercise.title"
                                 deleteQuestion="artemisApp.exercise.delete.question"
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                [deleteAction]="deleteModelingExercise"
-                                [entityParameter]="modelingExercise.id"
+                                (delete)="deleteModelingExercise(modelingExercise.id)"
+                                [closeWithMessage]="closeDialogMessage"
                             >
                                 <fa-icon icon="times"></fa-icon>
                             </button>

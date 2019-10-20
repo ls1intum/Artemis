@@ -10,7 +10,6 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -18,6 +17,7 @@ import { tap } from 'rxjs/operators';
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
+    closeDialogMessage: string;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -62,16 +62,20 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      * Deletes modeling exercise
      * @param modelingExerciseId id of the exercise that will be deleted
      */
-    deleteModelingExercise = (modelingExerciseId: number) => {
-        return this.modelingExerciseService.delete(modelingExerciseId).pipe(
-            tap(() => {
+    deleteModelingExercise(modelingExerciseId: number) {
+        this.modelingExerciseService.delete(modelingExerciseId).subscribe(
+            () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
                     content: 'Deleted an modelingExercise',
                 });
-            }),
+                this.closeDialogMessage = '';
+            },
+            (error: HttpErrorResponse) => {
+                this.closeDialogMessage = error.message;
+            },
         );
-    };
+    }
 
     protected getChangeEventName(): string {
         return 'modelingExerciseListModification';

@@ -61,8 +61,8 @@
                                     [entityTitle]="lecture.title"
                                     deleteQuestion="artemisApp.lecture.delete.question"
                                     deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
-                                    [deleteAction]="deleteLecture"
-                                    [entityParameter]="lecture.id"
+                                    (delete)="deleteLecture(lecture.id)"
+                                    [closeWithMessage]="closeDialogMessage"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
