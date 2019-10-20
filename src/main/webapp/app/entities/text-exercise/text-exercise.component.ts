@@ -23,12 +23,12 @@ export class TextExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         courseService: CourseService,
         translateService: TranslateService,
-        private jhiAlertService: JhiAlertService,
+        protected jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
         private accountService: AccountService,
     ) {
-        super(courseService, translateService, route, eventManager);
+        super(courseService, translateService, route, eventManager, jhiAlertService);
         this.textExercises = [];
     }
 
@@ -77,10 +77,6 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     protected getChangeEventName(): string {
         return 'textExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

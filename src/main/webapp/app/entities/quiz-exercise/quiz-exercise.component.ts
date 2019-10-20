@@ -32,14 +32,14 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     constructor(
         private quizExerciseService: QuizExerciseService,
-        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
+        protected jhiAlertService: JhiAlertService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager);
+        super(courseService, translateService, route, eventManager, jhiAlertService);
     }
 
     protected loadExercises(): void {
@@ -65,10 +65,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     protected getChangeEventName(): string {
         return 'quizExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.headers.get('X-artemisApp-error')!);
     }
 
     /**

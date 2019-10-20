@@ -37,7 +37,7 @@ export class DeleteDialogComponent implements OnInit {
     }
 
     /**
-     * Closes the dialog with a 'confirm' message, so the user of the service can use this message to delete the entity
+     * Emits delete event and passes additional checks from the dialog
      */
     confirmDelete() {
         this.delete.emit(this.additionalChecksValues);

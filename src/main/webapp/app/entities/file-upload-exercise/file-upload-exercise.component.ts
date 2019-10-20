@@ -21,14 +21,14 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private jhiAlertService: JhiAlertService,
+        protected jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager);
+        super(courseService, translateService, route, eventManager, jhiAlertService);
     }
 
     protected loadExercises(): void {
@@ -78,10 +78,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     protected getChangeEventName(): string {
         return 'fileUploadExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     callback() {}

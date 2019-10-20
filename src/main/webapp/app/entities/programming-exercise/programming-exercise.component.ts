@@ -26,14 +26,14 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private courseExerciseService: CourseExerciseService,
         private exerciseService: ExerciseService,
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        protected jhiAlertService: JhiAlertService,
         private router: Router,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager);
+        super(courseService, translateService, route, eventManager, jhiAlertService);
         this.programmingExercises = [];
     }
 
@@ -104,10 +104,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     callback() {}

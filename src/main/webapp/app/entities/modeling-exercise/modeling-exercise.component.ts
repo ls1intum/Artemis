@@ -22,14 +22,14 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private jhiAlertService: JhiAlertService,
+        protected jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager);
+        super(courseService, translateService, route, eventManager, jhiAlertService);
         this.modelingExercises = [];
     }
 
@@ -77,10 +77,6 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     protected getChangeEventName(): string {
         return 'modelingExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**
