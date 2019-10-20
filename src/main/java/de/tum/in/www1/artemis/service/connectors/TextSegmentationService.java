@@ -76,6 +76,8 @@ public class TextSegmentationService {
 
         response.textBlocks.forEach(textBlock -> textBlock.setText(textBlock.getSubmission().getText().substring(textBlock.getStartIndex(), textBlock.getEndIndex())));
 
+        log.info("Segmentation finished. " + response.textBlocks.size() + " TextBlocks calculated.");
+
         return response.textBlocks;
     }
 
