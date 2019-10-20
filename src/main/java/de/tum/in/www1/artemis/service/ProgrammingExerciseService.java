@@ -1135,14 +1135,14 @@ public class ProgrammingExerciseService {
             // create a large zip file with all zipped repos and provide it for download
             log.debug("Create zip file for all repositories");
             Path zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                    programmingExercise.getCourse().getTitle() + "-" + programmingExercise.getTitle() + "-" + System.currentTimeMillis() + ".zip");
+                    programmingExercise.getCourse().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
             exerciseService.createZipFile(zipFilePath, zippedRepoFiles);
             exerciseService.scheduleForDeletion(zipFilePath, 15);
             log.info("Export student repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
             return new java.io.File(zipFilePath.toString());
         }
         catch (IOException ex) {
-            log.error("Export students repositories for exercise " + programmingExercise.getTitle() + " did not work as expected: " + ex.getMessage());
+            log.error("Export students repositories for exercise '" + programmingExercise.getTitle() + "' did not work as expected: " + ex.getMessage());
         }
         finally {
             // we do some cleanup here to prevent future errors with file handling
