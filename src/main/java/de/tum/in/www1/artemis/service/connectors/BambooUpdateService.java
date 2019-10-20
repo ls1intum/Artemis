@@ -24,6 +24,8 @@ import com.appfire.bitbucket.cli.objects.RemoteRepository;
 import com.appfire.common.cli.*;
 import com.appfire.common.cli.objects.RemoteApplicationLink;
 import com.appfire.common.cli.requesthelpers.DefaultRequestHelper;
+
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.exception.BambooException;
 
 @Profile("bamboo")
@@ -105,8 +107,12 @@ public class BambooUpdateService {
 
                 updateRepository(bambooClient, bambooRemoteRepository, remoteRepository.getSlug(), bitbucketProject, planKey);
 
-                // Overwrite triggers if needed
-                triggeredBy.ifPresent(strings -> overwriteTriggers(planKey, bambooClient, strings));
+                // Overwrite triggers if needed, incl workaround for different repo names
+                if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals("Assignment")) {
+                    triggeredBy = Optional
+                            .of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, "Assignment")).collect(Collectors.toList()));
+                }
+                triggeredBy.ifPresent(repoTriggers -> overwriteTriggers(planKey, bambooClient, repoTriggers));
 
                 log.info("Update plan repository for build plan " + planKey + " was successful");
             }
