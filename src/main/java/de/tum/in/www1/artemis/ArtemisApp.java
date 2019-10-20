@@ -54,6 +54,8 @@ public class ArtemisApp implements InitializingBean {
 
         // activate Quiz Schedule Service
         quizScheduleService.startSchedule(3 * 1000);                          // every 3 seconds
+
+        // TODO: delete all folders in REPO-DOWNLOAD path
     }
 
     /**

@@ -819,7 +819,9 @@ public class ParticipationService {
 
             // delete local repository cache
             try {
-                gitService.get().deleteLocalRepository(programmingExerciseParticipation);
+                if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
+                    gitService.get().deleteLocalRepository(programmingExerciseParticipation);
+                }
             }
             catch (Exception ex) {
                 log.error("Error while deleting local repository", ex);
