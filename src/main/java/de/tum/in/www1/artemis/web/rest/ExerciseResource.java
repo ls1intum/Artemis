@@ -56,11 +56,7 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final TextSubmissionService textSubmissionService;
-
-    private final ModelingSubmissionService modelingSubmissionService;
-
-    private final FileUploadSubmissionService fileUploadSubmissionService;
+    private final SubmissionRepository submissionRepository;
 
     private final ResultService resultService;
 
@@ -68,8 +64,7 @@ public class ExerciseResource {
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService) {
+            SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -77,10 +72,8 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.complaintRepository = complaintRepository;
-        this.textSubmissionService = textSubmissionService;
-        this.modelingSubmissionService = modelingSubmissionService;
+        this.submissionRepository = submissionRepository;
         this.resultService = resultService;
-        this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
     }
 
@@ -174,8 +167,7 @@ public class ExerciseResource {
         Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+        Long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);

@@ -139,7 +139,15 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        return getSubmissionWithoutManualResult(modelingExercise).map(ModelingSubmission.class::cast);
+        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
+                .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Random r = new Random();
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 
     /**
@@ -331,23 +339,5 @@ public class ModelingSubmissionService extends SubmissionService {
     private ModelingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
         return modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return modelingSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return modelingSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }

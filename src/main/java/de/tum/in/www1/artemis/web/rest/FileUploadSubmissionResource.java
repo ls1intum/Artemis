@@ -187,8 +187,8 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
         }
         else {
-            Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService.getSubmissionWithoutManualResult(fileUploadExercise)
-                    .map(FileUploadSubmission.class::cast);
+            Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
+                    .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise).map(FileUploadSubmission.class::cast);
             if (!optionalFileUploadSubmission.isPresent()) {
                 return notFound();
             }

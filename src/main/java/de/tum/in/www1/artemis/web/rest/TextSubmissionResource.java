@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -33,17 +32,13 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
-    private final TextSubmissionRepository textSubmissionRepository;
-
     private final TextExerciseService textExerciseService;
 
     private final TextSubmissionService textSubmissionService;
 
-    public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+    public TextSubmissionResource(ExerciseService exerciseService, TextExerciseService textExerciseService, CourseService courseService, ParticipationService participationService,
+            TextSubmissionService textSubmissionService, UserService userService, AuthorizationCheckService authCheckService) {
         super(courseService, authCheckService, userService, exerciseService, participationService);
-        this.textSubmissionRepository = textSubmissionRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionService = textSubmissionService;
     }
@@ -100,19 +95,6 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
         this.textSubmissionService.hideDetails(textSubmission);
         return ResponseEntity.ok(textSubmission);
-    }
-
-    /**
-     * GET /text-submissions/:id : get the "id" textSubmission.
-     *
-     * @param id the id of the textSubmission to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
-     */
-    @GetMapping("/text-submissions/{id}")
-    public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
-        log.debug("REST request to get TextSubmission : {}", id);
-        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(textSubmission);
     }
 
     /**

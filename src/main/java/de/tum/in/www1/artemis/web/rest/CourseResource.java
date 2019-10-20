@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -79,11 +80,7 @@ public class CourseResource {
 
     private final NotificationService notificationService;
 
-    private final TextSubmissionService textSubmissionService;
-
-    private final ModelingSubmissionService modelingSubmissionService;
-
-    private final FileUploadSubmissionService fileUploadSubmissionService;
+    private final SubmissionRepository submissionRepository;
 
     private final ResultService resultService;
 
@@ -94,9 +91,8 @@ public class CourseResource {
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
-            FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            LectureService lectureService, NotificationService notificationService, ResultService resultService, ComplaintService complaintService,
+            TutorLeaderboardService tutorLeaderboardService, SubmissionRepository submissionRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -110,12 +106,10 @@ public class CourseResource {
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
         this.notificationService = notificationService;
-        this.textSubmissionService = textSubmissionService;
-        this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.fileUploadSubmissionService = fileUploadSubmissionService;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -348,17 +342,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            long numberOfSubmissions = 0L;
-            if (exercise instanceof TextExercise) {
-                numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof ModelingExercise) {
-                numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof FileUploadExercise) {
-                numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-
+            long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
             long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
@@ -389,8 +373,7 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId)
-                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        Long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -466,16 +449,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfParticipations = 0L;
-            if (exercise instanceof TextExercise) {
-                numberOfParticipations = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof ModelingExercise) {
-                numberOfParticipations += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
-            else if (exercise instanceof FileUploadExercise) {
-                numberOfParticipations += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-            }
+            long numberOfParticipations = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
 
             long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
             long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
@@ -527,9 +501,7 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));

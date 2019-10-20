@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -113,6 +114,25 @@ public class FileUploadSubmissionService extends SubmissionService {
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
         return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new FileUploadSubmission())).collect(Collectors.toList());
+    }
+
+    /**
+     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
+     *
+     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
+     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    @Transactional(readOnly = true)
+    public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
+        Random r = new Random();
+        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(fileUploadExercise.getId())
+                .stream().map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 
     /**
@@ -222,28 +242,10 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional
     public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise) {
-        FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) getSubmissionWithoutManualResult(fileUploadExercise)
+        FileUploadSubmission fileUploadSubmission = getFileUploadSubmissionWithoutManualResult(fileUploadExercise)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockSubmission(fileUploadSubmission);
         return fileUploadSubmission;
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return fileUploadSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return fileUploadSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 
     /**

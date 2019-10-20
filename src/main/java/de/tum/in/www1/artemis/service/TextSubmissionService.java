@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -140,7 +141,14 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        return getSubmissionWithoutManualResult(textExercise).map(TextSubmission.class::cast);
+        Random r = new Random();
+        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
+                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 
     /**
@@ -204,23 +212,5 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission findOneWithEagerResultAndAssessor(Long id) {
         return textSubmissionRepository.findByIdWithEagerResultAndAssessor(id)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + id + "\" does not exist"));
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return textSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return textSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }

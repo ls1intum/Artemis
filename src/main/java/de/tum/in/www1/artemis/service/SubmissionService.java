@@ -2,20 +2,13 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.stream.Collectors;
-
-import org.springframework.transaction.annotation.Transactional;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-abstract class SubmissionService {
+public abstract class SubmissionService {
 
     protected SubmissionRepository submissionRepository;
 
@@ -53,6 +46,7 @@ abstract class SubmissionService {
      * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
      * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
      * database without explicitly saving them.
+     * @param submission that we want to hide sensitive information for
      */
     public void hideDetails(Submission submission) {
         // do not send old submissions or old results to the client
@@ -101,6 +95,7 @@ abstract class SubmissionService {
      * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
      * @param submission the submission for which a new result should be created
+     * @param submissionRepository concrete submission repository
      * @return the newly created result
      */
     public Result setNewResult(Submission submission, GenericSubmissionRepository submissionRepository) {
@@ -134,24 +129,4 @@ abstract class SubmissionService {
         }
         return submission;
     }
-
-    /**
-     * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
-     * assessment for the corresponding submission yet.
-     *
-     * @param exercise the exercise for which we want to retrieve a submission without manual result
-     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
-     */
-    @Transactional(readOnly = true)
-    public Optional<Submission> getSubmissionWithoutManualResult(Exercise exercise) {
-        Random r = new Random();
-        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exercise.getId()).stream()
-                .map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
-    }
-
 }
