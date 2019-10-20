@@ -1,8 +1,10 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, UMLDiagramType, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import interact from 'interactjs';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -25,10 +27,16 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     private apollonEditor: ApollonEditor | null = null;
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private modalService: NgbModal) {}
+    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
+        this.subscribeForUMLModelReset();
+        this.guidedTourService.checkModelingComponent().subscribe(key => {
+            if (key) {
+                this.assessModelForGuidedTour(key, this.getCurrentModel());
+            }
+        });
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
@@ -115,6 +123,62 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     ngOnDestroy(): void {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
+        }
+    }
+
+    /**
+     * Resets the UML model for the guided tour by removing the elements, relationships and assessments
+     * @param umlModel the model that should be reset
+     */
+    private resetUMLModelForGuidedTour(umlModel: UMLModel): void {
+        if (umlModel) {
+            umlModel.elements = [];
+            umlModel.relationships = [];
+            umlModel.assessments = [];
+        }
+        this.initializeApollonEditor();
+    }
+
+    /**
+     * Subscribes to the guided tour service
+     */
+    private subscribeForUMLModelReset() {
+        this.guidedTourService.resetUMLModel().subscribe(reset => {
+            if (reset) {
+                this.resetUMLModelForGuidedTour(this.umlModel);
+            }
+        });
+    }
+
+    /**
+     * Assess the model for the modeling guided tutorial
+     * @param umlName  the identifier of the UML element that has to be assessed
+     * @param umlModel  the current UML model in the editor
+     */
+    assessModelForGuidedTour(umlName: string, umlModel: UMLModel): void {
+        // Find the required UML classes
+        const personClass = umlModel.elements.find(element => element.name.trim() === personUML.name && element.type === 'Class');
+        const studentClass = umlModel.elements.find(element => element.name.trim() === studentUML.name && element.type === 'Class');
+        let personStudentAssociation: UMLRelationship | undefined;
+
+        if (umlName === personUML.name) {
+            // Check if the Person class is correct
+            const nameAttribute = umlModel.elements.find(element => element.name.includes(personUML.attribute) && element.type === 'ClassAttribute');
+            const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id : false;
+            this.guidedTourService.updateModelingResult(umlName, personClassCorrect);
+        } else if (umlName === studentUML.name) {
+            // Check if the Student class is correct
+            const majorAttribute = umlModel.elements.find(element => element.name.includes(studentUML.attribute) && element.type === 'ClassAttribute');
+            const visitLectureMethod = umlModel.elements.find(element => element.name.includes(studentUML.method) && element.type === 'ClassMethod');
+            const studentClassCorrect =
+                studentClass && majorAttribute && visitLectureMethod ? majorAttribute.owner === studentClass.id && visitLectureMethod.owner === studentClass.id : false;
+            this.guidedTourService.updateModelingResult(umlName, studentClassCorrect);
+        } else if (umlName === associationUML.name && studentClass && personClass) {
+            // Check if the Inheritance association is correct
+            personStudentAssociation = umlModel.relationships.find(
+                relationship => relationship.source.element === studentClass!.id && relationship.target.element === personClass!.id && relationship.type === 'ClassInheritance',
+            );
+            this.guidedTourService.updateModelingResult(umlName, !!personStudentAssociation);
         }
     }
 }

@@ -7,6 +7,7 @@ export const modelingTour: GuidedTour = {
     courseShortName: 'artemistutorial',
     exerciseShortName: 'Modeling',
     settingsKey: 'modeling_tour',
+    resetUMLModel: true,
     steps: [
         new TextTourStep({
             headlineTranslateKey: 'tour.modelingExercise.editorArea.headline',

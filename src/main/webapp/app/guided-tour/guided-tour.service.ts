@@ -37,8 +37,9 @@ export class GuidedTourService {
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private guidedTourAvailabilitySubject = new Subject<boolean>();
     private isUserInteractionFinishedSubject = new Subject<boolean>();
-    private checkModelingComponentSubject = new Subject<string | null>();
     private transformSubject = new Subject<number>();
+    private checkModelingComponentSubject = new Subject<string | null>();
+    private resetUMLModelSubject = new Subject<boolean>();
 
     /** Variables for the dot navigation */
     public maxDots = 10;
@@ -133,6 +134,13 @@ export class GuidedTourService {
      */
     public checkModelingComponent(): Observable<string | null> {
         return this.checkModelingComponentSubject.asObservable();
+    }
+
+    /**
+     * @return Observable of resetUMLModelSubject, which is true if the UML model should be reset
+     */
+    resetUMLModel() {
+        return this.resetUMLModelSubject.asObservable();
     }
 
     /**
@@ -286,10 +294,16 @@ export class GuidedTourService {
      * Show the cancel hint every time a user skips a tour
      */
     private showCancelHint(): void {
+        /** Do not show hint if the user has seen it already */
+        const hasStartedOrFinishedTour = this.checkTourState(cancelTour);
+        if (hasStartedOrFinishedTour) {
+            return;
+        }
+
         clickOnElement('#account-menu[aria-expanded="false"]');
         setTimeout(() => {
             this.currentTour = cloneDeep(cancelTour);
-            // Proceed with tour if it has tour steps and the tour display is allowed for current window size
+            /** Proceed with tour if the tour has tour steps and the tour display is allowed for current window size */
             if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
                 const currentStep = this.currentTour.steps[this.currentTourStepIndex];
                 if (currentStep.action) {
@@ -474,6 +488,9 @@ export class GuidedTourService {
             }
             this.setPreparedTourStep();
             this.calculateTranslateValue(currentStep);
+            if (this.currentTourStepIndex === 0 && this.currentTour.resetUMLModel) {
+                this.resetUMLModelSubject.next(true);
+            }
         }
     }
 
