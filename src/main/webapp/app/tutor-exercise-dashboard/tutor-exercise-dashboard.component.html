@@ -62,7 +62,16 @@
         <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.problemStatement' | translate }}</h4>
 
-            <p [innerHTML]="formattedProblemStatement"></p>
+            <ng-template *ngIf="exercise.type !== ExerciseType_PROGRAMMING; else programmingInstructions">
+                <p [innerHTML]="formattedProblemStatement"></p>
+            </ng-template>
+            <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
+            <ng-template #programmingInstructions>
+                <jhi-programming-exercise-instructions
+                    [exercise]="asProgrammingExercise(exercise)"
+                    [participation]="asProgrammingExercise(exercise).templateParticipation"
+                ></jhi-programming-exercise-instructions>
+            </ng-template>
         </div>
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType_TEXT && formattedSampleSolution">
@@ -80,7 +89,7 @@
         <div class="col-12" *ngIf="exercise.type === ExerciseType_PROGRAMMING">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.exampleSolution' | translate }}</h4>
             <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation.repositoryUrl">
-                <jhi-button jhiTranslate="artemisApp.tutorExerciseDashboard.exampleSolution">Example Solution</jhi-button>
+                <jhi-button jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.exampleSolution">Example solution repository</jhi-button>
             </a>
         </div>
 
