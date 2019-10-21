@@ -764,7 +764,6 @@ export class GuidedTourService {
             exerciseExists = Object.values(this.guidedTourMapping.tours).find(tour => tour.exerciseName === exercise.shortName && guidedTour.settingsKey === tour.key);
         } else {
             exerciseExists = Object.values(this.guidedTourMapping.tours).find(tour => tour.exerciseName === exercise.title && guidedTour.settingsKey === tour.key);
-            console.log('exerciseExists: ', exerciseExists);
         }
 
         if (exerciseExists) {
