@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
@@ -7,6 +7,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { createRequestOption } from 'app/shared';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -439,4 +441,29 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const { participationId, submission, submissionState } = val;
         return { ...acc, [participationId]: { participationId, submissionState, submission } };
     };
+
+    /**
+     * Returns File Upload submissions for exercise from the server
+     * @param exerciseId the id of the exercise
+     * @param req request parameters
+     */
+    // TODO: This might be better placed in a different service.
+    getProgrammingSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<ProgrammingSubmission[]>> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<ProgrammingSubmission[]>(`api/exercises/${exerciseId}/programming-submissions`, {
+                params: options,
+                observe: 'response',
+            })
+            .map((res: HttpResponse<ProgrammingSubmission[]>) => this.convertArrayResponse(res));
+    }
+
+    private convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
+        const jsonResponse: ProgrammingSubmission[] = res.body!;
+        const body: ProgrammingSubmission[] = [];
+        for (let i = 0; i < jsonResponse.length; i++) {
+            body.push({ ...jsonResponse[i] });
+        }
+        return res.clone({ body });
+    }
 }

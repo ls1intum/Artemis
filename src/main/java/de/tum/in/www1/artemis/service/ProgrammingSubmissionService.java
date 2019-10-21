@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -60,11 +62,16 @@ public class ProgrammingSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final ResultRepository resultRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -76,6 +83,8 @@ public class ProgrammingSubmissionService {
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
+        this.resultRepository = resultRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -467,5 +476,39 @@ public class ProgrammingSubmissionService {
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
         return programmingSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
+
+    /**
+     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutorId    - the id of the tutor we are interested in
+     * @return a list of file upload Submissions
+     */
+    @Transactional(readOnly = true)
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
+        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
+        List<Result> results = this.resultRepository.findAllWithEagerSubmissionByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
+
+        return results.stream().map(result -> (ProgrammingSubmission) result.getSubmission()).collect(Collectors.toList());
+    }
+
+    /**
+     * Given an exerciseId, returns all the file upload submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
+     *
+     * @param exerciseId    - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @return a list of file upload submissions for the given exercise id
+     */
+    @Transactional(readOnly = true)
+    public List<ProgrammingSubmission> getProgrammingSubmissions(Long exerciseId, boolean submittedOnly) {
+        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<ProgrammingSubmission> submissions = new ArrayList<>();
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
+                // filter out non submitted submissions if the flag is set to true
+                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
+                .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
+        return submissions;
     }
 }

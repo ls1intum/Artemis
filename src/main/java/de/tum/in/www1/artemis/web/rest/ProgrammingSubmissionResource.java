@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -53,9 +54,11 @@ public class ProgrammingSubmissionResource {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final UserService userService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService, UserService userService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -63,6 +66,7 @@ public class ProgrammingSubmissionResource {
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.versionControlService = versionControlService;
+        this.userService = userService;
     }
 
     /**
@@ -264,4 +268,35 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET /file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
+     * assessed by the tutor who is doing the call
+     *
+     * @param exerciseId the id of the exercise
+     * @param submittedOnly if only submitted submissions should be returned
+     * @param assessedByTutor if the submission was assessed by calling tutor
+     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     */
+    @GetMapping("/exercises/{exerciseId}/programming-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+        log.debug("REST request to get all programming submissions");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<ProgrammingSubmission> programmingSubmissions;
+        if (assessedByTutor) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+        }
+
+        return ResponseEntity.ok().body(programmingSubmissions);
+    }
 }

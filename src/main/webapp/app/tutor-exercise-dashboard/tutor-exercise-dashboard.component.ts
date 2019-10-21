@@ -25,6 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -106,6 +107,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
         private complaintService: ComplaintService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
     ) {}
 
     ngOnInit(): void {
@@ -211,6 +213,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
      */
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
+        // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
                 submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
@@ -221,7 +224,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
                 break;
-            // TODO: Add case for programming exercises here.
+            case ExerciseType.PROGRAMMING:
+                submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                break;
         }
 
         submissionsObservable
