@@ -138,7 +138,7 @@ public class TextClusteringService {
     @Transactional(readOnly = true)
     List<TextBlock> getTextBlocks(Long exerciseId) {
         List<TextBlock> set = new ArrayList<>();
-        for (TextSubmission textSubmission : textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, true)) {
+        for (TextSubmission textSubmission : textSubmissionService.getSubmissions(exerciseId, true, TextSubmission.class)) {
             if (textSubmission.getLanguage() != Language.ENGLISH) {
                 // We only support english languages so far, to prevent corruption of the clustering
                 continue;

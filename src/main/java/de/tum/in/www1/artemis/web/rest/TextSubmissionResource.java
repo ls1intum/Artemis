@@ -90,7 +90,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        this.textSubmissionService.hideDetails(textSubmission);
+        textSubmissionService.hideDetails(textSubmission);
         return ResponseEntity.ok(textSubmission);
     }
 

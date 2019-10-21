@@ -148,7 +148,7 @@ public abstract class SubmissionService<T extends Submission> {
     }
 
     /**
-     * Gets the randomly any unassessed submission of specified type
+     * Gets randomly any unassessed submission of specified type
      * @param exercise exercise to which the submission belongs
      * @param submissionType concrete type of the submission
      * @return submission of the specified type
