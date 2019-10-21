@@ -40,6 +40,15 @@ Create and implement a `Policy` class following the below class diagram with a s
 
 @startuml
 
+skinparam ArrowFontSize 16
+skinparam shadowing false
+skinparam class {
+    FontSize 20
+    AttributeFontSize 16
+	BorderColor black
+	ArrowColor black
+}
+
 class Client {
 }
 
@@ -57,11 +66,11 @@ interface SortStrategy {
 }
 
 class BubbleSort {
-  <color:testsColor(testMethods[BubbleSort])>+performSort(List<Date>)</color>
+  <color:testsColor(testBubbleSort)>+performSort(List<Date>)</color>
 }
 
 class MergeSort {
-  <color:testsColor(testMethods[MergeSort])>+performSort(List<Date>)</color>
+  <color:testsColor(testMergeSort)>+performSort(List<Date>)</color>
 }
 
 MergeSort -up-|> SortStrategy #testsColor(testClass[MergeSort])

@@ -41,9 +41,16 @@
     <ng-template #buildLogsContainer>
         <ng-container *ngIf="buildLogs && buildLogs.length; else noFeedbacksContainer">
             <dl class="buildoutput dl-horizontal">
-                <ng-container *ngFor="let logEntry of buildLogs">
-                    <dt>{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
-                    <dd [innerHtml]="logEntry.log | safeHtml"></dd>
+                <ng-container *ngFor="let logEntry of buildLogs; let i = index">
+                    <!--Don't show the timestamp again if it is the same as the last entry's.-->
+                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</dt>
+                    <dd
+                        [class.text-danger]="logEntry.type === BuildLogType.ERROR"
+                        [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
+                        [class.text-warning]="logEntry.type === BuildLogType.WARNING"
+                        [class.mb-3]="i + 1 < buildLogs.length && logEntry.time !== buildLogs[i + 1].time"
+                        [innerHtml]="logEntry.log | safeHtml"
+                    ></dd>
                 </ng-container>
             </dl>
         </ng-container>
