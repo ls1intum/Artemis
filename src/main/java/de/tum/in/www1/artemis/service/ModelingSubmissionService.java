@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,7 +14,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -30,19 +28,13 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
 
     private final CompassService compassService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    private final SimpMessageSendingOperations messagingTemplate;
-
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
             StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository, participationService);
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
         this.compassService = compassService;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -167,52 +159,9 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      */
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
-
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResult(null);
-
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
-                username);
-        if (!optionalParticipation.isPresent()) {
-            throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
-        }
-        StudentParticipation participation = optionalParticipation.get();
-
-        // For now, we do not allow students to retry their modeling exercise after they have received feedback, because this could lead to unfair situations. Some students might
-        // get the manual feedback early and can then retry the exercise within the deadline and have a second chance, others might get the manual feedback late and would not have
-        // a chance to try it out again.
-        // TODO: think about how we can enable retry again in the future in a fair way
-        // make sure that no (submitted) submission exists for the given user and exercise to prevent retry submissions
-        boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(Submission::isSubmitted);
-        if (submittedSubmissionExists) {
-            throw new BadRequestAlertException("User " + username + " already participated in exercise with id " + modelingExercise.getId(), "modelingSubmission",
-                    "participationExists");
-        }
-
-        // update submission properties
-        modelingSubmission.setSubmissionDate(ZonedDateTime.now());
-        modelingSubmission.setType(SubmissionType.MANUAL);
-        modelingSubmission.setParticipation(participation);
-        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-
-        participation.addSubmissions(modelingSubmission);
-
+        modelingSubmission = save(modelingSubmission, modelingExercise, username, ModelingSubmission.class);
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
-            participation.setInitializationState(InitializationState.FINISHED);
-            // We remove all unfinished results here as they should not be sent to the client. Note, that the reference to the unfinished results will not get removed in the
-            // database by saving the participation to the DB below since the results are not persisted with the participation.
-            participation.setResults(
-                    participation.getResults().stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toSet()));
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
-        }
-        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
-        if (modelingSubmission.getId() == null) {
-            Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();
-            if (optionalModelingSubmission.isPresent()) {
-                modelingSubmission = optionalModelingSubmission.get();
-            }
         }
 
         log.debug("return model: " + modelingSubmission.getModel());
