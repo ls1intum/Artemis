@@ -119,9 +119,9 @@ export class ProgrammingExerciseDetailComponent extends OnError implements OnIni
         return this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
             () => {
                 if ($event.deleteRepositories) {
-                    this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
+                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
                 } else {
-                    this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
+                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 }
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
