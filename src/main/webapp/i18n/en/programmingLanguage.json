@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "ProgrammingLanguage": {
+            "undefined": "",
+            "null": "",
+            "JAVA": "Java",
+            "PYTHON": "Python",
+            "C": "C"
+        }
+    }
+}

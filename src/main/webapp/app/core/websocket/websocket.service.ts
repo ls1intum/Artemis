@@ -1,24 +1,35 @@
-import { Inject, Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs/Rx';
 
-import { CSRFService } from 'app/core/auth/csrf.service';
-import { WindowRef } from './window.service';
-import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { AuthServerProvider, CSRFService, WindowRef } from 'app/core';
 
 import * as SockJS from 'sockjs-client';
 import * as Stomp from 'webstomp-client';
 
+export interface IWebsocketService {
+    stompFailureCallback(): void;
+    connect(): void;
+    disconnect(): void;
+    receive(channel: string): Observable<any>;
+    subscribe(channel: string): void;
+    unsubscribe(channel: string): void;
+    bind(event: string, callback: () => void): void;
+    unbind(event: string, callback: () => void): void;
+    enableReconnect(): void;
+    disableReconnect(): void;
+}
+
 @Injectable({ providedIn: 'root' })
-export class JhiWebsocketService implements OnDestroy {
-    stompClient: Stomp.Client;
+export class JhiWebsocketService implements IWebsocketService, OnDestroy {
+    stompClient: Stomp.Client | null;
     subscribers: { [key: string]: Stomp.Subscription } = {};
     connection: Promise<void>;
     connectedPromise: Function;
     myListeners: { [key: string]: Observable<any> } = {};
     listenerObservers: { [key: string]: Observer<any> } = {};
     alreadyConnectedOnce = false;
-    private subscription: Subscription;
+    private subscription: Subscription | null;
     shouldReconnect = false;
     connectListeners: { (): void }[] = [];
     disconnectListeners: { (): void }[] = [];
@@ -30,7 +41,7 @@ export class JhiWebsocketService implements OnDestroy {
         private authServerProvider: AuthServerProvider,
         private $window: WindowRef,
         // tslint:disable-next-line: no-unused-variable
-        private csrfService: CSRFService
+        private csrfService: CSRFService,
     ) {}
 
     stompFailureCallback() {
@@ -97,7 +108,7 @@ export class JhiWebsocketService implements OnDestroy {
                     if (Object.keys(this.myListeners).length !== 0) {
                         for (const channel in this.myListeners) {
                             if (this.myListeners.hasOwnProperty(channel)) {
-                                this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+                                this.subscribers[channel] = this.stompClient!.subscribe(channel, data => {
                                     this.listenerObservers[channel].next(JSON.parse(data.body));
                                 });
                             }
@@ -115,7 +126,7 @@ export class JhiWebsocketService implements OnDestroy {
                 }
                 this.sendActivity();
             },
-            this.stompFailureCallback.bind(this)
+            this.stompFailureCallback.bind(this),
         );
     }
 
@@ -133,7 +144,7 @@ export class JhiWebsocketService implements OnDestroy {
         this.alreadyConnectedOnce = false;
     }
 
-    receive(channel?: string): Observable<any> {
+    receive(channel: string): Observable<any> {
         if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
             this.myListeners[channel] = this.createListener(channel);
         }
@@ -145,7 +156,7 @@ export class JhiWebsocketService implements OnDestroy {
             this.stompClient.send(
                 '/topic/activity', // destination
                 JSON.stringify({ page: this.router.routerState.snapshot.url }), // body
-                {} // header
+                {}, // header
             );
         }
     }
@@ -161,27 +172,22 @@ export class JhiWebsocketService implements OnDestroy {
         }
     }
 
-    subscribe(channel?: string) {
+    subscribe(channel: string) {
         this.connection.then(() => {
             if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
                 this.myListeners[channel] = this.createListener(channel);
             }
-            this.subscribers[channel] = this.stompClient.subscribe(channel, data => {
+            this.subscribers[channel] = this.stompClient!.subscribe(channel, data => {
                 this.listenerObservers[channel].next(JSON.parse(data.body));
             });
         });
     }
 
-    unsubscribe(channel?: string) {
+    unsubscribe(channel: string) {
         if (this && this.subscribers && this.subscribers[channel]) {
             this.subscribers[channel].unsubscribe();
         }
-        if (
-            this &&
-            channel != null &&
-            this.myListeners != null &&
-            (!Object.keys(this.myListeners).length || this.myListeners.hasOwnProperty(channel))
-        ) {
+        if (this && channel != null && this.myListeners != null && (!Object.keys(this.myListeners).length || this.myListeners.hasOwnProperty(channel))) {
             this.myListeners[channel] = this.createListener(channel);
         }
     }

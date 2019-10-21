@@ -1,0 +1,28 @@
+{
+    "name": "GroupNotification",
+    "fields": [
+        {
+            "fieldName": "type",
+            "fieldType": "GroupNotificationType",
+            "fieldValues": "INSTRUCTOR,TA,STUDENT"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "otherEntityName": "course",
+            "otherEntityRelationshipName": "groupNotification",
+            "relationshipName": "course",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20190315161954",
+    "entityTableName": "group_notification",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

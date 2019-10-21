@@ -1,15 +1,15 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, inject, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticDeleteDialogComponent } from 'app/entities/statistic/statistic-delete-dialog.component';
-import { StatisticService } from 'app/entities/statistic/statistic.service';
+import { StatisticDeleteDialogComponent } from 'app/entities/quiz-statistic/statistic-delete-dialog.component';
+import { StatisticService } from 'app/entities/quiz-statistic/statistic.service';
 
 describe('Component Tests', () => {
-    describe('Statistic Management Delete Component', () => {
+    describe('QuizStatistic Management Delete Component', () => {
         let comp: StatisticDeleteDialogComponent;
         let fixture: ComponentFixture<StatisticDeleteDialogComponent>;
         let service: StatisticService;
@@ -19,7 +19,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
-                declarations: [StatisticDeleteDialogComponent]
+                declarations: [StatisticDeleteDialogComponent],
             })
                 .overrideTemplate(StatisticDeleteDialogComponent, '')
                 .compileComponents();
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
                     expect(service.delete).toHaveBeenCalledWith(123);
                     expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
                     expect(mockEventManager.broadcastSpy).toHaveBeenCalled();
-                })
+                }),
             ));
         });
     });

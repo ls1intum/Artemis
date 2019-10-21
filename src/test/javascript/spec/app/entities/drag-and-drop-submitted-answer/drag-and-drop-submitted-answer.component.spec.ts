@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { DragAndDropSubmittedAnswerComponent } from 'app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.component';
 import { DragAndDropSubmittedAnswerService } from 'app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.service';
 import { DragAndDropSubmittedAnswer } from 'app/shared/model/drag-and-drop-submitted-answer.model';
@@ -16,9 +16,9 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [DragAndDropSubmittedAnswerComponent],
-                providers: []
+                providers: [],
             })
                 .overrideTemplate(DragAndDropSubmittedAnswerComponent, '')
                 .compileComponents();
@@ -35,9 +35,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new DragAndDropSubmittedAnswer(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN

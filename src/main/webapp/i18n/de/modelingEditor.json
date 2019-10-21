@@ -1,13 +1,68 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "modelingEditor": {
+            "title": "Modellierungseditor",
+            "problemStatement": "<strong>Problemstellung:</strong>",
+            "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
             "saveSuccessful": "Dein Diagramm wurde erfolgreich gespeichert!",
             "submitSuccessful": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst dein Diagramm nun nicht mehr bearbeiten. Bitte warte auf dein Feedback.",
             "submitSuccessfulWithAssessment": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst dein Diagramm nun nicht mehr bearbeiten. Dein Feedback wird unten angezeigt.",
             "submitDeadlineMissed": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst dein Diagramm nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "empty": "Ein leeres Diagramm kann nicht abgegeben werden.",
             "autoSubmit": "Die Übung ist zu Ende. Du kannst dein Diagramm nun nicht mehr bearbeiten.",
-            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+            "newAssessment": "Eine neue Bewertung für deine Abgabe wurde eingereicht.",
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
+            "assessment": {
+                "title": "Bewertung",
+                "noAssessment": "Es liegt noch keine Bewertung vor.",
+                "instructions": "Wähle im Editor Elemente aus, um die Bewertung zu filtern.",
+                "element": "Element",
+                "score": "Punkte"
+            },
+            "helpModal": {
+                "help": "Hilfe",
+                "title": "So verwendet man den Modellierungseditor",
+                "createElement": {
+                    "title": "Elemente hinzufügen",
+                    "text": "Um ein Element hinzuzufügen, ziehe es einfach von der rechten Seite per Drag & Drop in den Editorbereich auf der linken Seite."
+                },
+                "createRelationship": {
+                    "title": "Beziehungen hinzufügen",
+                    "text": "Um eine Beziehung hinzuzufügen, wähle die Ausgangsklasse mit einem Klick aus und erkenne die vier blaue Halbkreise. Das sind die möglichen Verbindungspunkte für Beziehungen. Klicke und halte einen dieser Punkte gedrückt und ziehe die Maus auf einen anderen blauen Halbkreis, um eine Beziehung zu erstellen."
+                },
+                "updateElement": {
+                    "title": "Elemente/Beziehungen editieren",
+                    "text": "Um ein Element oder eine Beziehung zu bearbeiten, doppelklicke darauf und es öffnet sich ein Popup, in dem du die Eigenschaften der Klasse bearbeiten kannst, z.B. Name, Typ, Attribute, Methoden, etc."
+                },
+                "deleteElement": {
+                    "title": "Elemente/Beziehungen löschen",
+                    "text": "Um ein Element oder eine Beziehung zu löschen, wähle diese mit einem Klick aus und drücke entweder <code>Entfernen</code> oder die <code>Rücktaste</code> auf der Tastatur."
+                },
+                "moveElement": {
+                    "title": "Elemente verschieben",
+                    "text": "Um ein Element zu verschieben, wähle dieses mit einem Klick aus und verwende entweder die Pfeiltasten der Tastatur oder bewege es per Drag & Drop."
+                },
+                "resizeElement": {
+                    "title": "Größe von Elementen verändern",
+                    "text": "Um die Größe eines Elements zu verändern, bewege per Drag & Drop die rechte, untere Ecke des Elements."
+                },
+                "reconnectRelationship": {
+                    "title": "Beziehungen neu verbinden",
+                    "text": "Um eine Beziehung neu zu verbinden, bewege per Drag & Drop eine der Beziehungsenden."
+                },
+                "select": {
+                    "title": "Multi-Selektion",
+                    "text": "Wenn du ein Element oder eine Beziehung selektierst, kannst du die <code>Umschalt</code>taste gedrückt halten, um dieses zu deiner aktuellen Auswahl hinzuzufügen. Mit <code>Strg+A</code> kannst du alle verfügbaren Elemente auswählen."
+                },
+                "duplicate": {
+                    "title": "Elemente duplizieren",
+                    "text": "Mit <code>Strg + C</code> kannst du aktuell selektierte Element mit all ihren Eigenschaften kopieren. <code>Strg + V</code> wird eine Kopie der Elemente erstellt."
+                },
+                "undo": {
+                    "title": "Rückgängig machen & Wiederherstellen",
+                    "text": "Mit <code>Strg + Z</code> und <code>Strg + Umschalt + Z</code> kannst du deine Änderungen rückgängig machen oder wiederherstellen."
+                }
+            }
         }
     }
 }

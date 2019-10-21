@@ -1,9 +1,7 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { LtiOutcomeUrlService } from 'app/entities/lti-outcome-url/lti-outcome-url.service';
 import { ILtiOutcomeUrl, LtiOutcomeUrl } from 'app/shared/model/lti-outcome-url.model';
 
@@ -15,7 +13,7 @@ describe('Service Tests', () => {
         let elemDefault: ILtiOutcomeUrl;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(LtiOutcomeUrlService);
@@ -39,9 +37,9 @@ describe('Service Tests', () => {
             it('should create a LtiOutcomeUrl', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -56,9 +54,9 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         url: 'BBBBBB',
-                        sourcedId: 'BBBBBB'
+                        sourcedId: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -74,16 +72,16 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         url: 'BBBBBB',
-                        sourcedId: 'BBBBBB'
+                        sourcedId: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

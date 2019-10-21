@@ -1,44 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
 import { Result } from './result.model';
-import { createRequestOption } from '../../shared';
-import { Feedback } from '../feedback/feedback.model';
-import { Participation } from '../participation/participation.model';
-import { Exercise } from '../exercise/exercise.model';
+import { createRequestOption } from 'app/shared';
+import { Feedback } from 'app/entities/feedback';
+import { StudentParticipation } from 'app/entities/participation';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
 
-@Injectable()
-export class ResultService {
+export interface IResultService {
+    find: (id: number) => Observable<EntityResponseType>;
+    findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
+    findResultsForParticipation: (courseId: number, exerciseId: number, participationId: number, req?: any) => Observable<EntityArrayResponseType>;
+    getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
+    getLatestResultWithFeedbacks: (particpationId: number) => Observable<HttpResponse<Result>>;
+    getFeedbackDetailsForResult: (resultId: number) => Observable<HttpResponse<Feedback[]>>;
+    delete: (id: number) => Observable<HttpResponse<void>>;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ResultService implements IResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
-    create(result: Result): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(result);
-        return this.http
-            .post<Result>(this.resultResourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
-    update(result: Result): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(result);
-        return this.http
-            .put<Result>(this.resultResourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
-    find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Result>(`${this.resultResourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+    find(resultId: number): Observable<EntityResponseType> {
+        return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
@@ -47,73 +41,83 @@ export class ResultService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    findResultsForParticipation(
-        courseId: number,
-        exerciseId: number,
-        participationId: number,
-        req?: any
-    ): Observable<HttpResponse<Result[]>> {
+    findResultsForParticipation(courseId: number, exerciseId: number, participationId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/participations/${participationId}/results`, {
                 params: options,
-                observe: 'response'
+                observe: 'response',
             })
-            .map((res: HttpResponse<Result[]>) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
-    getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<HttpResponse<Result[]>> {
+    getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, {
                 params: options,
-                observe: 'response'
+                observe: 'response',
             })
-            .map((res: HttpResponse<Result[]>) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
         return this.http.get<Feedback[]>(`${this.resultResourceUrl}/${resultId}/details`, { observe: 'response' });
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
+    getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
+        return this.http.get<Result>(`${this.resultResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
     }
 
-    private convertDateFromClient(result: Result): Result {
+    delete(resultId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
+    }
+
+    public convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
-            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null
+            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null,
         });
         return copy;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((result: Result) => {
-            result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
-            result.participation = this.convertParticipationDateFromServer(result.participation);
-        });
+    protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((result: Result) => {
+                result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
+            });
+        }
         return res;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
-        res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+    public convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);
+        }
         return res;
     }
 
-    convertParticipationDateFromServer(participation: Participation) {
+    convertParticipationDateFromServer(participation: StudentParticipation) {
         if (participation) {
             participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
-            participation.exercise = this.convertExerciseDateFromServer(participation.exercise);
+            if (participation.exercise) {
+                participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
+            }
         }
         return participation;
     }
 
-    convertExerciseDateFromServer(exercise: Exercise) {
-        if (exercise) {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+    /**
+     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
+     * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
+     * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     */
+    isTimeOfComplaintValid(result: Result, exercise: Exercise): boolean {
+        const resultCompletionDate = moment(result.completionDate!);
+        if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
+            return resultCompletionDate.isAfter(moment().subtract(1, 'week'));
         }
-        return exercise;
+        return moment(exercise.assessmentDueDate).isAfter(moment().subtract(1, 'week'));
     }
 }

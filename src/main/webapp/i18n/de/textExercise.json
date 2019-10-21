@@ -1,22 +1,28 @@
-
 {
-    "arTeMiSApp": {
-        "textExercise" : {
+    "artemisApp": {
+        "textExercise": {
             "home": {
-                "title": "Text Exercises",
-                "createLabel": "Text Exercise erstellen",
-                "createOrEditLabel": "Text Exercise erstellen oder bearbeiten"
+                "title": "Textaufgaben",
+                "createLabel": "Neue Textaufgabe erstellen",
+                "editLabel": "Textaufgabe bearbeiten"
             },
-            "created": "Text Exercise erstellt mit ID {{ param }}",
-            "updated": "Text Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Text Exercise gelöscht mit ID {{ param }}",
-            "delete": {
-                "question": "Soll Text Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
-            },
+            "created": "Textaufgabe mit ID {{ param }} erstellt",
+            "updated": "Textaufgabe mit ID {{ param }} aktualisiert",
+            "deleted": "Textaufgabe mit ID {{ param }} gelöscht",
             "detail": {
-                "title": "Text Exercise"
+                "title": "Textaufgabe"
             },
-            "sampleSolution": "Sample Solution"
+            "sampleSolution": "Beispiel Lösung",
+            "exampleSubmissions": "Beispielabgabe",
+            "assessedSubmission": "Deine bewertete Abgabe",
+            "createExampleSubmissions": "Beispielabgabe erstellen",
+            "automaticAssessmentEnabled": "Automatische Bewertung aktiviert",
+            "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen.",
+            "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
+            "confirmSubmission": "Bist du sicher, dass du abgeben möchtest? Du kannst deine Antwort nicht mehr bearbeiten, bis du eine Bewertung erhältst!",
+            "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback.",
+            "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
         }
     }
 }

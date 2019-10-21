@@ -12,6 +12,8 @@
         "hideSolution": "Hide Solution",
         "quizPointStatisticTitle": "Score-Distribution",
         "quizStatisticTitle": "Quiz-Statistic",
+        "recalculateStatistics": "Recalculate Statistics",
+        "quizQuestions": "Quiz questions",
         "quizPointStatistic": {
             "maxScore": "Maximum Score: ",
             "titleRated": "Score-Distribution (rated)",
@@ -26,7 +28,7 @@
             "xAxes": "Questions",
             "yAxes": "Correct Solutions"
         },
-        "multipleChoiceQuestionStatistic": {
+        "questionStatistic": {
             "titleRated": "Answer-Distribution (rated)",
             "titleUnrated": "Answer-Distribution (unrated)",
             "xAxes": "Answers",
@@ -40,6 +42,8 @@
             "showSampleSolution": "Show Sample Solution",
             "hideSampleSolution": "Hide Sample Solution"
         },
-        "invalid": "(invalid)"
+        "invalid": "(invalid)",
+        "quizhasEnded": "Quiz has ended!",
+        "now": "Now"
     }
 }

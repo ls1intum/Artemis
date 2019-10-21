@@ -1,47 +1,43 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
-import { ArTEMiSAdminModule } from '../../admin/admin.module';
+import { ArtemisSharedModule } from 'app/shared';
 import {
+    ParticipationCleanupBuildPlanDialogComponent,
+    ParticipationCleanupBuildPlanPopupComponent,
     ParticipationComponent,
-    ParticipationDeleteDialogComponent,
-    ParticipationDeletePopupComponent,
-    ParticipationDetailComponent,
     participationPopupRoute,
     ParticipationPopupService,
     participationRoute,
-    ParticipationService
+    ParticipationService,
+    ParticipationWebsocketService,
 } from './';
-import { SortByModule } from '../../components/pipes';
+import { SortByModule } from 'app/components/pipes';
+import { ArtemisExerciseScoresModule } from 'app/scores';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { ArtemisParticipationSubmissionModule } from 'app/entities/participation-submission/participation-submission.module';
 
-const ENTITY_STATES = [
-    ...participationRoute,
-    ...participationPopupRoute,
-];
+const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
     imports: [
-        ArTEMiSSharedModule,
-        ArTEMiSAdminModule,
+        ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule
+        SortByModule,
+        ArtemisExerciseScoresModule,
+        ArtemisProgrammingExerciseActionsModule,
+        ArtemisParticipationSubmissionModule,
     ],
-    declarations: [
-        ParticipationComponent,
-        ParticipationDetailComponent,
-        ParticipationDeleteDialogComponent,
-        ParticipationDeletePopupComponent,
-    ],
-    entryComponents: [
-        ParticipationComponent,
-        ParticipationDeleteDialogComponent,
-        ParticipationDeletePopupComponent,
-    ],
-    providers: [
-        ParticipationService,
-        ParticipationPopupService,
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+
+    declarations: [ParticipationComponent, ParticipationCleanupBuildPlanDialogComponent, ParticipationCleanupBuildPlanPopupComponent],
+    entryComponents: [ParticipationComponent, ParticipationCleanupBuildPlanDialogComponent, ParticipationCleanupBuildPlanPopupComponent],
+    providers: [ParticipationService, ParticipationPopupService],
 })
-export class ArTEMiSParticipationModule {}
+export class ArtemisParticipationModule {
+    static forRoot(): ModuleWithProviders {
+        return {
+            ngModule: ArtemisParticipationModule,
+            providers: [ParticipationWebsocketService],
+        };
+    }
+}

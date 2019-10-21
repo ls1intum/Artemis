@@ -1,0 +1,42 @@
+$draggable-width: 15px;
+
+.modeling-assessment {
+    position: relative;
+    display: flex;
+    flex-flow: column nowrap;
+    height: 100%;
+    max-height: 100vh;
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+}
+
+.resizable {
+    display: flex;
+    .draggable-right {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: $draggable-width;
+    }
+    .card-header {
+        width: calc(100% - 15px);
+    }
+}
+
+.apollon-container {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.apollon-row {
+    display: flex;
+    height: 100%;
+}

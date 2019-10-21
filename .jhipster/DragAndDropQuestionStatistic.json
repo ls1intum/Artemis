@@ -4,12 +4,12 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "dropLocationCounters",
             "otherEntityName": "dropLocationCounter",
-            "otherEntityRelationshipName": "dragAndDropQuestionStatistic"
+            "otherEntityRelationshipName": "dragAndDropQuestionStatistic",
+            "relationshipName": "dropLocationCounters"
         }
     ],
-    "changelogDate": "20180927081346",
+    "changelogDate": "20190315161903",
     "entityTableName": "dnd_question_statistic",
     "dto": "no",
     "pagination": "no",

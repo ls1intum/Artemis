@@ -4,11 +4,11 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticDetailComponent } from 'app/entities/statistic/statistic-detail.component';
+import { StatisticDetailComponent } from 'app/entities/quiz-statistic/statistic-detail.component';
 import { Statistic } from 'app/shared/model/statistic.model';
 
 describe('Component Tests', () => {
-    describe('Statistic Management Detail Component', () => {
+    describe('QuizStatistic Management Detail Component', () => {
         let comp: StatisticDetailComponent;
         let fixture: ComponentFixture<StatisticDetailComponent>;
         const route = ({ data: of({ statistic: new Statistic(123) }) } as any) as ActivatedRoute;
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [StatisticDetailComponent],
-                providers: [{ provide: ActivatedRoute, useValue: route }]
+                providers: [{ provide: ActivatedRoute, useValue: route }],
             })
                 .overrideTemplate(StatisticDetailComponent, '')
                 .compileComponents();

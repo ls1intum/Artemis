@@ -1,2 +1,4 @@
 node_modules
 target
+src/test/resources
+src/main/resources

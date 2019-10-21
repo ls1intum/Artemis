@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
-import de.tum.in.www1.artemis.service.dto.UserDTO;
-
 import javax.validation.constraints.Size;
-import java.time.Instant;
-import java.util.List;
-import java.util.Set;
+
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.
@@ -33,7 +30,6 @@ public class ManagedUserVM extends UserDTO {
 
     @Override
     public String toString() {
-        return "ManagedUserVM{" +
-            "} " + super.toString();
+        return "ManagedUserVM{" + "} " + super.toString();
     }
 }

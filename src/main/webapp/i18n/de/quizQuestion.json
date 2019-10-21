@@ -1,0 +1,38 @@
+{
+    "artemisApp": {
+        "quizQuestion": {
+            "home": {
+                "title": "Fragen",
+                "createLabel": "Frage erstellen",
+                "createOrEditLabel": "Frage erstellen oder bearbeiten"
+            },
+            "created": "Frage erstellt mit ID {{ param }}",
+            "updated": "Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Frage gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Frage {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Frage"
+            },
+            "title": "Titel",
+            "text": "Text",
+            "hint": "Hinweis",
+            "explanation": "Erklärung",
+            "score": "Punktzahl",
+            "scoringType": "Bewertungs Typ",
+            "randomizeOrder": "Zufällige Reihenfolge",
+            "questionStatistic": "Frage Statistik",
+            "exercise": "Übung",
+            "yourScore": "Erreichte Punktzahl",
+            "invalid": "Ungültig",
+            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet",
+            "retry": " Wiederholen",
+            "loading": "Warten bis das Bild geladen wurde.",
+            "failed": "Es tut uns leid, dass das Bild nicht geladen werden konnte. Bitte versuchen es erneut indem du auch den Button klickst.",
+            "showSampleSolution": "Blende die Musterlösung ein",
+            "hideSampleSolution": "Blende die Musterlösung aus",
+            "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus."
+        }
+    }
+}

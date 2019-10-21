@@ -1,7 +1,6 @@
-
 {
-    "arTeMiSApp": {
-        "dragAndDropQuestion" : {
+    "artemisApp": {
+        "dragAndDropQuestion": {
             "home": {
                 "title": "Drag And Drop Questions",
                 "createLabel": "Create a new Drag And Drop Question",
@@ -31,7 +30,7 @@
             "addMappingsInstructions": "Drag items onto drop locations to define correct solutions.",
             "addDragItemPicture": "Add Picture Drag Item",
             "addDragItemText": "Add Text Drag Item",
-            "studentInstructions": "Drag & Drop: Place the suitable items below on the correct areas above.",
+            "studentInstructions": "Drag & Drop: Place the suitable items on the correct areas.",
             "showingYourAnswer": "Your Submission:",
             "showingSampleSolution": "Sample Solution:",
             "changeBackgroundPicture": "Change Background",

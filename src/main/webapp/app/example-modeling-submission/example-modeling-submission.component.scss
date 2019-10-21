@@ -1,0 +1,11 @@
+.editor-container-outer {
+    min-width: 0; // prevent the min-width of the editor from pushing the instructions out the right side of the screen when resizing
+}
+
+.editor-container-inner {
+    min-height: 80vh;
+}
+
+.button-resize {
+    min-width: 245px; // prevent buttons from cutting text when resizing
+}

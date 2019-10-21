@@ -1,12 +1,16 @@
+import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
+
 export class Account {
-    public activated: boolean;
-    public authorities: string[];
-    public email: string;
-    public firstName: string;
-    public langKey: string;
-    public lastName: string;
-    public login: string;
-    public imageUrl: string;
+    public activated: boolean | null;
+    public authorities: string[] | null;
+    public login: string | null;
+    public email: string | null;
+    public name: string | null;
+    public firstName: string | null;
+    public lastName: string | null;
+    public langKey: string | null;
+    public imageUrl: string | null;
+    public guidedTourSettings: GuidedTourSetting[];
 
     constructor(
         activated?: boolean,
@@ -16,15 +20,17 @@ export class Account {
         langKey?: string,
         lastName?: string,
         login?: string,
-        imageUrl?: string
+        imageUrl?: string,
+        guidedTourSettings?: GuidedTourSetting[],
     ) {
-        this.login = login ? login : null;
-        this.firstName = firstName ? firstName : null;
-        this.lastName = lastName ? lastName : null;
-        this.email = email ? email : null;
-        this.activated = activated ? activated : false;
-        this.langKey = langKey ? langKey : null;
-        this.authorities = authorities ? authorities : null;
-        this.imageUrl = imageUrl ? imageUrl : null;
+        this.login = login || null;
+        this.firstName = firstName || null;
+        this.lastName = lastName || null;
+        this.email = email || null;
+        this.activated = activated || null;
+        this.langKey = langKey || null;
+        this.authorities = authorities || null;
+        this.imageUrl = imageUrl || null;
+        this.guidedTourSettings = guidedTourSettings || [];
     }
 }

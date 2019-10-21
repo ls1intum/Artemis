@@ -1,9 +1,15 @@
 {
     "global": {
-        "title": "ArTEMiS",
+        "title": "Artemis",
         "browsehappy": "You are using an <strong>outdated</strong> browser. Please <a href=\"http://browsehappy.com/?locale=en\">upgrade your browser</a> to improve your experience.",
+        "generic": {
+            "yes": "Yes",
+            "no": "No",
+            "emptyList": "No items available"
+        },
         "menu": {
             "home": "Home",
+            "overview": "Overview",
             "courses": "Courses",
             "course": "Course Administration",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
@@ -16,9 +22,10 @@
                 "programmingExercise": "Programming Exercise",
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
+                "lecture": "Lecture",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
-                "question": "Question",
+                "quizQuestion": "Question",
                 "multipleChoiceQuestion": "Multiple Choice Question",
                 "answerOption": "Answer Option",
                 "multipleChoiceSubmittedAnswer": "Multiple Choice Submitted Answer",
@@ -37,12 +44,12 @@
                 "fileUploadSubmission": "File Upload Submission",
                 "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
                 "dragAndDropAssignment": "Drag And Drop Assignment",
-                "statistic": "Statistic",
+                "quizStatistic": "Statistic",
                 "quizPointStatistic": "Quiz Point Statistic",
-                "questionStatistic": "Question Statistic",
+                "quizQuestionStatistic": "Question Statistic",
                 "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic",
                 "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic",
-                "statisticCounter": "Statistic Counter",
+                "quizStatisticCounter": "Statistic Counter",
                 "pointCounter": "Point Counter",
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
@@ -53,10 +60,21 @@
                 "fileUploadExercise": "File Upload Exercise",
                 "textSubmission": "Text Submission",
                 "fileUploadSubmission": "File Upload Submission",
+                "shortAnswerQuestionStatistic": "Short Answer Question Statistic",
+                "shortAnswerSpotCounter": "Short Answer Spot Counter",
+                "shortAnswerQuestion": "Short Answer Question",
+                "shortAnswerSpot": "Short Answer Spot",
+                "shortAnswerSolution": "Short Answer Solution",
+                "shortAnswerSubmittedAnswer": "Short Answer Submitted Answer",
+                "shortAnswerSubmittedText": "Short Answer Submitted Text",
+                "shortAnswerMapping": "Short Answer Mapping",
+                "programmingExerciseTestCase": "Programming Exercise Test Case",
+                "exerciseHint": "Exercise Hint",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
                 "main": "Account",
+                "profile": "Profile",
                 "settings": "Settings",
                 "password": "Password",
                 "sessions": "Sessions",
@@ -67,6 +85,7 @@
             "admin": {
                 "main": "Server Administration",
                 "userManagement": "User management",
+                "notificationManagement": "Notification management",
                 "tracker": "User tracker",
                 "metrics": "Metrics",
                 "health": "Health",
@@ -77,11 +96,16 @@
                 "database": "Database",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
-            "language": "Language"
+            "language": "Language",
+            "guidedTutorial": "Guided tutorial",
+            "startTutorial": "Start tutorial",
+            "continueTutorial": "Continue tutorial",
+            "noNotifications": "No notifications available",
+            "showAllNotifications": "Show all notifications"
         },
         "form": {
-            "username": "TUM ID",
-            "username.placeholder": "Your TUM ID",
+            "username": "Username",
+            "username.placeholder": "Your Username",
             "currentpassword": "Current password",
             "currentpassword.placeholder": "Current password",
             "newpassword": "New password",
@@ -89,14 +113,16 @@
             "confirmpassword": "New password confirmation",
             "confirmpassword.placeholder": "Confirm the new password",
             "email": "Email",
-            "email.placeholder": "Your email"
+            "email.placeholder": "Your email",
+            "cancel": "Cancel",
+            "confirm": "Confirm"
         },
         "messages": {
             "info": {
                 "authenticated": {
                     "prefix": "If you want to ",
                     "link": "sign in",
-                    "suffix": ", you can try the default accounts:<br/>- Administrator (login=\"admin\" and password=\"admin\") <br/>- User (login=\"user\" and password=\"user\")."
+                    "suffix": ", you can try the default accounts:<br>- Administrator (login=\"admin\" and password=\"admin\") <br>- User (login=\"user\" and password=\"user\")."
                 },
                 "register": {
                     "noaccount": "You don't have an account yet?",
@@ -130,7 +156,7 @@
             "id": "ID"
         },
         "ribbon": {
-            "dev":"Development",
+            "dev": "Development",
             "test": "Test Server"
         },
         "item-count": "Showing {{first}} - {{second}} of {{total}} items."
@@ -142,21 +168,43 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "confirm": "Confirm",
+            "download": "Download",
             "edit": "Edit",
+            "editInEditor": "Edit in editor",
+            "editEntity": "Edit {{entity}}",
+            "editLink": "Edit Link",
+            "generate": "Generate",
             "open": "Open",
             "save": "Save",
+            "saving": "Saving...",
             "view": "View",
             "preview": "Preview",
             "cleanup": "Cleanup",
             "archive": "Archive",
             "submit": "Submit",
-            "reset" : "Reset",
+            "submitDeadlineMissed": "Submit (deadline missed)",
+            "retry": "Retry",
+            "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
             "import": "Import",
-            "export": "Export"
+            "export": "Export",
+            "lecture": "Lectures",
+            "attachments": "Attachments",
+            "saveAttachment": "Save attachment",
+            "addAttachment": "Add attachment",
+            "tutorCourseDashboard": "Tutor Course Dashboard",
+            "exerciseDashboard": "Exercise Dashboard",
+            "newResult": "New Result",
+            "cleanupBuildPlan": "Cleanup Build Plan",
+            "registerForCourse": "Register For Course",
+            "exercise": "Exercises",
+            "scores": "Scores",
+            "manageHints": "Manage Hints"
         },
         "detail": {
             "field": "Field",
@@ -164,6 +212,9 @@
         },
         "delete": {
             "title": "Confirm delete operation"
+        },
+        "reset": {
+            "title": "Confirm reset operation"
         },
         "cleanup": {
             "title": "Confirm cleanup operation"
@@ -197,10 +248,23 @@
         "userexists": "Login name already used!",
         "emailexists": "Email is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID",
-        "invalid.build.plan.id": "The Build Plan ID seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
-        "invalid.repository.url": "The Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS."
+        "invalid.template.build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
+        "invalid.solution.build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
+        "invalid.template.repository.url": "The Template Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis.",
+        "invalid.solution.repository.url": "The Solution Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis.",
+        "unexpectedError": "An unexpected error occurred: {{error}}"
     },
-    "footer": "Found a bug or have some feedback? Please <a href=\"mailto:krusche@in.tum.de\">let us know</a>!",
+    "contact": "Contact us",
+    "bug": "Report a bug",
+    "feature": "Request a feature",
+    "releaseNotes": "Release Notes",
     "justNow": "just now",
-    "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes."
+    "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes.",
+    "overview": {
+        "title": "Course overview",
+        "course": "Course details",
+        "lectures": "Lectures",
+        "exercise": "Exercise details",
+        "statistics": "Course statistics"
+    }
 }

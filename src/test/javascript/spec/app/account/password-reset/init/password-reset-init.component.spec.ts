@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
-import { Renderer, ElementRef } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { ComponentFixture, inject, TestBed } from '@angular/core/testing';
+import { ElementRef, Renderer } from '@angular/core';
+import { of, throwError } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../../test.module';
+import { ArtemisTestModule } from '../../../../test.module';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
 import { PasswordResetInitService } from 'app/account/password-reset/init/password-reset-init.service';
 import { EMAIL_NOT_FOUND_TYPE } from 'app/shared';
@@ -14,20 +14,20 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [PasswordResetInitComponent],
                 providers: [
                     {
                         provide: Renderer,
                         useValue: {
-                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {}
-                        }
+                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {},
+                        },
                     },
                     {
                         provide: ElementRef,
-                        useValue: new ElementRef(null)
-                    }
-                ]
+                        useValue: new ElementRef(null),
+                    },
+                ],
             })
                 .overrideTemplate(PasswordResetInitComponent, '')
                 .createComponent(PasswordResetInitComponent);
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
         it('sets focus after the view has been initialized', inject([ElementRef], (elementRef: ElementRef) => {
             const element = fixture.nativeElement;
             const node = {
-                focus() {}
+                focus() {},
             };
 
             elementRef.nativeElement = element;
@@ -70,32 +70,29 @@ describe('Component Tests', () => {
             expect(comp.errorEmailNotExists).toBeNull();
         }));
 
-        it('notifies of unknown email upon email address not registered/400', inject(
-            [PasswordResetInitService],
-            (service: PasswordResetInitService) => {
-                spyOn(service, 'save').and.returnValue(
-                    throwError({
-                        status: 400,
-                        error: { type: EMAIL_NOT_FOUND_TYPE }
-                    })
-                );
-                comp.resetAccount.email = 'user@domain.com';
+        it('notifies of unknown email upon email address not registered/400', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
+            spyOn(service, 'save').and.returnValue(
+                throwError({
+                    status: 400,
+                    error: { type: EMAIL_NOT_FOUND_TYPE },
+                }),
+            );
+            comp.resetAccount.email = 'user@domain.com';
 
-                comp.requestReset();
+            comp.requestReset();
 
-                expect(service.save).toHaveBeenCalledWith('user@domain.com');
-                expect(comp.success).toBeNull();
-                expect(comp.error).toBeNull();
-                expect(comp.errorEmailNotExists).toEqual('ERROR');
-            }
-        ));
+            expect(service.save).toHaveBeenCalledWith('user@domain.com');
+            expect(comp.success).toBeNull();
+            expect(comp.error).toBeNull();
+            expect(comp.errorEmailNotExists).toEqual('ERROR');
+        }));
 
         it('notifies of error upon error response', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
             spyOn(service, 'save').and.returnValue(
                 throwError({
                     status: 503,
-                    data: 'something else'
-                })
+                    data: 'something else',
+                }),
             );
             comp.resetAccount.email = 'user@domain.com';
 

@@ -4,12 +4,12 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "mappings",
             "otherEntityName": "dragAndDropMapping",
-            "otherEntityRelationshipName": "submittedAnswer"
+            "otherEntityRelationshipName": "submittedAnswer",
+            "relationshipName": "mappings"
         }
     ],
-    "changelogDate": "20180927081417",
+    "changelogDate": "20190315161940",
     "entityTableName": "dnd_submitted_answer",
     "dto": "no",
     "pagination": "no",

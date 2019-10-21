@@ -1,55 +1,109 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager } from 'ng-jhipster';
+import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
-import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
+import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
+import { Result, ResultService } from 'app/entities/result';
+import { JhiAlertService } from 'ng-jhipster';
+import { ParticipationType } from './programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ExerciseType } from 'app/entities/exercise';
+import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
-    templateUrl: './programming-exercise-detail.component.html'
+    templateUrl: './programming-exercise-detail.component.html',
+    styleUrls: ['./programming-exercise-detail.component.scss'],
 })
-export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseDetailComponent implements OnInit {
+    ParticipationType = ParticipationType;
+    readonly JAVA = ProgrammingLanguage.JAVA;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
-    private subscription: Subscription;
-    private eventSubscriber: Subscription;
+
+    loadingTemplateParticipationResults = true;
+    loadingSolutionParticipationResults = true;
 
     constructor(
-        private eventManager: JhiEventManager,
+        private activatedRoute: ActivatedRoute,
+        private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private route: ActivatedRoute
-    ) {
-    }
+        private resultService: ResultService,
+        private jhiAlertService: JhiAlertService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+    ) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.load(params['id']);
+        this.activatedRoute.data.subscribe(({ programmingExercise }) => {
+            this.programmingExercise = programmingExercise;
+            this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
+            this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
+
+            this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
+            this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
+
+            this.programmingExerciseParticipationService
+                .getLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id)
+                .pipe(catchError(() => of(null)))
+                .subscribe((result: Result) => {
+                    this.programmingExercise.solutionParticipation.results = result ? [result] : [];
+                    this.loadingSolutionParticipationResults = false;
+                });
+
+            this.programmingExerciseParticipationService
+                .getLatestResultWithFeedback(this.programmingExercise.templateParticipation.id)
+                .pipe(catchError(() => of(null)))
+                .subscribe((result: Result) => {
+                    this.programmingExercise.templateParticipation.results = result ? [result] : [];
+                    this.loadingTemplateParticipationResults = false;
+                });
         });
-        this.registerChangeInProgrammingExercises();
     }
 
-    load(exerciseId: number) {
-        this.programmingExerciseService.find(exerciseId)
-            .subscribe((programmingExerciseResponse: HttpResponse<ProgrammingExercise>) => {
-                this.programmingExercise = programmingExerciseResponse.body;
-            });
+    /**
+     * Load the latest result for the given participation. Will return [result] if there is a result, [] if not.
+     * @param participationId of the given participation.
+     * @return an empty array if there is no result or an array with the single latest result.
+     */
+    private loadLatestResultWithFeedback(participationId: number) {
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId).pipe(
+            catchError(() => of(null)),
+            map((result: Result | null) => {
+                return result ? [result] : [];
+            }),
+        );
     }
+
     previousState() {
         window.history.back();
     }
 
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
-        this.eventManager.destroy(this.eventSubscriber);
+    squashTemplateCommits() {
+        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.programmingExercise.squashTemplateCommitsSuccess');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.programmingExercise.squashTemplateCommitsError');
+            },
+        );
     }
 
-    registerChangeInProgrammingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'programmingExerciseListModification',
-            () => this.load(this.programmingExercise.id)
+    generateStructureOracle() {
+        this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
+            res => {
+                const jhiAlert = this.jhiAlertService.success(res);
+                jhiAlert.msg = res;
+            },
+            error => {
+                const errorMessage = error.headers.get('X-artemisApp-alert');
+                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+                const jhiAlert = this.jhiAlertService.error(errorMessage);
+                jhiAlert.msg = errorMessage;
+            },
         );
     }
 }

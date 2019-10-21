@@ -1,7 +1,7 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
 import { FileUploadSubmissionUpdateComponent } from 'app/entities/file-upload-submission/file-upload-submission-update.component';
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
-                declarations: [FileUploadSubmissionUpdateComponent]
+                declarations: [FileUploadSubmissionUpdateComponent],
             })
                 .overrideTemplate(FileUploadSubmissionUpdateComponent, '')
                 .compileComponents();

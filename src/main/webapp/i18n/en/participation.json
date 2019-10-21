@@ -1,30 +1,51 @@
-
 {
-    "arTeMiSApp": {
-        "participation" : {
+    "artemisApp": {
+        "participation": {
             "home": {
                 "title": "Participations",
                 "createLabel": "Create a new Participation",
                 "createOrEditLabel": "Create or edit a Participation"
             },
-            "created": "A new Participation is created with identifier {{ param }}",
-            "updated": "A Participation is updated with identifier {{ param }}",
-            "deleted": "A Participation is deleted with identifier {{ param }}",
+            "created": "A new participation is created with identifier {{ param }}",
+            "updated": "The Participation of {{ param }} was updated",
+            "deleted": "The Participation of {{ param }} was deleted",
             "delete": {
-                "question": "Are you sure you want to delete Participation {{ id }}?"
+                "question": "Are you sure you want to delete the participation of <strong>{{ title }}</strong>?"
+            },
+            "cleanupBuildPlan": {
+                "question": "Are you sure you want to delete the build plan of the participation of {{ student }}?"
+            },
+            "addPresentation": {
+                "label": "Add presentation",
+                "error": "Could not add presentation. Please try again."
+            },
+            "removePresentation": {
+                "label": "Remove presentation",
+                "error": "Could not remove presentation. Please try again."
             },
             "detail": {
                 "title": "Participation"
             },
             "repositoryUrl": "Repository Url",
             "buildPlanId": "Build Plan Id",
-            "initializationState": "Initialization State",
-            "initializationDate": "Initialization Date",
+            "initializationState": "Status",
+            "initializationDate": "Start Date",
             "presentationScore": "Presentation Score",
             "results": "Results",
             "submissions": "Submissions",
             "student": "Student",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "deleteRepository": "Delete repository",
+            "deleteBuildPlan": "Delete build plan",
+            "participationSubmission": {
+                "submissionType": "Submission Type",
+                "submissionDate": "Submission Date",
+                "result": "Result",
+                "assessor": "Assessor",
+                "submissionsForParticipation": "Submissions of {{ student }} for Exercise {{ exercise }}",
+                "action": "Action",
+                "delete": "Are you sure you want to delete this submission?"
+            }
         }
     }
 }

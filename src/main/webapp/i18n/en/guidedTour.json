@@ -1,0 +1,34 @@
+{
+    "tour": {
+        "step": "Step {{ string }}:",
+        "navigation": {
+            "back": "Back",
+            "next": "Next",
+            "done": "Done",
+            "close": "Close"
+        },
+        "resize": {
+            "headline": "Browser window too small",
+            "content": "Please resize the browser to a larger size to continue the tour or close the tour."
+        },
+        "cancel": {
+            "headline": "Tutorial cancelled",
+            "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on <tt>Continue tutorial</tt> from the account menu."
+        },
+        "clickHint": {
+            "text": "Click on the highlighted element to proceed with the tour."
+        },
+        "typeHint": {
+            "text": "Enter any new line to proceed with the next step."
+        },
+        "waitHint": {
+            "text": "Please wait until the next step is loaded."
+        },
+        "videoHint": {
+            "text": "While watching the video, follow the steps on your computer side-by-side."
+        },
+        "stepAlreadyExecutedHint": {
+            "text": "You have already successfully completed this step, therefore you do not need to do anything here. Just click on next to proceed with the tutorial"
+        }
+    }
+}

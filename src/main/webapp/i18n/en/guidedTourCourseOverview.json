@@ -1,0 +1,56 @@
+{
+    "tour": {
+        "courseOverview": {
+            "welcome": {
+                "headline": "Welcome to Artemis",
+                "subHeadline": "An Automatic Assessment Management System for Interactive Learning",
+                "content": "Artemis is a learning platform where you can solve programming exercises in interactive learning sessions."
+            },
+            "overviewMenu": {
+                "headline": "Course overview",
+                "content": "On this page you can see an overview of all courses which you are signed up for."
+            },
+            "courseAdminMenu": {
+                "headline": "Course administration",
+                "content": "Administrate and manage your courses and exercises here."
+            },
+            "adminMenu": {
+                "headline": "Server administration",
+                "content": "Get an insight in the application administration."
+            },
+            "notificationMenu": {
+                "headline": "Your notifications",
+                "content": "Get notified about new exercises from this notification dropdown."
+            },
+            "accountMenuClick": {
+                "headline": "Personal settings",
+                "content": "Click on your user name to view your account menu."
+            },
+            "accountMenu": {
+                "headline": "Personal settings",
+                "content": "In this menu you can change the display language, restart the current tour or logout from Artemis"
+            },
+            "course": {
+                "headline": "Your current courses",
+                "content": "This is a course you are signed up to. You can check out the course details afterwards by clicking on the panel."
+            },
+            "courseFooter": {
+                "headline": "Next due exercise",
+                "content": "See what exercise has to be completed in the next few days."
+            },
+            "courseClick": {
+                "headline": "View course details",
+                "content": "Click on this panel to navigate to the course detail page."
+            },
+            "register": {
+                "headline": "Sign up for other courses",
+                "content": "You can click here and see whether you can sign up for other courses additionally."
+            },
+            "contact": {
+                "headline": "Contact the Artemis team",
+                "content": "Feel free to contact us to leave us some feedback, request features or to report bugs in the application. If you're motivated and want to contribute to Artemis, then head over to our Github and submit your first Pull Requests",
+                "link": "Visit the Artemis Github page"
+            }
+        }
+    }
+}

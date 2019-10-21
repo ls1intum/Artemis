@@ -4,19 +4,19 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "pointCounters",
             "otherEntityName": "pointCounter",
-            "otherEntityRelationshipName": "quizPointStatistic"
+            "otherEntityRelationshipName": "quizPointStatistic",
+            "relationshipName": "pointCounters"
         },
         {
             "relationshipType": "one-to-one",
-            "relationshipName": "quiz",
             "otherEntityName": "quizExercise",
-            "ownerSide": false,
-            "otherEntityRelationshipName": "quizPointStatistic"
+            "otherEntityRelationshipName": "quizPointStatistic",
+            "relationshipName": "quiz",
+            "ownerSide": false
         }
     ],
-    "changelogDate": "20180927081343",
+    "changelogDate": "20190315161900",
     "entityTableName": "quiz_point_statistic",
     "dto": "no",
     "pagination": "no",

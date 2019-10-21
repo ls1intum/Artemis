@@ -1,29 +1,172 @@
-
 {
-    "arTeMiSApp": {
-        "programmingExercise" : {
+    "artemisApp": {
+        "programmingExercise": {
             "home": {
-                "title": "Programming Exercises",
-                "createLabel": "Programming Exercise erstellen",
-                "createOrEditLabel": "Programming Exercise erstellen oder bearbeiten"
+                "title": "Programmieraufgaben",
+                "createLabel": "Neue Programmieraufgabe erstellen",
+                "editLabel": "Programmieraufgabe bearbeiten",
+                "generateLabel": "Neue Programmieraufgabe generieren",
+                "importLabel": "Neue Programmieraufgabe importieren",
+                "linkLabel": "Neue Programmieraufgabe verlinken",
+                "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
+                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
             },
-            "created": "Programming Exercise erstellt mit ID {{ param }}",
-            "updated": "Programming Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Programming Exercise gelöscht mit ID {{ param }}",
+            "created": "Programmieraufgabe erstellt mit Title {{ param }}",
+            "updated": "Programmieraufgabe aktualisiert mit Title {{ param }}",
+            "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
             "delete": {
-                "question": "Soll Programming Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
+                "studentReposBuildPlans": "Alle Studenten Repositories und Studenten Build Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Übung zuerst zu archivieren!",
+                "baseReposBuildPlans": "Alle Template-, Lösungs- und Testrepositories sowie Build Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Repositories und Build Pläne erst zu sichern!"
             },
             "detail": {
-                "title": "Programming Exercise"
+                "title": "Programmieraufgabe"
             },
-            "baseRepositoryUrl": "Base Repository Url",
-            "solutionRepositoryUrl": "Solution Repository Url",
-            "baseBuildPlanId": "Base Build Plan Id",
-            "publishBuildPlanUrl": "Publish Build Plan Url",
-            "allowOnlineEditor": "Allow Online Editor"
+            "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
+            "templateRepositoryUrl": "Vorlage Repository Url",
+            "testRepositoryUrl": "Test Repository Url (optional)",
+            "solutionRepositoryUrl": "Lösung Repository Url (optional)",
+            "templateBuildPlanId": "Vorlage Build Plan Id",
+            "solutionBuildPlanId": "Lösung Build Plan Id (optional)",
+            "repositories": "Repositories",
+            "buildplans": "Build Pläne",
+            "publishBuildPlanUrl": "Build Plan veröffentlichen",
+            "allowOnlineEditor": "Online Editor erlauben",
+            "sequentialTestRuns": {
+                "title": "Sequentielle Testläufe",
+                "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
+            },
+            "programmingLanguage": "Programmiersprache",
+            "packageName": "Package Name",
+            "templateResult": "Ergebnis Vorlage",
+            "solutionResult": "Ergebnis Lösung",
+            "structureTestOracle": "Oracle Strukturtest aktualisieren",
+            "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
+            "squashTemplateCommits": "Template Commits zusammenführen",
+            "squashTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
+            "squashTemplateCommitsError": "Template Repository Commits konnten nicht zusammengeführt werden.",
+            "squashTemplateCommitsSuccess": "Template Repository Commits wurden zusammengeführt.",
+            "editable": {
+                "unsaved": "Ungespeichert.",
+                "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
+                "saving": "Speichert...",
+                "savingTooltip": "Speichert die ungespeicherten Änderungen in der Aufgabenstellung.",
+                "saved": "Gespeichert.",
+                "savedTooltip": "Die Aufgabenstellung ist gespeichert."
+            },
+            "problemStatement": {
+                "title": "Aufgabenstellung",
+                "taskCommand": "[task] Aufgabe",
+                "testCaseCommand": "Testfall einfügen",
+                "exerciseHintCommand": "Aufgaben spezifischen Hinweis hinzufügen"
+            },
+            "status": {
+                "solutionFailsTest": "Das Solution Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution Repository oder den Testfällen hinweisen.",
+                "templateFulfillsTest": "Das Template Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template Repository oder den Testfällen hinweisen."
+            },
+            "testCaseAnalysis": {
+                "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test Repository gefunden werden:",
+                "missingTestCases": "{{number}} Testfälle wurde im Test Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
+                "issues": "Testfall Probleme.",
+                "ok": "Testfälle ok.",
+                "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test Repository gefunden werden."
+            },
+            "hintsAnalysis": {
+                "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",
+                "issues": "Hinweis Probleme.",
+                "ok": "Hinweise ok.",
+                "invalidHint": "Der Hinweis mit Id '{{id}}' konnte nicht in der Datenbank für diese Programmierübung gefunden werden."
+            },
+            "manageTestCases": {
+                "title": "Verwalte Testfälle",
+                "hideInactive": "Inaktive Testfälle verbergen",
+                "showInactive": "Inaktive Testfälle anzeigen",
+                "resetWeights": "Gewichtung zurücksetzen",
+                "weightsReset": "Die Gewichtung wurde erfolgreich zurückgesetzt.",
+                "weightsResetFailed": "Die Gewichtung konnte nicht zurückgesetzt werden.",
+                "saveWeights": "Gewichtung speichern",
+                "weightsUpdated": "Die Gewichtung wurde erfolgreich gespeichert.",
+                "weightCouldNotBeUpdated": "Die Gewichtung für den Testfall {{id}} konnte nicht übernommen werden: {{error}}.",
+                "saveTestCases": "Testfälle speichern",
+                "testCasesUpdated": "Die Testfälle wurden erfolgreich gespeichert.",
+                "testCasesCouldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
+                "noUnsavedChanges": "Keine ungespeicherten Änderungen",
+                "unsavedChanges": "Ungespeicherte Änderungen",
+                "updatedTestCasesShort": "Veränderte Testfälle",
+                "updatedTestCases": "Achtung: Du hast die Testfälle der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Testfall Einstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
+                "updatedTestCasesTooltip": "Du hast die Testfälle verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Neu erstellte Ergebnisse werden mit den aktualisierten Testfall Einstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studenten mit den veränderten Testfällen erneut bewerten.",
+                "noUpdatedTestCases": "Keine veränderten Testfälle",
+                "runAfterDueDateDisabled": "Du kannst diese Option nicht aktivieren, weil für diese Übung kein Build & Test Datum definiert ist. Klicke auf den Button, um in die Bearbeitungsmaske zu wechseln und das Datum zu setzen.",
+                "notReleased": "Nicht veröffentlicht",
+                "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher können die Testfälle geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
+            },
+            "export": {
+                "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
+                "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
+                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
+                "addStudentName": "Name der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "squashAfterInstructor": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
+                "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)"
+            },
+            "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
+            "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
+            "resubmitAll": "Alle erneut ausführen",
+            "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
+            "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",
+            "resubmitFailed": "Gescheiterte Teilnahmen erneut ausführen",
+            "resubmitFailedTooltip": "Führe die letzte Abgabe aller gescheiterten Teilnahmen erneut aus. Gescheiterte Teilnahmen besitzen kein Ergebnis für die letzte Abgabe. Gescheiterte Abgaben können bei Kommunikationsfehlern zwischen dem CI System und Artemis entstehen. Die entstehenden Ergebnisse werden als bewertet gekennzeichnet.",
+            "buildingSubmissions": "Laufende Abgaben: {{number}}",
+            "failedSubmissions": "Gescheiterte Abgaben: {{number}}",
+            "resultETA": "Ergebnis Wartezeit: {{eta}}",
+            "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
+            "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
+            "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
+            "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die geählten Bezeichnungen konsistent zu nutzen, da sie auch für Studenten sichtbar sind",
+            "timeline": {
+                "manualReview": "Manuelle Review",
+                "automaticTests": "Automatische Tests",
+                "afterDueDate": "Testlauf nach dem Abgabedatum",
+                "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
+                "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden",
+                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmers löst alle in dem Testrepository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach dem Abgabedatum ausgeführt werden sollen)",
+                "automaticTestsAfterDueDateTooltip": "Sobald das Abgabedatum abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Testrepository gespeicherten Tests.",
+                "manualReviewTooltip": "Nachdem alle automatischen Tests durchgelaufen sind, müssen die Tutoren noch einmal alle Abgaben manuell bewerten",
+                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studenten können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
+                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgabgen und Commits für Studenten gesperrt werden",
+                "afterDueDateTooltip": "Aktiviere diese Option um alle Studentenabgaben nach dem Abgebedatum zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl das Abgabedatum abgelaufen ist",
+                "alertNewDueDate": "Das Abgabedatum wurde auf das Releasedatum gesetzt!",
+                "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
+                "notSet": "nicht gesetzt"
+            },
+            "import": {
+                "attention": "Achtung! ",
+                "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "language": "Programmiersprache",
+                    "course": "Kurs",
+                    "doImport": "Import"
+                }
+            },
+            "repositoryIsLocked": {
+                "title": "Dein Repository ist gesperrt.",
+                "tooltip": "Dein Repository ist gesperrt, weil das Abgabedatum abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
+            },
+            "preview": {
+                "label": "Vorschau",
+                "tooltip": "Für jede Programmieraufgabe, werden verschieden Repositories und Build Pläne erstellt. Links befinden sich deren generierte Namen basierend auf dem Kurznamen der Aufgabe",
+                "repositories": "Repositories",
+                "buildPlans": "Build Pläne",
+                "templateRepoTooltip": "Das Repository, welches die Vorlage der Aufgabe beinhaltet",
+                "solutionRepoTooltip": "Das Repository, welches die Lösung der Aufgabe beinhaltet",
+                "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
+                "templateBuildPlanTooltip": "Der Build Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
+                "solutionBuildPlanTooltip": "Der Build Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
+            }
         },
-        "editor": {
-            "title": "Editor"
+        "error": {
+            "noparticipations": "Kein existierender User wurde angegeben oder es existieren keine Abgaben."
         }
     }
 }

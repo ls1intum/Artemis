@@ -9,7 +9,7 @@
         "updated": "An user is updated with identifier {{ param }}",
         "deleted": "An user is deleted with identifier {{ param }}",
         "delete": {
-            "question": "Are you sure you want to delete user {{ login }}?"
+            "question": "Are you sure you want to delete user <strong>{{ title }}</strong>?"
         },
         "detail": {
             "title": "User"

@@ -1,9 +1,7 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { QuizSubmissionService } from 'app/entities/quiz-submission/quiz-submission.service';
 import { IQuizSubmission, QuizSubmission } from 'app/shared/model/quiz-submission.model';
 
@@ -15,7 +13,7 @@ describe('Service Tests', () => {
         let elemDefault: IQuizSubmission;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(QuizSubmissionService);
@@ -39,9 +37,9 @@ describe('Service Tests', () => {
             it('should create a QuizSubmission', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -55,9 +53,9 @@ describe('Service Tests', () => {
             it('should update a QuizSubmission', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        scoreInPoints: 1
+                        scoreInPoints: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -72,16 +70,16 @@ describe('Service Tests', () => {
             it('should return a list of QuizSubmission', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        scoreInPoints: 1
+                        scoreInPoints: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

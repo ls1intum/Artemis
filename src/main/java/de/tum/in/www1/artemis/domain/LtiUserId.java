@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A LtiUserId.
@@ -86,9 +87,6 @@ public class LtiUserId implements Serializable {
 
     @Override
     public String toString() {
-        return "LtiUserId{" +
-            "id=" + getId() +
-            ", ltiUserId='" + getLtiUserId() + "'" +
-            "}";
+        return "LtiUserId{" + "id=" + getId() + ", ltiUserId='" + getLtiUserId() + "'" + "}";
     }
 }

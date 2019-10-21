@@ -9,7 +9,7 @@
         "updated": "Ein Benutzer mit ID {{ param }} wurde geändert",
         "deleted": "Ein Benutzer mit ID {{ param }} wurde gelöscht",
         "delete": {
-            "question": "Sind Sie sicher, dass Sie den Benutzer {{ login }} löschen möchten?"
+            "question": "Soll der Benutzer <strong>{{ title }}</strong> wirklich gelöscht werden?"
         },
         "detail": {
             "title": "Benutzer"

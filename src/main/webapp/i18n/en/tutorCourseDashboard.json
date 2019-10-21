@@ -1,0 +1,27 @@
+{
+    "artemisApp": {
+        "tutorCourseDashboard": {
+            "home": {
+                "title": "Tutor Course Dashboard"
+            },
+            "pageHeader": "Tutor Course Dashboard for course",
+            "yourAssessments": "Your assessments",
+            "totalAssessments": "Total assessments",
+            "complaintsAboutYourAssessments": "Complaints about your assessments",
+            "totalComplaints": "Total complaints",
+            "moreFeedbackRequestsForYourAssessments": "Feedback Requests about your assessments",
+            "totalMoreFeedbackRequests": "Total More Feedback Requests",
+            "showFinishedExercises": "Show finished exercises",
+            "exercise": "Exercise",
+            "exerciseType": "Exercise type",
+            "yourStatus": "Your status",
+            "exerciseDueDate": "Exercise due date",
+            "assessmentsDueDate": "Assessments due date",
+            "actions": "Actions",
+            "notReleased": "Not released",
+            "readGradingInstructions": "Read grading instructions",
+            "trainOnExampleSubmissions": "Train on example submissions",
+            "assessStudentsSubmissions": "Assess students' submissions"
+        }
+    }
+}

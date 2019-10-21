@@ -1,15 +1,15 @@
 /* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticCounterComponent } from 'app/entities/statistic-counter/statistic-counter.component';
-import { StatisticCounterService } from 'app/entities/statistic-counter/statistic-counter.service';
+import { StatisticCounterComponent } from 'app/entities/quiz-statistic-counter/statistic-counter.component';
+import { StatisticCounterService } from 'app/entities/quiz-statistic-counter/statistic-counter.service';
 import { StatisticCounter } from 'app/shared/model/statistic-counter.model';
 
 describe('Component Tests', () => {
-    describe('StatisticCounter Management Component', () => {
+    describe('QuizStatisticCounter Management Component', () => {
         let comp: StatisticCounterComponent;
         let fixture: ComponentFixture<StatisticCounterComponent>;
         let service: StatisticCounterService;
@@ -18,7 +18,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [StatisticCounterComponent],
-                providers: []
+                providers: [],
             })
                 .overrideTemplate(StatisticCounterComponent, '')
                 .compileComponents();
@@ -35,9 +35,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new StatisticCounter(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN

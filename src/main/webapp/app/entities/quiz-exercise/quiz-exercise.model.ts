@@ -1,22 +1,21 @@
-import { Question } from '../question';
+import { QuizQuestion } from '../quiz-question';
 import { QuizPointStatistic } from '../quiz-point-statistic';
 import { Exercise, ExerciseType } from '../exercise';
 import { Moment } from 'moment';
 import { Course } from '../course';
 
 export class QuizExercise extends Exercise {
-
     public id: number;
-    public randomizeQuestionOrder = true;   // default value
-    public isVisibleBeforeStart = false;    // default value
-    public isOpenForPractice = false;       // default value
-    public isPlannedToStart = false;        // default value
+    public randomizeQuestionOrder = true; // default value
+    public isVisibleBeforeStart = false; // default value
+    public isOpenForPractice = false; // default value
+    public isPlannedToStart = false; // default value
     public duration: number;
     public quizPointStatistic: QuizPointStatistic;
-    public questions: Question[];
+    public quizQuestions: QuizQuestion[];
     public status: string;
-    public isActiveQuiz = false;            // default value
-    public isPracticeModeAvailable = true;  // default value
+    public isActiveQuiz = false; // default value
+    public isPracticeModeAvailable = true; // default value
 
     // helper attributes
     public adjustedDueDate: Moment;
@@ -29,6 +28,6 @@ export class QuizExercise extends Exercise {
 
     constructor(course?: Course) {
         super(ExerciseType.QUIZ);
-        this.course = course;
+        this.course = course || null;
     }
 }

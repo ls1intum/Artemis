@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed, async, inject, fakeAsync, tick } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { JhiAlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
 
@@ -15,15 +15,15 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule, TranslateModule.forRoot()],
+                imports: [ArtemisTestModule, TranslateModule.forRoot()],
                 declarations: [JhiAlertErrorComponent],
                 providers: [
                     JhiEventManager,
                     {
                         provide: JhiAlertService,
-                        useClass: MockAlertService
-                    }
-                ]
+                        useClass: MockAlertService,
+                    },
+                ],
             })
                 .overrideTemplate(JhiAlertErrorComponent, '')
                 .compileComponents();
@@ -38,22 +38,22 @@ describe('Component Tests', () => {
         describe('Error Handling', () => {
             it('Should display an alert on status 0', () => {
                 // GIVEN
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: { status: 0 } });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
                 // THEN
                 expect(comp.alerts.length).toBe(1);
                 expect(comp.alerts[0].msg).toBe('error.server.not.reachable');
             });
             it('Should display an alert on status 404', () => {
                 // GIVEN
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: { status: 404 } });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
                 // THEN
                 expect(comp.alerts.length).toBe(1);
                 expect(comp.alerts[0].msg).toBe('error.url.not.found');
             });
             it('Should display an alert on generic error', () => {
                 // GIVEN
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: { error: { message: 'Error Message' } } });
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: { error: 'Second Error Message' } });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: { error: { message: 'Error Message' } } });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: { error: 'Second Error Message' } });
                 // THEN
                 expect(comp.alerts.length).toBe(2);
                 expect(comp.alerts[0].msg).toBe('Error Message');
@@ -71,10 +71,10 @@ describe('Component Tests', () => {
                         title: 'Bad Request',
                         status: 400,
                         path: '/api/foos',
-                        message: 'error.validation'
-                    }
+                        message: 'error.validation',
+                    },
                 });
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
                 // THEN
                 expect(comp.alerts.length).toBe(1);
                 expect(comp.alerts[0].msg).toBe('error.validation');
@@ -85,9 +85,9 @@ describe('Component Tests', () => {
                     url: 'http://localhost:8080/api/foos',
                     headers: new HttpHeaders(),
                     status: 400,
-                    error: 'Bad Request'
+                    error: 'Bad Request',
                 });
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
                 // THEN
                 expect(comp.alerts.length).toBe(1);
                 expect(comp.alerts[0].msg).toBe('Bad Request');
@@ -105,10 +105,10 @@ describe('Component Tests', () => {
                         status: 400,
                         path: '/api/foos',
                         message: 'error.validation',
-                        fieldErrors: [{ objectName: 'foo', field: 'minField', message: 'Min' }]
-                    }
+                        fieldErrors: [{ objectName: 'foo', field: 'minField', message: 'Min' }],
+                    },
                 });
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
                 // THEN
                 expect(comp.alerts.length).toBe(1);
                 expect(comp.alerts[0].msg).toBe('error.Size');
@@ -122,10 +122,10 @@ describe('Component Tests', () => {
                     statusText: 'Bad Request',
                     error: {
                         status: 400,
-                        message: 'error.validation'
-                    }
+                        message: 'error.validation',
+                    },
                 });
-                eventManager.broadcast({ name: 'arTeMiSApp.httpError', content: response });
+                eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
                 // THEN
                 expect(comp.alerts.length).toBe(1);
                 expect(comp.alerts[0].msg).toBe('Error Message');

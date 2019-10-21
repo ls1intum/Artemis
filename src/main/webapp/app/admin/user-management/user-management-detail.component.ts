@@ -1,32 +1,24 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
 
-import { User, UserService } from '../../core';
+import { User } from 'app/core';
 
 @Component({
-    selector: 'jhi-user-mgmt-detail',
-    templateUrl: './user-management-detail.component.html'
+    selector: 'jhi-user-management-detail',
+    templateUrl: './user-management-detail.component.html',
 })
-export class UserMgmtDetailComponent implements OnInit, OnDestroy {
+export class UserManagementDetailComponent implements OnInit {
     user: User;
-    private subscription: Subscription;
 
-    constructor(private userService: UserService, private route: ActivatedRoute) {}
+    constructor(private route: ActivatedRoute) {}
 
+    /**
+     * Retrieve the user from the user management activated route data {@link UserMgmtResolve} subscription
+     * and get the user based on the login string
+     */
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.load(params['login']);
+        this.route.data.subscribe(({ user }) => {
+            this.user = user.body ? user.body : user;
         });
-    }
-
-    load(login: string) {
-        this.userService.find(login).subscribe(response => {
-            this.user = response.body;
-        });
-    }
-
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
     }
 }

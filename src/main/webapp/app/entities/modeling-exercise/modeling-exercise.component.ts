@@ -1,113 +1,89 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
-import { Principal } from '../../core';
+import { AccountService } from '../../core';
 import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService } from '../course';
+import { CourseService } from '../course';
+import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-exercise',
-    templateUrl: './modeling-exercise.component.html'
+    templateUrl: './modeling-exercise.component.html',
 })
-export class ModelingExerciseComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
-    modelingExercises: ModelingExercise[];
-    course: Course;
-    eventSubscriber: Subscription;
-    courseId: number;
-    itemsPerPage: number;
-    links: any;
-    page: number;
-    predicate: string;
-    reverse: boolean;
+export class ModelingExerciseComponent extends ExerciseComponent {
+    @Input() modelingExercises: ModelingExercise[];
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
-        private principal: Principal,
-        private route: ActivatedRoute
+        private accountService: AccountService,
+        courseService: CourseService,
+        translateService: TranslateService,
+        eventManager: JhiEventManager,
+        route: ActivatedRoute,
     ) {
+        super(courseService, translateService, route, eventManager);
         this.modelingExercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
-        this.predicate = 'id';
-        this.reverse = true;
     }
 
-    ngOnInit() {
-        this.load();
-        this.registerChangeInModelingExercises();
-    }
-
-    load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            if (this.courseId) {
-                this.loadAllForCourse();
-            } else {
-                this.loadAll();
-            }
-        });
-    }
-
-    loadAll() {
-        this.modelingExerciseService.query().subscribe(
+    protected loadExercises(): void {
+        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<ModelingExercise[]>) => {
-                this.modelingExercises = res.body;
+                this.modelingExercises = res.body!;
+                // reconnect exercise with course
+                this.modelingExercises.forEach(exercise => {
+                    exercise.course = this.course;
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                });
+                this.emitExerciseCount(this.modelingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
-    loadAllForCourse() {
-        this.courseExerciseService
-            .findAllModelingExercises(this.courseId, {
-                page: this.page,
-                size: this.itemsPerPage
-            })
-            .subscribe(
-                (res: HttpResponse<ModelingExercise[]>) => {
-                    this.modelingExercises = res.body;
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
-        });
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAll();
-    }
-
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a modeling exercise in the collection
+     * @param item current modeling exercise
+     */
     trackId(index: number, item: ModelingExercise) {
         return item.id;
     }
-    registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load());
+
+    /**
+     * Deletes modeling exercise
+     * @param modelingExerciseId id of the exercise that will be deleted
+     */
+    deleteModelingExercise(modelingExerciseId: number) {
+        this.modelingExerciseService.delete(modelingExerciseId).subscribe(
+            response => {
+                this.eventManager.broadcast({
+                    name: 'modelingExerciseListModification',
+                    content: 'Deleted an modelingExercise',
+                });
+            },
+            error => this.onError(error),
+        );
+    }
+
+    protected getChangeEventName(): string {
+        return 'modelingExerciseListModification';
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
         console.log('Error: ' + error);
     }
 
+    /**
+     * Used in the template for jhiSort
+     */
     callback() {}
 }

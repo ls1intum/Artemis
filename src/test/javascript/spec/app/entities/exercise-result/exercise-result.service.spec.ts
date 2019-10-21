@@ -1,13 +1,11 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { ExerciseResultService } from 'app/entities/exercise-result/exercise-result.service';
-import { IExerciseResult, ExerciseResult, AssessmentType } from 'app/shared/model/exercise-result.model';
+import { AssessmentType, ExerciseResult, IExerciseResult } from 'app/shared/model/exercise-result.model';
 
 describe('Service Tests', () => {
     describe('ExerciseResult Service', () => {
@@ -18,7 +16,7 @@ describe('Service Tests', () => {
         let currentDate: moment.Moment;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(ExerciseResultService);
@@ -32,9 +30,9 @@ describe('Service Tests', () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        completionDate: currentDate.format(DATE_TIME_FORMAT)
+                        completionDate: currentDate.format(DATE_TIME_FORMAT),
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 service
                     .find(123)
@@ -49,15 +47,15 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        completionDate: currentDate.format(DATE_TIME_FORMAT)
+                        completionDate: currentDate.format(DATE_TIME_FORMAT),
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign(
                     {
-                        completionDate: currentDate
+                        completionDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .create(new ExerciseResult(null))
@@ -77,16 +75,16 @@ describe('Service Tests', () => {
                         score: 1,
                         rated: true,
                         hasFeedback: true,
-                        assessmentType: 'BBBBBB'
+                        assessmentType: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign(
                     {
-                        completionDate: currentDate
+                        completionDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .update(expected)
@@ -106,21 +104,21 @@ describe('Service Tests', () => {
                         score: 1,
                         rated: true,
                         hasFeedback: true,
-                        assessmentType: 'BBBBBB'
+                        assessmentType: 'BBBBBB',
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign(
                     {
-                        completionDate: currentDate
+                        completionDate: currentDate,
                     },
-                    returnedFromService
+                    returnedFromService,
                 );
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

@@ -1,20 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from '../../core';
-import { ExerciseComponent } from './exercise.component';
 import { ExerciseLtiConfigurationPopupComponent } from './exercise-lti-configuration-dialog.component';
 import { ExerciseResetPopupComponent } from './exercise-reset-dialog.component';
-
-export const exerciseRoute: Routes = [
-    {
-        path: 'exercise',
-        component: ExerciseComponent,
-        data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.exercise.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    }
-];
 
 export const exercisePopupRoute: Routes = [
     {
@@ -22,19 +9,19 @@ export const exercisePopupRoute: Routes = [
         component: ExerciseLtiConfigurationPopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
         path: 'exercise/:id/reset',
         component: ExerciseResetPopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
+        outlet: 'popup',
+    },
 ];

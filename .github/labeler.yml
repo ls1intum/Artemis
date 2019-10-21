@@ -1,0 +1,8 @@
+server:
+- src/main/java/**/*.java
+
+client:
+- src/main/webapp/**/*
+
+tests:
+- src/test/*

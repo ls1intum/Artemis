@@ -1,55 +1,50 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
-import { ArTEMiSSharedModule } from 'app/shared';
+import { adminState } from './admin.route';
+import { ArtemisSharedModule } from 'app/shared';
 import {
-    adminState,
     AuditsComponent,
     JhiConfigurationComponent,
     JhiHealthCheckComponent,
     JhiHealthModalComponent,
     JhiMetricsMonitoringComponent,
-    JhiMetricsMonitoringModalComponent,
     JhiTrackerComponent,
     LogsComponent,
-    UserMgmtComponent,
-    UserMgmtDeleteDialogComponent,
-    UserMgmtDetailComponent,
-    UserMgmtUpdateComponent
+    NotificationMgmtComponent,
+    NotificationMgmtDetailComponent,
+    NotificationMgmtUpdateComponent,
+    UserManagementComponent,
+    UserManagementDetailComponent,
+    UserManagementUpdateComponent,
 } from './';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
+const ENTITY_STATES = [...adminState];
+
 @NgModule({
     imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(adminState)
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedModule,
+        FormDateTimePickerModule,
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
     declarations: [
         AuditsComponent,
-        UserMgmtComponent,
-        UserMgmtDetailComponent,
-        UserMgmtUpdateComponent,
-        UserMgmtDeleteDialogComponent,
+        UserManagementComponent,
+        UserManagementDetailComponent,
+        UserManagementUpdateComponent,
+        NotificationMgmtComponent,
+        NotificationMgmtDetailComponent,
+        NotificationMgmtUpdateComponent,
         LogsComponent,
         JhiConfigurationComponent,
         JhiHealthCheckComponent,
         JhiHealthModalComponent,
         JhiTrackerComponent,
         JhiMetricsMonitoringComponent,
-        JhiMetricsMonitoringModalComponent
     ],
-    entryComponents: [UserMgmtDeleteDialogComponent, JhiHealthModalComponent, JhiMetricsMonitoringModalComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    entryComponents: [JhiHealthModalComponent],
 })
-export class ArTEMiSAdminModule {
-    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (languageKey !== undefined) {
-                this.languageService.changeLanguage(languageKey);
-            }
-        });
-    }
-}
+export class ArtemisAdminModule {}

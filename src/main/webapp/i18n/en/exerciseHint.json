@@ -1,0 +1,28 @@
+{
+    "artemisApp": {
+        "exerciseHint": {
+            "home": {
+                "title": "Exercise Hints",
+                "createLabel": "Create a new Exercise Hint",
+                "createOrEditLabel": "Create or edit an Exercise Hint",
+                "notFound": "No Exercise Hint found"
+            },
+            "created": "A new Exercise Hint is created with identifier {{ param }}",
+            "updated": "An Exercise Hint is updated with identifier {{ param }}",
+            "deleted": "An Exercise Hint is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Exercise Hint \"{{ title }}\"?"
+            },
+            "detail": {
+                "title": "Exercise Hint"
+            },
+            "title": "Title",
+            "content": "Content",
+            "exercise": "Exercise",
+            "studentDialog": {
+                "title": "Exercise Hints",
+                "tooltip": "Open hints for this exercise"
+            }
+        }
+    }
+}

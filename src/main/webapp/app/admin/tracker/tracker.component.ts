@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { JhiWebsocketService } from 'app/core';
 
 @Component({
     selector: 'jhi-tracker',
-    templateUrl: './tracker.component.html'
+    templateUrl: './tracker.component.html',
 })
 export class JhiTrackerComponent implements OnInit, OnDestroy {
     activities: any[] = [];
@@ -36,6 +36,6 @@ export class JhiTrackerComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.trackerService.unsubscribe();
+        this.trackerService.unsubscribe('/topic/tracker');
     }
 }

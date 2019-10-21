@@ -1,0 +1,40 @@
+.text-with-feedback {
+    text-decoration-line: underline;
+    padding: 2px 4px;
+    border-radius: 4px;
+
+    &.positive-feedback {
+        text-decoration-style: double;
+        text-decoration-color: green;
+        color: green;
+        background-color: #f2f9f2;
+    }
+
+    &.negative-feedback {
+        text-decoration-style: wavy;
+        text-decoration-color: #c7254e;
+        color: #c7254e;
+        background-color: #f9f2f4;
+    }
+
+    &.neutral-feedback {
+        text-decoration-style: dashed;
+        text-decoration-color: #1a1a1a;
+        background-color: #f2f2f2;
+        color: #1a1a1a;
+    }
+
+    b {
+        font-weight: 600;
+    }
+}
+
+.feedback-icon {
+    &.positive-feedback {
+        color: #3d9970;
+    }
+
+    &.negative-feedback {
+        color: #ff4136;
+    }
+}

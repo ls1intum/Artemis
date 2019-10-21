@@ -2,30 +2,23 @@ import { AfterViewInit, Component, ElementRef, OnInit, Renderer } from '@angular
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 
-import { LoginModalService } from 'app/core';
 import { PasswordResetFinishService } from './password-reset-finish.service';
 
 @Component({
     selector: 'jhi-password-reset-finish',
-    templateUrl: './password-reset-finish.component.html'
+    templateUrl: './password-reset-finish.component.html',
 })
 export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     confirmPassword: string;
-    doNotMatch: string;
-    error: string;
+    doNotMatch: string | null;
+    error: string | null;
     keyMissing: boolean;
     resetAccount: any;
-    success: string;
+    success: string | null;
     modalRef: NgbModalRef;
     key: string;
 
-    constructor(
-        private passwordResetFinishService: PasswordResetFinishService,
-        private loginModalService: LoginModalService,
-        private route: ActivatedRoute,
-        private elementRef: ElementRef,
-        private renderer: Renderer
-    ) {}
+    constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private elementRef: ElementRef, private renderer: Renderer) {}
 
     ngOnInit() {
         this.route.queryParams.subscribe(params => {
@@ -54,12 +47,8 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
                 () => {
                     this.success = null;
                     this.error = 'ERROR';
-                }
+                },
             );
         }
-    }
-
-    login() {
-        this.modalRef = this.loginModalService.open();
     }
 }

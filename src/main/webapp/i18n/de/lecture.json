@@ -1,0 +1,51 @@
+{
+    "artemisApp": {
+        "lecture": {
+            "home": {
+                "title": "Vorlesungen",
+                "createLabel": "Vorlesung erstellen",
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
+            },
+            "created": "Vorlesung erstellt mit ID {{ param }}",
+            "updated": "Vorlesung aktualisiert mit ID {{ param }}",
+            "deleted": "Vorlesung gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll die Vorlesung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen der Vorlesung zur Bestätigung ein."
+            },
+            "title": "Title",
+            "description": "Beschreibung",
+            "startDate": "Start",
+            "endDate": "Ende",
+            "course": "Kurs",
+            "detail": {
+                "title": "Vorlesung"
+            },
+            "attachments": {
+                "title": "Anhänge der Vorlesung",
+                "name": "Name",
+                "type": "Typ",
+                "link": "Link",
+                "file": "Datei",
+                "releaseDate": "Freigabedatum",
+                "uploadDate": "Upload-Datum",
+                "version": "Version",
+                "uploading": "Lade hoch...",
+                "isBeingEdited": "Wird gerade bearbeitet...",
+                "isDownloading": "Wird heruntergeladen...",
+                "attachments": "Anhänge",
+                "newAttachment": "Neuer Anhang",
+                "editAttachment": "Anhang bearbeiten",
+                "notificationText": "Mitteilungstext",
+                "notificationPlaceholder": "Optional: Mitteilung über die Änderung",
+                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 10MB"
+            }
+        },
+        "attachment": {
+            "deleteQuestion": "Soll der Anhang wirklich gelöscht werden?",
+            "created": "Anhang erstellt mit ID {{ param }}",
+            "updated": "Anhang aktualisiert mit ID {{ param }}",
+            "deleted": "Anhang gelöscht mit ID {{ param }}"
+        }
+    }
+}

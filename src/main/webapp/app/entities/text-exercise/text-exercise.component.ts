@@ -1,111 +1,88 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
-import { Course, CourseExerciseService, CourseService } from '../course';
+import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
+import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-text-exercise',
-    templateUrl: './text-exercise.component.html'
+    templateUrl: './text-exercise.component.html',
 })
-export class TextExerciseComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
-    textExercises: TextExercise[];
-    course: Course;
-    eventSubscriber: Subscription;
-    courseId: number;
-    itemsPerPage: number;
-    links: any;
-    page: number;
-    predicate: string;
-    reverse: boolean;
+export class TextExerciseComponent extends ExerciseComponent {
+    @Input() textExercises: TextExercise[];
 
     constructor(
         private textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private courseService: CourseService,
+        courseService: CourseService,
+        translateService: TranslateService,
         private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
-        private route: ActivatedRoute
+        eventManager: JhiEventManager,
+        route: ActivatedRoute,
+        private accountService: AccountService,
     ) {
+        super(courseService, translateService, route, eventManager);
         this.textExercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
-        this.predicate = 'id';
-        this.reverse = true;
     }
 
-    ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.load();
-            this.registerChangeInTextExercises();
-        });
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    loadAll() {
-        this.textExerciseService.query().subscribe(
+    protected loadExercises(): void {
+        this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<TextExercise[]>) => {
-                this.textExercises = res.body;
+                this.textExercises = res.body!;
+
+                // reconnect exercise with course
+                this.textExercises.forEach(exercise => {
+                    exercise.course = this.course;
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                });
+                this.emitExerciseCount(this.textExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
-    load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            if (this.courseId) {
-                this.loadAllForCourse();
-            } else {
-                this.loadAll();
-            }
-        });
-    }
-
-    loadAllForCourse() {
-        this.courseExerciseService
-            .findAllTextExercises(this.courseId, {
-                page: this.page,
-                size: this.itemsPerPage
-            })
-            .subscribe(
-                (res: HttpResponse<TextExercise[]>) => {
-                    this.textExercises = res.body;
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
-        });
-    }
-
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAll();
-    }
-
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a text exercise in the collection
+     * @param item current text exercise
+     */
     trackId(index: number, item: TextExercise) {
         return item.id;
     }
-    registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load());
+
+    /**
+     * Deletes text exercise
+     * @param textExerciseId id of the exercise that will be deleted
+     */
+    deleteTextExercise(textExerciseId: number) {
+        this.textExerciseService.delete(textExerciseId).subscribe(
+            response => {
+                this.eventManager.broadcast({
+                    name: 'textExerciseListModification',
+                    content: 'Deleted an textExercise',
+                });
+            },
+            error => this.onError(error),
+        );
+    }
+
+    protected getChangeEventName(): string {
+        return 'textExerciseListModification';
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
+    /**
+     * Used in the template for jhiSort
+     */
     callback() {}
 }

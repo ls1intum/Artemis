@@ -1,10 +1,10 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, inject, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArTeMiSTestModule } from '../../../test.module';
 import { SubmissionDeleteDialogComponent } from 'app/entities/submission/submission-delete-dialog.component';
 import { SubmissionService } from 'app/entities/submission/submission.service';
 
@@ -18,8 +18,8 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [SubmissionDeleteDialogComponent]
+                imports: [ArTeMiSTestModule],
+                declarations: [SubmissionDeleteDialogComponent],
             })
                 .overrideTemplate(SubmissionDeleteDialogComponent, '')
                 .compileComponents();
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
                     expect(service.delete).toHaveBeenCalledWith(123);
                     expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
                     expect(mockEventManager.broadcastSpy).toHaveBeenCalled();
-                })
+                }),
             ));
         });
     });

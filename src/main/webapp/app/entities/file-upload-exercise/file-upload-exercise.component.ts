@@ -1,110 +1,85 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
+import { TranslateService } from '@ngx-translate/core';
+import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
-import { Course, CourseExerciseService, CourseService } from '../course';
-import { ActivatedRoute } from '@angular/router';
+import { CourseExerciseService, CourseService } from '../course';
+import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { AccountService } from 'app/core';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
-    templateUrl: './file-upload-exercise.component.html'
+    templateUrl: './file-upload-exercise.component.html',
 })
-export class FileUploadExerciseComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
-    fileUploadExercises: FileUploadExercise[];
-    course: Course;
-    eventSubscriber: Subscription;
-    courseId: number;
-    itemsPerPage: number;
-    links: any;
-    page: number;
-    predicate: string;
-    reverse: boolean;
+export class FileUploadExerciseComponent extends ExerciseComponent {
+    @Input() fileUploadExercises: FileUploadExercise[] = [];
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
-        private route: ActivatedRoute
+        private accountService: AccountService,
+        courseService: CourseService,
+        translateService: TranslateService,
+        eventManager: JhiEventManager,
+        route: ActivatedRoute,
     ) {
-        this.fileUploadExercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
-        this.predicate = 'id';
-        this.reverse = true;
+        super(courseService, translateService, route, eventManager);
     }
 
-    ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.load();
-            this.registerChangeInFileUploadExercises();
-        });
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    loadAll() {
-        this.fileUploadExerciseService.query().subscribe(
-            (res: HttpResponse<FileUploadExercise[]>) => {
-                this.fileUploadExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
-    }
-
-    load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            if (this.courseId) {
-                this.loadAllForCourse();
-            } else {
-                this.loadAll();
-            }
-        });
-    }
-
-    loadAllForCourse() {
+    protected loadExercises(): void {
         this.courseExerciseService
-            .findAllFileUploadExercises(this.courseId, {
-                page: this.page,
-                size: this.itemsPerPage
-            })
+            .findAllFileUploadExercisesForCourse(this.courseId)
+            .pipe(filter(res => !!res.body))
             .subscribe(
                 (res: HttpResponse<FileUploadExercise[]>) => {
-                    this.fileUploadExercises = res.body;
+                    this.fileUploadExercises = res.body!;
+                    // reconnect exercise with course
+                    this.fileUploadExercises.forEach(exercise => {
+                        exercise.course = this.course;
+                        exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                        exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                    });
+                    this.emitExerciseCount(this.fileUploadExercises.length);
                 },
-                (res: HttpErrorResponse) => this.onError(res)
+                (res: HttpErrorResponse) => this.onError(res),
             );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
-        });
     }
 
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAll();
-    }
-
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index of a file upload exercise in the collection
+     * @param item current file upload exercise
+     */
     trackId(index: number, item: FileUploadExercise) {
         return item.id;
     }
-    registerChangeInFileUploadExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load());
+
+    /**
+     * Deletes file upload exercise
+     * @param fileUploadExerciseId id of the exercise that will be deleted
+     */
+    deleteFileUploadExercise(fileUploadExerciseId: number) {
+        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'fileUploadExerciseListModification',
+                    content: 'Deleted an fileUploadExercise',
+                });
+            },
+            error => this.onError(error),
+        );
+    }
+
+    protected getChangeEventName(): string {
+        return 'fileUploadExerciseListModification';
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     callback() {}

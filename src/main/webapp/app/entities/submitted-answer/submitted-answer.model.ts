@@ -1,17 +1,16 @@
-import { BaseEntity } from './../../shared';
-import { Question, QuestionType } from '../question';
+import { BaseEntity } from 'app/shared';
+import { QuizQuestion, QuizQuestionType } from '../quiz-question';
 import { QuizSubmission } from '../quiz-submission';
 
 export abstract class SubmittedAnswer implements BaseEntity {
-
     public id: number;
     public scoreInPoints: number;
-    public question: Question;
+    public quizQuestion: QuizQuestion;
     public submission: QuizSubmission;
 
-    private type: QuestionType;
+    private type: QuizQuestionType;
 
-    constructor(type: QuestionType) {
+    protected constructor(type: QuizQuestionType) {
         this.type = type;
     }
 }

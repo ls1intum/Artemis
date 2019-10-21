@@ -1,17 +1,20 @@
 {
     "compilerOptions": {
+        "allowJs": false,
         "target": "es6",
-        "module": "es6",
+        "module": "esnext",
         "moduleResolution": "node",
-        "sourceMap": false,
+        "sourceMap": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "removeComments": true,
         "noImplicitAny": true,
         "suppressImplicitAnyIndexErrors": true,
+        "strictNullChecks": true,
+        "resolveJsonModule": true,
         "skipLibCheck": true,
-        "outDir": "build/www/app",
-        "lib": ["es7", "dom"],
+        "outDir": "build/resources/main/static/app",
+        "lib": ["es2018", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],
@@ -22,7 +25,7 @@
         "importHelpers": true
     },
     "angularCompilerOptions": {
-        "genDir": "build/aot",
+        "genDir": "build/resources/main/aot",
         "skipMetadataEmit" : true,
         "fullTemplateTypeCheck": true,
         "preserveWhitespaces": true

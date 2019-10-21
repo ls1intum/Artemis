@@ -22,7 +22,7 @@ class LtiOutcomeUrlGatlingTest extends Simulation {
     val baseURL = Option(System.getProperty("baseURL")) getOrElse """http://127.0.0.1:8080"""
 
     val httpConf = http
-        .baseURL(baseURL)
+        .baseUrl(baseURL)
         .inferHtmlResources()
         .acceptHeader("*/*")
         .acceptEncodingHeader("gzip, deflate")
@@ -69,7 +69,7 @@ class LtiOutcomeUrlGatlingTest extends Simulation {
             .exec(http("Create new ltiOutcomeUrl")
             .post("/api/lti-outcome-urls")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "url":"SAMPLE_TEXT", "sourcedId":"SAMPLE_TEXT"}""")).asJSON
+            .body(StringBody("""{"id":null, "url":"SAMPLE_TEXT", "sourcedId":"SAMPLE_TEXT"}""")).asJson
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_ltiOutcomeUrl_url"))).exitHereIfFailed
             .pause(10)
@@ -88,6 +88,6 @@ class LtiOutcomeUrlGatlingTest extends Simulation {
     val users = scenario("Users").exec(scn)
 
     setUp(
-        users.inject(rampUsers(100) over (1 minutes))
+        users.inject(rampUsers(100) during(1 minutes))
     ).protocols(httpConf)
 }

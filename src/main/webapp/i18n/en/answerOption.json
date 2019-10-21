@@ -1,7 +1,6 @@
-
 {
-    "arTeMiSApp": {
-        "answerOption" : {
+    "artemisApp": {
+        "answerOption": {
             "home": {
                 "title": "Answer Options",
                 "createLabel": "Create a new Answer Option",

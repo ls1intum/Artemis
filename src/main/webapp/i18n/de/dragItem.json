@@ -1,7 +1,6 @@
-
 {
-    "arTeMiSApp": {
-        "dragItem" : {
+    "artemisApp": {
+        "dragItem": {
             "home": {
                 "title": "Drag Items",
                 "createLabel": "Drag Item erstellen",

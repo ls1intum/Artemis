@@ -4,12 +4,12 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "answerOptions",
             "otherEntityName": "answerOption",
-            "otherEntityRelationshipName": "question"
+            "otherEntityRelationshipName": "quizQuestion",
+            "relationshipName": "answerOptions"
         }
     ],
-    "changelogDate": "20180927081401",
+    "changelogDate": "20190315161920",
     "entityTableName": "multiple_choice_question",
     "dto": "no",
     "pagination": "no",

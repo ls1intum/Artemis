@@ -5,37 +5,32 @@ import { HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ParticipationPopupService {
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef: NgbModalRef | null;
 
-    constructor(
-        private datePipe: DatePipe,
-        private modalService: NgbModal,
-        private router: Router,
-        private participationService: ParticipationService
-    ) {
+    constructor(private datePipe: DatePipe, private modalService: NgbModal, private router: Router, private participationService: ParticipationService) {
         this.ngbModalRef = null;
     }
 
     open(component: Component, id?: number | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            const isOpen = this.ngbModalRef !== null;
-            if (isOpen) {
+            if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
 
             if (id) {
                 this.participationService.find(id).subscribe((participationResponse: HttpResponse<Participation>) => {
-                    const participation: Participation = participationResponse.body;
+                    const participation: Participation = participationResponse.body!;
                     this.ngbModalRef = this.participationModalRef(component, participation);
                     resolve(this.ngbModalRef);
                 });
             } else {
                 // setTimeout used as a workaround for getting ExpressionChangedAfterItHasBeenCheckedError
                 setTimeout(() => {
-                    this.ngbModalRef = this.participationModalRef(component, new Participation());
+                    this.ngbModalRef = this.participationModalRef(component, new StudentParticipation());
                     resolve(this.ngbModalRef);
                 }, 0);
             }
@@ -53,7 +48,7 @@ export class ParticipationPopupService {
             reason => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }

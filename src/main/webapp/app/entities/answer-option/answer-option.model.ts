@@ -1,17 +1,15 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { MultipleChoiceQuestion } from '../multiple-choice-question';
-import { MarkDownElement } from '../../entities/question';
+import { MarkDownElement } from '../quiz-question';
 
 export class AnswerOption implements BaseEntity, MarkDownElement {
-
     public id: number;
-    public text: string;
-    public hint: string;
-    public explanation: string;
-    public isCorrect = false;       // default value
+    public text: string | null;
+    public hint: string | null;
+    public explanation: string | null;
+    public isCorrect = false; // default value
     public question: MultipleChoiceQuestion;
-    public invalid = false;         // default value
+    public invalid = false; // default value
 
-    constructor() {
-    }
+    constructor() {}
 }

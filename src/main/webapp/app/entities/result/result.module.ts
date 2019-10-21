@@ -1,28 +1,16 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { ArTEMiSSharedModule } from '../../shared';
-import { ResultComponent, ResultDetailComponent, ResultService } from './';
-import { MomentModule } from 'angular2-moment';
+import { NgModule } from '@angular/core';
+
+import { ArtemisSharedModule } from 'app/shared';
+import { ResultComponent, ResultDetailComponent, ResultService, UpdatingResultComponent } from './';
+import { MomentModule } from 'ngx-moment';
+import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
+import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        MomentModule
-    ],
-    declarations: [
-        ResultComponent,
-        ResultDetailComponent
-    ],
-    exports: [
-        ResultComponent,
-        ResultDetailComponent
-    ],
-    entryComponents: [
-        ResultComponent,
-        ResultDetailComponent
-    ],
-    providers: [
-        ResultService,
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingSubmissionModule],
+    declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
+    exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent],
+    entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent],
+    providers: [ResultService],
 })
-export class ArTEMiSResultModule {}
+export class ArtemisResultModule {}

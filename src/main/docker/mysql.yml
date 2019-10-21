@@ -1,9 +1,9 @@
 version: '2'
 services:
     artemis-mysql:
-        image: mysql:5.7.20
+        image: mysql:8.0.17
         # volumes:
-        #     - ~/volumes/jhipster/ArTEMiS/mysql/:/var/lib/mysql/
+        #     - ~/volumes/jhipster/Artemis/mysql/:/var/lib/mysql/
         environment:
             - MYSQL_USER=root
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes

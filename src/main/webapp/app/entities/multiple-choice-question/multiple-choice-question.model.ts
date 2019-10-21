@@ -1,11 +1,12 @@
 import { AnswerOption } from '../answer-option';
-import { Question, QuestionType } from '../question';
+import { QuizQuestion, QuizQuestionType } from '../quiz-question';
 
-export class MultipleChoiceQuestion extends Question {
-
+export class MultipleChoiceQuestion extends QuizQuestion {
     public answerOptions?: AnswerOption[];
 
+    public hasCorrectOption: boolean | null;
+
     constructor() {
-        super(QuestionType.MULTIPLE_CHOICE);
+        super(QuizQuestionType.MULTIPLE_CHOICE);
     }
 }

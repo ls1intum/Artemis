@@ -1,36 +1,36 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { UserMgmtDetailComponent } from 'app/admin/user-management/user-management-detail.component';
+import { ArtemisTestModule } from '../../../test.module';
+import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { User } from 'app/core';
 
 describe('Component Tests', () => {
     describe('User Management Detail Component', () => {
-        let comp: UserMgmtDetailComponent;
-        let fixture: ComponentFixture<UserMgmtDetailComponent>;
+        let comp: UserManagementDetailComponent;
+        let fixture: ComponentFixture<UserManagementDetailComponent>;
         const route = ({
-            data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) })
+            data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) }),
         } as any) as ActivatedRoute;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [UserMgmtDetailComponent],
+                imports: [ArtemisTestModule],
+                declarations: [UserManagementDetailComponent],
                 providers: [
                     {
                         provide: ActivatedRoute,
-                        useValue: route
-                    }
-                ]
+                        useValue: route,
+                    },
+                ],
             })
-                .overrideTemplate(UserMgmtDetailComponent, '')
+                .overrideTemplate(UserManagementDetailComponent, '')
                 .compileComponents();
         }));
 
         beforeEach(() => {
-            fixture = TestBed.createComponent(UserMgmtDetailComponent);
+            fixture = TestBed.createComponent(UserManagementDetailComponent);
             comp = fixture.componentInstance;
         });
 
@@ -56,8 +56,8 @@ describe('Component Tests', () => {
                         createdDate: null,
                         lastModifiedBy: null,
                         lastModifiedDate: null,
-                        password: null
-                    })
+                        password: null,
+                    }),
                 );
             });
         });

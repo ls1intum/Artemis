@@ -1,15 +1,15 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticCounterUpdateComponent } from 'app/entities/statistic-counter/statistic-counter-update.component';
-import { StatisticCounterService } from 'app/entities/statistic-counter/statistic-counter.service';
+import { StatisticCounterUpdateComponent } from 'app/entities/quiz-statistic-counter/statistic-counter-update.component';
+import { StatisticCounterService } from 'app/entities/quiz-statistic-counter/statistic-counter.service';
 import { StatisticCounter } from 'app/shared/model/statistic-counter.model';
 
 describe('Component Tests', () => {
-    describe('StatisticCounter Management Update Component', () => {
+    describe('QuizStatisticCounter Management Update Component', () => {
         let comp: StatisticCounterUpdateComponent;
         let fixture: ComponentFixture<StatisticCounterUpdateComponent>;
         let service: StatisticCounterService;
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
-                declarations: [StatisticCounterUpdateComponent]
+                declarations: [StatisticCounterUpdateComponent],
             })
                 .overrideTemplate(StatisticCounterUpdateComponent, '')
                 .compileComponents();

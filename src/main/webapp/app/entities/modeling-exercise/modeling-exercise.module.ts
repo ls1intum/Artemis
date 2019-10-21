@@ -1,53 +1,32 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
-import {
-    ModelingExerciseComponent,
-    ModelingExerciseDeleteDialogComponent,
-    ModelingExerciseDeletePopupComponent,
-    ModelingExerciseDetailComponent,
-    ModelingExerciseDialogComponent,
-    ModelingExercisePopupComponent,
-    modelingExercisePopupRoute,
-    ModelingExercisePopupService,
-    modelingExerciseRoute,
-    ModelingExerciseService
-} from './';
-import { SortByModule } from '../../components/pipes';
-import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
+import { ArtemisSharedModule } from 'app/shared';
+import { ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent, modelingExerciseRoute, ModelingExerciseService } from './';
+import { SortByModule } from 'app/components/pipes';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
+import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 
-const ENTITY_STATES = [
-    ...modelingExerciseRoute,
-    ...modelingExercisePopupRoute,
-];
+const ENTITY_STATES = [...modelingExerciseRoute];
 
 @NgModule({
     imports: [
-        ArTEMiSSharedModule,
+        ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         SortByModule,
         FormDateTimePickerModule,
+        ArtemisMarkdownEditorModule,
+        ArtemisCategorySelectorModule,
+        ArtemisDifficultyPickerModule,
+        ArtemisPresentationScoreModule,
     ],
-    declarations: [
-        ModelingExerciseComponent,
-        ModelingExerciseDetailComponent,
-        ModelingExerciseDialogComponent,
-        ModelingExerciseDeleteDialogComponent,
-        ModelingExercisePopupComponent,
-        ModelingExerciseDeletePopupComponent,
-    ],
-    entryComponents: [
-        ModelingExerciseComponent,
-        ModelingExerciseDialogComponent,
-        ModelingExercisePopupComponent,
-        ModelingExerciseDeleteDialogComponent,
-        ModelingExerciseDeletePopupComponent,
-    ],
-    providers: [
-        ModelingExerciseService,
-        ModelingExercisePopupService,
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
+    entryComponents: [ModelingExerciseComponent, DeleteDialogComponent],
+    providers: [ModelingExerciseService],
+    exports: [ModelingExerciseComponent],
 })
-export class ArTEMiSModelingExerciseModule {}
+export class ArtemisModelingExerciseModule {}

@@ -1,0 +1,58 @@
+.instructions-container {
+    display: flex;
+    height: 100%;
+}
+
+.expanded-instructions {
+    width: 30vw;
+
+    .card {
+        width: 100%;
+        min-width: 200px;
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+
+            .card-title {
+                display: flex;
+            }
+        }
+
+        .card-body {
+            overflow-y: auto;
+        }
+    }
+
+    .draggable-left {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 15px;
+    }
+}
+
+.collapsed-instructions {
+    width: 50px;
+    justify-content: space-between;
+    flex-flow: column nowrap;
+    margin-left: 15px;
+    cursor: pointer;
+    span {
+        writing-mode: vertical-rl;
+        margin: auto;
+    }
+    fa-icon {
+        display: flex;
+        justify-content: center;
+        padding: 15px 0;
+    }
+}
+.expandable-header {
+    cursor: pointer;
+    fa-icon {
+        padding-left: 5px;
+    }
+}

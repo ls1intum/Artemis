@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.util;
 
+import java.nio.charset.Charset;
+import java.util.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-
-import java.nio.charset.Charset;
-import java.util.Base64;
 
 /**
  * Utility class for HTTP headers creation.
@@ -15,40 +15,40 @@ public final class HeaderUtil {
 
     private static final Logger log = LoggerFactory.getLogger(HeaderUtil.class);
 
-    private static final String APPLICATION_NAME = "arTeMiSApp";
-
     private HeaderUtil() {
     }
 
-    public static HttpHeaders createAlert(String message, String param) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-arTeMiSApp-alert", message);
-        headers.add("X-arTeMiSApp-params", param);
+    public static HttpHeaders createAlert(String applicationName, String message, String param) {
+        return io.github.jhipster.web.util.HeaderUtil.createAlert(applicationName, message, param);
+    }
+
+    public static HttpHeaders createEntityCreationAlert(String applicationName, boolean enableTranslation, String entityName, String param) {
+        return io.github.jhipster.web.util.HeaderUtil.createEntityCreationAlert(applicationName, enableTranslation, entityName, param);
+    }
+
+    public static HttpHeaders createEntityUpdateAlert(String applicationName, boolean enableTranslation, String entityName, String param) {
+        return io.github.jhipster.web.util.HeaderUtil.createEntityUpdateAlert(applicationName, enableTranslation, entityName, param);
+    }
+
+    public static HttpHeaders createEntityDeletionAlert(String applicationName, boolean enableTranslation, String entityName, String param) {
+        return io.github.jhipster.web.util.HeaderUtil.createEntityDeletionAlert(applicationName, enableTranslation, entityName, param);
+    }
+
+    public static HttpHeaders createFailureAlert(String applicationName, boolean enableTranslation, String entityName, String errorKey, String defaultMessage) {
+        HttpHeaders headers = io.github.jhipster.web.util.HeaderUtil.createFailureAlert(applicationName, enableTranslation, entityName, errorKey, defaultMessage);
+        headers.add("X-" + applicationName + "-message", defaultMessage);
         return headers;
     }
 
-    public static HttpHeaders createEntityCreationAlert(String entityName, String param) {
-        return createAlert(APPLICATION_NAME + "." + entityName + ".created", param);
-    }
-
-    public static HttpHeaders createEntityUpdateAlert(String entityName, String param) {
-        return createAlert(APPLICATION_NAME + "." + entityName + ".updated", param);
-    }
-
-    public static HttpHeaders createEntityDeletionAlert(String entityName, String param) {
-        return createAlert(APPLICATION_NAME + "." + entityName + ".deleted", param);
-    }
-
-    public static HttpHeaders createFailureAlert(String entityName, String errorKey, String defaultMessage) {
-        log.error("Entity processing failed, {}", defaultMessage);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-arTeMiSApp-error", "error." + errorKey);
-        headers.add("X-arTeMiSApp-params", entityName);
-        return headers;
-    }
-
+    /**
+     * Creates a authorization headers for a given username and password
+     * @param username the username
+     * @param password the password
+     * @return the acceptHeader
+     */
     public static HttpHeaders createAuthorization(String username, String password) {
         HttpHeaders acceptHeaders = new HttpHeaders() {
+
             {
                 set(com.google.common.net.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
                 set(com.google.common.net.HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON.toString());
@@ -63,6 +63,7 @@ public final class HeaderUtil {
 
     public static HttpHeaders createPrivateTokenAuthorization(String privateToken) {
         HttpHeaders acceptHeaders = new HttpHeaders() {
+
             {
                 set(com.google.common.net.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
                 set(com.google.common.net.HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON.toString());

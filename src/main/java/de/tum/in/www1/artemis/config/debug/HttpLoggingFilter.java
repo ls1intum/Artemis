@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.config.debug;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.filter.OncePerRequestFilter;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 public class HttpLoggingFilter extends OncePerRequestFilter {
 
@@ -21,9 +22,7 @@ public class HttpLoggingFilter extends OncePerRequestFilter {
     private static final AtomicIntegerFieldUpdater<HttpLoggingFilter> activeRequestsUpdater = AtomicIntegerFieldUpdater.newUpdater(HttpLoggingFilter.class, "activeRequests");
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response, FilterChain chain)
-        throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         int activeRequests = activeRequestsUpdater.incrementAndGet(this);
         logger.info("Request started. Active requests: {}", activeRequests);
         try {

@@ -9,5 +9,5 @@ export enum DragState {
     MOVE,
     RESIZE_BOTH,
     RESIZE_X,
-    RESIZE_Y
+    RESIZE_Y,
 }

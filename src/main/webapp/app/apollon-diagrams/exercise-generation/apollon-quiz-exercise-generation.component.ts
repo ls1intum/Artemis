@@ -1,18 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { layoutDiagram } from '@ls1intum/apollon';
-import { generateDragAndDropQuizExercise } from './quiz-exercise-generator';
-import { Course, CourseService } from '../../entities/course';
-import { QuizExerciseService } from '../../entities/quiz-exercise';
-import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { Course, CourseService } from 'app/entities/course';
+import { QuizExerciseService } from 'app/entities/quiz-exercise';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { ApollonEditor } from '@ls1intum/apollon';
+import { generateDragAndDropQuizExercise } from 'app/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 
 @Component({
     selector: 'jhi-apollon-quiz-exercise-generation',
     templateUrl: './apollon-quiz-exercise-generation.component.html',
-    providers: []
+    providers: [],
 })
 export class ApollonQuizExerciseGenerationComponent implements OnInit {
     apollonEditor: ApollonEditor;
+    diagramTitle: string;
     courses: Course[];
     selectedCourse: Course;
 
@@ -20,42 +21,41 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         private activeModal: NgbActiveModal,
         private courseService: CourseService,
         private fileUploaderService: FileUploaderService,
-        private quizExerciseService: QuizExerciseService
+        private quizExerciseService: QuizExerciseService,
     ) {}
 
+    /**
+     * Initializes courses from the server and assigns selected course
+     */
     ngOnInit() {
-        this.courseService.query().subscribe(
-            response => {
-                this.courses = response.body;
-                this.selectedCourse = this.courses[0];
-            }, () => { }
-        );
+        this.courseService.query().subscribe(response => {
+            this.courses = response.body!;
+            this.selectedCourse = this.courses[0];
+        });
     }
 
+    /**
+     * Generates quiz exercise from Apollon diagram model
+     */
     async save() {
         if (this.selectedCourse === undefined) {
             return;
         }
 
-        const diagramState = this.apollonEditor.getState();
-        const layoutedDiagram = layoutDiagram(diagramState, { outerPadding: 50 });
-        const interactiveElementIds = new Set(diagramState.interactiveElements.allIds);
+        const model = this.apollonEditor.model;
 
-        const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
-
-        await generateDragAndDropQuizExercise(
-            layoutedDiagram,
-            interactiveElementIds,
-            fontFamily,
-            this.selectedCourse,
-            this.fileUploaderService,
-            this.quizExerciseService
-        );
-
-        this.activeModal.close();
+        try {
+            const quizExercise = await generateDragAndDropQuizExercise(this.selectedCourse, this.diagramTitle, model, this.fileUploaderService, this.quizExerciseService);
+            this.activeModal.close(quizExercise);
+        } catch (error) {
+            this.activeModal.dismiss(error);
+        }
     }
 
+    /**
+     * Closes the dialog
+     */
     dismiss() {
-        this.activeModal.dismiss('cancel');
+        this.activeModal.close();
     }
 }

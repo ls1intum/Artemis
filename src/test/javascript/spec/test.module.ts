@@ -1,18 +1,19 @@
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgModule, ElementRef, Renderer } from '@angular/core';
+import { ElementRef, NgModule, Renderer2 } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiLanguageService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiAlertService, JhiParseLinks } from 'ng-jhipster';
+import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
 
-import { MockLanguageService, MockLanguageHelper } from './helpers/mock-language.service';
-import { JhiLanguageHelper, Principal, AccountService, LoginModalService, JhiTrackerService } from 'app/core';
-import { MockPrincipal } from './helpers/mock-principal.service';
+import { MockLanguageHelper, MockLanguageService } from './helpers/mock-language.service';
+import { AccountService, JhiLanguageHelper } from 'app/core';
 import { MockAccountService } from './helpers/mock-account.service';
 import { MockActivatedRoute, MockRouter } from './helpers/mock-route.service';
 import { MockActiveModal } from './helpers/mock-active-modal.service';
 import { MockEventManager } from './helpers/mock-event-manager.service';
+import { ArtemisIconsModule } from 'app/shared/icons/icons.module';
 
+// TODO: This module was taken from auto generated tests. Needs to be reworked completely.
 @NgModule({
     providers: [
         DatePipe,
@@ -21,61 +22,58 @@ import { MockEventManager } from './helpers/mock-event-manager.service';
         JhiParseLinks,
         {
             provide: JhiLanguageService,
-            useClass: MockLanguageService
+            useClass: MockLanguageService,
         },
         {
             provide: JhiLanguageHelper,
-            useClass: MockLanguageHelper
+            useClass: MockLanguageHelper,
         },
-        {
-            provide: JhiTrackerService,
-            useValue: null
-        },
+        // {
+        //     provide: JhiTrackerService,
+        //     useValue: null,
+        // },
         {
             provide: JhiEventManager,
-            useClass: MockEventManager
+            useClass: MockEventManager,
         },
         {
             provide: NgbActiveModal,
-            useClass: MockActiveModal
+            useClass: MockActiveModal,
         },
         {
             provide: ActivatedRoute,
-            useValue: new MockActivatedRoute({ id: 123 })
+            useValue: new MockActivatedRoute({ id: 123 }),
         },
         {
             provide: Router,
-            useClass: MockRouter
+            useClass: MockRouter,
         },
-        {
-            provide: Principal,
-            useClass: MockPrincipal
-        },
+        // {
+        //     provide: Principal,
+        //     useClass: MockPrincipal,
+        // },
         {
             provide: AccountService,
-            useClass: MockAccountService
-        },
-        {
-            provide: LoginModalService,
-            useValue: null
+            useClass: MockAccountService,
         },
         {
             provide: ElementRef,
-            useValue: null
+            useValue: null,
         },
         {
-            provide: Renderer,
-            useValue: null
+            provide: Renderer2,
+            useValue: null,
         },
         {
             provide: JhiAlertService,
-            useValue: null
+            useValue: null,
         },
         {
             provide: NgbModal,
-            useValue: null
-        }
+            useValue: null,
+        },
     ],
-    imports: [HttpClientTestingModule]
+    imports: [HttpClientTestingModule, ArtemisIconsModule],
+    exports: [ArtemisIconsModule],
 })
-export class ArTEMiSTestModule {}
+export class ArtemisTestModule {}

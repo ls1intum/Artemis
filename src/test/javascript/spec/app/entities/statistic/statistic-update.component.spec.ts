@@ -1,15 +1,15 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticUpdateComponent } from 'app/entities/statistic/statistic-update.component';
-import { StatisticService } from 'app/entities/statistic/statistic.service';
+import { StatisticUpdateComponent } from 'app/entities/quiz-statistic/statistic-update.component';
+import { StatisticService } from 'app/entities/quiz-statistic/statistic.service';
 import { Statistic } from 'app/shared/model/statistic.model';
 
 describe('Component Tests', () => {
-    describe('Statistic Management Update Component', () => {
+    describe('QuizStatistic Management Update Component', () => {
         let comp: StatisticUpdateComponent;
         let fixture: ComponentFixture<StatisticUpdateComponent>;
         let service: StatisticService;
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
-                declarations: [StatisticUpdateComponent]
+                declarations: [StatisticUpdateComponent],
             })
                 .overrideTemplate(StatisticUpdateComponent, '')
                 .compileComponents();

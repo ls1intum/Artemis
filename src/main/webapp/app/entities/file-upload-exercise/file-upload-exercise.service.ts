@@ -1,73 +1,79 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
-
-import * as moment from 'moment';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import { FileUploadExercise } from './file-upload-exercise.model';
-import { createRequestOption } from '../../shared';
-import { Exercise } from 'app/entities/exercise';
+import { createRequestOption } from 'app/shared';
+import { ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class FileUploadExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/file-upload-exercises';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
+    /**
+     * Sends request to create new file upload exercise
+     * @param fileUploadExercise that will be send to the server
+     */
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(fileUploadExercise);
+        let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
+        copy = this.formatFilePattern(copy);
         return this.http
             .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    update(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(fileUploadExercise);
+    /**
+     * Sends request to update file upload exercise on the server
+     * @param fileUploadExercise that we want to update to
+     * @param exerciseId id of the exercise that will be updated
+     * @param req request options passed to the server
+     */
+    update(fileUploadExercise: FileUploadExercise, exerciseId: number, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
+        copy = this.formatFilePattern(copy);
         return this.http
-            .put<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .put<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, copy, { params: options, observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    /**
+     * Sends request to get exercise by its id
+     * @param exerciseId id of the exercise
+     */
+    find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<FileUploadExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    /**
+     * Sends request to get all available file upload exercises
+     * @param req request options passed to the server
+     */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    /**
+     * Sends request to delete file upload exercise by its id
+     * @param exerciseId id of the exercise
+     */
+    delete(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
-    private convertDateFromClient(exercise: FileUploadExercise): FileUploadExercise {
-        const copy: FileUploadExercise = Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
-        });
-        return copy;
-    }
-
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
-        res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
-        return res;
-    }
-
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((exercise: Exercise) => {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        });
-        return res;
+    private formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
+        fileUploadExercise.filePattern = fileUploadExercise.filePattern.replace(/\s/g, '').toLowerCase();
+        return fileUploadExercise;
     }
 }

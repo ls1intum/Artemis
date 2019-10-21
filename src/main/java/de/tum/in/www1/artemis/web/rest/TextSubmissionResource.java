@@ -1,21 +1,29 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
+import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.swing.text.html.Option;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * REST controller for managing TextSubmission.
@@ -24,95 +32,206 @@ import java.util.Optional;
 @RequestMapping("/api")
 public class TextSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
-
     private static final String ENTITY_NAME = "textSubmission";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository) {
+    private final ExerciseService exerciseService;
+
+    private final TextExerciseService textExerciseService;
+
+    private final CourseService courseService;
+
+    private final ParticipationService participationService;
+
+    private final TextSubmissionService textSubmissionService;
+
+    private final UserService userService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
+            CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
+            AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
+        this.exerciseService = exerciseService;
+        this.textExerciseService = textExerciseService;
+        this.courseService = courseService;
+        this.participationService = participationService;
+        this.textSubmissionService = textSubmissionService;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
-     * POST  /text-submissions : Create a new textSubmission.
+     * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves his/her answer
      *
+     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param principal      the current user principal
      * @param textSubmission the textSubmission to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new textSubmission, or with status 400 (Bad Request) if the textSubmission has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/text-submissions")
-    @Timed
-    public ResponseEntity<TextSubmission> createTextSubmission(@RequestBody TextSubmission textSubmission) throws URISyntaxException {
+    @PostMapping("/exercises/{exerciseId}/text-submissions")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save TextSubmission : {}", textSubmission);
         if (textSubmission.getId() != null) {
             throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        TextSubmission result = textSubmissionRepository.save(textSubmission);
-        return ResponseEntity.created(new URI("/api/text-submissions/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+
+        return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
     /**
-     * PUT  /text-submissions : Updates an existing textSubmission.
+     * PUT /exercises/{exerciseId}/text-submissions : Updates an existing textSubmission. This function is called by the text editor for saving and submitting text submissions. The
+     * submit specific handling occurs in the TextSubmissionService.save() function.
      *
+     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param principal      the current user principal
      * @param textSubmission the textSubmission to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission,
-     * or with status 400 (Bad Request) if the textSubmission is not valid,
-     * or with status 500 (Internal Server Error) if the textSubmission couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
+     *         500 (Internal Server Error) if the textSubmission couldn't be updated
      */
-    @PutMapping("/text-submissions")
-    @Timed
-    public ResponseEntity<TextSubmission> updateTextSubmission(@RequestBody TextSubmission textSubmission) throws URISyntaxException {
+    @PutMapping("/exercises/{exerciseId}/text-submissions")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update TextSubmission : {}", textSubmission);
         if (textSubmission.getId() == null) {
-            return createTextSubmission(textSubmission);
+            return createTextSubmission(exerciseId, principal, textSubmission);
         }
-        TextSubmission result = textSubmissionRepository.save(textSubmission);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textSubmission.getId().toString()))
-            .body(result);
+
+        return handleTextSubmission(exerciseId, principal, textSubmission);
+    }
+
+    @NotNull
+    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
+        if (responseFailure != null) {
+            return responseFailure;
+        }
+
+        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
+
+        this.textSubmissionService.hideDetails(textSubmission);
+        return ResponseEntity.ok(textSubmission);
     }
 
     /**
-     * GET  /text-submissions : get all the textSubmissions.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
-     */
-    @GetMapping("/text-submissions")
-    @Timed
-    public List<TextSubmission> getAllTextSubmissions() {
-        log.debug("REST request to get all TextSubmissions");
-        return textSubmissionRepository.findAll();
-        }
-
-    /**
-     * GET  /text-submissions/:id : get the "id" textSubmission.
+     * GET /text-submissions/:id : get the "id" textSubmission.
      *
      * @param id the id of the textSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/text-submissions/{id}")
-    @Timed
     public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
         log.debug("REST request to get TextSubmission : {}", id);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(textSubmission);
     }
 
+    private ResponseEntity<TextSubmission> checkExerciseValidity(TextExercise textExercise) {
+        if (textExercise == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
+
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(textExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
+                    .body(null);
+        }
+        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return null;
+    }
+
     /**
-     * DELETE  /text-submissions/:id : delete the "id" textSubmission.
+     * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
+     * assessed by the tutor who is doing the call
      *
-     * @param id the id of the textSubmission to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param submittedOnly mark if only submitted Submissions should be returned
+     * @param assessedByTutor mark if only assessed Submissions should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
-    @DeleteMapping("/text-submissions/{id}")
-    @Timed
-    public ResponseEntity<Void> deleteTextSubmission(@PathVariable Long id) {
-        log.debug("REST request to delete TextSubmission : {}", id);
-        textSubmissionRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+        log.debug("REST request to get all TextSubmissions");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<TextSubmission> textSubmissions;
+        if (assessedByTutor) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
+        }
+
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            textSubmissions.forEach(textSubmission -> {
+                if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
+                    ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
+                }
+            });
+        }
+
+        return ResponseEntity.ok().body(textSubmissions);
+    }
+
+    /**
+     * GET /text-submission-without-assessment : get one textSubmission without assessment.
+     *
+     * @param exerciseId exerciseID  for which a submission should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a text submission without assessment");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
+        if (!(exercise instanceof TextExercise)) {
+            return badRequest();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+
+        // Check if the limit of simultaneously locked submissions has been reached
+        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
+
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+
+        // tutors should not see information about the student of a submission
+        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
+                && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
+        }
+
+        return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }
 }

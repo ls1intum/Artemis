@@ -7,7 +7,7 @@
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081354",
+    "changelogDate": "20190315161913",
     "entityTableName": "file_upload_exercise",
     "dto": "no",
     "pagination": "no",

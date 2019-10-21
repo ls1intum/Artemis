@@ -1,24 +1,36 @@
-
 {
-    "arTeMiSApp": {
-        "modelingExercise" : {
+    "artemisApp": {
+        "modelingExercise": {
             "home": {
                 "title": "Modeling Exercises",
-                "createLabel": "Create a new Modeling Exercise",
-                "createOrEditLabel": "Create or edit a Modeling Exercise"
+                "createLabel": "Create new Modeling Exercise",
+                "editLabel": "Edit Modeling Exercise"
             },
             "created": "A new Modeling Exercise is created with identifier {{ param }}",
             "updated": "A Modeling Exercise is updated with identifier {{ param }}",
             "deleted": "A Modeling Exercise is deleted with identifier {{ param }}",
-            "delete": {
-                "question": "Are you sure you want to delete Modeling Exercise {{ title }}?"
-            },
             "detail": {
                 "title": "Modeling Exercise"
             },
             "diagramType": "Diagram Type",
-            "sampleSolutionModel": "Sample Solution Model",
-            "sampleSolutionExplanation": "Sample Solution Explanation"
+            "problemStatement": "Problem Statement:",
+            "exampleSolution": "Example Solution",
+            "exampleSolutionExplanation": "Example Solution Explanation",
+            "createExampleSolution": "Create Example Solution",
+            "exampleSolutionRequiresExercise": "To create an example solution, you first need to finish creating the text exercise.",
+            "exampleSolutionForModelingExercise": "Example Solution for Modeling Exercise {{ exerciseTitle }}",
+            "saveExampleSolution": "Save Example Solution",
+            "exampleSubmission": "Example Submission {{ number }}",
+            "exampleSubmissions": "Example Submissions",
+            "createExampleSubmission": "Create Example Submission",
+            "createNewExampleSubmission": "Create new Example Submission",
+            "updateExampleSubmission": "Update Example Submission",
+            "saveExampleAssessment": "Save Example Assessment",
+            "showExampleSubmission": "Show Submission",
+            "showExampleAssessment": "Show Assessment",
+            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
+            "exampleSubmissionForModelingExercise": "Example Submission for Modeling Exercise {{ exerciseTitle }}",
+            "usedForTutorial": "Used for Tutorial"
         }
     }
 }

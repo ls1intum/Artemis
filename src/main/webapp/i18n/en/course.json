@@ -1,34 +1,62 @@
-
 {
-    "arTeMiSApp": {
-        "course" : {
+    "artemisApp": {
+        "course": {
             "home": {
                 "title": "Courses",
-                "createLabel": "Create a new Course",
-                "createOrEditLabel": "Create or edit a Course"
+                "createLabel": "Create new course",
+                "editLabel": "Edit course",
+                "createOrEditLabel": "Create or edit a course"
             },
-            "created": "A new Course is created with identifier {{ param }}",
-            "updated": "A Course is updated with identifier {{ param }}",
-            "deleted": "A Course is deleted with identifier {{ param }}",
+            "created": "A new course was created with title {{ param }}",
+            "updated": "A Course was updated with title {{ param }}",
+            "deleted": "A Course was deleted with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Course {{ id }}?"
+                "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the Course to confirm."
             },
             "detail": {
                 "title": "Course"
             },
+            "showActive": "Show only active courses",
+            "totalScore": "Total Score:",
             "title": "Title",
-            "studentGroupName": "Student Group Name",
-            "teachingAssistantGroupName": "Teaching Assistant Group Name",
-            "instructorGroupName": "Instructor Group Name",
-            "startDate": "Start Date",
-            "endDate": "End Date",
+            "color": "Color",
+            "courseIcon": "Course Icon",
+            "shortName": "Short Name",
+            "studentGroupName": "Student Group",
+            "teachingAssistantGroupName": "Tutor Group",
+            "instructorGroupName": "Instructor Group",
+            "description": "Course Description",
+            "startDate": "Start",
+            "endDate": "End",
+            "accessGroups": "Access Groups",
             "onlineCourse": "Online Course",
+            "registrationEnabled": "Registration Enabled",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
-            "modelingExercises": "Modeling Exercises (Beta)",
-            "textExercises": "Text Exercises (Beta)",
-            "fileUploadExercises": "File Upload Exercises (Beta)"
+            "modelingExercises": "Modeling Exercises",
+            "textExercises": "Text Exercises",
+            "upload": "Upload",
+            "uploading": "Uploading...",
+            "fileUploadExercises": "File Upload Exercises",
+            "students": "Students",
+            "tutors": "Tutors",
+            "instructors": "Instructors",
+            "onlineCourseFalse": "No",
+            "onlineCourseTrue": "Yes",
+            "form": {
+                "shortname": {
+                    "minlength": "Short Name must have a length of 3 or more characters.",
+                    "forbidden": "Short Name must start with a letter and cannot contain special characters."
+                }
+            },
+            "instructorDashboard": "Instructor Dashboard",
+            "presentationScoreEnabled": {
+                "title": "Presentation Score",
+                "description": "Activate this checkbox to define the amount of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise, if this feature should be activated."
+            },
+            "presentationScore": "Required Presentation Score for Bonus"
         }
     }
 }

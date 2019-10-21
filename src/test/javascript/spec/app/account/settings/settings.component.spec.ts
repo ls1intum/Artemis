@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { Observable, throwError } from 'rxjs';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { throwError } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { Principal, AccountService } from 'app/core';
+import { ArtemisTestModule } from '../../../test.module';
+import { AccountService, Principal } from 'app/core';
 import { SettingsComponent } from 'app/account/settings/settings.component';
 import { JhiTrackerService } from 'app/core/tracker/tracker.service';
 import { MockTrackerService } from '../../../helpers/mock-tracker.service';
@@ -16,14 +16,14 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [SettingsComponent],
                 providers: [
                     {
                         provide: JhiTrackerService,
-                        useClass: MockTrackerService
-                    }
-                ]
+                        useClass: MockTrackerService,
+                    },
+                ],
             })
                 .overrideTemplate(SettingsComponent, '')
                 .compileComponents();
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
                 activated: true,
                 email: 'john.doe@mail.com',
                 langKey: 'en',
-                login: 'john'
+                login: 'john',
             };
             mockPrincipal.setResponse(accountValues);
 
@@ -63,7 +63,7 @@ describe('Component Tests', () => {
             // GIVEN
             const accountValues = {
                 firstName: 'John',
-                lastName: 'Doe'
+                lastName: 'Doe',
             };
             mockPrincipal.setResponse(accountValues);
 

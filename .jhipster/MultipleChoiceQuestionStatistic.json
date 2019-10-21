@@ -4,12 +4,12 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "answerCounters",
             "otherEntityName": "answerCounter",
-            "otherEntityRelationshipName": "multipleChoiceQuestionStatistic"
+            "otherEntityRelationshipName": "multipleChoiceQuestionStatistic",
+            "relationshipName": "answerCounters"
         }
     ],
-    "changelogDate": "20180927081345",
+    "changelogDate": "20190315161902",
     "entityTableName": "mc_question_statistic",
     "dto": "no",
     "pagination": "no",

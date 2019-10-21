@@ -4,8 +4,8 @@
       "packageName": "de.tum.in.www1.artemis",
       "nativeLanguage": "en"
     },
-    "jhipsterVersion": "5.5.0",
-    "baseName": "ArTEMiS",
+    "jhipsterVersion": "6.4.1",
+    "baseName": "Artemis",
     "packageName": "de.tum.in.www1.artemis",
     "packageFolder": "de/tum/in/www1/artemis",
     "serverPort": "8080",
@@ -25,17 +25,13 @@
     "useSass": true,
     "clientPackageManager": "yarn",
     "applicationType": "monolith",
-    "testFrameworks": [
-      "gatling"
-    ],
+    "testFrameworks": ["gatling", "protractor"],
     "jhiPrefix": "jhi",
     "otherModules": [],
     "enableTranslation": true,
     "nativeLanguage": "en",
-    "languages": [
-      "en",
-      "de"
-    ],
+    "languages": ["en", "de"],
+    "blueprints": [],
     "cacheProvider": "ehcache",
     "enableHibernateCache": true
   }

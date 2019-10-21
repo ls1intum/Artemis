@@ -1,62 +1,136 @@
 <div *ngIf="participations">
-    <h2>
-        <span>{{exercise?.title}} - </span>
-        {{participations.length}} <span jhiTranslate="arTeMiSApp.participation.home.title">Participations</span>
-    </h2>
-    <jhi-alert></jhi-alert>
-    <div class="row">
+    <div class="d-flex">
+        <h2>
+            <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+        </h2>
+        <jhi-programming-exercise-instructor-submission-state
+            class="ml-auto"
+            *ngIf="exercise?.isAtLeastInstructor && exercise?.type === PROGRAMMING"
+            [exerciseId]="exercise.id"
+        ></jhi-programming-exercise-instructor-submission-state>
     </div>
-    <br/>
+    <jhi-alert></jhi-alert>
+    <div class="row"></div>
+    <br />
     <div class="table-responsive" *ngIf="participations">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="repositoryUrl"><span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="buildPlanId"><span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="initializationState"><span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="initializationDate"><span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="student.firstName"><span jhiTranslate="arTeMiSApp.participation.student">Student</span> <span class="fa fa-sort"></span></th>
-                <th></th>
-            </tr>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                    <th jhiSortBy="id">
+                        <span jhiTranslate="global.field.id">ID</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="repositoryUrl">
+                        <span jhiTranslate="artemisApp.participation.repositoryUrl">Repository Url</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="buildPlanId">
+                        <span jhiTranslate="artemisApp.participation.buildPlanId">Build Plan Id</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="initializationState">
+                        <span jhiTranslate="artemisApp.participation.initializationState">Initialization State</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="initializationDate">
+                        <span jhiTranslate="artemisApp.participation.initializationDate">Initialization Date</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="student.firstName">
+                        <span jhiTranslate="artemisApp.participation.student">Student</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="presentationScore" *ngIf="this.presentationScoreEnabled">
+                        <span jhiTranslate="artemisApp.participation.presentationScore">Presentation Score</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </th>
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let participation of participations | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a routerLink="/participation/{{participation.id}}">{{participation.id}}</a></td>
-                <td>{{participation.repositoryUrl}}</td>
-                <td>{{participation.buildPlanId}}</td>
-                <td>{{participation.initializationState}}</td>
-                <td>{{participation.initializationDate | date:'medium'}}</td>
-                <td>
-                    <a routerLink="/user-management/{{participation.student?.login}}">{{participation.student?.firstName}} {{participation.student?.lastName}}</a>
-                </td>
-                <td class="text-right">
-                    <div class="btn-group flex-btn-group-container">
-                        <button type="submit"
-                                routerLink="/participation/{{participation.id}}"
-                                class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'participation/'+ participation.id + '/delete'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                        </button>
-                        <div *ngIf="exercise.type === PROGRAMMING">
-                            <button type="submit"
-                                    [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new']} }]"
-                                    class="btn btn-primary btn-sm">
-                                <span class="fa fa-asterisk"></span>
-                                <span class="d-none d-md-inline">New Result</span>
+                <tr *ngFor="let participation of participations | sortBy: predicate:reverse; trackBy: trackId">
+                    <td>
+                        <div *ngIf="exercise.isAtLeastInstructor; else displayId">
+                            <a routerLink="/participation/{{ participation.id }}/submissions">{{ participation.id }}</a>
+                        </div>
+                        <ng-template #displayId>
+                            {{ participation.id }}
+                        </ng-template>
+                    </td>
+                    <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
+                    <td *ngIf="exercise?.type == PROGRAMMING">
+                        <span *ngIf="participation.repositoryUrl != null"><a href="{{ participation.repositoryUrl }}" target="_blank">Repository Link</a></span>
+                    </td>
+                    <td *ngIf="exercise?.type == PROGRAMMING">
+                        <span *ngIf="participation.buildPlanId != null"
+                            ><a href="https://bamboobruegge.in.tum.de/browse/{{ participation.buildPlanId }}" target="_blank">{{ participation.buildPlanId }}</a></span
+                        >
+                    </td>
+                    <td>{{ 'artemisApp.InitializationState.' + participation.initializationState | translate }}</td>
+                    <td>{{ participation.initializationDate | date: 'medium' }}</td>
+                    <td>
+                        <a routerLink="/admin/user-management/{{ participation.student?.login }}/view"
+                            >{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a
+                        >
+                    </td>
+                    <td *ngIf="this.presentationScoreEnabled">
+                        <span>{{ participation.presentationScore ? participation.presentationScore : 0 }}</span>
+                    </td>
+                    <td class="text-right">
+                        <div class="btn-group">
+                            <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
+                                <jhi-programming-exercise-instructor-trigger-build-button
+                                    *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
+                                    [exercise]="exercise"
+                                    [participation]="participation"
+                                    class="mr-1"
+                                ></jhi-programming-exercise-instructor-trigger-build-button>
+                                <ng-template #triggerLoading>
+                                    <fa-icon icon="circle-notch" [spin]="true" class="text-secondary"></fa-icon>
+                                </ng-template>
+                            </ng-container>
+                            <button
+                                *ngIf="exercise.isAtLeastInstructor"
+                                jhiDeleteButton
+                                [entityTitle]="participation.student.name"
+                                deleteQuestion="artemisApp.participation.delete.question"
+                                (delete)="deleteParticipation(participation.id, $event)"
+                                [additionalChecks]="
+                                    exercise.type === PROGRAMMING
+                                        ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
+                                        : null
+                                "
+                            >
+                                <fa-icon icon="times"></fa-icon>
+                            </button>
+                            <button
+                                type="submit"
+                                *ngIf="exercise?.type === PROGRAMMING && participation.buildPlanId != null && exercise.isAtLeastInstructor"
+                                [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'cleanupBuildPlan'] } }]"
+                                class="btn btn-danger btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'eraser'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanupBuildPlan">Cleanup build plan</span>
+                            </button>
+                            <button
+                                *ngIf="this.presentationScoreEnabled && participation.presentationScore !== 1"
+                                (click)="addPresentation(participation)"
+                                class="btn btn-info btn-sm mr-1"
+                            >
+                                <fa-icon icon="file-powerpoint"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
+                            </button>
+                            <button
+                                *ngIf="this.presentationScoreEnabled && participation.presentationScore == 1"
+                                (click)="removePresentation(participation)"
+                                class="btn btn-danger btn-sm mr-1"
+                            >
+                                <fa-icon icon="file-powerpoint"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                             </button>
                         </div>
-                    </div>
-                </td>
-            </tr>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

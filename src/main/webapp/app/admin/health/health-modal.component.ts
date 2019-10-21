@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { JhiHealthService } from './health.service';
+import { JhiHealthService } from 'app/admin';
 
 @Component({
     selector: 'jhi-health-modal',
-    templateUrl: './health-modal.component.html'
+    templateUrl: './health-modal.component.html',
 })
 export class JhiHealthModalComponent {
     currentHealth: any;

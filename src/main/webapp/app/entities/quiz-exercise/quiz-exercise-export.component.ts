@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,16 +6,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
-import { Question } from '../question';
-import { QuizExerciseComponent } from './quiz-exercise.component';
+import { QuizQuestion } from '../quiz-question';
 import { Course, CourseService } from '../course';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
-    templateUrl: './quiz-exercise-export.component.html'
+    templateUrl: './quiz-exercise-export.component.html',
+    styleUrls: ['./quiz-exercise-export.component.scss', '../../quiz.scss'],
 })
 export class QuizExerciseExportComponent implements OnInit {
-    questions: Question[] = new Array(0);
+    questions: QuizQuestion[] = new Array(0);
     courseId: number;
     course: Course;
 
@@ -28,7 +28,7 @@ export class QuizExerciseExportComponent implements OnInit {
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         router: Router,
-        translateService: TranslateService
+        translateService: TranslateService,
     ) {
         this.router = router;
         this.translateService = translateService;
@@ -46,25 +46,27 @@ export class QuizExerciseExportComponent implements OnInit {
      * @param courseId Id of the course
      */
     private loadForCourse(courseId: number) {
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
+        this.courseService.find(this.courseId).subscribe(courseResponse => {
+            this.course = courseResponse.body!;
+            // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
+            this.quizExerciseService.findForCourse(courseId).subscribe(
+                (res: HttpResponse<QuizExercise[]>) => {
+                    const quizExercises = res.body!;
+                    for (const quizExercise of quizExercises) {
+                        // reconnect course and exercise in case we need this information later
+                        quizExercise.course = this.course;
+                        this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+                            const quizExerciseResponse = response.body!;
+                            for (const question of quizExerciseResponse.quizQuestions) {
+                                question.exercise = quizExercise;
+                                this.questions.push(question);
+                            }
+                        });
+                    }
+                },
+                (res: HttpErrorResponse) => this.onError(res),
+            );
         });
-        // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.quizExerciseService.findForCourse(courseId).subscribe(
-            (res: HttpResponse<QuizExercise[]>) => {
-                const quizExercises = res.body;
-                for (const quizExercise of quizExercises) {
-                    this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                        const quizExerciseResponse = response.body;
-                        for (const question of quizExerciseResponse.questions) {
-                            question.exercise = quizExercise;
-                            this.questions.push(question);
-                        }
-                    });
-                }
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
     }
 
     /**
@@ -72,13 +74,13 @@ export class QuizExerciseExportComponent implements OnInit {
      * @param error Error
      */
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     /**
      * Exports selected questions into json file.
      */
     exportQuiz() {
-        QuizExerciseComponent.exportQuiz(this.questions, false);
+        this.quizExerciseService.exportQuiz(this.questions, false);
     }
 }

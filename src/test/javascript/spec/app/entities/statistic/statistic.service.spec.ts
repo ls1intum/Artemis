@@ -1,21 +1,19 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
-import { StatisticService } from 'app/entities/statistic/statistic.service';
+import { map, take } from 'rxjs/operators';
+import { StatisticService } from 'app/entities/quiz-statistic/statistic.service';
 import { IStatistic, Statistic } from 'app/shared/model/statistic.model';
 
 describe('Service Tests', () => {
-    describe('Statistic Service', () => {
+    describe('QuizStatistic Service', () => {
         let injector: TestBed;
         let service: StatisticService;
         let httpMock: HttpTestingController;
         let elemDefault: IStatistic;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(StatisticService);
@@ -36,12 +34,12 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should create a Statistic', async () => {
+            it('should create a QuizStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -52,14 +50,14 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should update a Statistic', async () => {
+            it('should update a QuizStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
                         released: true,
                         participantsRated: 1,
-                        participantsUnrated: 1
+                        participantsUnrated: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -71,21 +69,21 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should return a list of Statistic', async () => {
+            it('should return a list of QuizStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
                         released: true,
                         participantsRated: 1,
-                        participantsUnrated: 1
+                        participantsUnrated: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });
@@ -93,7 +91,7 @@ describe('Service Tests', () => {
                 httpMock.verify();
             });
 
-            it('should delete a Statistic', async () => {
+            it('should delete a QuizStatistic', async () => {
                 const rxPromise = service.delete(123).subscribe(resp => expect(resp.ok));
 
                 const req = httpMock.expectOne({ method: 'DELETE' });

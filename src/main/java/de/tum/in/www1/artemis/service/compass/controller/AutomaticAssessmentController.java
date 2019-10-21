@@ -1,61 +1,75 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
-import de.tum.in.www1.artemis.service.compass.assessment.Context;
-import de.tum.in.www1.artemis.service.compass.assessment.Result;
-import de.tum.in.www1.artemis.service.compass.assessment.Score;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import de.tum.in.www1.artemis.service.compass.assessment.Context;
+import de.tum.in.www1.artemis.service.compass.assessment.Score;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class AutomaticAssessmentController {
 
     private final Logger log = LoggerFactory.getLogger(AutomaticAssessmentController.class);
 
     private double totalCoverage;
+
     private double totalConfidence;
 
-
-    public void addScoresToAssessment(AssessmentIndex index, Map<String, Score> scoreHashMap, UMLModel model) throws IOException {
-
-        for (String jsonElementID : scoreHashMap.keySet()) {
+    /**
+     * For every model element it adds the feedback (together with the context of the element) to the assessment of the corresponding similarity set. If there is no assessment for
+     * the similarity set yet, it creates a new one.
+     *
+     * @param index                manages all assessments
+     * @param elementIdFeedbackMap maps elementIds to feedbacks
+     * @param model                the UML model - contains all elements with its jsonIds
+     */
+    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLDiagram model) {
+        for (String jsonElementID : elementIdFeedbackMap.keySet()) {
             UMLElement element = model.getElementByJSONID(jsonElementID);
 
             if (element == null) {
-                throw new IOException("Score for element was not fount");
+                log.warn("Element with id " + jsonElementID + " could not be found in model.");
+                continue;
             }
 
             Context context = element.getContext();
-            Assessment assessment = index.getAssessment(element);
+            Optional<Assessment> assessmentOptional = index.getAssessment(element.getSimilarityID());
 
-            if (assessment == null) {
-                assessment = new Assessment(context, scoreHashMap.get(jsonElementID));
-                index.addAssessment(element.getElementID(), assessment);
-            } else {
-                assessment.addScore(scoreHashMap.get(jsonElementID), context);
+            if (assessmentOptional.isPresent()) {
+                assessmentOptional.get().addFeedback(elementIdFeedbackMap.get(jsonElementID), context);
+            }
+            else {
+                Assessment newAssessment = new Assessment(context, elementIdFeedbackMap.get(jsonElementID));
+                index.addAssessment(element.getSimilarityID(), newAssessment);
             }
         }
     }
 
-
-
+    /**
+     * Loop over all models and triggers their automatic assessment.
+     *
+     * @param modelIndex      manages all models
+     * @param assessmentIndex manages all assessments
+     */
+    // TODO CZ: only assess models automatically that do not already have a complete manual assessment?
     public void assessModelsAutomatically(ModelIndex modelIndex, AssessmentIndex assessmentIndex) {
 
         totalCoverage = 0;
         totalConfidence = 0;
 
-        for (UMLModel model : modelIndex.getModelCollection()) {
+        for (UMLDiagram model : modelIndex.getModelCollection()) {
 
-            Result result = assessModelAutomatically(model, assessmentIndex);
+            CompassResult compassResult = assessModelAutomatically(model, assessmentIndex);
 
-            totalCoverage += result.getCoverage();
-            totalConfidence += result.getConfidence();
+            totalCoverage += compassResult.getCoverage();
+            totalConfidence += compassResult.getConfidence();
 
         }
 
@@ -63,111 +77,53 @@ public class AutomaticAssessmentController {
         totalCoverage /= modelIndex.getModelCollectionSize();
     }
 
+    /**
+     * Loop over all elements of the given model, get their assessments form the assessment index and build a Compass result with them.
+     *
+     * @param model           the UML model which contains all the model elements
+     * @param assessmentIndex manages all assessments
+     * @return a Compass result built from the assessments of the model elements
+     */
+    public CompassResult assessModelAutomatically(UMLDiagram model, AssessmentIndex assessmentIndex) {
+        double totalCount = 0;
+        double missingCount = 0;
 
-    public Result assessModelAutomatically(UMLModel model, AssessmentIndex assessmentIndex) {
-            List<Result> resultList = new ArrayList<>();
+        Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
-            double totalCount = 0;
-            double missingCount = 0;
+        for (UMLElement element : model.getAllModelElements()) {
+            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(element.getSimilarityID());
+            totalCount++;
 
-            for (UMLClass element : model.getConnectableList()) {
-                Result result = assessConnectable(element, assessmentIndex);
-                resultList.add(result);
-
-                int classCount = element.getElementCount();
-                totalCount += classCount;
-                missingCount += classCount - result.entitiesCovered();
+            if (assessmentOptional.isEmpty()) {
+                missingCount++;
             }
-
-            Map<UMLElement, Score> scoreHashMap = new HashMap<>();
-
-            for (UMLRelation relation : model.getRelationList()) {
-                Assessment assessment = assessmentIndex.getAssessment(relation);
-                totalCount++;
-
-                if (assessment == null) {
-                    missingCount++;
-                } else {
-                    Score score = assessment.getScore(relation.getContext());
-                    if (score == null) {
-                        log.debug("Unable to find score for relation " + relation.getJSONElementID() + " in model " + model.getModelID()
-                        + " with the specific context");
-                    } else {
-                        scoreHashMap.put(relation, score);
-                    }
-                }
-            }
-
-            double coverage = (totalCount - missingCount) / totalCount;
-
-            resultList.add(new Result(scoreHashMap, coverage));
-
-            Result result = Result.buildResultFromResultList(resultList, coverage);
-
-            model.setLastAssessmentResult(result);
-
-            return result;
-    }
-
-    private Result assessConnectable(UMLClass umlClass, AssessmentIndex index) {
-        HashMap<UMLElement, Score> scoreHashMap = new HashMap<>();
-
-        int missing = 0;
-
-        Context childContext = new Context(umlClass.getElementID());
-
-        for (UMLAttribute attribute : umlClass.getAttributeList()) {
-            Assessment assessment = index.getAssessment(attribute);
-
-            if (assessment == null) {
-                missing++;
-            } else if (assessment.hasContext(childContext)) {
-                Score score = assessment.getScore(childContext);
+            else {
+                Score score = assessmentOptional.get().getScore(element.getContext());
 
                 if (score == null) {
-                    log.warn("Unable to find score for attribute " + attribute.getJSONElementID());
-                } else {
-                    scoreHashMap.put(attribute, score);
+                    log.debug("Unable to find score for element " + element.getJSONElementID() + " in model " + model.getModelSubmissionId() + " with the specific context");
+                }
+                else {
+                    scoreHashMap.put(element, score);
                 }
             }
         }
 
-        for (UMLMethod method : umlClass.getMethodList()) {
-            Assessment assessment = index.getAssessment(method);
+        double coverage = 1;
 
-            if (assessment == null) {
-                missing++;
-            } else if (assessment.hasContext(childContext)) {
-                Score score = assessment.getScore(childContext);
-
-                if (score == null) {
-                    log.warn("Unable to find score for method " + method.getJSONElementID());
-                } else {
-                    scoreHashMap.put(method, score);
-                }
-            }
+        if (totalCount != 0) {
+            coverage = (totalCount - missingCount) / totalCount;
+        }
+        else {
+            log.warn("'totalCount' was 0. Set coverage to 1 for a CompassResult");
         }
 
-        Assessment assessment = index.getAssessment(umlClass);
+        CompassResult compassResult = new CompassResult(scoreHashMap, coverage);
 
-        if (assessment == null) {
-            missing++;
-        } else {
-            Score score = assessment.getScore(umlClass.getContext());
+        model.setLastAssessmentCompassResult(compassResult);
 
-            if (score == null) {
-                log.debug("Unable to find score for class " + umlClass.getJSONElementID() + " with the specific context");
-            } else {
-                scoreHashMap.put(umlClass, score);
-            }
-        }
-
-        double totalCount = umlClass.getElementCount();
-        double coverage = (totalCount - missing) / totalCount;
-
-        return new Result(scoreHashMap, coverage);
+        return compassResult;
     }
-
 
     public double getTotalCoverage() {
         return totalCoverage;
@@ -176,5 +132,4 @@ public class AutomaticAssessmentController {
     public double getTotalConfidence() {
         return totalConfidence;
     }
-
 }

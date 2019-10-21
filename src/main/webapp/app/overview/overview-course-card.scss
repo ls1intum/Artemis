@@ -1,0 +1,16 @@
+.card {
+    height: 320px;
+    cursor: pointer;
+    .card-header {
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .card-body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+}

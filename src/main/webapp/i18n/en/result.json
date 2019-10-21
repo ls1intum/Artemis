@@ -1,0 +1,48 @@
+{
+    "artemisApp": {
+        "result": {
+            "home": {
+                "title": "Results",
+                "createLabel": "Create a new result",
+                "createOrEditLabel": "Create or edit a result"
+            },
+            "created": "A new result is created with identifier {{ param }}",
+            "updated": "A result is updated with identifier {{ param }}",
+            "deleted": "A result is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete the result with id {{ id }}?"
+            },
+            "detail": {
+                "title": "Result"
+            },
+            "noResult": "No graded result",
+            "resultString": "Result Text",
+            "completionDate": "Completion Date",
+            "successful": "Successful",
+            "buildArtifact": "Build Artifact",
+            "score": "Score",
+            "scorePercentage": "Score (in %)",
+            "rated": "Rated",
+            "hasFeedback": "Has Feedback",
+            "assessmentType": "Assessment Type",
+            "assessor": "Reviewer",
+            "feedbacks": "Feedbacks",
+            "submission": "Submission",
+            "participation": "Participation",
+            "createManual": "Create manual result for",
+            "invalidScore": "Score is required and should be a number.",
+            "resultStringRequired": "Result text is required.",
+            "exerciseStillOpen": "Exercise is still open for submissions!",
+            "studentOverride": "The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.",
+            "addFeedback": "Add Feedback",
+            "deleteFeedback": "Delete Feedback",
+            "feedbackTextRequired": "Feedback text is required.",
+            "positive": "Positive",
+            "graded": "Graded",
+            "notGraded": "Not graded",
+            "preliminary": "(preliminary)",
+            "preliminaryTooltip": "Your result is not final. More tests will be executed after the exercise's due date.",
+            "noResultDetails": "No result details available."
+        }
+    }
+}

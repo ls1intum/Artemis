@@ -1,9 +1,8 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
+import { ArtemisSharedModule } from 'app/shared';
 import {
-    ExerciseComponent,
     ExerciseLtiConfigurationDialogComponent,
     ExerciseLtiConfigurationPopupComponent,
     ExerciseLtiConfigurationService,
@@ -11,39 +10,15 @@ import {
     ExercisePopupService,
     ExerciseResetDialogComponent,
     ExerciseResetPopupComponent,
-    exerciseRoute,
-    ExerciseService
+    ExerciseService,
 } from './';
 
-const ENTITY_STATES = [
-    ...exerciseRoute,
-    ...exercisePopupRoute
-];
+const ENTITY_STATES = [...exercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
-    declarations: [
-        ExerciseComponent,
-        ExerciseLtiConfigurationDialogComponent,
-        ExerciseLtiConfigurationPopupComponent,
-        ExerciseResetDialogComponent,
-        ExerciseResetPopupComponent
-    ],
-    entryComponents: [
-        ExerciseComponent,
-        ExerciseLtiConfigurationDialogComponent,
-        ExerciseLtiConfigurationPopupComponent,
-        ExerciseResetDialogComponent,
-        ExerciseResetPopupComponent
-    ],
-    providers: [
-        ExercisePopupService,
-        ExerciseService,
-        ExerciseLtiConfigurationService
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES)],
+    declarations: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
+    entryComponents: [ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseResetDialogComponent, ExerciseResetPopupComponent],
+    providers: [ExerciseService, ExerciseLtiConfigurationService, ExercisePopupService],
 })
-export class ArTEMiSExerciseModule {}
+export class ArtemisExerciseModule {}

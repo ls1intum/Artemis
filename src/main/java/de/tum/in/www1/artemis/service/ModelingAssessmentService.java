@@ -1,137 +1,137 @@
 package de.tum.in.www1.artemis.service;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.DecimalFormat;
-import java.time.ZonedDateTime;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-public class ModelingAssessmentService {
+public class ModelingAssessmentService extends AssessmentService {
+
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentService.class);
 
-    private final JsonAssessmentRepository jsonAssessmentRepository;
-    private final ResultRepository resultRepository;
     private final UserService userService;
-    private final ModelingExerciseService modelingExerciseService;
+
+    private final ModelingSubmissionService modelingSubmissionService;
+
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    public ModelingAssessmentService(JsonAssessmentRepository jsonAssessmentRepository,
-                                     ResultRepository resultRepository,
-                                     UserService userService,
-                                     ModelingExerciseService modelingExerciseService,
-                                     ModelingSubmissionRepository modelingSubmissionRepository) {
-        this.jsonAssessmentRepository = jsonAssessmentRepository;
-        this.resultRepository = resultRepository;
+    private final CompassService compassService;
+
+    public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
+            ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            ModelingSubmissionService modelingSubmissionService) {
+        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.userService = userService;
-        this.modelingExerciseService = modelingExerciseService;
+        this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingSubmissionService = modelingSubmissionService;
     }
 
     /**
-     * Find latest assessment for given exerciseId, studentId and modelId. First checks for existence of manual assessment,
-     * then of automatic assessment.
+     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
+     * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
      *
-     * @param exerciseId
-     * @param studentId
-     * @param modelId
-     * @return
-     */
-    public String findLatestAssessment(Long exerciseId, Long studentId, Long modelId) {
-        JsonObject assessmentJson = null;
-        if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, true)) {
-            // the modelingSubmission was graded manually
-            assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, true);
-        } else if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, false)) {
-            // the modelingSubmission was graded automatically
-            assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, false);
-        }
-
-        if (assessmentJson != null) {
-            return assessmentJson.get("assessments").toString();
-        }
-        return null;
-    }
-
-    /**
-     * This function is used for manually graded results. It updates the completion date, sets the assessment type to MANUAL
-     * and sets the assessor attribute. Furthermore, it saves the assessment in the file system and if the result is rated,
-     * i.e. the assessment was submitted, the total score is calculated and set in the result.
-     *
-     * @param resultId              the resultId the assessment belongs to
-     * @param exerciseId            the exerciseId the assessment belongs to
-     * @param modelingAssessment    the assessments as string
-     * @param rated                 if the result is rated or not (false if only save assessment, true if submit assessment)
+     * @param resultId the id of the result that should be submitted
+     * @param exercise the exercise the assessment belongs to
+     * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result updateManualResult(Long resultId, Long exerciseId, String modelingAssessment, Boolean rated) {
-        Result result = resultRepository.findById(resultId).get();
-        result.setRated(rated);
+    public Result submitManualAssessment(long resultId, ModelingExercise exercise, ZonedDateTime submissionDate) {
+        // TODO CZ: use AssessmentService#submitResult() function instead
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
+                .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
+        result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        result.setAssessmentType(AssessmentType.MANUAL);
-
-        User user = userService.getUser();
-        result.setAssessor(user);
-
-        Long studentId = result.getParticipation().getStudent().getId();
-        Long submissionId = result.getSubmission().getId();
-
-        if (result.getSubmission() instanceof ModelingSubmission && result.getSubmission().getResult() == null) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
-            modelingSubmission.setResult(result);
-            modelingSubmissionRepository.save(modelingSubmission);
-        }
-
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-
-        // write assessment to file system
-        jsonAssessmentRepository.writeAssessment(exerciseId, studentId, submissionId, true, modelingAssessment);
-
-        if (rated) {
-            // set score, result string and successful if rated
-            JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
-            Double maxScore = modelingExercise.getMaxScore();
-            Double totalScore = Math.min(Math.max(0, calculateTotalScore(assessmentJson)), maxScore);
-            Double percentageScore = totalScore/maxScore*100;
-            result.setScore(Math.round(percentageScore));
-            DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-            result.setResultString(formatter.format(totalScore) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
-            result.setSuccessful(result.getScore() == 100L);
-        }
-
-        resultRepository.save(result);
-
-        return result;
+        result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of
+        // feedback credits)
+        return resultRepository.save(result);
     }
 
     /**
-     * Helper function to calculate the total score of an assessment json. It loops through all assessed model elements
-     * and sums the credits up.
+     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
+     * database.
      *
-     * @param assessmentJson    the assessments as JsonObject
-     * @return the total score
+     * @param modelingSubmission the modeling submission to which the feedback belongs to
+     * @param modelingAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param modelingExercise the modeling exercise for which assessment due date is checked
+     * @return result that was saved in the database
      */
-    public Double calculateTotalScore(JsonObject assessmentJson) {
-        Double totalScore = 0.0;
-        JsonArray assessments = assessmentJson.get("assessments").getAsJsonArray();
-        for (JsonElement assessment : assessments) {
-            totalScore += assessment.getAsJsonObject().getAsJsonPrimitive("credits").getAsDouble();
+    @Transactional
+    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
+        Result result = modelingSubmission.getResult();
+        if (result == null) {
+            result = modelingSubmissionService.setNewResult(modelingSubmission);
         }
-        //TODO round this value to max two numbers after the comma
-        return totalScore;
+        // check the assessment due date if the user tries to override an existing submitted result
+        if (result.getCompletionDate() != null) {
+            checkAssessmentDueDate(modelingExercise);
+        }
+        checkGeneralFeedback(modelingAssessment);
+
+        result.setHasComplaint(false);
+        result.setExampleResult(modelingSubmission.isExampleSubmission());
+        result.setAssessmentType(AssessmentType.MANUAL);
+        User user = userService.getUser();
+        result.setAssessor(user);
+        result.updateAllFeedbackItems(modelingAssessment);
+        // Note: this boolean flag is only used for programming exercises
+        result.setHasFeedback(false);
+
+        if (result.getSubmission() == null) {
+            result.setSubmission(modelingSubmission);
+            modelingSubmission.setResult(result);
+            modelingSubmissionRepository.save(modelingSubmission);
+        }
+        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
+        return resultRepository.save(result);
+    }
+
+    /**
+     * Cancel an assessment of a given modeling submission for the current user, i.e. delete the corresponding result / release the lock and tell Compass that the submission is
+     * available for assessment again.
+     *
+     * @param modelingSubmission the modeling submission for which the current assessment should be canceled
+     */
+    public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
+        super.cancelAssessmentOfSubmission(modelingSubmission);
+        var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        ModelingExercise modelingExercise = (ModelingExercise) studentParticipation.getExercise();
+        compassService.cancelAssessmentForSubmission(modelingExercise, modelingSubmission.getId());
+    }
+
+    /**
+     * Gets an example modeling submission with the given submissionId and returns the result of the submission.
+     *
+     * @param submissionId the id of the example modeling submission
+     * @return the result of the submission
+     * @throws EntityNotFoundException when no submission can be found for the given id
+     */
+    @Transactional(readOnly = true)
+    public Result getExampleAssessment(long submissionId) {
+        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
+        ModelingSubmission modelingSubmission = optionalModelingSubmission
+                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+        return modelingSubmission.getResult();
     }
 }

@@ -1,7 +1,7 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../shared';
+import { ArtemisSharedModule } from '../shared';
 
 import {
     accountState,
@@ -11,11 +11,11 @@ import {
     PasswordResetInitComponent,
     PasswordStrengthBarComponent,
     RegisterComponent,
-    SettingsComponent
+    SettingsComponent,
 } from './';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(accountState)],
+    imports: [ArtemisSharedModule, RouterModule.forChild(accountState)],
     declarations: [
         ActivateComponent,
         RegisterComponent,
@@ -23,8 +23,7 @@ import {
         PasswordStrengthBarComponent,
         PasswordResetInitComponent,
         PasswordResetFinishComponent,
-        SettingsComponent
+        SettingsComponent,
     ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSAccountModule {}
+export class ArtemisAccountModule {}

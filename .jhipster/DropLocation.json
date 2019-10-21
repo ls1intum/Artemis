@@ -25,12 +25,13 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "question",
             "otherEntityName": "dragAndDropQuestion",
+            "otherEntityRelationshipName": "dropLocations",
+            "relationshipName": "quizQuestion",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081405",
+    "changelogDate": "20190315161924",
     "entityTableName": "drop_location",
     "dto": "no",
     "pagination": "no",

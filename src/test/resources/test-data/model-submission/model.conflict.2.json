@@ -1,0 +1,120 @@
+{
+  "version": "2.0",
+  "size": {
+    "width": 220,
+    "height": 960
+  },
+  "type": "ClassDiagram",
+  "interactive": {
+    "elements": [],
+    "relationships": []
+  },
+  "elements": [
+    {
+      "id": "66912b2d-0c8e-4663-af39-f69acb9350e1",
+      "name": "Drink",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": 700,
+        "y": 510,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [],
+      "methods": [
+        "6e47db46-9343-4fc9-96bd-37342991bdc5"
+      ]
+    },
+    {
+      "id": "6e47db46-9343-4fc9-96bd-37342991bdc5",
+      "name": "trinken()",
+      "owner": "66912b2d-0c8e-4663-af39-f69acb9350e1",
+      "type": "ClassMethod",
+      "bounds": {
+        "x": 0,
+        "y": 30,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "77f659ca-670f-4942-beb1-5b257971fc27",
+      "name": "Tea",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": 700,
+        "y": 760,
+        "width": 200,
+        "height": 100
+      },
+      "attributes": [
+        "594ab1eb-2f79-4573-a9a7-4806f631c5fe"
+      ],
+      "methods": [
+        "62db30c6-520e-4346-b841-4cf98857d784"
+      ]
+    },
+    {
+      "id": "594ab1eb-2f79-4573-a9a7-4806f631c5fe",
+      "name": "temperature",
+      "owner": "77f659ca-670f-4942-beb1-5b257971fc27",
+      "type": "ClassAttribute",
+      "bounds": {
+        "x": 0,
+        "y": 40,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "62db30c6-520e-4346-b841-4cf98857d784",
+      "name": "boil()",
+      "owner": "77f659ca-670f-4942-beb1-5b257971fc27",
+      "type": "ClassMethod",
+      "bounds": {
+        "x": 0,
+        "y": 70,
+        "width": 200,
+        "height": 30
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "id": "0749e2c9-1abc-4460-a28d-b6ffdd52b026",
+      "name": "Relationship",
+      "type": "ClassInheritance",
+      "source": {
+        "element": "77f659ca-670f-4942-beb1-5b257971fc27",
+        "direction": "Up",
+        "multiplicity": "",
+        "role": ""
+      },
+      "target": {
+        "element": "66912b2d-0c8e-4663-af39-f69acb9350e1",
+        "direction": "Down",
+        "multiplicity": "",
+        "role": ""
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 170
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "x": 90,
+        "y": -330,
+        "width": 0,
+        "height": 170
+      }
+    }
+  ],
+  "assessments": []
+}

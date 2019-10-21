@@ -1,21 +1,19 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
-import { StatisticCounterService } from 'app/entities/statistic-counter/statistic-counter.service';
+import { map, take } from 'rxjs/operators';
+import { StatisticCounterService } from 'app/entities/quiz-statistic-counter/statistic-counter.service';
 import { IStatisticCounter, StatisticCounter } from 'app/shared/model/statistic-counter.model';
 
 describe('Service Tests', () => {
-    describe('StatisticCounter Service', () => {
+    describe('QuizStatisticCounter Service', () => {
         let injector: TestBed;
         let service: StatisticCounterService;
         let httpMock: HttpTestingController;
         let elemDefault: IStatisticCounter;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(StatisticCounterService);
@@ -36,12 +34,12 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should create a StatisticCounter', async () => {
+            it('should create a QuizStatisticCounter', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -52,13 +50,13 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should update a StatisticCounter', async () => {
+            it('should update a QuizStatisticCounter', async () => {
                 const returnedFromService = Object.assign(
                     {
                         ratedCounter: 1,
-                        unRatedCounter: 1
+                        unRatedCounter: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -70,20 +68,20 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should return a list of StatisticCounter', async () => {
+            it('should return a list of QuizStatisticCounter', async () => {
                 const returnedFromService = Object.assign(
                     {
                         ratedCounter: 1,
-                        unRatedCounter: 1
+                        unRatedCounter: 1,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });
@@ -91,7 +89,7 @@ describe('Service Tests', () => {
                 httpMock.verify();
             });
 
-            it('should delete a StatisticCounter', async () => {
+            it('should delete a QuizStatisticCounter', async () => {
                 const rxPromise = service.delete(123).subscribe(resp => expect(resp.ok));
 
                 const req = httpMock.expectOne({ method: 'DELETE' });

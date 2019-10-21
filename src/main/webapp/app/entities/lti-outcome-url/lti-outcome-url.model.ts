@@ -1,4 +1,4 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { User } from './../../core';
 import { Exercise } from '../exercise';
 

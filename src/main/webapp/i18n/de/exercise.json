@@ -1,35 +1,95 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "exercise": {
             "home": {
                 "title": "Übungen",
                 "createLabel": "Übung erstellen",
                 "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
+            "resultCount": "{{resultsLength}} Ergebnisse",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Übung {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll der Übung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein."
             },
             "detail": {
                 "title": "Übung"
             },
+            "exercise": "Aufgabe",
+            "results": "Ergebnisse",
+            "actions": "Aktionen",
+            "notStarted": "Du hast diese Aufgabe noch nicht gestartet.",
             "problemStatement": "Aufgabenstellung",
-            "sampleSolution" : "Musterlösung",
+            "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
             "title": "Titel",
+            "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
             "dueDate": "Abgabedatum",
-            "maxScore": "Max Punktezahl",
+            "dueDateError": "Abgabedatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal",
+            "assessmentDueDate": "Abgabedatum der Bewertung",
+            "assessmentDateError": "Abgabedatum der Bewertung muss nach dem Veröffentlichungs- und Abgabedatum sein. Bitte überprüfe deine Auswahl nochmal",
+            "maxScore": "Maximale Punktzahl",
+            "difficulty": "Schwierigkeit",
+            "noLevel": "Keine Angabe",
+            "easy": "Leicht",
+            "medium": "Mittel",
+            "hard": "Schwer",
+            "categories": "Kategorien",
             "participations": "Teilnahmen",
+            "exportNames": "Namen exportieren",
+            "exportResults": "Ergebnisse exportieren",
+            "refresh": "Aktualisieren",
             "course": "Kurs",
             "type": "Typ",
             "mcqType": "Multiple Choice Fragen",
             "dndType": "Drag und Drop Fragen",
-            "welcome": "<strong>Welcome to ArTEMiS!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
+            "welcome": "<strong>Herzlich Willkommen bei Artemis!</strong> Wir haben automatisch einen Account für dich erstellt. Klicke auf den <i>Aufgabe starten</i> Button um zu starten!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
-            "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>"
+            "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
+            "studentName": "Name",
+            "studentId": "Login",
+            "completionDate": "Abgabedatum",
+            "result": "Ergebnis",
+            "submissionCount": "Abgaben",
+            "score": "Punktzahl",
+            "duration": "Dauer",
+            "showUnsuccessful": "Nur unerfolgreiche anzeigen",
+            "showSuccessful": "Nur erfolgreiche anzeigen",
+            "showManual": "Nur manuelle anzeigen",
+            "showAutomatic": "Nur automatische anzeigen",
+            "showAll": "Alle anzeigen",
+            "tagPlaceholder": "Neue Kategorie eingeben",
+            "isProgramming": "Das ist eine Programmierübung",
+            "isModeling": "Das ist eine Modelierungsübung",
+            "isQuiz": "Das ist eine Quizübung",
+            "isText": "Das ist eine Textübung",
+            "isFileUpload": "Das ist eine Datei-Upload-Übung",
+            "notificiationText": "Optional: Mitteilung über die Änderung",
+            "presentationScoreEnabled": {
+                "title": "Präsentationsergebnis aktiviert",
+                "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutoren auf der Seite \"Teilnahmen\" dieser Übung eine Punkt für Präsentation von Studenten eintragen."
+            },
+            "errors": {
+                "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
+            },
+            "form": {
+                "title": {
+                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
+                },
+                "shortName": {
+                    "pattern": "Der Kurzname darf nur aus Buchstaben und Zahlen bestehen!",
+                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
+                },
+                "packageName": {
+                    "pattern": "Der Packagename muss mindestens einen Punkt enthalten und darf nicht mit einer Zahl anfangen!"
+                },
+                "maxScore": {
+                    "pattern": "Die maximale Punktzahl muss zwischen 1 und 9999 liegen!"
+                }
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

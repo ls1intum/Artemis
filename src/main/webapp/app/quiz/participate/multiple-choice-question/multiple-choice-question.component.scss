@@ -1,0 +1,98 @@
+.mc-question {
+    background: #fefefe;
+    border: 1px solid lightgrey;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    padding: 20px;
+    position: relative;
+    width: 100%;
+
+    .answer-options {
+        margin-top: 20px;
+    }
+
+    .answer-option {
+        display: flex;
+        align-items: center;
+        outline: none !important;
+        border: 1px solid lightgrey;
+        margin: 4px 0;
+        padding: 6px 10px;
+
+        .selection {
+            width: 36px;
+            margin-left: 16px;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            align-items: center;
+
+            .text {
+                flex: 1;
+                padding-right: 8px;
+                font-size: 16px;
+            }
+
+            .hint {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                font-size: 18px;
+            }
+        }
+
+        &:hover {
+            background: #fafafa;
+        }
+
+        &.click-disabled {
+            cursor: not-allowed;
+
+            &:hover {
+                background: inherit;
+            }
+        }
+    }
+
+    table.answer-options-result {
+        width: 100%;
+
+        .answer-option {
+            display: table-row;
+        }
+
+        th {
+            color: dimgray;
+        }
+
+        th,
+        td {
+            padding: 6px 10px;
+        }
+
+        .solution {
+            width: 100px;
+        }
+
+        .result-symbol {
+            padding: 0;
+            color: orange;
+            width: 50px;
+        }
+
+        .selection {
+            width: 36px;
+            margin-left: 0;
+        }
+
+        .correct {
+            color: green;
+        }
+
+        .wrong {
+            color: red;
+        }
+    }
+}

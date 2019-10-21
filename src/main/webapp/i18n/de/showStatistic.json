@@ -12,6 +12,8 @@
         "hideSolution": "Verberge Lösung",
         "quizPointStatisticTitle": "Punkteverteilung",
         "quizStatisticTitle": "Quiz-Statistik",
+        "recalculateStatistics": "Statistiken neu berechnen",
+        "quizQuestions": "Quizfragen",
         "quizPointStatistic": {
             "maxScore": "Maximalpunkte: ",
             "titleRated": "Punkteverteilung (bewertet)",
@@ -26,7 +28,7 @@
             "xAxes": "Fragen",
             "yAxes": "Richtige Lösungen"
         },
-        "multipleChoiceQuestionStatistic": {
+        "questionStatistic": {
             "titleRated": "Antwortenverteilung (bewertet)",
             "titleUnrated": "Antwortenverteilung (unbewertet)",
             "xAxes": "Antworten",
@@ -37,9 +39,11 @@
         "dragAndDropQuestionStatistic": {
             "xAxes": "DropLocation",
             "yAxes": "Häufigkeit",
-            "showSampleSolution": "Zeige Beispiellösung",
-            "hideSampleSolution": "Verberge Beispiellösung"
+            "showSampleSolution": "Zeige Beispiel Lösung",
+            "hideSampleSolution": "Verberge Beispiel Lösung"
         },
-        "invalid": "(ungültig)"
+        "invalid": "(ungültig)",
+        "quizhasEnded": "Quiz ist zu Ende!",
+        "now": "Läuft"
     }
 }

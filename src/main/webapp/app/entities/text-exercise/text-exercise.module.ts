@@ -1,44 +1,32 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
-import {
-    TextExerciseComponent,
-    TextExerciseDeleteDialogComponent,
-    TextExerciseDeletePopupComponent,
-    TextExerciseDetailComponent,
-    TextExerciseUpdateComponent,
-    TextExerciseDialogComponent,
-    TextExercisePopupComponent,
-    textExercisePopupRoute,
-    TextExercisePopupService,
-    textExerciseRoute,
-    TextExerciseService
-} from './';
-import { SortByModule } from '../../components/pipes';
+import { ArtemisSharedModule } from 'app/shared';
+import { TextExerciseComponent, TextExerciseDetailComponent, textExerciseRoute, TextExerciseService, TextExerciseUpdateComponent } from './';
+import { SortByModule } from 'app/components/pipes';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
+import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 
-const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
+const ENTITY_STATES = [...textExerciseRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
-    declarations: [
-        TextExerciseComponent,
-        TextExerciseDetailComponent,
-        TextExerciseUpdateComponent,
-        TextExerciseDialogComponent,
-        TextExerciseDeleteDialogComponent,
-        TextExercisePopupComponent,
-        TextExerciseDeletePopupComponent
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        FormDateTimePickerModule,
+        ArtemisCategorySelectorModule,
+        ArtemisDifficultyPickerModule,
+        ArtemisMarkdownEditorModule,
+        ArtemisPresentationScoreModule,
     ],
-    entryComponents: [
-        TextExerciseComponent,
-        TextExerciseDialogComponent,
-        TextExerciseUpdateComponent,
-        TextExercisePopupComponent,
-        TextExerciseDeleteDialogComponent,
-        TextExerciseDeletePopupComponent
-    ],
-    providers: [TextExerciseService, TextExercisePopupService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
+    entryComponents: [TextExerciseUpdateComponent, DeleteDialogComponent],
+    providers: [TextExerciseService],
+    exports: [TextExerciseComponent],
 })
-export class ArTEMiSTextExerciseModule {}
+export class ArtemisTextExerciseModule {}

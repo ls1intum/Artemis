@@ -1,6 +1,6 @@
 {
-    "arTeMiSApp": {
-        "dragAndDropQuestionStatistic" : {
+    "artemisApp": {
+        "dragAndDropQuestionStatistic": {
             "home": {
                 "title": "Drag And Drop Question Statistics",
                 "createLabel": "Drag And Drop Question Statistic erstellen",

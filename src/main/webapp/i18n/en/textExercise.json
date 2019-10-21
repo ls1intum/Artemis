@@ -1,22 +1,28 @@
-
 {
-    "arTeMiSApp": {
-        "textExercise" : {
+    "artemisApp": {
+        "textExercise": {
             "home": {
                 "title": "Text Exercises",
-                "createLabel": "Create a new Text Exercise",
-                "createOrEditLabel": "Create or edit a Text Exercise"
+                "createLabel": "Create new Text Exercise",
+                "editLabel": "Edit Text Exercise"
             },
             "created": "A new Text Exercise is created with identifier {{ param }}",
             "updated": "A Text Exercise is updated with identifier {{ param }}",
             "deleted": "A Text Exercise is deleted with identifier {{ param }}",
-            "delete": {
-                "question": "Are you sure you want to delete Text Exercise {{ title }}?"
-            },
             "detail": {
                 "title": "Text Exercise"
             },
-            "sampleSolution": "Sample Solution"
+            "sampleSolution": "Example Solution",
+            "exampleSubmissions": "Example submissions",
+            "assessedSubmission": "Your assessed submission",
+            "createExampleSubmissions": "Create example submission",
+            "automaticAssessmentEnabled": "Automatic Assessment enabled",
+            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
+            "saveSuccessful": "Your answer was saved successfully!",
+            "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",
+            "submitSuccessful": "Your answer was submitted successfully! Now you can't edit your answer anymore. Please wait for your feedback.",
+            "submitDeadlineMissed": "Your answer was submitted successfully! Now you can't edit your answer anymore. Please wait for your feedback. As you missed the deadline the score will not be counted.",
+            "error": "An error occured. Please try again later."
         }
     }
 }

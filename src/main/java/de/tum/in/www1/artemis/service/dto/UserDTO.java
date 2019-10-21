@@ -1,17 +1,19 @@
 package de.tum.in.www1.artemis.service.dto;
 
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.User;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.time.Instant;
-import java.util.List;
+import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A DTO representing a user, with his authorities.
@@ -24,6 +26,9 @@ public class UserDTO {
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = 1, max = 50)
     private String login;
+
+    @Size(max = 50)
+    private String name;
 
     @Size(max = 50)
     private String firstName;
@@ -51,29 +56,31 @@ public class UserDTO {
 
     private Instant lastModifiedDate;
 
+    private ZonedDateTime lastNotificationRead;
+
     private Set<String> authorities;
 
-    private List<String> groups;
+    private Set<String> groups;
+
+    private Set<GuidedTourSetting> guidedTourSettings;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
 
     public UserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(),
-            user.getEmail(), user.getActivated(), user.getImageUrl(), user.getLangKey(),
-            user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-            user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()),
-            user.getGroups());
+        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getActivated(), user.getImageUrl(), user.getLangKey(),
+                user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getLastNotificationRead(),
+                user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()), user.getGroups(), user.getGuidedTourSettings());
     }
 
-    public UserDTO(Long id, String login, String firstName, String lastName,
-        String email, boolean activated, String imageUrl, String langKey,
-        String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate,
-        Set<String> authorities, List<String> groups) {
+    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, boolean activated, String imageUrl, String langKey, String createdBy,
+            Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<String> authorities, Set<String> groups,
+            Set<GuidedTourSetting> guidedTourSettings) {
 
         this.id = id;
         this.login = login;
+        this.name = name;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -84,8 +91,10 @@ public class UserDTO {
         this.createdDate = createdDate;
         this.lastModifiedBy = lastModifiedBy;
         this.lastModifiedDate = lastModifiedDate;
+        this.lastNotificationRead = lastNotificationRead;
         this.authorities = authorities;
         this.groups = groups;
+        this.guidedTourSettings = guidedTourSettings;
     }
 
     public Long getId() {
@@ -102,6 +111,14 @@ public class UserDTO {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getFirstName() {
@@ -184,6 +201,14 @@ public class UserDTO {
         this.lastModifiedDate = lastModifiedDate;
     }
 
+    public ZonedDateTime getLastNotificationRead() {
+        return lastNotificationRead;
+    }
+
+    public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
+        this.lastNotificationRead = lastNotificationRead;
+    }
+
     public Set<String> getAuthorities() {
         return authorities;
     }
@@ -192,29 +217,27 @@ public class UserDTO {
         this.authorities = authorities;
     }
 
-    public List<String> getGroups() {
+    public Set<String> getGroups() {
         return groups;
     }
 
-    public void setGroups(List<String> groups) {
+    public void setGroups(Set<String> groups) {
         this.groups = groups;
+    }
+
+    public Set<GuidedTourSetting> getGuidedTourSettings() {
+        return guidedTourSettings;
+    }
+
+    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
+        this.guidedTourSettings = guidedTourSettings;
     }
 
     @Override
     public String toString() {
-        return "UserDTO{" +
-            "login='" + login + '\'' +
-            ", firstName='" + firstName + '\'' +
-            ", lastName='" + lastName + '\'' +
-            ", email='" + email + '\'' +
-            ", imageUrl='" + imageUrl + '\'' +
-            ", activated=" + activated +
-            ", langKey='" + langKey + '\'' +
-            ", createdBy=" + createdBy +
-            ", createdDate=" + createdDate +
-            ", lastModifiedBy='" + lastModifiedBy + '\'' +
-            ", lastModifiedDate=" + lastModifiedDate +
-            ", authorities=" + authorities +
-            "}";
+        return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
+                + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + createdBy + ", createdDate=" + createdDate + ", lastModifiedBy='"
+                + lastModifiedBy + '\'' + ", lastModifiedDate=" + lastModifiedDate + ", lastNotificationRead=" + lastNotificationRead + ", authorities=" + authorities
+                + ",guidedTourSettings=" + guidedTourSettings + "}";
     }
 }

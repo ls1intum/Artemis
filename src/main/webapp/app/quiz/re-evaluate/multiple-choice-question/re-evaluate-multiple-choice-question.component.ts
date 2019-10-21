@@ -1,16 +1,4 @@
-import {
-    Component,
-    Input,
-    Output,
-    EventEmitter,
-    OnInit,
-    OnChanges,
-    SimpleChanges,
-    AfterViewInit,
-    ViewChild,
-    ViewChildren,
-    QueryList
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, QueryList, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
@@ -19,10 +7,11 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
-    providers: [ArtemisMarkdown]
+    styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../quiz.scss'],
+    providers: [ArtemisMarkdown],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
-    @ViewChild('questionEditor')
+    @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
 
     @ViewChildren(AceEditorComponent)
@@ -89,7 +78,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                 this.parseQuestionMarkdown(this.questionEditorText);
                 this.questionUpdated.emit();
             },
-            this
+            this,
         );
     }
 
@@ -101,11 +90,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         /** Array with all answer option Ace Editors
          *  Note: we filter out the question Editor (identified by his width)
          **/
-        const answerEditors: AceEditorComponent[] = this.aceEditorComponents
-            .toArray()
-            .filter(editor => editor.style.indexOf('width:90%') === -1);
+        const answerEditors = this.aceEditorComponents.toArray().filter(editor => editor.style.indexOf('width:90%') === -1);
 
-        this.question.answerOptions.forEach((answer, index) => {
+        this.question.answerOptions!.forEach((answer, index) => {
             requestAnimationFrame(
                 function() {
                     answerEditors[index].setTheme('chrome');
@@ -115,7 +102,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                     answerEditors[index].getEditor().setHighlightActiveLine(false);
                     answerEditors[index].getEditor().setShowPrintMargin(false);
                     answerEditors[index].getEditor().setOptions({
-                        autoScrollEditorIntoView: true
+                        autoScrollEditorIntoView: true,
                     });
                     answerEditors[index].getEditor().setValue(this.generateAnswerMarkdown(answer));
                     answerEditors[index].getEditor().clearSelection();
@@ -126,9 +113,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
                             this.parseAnswerMarkdown(answerEditors[index].getEditor().getValue(), answer);
                             this.questionUpdated.emit();
                         },
-                        this
+                        this,
                     );
-                }.bind(this)
+                }.bind(this),
             );
         });
     }
@@ -260,12 +247,12 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
-        const backupAnswer = this.backupQuestion.answerOptions.find(answerBackup => answer.id === answerBackup.id);
+        const backupAnswer = this.backupQuestion.answerOptions!.find(answerBackup => answer.id === answerBackup.id)!;
         // Find current index of our AnswerOption
-        const answerIndex = this.question.answerOptions.indexOf(answer);
+        const answerIndex = this.question.answerOptions!.indexOf(answer);
         // Remove current answerOption at given index and insert the backup at the same position
-        this.question.answerOptions.splice(answerIndex, 1);
-        this.question.answerOptions.splice(answerIndex, 0, backupAnswer);
+        this.question.answerOptions!.splice(answerIndex, 1);
+        this.question.answerOptions!.splice(answerIndex, 0, backupAnswer);
     }
 
     /**
@@ -274,8 +261,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param answer {AnswerOption} the Answer which should be deleted
      */
     deleteAnswer(answer: AnswerOption) {
-        const index = this.question.answerOptions.indexOf(answer);
-        this.question.answerOptions.splice(index, 1);
+        const index = this.question.answerOptions!.indexOf(answer);
+        this.question.answerOptions!.splice(index, 1);
     }
 
     /**
@@ -284,7 +271,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param  answer {AnswerOption} the Answer which should be deleted
      */
     setAnswerInvalid(answer: AnswerOption) {
-        this.question.answerOptions[this.question.answerOptions.indexOf(answer)].invalid = true;
+        const answerIndex = this.question.answerOptions!.indexOf(answer);
+        this.question.answerOptions![answerIndex].invalid = true;
         this.questionUpdated.emit();
     }
 

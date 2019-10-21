@@ -1,20 +1,31 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Submission.
@@ -27,21 +38,39 @@ public class SubmissionResource {
 
     private static final String ENTITY_NAME = "submission";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private SubmissionRepository submissionRepository;
 
-    public SubmissionResource(SubmissionRepository submissionRepository) {
+    private ResultRepository resultRepository;
+
+    private CourseService courseService;
+
+    private ParticipationService participationService;
+
+    private AuthorizationCheckService authCheckService;
+
+    private UserService userService;
+
+    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository, CourseService courseService, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, UserService userService) {
         this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
+        this.courseService = courseService;
+        this.participationService = participationService;
+        this.authCheckService = authCheckService;
+        this.userService = userService;
     }
 
     /**
-     * POST  /submissions : Create a new submission.
+     * POST /submissions : Create a new submission.
      *
      * @param submission the submission to create
      * @return the ResponseEntity with status 201 (Created) and with body the new submission, or with status 400 (Bad Request) if the submission has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/submissions")
-    @Timed
     public ResponseEntity<Submission> createSubmission(@RequestBody Submission submission) throws URISyntaxException {
         log.debug("REST request to save Submission : {}", submission);
         if (submission.getId() != null) {
@@ -49,52 +78,45 @@ public class SubmissionResource {
         }
         Submission result = submissionRepository.save(submission);
         return ResponseEntity.created(new URI("/api/submissions/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PUT  /submissions : Updates an existing submission.
+     * PUT /submissions : Updates an existing submission.
      *
      * @param submission the submission to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated submission,
-     * or with status 400 (Bad Request) if the submission is not valid,
-     * or with status 500 (Internal Server Error) if the submission couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated submission, or with status 400 (Bad Request) if the submission is not valid, or with status 500
+     *         (Internal Server Error) if the submission couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/submissions")
-    @Timed
     public ResponseEntity<Submission> updateSubmission(@RequestBody Submission submission) throws URISyntaxException {
         log.debug("REST request to update Submission : {}", submission);
         if (submission.getId() == null) {
             return createSubmission(submission);
         }
         Submission result = submissionRepository.save(submission);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, submission.getId().toString()))
-            .body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, submission.getId().toString())).body(result);
     }
 
     /**
-     * GET  /submissions : get all the submissions.
+     * GET /submissions : get all the submissions.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
     @GetMapping("/submissions")
-    @Timed
     public List<Submission> getAllSubmissions() {
         log.debug("REST request to get all Submissions");
         return submissionRepository.findAll();
-        }
+    }
 
     /**
-     * GET  /submissions/:id : get the "id" submission.
+     * GET /submissions/:id : get the "id" submission.
      *
      * @param id the id of the submission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the submission, or with status 404 (Not Found)
      */
     @GetMapping("/submissions/{id}")
-    @Timed
     public ResponseEntity<Submission> getSubmission(@PathVariable Long id) {
         log.debug("REST request to get Submission : {}", id);
         Optional<Submission> submission = submissionRepository.findById(id);
@@ -102,16 +124,48 @@ public class SubmissionResource {
     }
 
     /**
-     * DELETE  /submissions/:id : delete the "id" submission.
+     * DELETE /submissions/:id : delete the "id" submission.
      *
      * @param id the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/submissions/{id}")
-    @Timed
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
+
+        Optional<Submission> submission = submissionRepository.findById(id);
+
+        if (!submission.isPresent()) {
+            log.error("Submission with id: " + id + " cannot be deleted");
+            return ResponseEntity.notFound().build();
+        }
+
+        checkAccessPermissionAtInstructor(submission.get());
+
+        if (submission.get().getResult() != null) {
+            resultRepository.delete(submission.get().getResult());
+        }
         submissionRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    }
+
+    private void checkAccessPermissionAtInstructor(Submission submission) {
+        Course course = findCourseFromSubmission(submission);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+    }
+
+    private Course findCourseFromSubmission(Submission submission) {
+        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (studentParticipation.getExercise() != null && studentParticipation.getExercise().getCourse() != null) {
+            return studentParticipation.getExercise().getCourse();
+        }
+
+        return participationService.findOneWithEagerCourse(submission.getParticipation().getId()).getExercise().getCourse();
     }
 }

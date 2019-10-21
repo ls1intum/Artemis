@@ -1,7 +1,6 @@
-
 {
-    "arTeMiSApp": {
-        "ltiUserId" : {
+    "artemisApp": {
+        "ltiUserId": {
             "home": {
                 "title": "Lti User Ids",
                 "createLabel": "Create a new Lti User Id",

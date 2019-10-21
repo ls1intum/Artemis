@@ -9,12 +9,13 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "quizPointStatistic",
             "otherEntityName": "quizPointStatistic",
+            "otherEntityRelationshipName": "pointCounters",
+            "relationshipName": "quizPointStatistic",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081348",
+    "changelogDate": "20190315161906",
     "entityTableName": "point_counter",
     "dto": "no",
     "pagination": "no",

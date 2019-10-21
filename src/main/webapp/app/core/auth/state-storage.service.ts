@@ -3,44 +3,44 @@ import { SessionStorageService } from 'ngx-webstorage';
 
 @Injectable({ providedIn: 'root' })
 export class StateStorageService {
-    constructor(private $sessionStorage: SessionStorageService) {}
+    constructor(private sessionStorage: SessionStorageService) {}
 
-    getPreviousState() {
-        return this.$sessionStorage.retrieve('previousState');
+    getPreviousState(): string | null {
+        return this.sessionStorage.retrieve('previousState');
     }
 
-    resetPreviousState() {
-        this.$sessionStorage.clear('previousState');
+    resetPreviousState(): void {
+        this.sessionStorage.clear('previousState');
     }
 
-    storePreviousState(previousStateName: any, previousStateParams: any) {
+    storePreviousState(previousStateName: any, previousStateParams: any): void {
         const previousState = { name: previousStateName, params: previousStateParams };
-        this.$sessionStorage.store('previousState', previousState);
+        this.sessionStorage.store('previousState', previousState);
     }
 
-    getDestinationState() {
-        return this.$sessionStorage.retrieve('destinationState');
+    getDestinationState(): string | null {
+        return this.sessionStorage.retrieve('destinationState');
     }
 
-    storeUrl(url: string) {
-        this.$sessionStorage.store('previousUrl', url);
+    storeUrl(url: string | null) {
+        this.sessionStorage.store('previousUrl', url);
     }
 
-    getUrl() {
-        return this.$sessionStorage.retrieve('previousUrl');
+    getUrl(): string | null {
+        return this.sessionStorage.retrieve('previousUrl');
     }
 
-    storeDestinationState(destinationState: any, destinationStateParams: any, fromState: any) {
+    storeDestinationState(destinationState: any, destinationStateParams: any, fromState: any): void {
         const destinationInfo = {
             destination: {
                 name: destinationState.name,
-                data: destinationState.data
+                data: destinationState.data,
             },
             params: destinationStateParams,
             from: {
-                name: fromState.name
-            }
+                name: fromState.name,
+            },
         };
-        this.$sessionStorage.store('destinationState', destinationInfo);
+        this.sessionStorage.store('destinationState', destinationInfo);
     }
 }

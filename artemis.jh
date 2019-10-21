@@ -1,5 +1,4 @@
-entity Statistic (statistic) {      //abstract
-    released Boolean,
+entity Statistic (quizStatistic) {      //abstract
     participantsRated Integer,
     participantsUnrated Integer
 }
@@ -7,18 +6,21 @@ entity Statistic (statistic) {      //abstract
 entity QuizPointStatistic (quizPointStatistic) { //extends Statistic
 }
 
-entity QuestionStatistic (questionStatistic) {   //extends Statistic, abstract
+entity QuizQuestionStatistic (quizQuestionStatistic) {   //extends Statistic, abstract
     ratedCorrectCounter Integer,
     unRatedCorrectCounter Integer,
 }
 
-entity MultipleChoiceQuestionStatistic (mcQuestionStatistic) {   //extends QuestionStatistic
+entity MultipleChoiceQuestionStatistic (mcQuestionStatistic) {   //extends QuizQuestionStatistic
 }
 
-entity DragAndDropQuestionStatistic (dndQuestionStatistic) {   //extends QuestionStatistic
+entity DragAndDropQuestionStatistic (dndQuestionStatistic) {   //extends QuizQuestionStatistic
 }
 
-entity StatisticCounter(statisticCounter) { //abstract
+entity ShortAnswerQuestionStatistic (saQuestionStatistic) {   //extends QuizQuestionStatistic
+}
+
+entity StatisticCounter(quizStatisticCounter) { //abstract
     ratedCounter Integer,
     UnRatedCounter Integer
 }
@@ -33,24 +35,36 @@ entity AnswerCounter(answerCounter) {       //extends StatisticCounter
 entity DropLocationCounter(dropLocationCounter) {    //extends StatisticCounter
 }
 
+entity ShortAnswerSpotCounter(shortAnswerSpotCounter) {    //extends StatisticCounter
+}
+
 entity Course (course) {
     title String,
+    description String,        //LONGTEXT --> lob
+    shortName String,
     studentGroupName String,
     teachingAssistantGroupName String,
     instructorGroupName String,
     startDate ZonedDateTime,
     endDate ZonedDateTime,
-    onlineCourse Boolean
+    onlineCourse Boolean,
+    maxComplaints Integer,
+    color String,
+    courseIcon String,
+    registrationEnabled Boolean
 }
 
 entity Exercise (exercise) {        //abstract
     problemStatement String,        //LONGTEXT --> lob
     gradingInstructions String,     //LONGTEXT --> lob
     title String,
+    shortName String,
     releaseDate ZonedDateTime,
     dueDate ZonedDateTime,
+    assessmentDueDate ZonedDateTime,
     maxScore Double,
-    difficulty DifficultyLevel
+    assessmentType AssessmentType,
+    difficulty DifficultyLevel,
     categories String               //List<String>, similar to User --> groups
 }
 
@@ -69,11 +83,16 @@ entity FileUploadExercise {         //extends Exercise
 }
 
 entity ProgrammingExercise {        //extends Exercise
-    baseRepositoryUrl String,
-    solutionRepositoryUrl String,
-    baseBuildPlanId String,
+    testRepositoryUrl String,
     publishBuildPlanUrl Boolean,
-    allowOnlineEditor Boolean
+    allowOnlineEditor Boolean,
+    programmingLanguage ProgrammingLanguage,
+    packageName String
+}
+
+enum ProgrammingLanguage {
+    JAVA,
+    PYTHON
 }
 
 entity ModelingExercise {           //extends Exercise
@@ -109,7 +128,7 @@ entity SubmittedAnswer {            //abstract
     scoreInPoints Double
 }
 
-entity Question {                   //abstract
+entity QuizQuestion {                   //abstract
 	title String,
     text String,
     hint String,
@@ -126,7 +145,7 @@ enum ScoringType {
     TRUE_FALSE_NEUTRAL
 }
 
-entity MultipleChoiceQuestion {             //extends Question
+entity MultipleChoiceQuestion {             //extends QuizQuestion
 
 }
 
@@ -142,7 +161,7 @@ entity MultipleChoiceSubmittedAnswer (mcSubmittedAnswer) {      //extends Submit
 
 }
 
-entity DragAndDropQuestion {          //extends Question
+entity DragAndDropQuestion {          //extends QuizQuestion
 	backgroundFilePath String
 }
 
@@ -156,6 +175,21 @@ entity DropLocation {
 
 entity DragItem {
 	pictureFilePath String
+    text String
+    invalid Boolean
+}
+
+entity ShortAnswerQuestion {          //extends QuizQuestion
+
+}
+
+entity ShortAnswerSpot {
+	width Integer,
+	spotNr Integer,
+    invalid Boolean,
+}
+
+entity ShortAnswerSolution {
     text String
     invalid Boolean
 }
@@ -180,18 +214,22 @@ entity ExerciseResult (result) {
     score Long,
     rated Boolean,
     hasFeedback Boolean,
-    assessmentType AssessmentType
+    assessmentType AssessmentType,
+    hasComplaint Boolean,
+    exampleResult Boolean
 }
 
 enum AssessmentType {
     AUTOMATIC,
-    MANUAL,
-    SEMIAUTOMATIC
+    SEMI_AUTOMATIC,
+    MANUAL
 }
 
 entity Feedback(feedback) {
 	text String,
 	detailText String,
+	reference String,
+	credits Double,
 	positive Boolean,
 	type FeedbackType
 }
@@ -212,18 +250,21 @@ enum InitializationState {
 
 enum SubmissionType {
 	MANUAL,
-    TIMEOUT
+    TIMEOUT,
+    TEST,
+    OTHER
 }
 
 entity Submission {                 //abstract
 	submitted Boolean
 	submissionDate ZonedDateTime,
-    type SubmissionType
+    type SubmissionType,
+    exampleSubmission Boolean
 }
 
 entity ModelingSubmission {         //extends Submission
-	model String,                   //transient --> stored in the file system
-	explanationText String          //LONGTEXT --> clob
+	model String,                   //LONGTEXT --> lob
+	explanationText String          //LONGTEXT --> lob
 }
 
 entity QuizSubmission {             //extends Submission
@@ -235,13 +276,28 @@ entity ProgrammingSubmission {      //extends Submission
 }
 
 entity TextSubmission {             //extends Submission
-    text String                     //LONGTEXT --> clob
+    text String                     //LONGTEXT --> lob
+}
+
+entity TextBlock {
+    id String
+    text String
+    startIndex Integer
+    endIndex   Integer
+}
+
+entity TextCluster {
+    probabilities Blob
+    distanceMatrix Blob
 }
 
 entity FileUploadSubmission {       //extends Submission
     filePath String
 }
 
+entity ExampleSubmission {
+    usedForTutorial Boolean
+}
 
 entity DragAndDropSubmittedAnswer (dndSubmittedAnswer) {      //extends SubmittedAnswer
 
@@ -253,50 +309,235 @@ entity DragAndDropMapping {
     invalid Boolean
 }
 
+entity ShortAnswerSubmittedAnswer (saSubmittedAnswer) {      //extends SubmittedAnswer
+}
+
+entity ShortAnswerSubmittedText (shortAnswerSubmittedText) {
+    text String,
+    isCorrect Boolean
+}
+
+entity ShortAnswerMapping {
+	shortAnswerSpotIndex Integer
+    shortAnswerSolutionIndex Integer
+    invalid Boolean
+}
+
 entity ApollonDiagram {
     title String
-    jsonRepresentation String       // LONGTEXT --> clob
+    jsonRepresentation String       // LONGTEXT --> lob
 }
+
+entity Complaint {
+    complaintText String,
+    accepted Boolean,
+    submittedTime ZonedDateTime,
+    resultBeforeComplaint String    // LONGTEXT --> lob
+}
+
+entity ComplaintResponse {
+    responseText String
+    submittedTime ZonedDateTime
+}
+
+entity TutorParticipation {
+    status TutorParticipationStatus,
+    points Integer
+}
+
+enum TutorParticipationStatus {
+    NOT_PARTICIPATED,
+    REVIEWED_INSTRUCTIONS,
+    TRAINED,
+    COMPLETED
+}
+
+entity StudentQuestion {
+    questionText String,               // VarChar(1000)
+    creationDate ZonedDateTime,
+    visibleForStudents Boolean
+}
+
+entity StudentQuestionAnswer {
+    answerText String,                 // LONGTEXT --> lob
+    answerDate ZonedDateTime,
+    verified Boolean
+}
+
+entity TutorGroup {
+    name String,
+    capacity Integer,
+    weekday Weekday,
+    timeSlot String,
+    language Language,
+    room String
+}
+
+enum Weekday {
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY
+}
+
+enum Language {
+    ENGLISH,
+    GERMAN
+}
+
+entity Notification {
+    title String,
+    text String,                       // LONGTEXT --> lob
+    notificationDate ZonedDateTime,
+    target String
+}
+
+entity SystemNotification {             // extends Notification
+    expireDate ZonedDateTime,
+    type SystemNotificationType,
+}
+
+entity GroupNotification {             // extends Notification
+    type GroupNotificationType
+}
+
+entity SingleUserNotification {        // extends Notification
+
+}
+
+enum GroupNotificationType {
+    INSTRUCTOR,
+    TA,
+    STUDENT
+}
+
+enum SystemNotificationType {
+    WARNING,
+    INFO
+}
+
+entity Lecture {
+    title String,
+    description String,               // LONGTEXT --> lob
+    startDate ZonedDateTime,
+    endDate ZonedDateTime
+}
+
+entity Attachment {
+    name String,
+    link String,
+    version Integer,
+    uploadDate ZonedDateTime,
+    releaseDate ZonedDateTime,
+    attachmentType AttachmentType
+}
+
+enum AttachmentType {
+    FILE,
+    URL
+}
+
+entity ModelAssessmentConflict {
+    state EscalationState,
+    creationDate ZonedDateTime,
+    resolutionDate ZonedDateTime
+}
+
+entity ConflictingResult {
+    modelElementId String
+}
+
+enum EscalationState {
+    UNHANDLED,
+    ESCALATED_TO_TUTORS_IN_CONFLICT,
+    ESCALATED_TO_INSTRUCTOR,
+    RESOLVED_BY_CAUSER,
+    RESOLVED_BY_OTHER_TUTORS,
+    RESOLVED_BY_INSTRUCTOR
+}
+
 
 relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
-    Course{exercises} to Exercise{course(title)},
-    Exercise{participations} to Participation{exercise(title)},
+    ShortAnswerQuestionStatistic{ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
+    Course{exercises} to Exercise{course},
+    Course{lectures} to Lecture{course},
+    Course{tutorGroups} to TutorGroup{course},
+    Exercise{participations} to Participation{exercise},
+    Exercise{tutorParticipations} to TutorParticipation{assessedExercise},
     Participation{results} to ExerciseResult{participation},
     Participation{submissions} to Submission{participation},
     ExerciseResult{feedbacks} to Feedback{result},
-    QuizExercise{questions} to Question{exercise},
-    MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
-    DragAndDropQuestion{dropLocations} to DropLocation{question},
-    DragAndDropQuestion{dragItems} to DragItem{question},
+    QuizExercise{quizQuestions} to QuizQuestion{exercise},
+    MultipleChoiceQuestion{answerOptions} to AnswerOption{quizQuestion},
+    DragAndDropQuestion{dropLocations} to DropLocation{quizQuestion},
+    DragAndDropQuestion{dragItems} to DragItem{quizQuestion},
+    ShortAnswerQuestion{spots} to ShortAnswerSpot{quizQuestion},
+    ShortAnswerQuestion{solutions} to ShortAnswerSolution{quizQuestion},
     QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
     DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
-    DragAndDropQuestion{correctMappings} to DragAndDropMapping{question}
+    DragAndDropQuestion{correctMappings} to DragAndDropMapping{quizQuestion},
+    ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{quizQuestion}
+    ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
+    Exercise{exampleSubmissions} to ExampleSubmission{exercise}
+    StudentQuestion{answers} to StudentQuestionAnswer{quizQuestion},
+    Lecture{attachments} to Attachment{lecture},
+    Exercise{attachments} to Attachment{exercise},
+    Exercise{studentQuestions} to StudentQuestion{exercise},
+    Lecture{studentQuestions} to StudentQuestion{lecture},
+    ModelAssessmentConflict{resultsInConflict} to ConflictingResult{conflict},
+    TextSubmission{blocks} to TextBlock{submission},
+    TextCluster{blocks} to TextBlock{cluster},
+    TextExercise{clusters} to TextCluster{exercise}
 }
 
 relationship OneToOne {
     QuizExercise{quizPointStatistic} to QuizPointStatistic{quiz},
-    Question{questionStatistic} to QuestionStatistic{question},
+    QuizQuestion{quizQuestionStatistic} to QuizQuestionStatistic{quizQuestion},
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
+    ShortAnswerSpotCounter{spot} to ShortAnswerSpot,
+    ShortAnswerSubmittedText{spot} to ShortAnswerSpot,
     Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
-    ExerciseResult{assessor} to User
+    ExerciseResult{assessor} to User,
+    Complaint{result} to ExerciseResult,
+    ComplaintResponse{complaint} to Complaint,
+    ExampleSubmission{submission} to Submission,
+    ProgrammingExercise{templateParticipation} to Participation,
+    ProgrammingExercise{solutionParticipation} to Participation,
+    ModelAssessmentConflict{causingConflictingResult} to ConflictingResult,
+    ModelAssessmentConflict{updatedFeedback} to Feedback,
 }
 
 relationship ManyToOne {
-    Participation{student(login)} to User,
+    TutorGroup{tutor} to User,
+    Participation{student} to User,
     LtiOutcomeUrl{user} to User,
     LtiOutcomeUrl{exercise} to Exercise,
-    SubmittedAnswer{question} to Question
+    SubmittedAnswer{quizQuestion} to QuizQuestion
     DragAndDropMapping{dragItem} to DragItem,
-    DragAndDropMapping{dropLocation} to DropLocation
+    DragAndDropMapping{dropLocation} to DropLocation,
+    ShortAnswerMapping{solution} to ShortAnswerSolution,
+    ShortAnswerMapping{spot} to ShortAnswerSpot,
+    TutorParticipation{tutor} to User,
+    StudentQuestion{author} to User,
+    StudentQuestionAnswer{author} to User,
+    Notification{author} to User,
+    SingleUserNotification{recipient} to User,
+    GroupNotification{course} to Course,
+    Complaint{student} to User,
+    ComplaintResponse{reviewer} to User,
+    ModelAssessmentConflict{result} to ExerciseResult,
 }
 
 relationship ManyToMany {
-	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
+    TutorGroup{students} to User,    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
+	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption,
+	TutorParticipation{trainedExampleSubmissions} to ExampleSubmission{tutorParticipations},
 }
 
 paginate Exercise with infinite-scroll

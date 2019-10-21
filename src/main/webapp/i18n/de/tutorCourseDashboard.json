@@ -1,0 +1,27 @@
+{
+    "artemisApp": {
+        "tutorCourseDashboard": {
+            "home": {
+                "title": "Tutor Kurse Dashboard"
+            },
+            "pageHeader": "Tutor Kurs Dashboard für den Kurs",
+            "yourAssessments": "Deine Bewertungen",
+            "totalAssessments": "Gesamtzahl der Bewertungen",
+            "complaintsAboutYourAssessments": "Beschwerden über deine Bewertungen",
+            "totalComplaints": "Gesamtzahl der Beschwerden",
+            "moreFeedbackRequestsForYourAssessments": "Feedbackanfragen über deine Bewertungen",
+            "totalMoreFeedbackRequests": "Gesamtzahl der weiteren Feedbackanfragen",
+            "showFinishedExerciseres": "Beendete Übungen anzeigen",
+            "exercise": "Übungen",
+            "exerciseType": "Aufgabentyp",
+            "yourStatus": "Dein Status",
+            "exerciseDueDate": "Fälligkeitsdatum der Übung",
+            "assessmentsDueDate": "Fälligkeitsdatum der Bewertungen",
+            "actions": "Aktionen",
+            "notReleased": "Nicht freigegeben",
+            "readGradingInstructions": "Bewertungsanweisungen lesen",
+            "trainOnExampleSubmissions": "Übung zu Beispiel Einreichungen",
+            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten."
+        }
+    }
+}

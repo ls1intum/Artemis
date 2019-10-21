@@ -17,30 +17,34 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "dragItem",
             "otherEntityName": "dragItem",
+            "otherEntityRelationshipName": "dragAndDropMapping",
+            "relationshipName": "dragItem",
             "otherEntityField": "id"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "dropLocation",
             "otherEntityName": "dropLocation",
+            "otherEntityRelationshipName": "dragAndDropMapping",
+            "relationshipName": "dropLocation",
             "otherEntityField": "id"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "submittedAnswer",
             "otherEntityName": "dragAndDropSubmittedAnswer",
+            "otherEntityRelationshipName": "mappings",
+            "relationshipName": "submittedAnswer",
             "otherEntityField": "id"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "question",
             "otherEntityName": "dragAndDropQuestion",
+            "otherEntityRelationshipName": "correctMappings",
+            "relationshipName": "quizQuestion",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081418",
+    "changelogDate": "20190315161941",
     "entityTableName": "drag_and_drop_mapping",
     "dto": "no",
     "pagination": "no",

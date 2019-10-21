@@ -1,30 +1,51 @@
-
 {
-    "arTeMiSApp": {
-        "participation" : {
+    "artemisApp": {
+        "participation": {
             "home": {
-                "title": "Participations",
-                "createLabel": "Participation erstellen",
-                "createOrEditLabel": "Participation erstellen oder bearbeiten"
+                "title": "Teilnahmen",
+                "createLabel": "Teilnahme erstellen",
+                "createOrEditLabel": "Teilnahme erstellen oder bearbeiten"
             },
-            "created": "Participation erstellt mit ID {{ param }}",
-            "updated": "Participation aktualisiert mit ID {{ param }}",
-            "deleted": "Participation gelöscht mit ID {{ param }}",
+            "created": "Teilnahme erstellt mit ID {{ param }}",
+            "updated": "Teilnahme von {{ param }} aktualisiert",
+            "deleted": "Teilnahme von {{ param }} gelöscht",
             "delete": {
-                "question": "Soll Participation {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Teilnahme von <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?"
+            },
+            "cleanupBuildPlan": {
+                "question": "Soll der Build Plan der Teilnahme von {{ student }} wirklich gelöscht werden?"
+            },
+            "addPresentation": {
+                "label": "Füge Präsentation hinzu",
+                "error": "Die Präsentation konnte nicht hinzugefügt werden. Bitte versuche es nochmal."
+            },
+            "removePresentation": {
+                "label": "Entferne Präsentation",
+                "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
             "detail": {
-                "title": "Participation"
+                "title": "Teilnahme"
             },
-            "repositoryUrl": "Repository Url",
-            "buildPlanId": "Build Plan Id",
-            "initializationState": "Initialization State",
-            "initializationDate": "Initialization Date",
-            "presentationScore": "Presentation Score",
-            "results": "Results",
-            "submissions": "Submissions",
+            "repositoryUrl": "Repository Link",
+            "buildPlanId": "Build Plan Link",
+            "initializationState": "Status",
+            "initializationDate": "Teilnahme Start",
+            "presentationScore": "Präsentationsergebnis",
+            "results": "Ergebnisse",
+            "submissions": "Einreichungen",
             "student": "Student",
-            "exercise": "Exercise"
+            "exercise": "Übung",
+            "deleteRepository": "Repository löschen",
+            "deleteBuildPlan": "Build Plan löschen",
+            "participationSubmission": {
+                "submissionType": "Abgabe Typ",
+                "submissionDate": "Abgabe Datum",
+                "result": "Ergebnis",
+                "assessor": "Bewerter",
+                "submissionsForParticipation": "Abgaben von {{ student }} für die Übung {{ exercise }}",
+                "action": "Aktion",
+                "delete": "Soll diese Abgabe wirklich gelöscht werden?"
+            }
         }
     }
 }

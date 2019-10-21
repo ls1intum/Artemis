@@ -1,21 +1,22 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.ApollonDiagram;
-import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
+import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing ApollonDiagram.
@@ -28,6 +29,9 @@ public class ApollonDiagramResource {
 
     private static final String ENTITY_NAME = "apollonDiagram";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final ApollonDiagramRepository apollonDiagramRepository;
 
     public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository) {
@@ -35,7 +39,7 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * POST  /apollon-diagrams : Create a new apollonDiagram.
+     * POST /apollon-diagrams : Create a new apollonDiagram.
      *
      * @param apollonDiagram the apollonDiagram to create
      * @return the ResponseEntity with status 201 (Created) and with body the new apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram has already an ID
@@ -43,7 +47,6 @@ public class ApollonDiagramResource {
      */
     @PostMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
         if (apollonDiagram.getId() != null) {
@@ -51,55 +54,48 @@ public class ApollonDiagramResource {
         }
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
         return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PUT  /apollon-diagrams : Updates an existing apollonDiagram.
+     * PUT /apollon-diagrams : Updates an existing apollonDiagram.
      *
      * @param apollonDiagram the apollonDiagram to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram,
-     * or with status 400 (Bad Request) if the apollonDiagram is not valid,
-     * or with status 500 (Internal Server Error) if the apollonDiagram couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram is not valid, or with status
+     *         500 (Internal Server Error) if the apollonDiagram couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
         if (apollonDiagram.getId() == null) {
             return createApollonDiagram(apollonDiagram);
         }
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, apollonDiagram.getId().toString()))
-            .body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, apollonDiagram.getId().toString())).body(result);
     }
 
     /**
-     * GET  /apollon-diagrams : get all the apollonDiagrams.
+     * GET /apollon-diagrams : get all the apollonDiagrams.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
      */
     @GetMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public List<ApollonDiagram> getAllApollonDiagrams() {
         log.debug("REST request to get all ApollonDiagrams");
         return apollonDiagramRepository.findAll();
-        }
+    }
 
     /**
-     * GET  /apollon-diagrams/:id : get the "id" apollonDiagram.
+     * GET /apollon-diagrams/:id : get the "id" apollonDiagram.
      *
      * @param id the id of the apollonDiagram to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
     @GetMapping("/apollon-diagrams/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to get ApollonDiagram : {}", id);
         ApollonDiagram apollonDiagram = apollonDiagramRepository.findById(id).get();
@@ -107,17 +103,16 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * DELETE  /apollon-diagrams/:id : delete the "id" apollonDiagram.
+     * DELETE /apollon-diagrams/:id : delete the "id" apollonDiagram.
      *
      * @param id the id of the apollonDiagram to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/apollon-diagrams/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to delete ApollonDiagram : {}", id);
         apollonDiagramRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 }

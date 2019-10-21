@@ -1,45 +1,38 @@
 import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
-import { Principal } from '../';
-import { LoginModalService } from '../login/login-modal.service';
-import { StateStorageService } from './state-storage.service';
+import { AccountService, StateStorageService } from 'app/core';
 import { LocalStorageService } from 'ngx-webstorage';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
-    constructor(
-        private router: Router,
-        private loginModalService: LoginModalService,
-        private principal: Principal,
-        private stateStorageService: StateStorageService,
-        private localStorage: LocalStorageService
-    ) {}
+    constructor(private router: Router, private accountService: AccountService, private stateStorageService: StateStorageService, private localStorage: LocalStorageService) {}
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
-        // save the jwt token from get parameter for lti launch requests
-        if (route.routeConfig.path === 'courses/:courseId/exercise/:exerciseId' && route.queryParams['jwt']) {
+        // save the jwt token from get parameter for lti launch requests for online course users
+        // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
+        if (route.routeConfig!.path === 'overview/:courseId/exercises/:exerciseId' && route.queryParams['jwt']) {
             const jwt = route.queryParams['jwt'];
             this.localStorage.store('authenticationToken', jwt);
         }
 
         const authorities = route.data['authorities'];
-        // We need to call the checkLogin / and so the principal.identity() function, to ensure,
-        // that the client has a principal too, if they already logged in by the server.
+        // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
+        // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
         return this.checkLogin(authorities, state.url);
     }
 
     checkLogin(authorities: string[], url: string): Promise<boolean> {
-        const principal = this.principal;
+        const accountService = this.accountService;
         return Promise.resolve(
-            principal.identity().then(account => {
+            accountService.identity().then(account => {
                 if (!authorities || authorities.length === 0) {
                     return true;
                 }
 
                 if (account) {
-                    return principal.hasAnyAuthority(authorities).then(response => {
+                    return accountService.hasAnyAuthority(authorities).then(response => {
                         if (response) {
                             return true;
                         }
@@ -54,11 +47,11 @@ export class UserRouteAccessService implements CanActivate {
                 this.router.navigate(['accessdenied']).then(() => {
                     // only show the login dialog, if the user hasn't logged in yet
                     if (!account) {
-                        this.loginModalService.open();
+                        this.router.navigate(['/']);
                     }
                 });
                 return false;
-            })
+            }),
         );
     }
 }

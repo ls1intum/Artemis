@@ -1,6 +1,6 @@
 {
-    "arTeMiSApp": {
-        "answerCounter" : {
+    "artemisApp": {
+        "answerCounter": {
             "home": {
                 "title": "Answer Counters",
                 "createLabel": "Answer Counter erstellen",

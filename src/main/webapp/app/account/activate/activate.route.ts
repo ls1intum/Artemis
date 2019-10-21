@@ -1,6 +1,5 @@
 import { Route } from '@angular/router';
 
-import { UserRouteAccessService } from '../../core';
 import { ActivateComponent } from './activate.component';
 
 export const activateRoute: Route = {
@@ -8,7 +7,6 @@ export const activateRoute: Route = {
     component: ActivateComponent,
     data: {
         authorities: [],
-        pageTitle: 'activate.title'
+        pageTitle: 'activate.title',
     },
-    canActivate: [UserRouteAccessService]
 };

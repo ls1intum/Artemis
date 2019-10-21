@@ -1,0 +1,169 @@
+<div *ngIf="exercise">
+    <div class="alert" *ngIf="showWelcomeAlert" [ngClass]="'alert-info'" style="bottom: 11px;">
+        <div [innerHTML]="'artemisApp.exercise.welcome' | translate"></div>
+    </div>
+    <!-- HEADER INFORMATION START -->
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="backToCourse.bind(this)">
+        <span pagetitle>{{ exercise.title }}</span>
+    </jhi-header-exercise-page-with-details>
+    <!-- HEADER INFORMATION END -->
+    <!-- EXERCISE ACTIONS START -->
+    <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
+        <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
+        <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult !== null">
+        </jhi-exercise-details-student-actions>
+
+        <!-- TODO: this is quite some duplicated code from course-exercise-row.component.html that we should unify in one component -->
+        <div class="col-auto" [ngSwitch]="exercise.participationStatus">
+            <div class="d-none d-sm-inline">
+                <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipating' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | translate }}</span>
+            </div>
+            <div class="d-sm-none">
+                <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuizShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
+                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
+            </div>
+            <span *ngSwitchCase="'initialized'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <span *ngSwitchCase="'inactive'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <span *ngSwitchCase="'quiz-finished'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <span *ngSwitchCase="'exercise-submitted'">
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+            </span>
+            <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
+                <jhi-programming-exercise-student-trigger-build-button
+                    [exercise]="exercise"
+                    [participation]="exercise.studentParticipations[0]"
+                ></jhi-programming-exercise-student-trigger-build-button>
+            </ng-container>
+        </div>
+
+        <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
+            <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
+            <div class="btn-group">
+                <div class="btn btn-outline-primary" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/dashboard">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.information' | translate }}
+                </div>
+                <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{ exerciseRouterLink }}">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.assessments' | translate }}
+                </div>
+                <div class="btn btn-outline-primary" *ngIf="exercise.type === MODELING" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/statistics">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics' | translate }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12 col-md-10 col-lg-8">
+            <!-- EXERCISE ACTIONS END -->
+            <!-- PROBLEM STATEMENT START -->
+            <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
+                <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.studentParticipations && exercise.studentParticipations[0]">
+                </jhi-programming-exercise-instructions>
+            </div>
+            <ng-template #exerciseTemplate>
+                <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
+                    <div class="col-12 col-md-12 markdown-preview problem-statement">
+                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | translate }}</h3>
+                        <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
+                    </div>
+                </div>
+            </ng-template>
+            <!-- PROBLEM STATEMENT END -->
+            <!-- RESULTS START -->
+            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !currentResult?.rated)">
+                <div class="col-auto">
+                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | translate }}</h3>
+                </div>
+            </div>
+            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult?.length > 1">
+                <div class="col-12 col-md-12">
+                    <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxScore"></jhi-result-history>
+                </div>
+            </div>
+            <div class="row justify-content-between" *ngIf="showResults && !currentResult?.rated && studentParticipation?.results?.length === 1">
+                <div class="col">
+                    <h4>
+                        <span class="badge w-100 badge-info">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.notGraded' | translate | uppercase }}
+                        </span>
+                    </h4>
+                </div>
+                <div class="col text-left">
+                    <jhi-result [result]="studentParticipation!.results[0]" [participation]="studentParticipation" showUngradedResults="true" short="true"></jhi-result>
+                </div>
+                <div class="col text-left d-none d-md-flex">
+                    <h6 [ngbTooltip]="studentParticipation!.results[0]!.completionDate | date: 'dd/MM/yy HH:mm'">
+                        ({{ studentParticipation!.results[0]!.completionDate! | amTimeAgo }})
+                    </h6>
+                </div>
+            </div>
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
+                <div class="col-auto">
+                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.allResults' | translate }}</h3>
+                </div>
+            </div>
+            <div class="row" *ngIf="showMoreResults && showResults">
+                <div class="col-12 col-md-12">
+                    <div *ngFor="let result of studentParticipation?.results">
+                        <div class="row justify-content-between">
+                            <div class="col">
+                                <h4>
+                                    <span class="badge w-100 badge-success" [ngClass]="exerciseRatedBadge(result)">
+                                        {{
+                                            (result.rated ? 'artemisApp.courseOverview.exerciseDetails.graded' : 'artemisApp.courseOverview.exerciseDetails.notGraded')
+                                                | translate
+                                                | uppercase
+                                        }}
+                                    </span>
+                                </h4>
+                            </div>
+                            <div class="col text-left">
+                                <jhi-result [result]="result" [participation]="exercise.studentParticipations[0]" showUngradedResults="true" short="true"></jhi-result>
+                            </div>
+                            <div class="col text-left d-none d-md-flex">
+                                <h6 [ngbTooltip]="result.completionDate | date: 'dd/MM/yy HH:mm'">({{ result.completionDate! | amTimeAgo }})</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="no-results" *ngIf="!studentParticipation || !studentParticipation.results">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showResults && studentParticipation?.results?.length > 1">
+                <div class="col-auto">
+                    <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
+                        showMoreResults
+                            ? ('artemisApp.courseOverview.exerciseDetails.hideResults' | translate)
+                            : ('artemisApp.courseOverview.exerciseDetails.showResults' | translate)
+                    }}</a>
+                </div>
+            </div>
+            <div class="row mb-2 mt-2 align-items-baseline no-results" *ngIf="!showResults">
+                <div class="col-auto">
+                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}</h3>
+                </div>
+            </div>
+        </div>
+        <!-- RESULTS END -->
+        <div class="col-sm-12 col-md-4 col-lg-4" jhiIdeFilter [showInIDE]="false">
+            <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
+        </div>
+    </div>
+</div>

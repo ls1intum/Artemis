@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed, inject, tick, fakeAsync } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
-import { Renderer, ElementRef } from '@angular/core';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import { ElementRef, Renderer } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ArTEMiSTestModule } from '../../../../test.module';
+import { ArtemisTestModule } from '../../../../test.module';
 import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';
 import { PasswordResetFinishService } from 'app/account/password-reset/finish/password-reset-finish.service';
 import { MockActivatedRoute } from '../../../../helpers/mock-route.service';
@@ -15,24 +15,24 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [PasswordResetFinishComponent],
                 providers: [
                     {
                         provide: ActivatedRoute,
-                        useValue: new MockActivatedRoute({ key: 'XYZPDQ' })
+                        useValue: new MockActivatedRoute({ key: 'XYZPDQ' }),
                     },
                     {
                         provide: Renderer,
                         useValue: {
-                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {}
-                        }
+                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {},
+                        },
                     },
                     {
                         provide: ElementRef,
-                        useValue: new ElementRef(null)
-                    }
-                ]
+                        useValue: new ElementRef(null),
+                    },
+                ],
             })
                 .overrideTemplate(PasswordResetFinishComponent, '')
                 .createComponent(PasswordResetFinishComponent);
@@ -55,7 +55,7 @@ describe('Component Tests', () => {
         it('sets focus after the view has been initialized', inject([ElementRef], (elementRef: ElementRef) => {
             const element = fixture.nativeElement;
             const node = {
-                focus() {}
+                focus() {},
             };
 
             elementRef.nativeElement = element;
@@ -90,10 +90,10 @@ describe('Component Tests', () => {
 
                 expect(service.save).toHaveBeenCalledWith({
                     key: 'XYZPDQ',
-                    newPassword: 'password'
+                    newPassword: 'password',
                 });
                 expect(comp.success).toEqual('OK');
-            })
+            }),
         ));
 
         it('should notify of generic error', inject(
@@ -109,11 +109,11 @@ describe('Component Tests', () => {
 
                 expect(service.save).toHaveBeenCalledWith({
                     key: 'XYZPDQ',
-                    newPassword: 'password'
+                    newPassword: 'password',
                 });
                 expect(comp.success).toBeNull();
                 expect(comp.error).toEqual('ERROR');
-            })
+            }),
         ));
     });
 });

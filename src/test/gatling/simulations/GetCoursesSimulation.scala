@@ -5,13 +5,13 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
 class GetCoursesSimulation extends Simulation {
-    val username = "<YOUR USERNAME>"    // TODO: replace with actual username
-    val password = "<YOUR PASSWORD>"    // TODO: replace with actual password
+    val username = "<YOUR USERNAME>"    // NOTE: replace with actual username
+    val password = "<YOUR PASSWORD>"    // NOTE: replace with actual password
 
     val baseURL = Option(System.getProperty("baseURL")) getOrElse """http://localhost:8080"""
 
     val httpConf = http
-        .baseURL(baseURL)
+        .baseUrl(baseURL)
         .inferHtmlResources()
         .acceptHeader("*/*")
         .acceptEncodingHeader("gzip, deflate")
@@ -58,7 +58,7 @@ class GetCoursesSimulation extends Simulation {
                 .exec(http("Create new course")
                     .post("/api/courses")
                     .headers(headers_http_authenticated)
-                    .body(StringBody("""{"id":null, "title":"SAMPLE_TEXT", "studentGroupName":"SAMPLE_TEXT", "teachingAssistantGroupName":"SAMPLE_TEXT"}""")).asJSON
+                    .body(StringBody("""{"id":null, "title":"SAMPLE_TEXT", "studentGroupName":"SAMPLE_TEXT", "teachingAssistantGroupName":"SAMPLE_TEXT"}""")).asJson
                     .check(status.is(201))
                     .check(headerRegex("Location", "(.*)").saveAs("new_course_url"))).exitHereIfFailed
                 .pause(2)
@@ -77,7 +77,7 @@ class GetCoursesSimulation extends Simulation {
     val users = scenario("Users").exec(scn)
 
     setUp(
-        users.inject(rampUsers(Integer.getInteger("users", 500)) over (Integer.getInteger("ramp", 30) seconds))
+        users.inject(rampUsers(Integer.getInteger("users", 500)) during(Integer.getInteger("ramp", 30) seconds))
     ).protocols(httpConf)
 
 }

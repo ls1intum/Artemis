@@ -23,7 +23,7 @@ export class JhiConfigurationService {
                 return properties.sort((propertyA, propertyB) => {
                     return propertyA.prefix === propertyB.prefix ? 0 : propertyA.prefix < propertyB.prefix ? -1 : 1;
                 });
-            })
+            }),
         );
     }
 
@@ -40,7 +40,7 @@ export class JhiConfigurationService {
             }
         }
         // by default, use the default ApplicationContext Id
-        return res['contexts']['ArTEMiS']['beans'];
+        return res['contexts']['Artemis']['beans'];
     }
 
     getEnv(): Observable<any> {
@@ -61,7 +61,7 @@ export class JhiConfigurationService {
                     properties[name] = vals;
                 }
                 return properties;
-            })
+            }),
         );
     }
 }

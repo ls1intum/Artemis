@@ -1,75 +1,159 @@
 import './vendor.ts';
 
-import { Injector, NgModule } from '@angular/core';
+import { ErrorHandler, NgModule, Sanitizer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import { Ng2Webstorage, LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { JhiEventManager } from 'ng-jhipster';
+import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {
+    JhiAlertService,
+    JhiConfigService,
+    JhiLanguageService,
+    JhiModuleConfig,
+    JhiPaginationUtil,
+    JhiResolvePagingParams,
+    missingTranslationHandler,
+    NgJhipsterModule,
+    translatePartialLoader,
+} from 'ng-jhipster';
+import { Angulartics2Module } from 'angulartics2';
+import * as moment from 'moment';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from './blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from './blocks/interceptor/notification.interceptor';
-import { JhiWebsocketService, Principal, UserRouteAccessService } from './core';
-import { ArTEMiSSharedModule } from './shared';
-import { ArTEMiSCoreModule } from 'app/core';
-import { ArTEMiSAppRoutingModule } from './app-routing.module';
-import { ArTEMiSHomeModule } from './home/home.module';
-import { ArTEMiSAccountModule } from './account/account.module';
-import { ArTEMiSCoursesModule } from './courses';
-import { ArTEMiSEntityModule } from './entities/entity.module';
-import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './instructor-dashboard';
-import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
+import { JhiWebsocketService, UserRouteAccessService } from './core';
+import { ArtemisSharedModule } from './shared';
+import { ArtemisCoreModule } from 'app/core';
+import { ArtemisAppRoutingModule } from './app-routing.module';
+import { ArtemisHomeModule } from './home';
+import { ArtemisLegalModule } from './legal';
+import { ArtemisOverviewModule } from './overview';
+import { ArtemisAccountModule } from './account/account.module';
+import { ArtemisEntityModule } from './entities/entity.module';
+import { ArtemisCourseScoresModule, ArtemisExerciseScoresModule } from './scores';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
-import { DifferencePipe, MomentModule } from 'angular2-moment';
-import { ArTEMiSEditorModule } from './editor';
+import { DifferencePipe, MomentModule } from 'ngx-moment';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
-import { ArTEMiSQuizModule } from './quiz/participate';
-import * as moment from 'moment';
-// jhipster-needle-angular-add-module-import JHipster will add new module here
+import { ArtemisQuizModule } from './quiz/participate';
+import { ArtemisTextModule } from './text-editor';
+import { ArtemisTextAssessmentModule } from './text-assessment';
+import { ArtemisModelingStatisticsModule } from './modeling-statistics/';
 import {
     ActiveMenuDirective,
     ErrorComponent,
     FooterComponent,
     JhiMainComponent,
     NavbarComponent,
+    NotificationContainerComponent,
     PageRibbonComponent,
-    ProfileService
+    ProfileService,
+    SystemNotificationComponent,
 } from './layouts';
-import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
-import { ArTEMiSStatisticModule } from './statistics/statistic.module';
-import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
+import { ArtemisApollonDiagramsModule } from './apollon-diagrams';
+import { ArtemisStatisticModule } from './quiz/statistics/quiz-statistic.module';
+import { ArtemisModelingSubmissionModule } from 'app/modeling-submission';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
-import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
-import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
+import { PendingChangesGuard } from 'app/shared';
+import { ArtemisInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
+import { ArtemisInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
+import { ArtemisTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
+import { ArtemisTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
+import { ArtemisExampleTextSubmissionModule } from 'app/example-text-submission';
+import { ArtemisExampleModelingSubmissionModule } from 'app/example-modeling-submission';
+import { ArtemisComplaintsModule } from 'app/complaints';
+import { ArtemisNotificationModule } from 'app/entities/notification/notification.module';
+import { ArtemisSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
+import { ArtemisModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
+import { ArtemisExampleModelingSolutionModule } from 'app/example-modeling-solution';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
+import { ArtemisConnectionNotificationModule } from './layouts/connection-notification/connection-notification.module';
+import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
+import { DeviceDetectorModule } from 'ngx-device-detector';
+import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission/programming-submission.module';
+import { ArtemisParticipationModule } from 'app/entities/participation/participation.module';
+import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/file-upload-submission.module';
+import { ArtemisFileUploadAssessmentModule } from 'app/file-upload-assessment/file-upload-assessment.module';
 
 @NgModule({
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
-        ArTEMiSAppRoutingModule,
-        Ng2Webstorage.forRoot({ prefix: 'jhi', separator: '-' }),
+        ArtemisAppRoutingModule,
+        NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
+        DeviceDetectorModule,
+        GuidedTourModule.forRoot(),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
         MomentModule,
-        ArTEMiSSharedModule,
-        ArTEMiSCoreModule,
-        ArTEMiSHomeModule,
-        ArTEMiSAccountModule,
-        ArTEMiSEntityModule,
-        ArTEMiSApollonDiagramsModule,
-        ArTEMiSCoursesModule,
-        ArTEMiSEditorModule,
-        ArTEMiSQuizModule,
-        ArTEMiSInstructorCourseDashboardModule,
-        ArTEMiSInstructorDashboardModule,
-        ArTEMiSAssessmentDashboardModule,
-        ArTEMiSStatisticModule,
-        ArTEMiSModelingEditorModule
+        NgJhipsterModule.forRoot({
+            // set below to true to make alerts look like toast
+            alertAsToast: false,
+            alertTimeout: 8000,
+            i18nEnabled: true,
+            defaultI18nLang: 'en',
+        }),
+        /**
+         * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
+         */
+        Angulartics2Module.forRoot(),
+        ArtemisSharedModule.forRoot(),
+        ArtemisCoreModule,
+        ArtemisHomeModule,
+        ArtemisLegalModule,
+        ArtemisParticipationModule.forRoot(),
+        ArtemisProgrammingSubmissionModule.forRoot(),
+        ArtemisOverviewModule,
+        ArtemisAccountModule,
+        ArtemisEntityModule,
+        ArtemisApollonDiagramsModule,
+        ArtemisQuizModule,
+        ArtemisCourseScoresModule,
+        ArtemisExerciseScoresModule,
+        ArtemisStatisticModule,
+        ArtemisModelingSubmissionModule,
+        ArtemisModelingStatisticsModule,
+        ArtemisTextModule,
+        ArtemisTextAssessmentModule,
+        ArtemisFileUploadSubmissionModule,
+        ArtemisFileUploadAssessmentModule,
+        ArtemisInstructorCourseStatsDashboardModule,
+        ArtemisInstructorExerciseStatsDashboardModule,
+        ArtemisTutorCourseDashboardModule,
+        ArtemisTutorExerciseDashboardModule,
+        ArtemisComplaintsModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisNotificationModule,
+        ArtemisSystemNotificationModule,
+        ArtemisModelingAssessmentEditorModule,
+        ArtemisModelingSubmissionModule,
+        ArtemisExampleTextSubmissionModule,
+        ArtemisExampleModelingSubmissionModule,
+        ArtemisExampleModelingSolutionModule,
+        ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisConnectionNotificationModule,
+        ArtemisListOfComplaintsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
+        TranslateModule.forRoot({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: translatePartialLoader,
+                deps: [HttpClient],
+            },
+            missingTranslationHandler: {
+                provide: MissingTranslationHandler,
+                useFactory: missingTranslationHandler,
+                deps: [JhiConfigService],
+            },
+        }),
     ],
     declarations: [
         JhiMainComponent,
@@ -78,22 +162,24 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        QuizExerciseExportComponent
-    ],
-    entryComponents: [
-        /** @desc Angular app main component **/
-        JhiMainComponent
+        SystemNotificationComponent,
+        NotificationContainerComponent,
+        QuizExerciseExportComponent,
     ],
     providers: [
+        {
+            provide: ErrorHandler,
+            useClass: SentryErrorHandler,
+        },
+        GuidedTourService,
         ProfileService,
         RepositoryService,
         PaginationConfig,
         UserRouteAccessService,
         DifferencePipe,
         JhiWebsocketService,
-        Principal,
-        ParticipationDataProvider,
         PendingChangesGuard,
+        TranslateService,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.
@@ -107,33 +193,49 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
             multi: true,
-            deps: [LocalStorageService, SessionStorageService]
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,
             multi: true,
-            deps: [Injector]
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ErrorHandlerInterceptor,
             multi: true,
-            deps: [JhiEventManager]
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: NotificationInterceptor,
             multi: true,
-            deps: [Injector]
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: RepositoryInterceptor,
-            multi: true
-        }
+            multi: true,
+        },
+        {
+            provide: JhiLanguageService,
+            useClass: JhiLanguageService,
+            deps: [TranslateService, JhiConfigService],
+        },
+        {
+            provide: JhiResolvePagingParams,
+            useClass: JhiResolvePagingParams,
+            deps: [JhiPaginationUtil],
+        },
+        {
+            provide: JhiAlertService,
+            useClass: JhiAlertService,
+            deps: [Sanitizer, JhiConfigService, TranslateService],
+        },
+        {
+            provide: JhiConfigService,
+            useClass: JhiConfigService,
+            deps: [JhiModuleConfig],
+        },
     ],
-    bootstrap: [JhiMainComponent]
+    bootstrap: [JhiMainComponent],
 })
 export class ArTeMiSAppModule {
     constructor(private dpConfig: NgbDatepickerConfig) {

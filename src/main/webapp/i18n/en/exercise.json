@@ -1,37 +1,95 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "exercise": {
             "home": {
                 "title": "Exercises",
                 "createLabel": "Create a new Exercise",
-                "createOrEditLabel": "Create or edit a Exercise"
+                "createOrEditLabel": "Create or edit an Exercise"
             },
+            "resultCount": "{{resultsLength}} results",
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Exercise {{ id }}?"
+                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the Exercise to confirm."
             },
             "detail": {
                 "title": "Exercise"
             },
+            "exercise": "Exercise",
+            "results": "Results",
+            "actions": "Actions",
+            "notStarted": "You have not started this exercise yet.",
             "problemStatement": "Problem Statement",
-            "sampleSolution" : "Sample Solution",
+            "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
             "title": "Title",
+            "shortName": "Short Name",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
+            "dueDateError": "Due Date must be after Release Date. Please check your selection again",
+            "assessmentDueDate": "Assessment Due Date",
+            "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
             "maxScore": "Max Score",
             "difficulty": "Difficulty",
+            "noLevel": "No Level",
+            "easy": "Easy",
+            "medium": "Medium",
+            "hard": "Hard",
             "categories": "Categories",
             "participations": "Participations",
+            "exportNames": "Export Names",
+            "exportResults": "Export Results",
+            "refresh": "Refresh",
             "course": "Course",
             "type": "Type",
             "mcqType": "Multiple Choice Question",
             "dndType": "Drag and Drop Question",
-            "welcome": "<strong>Welcome to ArTEMiS!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
+            "welcome": "<strong>Welcome to Artemis!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
-            "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>"
+            "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
+            "studentName": "Name",
+            "studentId": "Login",
+            "completionDate": "Completion Date",
+            "result": "Result",
+            "submissionCount": "Submissions",
+            "score": "Score",
+            "duration": "Duration",
+            "showUnsuccessful": "Show Unsuccessful",
+            "showSuccessful": "Show Successful",
+            "showManual": "Show Manual",
+            "showAutomatic": "Show Automatic",
+            "showAll": "Show All",
+            "tagPlaceholder": "Enter a new category",
+            "isProgramming": "This is a programming exercise",
+            "isModeling": "This is a modeling exercise",
+            "isQuiz": "This is a quiz exercise",
+            "isText": "This is a text exercise",
+            "isFileUpload": "This is a file upload exercise",
+            "notificationText": "Optional: Notification about changes",
+            "presentationScoreEnabled": {
+                "title": "Presentation Score enabled",
+                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participations\" page of the exercise."
+            },
+            "errors": {
+                "exerciseNotFound": "This exercise was not found"
+            },
+            "form": {
+                "title": {
+                    "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
+                },
+                "shortName": {
+                    "pattern": "The short name must only consist of alphanumeric characters!",
+                    "minlength": "The short name must be at least 3 characters long!"
+                },
+                "packageName": {
+                    "pattern": "The package name must have at least 1 dot and must not start with a number"
+                },
+                "maxScore": {
+                    "pattern": "The maximum score must be between 1 and 9999!"
+                }
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

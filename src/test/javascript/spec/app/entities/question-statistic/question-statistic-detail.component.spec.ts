@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { QuestionStatisticDetailComponent } from 'app/entities/question-statistic/question-statistic-detail.component';
+import { QuestionStatisticDetailComponent } from 'app/entities/quiz-question-statistic/question-statistic-detail.component';
 import { QuestionStatistic } from 'app/shared/model/question-statistic.model';
 
 describe('Component Tests', () => {
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [QuestionStatisticDetailComponent],
-                providers: [{ provide: ActivatedRoute, useValue: route }]
+                providers: [{ provide: ActivatedRoute, useValue: route }],
             })
                 .overrideTemplate(QuestionStatisticDetailComponent, '')
                 .compileComponents();

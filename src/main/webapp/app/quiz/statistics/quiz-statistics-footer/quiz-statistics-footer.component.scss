@@ -1,0 +1,30 @@
+.quiz-statistic-footer {
+    position: fixed;
+    height: 60px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: white;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+
+    .container {
+        height: 100%;
+
+        .quiz-footer-content,
+        .edit-quiz-footer-content {
+            .form-group {
+                justify-content: center;
+
+                .dropup {
+                    text-align: center;
+                    width: 100%;
+                }
+
+                @media (max-width: 991.98px) {
+                    padding-top: 10px;
+                }
+            }
+        }
+    }
+}

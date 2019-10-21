@@ -4,20 +4,14 @@ import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-import { LANGUAGES } from 'app/core/language/language.constants';
+import { LANGUAGES } from './language.constants';
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
-    renderer: Renderer2 = null;
+    private renderer: Renderer2;
     private _language: BehaviorSubject<string>;
 
-    constructor(
-        private translateService: TranslateService,
-        // tslint:disable-next-line: no-unused-variable
-        private rootRenderer: RendererFactory2,
-        private titleService: Title,
-        private router: Router
-    ) {
+    constructor(private translateService: TranslateService, private titleService: Title, private router: Router, rootRenderer: RendererFactory2) {
         this._language = new BehaviorSubject<string>(this.translateService.currentLang);
         this.renderer = rootRenderer.createRenderer(document.querySelector('html'), null);
         this.init();
@@ -57,7 +51,7 @@ export class JhiLanguageHelper {
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {
-        let title: string = routeSnapshot.data && routeSnapshot.data['pageTitle'] ? routeSnapshot.data['pageTitle'] : 'arTeMiSApp';
+        let title: string = routeSnapshot.data && routeSnapshot.data['pageTitle'] ? routeSnapshot.data['pageTitle'] : 'artemisApp';
         if (routeSnapshot.firstChild) {
             title = this.getPageTitle(routeSnapshot.firstChild) || title;
         }

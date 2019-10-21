@@ -1,5 +1,5 @@
 import { SpyObject } from './spyobject';
-import { JhiAlertService, JhiAlert } from 'ng-jhipster';
+import { JhiAlert, JhiAlertService } from 'ng-jhipster';
 
 export class MockAlertService extends SpyObject {
     constructor() {

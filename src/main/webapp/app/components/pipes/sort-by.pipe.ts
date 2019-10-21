@@ -1,25 +1,17 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DifferencePipe } from 'angular2-moment';
-import { BaseEntity } from '../../shared';
+import { DifferencePipe } from 'ngx-moment';
 
 @Pipe({
-    name: 'sortBy'
+    name: 'sortBy',
 })
 export class SortByPipe implements PipeTransform {
-    constructor(private momentDiff: DifferencePipe) { }
+    constructor(private momentDiff: DifferencePipe) {}
 
-    transform<T extends BaseEntity>(array: Array<T>, predicate: string, reverse: boolean): Array<T> {
-        array.sort((a: T, b: T) => {
+    transform(array: any[], predicate: string, reverse: boolean): any[] {
+        array.sort((a: any, b: any) => {
             let tempA = a;
             let tempB = b;
-            if (predicate === 'releaseDate') {
-                if (!tempA['isPlannedToStart']) {
-                    tempA['releaseDate'] = '0';
-                }
-                if (!tempB['isPlannedToStart']) {
-                    tempB['releaseDate'] = '0';
-                }
-            } else if (predicate === 'status') {
+            if (predicate === 'status') {
                 tempA['status'] = this.statusForQuiz(tempA);
                 tempB['status'] = this.statusForQuiz(tempB);
             } else if (predicate === 'duration' && (!tempA['duration'] || !tempB['duration'])) {
@@ -29,15 +21,22 @@ export class SortByPipe implements PipeTransform {
             const keys = predicate.split('.');
             for (const tempKey of keys) {
                 if (tempA !== null) {
-                    tempA = tempA[tempKey];
+                    if (tempA instanceof Map) {
+                        tempA = tempA.get(tempKey);
+                    } else {
+                        tempA = tempA[tempKey];
+                    }
                 }
                 if (tempB !== null) {
-                    tempB = tempB[tempKey];
+                    if (tempB instanceof Map) {
+                        tempB = tempB.get(tempKey);
+                    } else {
+                        tempB = tempB[tempKey];
+                    }
                 }
             }
-            const result = (tempA < tempB) ? -1 : (tempA > tempB) ? 1 : (tempA == null && tempB !== null ? -1 : (tempA !== null && tempB == null ? 1 : (
-                (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0
-            )));
+            const result =
+                tempA < tempB ? -1 : tempA > tempB ? 1 : tempA == null && tempB !== null ? -1 : tempA !== null && tempB == null ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
             return result * (reverse ? 1 : -1);
         });
         return array;
@@ -54,6 +53,7 @@ export class SortByPipe implements PipeTransform {
         return quizExercise.isVisibleBeforeStart ? 3 : 4;
     }
 
+    // TODO: How does this work? An exercise does not have a completion date.
     durationForExercise(exercise: any) {
         return this.momentDiff.transform(exercise.completionDate, exercise.participations[0].initializationDate, 'minutes');
     }

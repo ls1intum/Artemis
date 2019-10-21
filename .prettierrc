@@ -1,9 +1,10 @@
 # Prettier configuration
 
-printWidth: 140
+printWidth: 180
 singleQuote: true
 tabWidth: 4
 useTabs: false
+trailingComma: all
 
 # js and ts rules:
 arrowParens: avoid

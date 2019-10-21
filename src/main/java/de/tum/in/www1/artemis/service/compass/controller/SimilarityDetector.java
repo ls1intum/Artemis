@@ -1,106 +1,51 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
-
-import java.util.Collection;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 
 public class SimilarityDetector {
 
     /**
-     * Determine elementId and context for each model element of a new model
-     * @param model the new model which contains the model elements
-     * @param index the modelIndex which keeps track of all elementIds
+     * Analyze the similarity of all model elements of the given UML diagram. It gets the similarityId for every model element from the model index and assigns it to the
+     * corresponding element. Additionally, it sets the context of the model elements.
+     *
+     * @param model the model which contains the model elements for which the similarityId and the context should be analyzed and set
+     * @param index the modelIndex which keeps track of all similarityIds of all the model elements in one modeling exercise
      */
-    public static void analyzeSimilarity(UMLModel model, ModelIndex index) {
+    public static void analyzeSimilarity(UMLDiagram model, ModelIndex index) {
 
-        for (UMLClass umlClass : model.getConnectableList()) {
-            umlClass.setElementID(index.getElementID(umlClass));
-
-            for (UMLAttribute attribute : umlClass.getAttributeList()) {
-                attribute.setElementID(index.getElementID(attribute));
-            }
-
-            for (UMLMethod method : umlClass.getMethodList()) {
-                method.setElementID(index.getElementID(method));
-            }
+        for (UMLElement element : model.getAllModelElements()) {
+            element.setSimilarityID(index.retrieveSimilarityId(element));
         }
 
-        for (UMLRelation relation : model.getRelationList()) {
-            relation.setElementID(index.getElementID(relation));
-        }
-
-        setContext(model);
+        setContextOfModelElements(model);
     }
 
-    private static void setContext(UMLModel model) {
-        for (UMLClass umlClass : model.getConnectableList()) {
-            umlClass.setContext(generateContextForElement(model, umlClass));
-            for (UMLAttribute attribute : umlClass.getAttributeList()) {
-                attribute.setContext(generateContextForElement(model, attribute));
+    /**
+     * Set the context of all model elements of the given UML diagram. For UML attributes and methods, the context contains the similarityId of their parent class. For all other
+     * elements no context is considered and the default NO_CONTEXT is assigned.
+     *
+     * @param model the model containing the model elements for which the context should be set
+     */
+    private static void setContextOfModelElements(UMLDiagram model) {
+        Context context;
+
+        for (UMLElement element : model.getAllModelElements()) {
+            context = Context.NO_CONTEXT;
+
+            if (element instanceof UMLAttribute) {
+                UMLAttribute attribute = (UMLAttribute) element;
+                context = new Context(attribute.getParentClass().getSimilarityID());
             }
-            for (UMLMethod method : umlClass.getMethodList()) {
-                method.setContext(generateContextForElement(model, method));
+            else if (element instanceof UMLMethod) {
+                UMLMethod method = (UMLMethod) element;
+                context = new Context(method.getParentClass().getSimilarityID());
             }
+
+            element.setContext(context);
         }
-        for (UMLRelation relation : model.getRelationList()) {
-            relation.setContext(generateContextForElement(model, relation));
-        }
-    }
-
-    private static Context generateContextForElement(UMLModel model, UMLElement element) {
-
-        if (element.getClass() == UMLAttribute.class) {
-            for (UMLClass umlClass : model.getConnectableList()) {
-                if (umlClass.getAttributeList().contains(element)) {
-                    return new Context(umlClass.getElementID());
-                }
-            }
-        }
-        else if (element.getClass() == UMLMethod.class) {
-            for (UMLClass umlClass : model.getConnectableList()) {
-                if (umlClass.getMethodList().contains(element)) {
-                    return new Context(umlClass.getElementID());
-                }
-            }
-        }
-
-        /*
-         * Do not use context for classes
-         * Class context reduces the automatic assessment rate significantly
-         */
-
-        /*else if (element.getClass() == UMLClass.class) {
-            return ClassContext.getWeakContext((UMLClass) element, model);
-        }
-        else if (element.getClass() == UMLRelation.class) {
-            UMLRelation relation = (UMLRelation) element;
-            HashSet<Integer> edges = new HashSet<>();
-            for (UMLClass connectableElement : model.getConnectableList()) {
-                if (relation.getSource().equals(connectableElement) || relation.getTarget().equals(connectableElement)) {
-                    edges.add(connectableElement.getElementID());
-                }
-            }
-            if (!edges.isEmpty()) {
-                return new Context(edges);
-            }
-        }*/
-
-        return Context.NO_CONTEXT;
-    }
-
-    @SuppressWarnings("unused")
-    static double diversity (Collection<UMLModel> modelList) {
-        double diversity = 0;
-
-        for (UMLModel model : modelList) {
-            for (UMLModel referenceModel : modelList) {
-                diversity += referenceModel.similarity(model);
-            }
-        }
-
-        diversity /= Math.pow(modelList.size(), 2);
-
-        return diversity;
     }
 }

@@ -1,48 +1,124 @@
-import { Routes } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
+import { UserRouteAccessService } from 'app/core';
+import { Observable } from 'rxjs/Observable';
+import { map } from 'rxjs/operators';
 
-import { UserRouteAccessService } from '../../core';
+import { PendingChangesGuard } from 'app/shared';
+
+import { ProgrammingExercise } from './programming-exercise.model';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
+import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
-import { ProgrammingExerciseDeletePopupComponent } from './programming-exercise-delete-dialog.component';
+import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
+import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
+import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
+import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
+
+@Injectable({ providedIn: 'root' })
+export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
+    constructor(private service: ProgrammingExerciseService) {}
+
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+        const id = route.params['id'] ? route.params['id'] : null;
+        if (id) {
+            return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
+        }
+        return Observable.of(new ProgrammingExercise());
+    }
+}
 
 export const programmingExerciseRoute: Routes = [
-    {
-        path: 'programming-exercise',
-        component: ProgrammingExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    },
-    {
-        path: 'programming-exercise/:id',
-        component: ProgrammingExerciseDetailComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    },
     {
         path: 'course/:courseId/programming-exercise',
         component: ProgrammingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/programming-exercise/:id',
+        path: 'course/:courseId/programming-exercise/:id/view',
         component: ProgrammingExerciseDetailComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/programming-exercise/new',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/programming-exercise/:id/edit',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/programming-exercise/import/:id',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course/:courseId/programming-exercise/:exerciseId/manage-test-cases',
+        component: ProgrammingExerciseManageTestCasesComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [CanDeactivateGuard],
+    },
+    {
+        path: 'exercise/:id/archive',
+        component: ProgrammingExerciseArchivePopupComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'instructorDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
+    {
+        path: 'exercise/:id/cleanup',
+        component: ProgrammingExerciseCleanupPopupComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'instructorDashboard.title',
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup',
+    },
 ];
 
 export const programmingExercisePopupRoute: Routes = [
@@ -51,29 +127,19 @@ export const programmingExercisePopupRoute: Routes = [
         component: ProgrammingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
     {
-        path: 'programming-exercise/:id/edit',
+        path: 'course/:courseId/programming-exercise/:id/editlink',
         component: ProgrammingExercisePopupComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
-    {
-        path: 'programming-exercise/:id/delete',
-        component: ProgrammingExerciseDeletePopupComponent,
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.programmingExercise.home.title'
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
 ];

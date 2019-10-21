@@ -7,7 +7,7 @@
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081415",
+    "changelogDate": "20190315161937",
     "entityTableName": "text_submission",
     "dto": "no",
     "pagination": "no",

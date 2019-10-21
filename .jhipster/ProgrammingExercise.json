@@ -2,15 +2,7 @@
     "name": "ProgrammingExercise",
     "fields": [
         {
-            "fieldName": "baseRepositoryUrl",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "solutionRepositoryUrl",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "baseBuildPlanId",
+            "fieldName": "testRepositoryUrl",
             "fieldType": "String"
         },
         {
@@ -20,10 +12,40 @@
         {
             "fieldName": "allowOnlineEditor",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "programmingLanguage",
+            "fieldType": "ProgrammingLanguage",
+            "fieldValues": "JAVA,PYTHON"
+        },
+        {
+            "fieldName": "packageName",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "sequentialTestRuns",
+            "fieldType": "Boolean"
         }
     ],
-    "relationships": [],
-    "changelogDate": "20180927081355",
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "otherEntityName": "participation",
+            "otherEntityRelationshipName": "programmingExercise",
+            "relationshipName": "templateParticipation",
+            "otherEntityField": "id",
+            "ownerSide": true
+        },
+        {
+            "relationshipType": "one-to-one",
+            "otherEntityName": "participation",
+            "otherEntityRelationshipName": "programmingExercise",
+            "relationshipName": "solutionParticipation",
+            "otherEntityField": "id",
+            "ownerSide": true
+        }
+    ],
+    "changelogDate": "20190315161914",
     "entityTableName": "programming_exercise",
     "dto": "no",
     "pagination": "no",

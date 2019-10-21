@@ -1,11 +1,9 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { AnswerOptionService } from 'app/entities/answer-option/answer-option.service';
-import { IAnswerOption, AnswerOption } from 'app/shared/model/answer-option.model';
+import { AnswerOption, IAnswerOption } from 'app/shared/model/answer-option.model';
 
 describe('Service Tests', () => {
     describe('AnswerOption Service', () => {
@@ -15,7 +13,7 @@ describe('Service Tests', () => {
         let elemDefault: IAnswerOption;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(AnswerOptionService);
@@ -39,9 +37,9 @@ describe('Service Tests', () => {
             it('should create a AnswerOption', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -59,9 +57,9 @@ describe('Service Tests', () => {
                         hint: 'BBBBBB',
                         explanation: 'BBBBBB',
                         isCorrect: true,
-                        invalid: true
+                        invalid: true,
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -80,16 +78,16 @@ describe('Service Tests', () => {
                         hint: 'BBBBBB',
                         explanation: 'BBBBBB',
                         isCorrect: true,
-                        invalid: true
+                        invalid: true,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

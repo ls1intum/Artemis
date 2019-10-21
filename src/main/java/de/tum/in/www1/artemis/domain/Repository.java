@@ -1,18 +1,23 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.eclipse.jgit.lib.BaseRepositoryBuilder;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
+
+import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
 /**
  * Created by Josias Montag on 14.10.16.
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
-    private Participation participation;
+    private ProgrammingExerciseParticipation participation;
+
     private Path localPath;
+
+    private HashMap<File, FileType> filesAndFolders;
+
     private Collection<File> files;
 
     public Repository(File gitDir) throws IOException {
@@ -28,15 +33,15 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     /**
-     * Check if the file is allowed in this repository.
-     * This checks if the path of the file is a subdirectory of the repository directory.
+     * Check if the file is allowed in this repository. This checks if the path of the file is a subdirectory of the repository directory. Also checks that the ../ operator is not
+     * used to traverse up directories on the server.
      *
-     * @param file
-     * @return
+     * @param file for which to check if it is valid.
+     * @return true if the file is valid.
      */
     public boolean isValidFile(java.io.File file) {
 
-        if (file == null)
+        if (file == null || file.getPath().contains("../"))
             return false;
 
         if (file.equals(this.localPath.toFile()))
@@ -45,12 +50,11 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return isValidFile(file.getParentFile());
     }
 
-
-    public Participation getParticipation() {
+    public ProgrammingExerciseParticipation getParticipation() {
         return participation;
     }
 
-    public void setParticipation(Participation participation) {
+    public void setParticipation(ProgrammingExerciseParticipation participation) {
         this.participation = participation;
     }
 
@@ -60,6 +64,14 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     public void setLocalPath(Path localPath) {
         this.localPath = localPath;
+    }
+
+    public HashMap<File, FileType> getContent() {
+        return filesAndFolders;
+    }
+
+    public void setContent(HashMap<File, FileType> filesAndFolders) {
+        this.filesAndFolders = filesAndFolders;
     }
 
     public Collection<File> getFiles() {

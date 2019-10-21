@@ -12,12 +12,12 @@ import locale from '@angular/common/locales/en';
         Title,
         {
             provide: LOCALE_ID,
-            useValue: 'en'
+            useValue: 'en',
         },
-        DatePipe
-    ]
+        DatePipe,
+    ],
 })
-export class ArTEMiSCoreModule {
+export class ArtemisCoreModule {
     constructor() {
         registerLocaleData(locale);
     }

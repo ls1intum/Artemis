@@ -1,0 +1,23 @@
+/*!* ==========================================================================
+Instructions wrapper styles
+========================================================================== *!*/
+
+.instructions {
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 1 1 auto;
+    height: 100%;
+
+    &__content {
+        display: flex;
+        flex-flow: column nowrap;
+        flex: 1 1 auto;
+        height: inherit;
+
+        &__markdown {
+            height: inherit;
+            overflow: auto;
+            padding: 1.25rem;
+        }
+    }
+}

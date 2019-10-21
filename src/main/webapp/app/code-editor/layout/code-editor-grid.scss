@@ -1,0 +1,257 @@
+/*!* ==========================================================================
+Code-Editor Layout Styles
+========================================================================== *!*/
+
+.editor-wrapper {
+    display: grid;
+    grid-template-rows: min-content auto auto;
+    grid-row-gap: 10px;
+
+    .collapsed--horizontal {
+        width: 75px !important;
+    }
+    .collapsed--vertical {
+        height: 42px !important;
+    }
+
+    .editor-statusbar {
+        display: flex;
+        align-items: center;
+        border: 1px solid #e7e7e7;
+        padding: 10px;
+
+        &__title {
+            color: #5e5e5e;
+            font-size: 18px;
+        }
+    }
+
+    .editor-main {
+        display: flex;
+        flex-flow: column nowrap;
+        height: 500px;
+        margin-bottom: 10px;
+
+        &__content {
+            display: flex;
+            height: inherit;
+
+            .editor-sidebar-left {
+                flex: 0 1 auto;
+                display: flex;
+                width: 310px;
+
+                > *:first-child {
+                    flex: 1 1 auto;
+                    width: 90%;
+                }
+            }
+        }
+
+        .editor-center {
+            flex: 1 1 auto;
+
+            .card {
+                height: 100%;
+            }
+        }
+        .editor-sidebar-right {
+            flex: 0 1 auto;
+            display: flex;
+            flex-flow: row nowrap;
+            width: 500px;
+
+            > *:last-child {
+                flex: 1 1 auto;
+                width: 90%;
+            }
+        }
+    }
+
+    .editor-bottom {
+        flex: 1 1 auto;
+        display: flex;
+        flex-flow: column nowrap;
+        height: 200px;
+
+        // Hide the grip lines if the editor-bottom content template is empty.
+        .rg-bottom-bottom {
+            display: none;
+        }
+        > * + .rg-bottom-bottom {
+            display: inherit !important;
+        }
+
+        > * {
+            height: inherit;
+        }
+    }
+}
+
+/*!* ==========================================================================
+Collapsable styling
+========================================================================== *!*/
+
+// File browser
+.editor-sidebar-left.collapsed--horizontal {
+    > * {
+        flex: none !important;
+
+        .card-header {
+            height: 100%;
+            width: 100%;
+            > fa-icon {
+                display: none;
+            }
+        }
+
+        .card-body,
+        .card-second-header {
+            display: none !important;
+        }
+
+        .card-title span {
+            display: none !important;
+        }
+    }
+}
+
+.editor-sidebar-left:not(.collapsed--horizontal) {
+    .code-editor-status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(max-content, 1fr));
+        grid-column-gap: 10px;
+
+        > :not(:first-child) {
+            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            padding-left: 20px;
+        }
+    }
+}
+
+.editor-sidebar-left.collapsed--horizontal {
+    .code-editor-status {
+        > :not(:last-child) {
+            padding-bottom: 5px;
+        }
+        > :not(:first-child) {
+            padding-top: 5px;
+            border-top: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        span {
+            display: none !important;
+        }
+    }
+}
+
+// Instructions
+.editor-sidebar-right.collapsed--horizontal {
+    flex: none !important;
+
+    .card-header {
+        height: 100%;
+        width: 100%;
+        > fa-icon {
+            display: none;
+        }
+    }
+    .instructions-wrapper__content {
+        height: auto !important;
+
+        .editable-instruction-container__save,
+        .editable-instruction-container__editor {
+            display: none;
+        }
+        .instructions__content {
+            display: none;
+        }
+    }
+
+    .card-second-header {
+        display: none !important;
+    }
+
+    .card-title span {
+        display: none !important;
+    }
+}
+
+.editor-sidebar-right:not(.collapsed--horizontal) {
+    .editable-instruction-container__status {
+        display: grid;
+        grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 2fr);
+
+        > :not(:first-child) {
+            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            padding-left: 20px;
+        }
+
+        &__item:not(:last-child) {
+            margin-right: 15px;
+        }
+
+        .instructions-status {
+            display: flex;
+            justify-content: center;
+        }
+    }
+}
+
+.editor-sidebar-right.collapsed--horizontal {
+    .instructions__content {
+        height: auto;
+    }
+    .editable-instruction-container__status {
+        display: flex;
+        flex-flow: column;
+
+        > :not(:last-child) {
+            padding-bottom: 5px;
+        }
+
+        > :not(:first-child) {
+            padding-left: 0 !important;
+            padding-top: 5px;
+            border-top: 1px solid rgba(0, 0, 0, 0.125);
+            border-left: none !important;
+        }
+
+        span {
+            display: none !important;
+        }
+
+        .editable-instruction-container__status__testcase span,
+        .instructions-status span {
+            display: none !important;
+        }
+    }
+}
+
+// build-output
+.editor-bottom.collapsed--vertical {
+    .card-body {
+        display: none;
+    }
+}
+
+/*!* ==========================================================================
+Resizable drag elements
+========================================================================== *!*/
+
+.rg-main-bottom,
+.rg-bottom-bottom,
+.rg-sidebar-left,
+.rg-sidebar-right {
+    align-self: center;
+}
+
+.rg-main-bottom {
+    cursor: row-resize;
+}
+
+.rg-sidebar-left,
+.rg-sidebar-right {
+    cursor: col-resize;
+    margin-left: 4px;
+    margin-right: 4px;
+}

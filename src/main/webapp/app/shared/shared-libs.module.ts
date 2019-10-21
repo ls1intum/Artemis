@@ -5,22 +5,17 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgJhipsterModule } from 'ng-jhipster';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { CookieModule } from 'ngx-cookie';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisIconsModule } from 'app/shared/icons/icons.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
-    imports: [
-        NgbModule.forRoot(),
-        NgJhipsterModule.forRoot({
-            // set below to true to make alerts look like toast
-            alertAsToast: false,
-            alertTimeout: 5000,
-            i18nEnabled: true,
-            defaultI18nLang: 'en'
-        }),
-        InfiniteScrollModule,
-        CookieModule.forRoot(),
-        FontAwesomeModule
-    ],
-    exports: [FormsModule, CommonModule, NgbModule, NgJhipsterModule, InfiniteScrollModule, FontAwesomeModule]
+    imports: [NgbModule, InfiniteScrollModule, CookieModule.forRoot(), ArtemisIconsModule, TranslateModule],
+    exports: [FormsModule, CommonModule, NgbModule, NgJhipsterModule, InfiniteScrollModule, ArtemisIconsModule, TranslateModule],
 })
-export class ArTEMiSSharedLibsModule {}
+export class ArtemisSharedLibsModule {
+    static forRoot() {
+        return {
+            ngModule: ArtemisSharedLibsModule,
+        };
+    }
+}

@@ -3,19 +3,21 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 
 import { ActivateService } from './activate.service';
-import { LoginModalService } from '../../core';
 
 @Component({
     selector: 'jhi-activate',
-    templateUrl: './activate.component.html'
+    templateUrl: './activate.component.html',
 })
 export class ActivateComponent implements OnInit {
-    error: string;
-    success: string;
+    error: string | null;
+    success: string | null;
     modalRef: NgbModalRef;
 
-    constructor(private activateService: ActivateService, private loginModalService: LoginModalService, private route: ActivatedRoute) {}
+    constructor(private activateService: ActivateService, private route: ActivatedRoute) {}
 
+    /**
+     * Checks if the user can be activated with ActivateService
+     */
     ngOnInit() {
         this.route.queryParams.subscribe(params => {
             this.activateService.get(params['key']).subscribe(
@@ -26,12 +28,8 @@ export class ActivateComponent implements OnInit {
                 () => {
                     this.success = null;
                     this.error = 'ERROR';
-                }
+                },
             );
         });
-    }
-
-    login() {
-        this.modalRef = this.loginModalService.open();
     }
 }

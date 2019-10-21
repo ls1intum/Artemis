@@ -1,12 +1,12 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, inject, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { QuestionDeleteDialogComponent } from 'app/entities/question/question-delete-dialog.component';
-import { QuestionService } from 'app/entities/question/question.service';
+import { ArtemisTestModule } from '../../../test.module';
+import { QuestionDeleteDialogComponent } from 'app/entities/quiz-question/question-delete-dialog.component';
+import { QuestionService } from 'app/entities/quiz-question/question.service';
 
 describe('Component Tests', () => {
     describe('Question Management Delete Component', () => {
@@ -18,8 +18,8 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [QuestionDeleteDialogComponent]
+                imports: [ArtemisTestModule],
+                declarations: [QuestionDeleteDialogComponent],
             })
                 .overrideTemplate(QuestionDeleteDialogComponent, '')
                 .compileComponents();
@@ -45,7 +45,7 @@ describe('Component Tests', () => {
                     expect(service.delete).toHaveBeenCalledWith(123);
                     expect(mockActiveModal.dismissSpy).toHaveBeenCalled();
                     expect(mockEventManager.broadcastSpy).toHaveBeenCalled();
-                })
+                }),
             ));
         });
     });

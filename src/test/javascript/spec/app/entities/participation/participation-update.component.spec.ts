@@ -1,9 +1,9 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ParticipationUpdateComponent } from 'app/entities/participation/participation-update.component';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { Participation } from 'app/shared/model/participation.model';
@@ -16,8 +16,8 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [ParticipationUpdateComponent]
+                imports: [ArtemisTestModule],
+                declarations: [ParticipationUpdateComponent],
             })
                 .overrideTemplate(ParticipationUpdateComponent, '')
                 .compileComponents();

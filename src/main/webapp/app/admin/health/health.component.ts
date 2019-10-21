@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { JhiHealthService } from './health.service';
-import { JhiHealthModalComponent } from './health-modal.component';
+import { JhiHealthModalComponent, JhiHealthService } from 'app/admin';
 
 @Component({
     selector: 'jhi-health',
-    templateUrl: './health.component.html'
+    templateUrl: './health.component.html',
 })
 export class JhiHealthCheckComponent implements OnInit {
     healthData: any;
@@ -43,7 +42,7 @@ export class JhiHealthCheckComponent implements OnInit {
                     this.healthData = this.healthService.transformHealthData(error.error);
                     this.updatingHealth = false;
                 }
-            }
+            },
         );
     }
 
@@ -56,7 +55,7 @@ export class JhiHealthCheckComponent implements OnInit {
             },
             reason => {
                 // Left blank intentionally, nothing to do here
-            }
+            },
         );
     }
 

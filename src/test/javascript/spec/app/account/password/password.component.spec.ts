@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { PasswordComponent } from 'app/account/password/password.component';
 import { PasswordService } from 'app/account/password/password.service';
 import { JhiTrackerService } from 'app/core/tracker/tracker.service';
@@ -16,14 +16,14 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [PasswordComponent],
                 providers: [
                     {
                         provide: JhiTrackerService,
-                        useClass: MockTrackerService
-                    }
-                ]
+                        useClass: MockTrackerService,
+                    },
+                ],
             })
                 .overrideTemplate(PasswordComponent, '')
                 .compileComponents();
@@ -51,7 +51,7 @@ describe('Component Tests', () => {
             // GIVEN
             const passwordValues = {
                 currentPassword: 'oldPassword',
-                newPassword: 'myPassword'
+                newPassword: 'myPassword',
             };
 
             spyOn(service, 'save').and.returnValue(of(new HttpResponse({ body: true })));

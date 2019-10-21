@@ -1,11 +1,11 @@
 /* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { QuestionStatisticComponent } from 'app/entities/question-statistic/question-statistic.component';
-import { QuestionStatisticService } from 'app/entities/question-statistic/question-statistic.service';
+import { QuestionStatisticComponent } from 'app/entities/quiz-question-statistic/question-statistic.component';
+import { QuestionStatisticService } from 'app/entities/quiz-question-statistic/quiz-question-statistic.service';
 import { QuestionStatistic } from 'app/shared/model/question-statistic.model';
 
 describe('Component Tests', () => {
@@ -18,7 +18,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [QuestionStatisticComponent],
-                providers: []
+                providers: [],
             })
                 .overrideTemplate(QuestionStatisticComponent, '')
                 .compileComponents();
@@ -35,9 +35,9 @@ describe('Component Tests', () => {
                 of(
                     new HttpResponse({
                         body: [new QuestionStatistic(123)],
-                        headers
-                    })
-                )
+                        headers,
+                    }),
+                ),
             );
 
             // WHEN

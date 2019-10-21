@@ -1,11 +1,9 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { DragItemService } from 'app/entities/drag-item/drag-item.service';
-import { IDragItem, DragItem } from 'app/shared/model/drag-item.model';
+import { DragItem, IDragItem } from 'app/shared/model/drag-item.model';
 
 describe('Service Tests', () => {
     describe('DragItem Service', () => {
@@ -15,7 +13,7 @@ describe('Service Tests', () => {
         let elemDefault: IDragItem;
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule]
+                imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
             service = injector.get(DragItemService);
@@ -39,9 +37,9 @@ describe('Service Tests', () => {
             it('should create a DragItem', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        id: 0
+                        id: 0,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
@@ -57,9 +55,9 @@ describe('Service Tests', () => {
                     {
                         pictureFilePath: 'BBBBBB',
                         text: 'BBBBBB',
-                        invalid: true
+                        invalid: true,
                     },
-                    elemDefault
+                    elemDefault,
                 );
 
                 const expected = Object.assign({}, returnedFromService);
@@ -76,16 +74,16 @@ describe('Service Tests', () => {
                     {
                         pictureFilePath: 'BBBBBB',
                         text: 'BBBBBB',
-                        invalid: true
+                        invalid: true,
                     },
-                    elemDefault
+                    elemDefault,
                 );
                 const expected = Object.assign({}, returnedFromService);
                 service
                     .query(expected)
                     .pipe(
                         take(1),
-                        map(resp => resp.body)
+                        map(resp => resp.body),
                     )
                     .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });

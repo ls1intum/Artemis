@@ -1,0 +1,34 @@
+{
+    "tour": {
+        "step": "Schritt {{ string }}:",
+        "navigation": {
+            "back": "Zurück",
+            "next": "Weiter",
+            "done": "Beenden",
+            "close": "Schließen"
+        },
+        "resize": {
+            "headline": "Zu kleine Bildschirmgröße",
+            "content": "Bitte vergrößere deine Bildschirmgröße um mit der Tour fortzufahren oder schließe die Tour."
+        },
+        "cancel": {
+            "headline": "Tutorial abgebrochen",
+            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial fortsetzen</tt> im Account-Menü."
+        },
+        "clickHint": {
+            "text": "Klicke auf das Element um die Tour fortzusetzen."
+        },
+        "typeHint": {
+            "text": "Füge eine neue Zeile ein um mit dem nächsten Schritt fortzufahren."
+        },
+        "waitHint": {
+            "text": "Bitte warte bis der nächste Schritt fertig geladen ist."
+        },
+        "videoHint": {
+            "text": "Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
+        },
+        "stepAlreadyExecutedHint": {
+            "text": "Du hast diesen Tutorialschritt bereits erfolgreich durchgeführt, deswegen brauchst du hier nichts mehr tun. Navigiere einfach zum nächsten Schritt, um mit dem Tutorial fortzufahren."
+        }
+    }
+}

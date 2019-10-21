@@ -1,6 +1,6 @@
 {
-    "arTeMiSApp": {
-        "DifficultyLevel" : {
+    "artemisApp": {
+        "DifficultyLevel": {
             "null": "",
             "EASY": "EASY",
             "MEDIUM": "MEDIUM",

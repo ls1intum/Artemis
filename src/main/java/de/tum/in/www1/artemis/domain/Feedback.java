@@ -1,14 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import java.io.Serializable;
+import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.util.Objects;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 
 /**
  * A Feedback.
@@ -16,7 +20,10 @@ import java.util.Objects;
 @Entity
 @Table(name = "feedback")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Feedback implements Serializable {
+
+    public static final int MAX_REFERENCE_LENGTH = 2000;
 
     private static final long serialVersionUID = 1L;
 
@@ -24,13 +31,26 @@ public class Feedback implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Size(max = 500)   // this ensures that the detail_text can be stored, even for long feedback
+    @Size(max = 500)
     @Column(name = "text")
     private String text;
 
-    @Size(max = 2000)   // this ensures that the detail_text can be stored, even for long feedback
+    @Size(max = 5000)   // this ensures that the detail_text can be stored, even for long feedback
     @Column(name = "detail_text")
     private String detailText;
+
+    /**
+     * Reference to the assessed element (e.g. model element id or text element string)
+     */
+    @Size(max = MAX_REFERENCE_LENGTH)
+    @Column(name = "reference")
+    private String reference;
+
+    /**
+     * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
+     */
+    @Column(name = "credits ")
+    private Double credits;
 
     @Column(name = "positive")
     private Boolean positive;
@@ -76,6 +96,64 @@ public class Feedback implements Serializable {
 
     public void setDetailText(String detailText) {
         this.detailText = detailText;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public Feedback reference(String reference) {
+        this.reference = reference;
+        return this;
+    }
+
+    public boolean hasReference() {
+        return reference != null && !reference.isEmpty();
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    /**
+     * For modeling submissions the reference looks like "<umlElementType>:<jsonElementId>". This function tries to split the reference string at ':' and returns the second part
+     * (i.e. the jsonElementId).
+     *
+     * @return the jsonElementId for modeling submissions or null if the reference string does not contain ':'
+     */
+    @JsonIgnore
+    public String getReferenceElementId() {
+        if (reference == null || !reference.contains(":")) {
+            return null;
+        }
+        return reference.split(":")[1];
+    }
+
+    /**
+     * For modeling submissions the reference looks like "<umlElementType>:<jsonElementId>". This function tries to split the reference string at ':' and returns the first part
+     * (i.e. the umlElementType).
+     *
+     * @return the umlElementType for modeling submissions or null if the reference string does not contain ':'
+     */
+    @JsonIgnore
+    public String getReferenceElementType() {
+        if (!reference.contains(":")) {
+            return null;
+        }
+        return reference.split(":")[0];
+    }
+
+    public Double getCredits() {
+        return credits;
+    }
+
+    public Feedback credits(Double credits) {
+        this.credits = credits;
+        return this;
+    }
+
+    public void setCredits(Double credits) {
+        this.credits = credits;
     }
 
     public Boolean isPositive() {
@@ -133,6 +211,10 @@ public class Feedback implements Serializable {
         return Objects.equals(getId(), feedback.getId());
     }
 
+    public boolean referenceEquals(Feedback otherFeedback) {
+        return reference.equals(otherFeedback.reference);
+    }
+
     @Override
     public int hashCode() {
         return Objects.hashCode(getId());
@@ -140,12 +222,7 @@ public class Feedback implements Serializable {
 
     @Override
     public String toString() {
-        return "Feedback{" +
-            "id=" + getId() +
-            ", text='" + getText() + "'" +
-            ", detailText='" + getDetailText() + "'" +
-            ", positive='" + isPositive() + "'" +
-            ", type='" + getType() + "'" +
-            "}";
+        return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
+                + isPositive() + "'" + ", type='" + getType() + "'" + "}";
     }
 }

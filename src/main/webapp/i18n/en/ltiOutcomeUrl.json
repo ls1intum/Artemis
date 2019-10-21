@@ -1,7 +1,6 @@
-
 {
-    "arTeMiSApp": {
-        "ltiOutcomeUrl" : {
+    "artemisApp": {
+        "ltiOutcomeUrl": {
             "home": {
                 "title": "Lti Outcome Urls",
                 "createLabel": "Create a new Lti Outcome Url",

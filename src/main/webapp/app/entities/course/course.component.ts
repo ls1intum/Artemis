@@ -2,29 +2,37 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
 import { Course } from './course.model';
 import { CourseService } from './course.service';
 
 @Component({
     selector: 'jhi-course',
     templateUrl: './course.component.html',
-    styles: ['.course-table {padding-bottom: 5rem}']
+    styles: ['.course-table {padding-bottom: 5rem}'],
 })
 export class CourseComponent implements OnInit, OnDestroy {
+    predicate: string;
+    reverse: boolean;
+    showOnlyActive = true;
+
     courses: Course[];
     eventSubscriber: Subscription;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {}
+    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
+        this.predicate = 'id';
+        // show the newest courses first and the oldest last
+        this.reverse = false;
+    }
 
     loadAll() {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
+                this.courses = res.body!;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
+
     ngOnInit() {
         this.loadAll();
         this.registerChangeInCourses();
@@ -42,7 +50,29 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.loadAll());
     }
 
+    /**
+     * Deletes the course
+     * @param courseId id the course that will be deleted
+     */
+    deleteCourse(courseId: number) {
+        this.courseService.delete(courseId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'courseListModification',
+                    content: 'Deleted an course',
+                });
+            },
+            error => this.onError(error),
+        );
+    }
+
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
+    }
+
+    callback() {}
+
+    get today(): Date {
+        return new Date();
     }
 }

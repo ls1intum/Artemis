@@ -4,14 +4,14 @@
     "relationships": [
         {
             "relationshipType": "many-to-many",
-            "otherEntityRelationshipName": "",
-            "relationshipName": "selectedOptions",
             "otherEntityName": "answerOption",
+            "otherEntityRelationshipName": "multipleChoiceSubmittedAnswer",
+            "relationshipName": "selectedOptions",
             "otherEntityField": "id",
             "ownerSide": true
         }
     ],
-    "changelogDate": "20180927081403",
+    "changelogDate": "20190315161922",
     "entityTableName": "mc_submitted_answer",
     "dto": "no",
     "pagination": "no",

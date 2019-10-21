@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -6,26 +6,35 @@ import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { resizeImage } from 'app/utils/drag-and-drop.utils';
 
 // options are optional ;)
 polyfill({
     // use this to make use of the scroll behaviour
-    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
-// dragenter listener
+// Drag-enter listener for mobile devices
+// tslint:disable-next-line
 (event: any) => {
     event.preventDefault();
 };
 
-window.addEventListener('touchmove', function() {});
+window.addEventListener('touchmove', function() {}, { passive: false });
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
-    providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
+    providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    styleUrls: ['./drag-and-drop-question.component.scss', '../quiz-question.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
-export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
+export class DragAndDropQuestionComponent implements OnChanges {
+    /** needed to trigger a manual reload of the drag and drop background picture */
+    @ViewChild(SecuredImageComponent, { static: false })
+    secureImageComponent: SecuredImageComponent;
+
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
 
@@ -67,19 +76,26 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     rendered: DragAndDropQuestion;
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
+    correctAnswer: number;
+
+    loadingState = 'loading';
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
-    ngOnInit() {}
+    @HostListener('window:resize') onResize() {
+        resizeImage();
+    }
 
-    ngOnDestroy() {}
+    ngOnChanges(changes: SimpleChanges): void {
+        this.countCorrectMappings();
+    }
 
     watchCollection() {
         // update html for text, hint and explanation for the question
         this.rendered = new DragAndDropQuestion();
-        this.rendered.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.rendered.text = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.text);
+        this.rendered.hint = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.hint);
+        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdownUntrusted(this.question.explanation);
     }
 
     /**
@@ -96,6 +112,26 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
         this.dropAllowed = false;
     }
 
+    /** Sets the view displayed to the user
+     * @param {Output} value -> loading: background picture for drag and drop question is currently loading
+     *                          success: background picture for drag and drop question was loaded
+     *                          error: an error occurred during background download */
+    changeLoading(value: string) {
+        this.loadingState = value;
+        if (this.loadingState === 'success') {
+            resizeImage();
+        }
+    }
+
+    /**
+     * Prevent scrolling when dragging elements on mobile devices
+     * @param event
+     */
+    preventDefault(event: any) {
+        event.mouseEvent.preventDefault();
+        return false;
+    }
+
     /**
      * react to the drop event of a drag item
      *
@@ -103,9 +139,10 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      *                     May be null if drag item was dragged back to the unassigned items.
      * @param dragEvent {object} the drag item that was dropped
      */
-    onDragDrop(dropLocation: DropLocation, dragEvent: any) {
+    onDragDrop(dropLocation: DropLocation | null, dragEvent: any) {
         this.drop();
         const dragItem = dragEvent.dragData;
+
         if (dropLocation) {
             // check if this mapping is new
             if (this.dragAndDropQuestionUtil.isMappedTogether(this.mappings, dragItem, dropLocation)) {
@@ -163,14 +200,15 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
-        const mapping = this.mappings.find(localMapping =>
-            that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation)
-        );
-        if (mapping) {
-            return mapping.dragItem;
-        } else {
-            return null;
+        if (this.mappings) {
+            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation!, dropLocation));
+            if (mapping) {
+                return mapping.dragItem;
+            } else {
+                return null;
+            }
         }
+        return null;
     }
 
     invalidDragItemForDropLocation(dropLocation: DropLocation) {
@@ -184,9 +222,9 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      * @return {Array} an array of all unassigned drag items
      */
     getUnassignedDragItems() {
-        return this.question.dragItems.filter(function(dragItem) {
-            return !this.mappings.some(function(mapping: DragAndDropMapping) {
-                return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem);
+        return this.question.dragItems.filter(dragItem => {
+            return !this.mappings.some(mapping => {
+                return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem);
             }, this);
         }, this);
     }
@@ -198,7 +236,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      * @param dropLocation {object} the drop location to check for correctness
      * @return {boolean} true, if the drop location is correct, otherwise false
      */
-    isLocationCorrect(dropLocation: DropLocation) {
+    isLocationCorrect(dropLocation: DropLocation): boolean {
         if (!this.question.correctMappings) {
             return false;
         }
@@ -244,12 +282,19 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const dragAndDropQuestionUtil = this.dragAndDropQuestionUtil;
         const mapping = this.sampleSolutionMappings.find(function(solutionMapping) {
-            return dragAndDropQuestionUtil.isSameDropLocation(solutionMapping.dropLocation, dropLocation);
+            return dragAndDropQuestionUtil.isSameDropLocation(solutionMapping.dropLocation!, dropLocation);
         });
         if (mapping) {
             return mapping.dragItem;
         } else {
             return null;
         }
+    }
+
+    /**
+     * counts the amount of right mappings for a question by using the isLocationCorrect Method
+     */
+    countCorrectMappings(): void {
+        this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
     }
 }

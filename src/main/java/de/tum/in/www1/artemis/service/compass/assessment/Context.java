@@ -1,19 +1,31 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Context {
-    private HashSet<Integer> contextElementIDs;
 
+    private Set<Integer> contextElementIDs;
+
+    /**
+     * Dummy context, placeholder if no context is available
+     */
     public static final Context NO_CONTEXT = new Context(-1);
 
-    public Context(int contextElementID) {
-        this.contextElementIDs = new HashSet<>(Collections.singletonList(contextElementID));
+    public Context() {
     }
 
-    public Context(HashSet<Integer> contextElementIDs) {
+    public Context(int contextElementID) {
+        this.contextElementIDs = ConcurrentHashMap.newKeySet();
+        contextElementIDs.add(contextElementID);
+    }
+
+    public Context(Set<Integer> contextElementIDs) {
         this.contextElementIDs = contextElementIDs;
+    }
+
+    public Set<Integer> getContextElementIDs() {
+        return contextElementIDs;
     }
 
     @Override
@@ -29,7 +41,7 @@ public class Context {
     }
 
     @Override
-    public int hashCode () {
+    public int hashCode() {
         return contextElementIDs.hashCode();
     }
 }

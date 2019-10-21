@@ -1,10 +1,8 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../core';
+import { UserRouteAccessService } from 'app/core';
 import { ParticipationComponent } from './participation.component';
-import { ParticipationDetailComponent } from './participation-detail.component';
-import { ParticipationDeletePopupComponent } from './participation-delete-dialog.component';
-import { InstructorDashboardResultPopupComponent } from '../../instructor-dashboard/instructor-dashboard-result-dialog.component';
+import { ParticipationCleanupBuildPlanPopupComponent } from 'app/entities/participation/participation-cleanup-build-plan-dialog.component';
 
 export const participationRoute: Routes = [
     {
@@ -12,49 +10,30 @@ export const participationRoute: Routes = [
         component: ParticipationComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.participation.home.title'
+            pageTitle: 'artemisApp.participation.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    },
-    {
-        path: 'participation/:id',
-        component: ParticipationDetailComponent,
-        data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.participation.home.title'
-        },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'exercise/:exerciseId/participation',
         component: ParticipationComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.participation.home.title'
+            pageTitle: 'artemisApp.participation.home.title',
         },
-        canActivate: [UserRouteAccessService]
-    }
+        canActivate: [UserRouteAccessService],
+    },
 ];
 
 export const participationPopupRoute: Routes = [
     {
-        path: 'participation/:id/delete',
-        component: ParticipationDeletePopupComponent,
+        path: 'participation/:id/cleanupBuildPlan',
+        component: ParticipationCleanupBuildPlanPopupComponent,
         data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.participation.home.title'
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
-        outlet: 'popup'
+        outlet: 'popup',
     },
-    {
-        path: 'participation/:participationId/result/new',
-        component: InstructorDashboardResultPopupComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'arTeMiSApp.participation.home.title'
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup'
-    }
 ];

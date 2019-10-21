@@ -5,7 +5,9 @@ import org.springframework.web.socket.WebSocketSession;
 public class CustomWebsocketSessionHolder {
 
     private WebSocketSession session;
+
     private final long createTime;
+
     private long lastMessageTime;
 
     public CustomWebsocketSessionHolder(WebSocketSession session) {

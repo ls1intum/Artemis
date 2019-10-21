@@ -1,0 +1,14 @@
+apply plugin: "war"
+
+bootWar {
+    mainClassName = 'de.tum.in.www1.artemis.ArtemisApp'
+    includes = ["WEB-INF/**", "META-INF/**"]
+}
+// Command for production build: ./gradlew -Pprod -Pwar clean bootWar
+
+war {
+    webAppDirName = "build/resources/main/static/"
+    enabled = true
+    extension = "war.original"
+    includes = ["WEB-INF/**", "META-INF/**"]
+}

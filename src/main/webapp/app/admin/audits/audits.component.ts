@@ -2,13 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { JhiParseLinks } from 'ng-jhipster';
 
-import { Audit } from './audit.model';
-import { AuditsService } from './audits.service';
-import { ITEMS_PER_PAGE } from '../../shared';
+import { Audit, AuditsService } from 'app/admin';
+import { ITEMS_PER_PAGE } from 'app/shared';
 
 @Component({
-  selector: 'jhi-audit',
-  templateUrl: './audits.component.html'
+    selector: 'jhi-audit',
+    templateUrl: './audits.component.html',
 })
 export class AuditsComponent implements OnInit {
     audits: Audit[];
@@ -22,10 +21,7 @@ export class AuditsComponent implements OnInit {
     totalItems: number;
     datePipe: DatePipe;
 
-    constructor(
-        private auditsService: AuditsService,
-        private parseLinks: JhiParseLinks
-    ) {
+    constructor(private auditsService: AuditsService, private parseLinks: JhiParseLinks) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.page = 1;
         this.reverse = false;
@@ -49,12 +45,10 @@ export class AuditsComponent implements OnInit {
     }
 
     onChangeDate() {
-        this.auditsService.query({page: this.page - 1, size: this.itemsPerPage,
-            fromDate: this.fromDate, toDate: this.toDate}).subscribe(res => {
-
-            this.audits = res.body;
-            this.links = this.parseLinks.parse(res.headers.get('link'));
-            this.totalItems = + res.headers.get('X-Total-Count');
+        this.auditsService.query({ page: this.page - 1, size: this.itemsPerPage, fromDate: this.fromDate, toDate: this.toDate }).subscribe(res => {
+            this.audits = res.body!;
+            this.links = this.parseLinks.parse(res.headers.get('link')!);
+            this.totalItems = +res.headers.get('X-Total-Count')!;
         });
     }
 
@@ -68,7 +62,7 @@ export class AuditsComponent implements OnInit {
             fromDate = new Date(fromDate.getFullYear(), fromDate.getMonth() - 1, fromDate.getDate());
         }
 
-        this.fromDate = this.datePipe.transform(fromDate, dateFormat);
+        this.fromDate = this.datePipe.transform(fromDate, dateFormat)!;
     }
 
     today() {
@@ -77,7 +71,7 @@ export class AuditsComponent implements OnInit {
         const today: Date = new Date();
         today.setDate(today.getDate() + 1);
         const date = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        this.toDate = this.datePipe.transform(date, dateFormat);
+        this.toDate = this.datePipe.transform(date, dateFormat)!;
     }
 
     private sortAudits(audits: Audit[]) {

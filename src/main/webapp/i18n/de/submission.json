@@ -1,7 +1,6 @@
-
 {
-    "arTeMiSApp": {
-        "submission" : {
+    "artemisApp": {
+        "submission": {
             "home": {
                 "title": "Submissions",
                 "createLabel": "Submission erstellen",
@@ -19,8 +18,10 @@
             "submitted": "Submitted",
             "submissionDate": "Submission Date",
             "type": "Type",
-            "result": "Result",
-            "participation": "Participation"
+            "result": "Ergebnis",
+            "participation": "Participation",
+            "lockedSubmissionsLimitReached": "Du hast die maximale Anzahl von unvollständigen Bewertungen in diesem Kurs erreicht. Bitte beende deine offenen Bewertungen, bevor du eine neue beginnen kannst.",
+            "resultTimeout": "Das Ergebnis zu deiner letzten Abgabe ist nicht verfügbar. Bitte gebe deinen Code erneut ab."
         }
     }
 }

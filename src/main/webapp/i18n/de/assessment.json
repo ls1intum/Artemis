@@ -1,0 +1,52 @@
+{
+    "artemisApp": {
+        "assessment": {
+            "assessment": "Bewertung",
+            "generalFeedback": "Allgemeines Feedback",
+            "automaticGenerated": "Automatisch erstelltes Feedback",
+            "error": {
+                "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
+                "assessmentDueDateOver": "Das Fälligkeitsdatum der Bewertung für diese Aufgabe ist vorbei."
+            },
+            "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
+            "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
+            "button": {
+                "overrideAssessment": "Bewertung überschreiben",
+                "nextSubmission": "Nächste Abgabe bewerten",
+                "resolveConflict": "Konflikte behandeln"
+            },
+            "detail": {
+                "feedback": "Feedback",
+                "scoreFor": "Bewertung für"
+            },
+            "messages": {
+                "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
+                "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
+                "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+                "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+                "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
+                "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+                "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
+            },
+            "dashboard": {
+                "empty": "Keine Abgabe für diese Aufgabe!",
+                "loading": "Laden..",
+                "columns": {
+                    "submissionDate": "Einreichungsdatum",
+                    "result": "Ergebnis",
+                    "submissionCount": "Anzahl der Einreichungen",
+                    "score": "Punkte",
+                    "duration": "Dauer",
+                    "assessmentType": "Bewertungsart",
+                    "assessor": "Prüfer/in",
+                    "action": "Aktion"
+                },
+                "minutes": "Minuten",
+                "actions": {
+                    "open": "Bewertung öffnen",
+                    "assess": "Abgabe bewerten"
+                }
+            }
+        }
+    }
+}

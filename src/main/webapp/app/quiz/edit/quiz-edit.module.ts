@@ -1,6 +1,5 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-
-import { ArTEMiSSharedModule } from '../../shared';
+import { NgModule } from '@angular/core';
+import { ArtemisSharedModule } from '../../shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { HomeComponent } from '../../home';
@@ -9,24 +8,27 @@ import { QuizComponent } from '../participate/quiz.component';
 import { QuizExerciseComponent } from '../../entities/quiz-exercise';
 import { EditMultipleChoiceQuestionComponent } from './multiple-choice-question/edit-multiple-choice-question.component';
 import { EditDragAndDropQuestionComponent } from './drag-and-drop-question/edit-drag-and-drop-question.component';
+import { EditShortAnswerQuestionComponent } from './short-answer-question/edit-short-answer-question.component';
 import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { DndModule } from 'ng2-dnd';
-import { ArTEMiSQuizModule } from '../participate';
+import { ArtemisQuizModule } from '../participate';
+import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule],
-    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
+    imports: [ArtemisSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArtemisQuizModule, ArtemisMarkdownEditorModule],
+    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, QuizScoringInfoModalComponent, EditShortAnswerQuestionComponent],
     entryComponents: [
         HomeComponent,
         QuizComponent,
         QuizExerciseComponent,
         JhiMainComponent,
         EditMultipleChoiceQuestionComponent,
-        EditDragAndDropQuestionComponent
+        EditDragAndDropQuestionComponent,
+        EditShortAnswerQuestionComponent,
     ],
     providers: [RepositoryService, JhiAlertService],
-    exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, EditShortAnswerQuestionComponent],
 })
-export class ArTEMiSQuizEditModule {}
+export class ArtemisQuizEditModule {}

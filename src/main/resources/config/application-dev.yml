@@ -28,13 +28,15 @@ spring:
         livereload:
             enabled: false # we use Webpack dev server + BrowserSync for livereload
     jackson:
-        serialization.indent_output: true
+        serialization:
+            indent-output: true
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false
+        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
         hikari:
+            poolName: Hikari
             auto-commit: false
             data-source-properties:
                 cachePrepStmts: true
@@ -42,16 +44,15 @@ spring:
                 prepStmtCacheSqlLimit: 2048
                 useServerPrepStmts: true
     jpa:
-        database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+        database-platform: org.hibernate.dialect.MySQL8Dialect
         database: MYSQL
-        show-sql: true
+        show-sql: false
         properties:
             hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
-            hibernate.generate_statistics: true
-            hibernate.cache.region.factory_class: io.github.jhipster.config.jcache.BeanClassLoaderAwareJCacheRegionFactory
+            hibernate.generate_statistics: false
     liquibase:
         contexts: dev
     mail:
@@ -63,55 +64,10 @@ spring:
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
     thymeleaf:
         cache: false
-    sleuth:
-        sampler:
-            probability: 1 # report 100% of traces
-    zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
-        base-url: http://localhost:9411
-        enabled: false
-        locator:
-            discovery:
-                enabled: true
 
 server:
     port: 8080
-    url: https://artemis.ase.in.tum.de
-
-# ===================================================================
-# ArTEMiS specific properties
-# ===================================================================
-
-artemis:
-  repo-clone-path: ./repos/
-  encryption-password: <encryption-password>
-  result-retrieval-delay: 5000
-  jira:
-    url: https://jirabruegge.in.tum.de
-    user: <username>
-    password: <password>
-    admin-group-name: <group>
-  version-control:
-    url: https://repobruegge.in.tum.de
-    user: <username>
-    secret: <secret>
-  bamboo:
-    url: https://bamboobruegge.in.tum.de
-    bitbucket-application-link-id: <application-link-id>
-    user: <username>
-    password: <password>
-    empty-commit-necessary: true
-  lti:
-    id: artemis_lti
-    oauth-key: artemis_lti_key
-    oauth-secret: <secret>
-    user-prefix: edx_
-    user-group-name: edx
-  git:
-    name: ArTEMiS
-    email: <email>
-  ldap:
-    dn-prefix:
-    dn-suffix:
+    url: https://artemislocal.ase.in.tum.de
 
 # ===================================================================
 # JHipster specific properties
@@ -120,8 +76,6 @@ artemis:
 # ===================================================================
 
 jhipster:
-    http:
-        version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
     cache: # Cache configuration
         ehcache: # Ehcache configuration
             time-to-live-seconds: 3600 # By default objects stay 1 hour in the cache
@@ -143,29 +97,18 @@ jhipster:
                 token-validity-in-seconds: 86400
                 token-validity-in-seconds-for-remember-me: 2592000
     mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: ArTEMiS@localhost
+        from: artemis@localhost
         base-url: http://127.0.0.1:8080
-    metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx:
-            enabled: true
-        prometheus: 
-            enabled: false #expose metrics via prometheus 
-        logs: # Reports Dropwizard metrics in the logs
+    metrics:
+        logs: # Reports metrics in the logs
             enabled: false
             report-frequency: 60 # in seconds
     logging:
+        use-json-format: false # By default, logs are not in Json format
         logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
             enabled: false
             host: localhost
             port: 5000
             queue-size: 512
-
-# ===================================================================
-# Application specific properties
-# Add your own application properties here, see the ApplicationProperties class
-# to have type-safe configuration, like in the JHipsterProperties above
-#
-# More documentation is available at:
-# https://www.jhipster.tech/common-application-properties/
-# ===================================================================
-
+    audit-events:
+        retention-period: 120 # Number of days before audit events are deleted.

@@ -1,8 +1,7 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
 import { JhiMetricsService } from 'app/admin/metrics/metrics.service';
 
@@ -14,8 +13,8 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [JhiMetricsMonitoringComponent]
+                imports: [ArtemisTestModule],
+                declarations: [JhiMetricsMonitoringComponent],
             })
                 .overrideTemplate(JhiMetricsMonitoringComponent, '')
                 .compileComponents();
@@ -33,14 +32,14 @@ describe('Component Tests', () => {
                 const response = {
                     timers: {
                         service: 'test',
-                        unrelatedKey: 'test'
+                        unrelatedKey: 'test',
                     },
                     gauges: {
                         'jcache.statistics': {
-                            value: 2
+                            value: 2,
                         },
-                        unrelatedKey: 'test'
-                    }
+                        unrelatedKey: 'test',
+                    },
                 };
                 spyOn(service, 'getMetrics').and.returnValue(of(response));
 

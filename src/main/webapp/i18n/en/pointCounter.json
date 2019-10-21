@@ -1,6 +1,6 @@
 {
-    "arTeMiSApp": {
-        "pointCounter" : {
+    "artemisApp": {
+        "pointCounter": {
             "home": {
                 "title": "Point Counters",
                 "createLabel": "Create a new Point Counter",

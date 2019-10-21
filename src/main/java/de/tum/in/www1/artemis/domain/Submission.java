@@ -1,18 +1,21 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.view.QuizView;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.*;
+
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A Submission.
@@ -20,22 +23,16 @@ import java.util.Objects;
 @Entity
 @Table(name = "submission")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-    name = "discriminator",
-    discriminatorType = DiscriminatorType.STRING
-)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "submissionExerciseType")
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = ProgrammingSubmission.class, name = "programming"),
-    @JsonSubTypes.Type(value = ModelingSubmission.class, name = "modeling"),
-    @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"),
-    @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
-    @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"),
-})
+@JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingSubmission.class, name = "programming"), @JsonSubTypes.Type(value = ModelingSubmission.class, name = "modeling"),
+        @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"), @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
+        @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"), })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -54,14 +51,21 @@ public abstract class Submission implements Serializable {
     @JsonView(QuizView.Before.class)
     private SubmissionType type;
 
+    @Column(name = "example_submission")
+    private Boolean exampleSubmission;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "language")
+    private Language language;
+
     @ManyToOne
     private Participation participation;
 
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(mappedBy = "submission", cascade={CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY, orphanRemoval=true)
-    @JsonIgnoreProperties({"submission", "participation"})
+    @OneToOne(mappedBy = "submission", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({ "submission", "participation" })
     @JoinColumn(unique = true)
     private Result result;
 
@@ -132,6 +136,32 @@ public abstract class Submission implements Serializable {
         this.type = type;
     }
 
+    public Boolean isExampleSubmission() {
+        return exampleSubmission;
+    }
+
+    public Submission exampleSubmission(Boolean exampleSubmission) {
+        this.exampleSubmission = exampleSubmission;
+        return this;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public Submission language(Language language) {
+        this.language = language;
+        return this;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
+
+    public void setExampleSubmission(Boolean exampleSubmission) {
+        this.exampleSubmission = exampleSubmission;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -154,11 +184,7 @@ public abstract class Submission implements Serializable {
 
     @Override
     public String toString() {
-        return "Submission{" +
-            "id=" + getId() +
-            ", submitted='" + isSubmitted() + "'" +
-            ", type='" + getType() + "'" +
-            "}";
+        return "Submission{" + "id=" + getId() + ", submitted='" + isSubmitted() + "'" + ", type='" + getType() + "'" + "}";
     }
 
 }

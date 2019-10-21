@@ -1,15 +1,14 @@
 package de.tum.in.www1.artemis.config;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
-import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import io.github.jhipster.config.JHipsterProperties;
+import static de.tum.in.www1.artemis.config.Constants.*;
+
+import java.util.Optional;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,43 +27,48 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import javax.annotation.PostConstruct;
-import java.util.Optional;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
+import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
-@Configuration
-@Import(SecurityProblemSupport.class)
+import javax.annotation.PostConstruct;
+
+// @formatter:off
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@Import(SecurityProblemSupport.class)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final UserDetailsService userDetailsService;
-    private final TokenProvider tokenProvider;
-    private final CorsFilter corsFilter;
-    private final SecurityProblemSupport problemSupport;
-    private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
-    private final JHipsterProperties jHipsterProperties;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, JHipsterProperties jHipsterProperties) {
+    private final UserDetailsService userDetailsService;
+
+    private final TokenProvider tokenProvider;
+
+    private final CorsFilter corsFilter;
+
+    private final SecurityProblemSupport problemSupport;
+
+    private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
+
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
+                                 CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
-        this.jHipsterProperties = jHipsterProperties;
     }
 
     @PostConstruct
     public void init() {
         try {
-            authenticationManagerBuilder
-                .userDetailsService(userDetailsService)
-                .passwordEncoder(passwordEncoder());
-            if(remoteUserAuthenticationProvider.isPresent()) {
-                authenticationManagerBuilder.authenticationProvider(remoteUserAuthenticationProvider.get());
-            }
-        } catch (Exception e) {
+            authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+            remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
+        }
+        catch (Exception e) {
             throw new BeanInitializationException("Security configuration failed", e);
         }
     }
@@ -72,17 +76,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
-    @Override
-    @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
-        PBEPasswordEncoder encoder = new PBEPasswordEncoder();
-        encoder.setPbeStringEncryptor(encryptor());
-        return encoder;
+        return new PBEPasswordEncoder(encryptor());
     }
 
     @Bean
@@ -94,20 +90,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    public void configure(WebSecurity web) throws Exception {
-        web.ignoring()
-            .antMatchers(HttpMethod.OPTIONS, "/**")
-            .antMatchers("/app/**/*.{js,html}")
-            .antMatchers("/i18n/**")
-            .antMatchers("/content/**")
-            .antMatchers("/test/**");
-
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/results/*-*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
+    public void configure(WebSecurity web) {
+        // @formatter:off
+        web.ignoring().antMatchers(HttpMethod.OPTIONS, "/**").antMatchers("/app/**/*.{js,html}").antMatchers("/i18n/**").antMatchers("/content/**").antMatchers("/test/**");
+        web.ignoring().antMatchers(HttpMethod.POST, RESULT_RESOURCE_API_PATH + "*-*");
+        web.ignoring().antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
+        web.ignoring().antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
+        web.ignoring().antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
     }
 
     @Override
@@ -115,17 +104,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http
             .csrf()
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            .ignoringAntMatchers("/websocket/**")
-            .ignoringAntMatchers("/api/lti/launch/*")
+            .ignoringAntMatchers("/websocket/**").ignoringAntMatchers("/api/lti/launch/*")
         .and()
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
-            .exceptionHandling()
-            .authenticationEntryPoint(problemSupport)
+            .exceptionHandling().authenticationEntryPoint(problemSupport)
             .accessDeniedHandler(problemSupport)
         .and()
             .headers()
             .frameOptions()
             .disable()
+        .and()
+            .headers()
+            .httpStrictTransportSecurity()
+            .disable() // this is already configured using nginx
         .and()
             .sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -137,6 +128,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/account/reset-password/init").permitAll()
             .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
+            .antMatchers("/api/files/attachments/**").permitAll()
+            .antMatchers("/api/files/file-upload-submission/**").permitAll()
             .antMatchers("/api/**").authenticated()
             .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/websocket/**").permitAll()
@@ -145,7 +138,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
         .and()
             .apply(securityConfigurerAdapter());
-
     }
 
     private JWTConfigurer securityConfigurerAdapter() {

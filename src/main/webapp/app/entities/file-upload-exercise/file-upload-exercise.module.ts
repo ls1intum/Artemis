@@ -1,44 +1,30 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
-import {
-    FileUploadExerciseComponent,
-    FileUploadExerciseDeleteDialogComponent,
-    FileUploadExerciseDeletePopupComponent,
-    FileUploadExerciseDetailComponent,
-    FileUploadExerciseDialogComponent,
-    FileUploadExercisePopupComponent,
-    fileUploadExercisePopupRoute,
-    FileUploadExercisePopupService,
-    fileUploadExerciseRoute,
-    FileUploadExerciseService,
-    FileUploadExerciseUpdateComponent
-} from './';
-import { SortByModule } from '../../components/pipes';
+import { ArtemisSharedModule } from 'app/shared';
+import { FileUploadExerciseComponent, FileUploadExerciseDetailComponent, fileUploadExerciseRoute, FileUploadExerciseService, FileUploadExerciseUpdateComponent } from './';
+import { SortByModule } from 'app/components/pipes';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
+import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
+import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 
-const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
+const ENTITY_STATES = [...fileUploadExerciseRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
-    declarations: [
-        FileUploadExerciseComponent,
-        FileUploadExerciseDetailComponent,
-        FileUploadExerciseUpdateComponent,
-        FileUploadExerciseDialogComponent,
-        FileUploadExerciseDeleteDialogComponent,
-        FileUploadExercisePopupComponent,
-        FileUploadExerciseDeletePopupComponent
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        FormDateTimePickerModule,
+        ArtemisCategorySelectorModule,
+        ArtemisDifficultyPickerModule,
+        ArtemisMarkdownEditorModule,
+        ArtemisPresentationScoreModule,
     ],
-    entryComponents: [
-        FileUploadExerciseComponent,
-        FileUploadExerciseUpdateComponent,
-        FileUploadExerciseDialogComponent,
-        FileUploadExercisePopupComponent,
-        FileUploadExerciseDeleteDialogComponent,
-        FileUploadExerciseDeletePopupComponent
-    ],
-    providers: [FileUploadExerciseService, FileUploadExercisePopupService],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
+    exports: [FileUploadExerciseComponent],
+    providers: [FileUploadExerciseService],
 })
-export class ArTEMiSFileUploadExerciseModule {}
+export class ArtemisFileUploadExerciseModule {}

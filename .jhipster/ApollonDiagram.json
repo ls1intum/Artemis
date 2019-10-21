@@ -11,7 +11,7 @@
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081419",
+    "changelogDate": "20190315161945",
     "entityTableName": "apollon_diagram",
     "dto": "no",
     "pagination": "no",

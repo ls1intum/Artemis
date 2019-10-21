@@ -5,34 +5,52 @@ package de.tum.in.www1.artemis.web.rest.dto;
  */
 public class LtiLaunchRequestDTO {
 
-
-    public LtiLaunchRequestDTO() {
-    }
-
-
-
     private String lis_person_sourcedid;
+
     private String lis_person_contact_email_primary;
+
     private String lis_outcome_service_url;
+
     private String lti_message_type;
+
     private String lti_version;
+
     private String context_id;
+
+    private String context_label;
+
     private String oauth_version;
+
     private String oauth_signature_method;
+
     private Long oauth_timestamp;
+
     private String roles;
+
     private String launch_presentation_locale;
+
     private String custom_component_display_name;
+
     private String launch_presentation_return_url;
+
     private String lis_result_sourcedid;
+
     private String resource_link_id;
+
     private String user_id;
+
     private String oauth_nonce;
+
     private String oauth_consumer_key;
+
     private String oauth_signature;
 
     private Boolean custom_require_existing_user = false;
+
     private Boolean custom_lookup_user_by_email = false;
+
+    public LtiLaunchRequestDTO() {
+    }
 
     public Boolean getCustom_require_existing_user() {
         return custom_require_existing_user;
@@ -57,7 +75,6 @@ public class LtiLaunchRequestDTO {
     public void setLis_person_sourcedid(String lis_person_sourcedid) {
         this.lis_person_sourcedid = lis_person_sourcedid;
     }
-
 
     public String getLis_person_contact_email_primary() {
         return lis_person_contact_email_primary;
@@ -203,29 +220,24 @@ public class LtiLaunchRequestDTO {
         this.oauth_signature = oauth_signature;
     }
 
+    public String getContext_label() {
+        return context_label;
+    }
+
+    public void setContext_label(String context_label) {
+        this.context_label = context_label;
+    }
 
     @Override
     public String toString() {
-        return "LtiLaunchRequestDTO{" +
-            "lis_person_sourcedid='" + lis_person_sourcedid + '\'' +
-            ", lis_person_contact_email_primary='" + lis_person_contact_email_primary + '\'' +
-            ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' +
-            ", lti_message_type='" + lti_message_type + '\'' +
-            ", lti_version='" + lti_version + '\'' +
-            ", context_id='" + context_id + '\'' +
-            ", oauth_version='" + oauth_version + '\'' +
-            ", oauth_signature_method='" + oauth_signature_method + '\'' +
-            ", oauth_timestamp=" + oauth_timestamp +
-            ", roles='" + roles + '\'' +
-            ", launch_presentation_locale='" + launch_presentation_locale + '\'' +
-            ", custom_component_display_name='" + custom_component_display_name + '\'' +
-            ", launch_presentation_return_url='" + launch_presentation_return_url + '\'' +
-            ", lis_result_sourcedid='" + lis_result_sourcedid + '\'' +
-            ", resource_link_id='" + resource_link_id + '\'' +
-            ", user_id='" + user_id + '\'' +
-            ", oauth_nonce=" + oauth_nonce +
-            ", oauth_consumer_key='" + oauth_consumer_key + '\'' +
-            ", oauth_signature='" + oauth_signature + '\'' +
-            '}';
+        return "LtiLaunchRequestDTO{" + "lis_person_sourcedid='" + lis_person_sourcedid + '\'' + ", lis_person_contact_email_primary='" + lis_person_contact_email_primary + '\''
+                + ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' + ", lti_message_type='" + lti_message_type + '\'' + ", lti_version='" + lti_version + '\''
+                + ", context_id='" + context_id + '\'' + ", context_label='" + context_label + '\'' + ", oauth_version='" + oauth_version + '\'' + ", oauth_signature_method='"
+                + oauth_signature_method + '\'' + ", oauth_timestamp=" + oauth_timestamp + ", roles='" + roles + '\'' + ", launch_presentation_locale='"
+                + launch_presentation_locale + '\'' + ", custom_component_display_name='" + custom_component_display_name + '\'' + ", launch_presentation_return_url='"
+                + launch_presentation_return_url + '\'' + ", lis_result_sourcedid='" + lis_result_sourcedid + '\'' + ", resource_link_id='" + resource_link_id + '\''
+                + ", user_id='" + user_id + '\'' + ", oauth_nonce=" + oauth_nonce + ", oauth_consumer_key='" + oauth_consumer_key + '\'' + ", oauth_signature='" + oauth_signature
+                + '\'' + '}';
     }
+
 }

@@ -1,109 +1,94 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
-import { Course, CourseExerciseService, CourseService } from '../course';
-import { ActivatedRoute } from '@angular/router';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
+import { CourseExerciseService, CourseService } from '../course';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 
 @Component({
     selector: 'jhi-programming-exercise',
-    templateUrl: './programming-exercise.component.html'
+    templateUrl: './programming-exercise.component.html',
 })
-export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
-    programmingExercises: ProgrammingExercise[];
-    course: Course;
-    eventSubscriber: Subscription;
-    courseId: number;
-    itemsPerPage: number;
-    links: any;
-    page: number;
-    predicate: string;
-    reverse: boolean;
+export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
+    @Input() programmingExercises: ProgrammingExercise[];
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private courseService: CourseService,
+        private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
-        private route: ActivatedRoute
+        private modalService: NgbModal,
+        private router: Router,
+        courseService: CourseService,
+        translateService: TranslateService,
+        eventManager: JhiEventManager,
+        route: ActivatedRoute,
     ) {
+        super(courseService, translateService, route, eventManager);
         this.programmingExercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
-        this.predicate = 'id';
-        this.reverse = true;
     }
 
-    ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.load();
-            this.registerChangeInProgrammingExercises();
-        });
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    loadAll() {
-        this.programmingExerciseService.query().subscribe(
+    protected loadExercises(): void {
+        this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
             (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body;
+                this.programmingExercises = res.body!;
+                // reconnect exercise with course
+                this.programmingExercises.forEach(exercise => {
+                    exercise.course = this.course;
+                    exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                });
+                this.emitExerciseCount(this.programmingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
-    }
-
-    load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            if (this.courseId) {
-                this.loadAllForCourse();
-            } else {
-                this.loadAll();
-            }
-        });
-    }
-
-    loadAllForCourse() {
-        this.courseExerciseService.findAllProgrammingExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
-        });
-    }
-
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAll();
     }
 
     trackId(index: number, item: ProgrammingExercise) {
         return item.id;
     }
-    registerChangeInProgrammingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', () => this.load());
+
+    /**
+     * Deletes programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     * @param $event passed from delete dialog to represent if checkboxes were checked
+     */
+    deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'programmingExerciseListModification',
+                    content: 'Deleted an programmingExercise',
+                });
+            },
+            error => this.onError(error),
+        );
+    }
+
+    protected getChangeEventName(): string {
+        return 'programmingExerciseListModification';
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
-    callback() { }
+    callback() {}
+
+    openImportModal() {
+        const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.result.then(
+            (result: ProgrammingExercise) => {
+                this.router.navigate(['course', this.courseId, 'programming-exercise', 'import', result.id]);
+            },
+            reason => {},
+        );
+    }
 }

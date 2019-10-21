@@ -1,29 +1,33 @@
 import { Component, OnInit } from '@angular/core';
 
-import { Principal } from '../../core';
+import { AccountService, User } from '../../core';
 import { PasswordService } from './password.service';
 
 @Component({
     selector: 'jhi-password',
-    templateUrl: './password.component.html'
+    templateUrl: './password.component.html',
 })
 export class PasswordComponent implements OnInit {
-    doNotMatch: string;
-    error: string;
-    success: string;
-    account: any;
+    doNotMatch: string | null;
+    error: string | null;
+    success: string | null;
+    user: User;
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
 
-    constructor(private passwordService: PasswordService, private principal: Principal) {}
+    constructor(private passwordService: PasswordService, private accountService: AccountService) {}
 
     ngOnInit() {
-        this.principal.identity().then(account => {
-            this.account = account;
+        this.accountService.identity().then(user => {
+            this.user = user!;
         });
     }
 
+    /**
+     * Changes the current user's password. It will only try to change it if the values in both the new password field
+     * and the confirmation of the new password are the same.
+     */
     changePassword() {
         if (this.newPassword !== this.confirmPassword) {
             this.error = null;
@@ -39,7 +43,7 @@ export class PasswordComponent implements OnInit {
                 () => {
                     this.success = null;
                     this.error = 'ERROR';
-                }
+                },
             );
         }
     }

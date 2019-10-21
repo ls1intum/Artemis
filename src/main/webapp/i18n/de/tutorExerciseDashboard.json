@@ -1,0 +1,69 @@
+{
+    "artemisApp": {
+        "tutorExerciseDashboard": {
+            "home": {
+                "title": "Dashboard für Lehrerübungen"
+            },
+            "participation": {
+                "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
+            },
+            "pageHeader": "Tutor Übungs-Dashboard für die Übung",
+            "yourStatus": "Dein Status",
+            "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
+            "needToReadGradingInstructions": "Du musst die Bewertungsanweisungen lesen, bevor du mit der Bewertung beginnen kannst.",
+            "readGradingInstructions": "Bewertungsanweisungen lesen",
+            "startYourParticipation": "Beginne deine Teilnahme an der Übung.",
+            "gradingInstructions": "Bewertungsanweisungen",
+            "problemStatement": "Aufgabenstellung",
+            "exampleSolution": "Beispiel Lösung",
+            "close": "Schließen",
+            "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
+            "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",
+            "reviewSubmissions": "Überprüfung von Beispielabgaben",
+            "start": "",
+            "continue": "",
+            "reviewingExampleSubmissions": "Beispielabgaben ansehen",
+            "reviewExampleSubmission": "Geprüfte Beispielabgabe",
+            "tutorialSubmissions": "Bewertung von Beispielabgaben",
+            "assessingExampleSubmission": "Beispielabgabe bewerten",
+            "assessExampleSubmission": "Bewertete Beispielabgabe",
+            "studentsSubmissions": "Abgaben der Studenten",
+            "submissionDate": "Abgabedatum",
+            "result": "Ergebnis",
+            "status": "Status",
+            "score": "Ergebnis",
+            "action": "Aktion",
+            "continueAssessment": "Bewertung fortsetzen",
+            "openAssessment": "Bewertung öffnen",
+            "startAssessment": "Neue Bewertung starten",
+            "new": "NEU",
+            "noSubmissions": "Es gibt derzeit keine Abgaben, die du bewerten kannst.",
+            "complaints": "Beschwerden",
+            "noComplaints": "Es gibt keine Beschwerde.",
+            "evaluateComplaint": "Auswertung der Beschwerde.",
+            "showComplaint": "Beschwerde anzeigen",
+            "complaintEvaluated": "Beschwerde wurde bereits bewertet",
+            "complaintNotEvaluated": "Beschwerde muss noch bewertet werden",
+            "moreFeedback": "Weiteres Feedback anfragen",
+            "noMoreFeedbackRequests": "Es gibt keine Feedbackanfragen zu zeigen",
+            "evaluateMoreFeedbackRequest": "Auswertung der Feedbackanfragen",
+            "moreFeedbackRequestEvaluated": "Die Feedbackanfragen wurden bereits ausgewertet",
+            "moreFeedbackRequestNotEvaluated": "Es müssen noch weitere Feedbackanfragen bewertet werden",
+            "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
+            "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
+            "exerciseInformation": "Übungsinformationen",
+            "numberOfTotalSubmissions": "Gesamte Beispielabgaben",
+            "numberOfAssessedSubmissions": "Bewertete Abgaben",
+            "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
+            "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",
+            "numberOfManualAssessedSubmissions": "Manuell bewertete Abgaben",
+            "nextAssessment": "Nächste Abgabe bewerten",
+            "language": "Sprache",
+            "languages": {
+                "ENGLISH": "Englisch",
+                "GERMAN": "Deutsch",
+                "UNKNOWN": "Unbekannt"
+            }
+        }
+    }
+}

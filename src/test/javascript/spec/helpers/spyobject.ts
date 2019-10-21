@@ -1,3 +1,4 @@
+// TODO: We don't need this if we use sinon
 export interface GuinessCompatibleSpy extends jasmine.Spy {
     /** By chaining the spy with and.returnValue, all calls to the function will return a specific
      * value. */
@@ -6,11 +7,11 @@ export interface GuinessCompatibleSpy extends jasmine.Spy {
      * function. */
     andCallFake(fn: Function): GuinessCompatibleSpy;
     /** removes all recorded calls */
-    reset();
+    reset(): () => void;
 }
 
 export class SpyObject {
-    static stub(object = null, config = null, overrides = null) {
+    static stub(object: any = null, config: any = null, overrides: any = null) {
         if (!(object instanceof SpyObject)) {
             overrides = config;
             config = object;
@@ -26,7 +27,7 @@ export class SpyObject {
         return object;
     }
 
-    constructor(type = null) {
+    constructor(type: any = null) {
         if (type) {
             Object.keys(type.prototype).forEach(prop => {
                 let m = null;
@@ -45,19 +46,19 @@ export class SpyObject {
         }
     }
 
-    spy(name) {
+    spy(name: any) {
         if (!this[name]) {
             this[name] = this._createGuinnessCompatibleSpy(name);
         }
         return this[name];
     }
 
-    prop(name, value) {
+    prop(name: any, value: any) {
         this[name] = value;
     }
 
     /** @internal */
-    _createGuinnessCompatibleSpy(name): GuinessCompatibleSpy {
+    _createGuinnessCompatibleSpy(name: any): GuinessCompatibleSpy {
         const newSpy: GuinessCompatibleSpy = <any>jasmine.createSpy(name);
         newSpy.andCallFake = <any>newSpy.and.callFake;
         newSpy.andReturn = <any>newSpy.and.returnValue;

@@ -1,20 +1,21 @@
 package de.tum.in.www1.artemis.repository;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
-import de.tum.in.www1.artemis.domain.User;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * Spring Data JPA repository for the LtiOutcomeUrl entity.
  */
 @SuppressWarnings("unused")
-public interface LtiOutcomeUrlRepository extends JpaRepository<LtiOutcomeUrl,Long> {
+public interface LtiOutcomeUrlRepository extends JpaRepository<LtiOutcomeUrl, Long> {
 
     @Query("select ltiOutcomeUrl from LtiOutcomeUrl ltiOutcomeUrl where ltiOutcomeUrl.user.login = ?#{principal}")
     List<LtiOutcomeUrl> findByUserIsCurrentUser();

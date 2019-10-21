@@ -1,36 +1,36 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.*;
-import de.tum.in.www1.artemis.domain.view.QuizView;
+import java.io.Serializable;
+import java.util.Objects;
+
+import javax.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.*;
+
+import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A SubmittedAnswer.
  */
 @Entity
 @Table(name = "submitted_answer")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-    name="discriminator",
-    discriminatorType=DiscriminatorType.STRING
-)
-@DiscriminatorValue(value="S")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue(value = "S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 
 // add JsonTypeInfo and JsonSubTypes annotation to help Jackson decide which class the JSON should be deserialized to
 // depending on the value of the "type" property.
 // Note: The "type" property has to be added on the front-end when making a request that includes a SubmittedAnswer Object
 // However, the "type" property will be automatically added by Jackson when an object is serialized
-@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, property="type")
-@JsonSubTypes({
-    @JsonSubTypes.Type(value=MultipleChoiceSubmittedAnswer.class, name="multiple-choice"),
-    @JsonSubTypes.Type(value=DragAndDropSubmittedAnswer.class, name="drag-and-drop")
-})
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceSubmittedAnswer.class, name = "multiple-choice"),
+        @JsonSubTypes.Type(value = DragAndDropSubmittedAnswer.class, name = "drag-and-drop"), @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswer.class, name = "short-answer") })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class SubmittedAnswer implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -44,10 +44,10 @@ public abstract class SubmittedAnswer implements Serializable {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
-    @ManyToOne(cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties({"questionStatistic", "exercise"})
+    @ManyToOne
+    @JsonIgnoreProperties({ "questionStatistic", "exercise" })
     @JsonView(QuizView.Before.class)
-    private Question question;
+    private QuizQuestion quizQuestion;
 
     @ManyToOne
     @JsonIgnore
@@ -74,17 +74,17 @@ public abstract class SubmittedAnswer implements Serializable {
         this.scoreInPoints = scoreInPoints;
     }
 
-    public Question getQuestion() {
-        return question;
+    public QuizQuestion getQuizQuestion() {
+        return quizQuestion;
     }
 
-    public SubmittedAnswer question(Question question) {
-        this.question = question;
+    public SubmittedAnswer question(QuizQuestion quizQuestion) {
+        this.quizQuestion = quizQuestion;
         return this;
     }
 
-    public void setQuestion(Question question) {
-        this.question = question;
+    public void setQuizQuestion(QuizQuestion quizQuestion) {
+        this.quizQuestion = quizQuestion;
     }
 
     public QuizSubmission getSubmission() {
@@ -122,16 +122,13 @@ public abstract class SubmittedAnswer implements Serializable {
 
     @Override
     public String toString() {
-        return "SubmittedAnswer{" +
-            "id=" + getId() +
-            ", scoreInPoints='" + getScoreInPoints() + "'" +
-            "}";
+        return "SubmittedAnswer{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
 
     /**
-     * Delete all references to question and question-elements if the quiz was changed
+     * Delete all references to quizQuestion and quizQuestion-elements if the quiz was changed
      *
      * @param quizExercise the changed quizExercise-object
      */
-    public abstract void checkAndDeleteReferences (QuizExercise quizExercise);
+    public abstract void checkAndDeleteReferences(QuizExercise quizExercise);
 }

@@ -1,312 +1,257 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
-
-import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
+import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from '../result';
-import {
-    ENTITY_KIND_HEIGHT,
-    ENTITY_MEMBER_HEIGHT,
-    ENTITY_MEMBER_LIST_VERTICAL_PADDING,
-    ENTITY_NAME_HEIGHT,
-    Point,
-    EntityKind,
-    RelationshipKind,
-    State,
-    RectEdge
-} from '@ls1intum/apollon';
+import { UMLElementType, UMLModel, UMLModelElementType, UMLRelationshipType } from '@ls1intum/apollon';
+import { Feedback } from 'app/entities/feedback';
+import { mergeMap } from 'rxjs/operators';
+import { timer } from 'rxjs';
+import { ComplaintResponse } from 'app/entities/complaint-response';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
-    private resourceUrl = SERVER_API_URL + 'api/modeling-assessments';
+    private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
+    private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
+    private localSubmissionConflictMap: Map<number, Conflict[]>;
+    private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
-
-    save(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const copy = this.convert(modelingAssessment);
-        return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    constructor(private http: HttpClient) {
+        this.localSubmissionConflictMap = new Map<number, Conflict[]>();
     }
 
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const copy = this.convert(modelingAssessment);
-        return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    addLocalConflicts(submissionID: number, conflicts: Conflict[]) {
+        return this.localSubmissionConflictMap.set(submissionID, conflicts);
     }
 
-    find(participationId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
-        return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/participation/${participationId}/submission/${submissionId}`, {
-                observe: 'response'
-            })
-            .map(res => this.convertArrayResponse(res));
+    getLocalConflicts(submissionID: number) {
+        return this.localSubmissionConflictMap.get(submissionID);
     }
 
-    getOptimalSubmissions(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, { observe: 'response' });
+    escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
+        return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/escalate`, conflicts);
     }
 
-    getPartialAssessment(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
-        return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/partial-assessment`, {
-                observe: 'response'
-            })
-            .map(res => this.convertArrayResponse(res));
+    saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
+        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
+        if (submit) {
+            url += '?submit=true';
+            if (ignoreConflicts) {
+                url += '&ignoreConflicts=true';
+            }
+        }
+        return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
-    getDataForEditor(exerciseId: number, submissionId: number): Observable<any> {
-        return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, { responseType: 'json' });
+    saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/exampleAssessment`;
+        return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
+    }
+
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
+        const assessmentUpdate = {
+            feedbacks,
+            complaintResponse,
+        };
+        return this.http.post<Result>(url, assessmentUpdate).map(res => this.convertResult(res));
+    }
+
+    getAssessment(submissionId: number): Observable<Result> {
+        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map(res => this.convertResult(res));
+    }
+
+    getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
+        const url = `${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/modelingExampleAssessment`;
+        return this.http.get<Result>(url).map(res => this.convertResult(res));
+    }
+
+    getOptimalSubmissions(exerciseId: number): Observable<number[]> {
+        return this.http.get<number[]>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`);
+    }
+
+    getPartialAssessment(submissionId: number): Observable<Result> {
+        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/partial-assessment`).map(res => this.convertResult(res));
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Result = this.convertItemFromServer(res.body);
-        return res.clone({ body });
+    cancelAssessment(submissionId: number): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
     }
 
     /**
-     * Convert a returned JSON object to Result.
+     * Iterates over all feedback elements of a response and converts the reference field of the feedback into
+     * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
      */
-    private convertItemFromServer(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        return copy;
-    }
-
-    private convertAssessmentFromServer(assessment: ModelingAssessment): ModelingAssessment {
-        const copy: ModelingAssessment = Object.assign({}, assessment);
-        return copy;
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingAssessment[]>): HttpResponse<ModelingAssessment[]> {
-        const jsonResponse: ModelingAssessment[] = res.body;
-        const body: ModelingAssessment[] = [];
-        if (jsonResponse) {
-            for (let i = 0; i < jsonResponse.length; i++) {
-                body.push(this.convertAssessmentFromServer(jsonResponse[i]));
+    convertResult(result: Result): Result {
+        if (!result || !result.feedbacks) {
+            return result;
+        }
+        for (const feedback of result.feedbacks) {
+            if (feedback.reference) {
+                feedback.referenceType = feedback.reference.split(':')[0] as UMLModelElementType;
+                feedback.referenceId = feedback.reference.split(':')[1];
             }
         }
-        return res.clone({ body });
+        return result;
     }
 
     /**
-     * Convert the assessment to a String which can be sent to the server.
+     * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
      */
-    private convert(modelingAssessment: ModelingAssessment[]): String {
-        const copy: String = JSON.stringify({ assessments: modelingAssessment });
-        return copy;
-    }
-
-    getNamesForAssessments(assessments: ModelingAssessment[], model: State): Map<string, Map<string, string>> {
+    // TODO: define a mapping or simplify this complex monster in a another way so that we can support other diagram types as well
+    getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
-        for (const assessment of assessments) {
-            if (assessment.type === ModelElementType.CLASS) {
-                const classElement = model.entities.byId[assessment.id];
-                const className = classElement.name;
+        for (const feedback of result.feedbacks) {
+            const referencedModelType = feedback.referenceType!;
+            const referencedModelId = feedback.referenceId!;
+            if (referencedModelType in UMLElementType) {
+                const element = model.elements.find(elem => elem.id === referencedModelId);
+                if (!element) {
+                    // prevent errors when element could not be found, should never happen
+                    assessmentsNames[referencedModelId] = { name: '', type: '' };
+                    continue;
+                }
+
+                const name = element.name;
                 let type: string;
-                switch (classElement.kind) {
-                    case EntityKind.ActivityControlInitialNode:
+                switch (element.type) {
+                    case UMLElementType.Class:
+                        type = 'class';
+                        break;
+                    case UMLElementType.Package:
+                        type = 'package';
+                        break;
+                    case UMLElementType.Interface:
+                        type = 'interface';
+                        break;
+                    case UMLElementType.AbstractClass:
+                        type = 'abstract class';
+                        break;
+                    case UMLElementType.Enumeration:
+                        type = 'enum';
+                        break;
+                    case UMLElementType.ClassAttribute:
+                        type = 'attribute';
+                        break;
+                    case UMLElementType.ClassMethod:
+                        type = 'method';
+                        break;
+                    case UMLElementType.ActivityInitialNode:
                         type = 'initial node';
                         break;
-                    case EntityKind.ActivityControlFinalNode:
+                    case UMLElementType.ActivityFinalNode:
                         type = 'final node';
                         break;
-                    case EntityKind.ActivityObject:
+                    case UMLElementType.ActivityObjectNode:
                         type = 'object';
                         break;
-                    case EntityKind.ActivityActionNode:
+                    case UMLElementType.ActivityActionNode:
                         type = 'action';
                         break;
-                    case EntityKind.ActivityForkNode:
-                    case EntityKind.ActivityForkNodeHorizontal:
+                    case UMLElementType.ActivityForkNode:
                         type = 'fork node';
                         break;
-                    case EntityKind.ActivityMergeNode:
+                    case UMLElementType.ActivityMergeNode:
                         type = 'merge node';
                         break;
                     default:
-                        type = assessment.type;
+                        type = '';
                         break;
                 }
-                assessmentsNames[assessment.id] = { type, name: className };
-            } else if (assessment.type === ModelElementType.ATTRIBUTE) {
-                for (const entityId of model.entities.allIds) {
-                    for (const att of model.entities.byId[entityId].attributes) {
-                        if (att.id === assessment.id) {
-                            assessmentsNames[assessment.id] = { type: assessment.type, name: att.name };
-                        }
-                    }
-                }
-            } else if (assessment.type === ModelElementType.METHOD) {
-                for (const entityId of model.entities.allIds) {
-                    for (const method of model.entities.byId[entityId].methods) {
-                        if (method.id === assessment.id) {
-                            assessmentsNames[assessment.id] = { type: assessment.type, name: method.name };
-                        }
-                    }
-                }
-            } else if (assessment.type === ModelElementType.RELATIONSHIP) {
-                const relationship = model.relationships.byId[assessment.id];
-                const source = model.entities.byId[relationship.source.entityId].name;
-                const target = model.entities.byId[relationship.target.entityId].name;
-                const kind: RelationshipKind = model.relationships.byId[assessment.id].kind;
+                assessmentsNames[referencedModelId] = { type, name };
+            } else if (referencedModelType in UMLRelationshipType) {
+                const relationship = model.relationships.find(rel => rel.id === referencedModelId)!;
+                const source = model.elements.find(element => element.id === relationship.source.element)!.name;
+                const target = model.elements.find(element => element.id === relationship.target.element)!.name;
+                const relationshipType = relationship.type;
                 let type = 'association';
                 let relation: string;
-                switch (kind) {
-                    case RelationshipKind.AssociationBidirectional:
+                switch (relationshipType) {
+                    case UMLRelationshipType.ClassBidirectional:
                         relation = ' <-> ';
                         break;
-                    case RelationshipKind.AssociationUnidirectional:
-                        relation = ' -> ';
+                    case UMLRelationshipType.ClassUnidirectional:
+                        relation = ' --> ';
                         break;
-                    case RelationshipKind.Aggregation:
-                        relation = ' -◇ ';
+                    case UMLRelationshipType.ClassAggregation:
+                        relation = ' --◇ ';
                         break;
-                    case RelationshipKind.Inheritance:
-                        relation = ' -▷ ';
+                    case UMLRelationshipType.ClassInheritance:
+                        relation = ' --▷ ';
                         break;
-                    case RelationshipKind.Dependency:
-                        relation = ' ╌> ';
+                    case UMLRelationshipType.ClassDependency:
+                        relation = ' ╌╌> ';
                         break;
-                    case RelationshipKind.Composition:
-                        relation = ' -◆ ';
+                    case UMLRelationshipType.ClassComposition:
+                        relation = ' --◆ ';
                         break;
-                    case RelationshipKind.ActivityControlFlow:
-                        relation = ' -> ';
+                    case UMLRelationshipType.ActivityControlFlow:
+                        relation = ' --> ';
                         type = 'control flow';
                         break;
                     default:
-                        relation = ' -- ';
+                        relation = ' --- ';
                 }
-                assessmentsNames[assessment.id] = { type, name: source + relation + target };
+                assessmentsNames[referencedModelId] = { type, name: source + relation + target };
             } else {
-                assessmentsNames[assessment.id] = { type: assessment.type, name: '' };
+                assessmentsNames[referencedModelId] = { type: referencedModelType, name: '' };
             }
         }
         return assessmentsNames;
     }
 
-    getElementPositions(assessments: ModelingAssessment[], model: State): Map<string, Point> {
-        const SYMBOL_HEIGHT = 31;
-        const SYMBOL_WIDTH = 65;
-        const positions = new Map<string, Point>();
-        for (const assessment of assessments) {
-            const elemPosition: Point = { x: 0, y: 0 };
-            if (assessment.type === ModelElementType.CLASS) {
-                if (model.entities.byId[assessment.id]) {
-                    const entity = model.entities.byId[assessment.id];
-                    elemPosition.x = entity.position.x + entity.size.width;
-                    if (entity.kind === EntityKind.ActivityControlInitialNode || entity.kind === EntityKind.ActivityControlFinalNode) {
-                        elemPosition.x = entity.position.x;
-                    }
-                    elemPosition.y = entity.position.y;
-                }
-            } else if (assessment.type === ModelElementType.ATTRIBUTE) {
-                for (const entityId of model.entities.allIds) {
-                    const entity = model.entities.byId[entityId];
-                    entity.attributes.forEach((attribute, index) => {
-                        if (attribute.id === assessment.id) {
-                            elemPosition.x = entity.position.x + entity.size.width;
-                            elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-                            if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
-                                elemPosition.y += ENTITY_KIND_HEIGHT;
-                            }
-                            if (entity.attributes.length > 1 && index > 0) {
-                                elemPosition.y += index * ENTITY_MEMBER_HEIGHT;
-                            }
-                        }
-                    });
-                }
-            } else if (assessment.type === ModelElementType.METHOD) {
-                for (const entityId of model.entities.allIds) {
-                    const entity = model.entities.byId[entityId];
-                    entity.methods.forEach((method, index) => {
-                        if (method.id === assessment.id) {
-                            elemPosition.x = entity.position.x + entity.size.width;
-                            elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-                            if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
-                                elemPosition.y += ENTITY_KIND_HEIGHT;
-                            }
-                            if (entity.attributes.length > 0) {
-                                elemPosition.y += 2 * ENTITY_MEMBER_LIST_VERTICAL_PADDING + entity.attributes.length * ENTITY_MEMBER_HEIGHT;
-                            }
-                            if (entity.methods.length > 1 && index > 0) {
-                                elemPosition.y += index * ENTITY_MEMBER_HEIGHT;
-                            }
-                        }
-                    });
-                }
-            } else if (assessment.type === ModelElementType.RELATIONSHIP) {
-                if (model.relationships.byId[assessment.id]) {
-                    const relationship = model.relationships.byId[assessment.id];
-                    const kind: RelationshipKind = relationship.kind;
-                    const sourceEntity = model.entities.byId[relationship.source.entityId];
-                    const destEntity = model.entities.byId[relationship.target.entityId];
-                    if (kind === RelationshipKind.AssociationBidirectional) {
-                        const rightElem = sourceEntity.position.x > destEntity.position.x ? sourceEntity : destEntity;
-                        const rightEdge: RectEdge = rightElem === sourceEntity ? relationship.source.edge : relationship.target.edge;
-                        elemPosition.x = rightElem.position.x;
-                        elemPosition.y = rightElem.position.y;
-                        switch (rightEdge) {
-                            case 'TOP':
-                                elemPosition.x += rightElem.size.width / 2;
-                                elemPosition.y -= SYMBOL_HEIGHT;
-                                break;
-                            case 'BOTTOM':
-                                elemPosition.x += rightElem.size.width / 2;
-                                elemPosition.y += rightElem.size.height;
-                                break;
-                            case 'LEFT':
-                                elemPosition.y += rightElem.size.height / 2;
-                                break;
-                            case 'RIGHT':
-                                elemPosition.x += rightElem.size.width + SYMBOL_WIDTH;
-                                elemPosition.y += rightElem.size.height / 2;
-                                break;
-                            default:
-                                break;
-                        }
-                    } else {
-                        elemPosition.x = sourceEntity.position.x;
-                        elemPosition.y = sourceEntity.position.y;
-                        const sourceEdge: RectEdge = relationship.source.edge;
-                        switch (sourceEdge) {
-                            case 'TOP':
-                                elemPosition.x += sourceEntity.size.width / 2;
-                                elemPosition.y -= SYMBOL_HEIGHT;
-                                break;
-                            case 'BOTTOM':
-                                elemPosition.x += sourceEntity.size.width / 2;
-                                elemPosition.y += sourceEntity.size.height;
-                                break;
-                            case 'LEFT':
-                                elemPosition.y += sourceEntity.size.height / 2;
-                                break;
-                            case 'RIGHT':
-                                elemPosition.x += sourceEntity.size.width + SYMBOL_WIDTH;
-                                elemPosition.y += sourceEntity.size.height / 2;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                }
-            }
-            positions[assessment.id] = elemPosition;
+    /**
+     * Checks if the feedback text and detail text of every feedback item is smaller than the configured maximum length. Returns true if the length of the texts is valid or if
+     * there is no feedback, false otherwise.
+     */
+    isFeedbackTextValid(feedback: Feedback[]): boolean {
+        if (!feedback) {
+            return true;
         }
-
-        return positions;
+        return feedback.every(
+            feedbackItem =>
+                (!feedbackItem.text || feedbackItem.text.length <= this.MAX_FEEDBACK_TEXT_LENGTH) &&
+                (!feedbackItem.detailText || feedbackItem.detailText.length <= this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH),
+        );
     }
 
+    /**
+     * Creates an array filled with n integers starting from the number provided by startFrom.
+     * Example: numberToArray(5, 0) returns the array
+     * [0, 1, 2, 3, 4]
+     */
     numberToArray(n: number, startFrom: number): number[] {
         n = Math.floor(Math.abs(n));
         return [...Array(n).keys()].map(i => i + startFrom);
     }
 }
+
+export const genericRetryStrategy = ({
+    maxRetryAttempts = 3,
+    scalingDuration = 1000,
+    excludedStatusCodes = [],
+}: {
+    maxRetryAttempts?: number;
+    scalingDuration?: number;
+    excludedStatusCodes?: number[];
+} = {}) => (attempts: Observable<any>) => {
+    return attempts.pipe(
+        mergeMap((error, i) => {
+            const retryAttempt = i + 1;
+            // if maximum number of retries have been met
+            // or response is a status code we don't wish to retry, throw error
+            if (retryAttempt > maxRetryAttempts || excludedStatusCodes.find(e => e === error.status)) {
+                throw error;
+            }
+            // retry after 1s, 2s, etc...
+            return timer(retryAttempt * scalingDuration);
+        }),
+    );
+};

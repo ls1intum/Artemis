@@ -1,68 +1,35 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
+import { Course, CourseService } from 'app/entities/course';
+import { TranslateService } from '@ngx-translate/core';
 
-import { Exercise } from './exercise.model';
-import { ExerciseService } from './exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
-
-@Component({
-    selector: 'jhi-exercise',
-    templateUrl: './exercise.component.html'
-})
-export class ExerciseComponent implements OnInit, OnDestroy {
-    exercises: Exercise[];
-    eventSubscriber: Subscription;
-    itemsPerPage: number;
-    links: any;
-    page: number;
+export abstract class ExerciseComponent implements OnInit, OnDestroy {
+    private eventSubscriber: Subscription;
+    @Input() embedded = false;
+    @Input() course: Course;
+    @Output() exerciseCount = new EventEmitter<number>();
+    showAlertHeading: boolean;
+    showHeading: boolean;
+    courseId: number;
     predicate: string;
     reverse: boolean;
-    totalItems: number;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
-        private parseLinks: JhiParseLinks
+    protected constructor(
+        private courseService: CourseService,
+        protected translateService: TranslateService,
+        private route: ActivatedRoute,
+        protected eventManager: JhiEventManager,
     ) {
-        this.exercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
         this.predicate = 'id';
         this.reverse = true;
     }
 
-    loadAll() {
-        this.exerciseService
-            .query({
-                page: this.page,
-                size: this.itemsPerPage,
-                sort: this.sort()
-            })
-            .subscribe(
-                (res: HttpResponse<Exercise[]>) => this.onSuccess(res.body, res.headers),
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-    }
-
-    reset() {
-        this.page = 0;
-        this.exercises = [];
-        this.loadAll();
-    }
-
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAll();
-    }
-
-    ngOnInit() {
-        this.loadAll();
+    ngOnInit(): void {
+        this.showAlertHeading = !this.embedded;
+        this.showHeading = this.embedded;
+        this.load();
         this.registerChangeInExercises();
     }
 
@@ -70,30 +37,40 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: Exercise) {
-        return item.id;
-    }
-    registerChangeInExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('exerciseListModification', () => this.reset());
-    }
-
-    sort() {
-        const result = [this.predicate + ',' + (this.reverse ? 'asc' : 'desc')];
-        if (this.predicate !== 'id') {
-            result.push('id');
-        }
-        return result;
-    }
-
-    private onSuccess(exercises: Exercise[], headers: HttpHeaders) {
-        this.links = this.parseLinks.parse(headers.get('link'));
-        this.totalItems = Number(headers.get('X-Total-Count'));
-        for (let i = 0; i < exercises.length; i++) {
-            this.exercises.push(exercises[i]);
+    protected load(): void {
+        if (this.course == null) {
+            this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+            this.loadCourse();
+        } else {
+            this.courseId = this.course.id;
+            this.loadExercises();
         }
     }
 
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+    private loadCourse(): void {
+        this.courseService.find(this.courseId).subscribe(courseResponse => {
+            this.course = courseResponse.body!;
+            this.loadExercises();
+        });
+    }
+
+    public getAmountOfExercisesString<T>(exercises: Array<T>): string {
+        if (exercises.length === 0) {
+            return this.translateService.instant('artemisApp.createExercise.noExercises');
+        } else {
+            return exercises.length.toString();
+        }
+    }
+
+    protected abstract loadExercises(): void;
+
+    protected emitExerciseCount(count: number): void {
+        this.exerciseCount.emit(count);
+    }
+
+    protected abstract getChangeEventName(): string;
+
+    private registerChangeInExercises() {
+        this.eventSubscriber = this.eventManager.subscribe(this.getChangeEventName(), () => this.load());
     }
 }

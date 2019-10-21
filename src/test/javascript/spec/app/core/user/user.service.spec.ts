@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { JhiDateUtils } from 'ng-jhipster';
 
-import { UserService, User } from 'app/core';
+import { User, UserService } from 'app/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
@@ -13,7 +13,7 @@ describe('Service Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
-                providers: [JhiDateUtils]
+                providers: [JhiDateUtils],
             });
 
             service = TestBed.get(UserService);
@@ -58,7 +58,7 @@ describe('Service Tests', () => {
                 const req = httpMock.expectOne({ method: 'GET' });
                 req.flush('Invalid request parameters', {
                     status: 404,
-                    statusText: 'Bad Request'
+                    statusText: 'Bad Request',
                 });
             });
         });

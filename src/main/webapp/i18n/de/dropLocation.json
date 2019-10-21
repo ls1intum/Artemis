@@ -1,7 +1,6 @@
-
 {
-    "arTeMiSApp": {
-        "dropLocation" : {
+    "artemisApp": {
+        "dropLocation": {
             "home": {
                 "title": "Drop Locations",
                 "createLabel": "Drop Location erstellen",
