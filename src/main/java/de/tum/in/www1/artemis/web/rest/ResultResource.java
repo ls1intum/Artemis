@@ -113,7 +113,7 @@ public class ResultResource {
         final var course = participation.getExercise().getCourse();
         final var user = userService.getUserWithGroupsAndAuthorities();
         final var exercise = participation.getExercise();
-        if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
+        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise))
             return forbidden();
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
