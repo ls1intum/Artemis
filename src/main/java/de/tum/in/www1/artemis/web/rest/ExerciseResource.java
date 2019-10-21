@@ -66,10 +66,12 @@ public class ExerciseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
             TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService) {
+            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService, ProgrammingSubmissionService programmingSubmissionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -82,6 +84,7 @@ public class ExerciseResource {
         this.resultService = resultService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
@@ -174,8 +177,10 @@ public class ExerciseResource {
         Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
+        // TODO: This could just be one repository method as the exercise id is provided anyway.
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
+                + programmingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);

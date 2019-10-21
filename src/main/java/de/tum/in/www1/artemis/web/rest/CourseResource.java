@@ -397,7 +397,7 @@ public class CourseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId)
-                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId) + programmingExerciseService.countSubmissionsToAssessByCourseId(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);

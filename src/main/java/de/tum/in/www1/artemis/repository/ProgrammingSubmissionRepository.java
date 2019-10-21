@@ -32,4 +32,12 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     ProgrammingSubmission findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     Optional<ProgrammingSubmission> findByResultId(long resultId);
+
+    /**
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     *         exercise due date at all
+     */
+    @Query("SELECT COUNT (DISTINCT submission) FROM ProgrammingSubmission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
 }
