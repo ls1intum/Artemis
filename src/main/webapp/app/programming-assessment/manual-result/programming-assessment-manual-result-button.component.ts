@@ -13,7 +13,7 @@ import { AssessmentType } from 'app/entities/assessment-type';
             [btnType]="ButtonType.WARNING"
             [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
-            [title]="'entity.action.newResult'"
+            [title]="latestResult ? 'entity.action.updateResult' : 'entity.action.newResult'"
             (onClick)="openManualResultDialog($event)"
         ></jhi-button>
     `,
