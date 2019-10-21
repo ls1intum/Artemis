@@ -58,7 +58,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private accountService: AccountService,
         private route: ActivatedRoute,
-        private guidedTourService: GuidedTourService,
+        public guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {

@@ -24,7 +24,7 @@ export class OverviewComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
-        private guidedTourService: GuidedTourService,
+        public guidedTourService: GuidedTourService,
     ) {}
 
     loadAndFilterCourses() {
