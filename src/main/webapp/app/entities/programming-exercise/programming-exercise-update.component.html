@@ -1,5 +1,5 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col-lg-8 col-sm-12">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
             <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
                 Generate new Programming Exercise
@@ -165,6 +165,7 @@
                         [showStatus]="programmingExercise?.id"
                         [editMode]="programmingExercise?.id"
                         (hasUnsavedChanges)="hashUnsavedChanges = $event"
+                        [forceRender]="rerenderSubject.asObservable()"
                         class="form__editable-instructions"
                     ></jhi-programming-exercise-editable-instructions>
                 </div>

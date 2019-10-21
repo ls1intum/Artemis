@@ -188,14 +188,18 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         flush();
     }));
 
-    it('should re-render the preview html after changes to the problem statement have been made', fakeAsync(() => {
+    it('should re-render the preview html when forceRender has emitted', fakeAsync(() => {
+        const forceRenderSubject = new Subject<void>();
         comp.exercise = exercise;
         comp.participation = participation;
+        comp.forceRender = forceRenderSubject.asObservable();
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.detectChanges();
         tick();
+
+        forceRenderSubject.next();
 
         expect(generateHtmlSubjectStub).to.have.been.calledOnce;
 

@@ -7,6 +7,8 @@ import { ProgrammingExercise, programmingExerciseRoute } from 'app/entities/prog
 import * as moment from 'moment';
 import { Participation, ParticipationType, StudentParticipation } from 'app/entities/participation';
 import { ExerciseType } from 'app/entities/exercise';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { isMoment } from 'moment';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
@@ -14,11 +16,33 @@ export const isLegacyResult = (result: Result) => {
     return result.completionDate!.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;
 };
 
-export const hasBuildAndTestAfterDueDatePassed = (programmingExercise: ProgrammingExercise) => {
+/**
+ * A result is preliminary if:
+ * - The programming exercise buildAndTestAfterDueDate is set
+ * - The submission date of the result / result completionDate is before the buildAndTestAfterDueDate
+ *
+ * Note: We check some error cases in this method as a null value for the given parameters, because the clients using this method might unwillingly provide them (result component).
+ * TODO: Remove the null checks when the result component is refactored.
+ *
+ * @param result Result with attached Submission - if submission is null, method will use the result completionDate as a reference.
+ * @param programmingExercise ProgrammingExercise
+ */
+export const isResultPreliminary = (result: Result, programmingExercise: ProgrammingExercise | null) => {
     if (!programmingExercise) {
         return false;
     }
-    return !programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment.now());
+    const { submission } = result;
+    // We use the result completionDate as a fallback when the submissionDate is not available (edge case, every result should have a submission).
+    let referenceDate = submission && submission.submissionDate ? submission.submissionDate : result.completionDate;
+    // If not a moment date already, try to convert it (e.g. when it is a string).
+    if (referenceDate && !isMoment(referenceDate)) {
+        referenceDate = moment(referenceDate);
+    }
+    // When the result completionDate would be null, we have to return here (edge case, every result should have a completionDate).
+    if (!referenceDate || !referenceDate.isValid()) {
+        return false;
+    }
+    return !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && referenceDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 };
 
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {

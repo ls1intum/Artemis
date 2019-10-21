@@ -78,7 +78,12 @@
                                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </button>
-                                            <jhi-confirm-button (confirmEvent)="deleteAttachment(attachment)"> </jhi-confirm-button>
+                                            <button
+                                                jhiDeleteButton
+                                                [entityTitle]="attachment.name"
+                                                deleteQuestion="artemisApp.attachment.deleteQuestion"
+                                                (delete)="deleteAttachment(attachment)"
+                                            ></button>
                                         </div>
                                     </td>
                                 </tr>

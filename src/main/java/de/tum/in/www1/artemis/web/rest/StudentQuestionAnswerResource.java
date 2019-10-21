@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -68,6 +69,7 @@ public class StudentQuestionAnswerResource {
      */
     @PostMapping("/student-question-answers")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() != null) {
@@ -95,6 +97,7 @@ public class StudentQuestionAnswerResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/student-question-answers")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
@@ -113,6 +116,7 @@ public class StudentQuestionAnswerResource {
      */
     @GetMapping("/student-question-answers/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
         Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
@@ -126,11 +130,12 @@ public class StudentQuestionAnswerResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/student-question-answers/{id}")
+    // TODO: there are no security checks here. The API endpoint should at least include the course id
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);
-        if (!optionalStudentQuestionAnswer.isPresent()) {
+        if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
@@ -148,7 +153,7 @@ public class StudentQuestionAnswerResource {
             return ResponseEntity.badRequest().build();
         }
         Boolean hasCourseTAAccess = courseService.userHasAtLeastTAPermissions(course);
-        Boolean isUserAuthor = user.getId() == studentQuestionAnswer.getAuthor().getId();
+        Boolean isUserAuthor = Objects.equals(user.getId(), studentQuestionAnswer.getAuthor().getId());
         if (hasCourseTAAccess || isUserAuthor) {
             log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
             studentQuestionAnswerRepository.deleteById(id);

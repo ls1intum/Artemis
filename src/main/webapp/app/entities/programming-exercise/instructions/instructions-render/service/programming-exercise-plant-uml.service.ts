@@ -39,6 +39,26 @@ export class ProgrammingExercisePlantUmlService {
             .map(res => this.convertPlantUmlResponseToBase64(res));
     }
 
+    /**
+     * @function getPlantUmlSvg
+     * @param plantUml definition obtained by parsing the README markdown file
+     * @desc Requests the plantuml svg as string
+     *
+     * TODO provide a rationale about the cache configuration
+     *
+     */
+    @Cacheable({
+        /** Cacheable configuration **/
+        maxCacheCount: 3,
+        maxAge: 3000,
+        slidingExpiration: true,
+    })
+    getPlantUmlSvg(plantUml: string) {
+        return this.http.get(`${this.resourceUrl}/svg`, {
+            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
+        });
+    }
+
     private convertPlantUmlResponseToBase64(res: any): string {
         return Buffer.from(res, 'binary').toString('base64');
     }

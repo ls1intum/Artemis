@@ -58,6 +58,8 @@
             "duration": "Dauer",
             "showUnsuccessful": "Nur unerfolgreiche anzeigen",
             "showSuccessful": "Nur erfolgreiche anzeigen",
+            "showManual": "Nur manuelle anzeigen",
+            "showAutomatic": "Nur automatische anzeigen",
             "showAll": "Alle anzeigen",
             "tagPlaceholder": "Neue Kategorie eingeben",
             "isProgramming": "Das ist eine Programmierübung",
