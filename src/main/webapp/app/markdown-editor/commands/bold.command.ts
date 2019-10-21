@@ -22,7 +22,7 @@ export class BoldCommand extends Command {
         } else {
             const trimmedText = this.deleteWhiteSpace(selectedText);
             textToAdd = `**${trimmedText}**`;
-            this.addRefinedTxt(selectedText, textToAdd);
+            this.addRefinedText(selectedText, textToAdd);
         }
     }
 }

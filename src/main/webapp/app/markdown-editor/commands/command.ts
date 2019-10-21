@@ -84,7 +84,7 @@ export abstract class Command {
         return text.trim();
     }
 
-    protected addRefinedTxt(selectedText: string, textToAdd: string) {
+    protected addRefinedText(selectedText: string, textToAdd: string) {
         if (selectedText.charAt(0) === ' ' && selectedText.charAt(selectedText.length - 1) === ' ') {
             return this.insertText(' ' + textToAdd + ' ');
         } else if (selectedText.charAt(0) === ' ') {

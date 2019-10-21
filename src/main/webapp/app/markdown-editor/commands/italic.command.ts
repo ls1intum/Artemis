@@ -22,7 +22,7 @@ export class ItalicCommand extends Command {
         } else {
             const trimmedText = this.deleteWhiteSpace(selectedText);
             textToAdd = `*${trimmedText}*`;
-            this.addRefinedTxt(selectedText, textToAdd);
+            this.addRefinedText(selectedText, textToAdd);
         }
     }
 }
