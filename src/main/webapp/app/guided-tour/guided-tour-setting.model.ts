@@ -14,3 +14,11 @@ export class GuidedTourSetting {
         this.guidedTourState = guidedTourState ? guidedTourState : GuidedTourState.STARTED;
     }
 }
+
+export class GuidedTourMapping {
+    courseShortName: string;
+    tours: {
+        key: string;
+        exerciseName: string;
+    }[];
+}

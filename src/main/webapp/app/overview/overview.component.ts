@@ -6,7 +6,6 @@ import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { compareCourseShortName } from 'app/guided-tour/guided-tour.utils';
 import { CourseScoreCalculationService } from 'app/overview';
 
 @Component({
@@ -18,8 +17,6 @@ export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
     public guidedTourCourse: Course | null;
-
-    readonly compareCourseShortName = compareCourseShortName;
 
     constructor(
         private courseService: CourseService,

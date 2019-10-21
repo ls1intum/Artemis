@@ -24,6 +24,7 @@ export class ProfileService {
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
+                        const guidedTourMapping = data['guided-tour'];
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
                             if (ribbonProfiles.length !== 0) {
@@ -32,6 +33,7 @@ export class ProfileService {
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                         }
                         profileInfo.sentry = data.sentry;
+                        profileInfo.guidedTourMapping = guidedTourMapping;
                         return profileInfo;
                     }),
                 )

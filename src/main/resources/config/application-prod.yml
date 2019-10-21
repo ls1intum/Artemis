@@ -131,3 +131,23 @@ jhipster:
             queue-size: 512
     audit-events:
         retention-period: 120 # Number of days before audit events are deleted.
+
+# Properties to be exposed on the /info management endpoint
+info:
+    guided-tour:
+        courseShortName: 'artemistutorial'
+        tours:
+            - key: 'cancel_tour'
+              exerciseName: ''
+            - key: 'code_editor_tour'
+              exerciseName: 'tutorial'
+            - key: 'course_overview_tour'
+              exerciseName: ''
+            - key: 'course_exercise_overview_tour'
+              exerciseName: 'tutorial'
+            - key: 'modeling_tour'
+              exerciseName: 'Modeling'
+            - key: 'programming_exercise_fail_tour'
+              exerciseName: 'tutorial'
+            - key: 'programming_exercise_success_tour'
+              exerciseName: 'tutorial'

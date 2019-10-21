@@ -7,7 +7,7 @@ import { fromEvent, Observable, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
+import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { AccountService, User } from 'app/core';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -18,6 +18,7 @@ import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour } from 'app/guided-tour/tours/general-tour';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -47,12 +48,16 @@ export class GuidedTourService {
     private transformXIntervalNext = -26;
     private transformXIntervalPrev = 26;
 
+    // Guided tour course and exercise mapping
+    public guidedTourMapping: GuidedTourMapping;
+
     constructor(
         private http: HttpClient,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private router: Router,
         private deviceService: DeviceDetectorService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -63,6 +68,13 @@ export class GuidedTourService {
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
                 this.guidedTourSettings = user ? user.guidedTourSettings : [];
+            }
+        });
+
+        // Retrieve the guided tour mapping from the profile service
+        this.profileService.getProfileInfo().subscribe(profileInfo => {
+            if (profileInfo && profileInfo.guidedTourMapping) {
+                this.guidedTourMapping = profileInfo.guidedTourMapping;
             }
         });
 
@@ -97,6 +109,10 @@ export class GuidedTourService {
                     }
                 }
             });
+    }
+
+    private setGuidedTourCourseExerciseMapping(guidedTourMapping: GuidedTourMapping) {
+        this.guidedTourMapping = guidedTourMapping;
     }
 
     /**
@@ -705,15 +721,20 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour): Exercise | null {
-        if (!guidedTour.exerciseShortName || !course || !course.exercises) {
+        if (!course || !course.exercises) {
             return null;
         }
-        const exerciseForGuidedTourExists = course.exercises.find(
-            exercise => (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) || exercise.title === guidedTour.exerciseShortName,
+        const courseForGuidedTour = Object.values(this.guidedTourMapping.tours).find(tour => tour.key === guidedTour.settingsKey);
+        if (!courseForGuidedTour) {
+            return null;
+        }
+        const exerciseForGuidedTour = course.exercises.find(
+            exercise =>
+                (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === courseForGuidedTour.exerciseName) || exercise.title === courseForGuidedTour.exerciseName,
         );
-        if (exerciseForGuidedTourExists) {
+        if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
-            return exerciseForGuidedTourExists;
+            return exerciseForGuidedTour;
         }
         return null;
     }
@@ -724,7 +745,7 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
-        const courseForTour = courses.find(course => course.shortName === guidedTour.courseShortName);
+        const courseForTour = courses.find(course => course.shortName === this.guidedTourMapping.courseShortName);
         if (courseForTour) {
             this.enableTour(guidedTour);
             return courseForTour;
@@ -738,11 +759,31 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) {
-            this.enableTour(guidedTour);
-        } else if (exercise.title === guidedTour.exerciseShortName) {
+        let exerciseExists = null;
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            exerciseExists = Object.values(this.guidedTourMapping.tours).find(tour => tour.exerciseName === exercise.shortName && guidedTour.settingsKey === tour.key);
+        } else {
+            exerciseExists = Object.values(this.guidedTourMapping.tours).find(tour => tour.exerciseName === exercise.title && guidedTour.settingsKey === tour.key);
+            console.log('exerciseExists: ', exerciseExists);
+        }
+
+        if (exerciseExists) {
             this.enableTour(guidedTour);
         }
+    }
+
+    public compareCourseShortName(course: Course, guidedTourCourse: Course | null): boolean {
+        if (!course || !guidedTourCourse) {
+            return false;
+        }
+        return course.shortName === this.guidedTourMapping.courseShortName;
+    }
+
+    public compareExerciseShortName(exercise: Exercise, guidedTourExercise: Exercise | null): boolean {
+        if (!exercise || !guidedTourExercise) {
+            return false;
+        }
+        return exercise.shortName === guidedTourExercise.shortName;
     }
 
     /**

@@ -20,7 +20,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
-import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
+import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core';
@@ -74,7 +74,7 @@ describe('GuidedTourService', () => {
     const tourWithCourseAndExercise: GuidedTour = {
         courseShortName: 'tutorial',
         exerciseShortName: 'git',
-        settingsKey: 'tour_with_course_and_exericse',
+        settingsKey: 'tour_with_course_and_exercise',
         steps: [
             new TextTourStep({
                 headlineTranslateKey: '',
@@ -262,6 +262,11 @@ describe('GuidedTourService', () => {
         });
 
         describe('Tour for a certain course and exercise', () => {
+            const guidedTourMapping = {
+                courseShortName: 'tutorial',
+                tours: [{ key: 'tour_with_course_and_exercise', exerciseName: 'git' }],
+            } as GuidedTourMapping;
+
             const exercise1 = {
                 id: 1,
                 shortName: 'git',
@@ -286,6 +291,7 @@ describe('GuidedTourService', () => {
             } as Course;
 
             beforeEach(async () => {
+                guidedTourService.guidedTourMapping = guidedTourMapping;
                 prepareGuidedTour(tourWithCourseAndExercise);
             });
 
