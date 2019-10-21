@@ -23,8 +23,8 @@ import { ProgrammingAssessmentManualResultService } from 'app/programming-assess
 })
 export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
     @Input() participationId: number;
-    participation: StudentParticipation;
     @Input() result: Result;
+    participation: StudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
@@ -43,24 +43,31 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     ngOnInit() {
         // If there already is a manual result, update it instead of creating a new one.
         if (this.result) {
-            if (this.result.feedbacks) {
-                this.feedbacks = this.result.feedbacks;
-            } else {
-                this.isLoading = true;
-                this.resultService
-                    .getFeedbackDetailsForResult(this.result.id)
-                    .pipe(
-                        tap(({ body: feedbacks }) => {
-                            this.feedbacks = feedbacks!;
-                        }),
-                    )
-                    .subscribe(() => (this.isLoading = false));
-            }
-            this.participation = this.result.participation! as StudentParticipation;
+            this.initializeForResultUpdate();
             return;
         }
+        this.initializeForResultCreation();
+    }
+
+    initializeForResultUpdate() {
+        if (this.result.feedbacks) {
+            this.feedbacks = this.result.feedbacks;
+        } else {
+            this.isLoading = true;
+            this.resultService
+                .getFeedbackDetailsForResult(this.result.id)
+                .pipe(
+                    tap(({ body: feedbacks }) => {
+                        this.feedbacks = feedbacks!;
+                    }),
+                )
+                .subscribe(() => (this.isLoading = false));
+        }
+        this.participation = this.result.participation! as StudentParticipation;
+    }
+
+    initializeForResultCreation() {
         this.isLoading = true;
-        // TODO: Implement result update.
         this.result = this.manualResultService.generateInitialManualResult();
         this.participationService
             .find(this.participationId)

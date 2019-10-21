@@ -426,4 +426,19 @@ public class ResultService {
     public boolean existsByExerciseId(Long exerciseId) {
         return resultRepository.existsByParticipation_ExerciseId(exerciseId);
     }
+
+    /**
+     * Make sure that the feedback items of a result are linked to the result.
+     *
+     * @param result Result
+     * @return updated Result.
+     */
+    public Result saveResult(Result result) {
+        // Without this no connection between the result and feedback items is created.
+        for (Feedback feedback : result.getFeedbacks()) {
+            feedback.setResult(result);
+        }
+        return resultRepository.save(result);
+    }
+
 }
