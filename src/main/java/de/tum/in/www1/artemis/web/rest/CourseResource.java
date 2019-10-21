@@ -91,12 +91,14 @@ public class CourseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
             FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -116,6 +118,7 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -348,6 +351,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
+            // TODO: This could be 1 repository method as the exercise id is provided anyway.
             long numberOfSubmissions = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
@@ -357,6 +361,9 @@ public class CourseResource {
             }
             else if (exercise instanceof FileUploadExercise) {
                 numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else if (exercise instanceof ProgrammingExercise) {
+                numberOfSubmissions += programmingExerciseService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
             long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());

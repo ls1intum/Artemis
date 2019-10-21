@@ -1159,4 +1159,13 @@ public class ProgrammingExerciseService {
         }
         return null;
     }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    @Transactional(readOnly = true)
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return programmingExerciseRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
 }

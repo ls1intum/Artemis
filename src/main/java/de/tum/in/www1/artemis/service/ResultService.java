@@ -363,6 +363,7 @@ public class ResultService {
      * @return a number of assessments for the exercise
      */
     @Transactional(readOnly = true)
+    // TODO: This does not seem to be working for programming exercises as every student can have multiple submissions.
     public long countNumberOfAssessmentsForExercise(Long exerciseId) {
         return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
     }
