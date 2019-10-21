@@ -79,11 +79,8 @@
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType_PROGRAMMING">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.exampleSolution' | translate }}</h4>
-            <!--
-            TODO: Add proper translations and styling.
--->
-            <a [href]="asProgrammingExercise(exercise).solutionParticipation.repositoryUrl">
-                <jhi-button title="Check sample solution repo"></jhi-button>
+            <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation.repositoryUrl">
+                <jhi-button jhiTranslate="artemisApp.tutorExerciseDashboard.exampleSolution">Example Solution</jhi-button>
             </a>
         </div>
 

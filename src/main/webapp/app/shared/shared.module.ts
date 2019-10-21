@@ -12,13 +12,23 @@ import { TranslateModule } from '@ngx-translate/core';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, TranslateModule],
-    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective],
+    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective, SecureLinkDirective],
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService, DeleteDialogService],
     entryComponents: [DeleteDialogComponent],
-    exports: [ArtemisSharedCommonModule, ArtemisSharedPipesModule, HasAnyAuthorityDirective, SecuredImageComponent, TranslateModule, DeleteButtonDirective, DeleteDialogComponent],
+    exports: [
+        ArtemisSharedCommonModule,
+        ArtemisSharedPipesModule,
+        HasAnyAuthorityDirective,
+        SecuredImageComponent,
+        TranslateModule,
+        DeleteButtonDirective,
+        DeleteDialogComponent,
+        SecureLinkDirective,
+    ],
 })
 export class ArtemisSharedModule {
     static forRoot() {
