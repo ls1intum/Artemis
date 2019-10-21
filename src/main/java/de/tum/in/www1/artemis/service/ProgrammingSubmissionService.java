@@ -488,9 +488,9 @@ public class ProgrammingSubmissionService {
     @Transactional(readOnly = true)
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
-        List<Result> results = this.resultRepository.findAllWithEagerSubmissionByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
-
-        return results.stream().map(result -> (ProgrammingSubmission) result.getSubmission()).collect(Collectors.toList());
+        List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
+        return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
+                .collect(Collectors.toList());
     }
 
     /**
