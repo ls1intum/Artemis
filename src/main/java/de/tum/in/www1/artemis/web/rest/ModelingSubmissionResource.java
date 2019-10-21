@@ -75,7 +75,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -100,12 +100,12 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 
     /**
-     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will return
+     * GET /exercises/{exerciseId}/modeling-submissions: get all modeling submissions by exercise id. If the parameter assessedByTutor is true, this method will
      * only return all the modeling submissions where the tutor has a result associated
      *
      * @param exerciseId id of the exercise for which the modeling submission should be returned
@@ -132,7 +132,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise, user));
         }
 
-        List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
+        List<ModelingSubmission> submissions = modelingSubmissionService.getSubmissions(exerciseId, submittedOnly, ModelingSubmission.class);
         return ResponseEntity.ok(clearStudentInformation(submissions, exercise, user));
     }
 
@@ -186,7 +186,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
-        var exerciseValidity = this.checkExercise(exercise, ModelingExercise.class);
+        var exerciseValidity = this.checkExerciseValidityForTutor(exercise, ModelingExercise.class);
         if (exerciseValidity != null) {
             return exerciseValidity;
         }
@@ -210,7 +210,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
 

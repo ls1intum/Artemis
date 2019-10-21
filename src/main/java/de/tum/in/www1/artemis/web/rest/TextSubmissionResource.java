@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
@@ -85,7 +83,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
+        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidityForStudent(textExercise);
         if (responseFailure != null) {
             return responseFailure;
         }
@@ -122,7 +120,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
             textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
-            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
+            textSubmissions = textSubmissionService.getSubmissions(exerciseId, submittedOnly, TextSubmission.class);
         }
 
         // tutors should not see information about the student of a submission
@@ -150,7 +148,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        var exerciseValid = this.checkExercise(exercise, TextExercise.class);
+        var exerciseValid = this.checkExerciseValidityForTutor(exercise, TextExercise.class);
         if (exerciseValid != null) {
             return exerciseValid;
         }

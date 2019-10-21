@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -115,37 +114,6 @@ public class TextSubmissionService extends SubmissionService<TextSubmission> {
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
         return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new TextSubmission())).collect(Collectors.toList());
-    }
-
-    /**
-     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @return a list of text submissions for the given exercise id
-     */
-    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
-        List<TextSubmission> textSubmissions = new ArrayList<>();
-
-        for (StudentParticipation participation : participations) {
-            Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
-
-            if (!optionalTextSubmission.isPresent()) {
-                continue;
-            }
-
-            if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
-                continue;
-            }
-
-            if (optionalTextSubmission.get().getResult() != null) {
-                optionalTextSubmission.get().getResult().getAssessor().setGroups(null);
-            }
-
-            textSubmissions.add(optionalTextSubmission.get());
-        }
-        return textSubmissions;
     }
 
     public TextSubmission findOneWithEagerResultAndAssessor(Long id) {

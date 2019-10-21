@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -62,24 +61,6 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
 
         return save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
-    }
-
-    /**
-     * Given an exerciseId, returns all the file upload submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-     * submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @return a list of file upload submissions for the given exercise id
-     */
-    @Transactional(readOnly = true)
-    public List<FileUploadSubmission> getFileUploadSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
-        List<FileUploadSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestFileUploadSubmission)
-                // filter out non submitted submissions if the flag is set to true
-                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add(submission.get()));
-        return submissions;
     }
 
     /**

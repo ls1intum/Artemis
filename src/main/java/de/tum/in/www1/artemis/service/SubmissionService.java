@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -83,8 +84,7 @@ public abstract class SubmissionService<T extends Submission> {
                 }
                 // remove information about the student from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                    StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-                    studentParticipation.setStudent(null);
+                    ((StudentParticipation) submission.getParticipation()).filterSensitiveInformation();
                 }
             }
         }
@@ -225,6 +225,25 @@ public abstract class SubmissionService<T extends Submission> {
             }
         }
         return submission;
+    }
+
+    /**
+     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions.
+     *
+     * @param exerciseId    - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @return a list of submissions of given type for the given exercise id
+     */
+    @Transactional(readOnly = true)
+    public List<T> getSubmissions(Long exerciseId, boolean submittedOnly, Class<T> submissionType) {
+        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<T> submissions = new ArrayList<>();
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null))
+                .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType))
+                // filter out non submitted submissions if the flag is set to true
+                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add(submission.get()));
+        return submissions;
     }
 
 }

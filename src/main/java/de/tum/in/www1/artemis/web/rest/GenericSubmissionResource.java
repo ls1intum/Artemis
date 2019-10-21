@@ -44,11 +44,11 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
     }
 
     /**
-     * Check if exercise is valid and the user can access it
+     * Check if exercise is valid, has course and the user (student) can access it
      * @param exercise that we want to check
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    ResponseEntity<T> checkExerciseValidity(E exercise) {
+    ResponseEntity<T> checkExerciseValidityForStudent(E exercise) {
         if (exercise == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
@@ -69,7 +69,12 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         return null;
     }
 
-    public ResponseEntity<T> checkExercise(Exercise exercise, Class<E> exerciseType) {
+    /**
+     * Check if exercise is valid and the user (tutor) can access it
+     * @param exercise that we want to check
+     * @return either null if exercise is valid or one of the error responses if it is not valid
+     */
+    public ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType) {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }

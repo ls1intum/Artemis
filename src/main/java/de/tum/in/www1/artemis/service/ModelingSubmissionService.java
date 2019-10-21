@@ -38,33 +38,6 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
     }
 
     /**
-     * Given an exerciseId, returns all the modeling submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-     * submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @return a list of modeling submissions for the given exercise id
-     */
-    @Transactional(readOnly = true)
-    public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
-        List<ModelingSubmission> submissions = new ArrayList<>();
-        for (StudentParticipation participation : participations) {
-            Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
-            if (submission.isPresent()) {
-                if (submittedOnly && !submission.get().isSubmitted()) {
-                    // filter out non submitted submissions if the flag is set to true
-                    continue;
-                }
-                submissions.add(submission.get());
-            }
-            // avoid infinite recursion
-            participation.getExercise().setStudentParticipations(null);
-        }
-        return submissions;
-    }
-
-    /**
      * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
      * submission lock limit has been reached.
      *

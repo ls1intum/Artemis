@@ -58,14 +58,10 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
     public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, Principal principal,
             @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
-
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
-            return forbidden();
-        }
 
         // Check if the course hasn't been changed
-        final var validityExceptionResponse = this.checkExerciseValidity(exercise);
+        final var validityExceptionResponse = this.checkExerciseValidityForStudent(exercise);
         if (validityExceptionResponse != null) {
             return validityExceptionResponse;
         }
@@ -94,7 +90,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        this.fileUploadSubmissionService.hideDetails(submission);
+        fileUploadSubmissionService.hideDetails(submission);
         return ResponseEntity.ok(submission);
     }
 
@@ -147,7 +143,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
-            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+            fileUploadSubmissions = fileUploadSubmissionService.getSubmissions(exerciseId, submittedOnly, FileUploadSubmission.class);
         }
 
         return ResponseEntity.ok().body(fileUploadSubmissions);
@@ -166,7 +162,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
         Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
-        var exerciseValidity = this.checkExercise(fileUploadExercise, FileUploadExercise.class);
+        var exerciseValidity = this.checkExerciseValidityForTutor(fileUploadExercise, FileUploadExercise.class);
         if (exerciseValidity != null) {
             return exerciseValidity;
         }
