@@ -72,6 +72,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
     /**
      * Check if exercise is valid and the user (tutor) can access it
      * @param exercise that we want to check
+     * @param exerciseType type of the exercise
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
     public ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType) {

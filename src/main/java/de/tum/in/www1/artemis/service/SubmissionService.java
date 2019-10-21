@@ -172,7 +172,8 @@ public abstract class SubmissionService<T extends Submission> {
      *
      * @param submission the submission that should be saved
      * @param exercise   the exercise the submission belongs to
-     * @param username           the name of the corresponding user
+     * @param username   the name of the corresponding user
+     * @param submissionType type of the submission
      * @return the saved concrete submission entity
      */
     @Transactional(rollbackFor = Exception.class)
@@ -233,12 +234,13 @@ public abstract class SubmissionService<T extends Submission> {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param submissionType - type of the submission
      * @return a list of submissions of given type for the given exercise id
      */
     @Transactional(readOnly = true)
     public List<T> getSubmissions(Long exerciseId, boolean submittedOnly, Class<T> submissionType) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
-        List<T> submissions = new ArrayList<>();
+        ArrayList<T> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null))
                 .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType))
                 // filter out non submitted submissions if the flag is set to true

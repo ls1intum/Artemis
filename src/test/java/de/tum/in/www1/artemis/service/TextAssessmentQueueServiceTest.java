@@ -70,7 +70,7 @@ public class TextAssessmentQueueServiceTest {
         int clusterSizes[] = new int[] { 4, 5, 10, 1 };
         ArrayList<TextBlock> textBlocks = generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = createSampleTextExercise(textBlocks, submissionCount, submissionSize);
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
+        List<TextSubmission> textSubmissions = textSubmissionService.getSubmissions(textExercise.getId(), true, TextSubmission.class);
         List<TextCluster> clusters = addTextBlocksToCluster(textBlocks, clusterSizes);
         Mockito.when(textClusterRepositoryMock.findAllByExercise(textExercise)).thenReturn(clusters);
         HashMap<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
@@ -159,7 +159,7 @@ public class TextAssessmentQueueServiceTest {
 
         }
         Mockito.when(participationServiceMock.findByExerciseId(textExercise.getId())).thenReturn(Arrays.asList(studentParticipations));
-        Mockito.when(textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true)).thenReturn(Arrays.asList(submissions));
+        Mockito.when(textSubmissionService.getSubmissions(textExercise.getId(), true, TextSubmission.class)).thenReturn(Arrays.asList(submissions));
         return textExercise;
     }
 

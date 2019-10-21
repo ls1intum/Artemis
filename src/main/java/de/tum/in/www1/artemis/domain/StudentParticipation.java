@@ -87,6 +87,12 @@ public class StudentParticipation extends Participation {
         setStudent(null);
     }
 
+    /**
+     * Finds the latest submission of specified type
+     * @param submissionType type of the submission to find
+     * @param <T> concrete submission class
+     * @return latest submission of specified type
+     */
     public <T extends Submission> Optional<T> findLatestSubmissionOfType(Class<T> submissionType) {
         Optional<Submission> optionalSubmission = findLatestSubmission();
         if (optionalSubmission.isEmpty()) {

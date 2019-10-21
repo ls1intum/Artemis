@@ -57,10 +57,11 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
     @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
             Principal principal) throws IOException {
+        fileUploadSubmission = save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, fileUploadExercise);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
-
-        return save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
+        fileUploadSubmissionRepository.save(fileUploadSubmission);
+        return fileUploadSubmission;
     }
 
     /**
