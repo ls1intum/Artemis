@@ -438,6 +438,8 @@ public class ResultService {
         for (Feedback feedback : result.getFeedbacks()) {
             feedback.setResult(result);
         }
+        // The same link might need to be restored for the submission.
+        result.getSubmission().setResult(result);
         return resultRepository.save(result);
     }
 
