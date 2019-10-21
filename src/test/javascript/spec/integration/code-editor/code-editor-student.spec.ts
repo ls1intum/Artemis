@@ -54,6 +54,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../utils/general.utils';
+import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -596,7 +597,12 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
+        const guidedTourMapping = {
+            courseShortName: '',
+            tours: [{ key: '', exerciseName: '' }],
+        } as GuidedTourMapping;
         spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+        guidedTourService.guidedTourMapping = guidedTourMapping;
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };
         const result = { id: 3, successful: false };
