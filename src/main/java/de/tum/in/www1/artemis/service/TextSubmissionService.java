@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class TextSubmissionService extends SubmissionService {
+public class TextSubmissionService extends SubmissionService<TextSubmission> {
 
     private final TextSubmissionRepository textSubmissionRepository;
 

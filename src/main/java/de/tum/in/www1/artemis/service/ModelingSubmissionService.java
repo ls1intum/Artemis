@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class ModelingSubmissionService extends SubmissionService {
+public class ModelingSubmissionService extends SubmissionService<ModelingSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 

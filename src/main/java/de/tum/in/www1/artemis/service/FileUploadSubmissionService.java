@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class FileUploadSubmissionService extends SubmissionService {
+public class FileUploadSubmissionService extends SubmissionService<FileUploadSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
 

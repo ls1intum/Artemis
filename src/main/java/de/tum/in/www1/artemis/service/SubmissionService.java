@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-public abstract class SubmissionService {
+public abstract class SubmissionService<T extends Submission> {
 
     protected SubmissionRepository submissionRepository;
 
@@ -73,10 +73,9 @@ public abstract class SubmissionService {
      * Maps abstract Submission type to concrete submission and assigns result.
      * @param result result that will be assigned to concrete submission
      * @param concreteSubmission concrete submission that will be mapped from abstract submission
-     * @param <T> concrete submission type
      * @return concrete submission of type T
      */
-    public <T extends Submission> T mapAbstractToConcreteSubmission(Result result, T concreteSubmission) {
+    public T mapAbstractToConcreteSubmission(Result result, T concreteSubmission) {
         Submission submission = result.getSubmission();
         result.setSubmission(null);
         if (concreteSubmission instanceof TextSubmission) {
@@ -112,10 +111,9 @@ public abstract class SubmissionService {
      * Hides the result details for given submission
      * @param submission that we want to hide details for
      * @param exercise to which the submission belongs to
-     * @param <T> concrete submission type
      * @return submission with result details hidden
      */
-    public <T extends Submission> T hideResultDetails(T submission, Exercise exercise) {
+    public T hideResultDetails(T submission, Exercise exercise) {
         // do not send the result to the client if the assessment is not finished
         if (submission.getResult() != null && (submission.getResult().getCompletionDate() == null || submission.getResult().getAssessor() == null)) {
             submission.setResult(null);
