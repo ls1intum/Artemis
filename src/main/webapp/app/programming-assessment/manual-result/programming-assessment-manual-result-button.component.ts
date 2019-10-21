@@ -1,9 +1,12 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { Result } from 'app/entities/result';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { Subscription } from 'rxjs';
+import { ParticipationWebsocketService } from 'app/entities/participation';
+import { filter, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',
@@ -18,18 +21,35 @@ import { AssessmentType } from 'app/entities/assessment-type';
         ></jhi-button>
     `,
 })
-export class ProgrammingAssessmentManualResultButtonComponent implements OnChanges {
+export class ProgrammingAssessmentManualResultButtonComponent implements OnChanges, OnDestroy {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     @Input() participationId: number;
     @Input() latestResult?: Result | null;
 
-    constructor(private modalService: NgbModal) {}
+    latestResultSubscription: Subscription;
+
+    constructor(private modalService: NgbModal, private participationWebsocketService: ParticipationWebsocketService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.latestResult && this.latestResult && this.latestResult.assessmentType !== AssessmentType.MANUAL) {
             // The assessor can't update the automatic result of the student.
             this.latestResult = null;
+        }
+        if (changes.participationId && this.participationId) {
+            if (this.latestResultSubscription) {
+                this.latestResultSubscription.unsubscribe();
+            }
+            this.latestResultSubscription = this.participationWebsocketService
+                .subscribeForLatestResultOfParticipation(this.participationId)
+                .pipe(filter((result: Result) => result && result.assessmentType === AssessmentType.MANUAL))
+                .subscribe(manualResult => (this.latestResult = manualResult));
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.latestResultSubscription) {
+            this.latestResultSubscription.unsubscribe();
         }
     }
 

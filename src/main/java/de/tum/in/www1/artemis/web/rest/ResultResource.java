@@ -315,7 +315,7 @@ public class ResultResource {
             final var exercise = (ProgrammingExercise) exerciseToBeChecked;
             final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
                     : exercise.getDueDate();
-            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || !relevantDueDate.isBefore(ZonedDateTime.now()));
+            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
         }
 
         return true;
