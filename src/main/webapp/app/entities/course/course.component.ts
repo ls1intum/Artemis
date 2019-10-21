@@ -4,14 +4,14 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { OnError } from 'app/shared/util/on-error';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-course',
     templateUrl: './course.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
 })
-export class CourseComponent extends OnError implements OnInit, OnDestroy {
+export class CourseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     showOnlyActive = true;
@@ -20,8 +20,7 @@ export class CourseComponent extends OnError implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     closeDialogTrigger: boolean;
 
-    constructor(private courseService: CourseService, protected jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
-        super(jhiAlertService);
+    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;
@@ -32,7 +31,7 @@ export class CourseComponent extends OnError implements OnInit, OnDestroy {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -66,7 +65,7 @@ export class CourseComponent extends OnError implements OnInit, OnDestroy {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

@@ -6,13 +6,13 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
-import { OnError } from 'app/shared/util/on-error';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
 })
-export class UserManagementComponent extends OnError implements OnInit, OnDestroy {
+export class UserManagementComponent implements OnInit, OnDestroy {
     currentAccount: User;
     users: User[];
     error: string | null;
@@ -29,14 +29,13 @@ export class UserManagementComponent extends OnError implements OnInit, OnDestro
 
     constructor(
         private userService: UserService,
-        protected alertService: JhiAlertService,
+        private alertService: JhiAlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
     ) {
-        super(alertService);
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
             this.page = data['pagingParams'].page;
@@ -101,7 +100,7 @@ export class UserManagementComponent extends OnError implements OnInit, OnDestro
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
-            .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => this.onError(res));
+            .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => onError(this.alertService, res));
     }
 
     /**
@@ -161,7 +160,7 @@ export class UserManagementComponent extends OnError implements OnInit, OnDestro
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 

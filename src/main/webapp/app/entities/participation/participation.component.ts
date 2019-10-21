@@ -11,13 +11,13 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { OnError } from 'app/shared/util/on-error';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-participation',
     templateUrl: './participation.component.html',
 })
-export class ParticipationComponent extends OnError implements OnInit, OnDestroy {
+export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -40,12 +40,11 @@ export class ParticipationComponent extends OnError implements OnInit, OnDestroy
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
     ) {
-        super(jhiAlertService);
         this.reverse = true;
         this.predicate = 'id';
     }
@@ -133,7 +132,7 @@ export class ParticipationComponent extends OnError implements OnInit, OnDestroy
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -150,7 +149,7 @@ export class ParticipationComponent extends OnError implements OnInit, OnDestroy
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
     callback() {}

@@ -1,12 +1,11 @@
 import { EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { Course, CourseService } from 'app/entities/course';
 import { TranslateService } from '@ngx-translate/core';
-import { OnError } from 'app/shared/util/on-error';
 
-export abstract class ExerciseComponent extends OnError implements OnInit, OnDestroy {
+export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
@@ -22,9 +21,7 @@ export abstract class ExerciseComponent extends OnError implements OnInit, OnDes
         protected translateService: TranslateService,
         private route: ActivatedRoute,
         protected eventManager: JhiEventManager,
-        protected jhiAlertService: JhiAlertService,
     ) {
-        super(jhiAlertService);
         this.predicate = 'id';
         this.reverse = true;
     }

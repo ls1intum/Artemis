@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -28,7 +29,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         route: ActivatedRoute,
         private accountService: AccountService,
     ) {
-        super(courseService, translateService, route, eventManager, jhiAlertService);
+        super(courseService, translateService, route, eventManager);
         this.textExercises = [];
     }
 
@@ -45,7 +46,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.textExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -71,7 +72,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

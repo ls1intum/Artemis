@@ -13,6 +13,7 @@ import { ExerciseService } from 'app/entities/exercise';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -28,7 +29,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private courseExerciseService: CourseExerciseService,
         private exerciseService: ExerciseService,
         private accountService: AccountService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         private router: Router,
         private modalService: NgbModal,
         courseService: CourseService,
@@ -36,7 +37,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager, jhiAlertService);
+        super(courseService, translateService, route, eventManager);
         this.programmingExercises = [];
     }
 
@@ -52,7 +53,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -74,7 +75,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -93,7 +94,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 }
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -102,7 +103,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
     resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe(() => (this.closeDialogTrigger = !this.closeDialogTrigger), (error: HttpErrorResponse) => this.onError(error));
+        this.exerciseService
+            .reset(programmingExerciseId)
+            .subscribe(() => (this.closeDialogTrigger = !this.closeDialogTrigger), (error: HttpErrorResponse) => onError(this.jhiAlertService, error));
     }
 
     openRepoExportDialog(programmingExerciseId: number, $event: MouseEvent) {

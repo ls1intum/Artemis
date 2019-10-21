@@ -9,6 +9,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { AccountService } from 'app/core';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -21,14 +22,14 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager, jhiAlertService);
+        super(courseService, translateService, route, eventManager);
     }
 
     protected loadExercises(): void {
@@ -46,7 +47,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
     }
 
@@ -72,7 +73,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

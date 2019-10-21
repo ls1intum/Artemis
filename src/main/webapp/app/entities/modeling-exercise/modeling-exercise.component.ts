@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -22,14 +23,14 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager, jhiAlertService);
+        super(courseService, translateService, route, eventManager);
         this.modelingExercises = [];
     }
 
@@ -45,7 +46,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.modelingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -71,7 +72,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

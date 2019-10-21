@@ -8,13 +8,13 @@ import { AccountService } from 'app/core';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture';
 import { ActivatedRoute } from '@angular/router';
-import { OnError } from 'app/shared/util/on-error';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-lecture',
     templateUrl: './lecture.component.html',
 })
-export class LectureComponent extends OnError implements OnInit, OnDestroy {
+export class LectureComponent implements OnInit, OnDestroy {
     lectures: Lecture[];
     currentAccount: any;
     eventSubscriber: Subscription;
@@ -24,12 +24,10 @@ export class LectureComponent extends OnError implements OnInit, OnDestroy {
     constructor(
         protected lectureService: LectureService,
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,
-    ) {
-        super(jhiAlertService);
-    }
+    ) {}
 
     loadAll() {
         this.lectureService
@@ -42,7 +40,7 @@ export class LectureComponent extends OnError implements OnInit, OnDestroy {
                 (res: Lecture[]) => {
                     this.lectures = res;
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
     }
 
@@ -80,7 +78,7 @@ export class LectureComponent extends OnError implements OnInit, OnDestroy {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 }

@@ -11,6 +11,7 @@ import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -33,13 +34,13 @@ export class QuizExerciseComponent extends ExerciseComponent {
     constructor(
         private quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
     ) {
-        super(courseService, translateService, route, eventManager, jhiAlertService);
+        super(courseService, translateService, route, eventManager);
     }
 
     protected loadExercises(): void {
@@ -55,7 +56,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.emitExerciseCount(this.quizExercises.length);
                 this.setQuizExercisesStatus();
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -102,7 +103,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.handleNewQuizExercise(res.body!);
             },
             (res: HttpErrorResponse) => {
-                this.onError(res);
+                onError(this.jhiAlertService, res);
                 this.loadOne(quizExerciseId);
             },
         );
@@ -123,7 +124,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.handleNewQuizExercise(res.body!);
             },
             (res: HttpErrorResponse) => {
-                this.onError(res);
+                onError(this.jhiAlertService, res);
                 this.loadOne(quizExerciseId);
             },
         );
@@ -175,7 +176,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.handleNewQuizExercise(res.body!);
             },
             (res: HttpErrorResponse) => {
-                this.onError(res);
+                onError(this.jhiAlertService, res);
                 this.loadOne(quizExerciseId);
             },
         );
@@ -194,7 +195,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -211,7 +212,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

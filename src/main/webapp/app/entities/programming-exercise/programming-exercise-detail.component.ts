@@ -13,14 +13,14 @@ import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { OnError } from 'app/shared/util/on-error';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
 })
-export class ProgrammingExerciseDetailComponent extends OnError implements OnInit {
+export class ProgrammingExerciseDetailComponent implements OnInit {
     readonly ActionType = ActionType;
     readonly ParticipationType = ParticipationType;
     readonly JAVA = ProgrammingLanguage.JAVA;
@@ -38,11 +38,9 @@ export class ProgrammingExerciseDetailComponent extends OnError implements OnIni
         private programmingExerciseService: ProgrammingExerciseService,
         private resultService: ResultService,
         private exerciseService: ExerciseService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-    ) {
-        super(jhiAlertService);
-    }
+    ) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
@@ -106,7 +104,7 @@ export class ProgrammingExerciseDetailComponent extends OnError implements OnIni
                 const jhiAlert = this.jhiAlertService.success(res);
                 jhiAlert.msg = res;
             },
-            error => this.onError(error),
+            error => onError(this.jhiAlertService, error),
         );
     }
 
@@ -125,7 +123,7 @@ export class ProgrammingExerciseDetailComponent extends OnError implements OnIni
                 }
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 }

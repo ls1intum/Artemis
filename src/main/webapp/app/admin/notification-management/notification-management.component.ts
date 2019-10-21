@@ -8,13 +8,13 @@ import { ITEMS_PER_PAGE } from 'app/shared';
 import { AccountService, User, UserService } from 'app/core';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
-import { OnError } from 'app/shared/util/on-error';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-notification-mgmt',
     templateUrl: './notification-management.component.html',
 })
-export class NotificationMgmtComponent extends OnError implements OnInit, OnDestroy {
+export class NotificationMgmtComponent implements OnInit, OnDestroy {
     currentAccount: User;
     notifications: SystemNotification[];
     error: string;
@@ -32,14 +32,13 @@ export class NotificationMgmtComponent extends OnError implements OnInit, OnDest
     constructor(
         private userService: UserService,
         private systemNotificationService: SystemNotificationService,
-        protected alertService: JhiAlertService,
+        private alertService: JhiAlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
     ) {
-        super(alertService);
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
             this.page = data['pagingParams'].page;
@@ -87,7 +86,7 @@ export class NotificationMgmtComponent extends OnError implements OnInit, OnDest
                 });
                 this.closeDialogTrigger = !this.closeDialogTrigger;
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.alertService, error),
         );
     }
 
@@ -101,7 +100,7 @@ export class NotificationMgmtComponent extends OnError implements OnInit, OnDest
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
-            .subscribe((res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => this.onError(res));
+            .subscribe((res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => onError(this.alertService, res));
     }
 
     /**
