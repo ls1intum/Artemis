@@ -305,6 +305,8 @@ public class ResultResource {
 
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
+        // Send updated result to websocket subscribers.
+        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
