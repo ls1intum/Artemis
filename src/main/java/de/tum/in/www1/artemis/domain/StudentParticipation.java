@@ -87,7 +87,7 @@ public class StudentParticipation extends Participation {
         setStudent(null);
     }
 
-    private <T extends Submission> Optional<T> findLatestSubmissionOfType(Class<T> submissionType) {
+    public <T extends Submission> Optional<T> findLatestSubmissionOfType(Class<T> submissionType) {
         Optional<Submission> optionalSubmission = findLatestSubmission();
         if (optionalSubmission.isEmpty()) {
             return Optional.empty();

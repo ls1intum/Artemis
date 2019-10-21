@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
+import java.time.ZonedDateTime;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,6 +66,21 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
+        return null;
+    }
+
+    public ResponseEntity<T> checkExercise(Exercise exercise, Class<E> exerciseType) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
+        if (!(exerciseType.isInstance(exercise))) {
+            return badRequest();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
         return null;
     }
 }

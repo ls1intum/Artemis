@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -167,16 +166,9 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
         Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            return forbidden();
-        }
-        if (!(fileUploadExercise instanceof FileUploadExercise)) {
-            return badRequest();
-        }
-
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        var exerciseValidity = this.checkExercise(fileUploadExercise, FileUploadExercise.class);
+        if (exerciseValidity != null) {
+            return exerciseValidity;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

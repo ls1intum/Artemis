@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -188,16 +186,9 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return forbidden();
-        }
-        if (!(exercise instanceof ModelingExercise)) {
-            return badRequest();
-        }
-
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        var exerciseValidity = this.checkExercise(exercise, ModelingExercise.class);
+        if (exerciseValidity != null) {
+            return exerciseValidity;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

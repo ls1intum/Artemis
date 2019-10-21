@@ -137,17 +137,8 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
                 }
             }
         }
-
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
-                .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Random r = new Random();
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        return getRandomUnassessedSubmission(modelingExercise, ModelingSubmission.class);
     }
 
     /**

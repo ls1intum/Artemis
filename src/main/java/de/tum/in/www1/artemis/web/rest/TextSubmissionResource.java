@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -151,16 +150,9 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return forbidden();
-        }
-        if (!(exercise instanceof TextExercise)) {
-            return badRequest();
-        }
-
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        var exerciseValid = this.checkExercise(exercise, TextExercise.class);
+        if (exerciseValid != null) {
+            return exerciseValid;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

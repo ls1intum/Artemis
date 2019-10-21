@@ -2,6 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -124,5 +129,19 @@ public abstract class SubmissionService<T extends Submission> {
             submission.getResult().setAssessor(null);
         }
         return submission;
+    }
+
+    public Optional<T> getRandomUnassessedSubmission(Exercise exercise, Class<T> submissionType) {
+        // otherwise return a random submission that is not manually assessed or an empty optional if there is none
+        List<T> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exercise.getId()).stream()
+                .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Random r = new Random();
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 }
