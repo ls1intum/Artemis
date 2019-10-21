@@ -274,7 +274,7 @@ public class ExerciseResource {
             return forbidden();
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
+        return ResponseEntity.ok().build();
     }
 
     /**
