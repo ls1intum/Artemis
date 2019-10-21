@@ -303,7 +303,8 @@ public class ResultResource {
             return createProgrammingExerciseManualResult(result);
         }
 
-        result = resultService.saveResult(result);
+        // TODO: The saved result's submission is not loaded.
+        result = resultService.saveProgrammingExerciseResult(result);
         // Send updated result to websocket subscribers.
         messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);

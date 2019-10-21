@@ -54,12 +54,9 @@ public class ResultService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -69,7 +66,6 @@ public class ResultService {
         this.objectMapper = objectMapper;
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -433,13 +429,14 @@ public class ResultService {
      * @param result Result
      * @return updated Result.
      */
-    public Result saveResult(Result result) {
+    public Result saveProgrammingExerciseResult(Result result) {
         // Without this no connection between the result and feedback items is created.
         for (Feedback feedback : result.getFeedbacks()) {
             feedback.setResult(result);
         }
         // The same link might need to be restored for the submission.
         result.getSubmission().setResult(result);
+        programmingSubmissionService.save((ProgrammingSubmission) result.getSubmission());
         return resultRepository.save(result);
     }
 
