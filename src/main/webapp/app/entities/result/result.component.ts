@@ -137,7 +137,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (isModelingOrTextOrFileUpload(this.participation)) {
             // Based on its submission we test if the participation is in due time of the given exercise.
             const inDueTime = isParticipationInDueTime(this.participation, getExercise(this.participation));
-            const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate!);
+            const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate);
 
             // Submission is in due time of exercise and has a result with score.
             if (inDueTime && initializedResultWithScore(this.result)) {
