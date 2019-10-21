@@ -42,10 +42,10 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ArtemisSharedComponentModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingAssessmentModule,
+        ArtemisResultModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
-    exports: [ResultComponent],
-    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
+    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
     providers: [CourseService, JhiAlertService, RepositoryService, ResultService, CourseExerciseService, ParticipationService, CourseScoreCalculationService],
 })
 export class ArtemisTutorExerciseDashboardModule {}
