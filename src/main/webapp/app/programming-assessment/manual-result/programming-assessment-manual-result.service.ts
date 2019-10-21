@@ -22,6 +22,7 @@ export class ProgrammingAssessmentManualResultService {
 
     update(result: Result): Observable<EntityResponseType> {
         const copy = this.resultService.convertDateFromClient(result);
+        copy.participation!.results = [];
         return this.http
             .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));

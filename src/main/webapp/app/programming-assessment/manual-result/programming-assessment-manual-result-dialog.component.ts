@@ -14,7 +14,7 @@ import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, switchMap } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
 
 @Component({
@@ -24,7 +24,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/programming-assess
 export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
     @Input() participationId: number;
     participation: StudentParticipation;
-    result: Result;
+    @Input() result: Result;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
@@ -37,9 +37,28 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private datePipe: DatePipe,
         private eventManager: JhiEventManager,
         private alertService: JhiAlertService,
+        private resultService: ResultService,
     ) {}
 
     ngOnInit() {
+        // If there already is a manual result, update it instead of creating a new one.
+        if (this.result) {
+            if (this.result.feedbacks) {
+                this.feedbacks = this.result.feedbacks;
+            } else {
+                this.isLoading = true;
+                this.resultService
+                    .getFeedbackDetailsForResult(this.result.id)
+                    .pipe(
+                        tap(({ body: feedbacks }) => {
+                            this.feedbacks = feedbacks!;
+                        }),
+                    )
+                    .subscribe(() => (this.isLoading = false));
+            }
+            this.participation = this.result.participation! as StudentParticipation;
+            return;
+        }
         this.isLoading = true;
         // TODO: Implement result update.
         this.result = this.manualResultService.generateInitialManualResult();

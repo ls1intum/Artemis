@@ -303,8 +303,12 @@ public class ResultResource {
             return createProgrammingExerciseManualResult(result);
         }
 
+        // Without this no connection between the result and feedback items is created.
+        for (Feedback feedback : result.getFeedbacks()) {
+            feedback.setResult(result);
+        }
         // have a look how quiz-exercise handles this case with the contained questions
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         // Send updated result to websocket subscribers.
         messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
