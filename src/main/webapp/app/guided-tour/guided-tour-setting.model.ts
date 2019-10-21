@@ -15,6 +15,9 @@ export class GuidedTourSetting {
     }
 }
 
+/**
+ * Guided tour mapping model which handles the mapping of tutorial to course and exercise
+ */
 export class GuidedTourMapping {
     courseShortName: string;
     tours: {

@@ -772,6 +772,12 @@ export class GuidedTourService {
         }
     }
 
+    /**
+     * Determine if the current course is a course for a guided tour
+     * @param course    current course
+     * @param guidedTourCourse guided tour course for the component
+     * @return true if the current course is a course for a guided tour, otherwise false
+     */
     public compareCourseShortName(course: Course, guidedTourCourse: Course | null): boolean {
         if (!course || !guidedTourCourse) {
             return false;
@@ -779,6 +785,12 @@ export class GuidedTourService {
         return course.shortName === this.guidedTourMapping.courseShortName;
     }
 
+    /**
+     * Determine if the current exercise is an exercise for a guided tour
+     * @param exercise  current exercise
+     * @param guidedTourExercise guided tour exercise for the component
+     * @return true if the current exercise is an exercise for a guided tour, otherwise false
+     */
     public compareExerciseShortName(exercise: Exercise, guidedTourExercise: Exercise | null): boolean {
         if (!exercise || !guidedTourExercise) {
             return false;
