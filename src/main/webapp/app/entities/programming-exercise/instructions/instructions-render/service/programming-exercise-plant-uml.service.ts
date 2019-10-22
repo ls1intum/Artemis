@@ -55,8 +55,9 @@ export class ProgrammingExercisePlantUmlService {
         slidingExpiration: true,
     })
     getPlantUmlSvg(plantUml: string): Observable<string> {
-        return this.http.get<string>(`${this.resourceUrl}/svg`, {
+        return this.http.get(`${this.resourceUrl}/svg`, {
             params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
+            responseType: 'text',
         });
     }
 
