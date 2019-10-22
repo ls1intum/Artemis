@@ -13,8 +13,6 @@ public final class Constants {
 
     public static final String SYSTEM_ACCOUNT = "system";
 
-    public static final String ANONYMOUS_USER = "anonymoususer";
-
     public static final String DEFAULT_LANGUAGE = "en";
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 2;
