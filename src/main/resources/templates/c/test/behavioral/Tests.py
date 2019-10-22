@@ -16,6 +16,7 @@ def main():
     tester: Tester = Tester()
 
     # Register all test cases:
+    testCompile: TestCompile = TestCompile(makefileLocation)
 
     # IO Tests:
     tester.addTest(TestInput(makefileLocation, 0, [testCompile.name], name="TestInput_0"))
