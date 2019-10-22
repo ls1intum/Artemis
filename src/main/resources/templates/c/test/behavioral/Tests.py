@@ -17,11 +17,6 @@ def main():
 
     # Register all test cases:
 
-    # Basic compile test:
-    # Run after the sanitizer so we run the tests without any sanitizer enabled
-    testCompile: TestCompile = TestCompile(makefileLocation)
-    tester.addTest(testCompile)
-
     # IO Tests:
     tester.addTest(TestInput(makefileLocation, 0, [testCompile.name], name="TestInput_0"))
     tester.addTest(TestInput(makefileLocation, 1, [testCompile.name], name="TestInput_1"))
@@ -35,20 +30,14 @@ def main():
 
     # Sanitizer:
     # Address Sanitizer:
-    testASan: TestASan = TestASan(makefileLocation, requirements=[testCompile.name])
-    tester.addTest(testASan)
     tester.addTest(TestInput(makefileLocation, 1, requirements=[testASan.name], name="TestInputASan_1"))
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testASan.name], name="TestInputASan_5"))
 
     # Undefined Behavior Sanitizer:
-    testUBSan: TestUBSan = TestUBSan(makefileLocation, requirements=[testCompile.name])
-    tester.addTest(testUBSan)
     tester.addTest(TestInput(makefileLocation, 1, requirements=[testUBSan.name], name="TestInputUBSan_1"))
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testUBSan.name], name="TestInputUBSan_5"))
 
     # Leak Sanitizer:
-    testLSan: TestLSan = TestLSan(makefileLocation, requirements=[testCompile.name])
-    tester.addTest(testLSan)
     tester.addTest(TestInput(makefileLocation, 1, requirements=[testLSan.name], name="TestInputLSan_1"))
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testLSan.name], name="TestInputLSan_5"))
 
