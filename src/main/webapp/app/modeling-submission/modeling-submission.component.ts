@@ -459,12 +459,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 
-    get isLate(): boolean {
-        if (this.modelingExercise) {
-            if (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment())) {
-                return false;
-            }
-        }
-        return true;
+    /**
+     * The exercise is still active if it's due date hasn't passed yet, or if the participation was started after the due date has already passed
+     */
+    get isActive() {
+        const isInitializationAfterDueDate =
+            this.modelingExercise &&
+            this.modelingExercise.dueDate &&
+            this.participation.initializationDate &&
+            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
+        return this.modelingExercise && (!this.modelingExercise.dueDate || isInitializationAfterDueDate || moment(this.modelingExercise.dueDate).isAfter(moment()));
     }
 }

@@ -10,25 +10,13 @@
         <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
-            <div *ngIf="!isLate">
-                <button class="btn btn-success" (click)="submit()" [hidden]="!isActive">
-                    <ng-container *ngIf="!isSaving">
-                        <fa-icon icon="save"></fa-icon>
-                        <span jhiTranslate="entity.action.submit">Submit</span>
-                    </ng-container>
-                    <ng-container *ngIf="isSaving">
-                        <fa-icon icon="sync"></fa-icon>
-                        <span jhiTranslate="entity.action.submitting">Submitting...</span>
-                    </ng-container>
-                </button>
-                <jhi-help-icon placement="top" text="entity.action.submitTooltip"></jhi-help-icon>
-            </div>
-            <div>
-                <button class="btn btn-warning" (click)="submit()" *ngIf="isLate" jhiTranslate="entity.action.submitDeadlineMissed">
-                    Submit (deadline missed)
-                </button>
-                <jhi-help-icon *ngIf="isLate" placement="top" text="entity.action.submitDeadlineMissedTooltip"></jhi-help-icon>
-            </div>
+            <jhi-button
+                [disabled]="!isActive || !submission"
+                [title]="isActive ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+                (onClick)="submit()"
+                [isLoading]="isSaving"
+                [tooltip]="isActive ? 'entity.action.submitTooltip' : 'entity.action.submitDeadlineMissedTooltip'"
+            ></jhi-button>
             <!--TODO: enable retry button again-->
             <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->
             <!--<fa-icon icon="sync"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>-->
