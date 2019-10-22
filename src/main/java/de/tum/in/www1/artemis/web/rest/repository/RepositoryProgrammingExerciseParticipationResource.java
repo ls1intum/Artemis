@@ -169,7 +169,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         Optional<Result> latestResult = participation.getResults().stream().findFirst();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
         if (latestResult.isPresent() && latestResult.get().getAssessmentType().equals(AssessmentType.MANUAL)) {
-            return badRequest();
+            // Don't throw an error here, just return an empty list.
+            return ResponseEntity.ok(new ArrayList<>());
         }
 
         List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(((ProgrammingExerciseParticipation) participation).getBuildPlanId());

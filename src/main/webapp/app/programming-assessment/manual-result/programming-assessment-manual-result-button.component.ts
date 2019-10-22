@@ -31,6 +31,12 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
 
     constructor(private modalService: NgbModal, private participationWebsocketService: ParticipationWebsocketService) {}
 
+    /**
+     * - Check that the inserted result is of type MANUAL, otherwise set it to null
+     * - If the participationId changes, subscribe to the latest result from the websocket
+     *
+     * @param changes
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.latestResult && this.latestResult && this.latestResult.assessmentType !== AssessmentType.MANUAL) {
             // The assessor can't update the automatic result of the student.

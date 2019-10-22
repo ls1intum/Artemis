@@ -425,9 +425,10 @@ public class ResultService {
 
     /**
      * Make sure that the feedback items of a result are linked to the result.
+     * Unproxies the related entities Submission and Feedback after the save.
      *
      * @param result Result
-     * @return updated Result.
+     * @return updated Result with eagerly loaded Submission and Feedbacks.
      */
     public Result saveProgrammingExerciseResult(Result result) {
         // Without this no connection between the result and feedback items is created.
@@ -437,7 +438,11 @@ public class ResultService {
         // The same link might need to be restored for the submission.
         result.getSubmission().setResult(result);
         programmingSubmissionService.save((ProgrammingSubmission) result.getSubmission());
-        return resultRepository.save(result);
+        result = resultRepository.save(result);
+        // Unproxy the related entities.
+        Hibernate.unproxy(result.getSubmission());
+        Hibernate.unproxy(result.getFeedbacks());
+        return result;
     }
 
 }
