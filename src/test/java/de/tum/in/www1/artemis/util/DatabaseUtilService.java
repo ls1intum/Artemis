@@ -191,7 +191,7 @@ public class DatabaseUtilService {
         }
         User user = getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
-        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setInitializationDate(pastTimestamp.minusHours(1));
         participation.setStudent(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
