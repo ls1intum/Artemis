@@ -1,0 +1,66 @@
+all: main
+
+# A list of all for the compilation required files
+SOURCE=main.c
+
+# Compile without sanitizers and disable optimisation
+# For more information about gcc warnings: https://embeddedartistry.com/blog/2017/3/7/clang-weverything
+# -Wall:		Print warnings
+# $(SOURCE): 	Input file(s)
+# -o: 			Link the resulting object files
+# main:			Output file
+# -O0:			Do not optimize the programm
+# -Wextra:		Enable additional warnings not covered by "-Wall"
+# -Wpedantic:	Reject everything that is not ISO C
+main: FORCE
+	gcc -Wall $(SOURCE) -o main -O0 -Wall -Wextra -Wpedantic
+
+# Compile with address sanitizer enabled
+# For more information about gcc warnings: https://embeddedartistry.com/blog/2017/3/7/clang-weverything
+# -Wall:				Print warnings
+# $(SOURCE): 			Input file(s)
+# -o: 					Link the resulting object files
+# main:					Output file
+# -O0:					Do not optimize the programm
+# -Wextra:				Enable additional warnings not covered by "-Wall"
+# -Wpedantic:			Reject everything that is not ISO C
+# -Werror:				Treat all warnings as errors
+# -fsanitize=address:	Address sanitizer (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
+asan: FORCE
+	gcc -Wall $(SOURCE) -o main -O0 -Wall -Wextra -Wpedantic -Werror -fsanitize=address
+
+# Compile with undefined behavior sanitizer enabled
+# For more information about gcc warnings: https://embeddedartistry.com/blog/2017/3/7/clang-weverything
+# -Wall:				Print warnings
+# $(SOURCE): 			Input file(s)
+# -o: 					Link the resulting object files
+# main:					Output file
+# -O0:					Do not optimize the programm
+# -Wextra:				Enable additional warnings not covered by "-Wall"
+# -Wpedantic:			Reject everything that is not ISO C
+# -Werror:				Treat all warnings as errors
+# -fsanitize=undefined:	Fast undefined behavior check (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
+ubsan: FORCE
+	gcc -Wall $(SOURCE) -o main -O0 -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined
+
+# Compile with leak sanitizer enabled
+# For more information about gcc warnings: https://embeddedartistry.com/blog/2017/3/7/clang-weverything
+# -Wall:			Print warnings
+# $(SOURCE): 		Input file(s)
+# -o: 				Link the resulting object files
+# main:				Output file
+# -O0:				Do not optimize the programm
+# -Wextra:			Enable additional warnings not covered by "-Wall"
+# -Wpedantic:		Reject everything that is not ISO C
+# -Werror:			Treat all warnings as errors
+# -fsanitize=leak	Basic memory leak sanitizer (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
+lsan: FORCE
+	gcc -Wall $(SOURCE) -o main -O0 -Wall -Wextra -Wpedantic -Werror -fsanitize=leak
+
+# Execute the compiled programm
+run:
+	./main
+
+# Make sure we allways rebuild
+# Required for the tester
+FORCE: ;
