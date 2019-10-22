@@ -115,10 +115,8 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      */
     @Transactional(readOnly = true)
     public List<ModelingSubmission> getAllModelingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
-        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
-        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
-
-        return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new ModelingSubmission())).collect(Collectors.toList());
+        return modelingSubmissionRepository.findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(exerciseId, tutorId).stream().map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     /**

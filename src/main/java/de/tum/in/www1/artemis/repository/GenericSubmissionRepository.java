@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -39,4 +40,11 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      */
     @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     Optional<T> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
+
+    /**
+     * Load all the submissions in this exercise associated to the tutor
+     * @param exerciseId id of the exercise
+     * @param tutorId id of the tutor
+     */
+    List<Optional<T>> findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(Long exerciseId, Long tutorId);
 }

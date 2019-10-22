@@ -91,25 +91,6 @@ public abstract class SubmissionService<T extends Submission> {
     }
 
     /**
-     * Maps abstract Submission type to concrete submission and assigns result.
-     * @param result result that will be assigned to concrete submission
-     * @param concreteSubmission concrete submission that will be mapped from abstract submission
-     * @return concrete submission of type T
-     */
-    public T mapAbstractToConcreteSubmission(Result result, T concreteSubmission) {
-        Submission submission = result.getSubmission();
-        result.setSubmission(null);
-        if (concreteSubmission instanceof TextSubmission) {
-            concreteSubmission.setLanguage(submission.getLanguage());
-        }
-        concreteSubmission.setResult(result);
-        concreteSubmission.setParticipation(submission.getParticipation());
-        concreteSubmission.setId(submission.getId());
-        concreteSubmission.setSubmissionDate(submission.getSubmissionDate());
-        return concreteSubmission;
-    }
-
-    /**
      * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
      * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
