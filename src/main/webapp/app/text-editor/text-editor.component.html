@@ -11,11 +11,17 @@
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
             <jhi-button
-                [title]="isActive ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+                [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
                 (onClick)="submit()"
                 [disabled]="!isActive || !submission"
                 [isLoading]="isSaving"
-                [tooltip]="isActive ? 'entity.action.submitTooltip' : 'entity.action.submitDeadlineMissedTooltip'"
+                [tooltip]="
+                    !isAllowedToSubmitAfterDeadline
+                        ? isActive
+                            ? 'entity.action.submitTooltip'
+                            : 'entity.action.deadlineMissedTooltip'
+                        : 'entity.action.submitDeadlineMissedTooltip'
+                "
             >
             </jhi-button>
         </div>

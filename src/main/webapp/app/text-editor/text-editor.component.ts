@@ -28,6 +28,9 @@ export class TextEditorComponent implements OnInit {
     result: Result;
     submission: TextSubmission;
     isSaving: boolean;
+    // Is submitting always enabled?
+    isAlwaysActive: boolean;
+    isAllowedToSubmitAfterDeadline: boolean;
     answer: string;
     isExampleSubmission = false;
     showComplaintForm = false;
@@ -69,6 +72,7 @@ export class TextEditorComponent implements OnInit {
             (data: StudentParticipation) => {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
+                this.checkIfSubmitAlwaysEnabled();
                 this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
 
                 if (this.textExercise.course) {
@@ -104,16 +108,21 @@ export class TextEditorComponent implements OnInit {
         );
     }
 
+    private checkIfSubmitAlwaysEnabled() {
+        const isInitializationAfterDueDate =
+            this.textExercise.dueDate && this.participation.initializationDate && moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
+        const isAlwaysActive = !this.textExercise.dueDate || isInitializationAfterDueDate;
+
+        this.isAllowedToSubmitAfterDeadline = !!isInitializationAfterDueDate;
+        this.isAlwaysActive = !!isAlwaysActive;
+    }
+
     /**
-     * The exercise is active if the due date hasn't passed yet, or if the participation was started after the due date has passed
+     * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
      */
     get isActive(): boolean {
-        const isInitializationAfterDueDate =
-            this.textExercise &&
-            this.textExercise.dueDate &&
-            this.participation.initializationDate &&
-            moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
-        return this.textExercise && (!this.textExercise.dueDate || isInitializationAfterDueDate || moment(this.textExercise.dueDate).isAfter(moment()));
+        const isActive = this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment()));
+        return !!isActive;
     }
 
     /**
@@ -175,7 +184,7 @@ export class TextEditorComponent implements OnInit {
                 this.submission = response.body!;
                 this.result = this.submission.result;
 
-                if (this.isActive) {
+                if (!this.isAlwaysActive) {
                     this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
                 } else {
                     this.jhiAlertService.warning('artemisApp.textExercise.submitDeadlineMissed');
