@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
-public class ProgrammingSubmissionService {
+public class ProgrammingSubmissionService extends SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
@@ -510,5 +510,25 @@ public class ProgrammingSubmissionService {
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
                 .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
         return submissions;
+    }
+
+    /**
+     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
+     *
+     * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    @Transactional(readOnly = true)
+    public Optional<ProgrammingSubmission> getProgrammingSubmissionWithoutManualResult(ProgrammingExercise programmingExercise) {
+        Random r = new Random();
+        List<ProgrammingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(programmingExercise.getId())
+                .stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (ProgrammingSubmission) submission)
+                .collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 }

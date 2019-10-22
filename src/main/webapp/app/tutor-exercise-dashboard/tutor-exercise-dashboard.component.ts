@@ -271,7 +271,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
                 break;
-            // TODO: Add case for programming exercises here.
+            case ExerciseType.PROGRAMMING:
+                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                break;
         }
 
         submissionObservable.subscribe(

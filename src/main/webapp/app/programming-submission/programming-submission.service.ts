@@ -458,6 +458,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .map((res: HttpResponse<ProgrammingSubmission[]>) => this.convertArrayResponse(res));
     }
 
+    /**
+     * Returns next File Upload submission without assessment from the server
+     * @param exerciseId the id of the exercise
+     */
+    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<ProgrammingSubmission> {
+        let url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+        return this.http.get<ProgrammingSubmission>(url);
+    }
+
     private convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
         const jsonResponse: ProgrammingSubmission[] = res.body!;
         const body: ProgrammingSubmission[] = [];

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -298,5 +299,41 @@ public class ProgrammingSubmissionResource {
         }
 
         return ResponseEntity.ok().body(programmingSubmissions);
+    }
+
+    /**
+     * GET /file-upload-submission-without-assessment : get one File Upload Submission without assessment.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a file upload submission without assessment");
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+
+        // TODO: Handle lock limit.
+
+        Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getProgrammingSubmissionWithoutManualResult(programmingExercise);
+        if (programmingSubmissionOpt.isEmpty()) {
+            return notFound();
+        }
+        ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
+
+        // Make sure the exercise is connected to the participation in the json response
+        StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
+        studentParticipation.setExercise(programmingExercise);
+        programmingSubmissionService.hideDetails(programmingSubmission);
+        return ResponseEntity.ok(programmingSubmission);
     }
 }
