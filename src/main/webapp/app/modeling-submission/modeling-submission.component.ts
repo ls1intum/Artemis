@@ -50,7 +50,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
-    isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
     autoSaveInterval: number;
@@ -114,7 +113,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
-                        this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
                         this.submission = modelingSubmission;
                         if (this.submission.model) {
@@ -195,7 +193,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     });
                 }
                 this.jhiAlertService.info('artemisApp.modelingEditor.autoSubmit');
-                this.isActive = false;
             }
         });
     }
@@ -241,14 +238,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         if (!this.submission) {
             this.submission = new ModelingSubmission();
+            this.submission.submitted = true;
         }
-        this.isSaving = true;
         this.updateSubmissionModel();
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
         }
-        this.submission.submitted = true;
+        this.isSaving = true;
         this.autoSaveTimer = 0;
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
@@ -258,7 +255,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.result = this.submission.result;
                     this.retryStarted = false;
 
-                    if (this.isActive) {
+                    if (this.isLate) {
                         this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
                     } else {
                         this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
@@ -280,9 +277,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 submission => {
                     this.submission = submission.body!;
                     this.result = this.submission.result;
-                    this.isSaving = false;
-                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
-                    if (this.isActive) {
+                    if (this.isLate) {
                         this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
                     } else {
                         this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
@@ -291,8 +286,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 },
                 () => {
                     this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                    this.isSaving = false;
                 },
+                () => (this.isSaving = false),
             );
         }
     }
@@ -462,5 +457,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     toggleRequestMoreFeedbackForm() {
         this.showComplaintForm = false;
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
+    }
+
+    get isLate(): boolean {
+        if (this.modelingExercise) {
+            if (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

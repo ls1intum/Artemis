@@ -186,6 +186,7 @@
             "cleanup": "Cleanup",
             "archive": "Archive",
             "submit": "Submit",
+            "submitting": "Submitting",
             "submitDeadlineMissed": "Submit (deadline missed)",
             "retry": "Retry",
             "reset": "Reset",
@@ -204,7 +205,9 @@
             "registerForCourse": "Register For Course",
             "exercise": "Exercises",
             "scores": "Scores",
-            "manageHints": "Manage Hints"
+            "manageHints": "Manage Hints",
+            "submitTooltip": "You can submit multiple times. Your latest submission will count towards your score.",
+            "submitDeadlineMissedTooltip": "The due date has passed. You can no longer submit any solutions!"
         },
         "detail": {
             "field": "Field",

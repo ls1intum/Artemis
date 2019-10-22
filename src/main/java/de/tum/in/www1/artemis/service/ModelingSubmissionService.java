@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -202,6 +203,11 @@ public class ModelingSubmissionService extends SubmissionService {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
         StudentParticipation participation = optionalParticipation.get();
+
+        if (modelingExercise.getDueDate() != null && modelingExercise.getDueDate().isBefore(ZonedDateTime.now())
+                && participation.getInitializationDate().isBefore(modelingExercise.getDueDate())) {
+            throw new BadRequestAlertException("You missed the deadline for submitting modeling exercise", "modelingSubmission", "idexists");
+        }
 
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());

@@ -117,10 +117,6 @@ public class ModelingSubmissionResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
 
-        if (modelingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            throw new BadRequestAlertException("You missed the deadline for submitting modeling exercise", ENTITY_NAME, "idexists");
-        }
-
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
