@@ -1,6 +1,6 @@
 {
     "name": "Artemis",
-    "version": "3.8.5",
+    "version": "3.8.6",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -197,6 +197,7 @@
         "build": "yarn run webpack:prod",
         "test": "jest --config=src/test/javascript/jest.config.js --silent",
         "test:e2e": "protractor protractor.conf.js",
+        "test:server-api-tests": "`pwd`/src/test/k6/api_tests.sh",
         "webpack:dev": "yarn run webpack-dev-server --config webpack/webpack.dev.js --port=9060 --watch-content-base --env.stats=minimal",
         "webpack:dev-verbose": "yarn run webpack-dev-server --config webpack/webpack.dev.js --inline --hot --port=9060 --watch-content-base --profile --progress --env.stats=normal",
         "webpack:build:main": "yarn run webpack --config webpack/webpack.dev.js --env.stats=minimal",
