@@ -1,17 +1,19 @@
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit, EventEmitter, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Directive({ selector: '[jhiDeleteButton]' })
-export class DeleteButtonDirective implements OnInit, OnChanges {
+export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
-    @Input() closeDialogTrigger: boolean;
+    @Input() set closeDialogTrigger(value: boolean) {
+        this.deleteDialogService.closeDialog();
+    }
 
     deleteTextSpan: HTMLElement;
 
@@ -64,11 +66,5 @@ export class DeleteButtonDirective implements OnInit, OnChanges {
 
     private setTextContent() {
         this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant(`entity.action.${this.actionType}`));
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.closeDialogTrigger) {
-            this.deleteDialogService.closeDialog();
-        }
     }
 }
