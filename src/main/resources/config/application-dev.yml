@@ -129,6 +129,6 @@ info:
             - key: 'modeling_tour'
               exerciseName: 'Modeling'
             - key: 'programming_exercise_fail_tour'
-              exerciseName: 'tutorial'
+              exerciseName: 'test'
             - key: 'programming_exercise_success_tour'
-              exerciseName: 'tutorial'
+              exerciseName: 'test'
