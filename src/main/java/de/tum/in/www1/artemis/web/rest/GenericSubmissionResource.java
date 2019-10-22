@@ -3,14 +3,13 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -88,5 +87,15 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
             return notFound();
         }
         return null;
+    }
+
+    /**
+     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
+     */
+    protected List<T> clearStudentInformation(List<T> submissions, Exercise exercise, User user) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
+        }
+        return submissions;
     }
 }

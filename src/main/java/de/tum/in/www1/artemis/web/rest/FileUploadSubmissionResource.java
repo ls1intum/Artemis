@@ -138,15 +138,15 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         }
 
         List<FileUploadSubmission> fileUploadSubmissions;
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getSubmissions(exerciseId, submittedOnly, FileUploadSubmission.class);
         }
 
-        return ResponseEntity.ok().body(fileUploadSubmissions);
+        return ResponseEntity.ok().body(clearStudentInformation(fileUploadSubmissions, exercise, user));
     }
 
     /**
@@ -186,7 +186,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        fileUploadSubmissionService.hideDetails(fileUploadSubmission);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

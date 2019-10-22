@@ -137,16 +137,6 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     }
 
     /**
-     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
-     */
-    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise, User user) {
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
-        }
-        return submissions;
-    }
-
-    /**
      * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new Result object is created and
      * assigned to the submission.
      *

@@ -115,24 +115,15 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         }
 
         List<TextSubmission> textSubmissions;
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
             textSubmissions = textSubmissionService.getSubmissions(exerciseId, submittedOnly, TextSubmission.class);
         }
 
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            textSubmissions.forEach(textSubmission -> {
-                if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
-                    ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
-                }
-            });
-        }
-
-        return ResponseEntity.ok().body(textSubmissions);
+        return ResponseEntity.ok().body(clearStudentInformation(textSubmissions, exercise, user));
     }
 
     /**
