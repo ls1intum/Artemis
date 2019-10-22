@@ -42,6 +42,7 @@
             }
         },
         "attachment": {
+            "deleteQuestion": "Soll der Anhang wirklich gelöscht werden?",
             "created": "Anhang erstellt mit ID {{ param }}",
             "updated": "Anhang aktualisiert mit ID {{ param }}",
             "deleted": "Anhang gelöscht mit ID {{ param }}"

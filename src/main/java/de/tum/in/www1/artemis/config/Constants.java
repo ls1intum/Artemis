@@ -13,8 +13,6 @@ public final class Constants {
 
     public static final String SYSTEM_ACCOUNT = "system";
 
-    public static final String ANONYMOUS_USER = "anonymoususer";
-
     public static final String DEFAULT_LANGUAGE = "en";
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 2;
@@ -71,8 +69,6 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
-    public static final String ASSIGNMENT_REPO_PATH = "assignment";
-
     public static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
@@ -86,6 +82,12 @@ public final class Constants {
     public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
+
+    public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
+
+    public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
+
+    public static final String TESTS_CHECKOUT_PATH = "tests";
 
     private Constants() {
     }

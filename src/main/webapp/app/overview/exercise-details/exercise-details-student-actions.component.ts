@@ -18,20 +18,8 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
     providers: [JhiAlertService, SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly TEXT = ExerciseType.TEXT;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly QUIZ_UNINITIALIZED = ParticipationStatus.QUIZ_UNINITIALIZED;
-    readonly QUIZ_ACTIVE = ParticipationStatus.QUIZ_ACTIVE;
-    readonly QUIZ_SUBMITTED = ParticipationStatus.QUIZ_SUBMITTED;
-    readonly QUIZ_NOT_STARTED = ParticipationStatus.QUIZ_NOT_STARTED;
-    readonly QUIZ_NOT_PARTICIPATED = ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
-    readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
-    readonly INITIALIZED = ParticipationStatus.INITIALIZED;
-    readonly INACTIVE = ParticipationStatus.INACTIVE;
+    readonly ExerciseType = ExerciseType;
+    readonly ParticipationStatus = ParticipationStatus;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -93,13 +81,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     startExercise() {
-        this.exercise.loading = true;
-
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
             return this.router.navigate(['/quiz', this.exercise.id]);
         }
 
+        this.exercise.loading = true;
         this.courseExerciseService
             .startExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))

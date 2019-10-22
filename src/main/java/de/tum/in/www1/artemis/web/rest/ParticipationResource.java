@@ -138,11 +138,6 @@ public class ParticipationResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()).isPresent()) {
-            // participation already exists
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "participation", "participationAlreadyExists",
-                    "There is already a participation for the given exercise and user.")).body(null);
-        }
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
@@ -515,7 +510,7 @@ public class ParticipationResource {
         }
         else if (exercise instanceof ModelingExercise) {
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            if (!optionalParticipation.isPresent()) {
+            if (optionalParticipation.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
             }
             Participation participation = optionalParticipation.get();
