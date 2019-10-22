@@ -11,11 +11,11 @@
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
             <jhi-button
-                [disabled]="!isActive || !submission"
-                [title]="isActive ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+                [disabled]="(!isActive && !isLate) || !submission"
+                [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
                 (onClick)="submit()"
                 [isLoading]="isSaving"
-                [tooltip]="isActive ? 'entity.action.submitTooltip' : 'entity.action.submitDeadlineMissedTooltip'"
+                [tooltip]="!isLate ? (isActive ? 'entity.action.submitTooltip' : 'entity.action.deadlineMissedTooltip') : 'entity.action.submitDeadlineMissedTooltip'"
             ></jhi-button>
             <!--TODO: enable retry button again-->
             <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->

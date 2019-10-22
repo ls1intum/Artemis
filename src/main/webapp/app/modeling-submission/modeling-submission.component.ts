@@ -70,6 +70,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isLoading: boolean;
+    isLate: boolean;
     ComplaintType = ComplaintType;
 
     constructor(
@@ -113,6 +114,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
+                        this.isLate =
+                            this.modelingExercise &&
+                            !!this.modelingExercise.dueDate &&
+                            !!this.participation.initializationDate &&
+                            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
                         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
                         this.submission = modelingSubmission;
                         if (this.submission.model) {
@@ -256,9 +262,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.retryStarted = false;
 
                     if (this.isLate) {
-                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
-                    } else {
                         this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                    } else {
+                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
                     }
 
                     this.subscribeToWebsockets();
@@ -278,9 +284,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = submission.body!;
                     this.result = this.submission.result;
                     if (this.isLate) {
-                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
-                    } else {
                         this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                    } else {
+                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
                     }
                     this.subscribeToAutomaticSubmissionWebsocket();
                 },
@@ -463,11 +469,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * The exercise is still active if it's due date hasn't passed yet, or if the participation was started after the due date has already passed
      */
     get isActive() {
-        const isInitializationAfterDueDate =
-            this.modelingExercise &&
-            this.modelingExercise.dueDate &&
-            this.participation.initializationDate &&
-            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
-        return this.modelingExercise && (!this.modelingExercise.dueDate || isInitializationAfterDueDate || moment(this.modelingExercise.dueDate).isAfter(moment()));
+        return this.modelingExercise && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isAfter(moment()));
     }
 }

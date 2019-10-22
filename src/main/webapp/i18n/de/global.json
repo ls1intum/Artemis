@@ -200,7 +200,8 @@
             "scores": "Bewertungen",
             "manageHints": "Verwalte Hinweise",
             "submitTooltip": "Du kannst mehrmals abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
-            "submitDeadlineMissedTooltip": "Die Deadline ist abgelaufen. Du kannst keine neuen Lösungen einreichen!"
+            "submitDeadlineMissedTooltip": "Die Deadline ist abgelaufen. Weitere Abgaben werden nicht gewertet!",
+            "deadlineMissedTooltip": "Die Deadline ist abgelaufen. Du kannst keine neuen Lösungen einreichen!"
         },
         "detail": {
             "field": "Feld",

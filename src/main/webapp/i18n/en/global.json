@@ -207,7 +207,8 @@
             "scores": "Scores",
             "manageHints": "Manage Hints",
             "submitTooltip": "You can submit multiple times. Your latest submission will count towards your score.",
-            "submitDeadlineMissedTooltip": "The due date has passed. You can no longer submit any solutions!"
+            "submitDeadlineMissedTooltip": "The deadline has expired. Your submissions will not get graded!",
+            "deadlineMissedTooltip": "The deadline has expired. You can no longer submit any solutions!"
         },
         "detail": {
             "field": "Field",
