@@ -16,6 +16,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Moment, now } from 'moment';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -26,7 +27,6 @@ export class TextEditorComponent implements OnInit {
     participation: StudentParticipation;
     result: Result;
     submission: TextSubmission;
-    isActive: boolean;
     isSaving: boolean;
     answer: string;
     isExampleSubmission = false;
@@ -44,9 +44,6 @@ export class TextEditorComponent implements OnInit {
     isAfterAssessmentDueDate: boolean;
     ComplaintType = ComplaintType;
 
-    public getColorForIndex = HighlightColors.forIndex;
-    private submissionConfirmationText: string;
-
     constructor(
         private route: ActivatedRoute,
         private textExerciseService: TextExerciseService,
@@ -58,10 +55,8 @@ export class TextEditorComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
-        translateService: TranslateService,
     ) {
         this.isSaving = false;
-        translateService.get('artemisApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
     ngOnInit() {
@@ -104,11 +99,21 @@ export class TextEditorComponent implements OnInit {
                         });
                     }
                 }
-
-                this.isActive = this.textExercise.dueDate === undefined || this.textExercise.dueDate === null || new Date() <= moment(this.textExercise.dueDate).toDate();
             },
             (error: HttpErrorResponse) => this.onError(error),
         );
+    }
+
+    /**
+     * The exercise is active if the due date hasn't passed yet, or if the participation was started after the due date has passed
+     */
+    get isActive(): boolean {
+        const isInitializationAfterDueDate =
+            this.textExercise &&
+            this.textExercise.dueDate &&
+            this.participation.initializationDate &&
+            moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
+        return this.textExercise && (!this.textExercise.dueDate || isInitializationAfterDueDate || moment(this.textExercise.dueDate).isAfter(moment()));
     }
 
     /**
@@ -163,27 +168,24 @@ export class TextEditorComponent implements OnInit {
         }
         this.submission.text = this.answer;
         this.submission.language = this.textService.predictLanguage(this.submission.text);
-        const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
-        if (confirmSubmit) {
-            this.submission.submitted = true;
-            this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
-                response => {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
+        this.submission.submitted = true;
+        this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
+            response => {
+                this.submission = response.body!;
+                this.result = this.submission.result;
 
-                    if (this.isActive) {
-                        this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
-                    } else {
-                        this.jhiAlertService.warning('artemisApp.textExercise.submitDeadlineMissed');
-                    }
-                },
-                err => {
-                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                    this.submission.submitted = false;
-                },
-            );
-        }
+                if (this.isActive) {
+                    this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
+                } else {
+                    this.jhiAlertService.warning('artemisApp.textExercise.submitDeadlineMissed');
+                }
+            },
+            err => {
+                this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                this.submission.submitted = false;
+            },
+        );
     }
 
     onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {

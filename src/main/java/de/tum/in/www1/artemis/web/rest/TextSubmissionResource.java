@@ -148,7 +148,7 @@ public class TextSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
                     .body(null);
         }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        if (!authCheckService.isAtLeastStudentForExercise(textExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

@@ -61,20 +61,21 @@ public class TextSubmissionService extends SubmissionService {
      */
     @Transactional
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
+        // Don't allow submissions after the due date (except if the exercise was started after the due date)
+        final var dueDate = textExercise.getDueDate();
+        final var optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
+        if (optionalParticipation.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
+        }
+        final var participation = optionalParticipation.get();
+        if (dueDate != null && participation.getInitializationDate().isAfter(dueDate) && dueDate.isBefore(ZonedDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
         if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
             textSubmission = save(textSubmission);
         }
         else {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
-            if (!optionalParticipation.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
-            }
-            StudentParticipation participation = optionalParticipation.get();
-
-            if (participation.getInitializationState() == InitializationState.FINISHED) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
-            }
-
             textSubmission = save(textSubmission, participation);
         }
         return textSubmission;
@@ -96,8 +97,6 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         participation.addSubmissions(textSubmission);
-
-        User user = participation.getStudent();
 
         if (textSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
