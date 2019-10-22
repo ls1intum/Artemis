@@ -34,6 +34,7 @@ export class DeleteDialogService {
     closeDialog(): void {
         if (this.modalRef && this.modalRef.componentInstance) {
             this.modalRef.componentInstance.clear();
+            this.modalRef = null;
         }
     }
 }
