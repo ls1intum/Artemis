@@ -20,6 +20,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
 import { filter } from 'rxjs/operators';
+import { ButtonType } from 'app/shared/components';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -30,6 +31,7 @@ import { filter } from 'rxjs/operators';
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
+    ButtonType = ButtonType;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
