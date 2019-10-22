@@ -425,10 +425,19 @@ public class UserService {
     /**
      * Get all managed users
      * @param pageable used to find users
-     * @return all users with roles other than ROLE_ANONYMOUS
+     * @return all users
      */
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAll(pageable).map(UserDTO::new);
+    }
+
+    /**
+     * Get user with groups by given login string
+     * @param login user login string
+     * @return existing user with given login string or null
+     */
+    public Optional<User> getUserWithGroupsByLogin(String login) {
+        return userRepository.findOneWithGroupsByLogin(login);
     }
 
     /**

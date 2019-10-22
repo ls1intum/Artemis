@@ -22,7 +22,8 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     participationIsActive: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
     isBuilding: boolean;
-    alwaysShowTriggerButton: boolean;
+    // If true, the trigger button is also displayed for successful submissions.
+    showForSuccessfulSubmissions = false;
 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
