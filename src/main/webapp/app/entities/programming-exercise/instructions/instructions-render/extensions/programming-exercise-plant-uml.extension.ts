@@ -56,7 +56,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
                 const plantUmlRegex = /@startuml([^@]*)@enduml/g;
                 // E.g. Implement BubbleSort, testBubbleSort
-                const plantUmlContainer = `<img id="plantUml-${idPlaceholder}"/>`;
+                const plantUmlContainer = `<div id="plantUml-${idPlaceholder}"/>`;
                 // Replace test status markers.
                 const plantUmls = text.match(plantUmlRegex) || [];
                 const replacedText = plantUmls.reduce(
