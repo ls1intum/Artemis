@@ -70,8 +70,7 @@ export class FileUploadExerciseService {
      * @param exerciseId id of the exercise
      */
     delete(exerciseId: number): Observable<HttpResponse<void>> {
-        return throwError('eer');
-        // return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
     private formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
