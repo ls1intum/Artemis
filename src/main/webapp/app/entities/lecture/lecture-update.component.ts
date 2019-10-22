@@ -6,18 +6,24 @@ import { JhiAlertService } from 'ng-jhipster';
 import { LectureService } from './lecture.service';
 import { Course, CourseService } from 'app/entities/course';
 import { Lecture } from 'app/entities/lecture/lecture.model';
+import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
+    styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
+    EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
 
     courses: Course[];
     startDate: string;
     endDate: string;
+
+    domainCommandsDescription = [new KatexCommand()];
 
     constructor(
         protected jhiAlertService: JhiAlertService,
