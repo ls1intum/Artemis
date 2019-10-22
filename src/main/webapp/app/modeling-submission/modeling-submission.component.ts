@@ -224,24 +224,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * to the model after at most 60 seconds.
      */
     private setAutoSaveTimer(): void {
-        if (this.submission.submitted) {
-            return;
-        }
         this.autoSaveTimer = 0;
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.submission && this.submission.submitted) {
-                clearInterval(this.autoSaveInterval);
-                this.autoSaveTimer = 0;
-            }
             if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
-                this.saveDiagram();
+                this.submit();
             }
         }, 1000);
     }
 
-    saveDiagram(): void {
+    submit(): void {
         if (this.isSaving) {
             // don't execute the function if it is already currently executing
             return;
@@ -249,59 +242,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!this.submission) {
             this.submission = new ModelingSubmission();
         }
-        this.submission.submitted = false;
-        this.updateSubmissionModel();
         this.isSaving = true;
-        this.autoSaveTimer = 0;
-
-        if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
-                response => {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
-                    this.isSaving = false;
-                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
-                },
-                error => {
-                    this.isSaving = false;
-                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                },
-            );
-        } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
-                submission => {
-                    this.submission = submission.body!;
-                    this.result = this.submission.result;
-                    this.isSaving = false;
-                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
-                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
-                    this.subscribeToAutomaticSubmissionWebsocket();
-                },
-                error => {
-                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                    this.isSaving = false;
-                },
-            );
-        }
-    }
-
-    submit(): void {
-        if (!this.submission) {
-            return;
-        }
         this.updateSubmissionModel();
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
         }
-
-        let confirmSubmit = true;
-        if (this.calculateNumberOfModelElements() < 10) {
-            confirmSubmit = window.confirm('Are you sure you want to submit? You cannot edit your model anymore until you get an assessment!');
-        }
-
-        if (confirmSubmit) {
-            this.submission.submitted = true;
+        this.submission.submitted = true;
+        this.autoSaveTimer = 0;
+        if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
                     this.submission = response.body!;
@@ -320,9 +269,29 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
                     }
                 },
-                err => {
+                () => {
                     this.jhiAlertService.error('artemisApp.modelingEditor.error');
                     this.submission.submitted = false;
+                },
+                () => (this.isSaving = false),
+            );
+        } else {
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
+                submission => {
+                    this.submission = submission.body!;
+                    this.result = this.submission.result;
+                    this.isSaving = false;
+                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
+                    if (this.isActive) {
+                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
+                    } else {
+                        this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                    }
+                    this.subscribeToAutomaticSubmissionWebsocket();
+                },
+                () => {
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                    this.isSaving = false;
                 },
             );
         }

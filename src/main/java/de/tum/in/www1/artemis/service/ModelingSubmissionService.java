@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -204,17 +203,6 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         StudentParticipation participation = optionalParticipation.get();
 
-        // For now, we do not allow students to retry their modeling exercise after they have received feedback, because this could lead to unfair situations. Some students might
-        // get the manual feedback early and can then retry the exercise within the deadline and have a second chance, others might get the manual feedback late and would not have
-        // a chance to try it out again.
-        // TODO: think about how we can enable retry again in the future in a fair way
-        // make sure that no (submitted) submission exists for the given user and exercise to prevent retry submissions
-        boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(Submission::isSubmitted);
-        if (submittedSubmissionExists) {
-            throw new BadRequestAlertException("User " + username + " already participated in exercise with id " + modelingExercise.getId(), "modelingSubmission",
-                    "participationExists");
-        }
-
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
@@ -223,16 +211,14 @@ public class ModelingSubmissionService extends SubmissionService {
 
         participation.addSubmissions(modelingSubmission);
 
-        if (modelingSubmission.isSubmitted()) {
-            notifyCompass(modelingSubmission, modelingExercise);
-            participation.setInitializationState(InitializationState.FINISHED);
-            // We remove all unfinished results here as they should not be sent to the client. Note, that the reference to the unfinished results will not get removed in the
-            // database by saving the participation to the DB below since the results are not persisted with the participation.
-            participation.setResults(
-                    participation.getResults().stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toSet()));
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
-        }
+        notifyCompass(modelingSubmission, modelingExercise);
+        participation.setInitializationState(InitializationState.FINISHED);
+        // We remove all unfinished results here as they should not be sent to the client. Note, that the reference to the unfinished results will not get removed in the
+        // database by saving the participation to the DB below since the results are not persisted with the participation.
+        participation
+                .setResults(participation.getResults().stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toSet()));
+        messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation", participation);
+
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
             Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();

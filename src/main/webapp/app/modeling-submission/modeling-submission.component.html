@@ -10,24 +10,15 @@
         <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
-            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
+            <button class="btn btn-success" (click)="submit()" [disabled]="!submission || !hasElements" [hidden]="submission?.submitted || !isActive">
                 <ng-container *ngIf="!isSaving">
                     <fa-icon icon="save"></fa-icon>
-                    <span jhiTranslate="entity.action.save">Save</span>
+                    <span jhiTranslate="entity.action.submit">Submit</span>
                 </ng-container>
                 <ng-container *ngIf="isSaving">
                     <fa-icon icon="sync"></fa-icon>
                     <span jhiTranslate="entity.action.saving">Saving...</span>
                 </ng-container>
-            </button>
-            <button
-                class="btn btn-success"
-                (click)="submit()"
-                [disabled]="!submission || !hasElements"
-                [hidden]="submission?.submitted || !isActive"
-                jhiTranslate="entity.action.submit"
-            >
-                Submit
             </button>
             <button
                 class="btn btn-warning"
