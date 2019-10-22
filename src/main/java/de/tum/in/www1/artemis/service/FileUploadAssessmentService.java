@@ -59,7 +59,7 @@ public class FileUploadAssessmentService extends AssessmentService {
     public Result saveAssessment(FileUploadSubmission fileUploadSubmission, List<Feedback> fileUploadAssessment, FileUploadExercise fileUploadExercise) {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
-            result = fileUploadSubmissionService.setNewResult(fileUploadSubmission, fileUploadSubmissionRepository);
+            result = fileUploadSubmissionService.setNewResult(fileUploadSubmission);
         }
         final long generalFeedbackCount = fileUploadAssessment.stream().filter(feedback -> feedback.getCredits() == 0).count();
         if (generalFeedbackCount > 1) {

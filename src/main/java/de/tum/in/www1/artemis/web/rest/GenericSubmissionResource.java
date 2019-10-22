@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -39,7 +42,12 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         this.participationService = participationService;
     }
 
-    ResponseEntity<T> checkExerciseValidity(E exercise) {
+    /**
+     * Check if exercise is valid, has course and the user (student) can access it
+     * @param exercise that we want to check
+     * @return either null if exercise is valid or one of the error responses if it is not valid
+     */
+    ResponseEntity<T> checkExerciseValidityForStudent(E exercise) {
         if (exercise == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
@@ -58,5 +66,36 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         }
 
         return null;
+    }
+
+    /**
+     * Check if exercise is valid and the user (tutor) can access it
+     * @param exercise that we want to check
+     * @param exerciseType type of the exercise
+     * @return either null if exercise is valid or one of the error responses if it is not valid
+     */
+    public ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
+        if (!(exerciseType.isInstance(exercise))) {
+            return badRequest();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+        return null;
+    }
+
+    /**
+     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
+     */
+    protected List<T> clearStudentInformation(List<T> submissions, Exercise exercise, User user) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
+        }
+        return submissions;
     }
 }

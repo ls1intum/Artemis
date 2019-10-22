@@ -2,20 +2,15 @@ package de.tum.in.www1.artemis.service;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -25,24 +20,18 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class TextSubmissionService extends SubmissionService {
+public class TextSubmissionService extends SubmissionService<TextSubmission> {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
-
-    private final SimpMessageSendingOperations messagingTemplate;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository, participationService);
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -59,52 +48,8 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
-            if (!optionalParticipation.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
-            }
-            StudentParticipation participation = optionalParticipation.get();
-
-            if (participation.getInitializationState() == InitializationState.FINISHED) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
-            }
-
-            textSubmission = save(textSubmission, participation);
+            textSubmission = save(textSubmission, textExercise, principal.getName(), TextSubmission.class);
         }
-        return textSubmission;
-    }
-
-    /**
-     * Saves the given submission. Is used for creating and updating text submissions. Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
-     *
-     * @param textSubmission the submission that should be saved
-     * @param participation  the participation the participation the submission belongs to
-     * @return the textSubmission entity that was saved to the database
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation) {
-        // update submission properties
-        textSubmission.setSubmissionDate(ZonedDateTime.now());
-        textSubmission.setType(SubmissionType.MANUAL);
-        textSubmission.setParticipation(participation);
-        textSubmission = textSubmissionRepository.save(textSubmission);
-
-        participation.addSubmissions(textSubmission);
-
-        if (textSubmission.isSubmitted()) {
-            participation.setInitializationState(InitializationState.FINISHED);
-
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
-        }
-        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
-        if (textSubmission.getId() == null) {
-            Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
-            if (optionalTextSubmission.isPresent()) {
-                textSubmission = optionalTextSubmission.get();
-            }
-        }
-
         return textSubmission;
     }
 
@@ -141,14 +86,7 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        Random r = new Random();
-        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
-                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        return getRandomUnassessedSubmission(textExercise, TextSubmission.class);
     }
 
     /**
@@ -176,37 +114,6 @@ public class TextSubmissionService extends SubmissionService {
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
         return results.stream().map(result -> mapAbstractToConcreteSubmission(result, new TextSubmission())).collect(Collectors.toList());
-    }
-
-    /**
-     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @return a list of text submissions for the given exercise id
-     */
-    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
-        List<TextSubmission> textSubmissions = new ArrayList<>();
-
-        for (StudentParticipation participation : participations) {
-            Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
-
-            if (!optionalTextSubmission.isPresent()) {
-                continue;
-            }
-
-            if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
-                continue;
-            }
-
-            if (optionalTextSubmission.get().getResult() != null) {
-                optionalTextSubmission.get().getResult().getAssessor().setGroups(null);
-            }
-
-            textSubmissions.add(optionalTextSubmission.get());
-        }
-        return textSubmissions;
     }
 
     public TextSubmission findOneWithEagerResultAndAssessor(Long id) {

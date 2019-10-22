@@ -76,7 +76,7 @@ public class ModelingAssessmentService extends AssessmentService {
     public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment, ModelingExercise modelingExercise) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
-            result = modelingSubmissionService.setNewResult(modelingSubmission, modelingSubmissionRepository);
+            result = modelingSubmissionService.setNewResult(modelingSubmission);
         }
         checkGeneralFeedback(modelingAssessment);
 

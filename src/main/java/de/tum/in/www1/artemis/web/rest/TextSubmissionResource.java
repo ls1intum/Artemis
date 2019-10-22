@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,14 +83,14 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
+        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidityForStudent(textExercise);
         if (responseFailure != null) {
             return responseFailure;
         }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        this.textSubmissionService.hideDetails(textSubmission);
+        textSubmissionService.hideDetails(textSubmission);
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -118,24 +115,15 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         }
 
         List<TextSubmission> textSubmissions;
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
-            textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
+            textSubmissions = textSubmissionService.getSubmissions(exerciseId, submittedOnly, TextSubmission.class);
         }
 
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            textSubmissions.forEach(textSubmission -> {
-                if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
-                    ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
-                }
-            });
-        }
-
-        return ResponseEntity.ok().body(textSubmissions);
+        return ResponseEntity.ok().body(clearStudentInformation(textSubmissions, exercise, user));
     }
 
     /**
@@ -151,16 +139,9 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return forbidden();
-        }
-        if (!(exercise instanceof TextExercise)) {
-            return badRequest();
-        }
-
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        var exerciseValid = this.checkExerciseValidityForTutor(exercise, TextExercise.class);
+        if (exerciseValid != null) {
+            return exerciseValid;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

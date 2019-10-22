@@ -80,7 +80,6 @@ public class TextSubmissionIntegrationTest {
     @WithMockUser(value = "student1")
     public void updateTextSubmission() throws Exception {
         database.addParticipationForExercise(textExercise, "student1");
-        database.addTextSubmission(textExercise, textSubmission, "student1");
         textSubmission.setText("dddd");
         textSubmission.setLanguage(Language.GERMAN);
         TextSubmission returnedSubmission = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,

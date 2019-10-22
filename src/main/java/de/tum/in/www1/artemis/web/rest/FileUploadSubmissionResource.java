@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,14 +58,10 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
     public ResponseEntity<FileUploadSubmission> submitFileUploadExercise(@PathVariable long exerciseId, Principal principal,
             @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
-
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
-            return forbidden();
-        }
 
         // Check if the course hasn't been changed
-        final var validityExceptionResponse = this.checkExerciseValidity(exercise);
+        final var validityExceptionResponse = this.checkExerciseValidityForStudent(exercise);
         if (validityExceptionResponse != null) {
             return validityExceptionResponse;
         }
@@ -95,7 +90,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        this.fileUploadSubmissionService.hideDetails(submission);
+        fileUploadSubmissionService.hideDetails(submission);
         return ResponseEntity.ok(submission);
     }
 
@@ -143,15 +138,15 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         }
 
         List<FileUploadSubmission> fileUploadSubmissions;
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
-            fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
+            fileUploadSubmissions = fileUploadSubmissionService.getSubmissions(exerciseId, submittedOnly, FileUploadSubmission.class);
         }
 
-        return ResponseEntity.ok().body(fileUploadSubmissions);
+        return ResponseEntity.ok().body(clearStudentInformation(fileUploadSubmissions, exercise, user));
     }
 
     /**
@@ -167,16 +162,9 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
         Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            return forbidden();
-        }
-        if (!(fileUploadExercise instanceof FileUploadExercise)) {
-            return badRequest();
-        }
-
-        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
-        if (fileUploadExercise.getDueDate() != null && fileUploadExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            return notFound();
+        var exerciseValidity = this.checkExerciseValidityForTutor(fileUploadExercise, FileUploadExercise.class);
+        if (exerciseValidity != null) {
+            return exerciseValidity;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
@@ -198,7 +186,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        fileUploadSubmissionService.hideDetails(fileUploadSubmission);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

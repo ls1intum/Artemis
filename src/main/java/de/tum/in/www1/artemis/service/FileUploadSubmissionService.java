@@ -4,26 +4,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -32,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class FileUploadSubmissionService extends SubmissionService {
+public class FileUploadSubmissionService extends SubmissionService<FileUploadSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
 
@@ -40,19 +33,13 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final ResultService resultService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final FileService fileService;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
             SimpMessageSendingOperations messagingTemplate, ResultService resultService, FileService fileService, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository, participationService);
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.messagingTemplate = messagingTemplate;
         this.resultService = resultService;
         this.fileService = fileService;
     }
@@ -67,38 +54,14 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return the saved file upload submission
      * @throws IOException if file can't be saved
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
             Principal principal) throws IOException {
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(fileUploadExercise.getId(), principal.getName());
-        if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + fileUploadExercise.getId());
-        }
-        StudentParticipation participation = optionalParticipation.get();
-
-        if (participation.getInitializationState() == InitializationState.FINISHED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
-        }
-
-        return save(fileUploadSubmission, file, participation, fileUploadExercise);
-    }
-
-    /**
-     * Given an exerciseId, returns all the file upload submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-     * submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @return a list of file upload submissions for the given exercise id
-     */
-    @Transactional(readOnly = true)
-    public List<FileUploadSubmission> getFileUploadSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
-        List<FileUploadSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestFileUploadSubmission)
-                // filter out non submitted submissions if the flag is set to true
-                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add(submission.get()));
-        return submissions;
+        fileUploadSubmission = save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
+        final var localPath = saveFileForSubmission(file, fileUploadSubmission, fileUploadExercise);
+        fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
+        fileUploadSubmissionRepository.save(fileUploadSubmission);
+        return fileUploadSubmission;
     }
 
     /**
@@ -125,56 +88,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
-        Random r = new Random();
-        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(fileUploadExercise.getId())
-                .stream().map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
-    }
-
-    /**
-     * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission() calls.
-     *
-     * @param fileUploadSubmission the submission that should be saved
-     * @param file                 the file that will be saved on the server
-     * @param participation        the participation the submission belongs to
-     * @param exercise             the exercise the submission belongs to
-     * @return the fileUploadSubmission entity that was saved to the database
-     * @throws IOException if file can't be saved
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
-            throws IOException {
-        final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-
-        // update submission properties
-        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
-        fileUploadSubmission.setType(SubmissionType.MANUAL);
-        fileUploadSubmission.setParticipation(participation);
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
-        fileUploadSubmissionRepository.save(fileUploadSubmission);
-
-        participation.addSubmissions(fileUploadSubmission);
-
-        if (fileUploadSubmission.isSubmitted()) {
-            participation.setInitializationState(InitializationState.FINISHED);
-
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
-        }
-        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
-        if (fileUploadSubmission.getId() == null) {
-            Optional<FileUploadSubmission> optionalFileUploadSubmission = savedParticipation.findLatestFileUploadSubmission();
-            if (optionalFileUploadSubmission.isPresent()) {
-                fileUploadSubmission = optionalFileUploadSubmission.get();
-            }
-        }
-
-        return fileUploadSubmission;
+        return getRandomUnassessedSubmission(fileUploadExercise, FileUploadSubmission.class);
     }
 
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
@@ -202,7 +116,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     private void lockSubmission(FileUploadSubmission fileUploadSubmission) {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
-            result = setNewResult(fileUploadSubmission, fileUploadSubmissionRepository);
+            result = setNewResult(fileUploadSubmission);
         }
 
         if (result.getAssessor() == null) {
