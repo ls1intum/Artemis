@@ -227,8 +227,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
                 // ignore the error if the user is already in the group
                 return;
             }
-            log.error("Could not add JIRA user to group " + group, e);
-            throw new ArtemisAuthenticationException("Error while adding user to JIRA group");
+            log.error("Could not add user " + username + " to JIRA group " + group + ". Error: " + e.getMessage());
+            throw new ArtemisAuthenticationException("Error while adding " + username + " to JIRA group " + group, e);
         }
     }
 

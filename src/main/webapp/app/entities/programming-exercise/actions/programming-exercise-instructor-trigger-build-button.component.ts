@@ -9,7 +9,7 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     constructor(submissionService: ProgrammingSubmissionService) {
         super(submissionService);
-        this.alwaysShowTriggerButton = true;
+        this.showForSuccessfulSubmissions = true;
     }
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
