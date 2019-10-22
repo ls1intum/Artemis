@@ -430,6 +430,7 @@ public class ResultService {
      * @param result Result
      * @return updated Result with eagerly loaded Submission and Feedbacks.
      */
+    @Transactional
     public Result saveProgrammingExerciseResult(Result result) {
         // Without this no connection between the result and feedback items is created.
         for (Feedback feedback : result.getFeedbacks()) {
