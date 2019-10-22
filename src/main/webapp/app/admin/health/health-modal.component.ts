@@ -34,7 +34,7 @@ export class JhiHealthModalComponent {
 
         if (typeof value === 'object') {
             return JSON.stringify(value);
-        } else {
+        } else if (value) {
             return value.toString();
         }
     }
