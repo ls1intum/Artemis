@@ -436,6 +436,9 @@ public class ResultService {
         for (Feedback feedback : result.getFeedbacks()) {
             feedback.setResult(result);
         }
+        if (result.getFeedbacks().size() > 0) {
+            result.setHasFeedback(true);
+        }
         // The same link might need to be restored for the submission.
         result.getSubmission().setResult(result);
         programmingSubmissionService.save((ProgrammingSubmission) result.getSubmission());
