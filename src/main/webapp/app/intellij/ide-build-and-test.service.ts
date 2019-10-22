@@ -5,7 +5,7 @@ import { ParticipationWebsocketService } from '../entities/participation';
 import { Result } from '../entities/result';
 import { filter, map, tap } from 'rxjs/operators';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { CodeEditorBuildLogService, DomainType } from 'app/code-editor';
+import { CodeEditorBuildLogService, DomainType } from 'app/code-editor/service/code-editor-repository.service';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Observable, Subject, Subscription } from 'rxjs';
 
