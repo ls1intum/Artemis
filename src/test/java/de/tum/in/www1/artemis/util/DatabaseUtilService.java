@@ -191,6 +191,7 @@ public class DatabaseUtilService {
         }
         User user = getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
         participation.setStudent(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
@@ -334,16 +335,19 @@ public class DatabaseUtilService {
         course.addExercises(objectExercise);
         ModelingExercise useCaseExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.UseCaseDiagram, course);
         course.addExercises(useCaseExercise);
+        ModelingExercise afterDueDateExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+        course.addExercises(afterDueDateExercise);
         courseRepo.save(course);
         exerciseRepo.save(classExercise);
         exerciseRepo.save(activityExercise);
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
+        exerciseRepo.save(afterDueDateExercise);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(4);
+        assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(5);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
-        assertThat(courseRepoContent.get(0).getExercises().size()).as("Course contains exercise").isEqualTo(4);
+        assertThat(courseRepoContent.get(0).getExercises().size()).as("Course contains exercise").isEqualTo(5);
         assertThat(courseRepoContent.get(0).getExercises()).as("Contains all exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 

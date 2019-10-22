@@ -205,7 +205,7 @@ public class ModelingSubmissionService extends SubmissionService {
         StudentParticipation participation = optionalParticipation.get();
 
         if (modelingExercise.getDueDate() != null && modelingExercise.getDueDate().isBefore(ZonedDateTime.now())
-                && participation.getInitializationDate().isBefore(modelingExercise.getDueDate())) {
+                && participation.getInitializationDate().isAfter(modelingExercise.getDueDate())) {
             throw new BadRequestAlertException("You missed the deadline for submitting modeling exercise", "modelingSubmission", "idexists");
         }
 
