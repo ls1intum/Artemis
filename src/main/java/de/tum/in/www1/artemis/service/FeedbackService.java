@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -53,7 +54,7 @@ public class FeedbackService {
         // Provide access to results with no feedback in the database
         // If the build failed (no feedback, but build logs) and the build plan does not exist any more (because it was cleaned up before),
         // we cannot send feedback to the student, this case is handled in the continuous integration service
-        if (!result.isSuccessful() && (result.getFeedbacks() == null || result.getFeedbacks().size() == 0)) {
+        if (!result.isSuccessful() && result.getAssessmentType().equals(AssessmentType.AUTOMATIC) && (result.getFeedbacks() == null || result.getFeedbacks().size() == 0)) {
             // if the result does not contain any feedback, try to retrieve them from Bamboo and store them in the result and return these.
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
         }
