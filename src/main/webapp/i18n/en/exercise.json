@@ -58,6 +58,8 @@
             "duration": "Duration",
             "showUnsuccessful": "Show Unsuccessful",
             "showSuccessful": "Show Successful",
+            "showManual": "Show Manual",
+            "showAutomatic": "Show Automatic",
             "showAll": "Show All",
             "tagPlaceholder": "Enter a new category",
             "isProgramming": "This is a programming exercise",
