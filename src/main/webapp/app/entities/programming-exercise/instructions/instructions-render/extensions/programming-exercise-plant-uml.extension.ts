@@ -33,7 +33,6 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
      */
     private loadAndInjectPlantUmls(plantUmls: string[]) {
         plantUmls.forEach((plantUml, index) => {
-            // TODO: use getPlantUmlSvg
             this.plantUmlService
                 .getPlantUmlSvg(plantUml)
                 .pipe(
@@ -41,7 +40,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                         const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                         if (plantUmlHtmlContainer) {
                             // We need to sanitize the received svg theoretically as it could contain malicious code in a script tag.
-                            plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUml);
+                            plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUmlSvg);
                         }
                     }),
                 )
