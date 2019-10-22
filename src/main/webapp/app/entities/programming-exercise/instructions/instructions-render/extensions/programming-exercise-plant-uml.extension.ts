@@ -10,6 +10,7 @@ import {
 } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-plant-uml.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
+import * as DOMPurify from 'dompurify';
 
 @Injectable()
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {
@@ -34,12 +35,13 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
         plantUmls.forEach((plantUml, index) => {
             // TODO: use getPlantUmlSvg
             this.plantUmlService
-                .getPlantUmlImage(plantUml)
+                .getPlantUmlSvg(plantUml)
                 .pipe(
-                    tap((plantUmlSrcAttribute: string) => {
+                    tap((plantUmlSvg: string) => {
                         const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                         if (plantUmlHtmlContainer) {
-                            plantUmlHtmlContainer.setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                            // We need to sanitize the received svg theoretically as it could contain malicious code in a script tag.
+                            plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUml);
                         }
                     }),
                 )
