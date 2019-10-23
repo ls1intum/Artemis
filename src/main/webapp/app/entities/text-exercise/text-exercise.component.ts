@@ -24,7 +24,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         courseService: CourseService,
         translateService: TranslateService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
         private accountService: AccountService,
