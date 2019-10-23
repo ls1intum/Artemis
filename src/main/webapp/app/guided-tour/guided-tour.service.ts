@@ -397,16 +397,12 @@ export class GuidedTourService {
                         this.enableNextStepClick();
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                this.observeMutations(targetNode, options)
-                    .pipe(
-                        filter(
-                            (mutation: MutationRecord) =>
-                                mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1),
-                        ),
-                    )
-                    .subscribe(() => {
+                this.observeMutations(targetNode, options).subscribe((mutation: MutationRecord) => {
+                    console.log('mutation: ', mutation);
+                    if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
                         this.enableNextStepClick();
-                    });
+                    }
+                });
             } else if (userInteraction === UserInteractionEvent.MODELING) {
                 options = { childList: true, subtree: true };
                 targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
