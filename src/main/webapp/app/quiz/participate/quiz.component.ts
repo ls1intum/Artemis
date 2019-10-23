@@ -26,6 +26,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-te
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 @Component({
     selector: 'jhi-quiz',
@@ -110,6 +111,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private quizSubmissionService: QuizSubmissionService,
         private translateService: TranslateService,
+        public deviceService: DeviceDetectorService,
     ) {
         smoothscroll.polyfill();
     }
