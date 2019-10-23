@@ -45,6 +45,7 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      * Load all the submissions in this exercise associated to the tutor
      * @param exerciseId id of the exercise
      * @param tutorId id of the tutor
+     * @return list of optional submissions
      */
     List<Optional<T>> findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(Long exerciseId, Long tutorId);
 }
