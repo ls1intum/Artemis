@@ -397,6 +397,7 @@ export class GuidedTourService {
                         this.enableNextStepClick();
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+                targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
                 this.observeMutations(targetNode, options).subscribe((mutation: MutationRecord) => {
                     console.log('mutation: ', mutation);
                     if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
