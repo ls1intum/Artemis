@@ -7,7 +7,7 @@
                 <span *ngIf="modelingExercise">{{ modelingExercise.title }}</span>
             </h2>
         </div>
-        <div class="col-12 col-lg-4 text-right submission-buttons" *ngIf="!isLoading">
+        <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
             <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
