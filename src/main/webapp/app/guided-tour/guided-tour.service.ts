@@ -398,10 +398,11 @@ export class GuidedTourService {
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
                 this.observeMutations(targetNode, options)
-                    // .pipe(filter((mutation: MutationRecord) => mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)))
                     .pipe(
-                        debounceTime(100),
-                        distinctUntilChanged(),
+                        filter(
+                            (mutation: MutationRecord) =>
+                                mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1),
+                        ),
                     )
                     .subscribe(() => {
                         this.enableNextStepClick();
