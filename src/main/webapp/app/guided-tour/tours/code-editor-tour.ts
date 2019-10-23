@@ -104,6 +104,7 @@ export const codeEditorTour: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
             orientation: Orientation.LEFT,
+            skipStepIfNoSelector: true,
         }),
     ],
 };
