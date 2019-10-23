@@ -79,7 +79,6 @@ public class GitService {
      *
      * @param participation Participation the remote repository belongs to.
      * @return the repository if it could be checked out
-     * @throws IOException if the repository could not be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
@@ -94,7 +93,6 @@ public class GitService {
      * @param participation Participation the remote repository belongs to.
      * @param targetPath path where the repo is located on disk
      * @return the repository if it could be checked out
-     * @throws IOException if the repository could not be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
@@ -328,8 +326,8 @@ public class GitService {
             fetchAll(repo);
             reset(repo, "origin/master");
         }
-        catch (GitAPIException ex) {
-            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex);
+        catch (GitAPIException | JGitInternalException ex) {
+            log.error("Cannot hard reset the repo " + repo.getLocalPath() + " to origin/master due to the following exception: " + ex.getMessage());
         }
     }
 
@@ -433,10 +431,9 @@ public class GitService {
             git.close();
 
             reset(repository, commitHash);
-
         }
-        catch (GitAPIException ex) {
-            log.error("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
+        catch (GitAPIException | JGitInternalException ex) {
+            log.warn("Cannot filter the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
         }
     }
 
@@ -461,11 +458,11 @@ public class GitService {
             // flush cache of files
             repository.setContent(null);
 
-            // checkout own local "stager" branch
-            studentGit.checkout().setCreateBranch(true).setName("stager").call();
+            // checkout own local "diff" branch
+            studentGit.checkout().setCreateBranch(true).setName("diff").call();
 
             // merge commits into one commit
-            RebaseResult result = studentGit.rebase().setUpstream(latestHash).runInteractively(new RebaseCommand.InteractiveHandler() {
+            studentGit.rebase().setUpstream(latestHash).runInteractively(new RebaseCommand.InteractiveHandler() {
 
                 @Override
                 public void prepareSteps(List<RebaseTodoLine> steps) {
@@ -495,7 +492,7 @@ public class GitService {
 
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
-            log.error("Cannot rebase the repo " + repository.getLocalPath() + " due to the following exception: " + ex);
+            log.warn("Cannot rebase the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
         }
     }
 

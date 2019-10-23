@@ -26,7 +26,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      *
      */
     toggleHasManualTests() {
-        this.exercise.assessmentType = this.exercise.assessmentType === AssessmentType.AUTOMATIC ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.AUTOMATIC;
+        this.exercise.assessmentType = this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? AssessmentType.AUTOMATIC : AssessmentType.SEMI_AUTOMATIC;
     }
 
     /**

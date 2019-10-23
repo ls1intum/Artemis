@@ -287,7 +287,6 @@ public class ResultService {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
 
-        // TODO: in this case we do not have a submission. However, it would be good to create one, even if it might be "empty"
         User user = userService.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -304,7 +303,7 @@ public class ResultService {
         Result savedResult = resultRepository.save(result);
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
-        if (result.isExampleResult() == Boolean.FALSE) {
+        if (result.isExampleResult() == Boolean.FALSE || result.isExampleResult() == null) {
             try {
                 result.getParticipation().addResult(savedResult);
                 participationService.save(result.getParticipation());

@@ -15,6 +15,7 @@ import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentP
 import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { tap, take } from 'rxjs/operators';
 import { zip, of } from 'rxjs';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 @Component({
     selector: 'jhi-exercise-scores',
@@ -111,6 +112,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     });
                     this.allResults = tempResults;
                     this.filterResults();
+                    // Nest submission into participation so that it is available for the result component
+                    this.results = this.results.map(result => {
+                        if (result.participation && result.submission) {
+                            result.participation.submissions = [result.submission];
+                        }
+                        return result;
+                    });
                 }),
             );
     }
@@ -121,6 +129,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.results = this.allResults.filter(result => result.successful);
         } else if (this.showAllResults === 'unsuccessful') {
             this.results = this.allResults.filter(result => !result.successful);
+        } else if (this.showAllResults === 'manual') {
+            this.results = this.allResults.filter(result => result.assessmentType === AssessmentType.MANUAL);
+        } else if (this.showAllResults === 'automatic') {
+            this.results = this.allResults.filter(result => result.assessmentType === AssessmentType.AUTOMATIC);
         } else if (this.showAllResults === 'all') {
             this.results = this.allResults;
         }

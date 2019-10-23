@@ -153,11 +153,13 @@ public class ProgrammingExerciseParticipationService {
 
     public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
+        // TODO: getProgrammingExercise() can be null which leads to a null pointer exception, we should handle this case and retrieve the exercise from the database
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
     public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
+        // TODO: getProgrammingExercise() can be null which leads to a null pointer exception, we should handle this case and retrieve the exercise from the database
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 

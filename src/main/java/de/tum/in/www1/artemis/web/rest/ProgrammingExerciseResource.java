@@ -618,6 +618,7 @@ public class ProgrammingExerciseResource {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
+        // TODO: in case we do not find a student login, we should inform the user in the client, that this student id did not participate in the exercise
 
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -630,8 +631,8 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 

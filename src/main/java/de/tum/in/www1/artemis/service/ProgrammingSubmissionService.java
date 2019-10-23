@@ -115,6 +115,9 @@ public class ProgrammingSubmissionService {
 
         String lastCommitHash;
         try {
+            // TODO: if the commit was made in a branch different than master, ignore this
+            // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
+            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
         }
         catch (Exception ex) {
@@ -125,7 +128,7 @@ public class ProgrammingSubmissionService {
         // There can't be two submissions for the same participation and commitHash!
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, lastCommitHash);
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + "already exists!");
+            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + " already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
