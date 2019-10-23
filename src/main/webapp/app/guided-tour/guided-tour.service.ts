@@ -387,12 +387,14 @@ export class GuidedTourService {
             let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
 
             if (userInteraction === UserInteractionEvent.CLICK) {
+                /** The first DOM mutation on the click event listener triggers the enableNextStepClick() call */
                 this.observeMutations(targetNode, options)
                     .pipe(take(1))
                     .subscribe(() => {
                         this.enableNextStepClick();
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+                /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
                 targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
                 this.observeMutations(targetNode, options)
                     .pipe(
@@ -405,6 +407,9 @@ export class GuidedTourService {
                         this.enableNextStepClick();
                     });
             } else if (userInteraction === UserInteractionEvent.MODELING) {
+                /** We observe any DOM mutation in the .apollon-editor node and its children
+                 *  If the UML model is correct then enableNextStepClick() will be called
+                 */
                 options = { childList: true, subtree: true };
                 targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
 
@@ -545,11 +550,6 @@ export class GuidedTourService {
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
-                console.warn(
-                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].highlightSelector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                        this.currentTour.settingsKey
-                    }`,
-                );
                 return false;
             }
         }

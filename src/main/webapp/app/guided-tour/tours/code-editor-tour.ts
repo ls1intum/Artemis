@@ -5,7 +5,7 @@ import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const codeEditorTour: GuidedTour = {
     courseShortName: 'artemistutorial',
-    exerciseShortName: 'test',
+    exerciseShortName: 'tutorial',
     settingsKey: 'code_editor_tour',
     steps: [
         new TextTourStep({
