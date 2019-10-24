@@ -68,7 +68,7 @@ public class TextSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
         }
         final var participation = optionalParticipation.get();
-        if (dueDate != null && participation.getInitializationDate().isAfter(dueDate) && dueDate.isBefore(ZonedDateTime.now())) {
+        if (dueDate != null && participation.getInitializationDate().isBefore(dueDate) && dueDate.isBefore(ZonedDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
