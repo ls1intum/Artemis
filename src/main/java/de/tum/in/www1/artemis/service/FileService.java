@@ -306,6 +306,10 @@ public class FileService {
             if (targetFilePath.endsWith("git.attributes.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.attributes.file", ".gitattributes");
             }
+            // special case for 'Makefile' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("Makefile.file")) {
+                targetFilePath = targetFilePath.replace("Makefile.file", "Makefile");
+            }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
