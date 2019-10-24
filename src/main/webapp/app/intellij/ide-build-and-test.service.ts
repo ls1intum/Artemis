@@ -5,9 +5,9 @@ import { ParticipationWebsocketService } from '../entities/participation';
 import { Result } from '../entities/result';
 import { filter, map, tap } from 'rxjs/operators';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { CodeEditorBuildLogService, DomainType } from 'app/code-editor/service/code-editor-repository.service';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Observable, Subject, Subscription } from 'rxjs';
+import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.
@@ -26,7 +26,7 @@ export class IdeBuildAndTestService {
         private submissionService: ProgrammingSubmissionService,
         private participationWebsocketService: ParticipationWebsocketService,
         private javaBridge: JavaBridgeService,
-        private buildLogService: CodeEditorBuildLogService,
+        private buildLogService: BuildLogService,
     ) {}
 
     /**
@@ -49,7 +49,6 @@ export class IdeBuildAndTestService {
      */
     listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise): Observable<void> {
         const participationId = exercise.studentParticipations[0].id;
-        this.buildLogService.setDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
         this.javaBridge.onBuildStarted();
 
         // Listen for the new result on the websocket
@@ -73,7 +72,7 @@ export class IdeBuildAndTestService {
                         this.javaBridge.onBuildFinished();
                         this.buildFinished.next();
                     } else {
-                        this.forwardBuildLogs();
+                        this.forwardBuildLogs(participationId);
                     }
                 }),
             )
@@ -82,9 +81,9 @@ export class IdeBuildAndTestService {
         return this.buildFinished;
     }
 
-    private forwardBuildLogs() {
+    private forwardBuildLogs(participationId: number) {
         this.buildLogSubscription = this.buildLogService
-            .getBuildLogs()
+            .getBuildLogs(participationId)
             .pipe(
                 map(logs => new BuildLogEntryArray(...logs)),
                 tap((logs: BuildLogEntryArray) => {
