@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from '../../../../../app.constants';
-import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParameterCodec, HttpParams, HttpResponse } from '@angular/common/http';
 import { Cacheable } from 'ngx-cacheable';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
@@ -53,9 +54,10 @@ export class ProgrammingExercisePlantUmlService {
         maxAge: 3000,
         slidingExpiration: true,
     })
-    getPlantUmlSvg(plantUml: string) {
+    getPlantUmlSvg(plantUml: string): Observable<string> {
         return this.http.get(`${this.resourceUrl}/svg`, {
             params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
+            responseType: 'text',
         });
     }
 
