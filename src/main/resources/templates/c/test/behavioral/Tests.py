@@ -33,16 +33,19 @@ def main():
     # Sanitizer:
     # Address Sanitizer:
     testASan: TestASan = TestASan(makefileLocation)
+    tester.addTest(testASan)
     tester.addTest(TestInput(makefileLocation, 1, requirements=[testASan.name], name="TestInputASan_1", executable="asan.out"))
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testASan.name], name="TestInputASan_5", executable="asan.out"))
 
     # Undefined Behavior Sanitizer:
     testUBSan: TestUBSan = TestUBSan(makefileLocation)
+    tester.addTest(testUBSan)
     tester.addTest(TestInput(makefileLocation, 1, requirements=[testUBSan.name], name="TestInputUBSan_1", executable="ubsan.out"))
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testUBSan.name], name="TestInputUBSan_5", executable="ubsan.out"))
 
     # Leak Sanitizer:
     testLSan: TestLSan = TestLSan(makefileLocation)
+    tester.addTest(testLSan)
     tester.addTest(TestInput(makefileLocation, 1, requirements=[testLSan.name], name="TestInputLSan_1", executable="lsan.out"))
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testLSan.name], name="TestInputLSan_5", executable="lsan.out"))
 
