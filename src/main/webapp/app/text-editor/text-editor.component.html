@@ -15,6 +15,7 @@
                 (onClick)="submit()"
                 [disabled]="!isActive || !submission"
                 [isLoading]="isSaving"
+                [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
                 [tooltip]="
                     !isAllowedToSubmitAfterDeadline
                         ? isActive

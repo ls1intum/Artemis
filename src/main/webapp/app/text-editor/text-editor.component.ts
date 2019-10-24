@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,19 +9,19 @@ import { Result, ResultService } from 'app/entities/result';
 import { ParticipationService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
-import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Moment, now } from 'moment';
+import { ButtonType } from 'app/shared/components';
 
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
 export class TextEditorComponent implements OnInit {
+    readonly ButtonType = ButtonType;
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
@@ -184,7 +183,7 @@ export class TextEditorComponent implements OnInit {
                 this.submission = response.body!;
                 this.result = this.submission.result;
 
-                if (!this.isAlwaysActive) {
+                if (!this.isAllowedToSubmitAfterDeadline) {
                     this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
                 } else {
                     this.jhiAlertService.warning('artemisApp.textExercise.submitDeadlineMissed');
