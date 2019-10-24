@@ -68,6 +68,8 @@ public class TextSubmissionIntegrationTest {
         textExerciseBeforeDueDate = (TextExercise) database.addCourseWithOneTextExercise().getExercises().iterator().next();
         textExerciseAfterDueDate = (TextExercise) exerciseRepo.findAll().get(0);
         afterDueDateParticipation = database.addParticipationForExercise(textExerciseAfterDueDate, student.getLogin());
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        participationRepository.save(afterDueDateParticipation);
         database.addParticipationForExercise(textExerciseBeforeDueDate, student.getLogin());
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
