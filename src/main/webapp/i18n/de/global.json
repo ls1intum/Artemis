@@ -184,7 +184,7 @@
             "submitTooltip": "Du kannst mehrmals abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe",
             "submitDeadlineMissedTooltip": "Die Deadline ist abgelaufen. Weitere Abgaben werden nicht gewertet!",
             "deadlineMissedTooltip": "Die Deadline ist abgelaufen. Du kannst keine neuen Lösungen einreichen!",
-            "submitDeadlineMissed": "Absenden (Deadline abgelaufen)",
+            "submitDeadlineMissed": "Absenden (Deadline verpasst)",
             "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
