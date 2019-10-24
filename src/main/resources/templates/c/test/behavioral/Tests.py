@@ -16,6 +16,9 @@ def main():
     tester: Tester = Tester()
 
     # Register all test cases:
+
+    # Basic compile test:
+    # Run after the sanitizer so we run the tests without any sanitizer enabled
     testCompile: TestCompile = TestCompile(makefileLocation)
 
     # IO Tests:
@@ -31,16 +34,19 @@ def main():
 
     # Sanitizer:
     # Address Sanitizer:
-    tester.addTest(TestInput(makefileLocation, 1, requirements=[testASan.name], name="TestInputASan_1"))
-    tester.addTest(TestInput(makefileLocation, 5, requirements=[testASan.name], name="TestInputASan_5"))
+    testASan: TestASan = TestASan(makefileLocation, requirements=[testCompile.name])
+    tester.addTest(TestInput(makefileLocation, 1, requirements=[testASan.name], name="TestInputASan_1", executable="asan.out"))
+    tester.addTest(TestInput(makefileLocation, 5, requirements=[testASan.name], name="TestInputASan_5", executable="asan.out"))
 
     # Undefined Behavior Sanitizer:
-    tester.addTest(TestInput(makefileLocation, 1, requirements=[testUBSan.name], name="TestInputUBSan_1"))
-    tester.addTest(TestInput(makefileLocation, 5, requirements=[testUBSan.name], name="TestInputUBSan_5"))
+    testUBSan: TestUBSan = TestUBSan(makefileLocation, requirements=[testCompile.name])
+    tester.addTest(TestInput(makefileLocation, 1, requirements=[testUBSan.name], name="TestInputUBSan_1", executable="ubsan.out"))
+    tester.addTest(TestInput(makefileLocation, 5, requirements=[testUBSan.name], name="TestInputUBSan_5", executable="ubsan.out"))
 
     # Leak Sanitizer:
-    tester.addTest(TestInput(makefileLocation, 1, requirements=[testLSan.name], name="TestInputLSan_1"))
-    tester.addTest(TestInput(makefileLocation, 5, requirements=[testLSan.name], name="TestInputLSan_5"))
+    testLSan: TestLSan = TestLSan(makefileLocation, requirements=[testCompile.name])
+    tester.addTest(TestInput(makefileLocation, 1, requirements=[testLSan.name], name="TestInputLSan_1", executable="lsan.out"))
+    tester.addTest(TestInput(makefileLocation, 5, requirements=[testLSan.name], name="TestInputLSan_5", executable="lsan.out"))
 
     # Run the actual tests:
     tester.run()
