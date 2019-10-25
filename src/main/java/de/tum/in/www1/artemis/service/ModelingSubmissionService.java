@@ -5,9 +5,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -15,7 +17,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -206,7 +207,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
         final var exerciseDueDate = modelingExercise.getDueDate();
         if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
-            throw new BadRequestAlertException("You missed the deadline for submitting modeling exercise", "modelingSubmission", "idexists");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         // update submission properties

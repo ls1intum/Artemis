@@ -412,7 +412,7 @@ public class ModelingSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_afterDueDate_forbidden() throws Exception {
-        request.put("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.BAD_REQUEST);
+        request.put("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
