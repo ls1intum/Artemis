@@ -11,9 +11,9 @@ import { Course, CourseService } from 'app/entities/course';
 import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { ParticipationService, ParticipationWebsocketService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { tap, take, filter } from 'rxjs/operators';
+import { tap, take } from 'rxjs/operators';
 import { zip, of } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 

@@ -462,8 +462,4 @@ public class ProgrammingSubmissionService {
         Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findByResultId(resultId);
         return programmingSubmission.orElseThrow(() -> new EntityNotFoundException("Could not find programming submission for result id " + resultId));
     }
-
-    public ProgrammingSubmission save(ProgrammingSubmission submission) {
-        return programmingSubmissionRepository.save(submission);
-    }
 }
