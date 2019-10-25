@@ -441,6 +441,7 @@ public class ResultService {
         }
         // The same link might need to be restored for the submission.
         result.getSubmission().setResult(result);
+        result.getSubmission().setParticipation(result.getParticipation());
         programmingSubmissionService.save((ProgrammingSubmission) result.getSubmission());
         result = resultRepository.save(result);
         // Unproxy the related entities.
