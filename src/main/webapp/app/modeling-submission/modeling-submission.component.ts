@@ -72,7 +72,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isLoading: boolean;
-    isLate: boolean;
+    isLate: boolean; // indicates if the submission is late
     ComplaintType = ComplaintType;
 
     constructor(
@@ -116,6 +116,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
+                        // checks if the student started the exercise after the due date
                         this.isLate =
                             this.modelingExercise &&
                             !!this.modelingExercise.dueDate &&
@@ -510,7 +511,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * The exercise is still active if it's due date hasn't passed yet, or if the participation was started after the due date has already passed
+     * The exercise is still active if it's due date hasn't passed yet
      */
     get isActive() {
         return this.modelingExercise && !this.result && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
