@@ -296,7 +296,7 @@ public class ResultService {
             List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
             result.setFeedbacks(savedFeedbackItems);
         }
-        return saveManualResult(result, true);
+        return createNewManualResult(result, true);
     }
 
     /**
@@ -305,7 +305,7 @@ public class ResultService {
      * @param result newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
      */
-    public Result saveManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
