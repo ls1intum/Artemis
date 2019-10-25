@@ -11,9 +11,9 @@ import { Course, CourseService } from 'app/entities/course';
 import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService, ParticipationWebsocketService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { tap, take } from 'rxjs/operators';
+import { tap, take, filter } from 'rxjs/operators';
 import { zip, of } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 
@@ -50,6 +50,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private participationService: ParticipationService,
         private programmingSubmissionService: ProgrammingSubmissionService,
+        private participationWebsocketService: ParticipationWebsocketService,
         private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
@@ -210,6 +211,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             document.body.appendChild(link); // Required for FF
             link.click();
         }
+    }
+
+    onNewManualResultCreated(newResult: Result) {
+        this.allResults = this.allResults.map(result => (result.participation!.id === newResult.participation!.id ? newResult : result));
+        this.filterResults();
     }
 
     refresh() {

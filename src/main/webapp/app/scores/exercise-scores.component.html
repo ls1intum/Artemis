@@ -111,6 +111,7 @@
                             *ngIf="newManualResultAllowed"
                             [participationId]="result.participation.id"
                             [latestResult]="result"
+                            (onNewResultCreated)="onNewManualResultCreated($event)"
                             class="mr-1"
                         ></jhi-programming-assessment-manual-result>
                     </td>

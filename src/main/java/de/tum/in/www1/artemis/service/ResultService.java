@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -54,9 +55,11 @@ public class ResultService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final FeedbackRepository feedbackRepository;
+
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService) {
+            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -66,6 +69,7 @@ public class ResultService {
         this.objectMapper = objectMapper;
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -273,12 +277,35 @@ public class ResultService {
     }
 
     /**
+     * Update a manual result of a programming exercise.
+     * Makes sure that the feedback items are persisted correctly, taking care of the OrderingColumn attribute of result.feedbacks.
+     * See https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection and inline doc for reference.
+     *
+     * Also informs the client using a websocket about the updated result.
+     *
+     * @param result Result.
+     * @return updated result with eagerly loaded Submission and Feedback items.
+     */
+    public Result updateManualProgrammingExerciseResult(Result result) {
+        // This is a workaround for saving a result with new feedbacks.
+        // The issue seems to be that result.feedbacks is both a OneToMany relationship + has a the OrderColumn annotation.
+        // Without this a 'null index column for collection' error is triggered when trying to save the result.
+        if (result.getId() != null) {
+            // This creates a null value in the feedbacks_order column, when the result is saved below, it is filled with the next available number (e.g. last item was 2, next is
+            // 3).
+            List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
+            result.setFeedbacks(savedFeedbackItems);
+        }
+        return saveManualResult(result, true);
+    }
+
+    /**
      * Handle the manual creation of a new result potentially including feedback
      *
      * @param result newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
      */
-    public void createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public Result saveManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
@@ -308,7 +335,7 @@ public class ResultService {
                 log.warn("Unable to load result list for participation", ex);
             }
 
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", savedResult);
 
             if (!Hibernate.isInitialized(savedResult.getParticipation().getExercise())) {
                 Hibernate.initialize(savedResult.getParticipation().getExercise());
@@ -318,6 +345,7 @@ public class ResultService {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
             }
         }
+        return savedResult;
     }
 
     /**
@@ -422,32 +450,4 @@ public class ResultService {
     public boolean existsByExerciseId(Long exerciseId) {
         return resultRepository.existsByParticipation_ExerciseId(exerciseId);
     }
-
-    /**
-     * Make sure that the feedback items of a result are linked to the result.
-     * Unproxies the related entities Submission and Feedback after the save.
-     *
-     * @param result Result
-     * @return updated Result with eagerly loaded Submission and Feedbacks.
-     */
-    @Transactional
-    public Result saveProgrammingExerciseResult(Result result) {
-        // Without this no connection between the result and feedback items is created.
-        for (Feedback feedback : result.getFeedbacks()) {
-            feedback.setResult(result);
-        }
-        if (result.getFeedbacks().size() > 0) {
-            result.setHasFeedback(true);
-        }
-        // The same link might need to be restored for the submission.
-        result.getSubmission().setResult(result);
-        result.getSubmission().setParticipation(result.getParticipation());
-        programmingSubmissionService.save((ProgrammingSubmission) result.getSubmission());
-        result = resultRepository.save(result);
-        // Unproxy the related entities.
-        Hibernate.unproxy(result.getSubmission());
-        Hibernate.unproxy(result.getFeedbacks());
-        return result;
-    }
-
 }

@@ -1,20 +1,16 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseScoresPopupService } from '../../scores/exercise-scores-popup.service';
 import { Result } from '../../entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
 import { Feedback, FeedbackType } from '../../entities/feedback';
-import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
-
-import { Subscription } from 'rxjs/Subscription';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation';
-import { catchError, tap, switchMap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
 
 @Component({
@@ -111,7 +107,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {
-        this.activeModal.close(result);
+        this.activeModal.close(result.body);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }

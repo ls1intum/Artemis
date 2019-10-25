@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, OnDestroy, EventEmitter, Output } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
@@ -26,6 +26,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     ButtonSize = ButtonSize;
     @Input() participationId: number;
     @Input() latestResult?: Result | null;
+    @Output() onNewResultCreated = new EventEmitter<Result>();
 
     latestResultSubscription: Subscription;
 
@@ -64,5 +65,9 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = this.participationId;
         modalRef.componentInstance.result = this.latestResult;
+        modalRef.result.then(manualResult => {
+            this.latestResult = manualResult;
+            this.onNewResultCreated.emit(manualResult);
+        });
     }
 }

@@ -139,7 +139,7 @@ public class ResultResource {
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
         result.setSubmission(submission);
-        resultService.createNewManualResult(result, true);
+        result = resultService.saveManualResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -303,9 +303,7 @@ public class ResultResource {
             return createProgrammingExerciseManualResult(result);
         }
 
-        result = resultService.saveProgrammingExerciseResult(result);
-        // Send updated result to websocket subscribers.
-        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+        result = resultService.updateManualProgrammingExerciseResult(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
