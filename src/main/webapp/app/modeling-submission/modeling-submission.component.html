@@ -46,7 +46,7 @@
         <div *ngIf="submission && (isActive || isLate)" class="col-12 editor-large">
             <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
         </div>
-        <div *ngIf="!isActive" class="col-9">
+        <div *ngIf="!isActive && modelingExercise" class="col-9">
             <jhi-modeling-assessment
                 [model]="umlModel"
                 [feedbacks]="assessmentResult?.feedbacks"
