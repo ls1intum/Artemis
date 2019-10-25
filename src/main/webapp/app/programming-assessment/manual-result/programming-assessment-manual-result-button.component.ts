@@ -26,7 +26,6 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     ButtonSize = ButtonSize;
     @Input() participationId: number;
     @Input() latestResult?: Result | null;
-    @Output() onNewResultCreated = new EventEmitter<Result>();
 
     latestResultSubscription: Subscription;
 
@@ -65,9 +64,5 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = this.participationId;
         modalRef.componentInstance.result = this.latestResult;
-        modalRef.result.then(manualResult => {
-            this.latestResult = manualResult;
-            this.onNewResultCreated.emit(manualResult);
-        });
     }
 }
