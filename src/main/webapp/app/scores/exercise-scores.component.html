@@ -110,6 +110,7 @@
                         <jhi-programming-assessment-manual-result
                             *ngIf="newManualResultAllowed"
                             [participationId]="result.participation.id"
+                            (onResultCreated)="refresh()"
                             class="mr-1"
                         ></jhi-programming-assessment-manual-result>
                     </td>
