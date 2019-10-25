@@ -80,25 +80,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     /**
-     * Cleans up programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event true if repositories should be deleted
-     */
-    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
-            () => {
-                if ($event.deleteRepositories) {
-                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
-                } else {
-                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
-                }
-                this.closeDialogTrigger = !this.closeDialogTrigger;
-            },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
-        );
-    }
-
-    /**
      * Resets programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
@@ -106,12 +87,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.exerciseService
             .reset(programmingExerciseId)
             .subscribe(() => (this.closeDialogTrigger = !this.closeDialogTrigger), (error: HttpErrorResponse) => onError(this.jhiAlertService, error));
-    }
-
-    openRepoExportDialog(programmingExerciseId: number, $event: MouseEvent) {
-        $event.stopPropagation();
-        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exerciseId = programmingExerciseId;
     }
 
     protected getChangeEventName(): string {
