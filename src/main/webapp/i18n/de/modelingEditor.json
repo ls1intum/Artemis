@@ -7,7 +7,7 @@
             "saveSuccessful": "Dein Diagramm wurde erfolgreich gespeichert!",
             "submitSuccessful": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst noch einmal senden oder auf dein Feedback warten.",
             "submitSuccessfulWithAssessment": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst dein Diagramm nun nicht mehr bearbeiten. Dein Feedback wird unten angezeigt.",
-            "submitDeadlineMissed": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst noch einmal senden oder auf dein Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
+            "submitDeadlineMissed": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "empty": "Ein leeres Diagramm kann nicht abgegeben werden.",
             "autoSubmit": "Die Übung ist zu Ende. Du kannst dein Diagramm nun nicht mehr bearbeiten.",
             "newAssessment": "Eine neue Bewertung für deine Abgabe wurde eingereicht.",
