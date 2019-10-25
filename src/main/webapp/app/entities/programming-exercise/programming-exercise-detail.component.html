@@ -16,7 +16,7 @@
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
                 </button>
-                <jhi-programming-assessment-repo-export [exerciseId]="programmingExercise.id" class="mr-1 mb-1"></jhi-programming-assessment-repo-export>
+                <jhi-programming-assessment-repo-export [exerciseId]="programmingExercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
                 <button
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     jhiDeleteButton
