@@ -23,7 +23,7 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
-export const enum ParticipationStatus {
+export enum ParticipationStatus {
     QUIZ_UNINITIALIZED = 'quiz-uninitialized',
     QUIZ_ACTIVE = 'quiz-active',
     QUIZ_SUBMITTED = 'quiz-submitted',

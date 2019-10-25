@@ -184,7 +184,7 @@ public class ResultResource {
      */
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
-        log.info("Received result notify (NEW)");
+        log.debug("Received result notify (NEW)");
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
@@ -204,11 +204,11 @@ public class ResultResource {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             return badRequest();
         }
-        log.info("PlanKey for received notifyResultNew is {}", planKey);
+        log.info("Artemis received a new result from Bamboo for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
         Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
-        if (!optionalParticipation.isPresent()) {
+        if (optionalParticipation.isEmpty()) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             return notFound();
         }
@@ -231,7 +231,7 @@ public class ResultResource {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
             }
         }
-        log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
+        log.info("The new result was for {} was saved successfully", planKey);
         return ResponseEntity.ok().build();
     }
 
