@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
-public class ProgrammingSubmissionService extends SubmissionService {
+public class ProgrammingSubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
@@ -47,8 +47,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private final ParticipationService participationService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -62,19 +60,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final ResultRepository resultRepository;
-
     private final StudentParticipationRepository studentParticipationRepository;
+
+    private final SubmissionService submissionService;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, SubmissionService submissionService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseService = programmingExerciseService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.versionControlService = versionControlService;
@@ -83,8 +80,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
-        this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -530,5 +527,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             return Optional.empty();
         }
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+    }
+
+    public void hideDetails(ProgrammingSubmission submission) {
+        submissionService.hideDetails(submission);
     }
 }

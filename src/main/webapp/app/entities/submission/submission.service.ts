@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import { createRequestOption } from 'app/shared';
 import { Result } from 'app/entities/result';
 import { Submission } from 'app/entities/submission';
-import { Participation } from 'app/entities/participation';
+import { Participation, StudentParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -34,7 +34,7 @@ export class SubmissionService {
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.submissionDate = res.body.submissionDate != null ? moment(res.body.submissionDate) : null;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation) as StudentParticipation;
         }
         return res;
     }

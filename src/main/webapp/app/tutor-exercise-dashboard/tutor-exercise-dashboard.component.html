@@ -246,9 +246,19 @@
                                 {{ 'artemisApp.tutorExerciseDashboard.languages.' + (unassessedSubmission.language ? unassessedSubmission.language : 'UNKNOWN') | translate }}
                             </td>
                             <td>
-                                <button class="btn btn-success btn-sm" (click)="openAssessmentEditor(unassessedSubmission.id, true)">
-                                    <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}
-                                </button>
+                                <ng-template *ngIf="exercise.type !== ExerciseType_PROGRAMMING; else programmingAssessment">
+                                    <button class="btn btn-success btn-sm" (click)="openAssessmentEditor(unassessedSubmission.id, true)">
+                                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}
+                                    </button>
+                                </ng-template>
+                                <ng-template #programmingAssessment>
+                                    <jhi-programming-assessment-repo-export
+                                        [exerciseId]="exercise.id"
+                                        [singleStudentMode]="true"
+                                        [studentIdList]="unassessedSubmission.participation.student.login"
+                                    ></jhi-programming-assessment-repo-export>
+                                    <jhi-programming-assessment-manual-result [participationId]="unassessedSubmission.participation.id"></jhi-programming-assessment-manual-result>
+                                </ng-template>
                             </td>
                         </tr>
                     </tbody>

@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
-import { Participation } from '../participation';
+import { Participation, StudentParticipation } from '../participation';
 import { Moment } from 'moment';
 import { Language } from 'app/entities/tutor-group';
 
@@ -27,7 +27,7 @@ export abstract class Submission implements BaseEntity {
     public submissionExerciseType: SubmissionExerciseType;
 
     public result: Result;
-    public participation: Participation;
+    public participation: StudentParticipation;
 
     public language: Language | null;
 

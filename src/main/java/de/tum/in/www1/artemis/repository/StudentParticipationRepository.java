@@ -59,7 +59,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and submission.submitted = true and (result is null or result.assessmentType = 'AUTOMATIC')")
+    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and submission.submitted = true and (select count(result) from participation.results where result.assessmentType = 'MANUAL') = 0 and (result is null or result.id = (select max(id) from participation.results))")
     List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     /**
