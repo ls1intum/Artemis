@@ -234,11 +234,53 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
-                this.submit();
+                this.saveDiagram();
             }
         }, 1000);
     }
 
+    saveDiagram(): void {
+        if (this.isSaving) {
+            // don't execute the function if it is already currently executing
+            return;
+        }
+        if (!this.submission) {
+            this.submission = new ModelingSubmission();
+        }
+        this.submission.submitted = false;
+        this.updateSubmissionModel();
+        this.isSaving = true;
+        this.autoSaveTimer = 0;
+
+        if (this.submission.id) {
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
+                response => {
+                    this.submission = response.body!;
+                    this.result = this.submission.result;
+                    this.isSaving = false;
+                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                },
+                () => {
+                    this.isSaving = false;
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                },
+            );
+        } else {
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
+                submission => {
+                    this.submission = submission.body!;
+                    this.result = this.submission.result;
+                    this.isSaving = false;
+                    this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                    this.subscribeToAutomaticSubmissionWebsocket();
+                },
+                () => {
+                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                    this.isSaving = false;
+                },
+            );
+        }
+    }
     submit(): void {
         if (this.isSaving) {
             // don't execute the function if it is already currently executing
@@ -409,7 +451,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Checks whether there are pending changes in the current model. Returns true if there are NO unsaved changes, false otherwise.
      */
     canDeactivate(): Observable<boolean> | boolean {
-        if (!this.modelingEditor || (this.submission && this.submission.submitted)) {
+        if (!this.modelingEditor) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
