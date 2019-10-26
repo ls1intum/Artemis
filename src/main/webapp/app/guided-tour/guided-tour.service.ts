@@ -62,7 +62,7 @@ export class GuidedTourService {
 
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
-            if (this.currentTour && event instanceof NavigationStart) {
+            if (this.availableTourForComponent && event instanceof NavigationStart) {
                 this.finishGuidedTour();
                 this.guidedTourAvailability.next(false);
             }
@@ -466,11 +466,6 @@ export class GuidedTourService {
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
-                console.warn(
-                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].highlightSelector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                        this.currentTour.settingsKey
-                    }`,
-                );
                 return false;
             }
         }
