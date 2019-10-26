@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +23,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class FileUploadSubmissionService extends SubmissionService<FileUploadSubmission> {
+public class FileUploadSubmissionService extends SubmissionService<FileUploadSubmission, FileUploadSubmissionRepository> {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
-
-    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final ResultService resultService;
 
@@ -38,8 +34,8 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
             SimpMessageSendingOperations messagingTemplate, ResultService resultService, FileService fileService, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository);
-        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository,
+                fileUploadSubmissionRepository);
         this.resultService = resultService;
         this.fileService = fileService;
     }
@@ -60,21 +56,8 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
         fileUploadSubmission = save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, fileUploadExercise);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
-        fileUploadSubmissionRepository.save(fileUploadSubmission);
+        genericSubmissionRepository.save(fileUploadSubmission);
         return fileUploadSubmission;
-    }
-
-    /**
-     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated
-     *
-     * @param exerciseId - the id of the exercise we are looking for
-     * @param tutorId    - the id of the tutor we are interested in
-     * @return a list of file upload Submissions
-     */
-    @Transactional(readOnly = true)
-    public List<FileUploadSubmission> getAllFileUploadSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
-        return fileUploadSubmissionRepository.findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(exerciseId, tutorId).stream().map(Optional::get)
-                .collect(Collectors.toList());
     }
 
     /**
@@ -161,30 +144,6 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
     }
 
     /**
-     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
-        return fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
      * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
@@ -192,18 +151,7 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
      * @return the file upload submission with the given id
      */
     private FileUploadSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return fileUploadSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOne(Long submissionId) {
-        return fileUploadSubmissionRepository.findById(submissionId)
+        return genericSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
 }

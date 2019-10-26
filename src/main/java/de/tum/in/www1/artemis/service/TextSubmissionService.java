@@ -16,21 +16,18 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
-public class TextSubmissionService extends SubmissionService<TextSubmission> {
-
-    private final TextSubmissionRepository textSubmissionRepository;
+public class TextSubmissionService extends SubmissionService<TextSubmission, TextSubmissionRepository> {
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository);
-        this.textSubmissionRepository = textSubmissionRepository;
+        super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository,
+                textSubmissionRepository);
         this.textAssessmentQueueService = textAssessmentQueueService;
     }
 
@@ -69,7 +66,7 @@ public class TextSubmissionService extends SubmissionService<TextSubmission> {
             textSubmission.getResult().setSubmission(textSubmission);
         }
 
-        textSubmission = textSubmissionRepository.save(textSubmission);
+        textSubmission = genericSubmissionRepository.save(textSubmission);
 
         return textSubmission;
     }
@@ -97,24 +94,7 @@ public class TextSubmissionService extends SubmissionService<TextSubmission> {
      *
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
-        return textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
+        return genericSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
                 .filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get()).collect(Collectors.toList());
-    }
-
-    /**
-     * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
-     *
-     * @param exerciseId - the id of the exercise we are looking for
-     * @param tutorId    - the id of the tutor we are interested in
-     * @return a list of text Submissions
-     */
-    @Transactional(readOnly = true)
-    public List<TextSubmission> getAllTextSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
-        return textSubmissionRepository.findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(exerciseId, tutorId).stream().map(Optional::get).collect(Collectors.toList());
-    }
-
-    public TextSubmission findOneWithEagerResultAndAssessor(Long id) {
-        return textSubmissionRepository.findByIdWithEagerResultAndAssessor(id)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + id + "\" does not exist"));
     }
 }

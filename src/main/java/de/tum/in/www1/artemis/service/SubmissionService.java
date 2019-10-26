@@ -17,15 +17,18 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-public abstract class SubmissionService<T extends Submission> {
+public abstract class SubmissionService<T extends Submission, E extends GenericSubmissionRepository<T>> {
 
     protected SubmissionRepository submissionRepository;
+
+    protected E genericSubmissionRepository;
 
     private UserService userService;
 
@@ -40,7 +43,8 @@ public abstract class SubmissionService<T extends Submission> {
     protected final StudentParticipationRepository studentParticipationRepository;
 
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            ParticipationService participationService, SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository) {
+            ParticipationService participationService, SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository,
+            E genericSubmissionRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
@@ -48,6 +52,7 @@ public abstract class SubmissionService<T extends Submission> {
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.genericSubmissionRepository = genericSubmissionRepository;
     }
 
     /**
@@ -229,4 +234,50 @@ public abstract class SubmissionService<T extends Submission> {
         return submissions;
     }
 
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its result and the assessor. Throws an EntityNotFoundException if no
+     * submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    public T findOneWithEagerResultAndAssessor(Long submissionId) {
+        return genericSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutorId    - the id of the tutor we are interested in
+     * @return a list of Submissions
+     */
+    @Transactional(readOnly = true)
+    public List<T> getAllSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
+        return genericSubmissionRepository.findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(exerciseId, tutorId).stream().map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    public T findOneWithEagerResultAndFeedback(Long submissionId) {
+        return genericSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    public T findOne(Long submissionId) {
+        return genericSubmissionRepository.findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
 }

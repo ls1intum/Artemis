@@ -117,7 +117,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         List<TextSubmission> textSubmissions;
         User user = userService.getUserWithGroupsAndAuthorities();
         if (assessedByTutor) {
-            textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
+            textSubmissions = textSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
             textSubmissions = textSubmissionService.getSubmissions(exerciseId, submittedOnly, TextSubmission.class);

@@ -140,7 +140,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         List<FileUploadSubmission> fileUploadSubmissions;
         User user = userService.getUserWithGroupsAndAuthorities();
         if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
+            fileUploadSubmissions = fileUploadSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getSubmissions(exerciseId, submittedOnly, FileUploadSubmission.class);

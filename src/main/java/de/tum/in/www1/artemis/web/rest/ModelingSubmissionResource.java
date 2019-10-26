@@ -128,7 +128,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         }
 
         if (assessedByTutor) {
-            List<ModelingSubmission> submissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
+            List<ModelingSubmission> submissions = modelingSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
             return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise, user));
         }
 
