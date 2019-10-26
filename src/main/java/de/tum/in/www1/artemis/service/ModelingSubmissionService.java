@@ -21,16 +21,13 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
-    private final ResultService resultService;
-
     private final CompassService compassService;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
             StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository,
-                modelingSubmissionRepository);
-        this.resultService = resultService;
+                modelingSubmissionRepository, resultService);
         this.compassService = compassService;
     }
 
@@ -51,7 +48,7 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
             modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         }
 
-        lockSubmission(modelingSubmission, modelingExercise);
+        lockModelingSubmission(modelingSubmission, modelingExercise);
         return modelingSubmission;
     }
 
@@ -66,7 +63,7 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
         ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
-        lockSubmission(modelingSubmission, modelingExercise);
+        lockModelingSubmission(modelingSubmission, modelingExercise);
         return modelingSubmission;
     }
 
@@ -131,21 +128,11 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @param modelingSubmission the submission to lock
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
-    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        Result result = modelingSubmission.getResult();
-        if (result == null) {
-            result = setNewResult(modelingSubmission);
+    private void lockModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        var result = super.lockSubmission(modelingSubmission);
+        if (result.getAssessor() == null && compassService.isSupported(modelingExercise.getDiagramType())) {
+            compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
         }
-
-        if (result.getAssessor() == null) {
-            if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
-            }
-            resultService.setAssessor(result);
-        }
-
-        result.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result);
         log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 
@@ -187,17 +174,5 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
-     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    private ModelingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return genericSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
 }

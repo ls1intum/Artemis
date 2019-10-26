@@ -25,9 +25,10 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
+            ResultService resultService) {
         super(submissionRepository, userService, authCheckService, resultRepository, participationService, messagingTemplate, studentParticipationRepository,
-                textSubmissionRepository);
+                textSubmissionRepository, resultService);
         this.textAssessmentQueueService = textAssessmentQueueService;
     }
 

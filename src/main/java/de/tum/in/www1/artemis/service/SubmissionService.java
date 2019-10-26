@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
@@ -26,25 +27,27 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public abstract class SubmissionService<T extends Submission, E extends GenericSubmissionRepository<T>> {
 
-    protected SubmissionRepository submissionRepository;
+    private final UserService userService;
 
-    protected E genericSubmissionRepository;
+    final E genericSubmissionRepository;
 
-    private UserService userService;
+    protected final SubmissionRepository submissionRepository;
 
-    protected AuthorizationCheckService authCheckService;
+    protected final AuthorizationCheckService authCheckService;
 
-    protected ResultRepository resultRepository;
+    protected final ResultRepository resultRepository;
 
-    protected ParticipationService participationService;
+    protected final ParticipationService participationService;
 
     protected final SimpMessageSendingOperations messagingTemplate;
 
     protected final StudentParticipationRepository studentParticipationRepository;
 
+    protected final ResultService resultService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             ParticipationService participationService, SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository,
-            E genericSubmissionRepository) {
+            E genericSubmissionRepository, ResultService resultService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
@@ -53,6 +56,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.genericSubmissionRepository = genericSubmissionRepository;
+        this.resultService = resultService;
     }
 
     /**
@@ -279,5 +283,38 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      */
     public T findOne(Long submissionId) {
         return genericSubmissionRepository.findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
+     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    T findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
+        return genericSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Soft lock the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * tutors to assess a model when an assessor is already assigned. If no result exists for this submission we create one first.
+     *
+     * @param submission the submission to lock
+     */
+    <L extends Exercise> Result lockSubmission(T submission) {
+        Result result = submission.getResult();
+        if (result == null) {
+            result = setNewResult(submission);
+        }
+
+        if (result.getAssessor() == null) {
+            resultService.setAssessor(result);
+        }
+
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(result);
+        return result;
     }
 }
