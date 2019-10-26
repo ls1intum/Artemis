@@ -176,7 +176,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
-                    .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise).map(FileUploadSubmission.class::cast);
+                    .getSubmissionWithoutManualResult(fileUploadExercise, FileUploadSubmission.class).map(FileUploadSubmission.class::cast);
             if (!optionalFileUploadSubmission.isPresent()) {
                 return notFound();
             }

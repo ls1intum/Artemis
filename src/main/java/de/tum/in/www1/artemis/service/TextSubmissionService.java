@@ -80,11 +80,11 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
+    public Optional<TextSubmission> getSubmissionWithoutManualResult(TextExercise textExercise) {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        return getRandomUnassessedSubmission(textExercise, TextSubmission.class);
+        return super.getSubmissionWithoutManualResult(textExercise, TextSubmission.class);
     }
 
     /**

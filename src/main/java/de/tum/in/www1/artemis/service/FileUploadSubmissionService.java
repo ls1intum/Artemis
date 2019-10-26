@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,18 +53,6 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
         genericSubmissionRepository.save(fileUploadSubmission);
         return fileUploadSubmission;
-    }
-
-    /**
-     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
-     * assessment for the corresponding submission yet.
-     *
-     * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
-     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
-     */
-    @Transactional(readOnly = true)
-    public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
-        return getRandomUnassessedSubmission(fileUploadExercise, FileUploadSubmission.class);
     }
 
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
@@ -123,7 +110,7 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
      */
     @Transactional
     public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise) {
-        FileUploadSubmission fileUploadSubmission = getFileUploadSubmissionWithoutManualResult(fileUploadExercise)
+        FileUploadSubmission fileUploadSubmission = getSubmissionWithoutManualResult(fileUploadExercise, FileUploadSubmission.class)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockFileUploadSubmission(fileUploadSubmission);
         return fileUploadSubmission;

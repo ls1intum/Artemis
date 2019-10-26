@@ -60,7 +60,7 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      */
     @Transactional
     public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
-        ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
+        ModelingSubmission modelingSubmission = getSubmissionWithoutManualResult(modelingExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
         lockModelingSubmission(modelingSubmission, modelingExercise);
@@ -78,7 +78,7 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @return a modeling submission without any result
      */
     @Transactional
-    public Optional<ModelingSubmission> getModelingSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
+    public Optional<ModelingSubmission> getSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
@@ -97,7 +97,7 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
             }
         }
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        return getRandomUnassessedSubmission(modelingExercise, ModelingSubmission.class);
+        return super.getSubmissionWithoutManualResult(modelingExercise, ModelingSubmission.class);
     }
 
     /**

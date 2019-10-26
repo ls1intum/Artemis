@@ -138,26 +138,6 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
     }
 
     /**
-     * Gets randomly any unassessed submission of specified type
-     * @param exercise exercise to which the submission belongs
-     * @param submissionType concrete type of the submission
-     * @return submission of the specified type
-     */
-    public Optional<T> getRandomUnassessedSubmission(Exercise exercise, Class<T> submissionType) {
-        // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        List<T> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exercise.getId()).stream()
-                .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
-
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Random r = new Random();
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
-    }
-
-    /**
      * Saves the given submission and creates the result if necessary. This method used for creating and updating submissions. Rolls back if inserting fails - occurs for concurrent calls.
      *
      * @param submission the submission that should be saved
@@ -316,5 +296,26 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
         result.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.save(result);
         return result;
+    }
+
+    /**
+     * Gets randomly any unassessed submission of specified type without manual result
+     * @param exercise exercise to which the submission belongs
+     * @param submissionType concrete type of the submission
+     * @return submission of the specified type
+     */
+    @Transactional(readOnly = true)
+    public <L extends Exercise> Optional<T> getSubmissionWithoutManualResult(L exercise, Class<T> submissionType) {
+        // otherwise return a random submission that is not manually assessed or an empty optional if there is none
+        List<T> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exercise.getId()).stream()
+                .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Random r = new Random();
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 }

@@ -190,7 +190,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
-            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
+            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getSubmissionWithoutManualResult((ModelingExercise) exercise);
             if (!optionalModelingSubmission.isPresent()) {
                 return notFound();
             }

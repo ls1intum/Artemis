@@ -147,7 +147,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getSubmissionWithoutManualResult((TextExercise) exercise);
 
         // tutors should not see information about the student of a submission
         if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
