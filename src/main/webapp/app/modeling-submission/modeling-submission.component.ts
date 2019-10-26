@@ -511,7 +511,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * The exercise is still active if it's due date hasn't passed yet
+     * The exercise is still active if it's due date hasn't passed yet.
+     * Additionally, if the result is set, the exercise is not active anymore. This allows to avoid infinite submissions, if the exercise was started late or it doesn't have due date.
      */
     get isActive() {
         return this.modelingExercise && !this.result && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
