@@ -1,11 +1,15 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Lecture } from 'app/entities/lecture';
+import { Subscription } from 'rxjs/Subscription';
+import { JhiEventManager } from 'ng-jhipster';
+import { Lecture, LectureService } from 'app/entities/lecture';
 import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as moment from 'moment';
 import { FileService } from 'app/shared';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -37,12 +41,19 @@ export class LectureAttachmentsComponent implements OnInit {
     notificationText: string | null;
     erroredFile: File | null;
 
+    formattedDescription: SafeHtml | null;
+    private subscription: Subscription;
+    private eventSubscriber: Subscription;
+
     constructor(
         protected activatedRoute: ActivatedRoute,
         private attachmentService: AttachmentService,
         private httpClient: HttpClient,
         private fileUploaderService: FileUploaderService,
         private fileService: FileService,
+        private eventManager: JhiEventManager,
+        private lectureService: LectureService,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit() {
@@ -53,6 +64,22 @@ export class LectureAttachmentsComponent implements OnInit {
                 this.attachments = attachmentsResponse.body!;
             });
         });
+        this.subscription = this.activatedRoute.params.subscribe(params => {
+            this.load(params['id']);
+        });
+        this.registerChangeInLecture();
+    }
+
+    load(id: number) {
+        this.lectureService.find(id).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+            this.lecture = lectureResponse.body!;
+
+            this.formattedDescription = this.artemisMarkdown.htmlForMarkdown(this.lecture.description);
+        });
+    }
+
+    registerChangeInLecture() {
+        this.eventSubscriber = this.eventManager.subscribe('lectureListModification', () => this.load(this.lecture.id));
     }
 
     previousState() {
