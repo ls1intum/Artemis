@@ -56,6 +56,14 @@ public class RequestUtilService {
         return new URI(res.getResponse().getHeader("location"));
     }
 
+    public <T> URI postWithContentType(String path, T body, HttpStatus expectedStatus, MediaType contentType) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(contentType).content(jsonBody).with(csrf()))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        assertThat(res.getResponse().containsHeader("location")).isTrue();
+        return new URI(res.getResponse().getHeader("location"));
+    }
+
     public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, HttpHeaders httpHeaders) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).headers(httpHeaders).with(csrf()))
