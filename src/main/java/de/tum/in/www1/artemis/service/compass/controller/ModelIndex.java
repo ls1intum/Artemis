@@ -42,7 +42,21 @@ public class ModelIndex {
             return modelElementMapping.get(element);
         }
 
-        Map<Double, Integer> similarityToIdMapping = new HashMap<>();
+        // Pair of similarity value and similarity ID
+        var bestSimilarityFit = Pair.of(-1.0, -1);
+        
+        for (final var knownElement : uniqueModelElementList) {
+            final var similarity = knownElement.similarity(element);
+            if (similarity > CompassConfiguration.EQUALITY_THRESHOLD && similarity > bestSimilarityFit.getFirst()) {
+                // element is similar to existing element and has a higher similarity than another element
+                bestSimilarityFit = Pair.of(similarity, knownElement.getSimilarityID());
+            }
+        }
+        
+        if (bestSimilarityFit.getFirst() != -1.0) {
+            modelElementMapping.put(element, bestSimilarityFit.getSecond());
+            return bestSimilarityFit.getSecond();
+        }
 
         double similarity;
         for (UMLElement knownElement : uniqueModelElementList) {
