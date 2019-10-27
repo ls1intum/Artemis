@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.common.cli.Base;
+import com.appfire.common.cli.CliClient;
 import com.appfire.common.cli.Settings;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -25,9 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.common.cli.Base;
-import com.appfire.common.cli.CliClient;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
@@ -342,6 +343,27 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         return targetPlanKey;
+    }
+
+    @Override
+    public void giveProjectPermissions(String projectKey, CIRole role, List<CIPermission> permissions) {
+        final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/roles/" + role.name();
+        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
+        final var entity = new HttpEntity<>(permissionData, headers);
+
+        final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+        if (response.getStatusCode() != HttpStatus.NO_CONTENT) {
+            throw new BambooException("Unable to give permissions to project " + projectKey + "\n" + response.getBody());
+        }
+    }
+
+    private String permissionToBambooPermission(CIPermission permission) {
+        switch (permission) {
+            case EDIT: return "WRITE";
+            case READ: return "READ";
+            default: throw new IllegalArgumentException("Unable to map Bamboo permission " + permission);
+        }
     }
 
     @Override

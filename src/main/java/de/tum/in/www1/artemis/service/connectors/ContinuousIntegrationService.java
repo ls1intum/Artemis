@@ -190,6 +190,15 @@ public interface ContinuousIntegrationService {
     void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy);
 
     /**
+     * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
+     *
+     * @param projectKey The key of the project to grant permissions to
+     * @param role The role of the users that should have the permissions
+     * @param permissions The permissions to grant the users
+     */
+    void giveProjectPermissions(String projectKey, CIRole role, List<CIPermission> permissions);
+
+    /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out
      * to a subdirectory called "assignment" for the Python programming language.
      */
