@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import org.springframework.data.util.Pair;
 
 public class ModelIndex {
 
@@ -56,22 +54,6 @@ public class ModelIndex {
         if (bestSimilarityFit.getFirst() != -1.0) {
             modelElementMapping.put(element, bestSimilarityFit.getSecond());
             return bestSimilarityFit.getSecond();
-        }
-
-        double similarity;
-        for (UMLElement knownElement : uniqueModelElementList) {
-            similarity = knownElement.similarity(element);
-            if (similarity > CompassConfiguration.EQUALITY_THRESHOLD) {
-                // element is similar to existing element
-                similarityToIdMapping.put(similarity, knownElement.getSimilarityID());
-            }
-        }
-
-        if (!similarityToIdMapping.isEmpty()) {
-            // get the similarity ID of the similarity set for which the element has the maximum similarity
-            int maxSimilarityId = Collections.max(similarityToIdMapping.entrySet(), Comparator.comparingDouble(Map.Entry::getKey)).getValue();
-            modelElementMapping.put(element, maxSimilarityId);
-            return maxSimilarityId;
         }
 
         // element does not fit already known element / similarity set
