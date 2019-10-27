@@ -6,10 +6,11 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.springframework.data.util.Pair;
+
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-import org.springframework.data.util.Pair;
 
 public class ModelIndex {
 
@@ -42,7 +43,7 @@ public class ModelIndex {
 
         // Pair of similarity value and similarity ID
         var bestSimilarityFit = Pair.of(-1.0, -1);
-        
+
         for (final var knownElement : uniqueModelElementList) {
             final var similarity = knownElement.similarity(element);
             if (similarity > CompassConfiguration.EQUALITY_THRESHOLD && similarity > bestSimilarityFit.getFirst()) {
@@ -50,7 +51,7 @@ public class ModelIndex {
                 bestSimilarityFit = Pair.of(similarity, knownElement.getSimilarityID());
             }
         }
-        
+
         if (bestSimilarityFit.getFirst() != -1.0) {
             modelElementMapping.put(element, bestSimilarityFit.getSecond());
             return bestSimilarityFit.getSecond();
