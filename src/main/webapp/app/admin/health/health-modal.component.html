@@ -12,12 +12,12 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th class="text-left" jhiTranslate="health.details.name">Name</th>
-                        <th class="text-left" jhiTranslate="health.details.value">Value</th>
+                        <th scope="col" class="text-left" jhiTranslate="health.details.name">Name</th>
+                        <th scope="col" class="text-left" jhiTranslate="health.details.value">Value</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let entry of currentHealth.details.details | keys">
+                    <tr *ngFor="let entry of currentHealth.details.details | keyvalue">
                         <td class="text-left">{{ entry.key }}</td>
                         <td class="text-left">{{ readableValue(entry.value) }}</td>
                     </tr>

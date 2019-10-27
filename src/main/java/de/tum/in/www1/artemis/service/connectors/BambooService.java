@@ -530,7 +530,7 @@ public class BambooService implements ContinuousIntegrationService {
                 // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
                 // we can still get the commit has from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
                 String commitHash = getCommitHash(buildMap, SubmissionType.MANUAL);
-                log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
+                log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
                 programmingSubmission = new ProgrammingSubmission();
                 programmingSubmission.setParticipation((Participation) participation);
                 programmingSubmission.setSubmitted(true);

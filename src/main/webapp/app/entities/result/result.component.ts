@@ -1,7 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { isModelingOrTextOrFileUpload, ParticipationService, Participation, getExercise } from 'app/entities/participation';
+import { isModelingOrTextOrFileUpload, isProgrammingOrQuiz, isParticipationInDueTime, ParticipationService, Participation, getExercise } from 'app/entities/participation';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
-import { isSubmissionInDueTime } from 'app/entities/submission/submission-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -35,9 +34,6 @@ enum ResultTemplateStatus {
  */
 export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
     readonly ResultTemplateStatus = ResultTemplateStatus;
 
     @Input() participation: Participation;
@@ -110,7 +106,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     evaluate() {
-        this.evaluateTemplateStatus();
+        this.templateStatus = this.evaluateTemplateStatus();
 
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = this.getTextColorClass();
@@ -128,65 +124,49 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     private evaluateTemplateStatus() {
-        if (this.participation && getExercise(this.participation) && isModelingOrTextOrFileUpload(this.participation)) {
-            // Evaluate the template status for modeling, text and file upload exercise.
-            this.templateStatus = this.evaluateTemplateStatusForModelingTextFileUploadExercises();
-        } else {
-            // Evaluate the template status for quiz and programming exercise.
-            this.templateStatus = this.evaluateTemplateStatusForQuizProgrammingExercises();
-        }
-    }
-
-    /**
-     * Evaluates the template status modeling, text and file upload exercises
-     *
-     * @return {ResultTemplateStatus}
-     */
-    private evaluateTemplateStatusForModelingTextFileUploadExercises() {
-        if (!this.participation) {
-            // this should NOT happen, but we provide a fallback case
+        // Fallback if participation is not set
+        if (!this.participation || !getExercise(this.participation)) {
             if (!this.result) {
                 return ResultTemplateStatus.NO_RESULT;
             } else {
                 return ResultTemplateStatus.HAS_RESULT;
             }
         }
-        const submissionInDueTime =
-            !getExercise(this.participation).dueDate ||
-            (this.participation.submissions != null &&
-                this.participation.submissions.length > 0 &&
-                isSubmissionInDueTime(this.participation.submissions[0], getExercise(this.participation)));
-        const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate!);
 
-        // Submission is in due time of exercise and has a result with score.
-        if (submissionInDueTime && initializedResultWithScore(this.result)) {
-            // Prevent that the result is shown before assessment due date
-            return !assessmentDueDate || assessmentDueDate.isBefore() ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT;
-        } else if (submissionInDueTime && !initializedResultWithScore(this.result)) {
-            // Submission is in due time of exercise and doesn't have a result with score.
-            return ResultTemplateStatus.SUBMITTED;
-        } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
-            // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
-            return ResultTemplateStatus.LATE;
-        } else {
-            // Submission is not in due time of exercise and tThere is actually no feedback for the submission or the feedback should not be displayed yet.
-            return ResultTemplateStatus.LATE_NO_FEEDBACK;
-        }
-    }
+        // Evaluate status for modeling, text and file-upload exercises
+        if (isModelingOrTextOrFileUpload(this.participation)) {
+            // Based on its submission we test if the participation is in due time of the given exercise.
+            const inDueTime = isParticipationInDueTime(this.participation, getExercise(this.participation));
+            const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate);
 
-    /**
-     * Evaluates the template status quiz and programming exercises
-     *
-     * @return {ResultTemplateStatus}
-     */
-    private evaluateTemplateStatusForQuizProgrammingExercises() {
-        if (this.isBuilding) {
-            return ResultTemplateStatus.IS_BUILDING;
-        } else if (initializedResultWithScore(this.result)) {
-            return ResultTemplateStatus.HAS_RESULT;
-        } else {
-            return ResultTemplateStatus.NO_RESULT;
+            // Submission is in due time of exercise and has a result with score.
+            if (inDueTime && initializedResultWithScore(this.result)) {
+                // Prevent that the result is shown before assessment due date
+                return !assessmentDueDate || assessmentDueDate.isBefore() ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT;
+            } else if (inDueTime && !initializedResultWithScore(this.result)) {
+                // Submission is in due time of exercise and doesn't have a result with score.
+                return ResultTemplateStatus.SUBMITTED;
+            } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
+                // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
+                return ResultTemplateStatus.LATE;
+            } else {
+                // Submission is not in due time of exercise and there is actually no feedback for the submission or the feedback should not be displayed yet.
+                return ResultTemplateStatus.LATE_NO_FEEDBACK;
+            }
         }
+
+        // Evaluate status for programming and quiz exercises
+        if (isProgrammingOrQuiz(this.participation)) {
+            if (this.isBuilding) {
+                return ResultTemplateStatus.IS_BUILDING;
+            } else if (initializedResultWithScore(this.result)) {
+                return ResultTemplateStatus.HAS_RESULT;
+            } else {
+                return ResultTemplateStatus.NO_RESULT;
+            }
+        }
+
+        return ResultTemplateStatus.NO_RESULT;
     }
 
     private dateAsMoment(date: any) {
@@ -242,7 +222,10 @@ export class ResultComponent implements OnInit, OnChanges {
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
         modalRef.componentInstance.showTestNames = this.showTestNames;
-        modalRef.componentInstance.exerciseType = getExercise(this.participation).type;
+        const exercise = getExercise(this.participation);
+        if (exercise) {
+            modalRef.componentInstance.exerciseType = exercise.type;
+        }
     }
 
     downloadBuildResult(participationId: number) {

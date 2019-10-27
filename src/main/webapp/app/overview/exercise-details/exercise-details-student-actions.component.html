@@ -1,5 +1,5 @@
 <!-- QUIZ EXERCISE ACTIONS START -->
-<div *ngIf="exercise.type === QUIZ">
+<div *ngIf="exercise.type === ExerciseType.QUIZ">
     <!-- ACTIONS START -->
     <div class="btn-group mr-2">
         <button
@@ -19,7 +19,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === QUIZ_NOT_STARTED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_NOT_STARTED"
             (click)="startExercise()"
         ></button>
         <button
@@ -30,14 +30,14 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             id="student-quiz-start-{{ exercise.id }}"
-            *ngIf="participationStatusWrapper() === QUIZ_UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | translate"
-            *ngIf="participationStatusWrapper() === QUIZ_ACTIVE"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_ACTIVE"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -54,7 +54,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatusWrapper() === QUIZ_SUBMITTED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_SUBMITTED"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -64,7 +64,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | translate"
             outlined="true"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatusWrapper() === QUIZ_FINISHED && showResult"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_FINISHED && showResult"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
@@ -84,7 +84,7 @@
 <!-- QUIZ EXERCISE ACTIONS END -->
 
 <!-- MODELING EXERCISE ACTIONS START -->
-<div *ngIf="exercise.type === MODELING">
+<div *ngIf="exercise.type === ExerciseType.MODELING">
     <!-- ACTION START -->
     <div class="btn-group mr-2">
         <button
@@ -94,7 +94,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
@@ -152,7 +152,7 @@
 <!-- MODELING EXERCISE ACTIONS END -->
 
 <!-- PROGRAMMING EXERCISE ACTIONS START -->
-<div *ngIf="exercise.type === PROGRAMMING">
+<div *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <!-- ACTION START -->
     <div class="btn-group">
         <button
@@ -163,7 +163,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
@@ -173,7 +173,12 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="isOnlineEditorAllowed() && participationStatusWrapper() == INITIALIZED && exercise.studentParticipations && exercise.studentParticipations.length > 0"
+            *ngIf="
+                isOnlineEditorAllowed() &&
+                participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
+                exercise.studentParticipations &&
+                exercise.studentParticipations.length > 0
+            "
             routerLink="/code-editor/{{ exercise.studentParticipations[0].id }}"
         ></button>
         <button
@@ -186,7 +191,7 @@
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.studentParticipations && participationStatusWrapper() == INITIALIZED && exercise.studentParticipations.length > 0"
+            *ngIf="exercise.studentParticipations && participationStatusWrapper() == ParticipationStatus.INITIALIZED && exercise.studentParticipations.length > 0"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>
@@ -197,7 +202,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === INACTIVE"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE"
             (click)="resumeProgrammingExercise()"
         ></button>
         <ng-template #popContent>
@@ -247,7 +252,7 @@
 <!-- PROGRAMMING EXERCISE ACTIONS END -->
 
 <!-- TEXT EXERCISE ACTIONS START -->
-<div *ngIf="exercise.type === TEXT">
+<div *ngIf="exercise.type === ExerciseType.TEXT">
     <!-- ACTIONS START -->
     <div class="btn-group mr-2">
         <button
@@ -258,7 +263,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             (click)="startExercise()"
         ></button>
         <button
@@ -315,7 +320,7 @@
 <!-- TEXT EXERCISE ACTIONS END -->
 
 <!-- FILE UPLOAD EXERCISE ACTIONS START -->
-<div *ngIf="exercise.type === FILE_UPLOAD">
+<div *ngIf="exercise.type === ExerciseType.FILE_UPLOAD">
     <!-- ACTIONS START -->
     <div class="btn-group">
         <button
@@ -323,7 +328,7 @@
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
-            *ngIf="participationStatusWrapper() === UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             (click)="startExercise()"
