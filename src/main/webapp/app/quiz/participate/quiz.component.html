@@ -120,11 +120,16 @@
                 </div>
                 <div *ngIf="mode === 'default' && !waitingForQuizStart">
                     <span *ngIf="isSaving">Saving Answers...</span>
-                    <span *ngIf="!isSaving" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
+                    <span *ngIf="!isSaving && !isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
                         <span *ngIf="justSaved" jhiTranslate="justNow"></span>
-                        <span *ngIf="!justSaved">{{ lastSavedTimeText }}</span>
+                        <span *ngIf="!justSaved && lastSavedTimeText !== ''">{{ lastSavedTimeText }}</span>
+                        <span *ngIf="!justSaved && lastSavedTimeText === ''" jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
+                    </span>
+                    <!-- Only display submission hint for mobile -->
+                    <span *ngIf="!isSaving && isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
+                        <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>
                 </div>
                 <div *ngIf="mode === 'default'" class="connection-status" [ngClass]="{ disconnected: disconnected }">
@@ -158,27 +163,10 @@
             <div class="submit-button">
                 <button
                     id="submit-quiz"
-                    *ngIf="!submission.submitted && !showingResult"
-                    [disabled]="isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
-                    [class.btn-lg]="deviceService.isDesktop()"
-                    [class.btn-sm]="!deviceService.isDesktop()"
-                    class="btn btn-success"
-                    jhiTranslate="entity.action.submit"
-                    (click)="onSubmit()"
-                ></button>
-                <button
-                    *ngIf="submission.submitted && !showingResult"
-                    disabled
-                    [class.btn-lg]="deviceService.isDesktop()"
-                    [class.btn-sm]="!deviceService.isDesktop()"
-                    class="btn btn-success"
-                    jhiTranslate="artemisApp.quizExercise.submitted"
-                <button
-                    id="submit-quiz"
                     *ngIf="!showingResult"
                     [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
-                    [class.btn-lg]="deviceService.isDesktop()"
-                    [class.btn-sm]="!deviceService.isDesktop()"
+                    [class.btn-lg]="!isMobile()"
+                    [class.btn-sm]="isMobile()"
                     class="btn btn-success"
                     [jhiTranslate]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
                     (click)="onSubmit()"

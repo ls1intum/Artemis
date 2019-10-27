@@ -59,7 +59,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     isSubmitting = false;
     isSaving = false;
-    lastSavedTimeText = 'never';
+    lastSavedTimeText = '';
     justSaved = false;
     waitingForQuizStart = false;
 
@@ -111,7 +111,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private quizSubmissionService: QuizSubmissionService,
         private translateService: TranslateService,
-        public deviceService: DeviceDetectorService,
+        private deviceService: DeviceDetectorService,
     ) {
         smoothscroll.polyfill();
     }
@@ -961,5 +961,12 @@ export class QuizComponent implements OnInit, OnDestroy {
         document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
         });
+    }
+
+    /**
+     * Determines if the current device is a mobile device
+     */
+    isMobile(): boolean {
+        return this.deviceService.isMobile();
     }
 }

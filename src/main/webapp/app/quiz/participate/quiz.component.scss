@@ -98,7 +98,7 @@
         @media (max-width: 599px) {
             max-width: 50%;
             max-height: 55px;
-            overflow-y: scroll;
+            overflow-y: hidden;
         }
     }
 
@@ -193,7 +193,7 @@
     display: flex;
     flex-wrap: wrap;
     max-height: 60px;
-    overflow: scroll;
+    overflow: hidden;
     position: relative;
 
     @media (max-width: 767.98px) {
