@@ -173,6 +173,15 @@
                     [class.btn-sm]="!deviceService.isDesktop()"
                     class="btn btn-success"
                     jhiTranslate="artemisApp.quizExercise.submitted"
+                <button
+                    id="submit-quiz"
+                    *ngIf="!showingResult"
+                    [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                    [class.btn-lg]="deviceService.isDesktop()"
+                    [class.btn-sm]="!deviceService.isDesktop()"
+                    class="btn btn-success"
+                    [jhiTranslate]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                    (click)="onSubmit()"
                 ></button>
             </div>
         </div>
