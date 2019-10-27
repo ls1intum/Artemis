@@ -6,6 +6,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 
 export const enum ProgrammingLanguage {
     JAVA = 'JAVA',
+    KOTLIN = 'KOTLIN',
     PYTHON = 'PYTHON',
     C = 'C',
 }
