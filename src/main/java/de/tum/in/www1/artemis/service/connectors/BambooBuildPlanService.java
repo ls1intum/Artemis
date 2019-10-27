@@ -122,7 +122,8 @@ public class BambooBuildPlanService {
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
         switch (programmingLanguage) {
-        case JAVA: {
+        case JAVA:
+        case KOTLIN: {
             if (!sequentialBuildRuns) {
                 return defaultStage
                         .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));

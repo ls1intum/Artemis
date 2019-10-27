@@ -3,6 +3,7 @@
         "ProgrammingLanguage": {
             "undefined": "",
             "null": "",
+            "KOTLIN": "Kotlin",
             "JAVA": "Java",
             "PYTHON": "Python",
             "C": "C"

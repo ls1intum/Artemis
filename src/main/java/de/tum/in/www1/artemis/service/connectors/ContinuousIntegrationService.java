@@ -198,6 +198,7 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 switch (language) {
                 case JAVA:
+                case KOTLIN:
                 case PYTHON:
                 case C:
                     return Constants.ASSIGNMENT_CHECKOUT_PATH;
@@ -212,6 +213,7 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 switch (language) {
                 case JAVA:
+                case KOTLIN
                 case PYTHON:
                     return "";
                 case C:
