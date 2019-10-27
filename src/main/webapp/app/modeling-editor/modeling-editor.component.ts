@@ -5,7 +5,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import interact from 'interactjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
-import { find as _find, includes, trim } from 'lodash';
 
 @Component({
     selector: 'jhi-modeling-editor',
