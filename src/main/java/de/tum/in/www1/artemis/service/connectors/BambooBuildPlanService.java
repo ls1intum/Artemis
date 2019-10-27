@@ -1,13 +1,21 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 
+import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
@@ -29,6 +37,7 @@ import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
 import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
+import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
@@ -43,6 +52,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.exception.ContinousIntegrationBuildPlanException;
 
 @Service
 @Profile("bamboo")
@@ -65,6 +75,12 @@ public class BambooBuildPlanService {
 
     @Value("${artemis.bamboo.vcs-application-link-name}")
     private String VCS_APPLICATION_LINK_NAME;
+
+    private final ResourceLoader resourceLoader;
+
+    public BambooBuildPlanService(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
 
     /**
      * Creates a Build Plan for a Programming Exercise
@@ -99,33 +115,36 @@ public class BambooBuildPlanService {
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, Boolean sequentialBuildRuns) {
-        VcsCheckoutTask checkoutTask = createCheckoutTask(ASSIGNMENT_REPO_PATH, "");
+        final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+        VcsCheckoutTask checkoutTask = createCheckoutTask(assignmentPath, testPath);
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
-        if (programmingLanguage == ProgrammingLanguage.JAVA && !sequentialBuildRuns) {
-            return defaultStage
-                    .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
+        switch (programmingLanguage) {
+        case JAVA: {
+            if (!sequentialBuildRuns) {
+                return defaultStage
+                        .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
+            }
+            else {
+                return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                        new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests")
+                                .hasTests(true),
+                        new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+            }
         }
-        else if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                    new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests").hasTests(true),
-                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
-        }
-        else if ((programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) && !sequentialBuildRuns) {
-            return defaultStage.jobs(defaultJob
-                    .tasks(checkoutTask, new ScriptTask().description("Builds and tests the code").inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
-                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/results.xml"))
-                    .requirements(new Requirement("Python3")).cleanWorkingDirectory(true));
-        }
-        else if (programmingLanguage == ProgrammingLanguage.PYTHON || programmingLanguage == ProgrammingLanguage.C) {
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                    new ScriptTask().description("Builds and tests the structural tests").inlineBody("pytest structural/* --junitxml=test-reports/structural-results.xml\nexit 0"),
-                    new ScriptTask().description("Builds and tests the behavior tests").inlineBody("pytest behavior/* --junitxml=test-reports/behavior-results.xml\nexit 0"),
-                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml")).requirements(new Requirement("Python3")));
-        }
+        case PYTHON:
+        case C: {
+            final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
+            var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+            tasks.add(0, checkoutTask);
 
-        return null;
+            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).requirements(new Requirement("Python3")).finalTasks(testParserTask));
+        }
+        default:
+            throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
+        }
     }
 
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug) {
@@ -177,4 +196,29 @@ public class BambooBuildPlanService {
                         .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW));
     }
 
+    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
+        final var directoryPattern = "classpath:buildscripts/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+        try {
+            final var scriptResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern);
+            // Have to use foreach because of possible IOException
+            // script name -> file contents
+            final var scriptContents = new HashMap<String, String>();
+            for (final var resource : scriptResources) {
+
+                // 1_some_description.sh --> "some description"
+                final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
+                        .split("_"))).collect(Collectors.toList());
+                descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
+                final var scriptDescription = String.join(" ", descriptionElements);
+                try (final var is = resource.getInputStream()) {
+                    scriptContents.put(scriptDescription, IOUtils.toString(is));
+                }
+            }
+
+            return scriptContents.entrySet().stream().map(script -> new ScriptTask().description(script.getKey()).inlineBody(script.getValue())).collect(Collectors.toList());
+        }
+        catch (IOException e) {
+            throw new ContinousIntegrationBuildPlanException("Unable to load template build plans", e);
+        }
+    }
 }

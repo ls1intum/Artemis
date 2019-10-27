@@ -364,7 +364,7 @@ public class ExerciseService {
                     String exerciseName = exercise.getShortName() != null ? exercise.getShortName() : exercise.getTitle().replaceAll("\\s", "");
                     finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getShortName() + "-" + exerciseName + ".zip");
                     createZipFile(finalZipFilePath, zippedRepoFiles);
-                    scheduleForDeletion(finalZipFilePath, 300);
+                    scheduleForDeletion(finalZipFilePath, 15);
 
                     log.info("Delete all temporary zip repo files");
                     // delete the temporary zipped repo files
@@ -415,15 +415,15 @@ public class ExerciseService {
 
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
-    private static final TimeUnit UNITS = TimeUnit.SECONDS; // your time unit
+    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
 
     /**
      * Schedule the deletion of the given path with a given delay
      *
      * @param path The path that should be deleted
-     * @param delay The delay after which the path should be deleted
+     * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
-    public void scheduleForDeletion(Path path, long delay) {
+    public void scheduleForDeletion(Path path, long delayInMinutes) {
         ScheduledFuture future = executor.schedule(() -> {
             try {
                 log.info("Delete file " + path);
@@ -433,7 +433,7 @@ public class ExerciseService {
             catch (IOException e) {
                 log.error("Deleting the file " + path + " did not work", e);
             }
-        }, delay, UNITS);
+        }, delayInMinutes, MINUTES);
 
         futures.put(path, future);
     }
