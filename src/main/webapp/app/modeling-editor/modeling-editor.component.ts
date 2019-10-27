@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, UMLDiagramType, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, UMLDiagramType, UMLModel, UMLRelationship, UMLElementType, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import interact from 'interactjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { find as _find, includes, trim } from 'lodash';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -157,26 +158,29 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      */
     assessModelForGuidedTour(umlName: string, umlModel: UMLModel): void {
         // Find the required UML classes
-        const personClass = umlModel.elements.find(element => element.name.trim() === personUML.name && element.type === 'Class');
-        const studentClass = umlModel.elements.find(element => element.name.trim() === studentUML.name && element.type === 'Class');
+        const personClass = umlModel.elements.find(element => element.name.trim() === personUML.name && element.type === UMLElementType.Class);
+        const studentClass = umlModel.elements.find(element => element.name.trim() === studentUML.name && element.type === UMLElementType.Class);
         let personStudentAssociation: UMLRelationship | undefined;
 
         if (umlName === personUML.name) {
             // Check if the Person class is correct
-            const nameAttribute = umlModel.elements.find(element => element.name.includes(personUML.attribute) && element.type === 'ClassAttribute');
+            const nameAttribute = umlModel.elements.find(element => element.name.includes(personUML.attribute) && element.type === UMLElementType.ClassAttribute);
             const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id : false;
             this.guidedTourService.updateModelingResult(umlName, personClassCorrect);
         } else if (umlName === studentUML.name) {
             // Check if the Student class is correct
-            const majorAttribute = umlModel.elements.find(element => element.name.includes(studentUML.attribute) && element.type === 'ClassAttribute');
-            const visitLectureMethod = umlModel.elements.find(element => element.name.includes(studentUML.method) && element.type === 'ClassMethod');
+            const majorAttribute = umlModel.elements.find(element => element.name.includes(studentUML.attribute) && element.type === UMLElementType.ClassAttribute);
+            const visitLectureMethod = umlModel.elements.find(element => element.name.includes(studentUML.method) && element.type === UMLElementType.ClassMethod);
             const studentClassCorrect =
                 studentClass && majorAttribute && visitLectureMethod ? majorAttribute.owner === studentClass.id && visitLectureMethod.owner === studentClass.id : false;
             this.guidedTourService.updateModelingResult(umlName, studentClassCorrect);
         } else if (umlName === associationUML.name && studentClass && personClass) {
             // Check if the Inheritance association is correct
             personStudentAssociation = umlModel.relationships.find(
-                relationship => relationship.source.element === studentClass!.id && relationship.target.element === personClass!.id && relationship.type === 'ClassInheritance',
+                relationship =>
+                    relationship.source.element === studentClass!.id &&
+                    relationship.target.element === personClass!.id &&
+                    relationship.type === UMLRelationshipType.ClassInheritance,
             );
             this.guidedTourService.updateModelingResult(umlName, !!personStudentAssociation);
         }

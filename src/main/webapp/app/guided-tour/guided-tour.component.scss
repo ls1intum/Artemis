@@ -206,7 +206,7 @@ jhi-guided-tour {
                 font-size: 15px;
                 min-height: 40px;
                 max-height: 80vh;
-                overflow-y: scroll;
+                overflow-y: auto;
                 margin-bottom: 20px;
 
                 @media (max-height: 600px) {

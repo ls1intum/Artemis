@@ -3,15 +3,15 @@
         "modelingExercise": {
             "editorArea": {
                 "headline": "Modeling Exercise",
-                "content": "Here on this page you have to solve a modeling exercise. You can see a checkered canvas - the editor area - where you can drag and drop the UML elements, which are displayed on the right side of the canvas, into."
+                "content": "Here on this page you have to solve a modeling exercise. You can see a checkered canvas - the editor area - into which you can drag and drop the UML elements, which are displayed on the right side of the canvas."
             },
             "addEditUmlElement": {
                 "headline": "Add and edit UML elements",
-                "content": "To add a UML element, simply drag and drop one of the elements from the right side into the editor area on the left side. You can edit the UML element by double-clicking the element"
+                "content": "To add a UML element, simply drag and drop one of the elements from the right side into the editor area on the left side. You can edit the UML element by double-clicking on the element."
             },
             "createAssociation": {
                 "headline": "Create associations",
-                "content": "To create an association between elements, select the source class with a single click and you will see four blue circles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue circle to create a relationship as shown in the animation below. Afterwards you can change the relationship type by double-clicking on the element and then choosing the required typ."
+                "content": "To create an association between elements, select the source class with a single click and you will see four blue circles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue circle to create a relationship as shown in the animation below. Afterwards you can change the relationship type by double-clicking on the element and then choosing the required type."
             },
             "executeTasks": {
                 "headline": "Modeling exercise.",
