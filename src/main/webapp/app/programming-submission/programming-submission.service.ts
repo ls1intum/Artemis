@@ -443,11 +443,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     /**
-     * Returns File Upload submissions for exercise from the server
+     * Returns programming submissions for exercise from the server
      * @param exerciseId the id of the exercise
      * @param req request parameters
      */
-    // TODO: This might be better placed in a different service.
     getProgrammingSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<ProgrammingSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -459,7 +458,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
-     * Returns next File Upload submission without assessment from the server
+     * Returns next programming submission without assessment from the server
      * @param exerciseId the id of the exercise
      */
     getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<ProgrammingSubmission> {

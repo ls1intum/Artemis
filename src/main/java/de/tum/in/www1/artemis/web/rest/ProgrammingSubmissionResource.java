@@ -271,13 +271,13 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * GET /file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
-     * assessed by the tutor who is doing the call
+     * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
+     * assessed by the tutor who is doing the call.
      *
-     * @param exerciseId the id of the exercise
-     * @param submittedOnly if only submitted submissions should be returned
-     * @param assessedByTutor if the submission was assessed by calling tutor
-     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     * @param exerciseId the id of the exercise.
+     * @param submittedOnly if only submitted submissions should be returned.
+     * @param assessedByTutor if the submission was assessed by calling tutor.
+     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body.
      */
     @GetMapping("/exercises/{exerciseId}/programming-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -303,7 +303,7 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * GET /file-upload-submission-without-assessment : get one File Upload Submission without assessment.
+     * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
      *
      * @param exerciseId the id of the exercise
      * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
