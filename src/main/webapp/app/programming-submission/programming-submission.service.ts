@@ -37,7 +37,6 @@ export interface IProgrammingSubmissionService {
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     getResultEtaInMs: () => Observable<number>;
     triggerBuild: (participationId: number) => Observable<Object>;
-    triggerInstructorBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
 }
