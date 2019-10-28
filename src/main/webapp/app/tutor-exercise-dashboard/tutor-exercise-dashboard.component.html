@@ -232,7 +232,10 @@
                                         [singleStudentMode]="true"
                                         [studentIdList]="submission.participation.student.login"
                                     ></jhi-programming-assessment-repo-export>
-                                    <jhi-programming-assessment-manual-result [participationId]="submission.participation.id"></jhi-programming-assessment-manual-result>
+                                    <jhi-programming-assessment-manual-result
+                                        [participationId]="submission.participation.id"
+                                        (onResultCreated)="loadAll()"
+                                    ></jhi-programming-assessment-manual-result>
                                 </ng-template>
                             </td>
                         </tr>
