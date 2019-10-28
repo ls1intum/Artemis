@@ -8,8 +8,6 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.*;
@@ -23,7 +21,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.*;
 
 /**
@@ -190,7 +187,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
-            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getSubmissionWithoutManualResult((ModelingExercise) exercise);
+            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
             if (!optionalModelingSubmission.isPresent()) {
                 return notFound();
             }
@@ -235,15 +232,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         }
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
-            List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
-                    .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-            if (submissionsWithoutResult.isEmpty()) {
-                return ResponseEntity.ok(new Long[] {}); // empty
-            }
-
-            Random r = new Random();
-            return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())).getId() });
+            return ResponseEntity.ok(new Long[] { modelingSubmissionService.getSubmissionWithoutManualResult(modelingExercise, ModelingSubmission.class).get().getId() });
         }
     }
 
@@ -274,50 +263,11 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
-        if (participation == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
+        var responseEntity = getDataForEditor(participation, ModelingExercise.class, ModelingSubmission.class, new ModelingSubmission());
+        if (responseEntity.hasBody() && responseEntity.getBody() != null) {
+            return ResponseEntity.ok(modelingSubmissionService.hideResultDetails(responseEntity.getBody(), participation.getExercise()));
         }
-        ModelingExercise modelingExercise;
-        if (participation.getExercise() instanceof ModelingExercise) {
-            modelingExercise = (ModelingExercise) participation.getExercise();
-            if (modelingExercise == null) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                        .body(null);
-            }
-
-            // make sure sensitive information are not sent to the client
-            modelingExercise.filterSensitiveInformation();
-        }
-        else {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
-                    .body(null);
-        }
-
-        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise))) {
-            return forbidden();
-        }
-
-        Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
-        ModelingSubmission modelingSubmission;
-        if (!optionalModelingSubmission.isPresent()) {
-            // this should never happen as the submission is initialized along with the participation when the exercise is started
-            modelingSubmission = new ModelingSubmission();
-            modelingSubmission.setParticipation(participation);
-        }
-        else {
-            // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = optionalModelingSubmission.get();
-        }
-
-        // make sure only the latest submission and latest result is sent to the client
-        participation.setSubmissions(null);
-        participation.setResults(null);
-
-        return ResponseEntity.ok(modelingSubmissionService.hideResultDetails(modelingSubmission, modelingExercise));
+        return responseEntity;
     }
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {

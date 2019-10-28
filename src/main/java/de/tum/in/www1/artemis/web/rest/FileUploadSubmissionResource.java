@@ -201,49 +201,10 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
-        if (participation == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
+        var responseEntity = getDataForEditor(participation, FileUploadExercise.class, FileUploadSubmission.class, new FileUploadSubmission());
+        if (responseEntity.hasBody() && responseEntity.getBody() != null) {
+            return ResponseEntity.ok(fileUploadSubmissionService.hideResultDetails(responseEntity.getBody(), participation.getExercise()));
         }
-        FileUploadExercise fileUploadExercise;
-        if (participation.getExercise() instanceof FileUploadExercise) {
-            fileUploadExercise = (FileUploadExercise) participation.getExercise();
-            if (fileUploadExercise == null) {
-                return ResponseEntity.badRequest()
-                        .headers(
-                                HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                        .body(null);
-            }
-
-            // make sure sensitive information are not sent to the client
-            fileUploadExercise.filterSensitiveInformation();
-        }
-        else {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "wrongExerciseType",
-                    "The exercise of the participation is not a file upload exercise.")).body(null);
-        }
-
-        // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise))) {
-            return forbidden();
-        }
-
-        Optional<FileUploadSubmission> optionalFileUploadSubmission = participation.findLatestFileUploadSubmission();
-        FileUploadSubmission fileUploadSubmission;
-        if (!optionalFileUploadSubmission.isPresent()) {
-            // this should never happen as the submission is initialized along with the participation when the exercise is started
-            fileUploadSubmission = new FileUploadSubmission();
-            fileUploadSubmission.setParticipation(participation);
-        }
-        else {
-            // only try to get and set the file upload if the fileUploadSubmission existed before
-            fileUploadSubmission = optionalFileUploadSubmission.get();
-        }
-
-        // make sure only the latest submission and latest result is sent to the client
-        participation.setSubmissions(null);
-        participation.setResults(null);
-
-        return ResponseEntity.ok(fileUploadSubmissionService.hideResultDetails(fileUploadSubmission, fileUploadExercise));
+        return responseEntity;
     }
 }
