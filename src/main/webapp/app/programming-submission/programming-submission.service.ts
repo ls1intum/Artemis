@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
@@ -356,11 +356,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-build', { submissionType });
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + `/trigger-build?submissionType=${submissionType}`, {});
     }
 
-    public triggerFailedBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', { submissionType });
+    public triggerFailedBuild(participationId: number) {
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { observe: 'response' });
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {

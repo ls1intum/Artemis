@@ -150,21 +150,32 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
+     *
+     * @param participationId to which the submission belongs.
+     * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered or a result already exists and 202 (accepted) if a build is still running for the given participation.
+     */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
+    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
         }
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)
-                || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
         Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId);
         if (submission.isEmpty()) {
             return badRequest();
+        }
+
+        // If a build is already queued/running for the given participation, we just return.
+        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
+        if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
+            return ResponseEntity.accepted().build();
         }
 
         // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
@@ -174,8 +185,7 @@ public class ProgrammingSubmissionResource {
             return ResponseEntity.ok().build();
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
-        ProgrammingSubmission newSubmission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
-        programmingSubmissionService.triggerBuildAndNotifyUser(newSubmission);
+        programmingSubmissionService.triggerBuildAndNotifyUser(submission.get());
         return ResponseEntity.ok().build();
     }
 

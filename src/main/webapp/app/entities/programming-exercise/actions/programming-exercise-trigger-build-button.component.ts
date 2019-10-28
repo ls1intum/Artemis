@@ -6,6 +6,7 @@ import { hasParticipationChanged, InitializationState, Participation } from 'app
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { SubmissionType } from 'app/entities/submission';
+import { HttpResponse } from '@angular/common/http';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -85,7 +86,17 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     triggerBuild(submissionType: SubmissionType) {
         if (this.participationHasLatestSubmissionWithoutResult) {
-            this.submissionService.triggerFailedBuild(this.participation.id, submissionType).subscribe();
+            this.submissionService
+                .triggerFailedBuild(this.participation.id)
+                .pipe(
+                    tap(res => {
+                        // This status code means that a build is already queued/running for the given participation.
+                        if (res.status === 202) {
+                            this.isBuilding = true;
+                        }
+                    }),
+                )
+                .subscribe();
         } else {
             this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe();
         }
