@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from '../core';
 import { PendingChangesGuard } from 'app/shared';
 import { CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent } from './';
+import { CodeEditorInstructorIdeComponent } from 'app/code-editor/code-editor-instructor-ide.component';
 
 export const codeEditorRoute: Routes = [
     {
@@ -35,6 +36,32 @@ export const codeEditorRoute: Routes = [
     {
         path: ':exerciseId/admin/test',
         component: CodeEditorInstructorContainerComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'ide/:exerciseId/admin/:participationId',
+        component: CodeEditorInstructorIdeComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'ide/:exerciseId/admin/test',
+        component: CodeEditorInstructorIdeComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
             pageTitle: 'artemisApp.editor.home.title',

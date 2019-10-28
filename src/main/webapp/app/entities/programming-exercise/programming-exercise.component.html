@@ -162,6 +162,7 @@
                                     [buttonLabel]="'entity.action.editInIntelliJ' | translate"
                                     [smallButton]="true"
                                     (click)="editInIDE(programmingExercise)"
+                                    routerLink="/code-editor/ide/{{ programmingExercise.id }}/admin/{{ programmingExercise.templateParticipation.id }}"
                                 >
                                 </jhi-ide-button>
                                 <button

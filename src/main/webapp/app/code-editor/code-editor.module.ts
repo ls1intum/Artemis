@@ -39,6 +39,8 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { CodeEditorInstructorIdeComponent } from 'app/code-editor/code-editor-instructor-ide.component';
+import { IntellijModule } from 'app/intellij/intellij.module';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -54,6 +56,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArtemisProgrammingExerciseActionsModule,
         TreeviewModule.forRoot(),
         ArtemisExerciseHintModule,
+        IntellijModule,
     ],
     declarations: [
         CodeEditorGridComponent,
@@ -71,9 +74,11 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
+        CodeEditorInstructorIdeComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     entryComponents: [
+        CodeEditorInstructorIdeComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserDeleteComponent,
