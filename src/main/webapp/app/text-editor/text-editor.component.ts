@@ -110,7 +110,7 @@ export class TextEditorComponent implements OnInit {
     private checkIfSubmitAlwaysEnabled() {
         const isInitializationAfterDueDate =
             this.textExercise.dueDate && this.participation.initializationDate && moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
-        const isAlwaysActive = !this.textExercise.dueDate || isInitializationAfterDueDate;
+        const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
 
         this.isAllowedToSubmitAfterDeadline = !!isInitializationAfterDueDate;
         this.isAlwaysActive = !!isAlwaysActive;
@@ -120,7 +120,7 @@ export class TextEditorComponent implements OnInit {
      * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
      */
     get isActive(): boolean {
-        const isActive = this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment()));
+        const isActive = !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment())));
         return !!isActive;
     }
 
