@@ -11,7 +11,7 @@
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
             <jhi-button
-                [disabled]="(!isActive && !isLate) || !submission"
+                [disabled]="(!isActive && !isLate) || !submission || !!result"
                 [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
                 (onClick)="submit()"
                 [isLoading]="isSaving"
@@ -43,10 +43,10 @@
     </div>
 
     <div class="row flex-grow-1">
-        <div *ngIf="submission && (isActive || isLate)" class="col-12 editor-large">
+        <div *ngIf="submission && (isActive || isLate) && !result" class="col-12 editor-large">
             <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
         </div>
-        <div *ngIf="!isActive && modelingExercise" class="col-9">
+        <div *ngIf="(!isActive || result) && modelingExercise" class="col-9">
             <jhi-modeling-assessment
                 [model]="umlModel"
                 [feedbacks]="assessmentResult?.feedbacks"
@@ -58,7 +58,7 @@
                 (selectionChanged)="onSelectionChanged($event)"
             ></jhi-modeling-assessment>
         </div>
-        <div class="col-3" *ngIf="submission?.submitted && !isActive">
+        <div class="col-3" *ngIf="submission?.submitted && (!isActive || result)">
             <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
             <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
                 <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
