@@ -96,6 +96,7 @@
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
                 "timeUntilPlannedStart": "Time until planned start:"
             },
+            "isSaving": "Saving answers...",
             "lastSaved": "Saved",
             "lastSavedTimeNever": "Never",
             "submitted": "Submitted",

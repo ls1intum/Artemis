@@ -119,7 +119,7 @@
                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                 </div>
                 <div *ngIf="mode === 'default' && !waitingForQuizStart">
-                    <span *ngIf="isSaving">Saving Answers...</span>
+                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.isSaving">Saving answers...</span>
                     <span *ngIf="!isSaving && !isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
@@ -127,8 +127,9 @@
                         <span *ngIf="!justSaved && lastSavedTimeText !== ''">{{ lastSavedTimeText }}</span>
                         <span *ngIf="!justSaved && lastSavedTimeText === ''" jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
                     </span>
-                    <!-- Only display submission hint for mobile -->
+                    <!-- Only display save and submission hint without time stamps for mobile -->
                     <span *ngIf="!isSaving && isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
+                        <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>
                 </div>
