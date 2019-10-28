@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { WindowRef } from 'app/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -27,7 +28,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
 
     static initBridge(bridge: JavaBridgeService, win: WindowRef) {
         win.nativeWindow.javaDowncallBridge = bridge;
-        bridge.intellijState = { opened: -1 };
+        bridge.intellijState = { opened: -1, inInstructorView: false };
         bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
     }
 
@@ -88,5 +89,15 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     onExerciseOpened(exerciseId: number): void {
         this.intellijState.opened = exerciseId;
         this.intellijStateSubject.next(this.intellijState);
+    }
+
+    onExerciseOpenedAsInstructor(exerciseId: number): void {
+        this.intellijState.opened = exerciseId;
+        this.intellijState.inInstructorView = true;
+        this.intellijStateSubject.next(this.intellijState);
+    }
+
+    editExercise(exerciseJson: string): void {
+        this.window.nativeWindow.intellij.editExercise(exerciseJson);
     }
 }

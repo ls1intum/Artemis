@@ -3,14 +3,17 @@ export interface Intellij {
     clone(repository: string, exerciseName: string, exerciseId: number, courseId: number): void;
     submit(): void;
     log(message: string): void;
+    editExercise(exerciseJson: string): void;
 }
 
 export interface IntelliJState {
     opened: number;
+    inInstructorView: boolean;
 }
 
 export interface JavaDowncallBridge {
     onExerciseOpened(exerciseId: number): void;
+    onExerciseOpenedAsInstructor(exerciseId: number): void;
 }
 
 export interface JavaUpcallBridge {
@@ -18,6 +21,7 @@ export interface JavaUpcallBridge {
     clone(repository: string, exerciseName: string, exerciseId: number, courseId: number): void;
     submit(): void;
     log(message: string): void;
+    editExercise(exerciseJson: string): void;
 }
 
 export interface Window {

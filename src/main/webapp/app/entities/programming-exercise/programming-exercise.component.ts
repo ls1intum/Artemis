@@ -11,6 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { isIntelliJ } from 'app/intellij/intellij';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -18,6 +20,7 @@ import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exe
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    readonly isIDE = isIntelliJ;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -26,6 +29,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
+        private javaBridge: JavaBridgeService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -90,5 +94,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             },
             reason => {},
         );
+    }
+
+    editInIDE(programmingExercise: ProgrammingExercise) {
+        this.javaBridge.editExercise(JSON.stringify(programmingExercise));
     }
 }
