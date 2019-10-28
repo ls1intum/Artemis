@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -51,18 +52,25 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ResultService resultService;
+
     private final Optional<VersionControlService> versionControlService;
+
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.messagingTemplate = messagingTemplate;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.resultService = resultService;
         this.versionControlService = versionControlService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     /**
@@ -119,18 +127,19 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId) {
+    public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
         }
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)
+                || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
             return forbidden();
         }
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.MANUAL);
+            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
         }
         catch (IllegalStateException ex) {
             return notFound();
@@ -141,35 +150,32 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Trigger the CI build of the given participation.
-     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
-     *
-     * @param participationId of the participation.
-     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
-     * The REST path would be: "/programming-submissions/{participationId}/trigger-instructor-build"
-     */
-    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-instructor-build")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> triggerInstructorBuild(@PathVariable Long participationId) {
+    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
         }
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        if (!authCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)
+                || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
             return forbidden();
         }
-        ProgrammingSubmission submission;
-        try {
-            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.INSTRUCTOR);
-        }
-        catch (IllegalStateException ex) {
-            return notFound();
+        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId);
+        if (submission.isEmpty()) {
+            return badRequest();
         }
 
-        programmingSubmissionService.triggerBuildAndNotifyUser(submission);
-
+        // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
+        Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
+        if (result.isPresent()) {
+            resultService.saveAndNotifyUser(result.get(), participationId);
+            return ResponseEntity.ok().build();
+        }
+        // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
+        ProgrammingSubmission newSubmission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
+        programmingSubmissionService.triggerBuildAndNotifyUser(newSubmission);
         return ResponseEntity.ok().build();
     }
 

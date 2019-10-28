@@ -5,6 +5,7 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/pr
 import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
+import { SubmissionType } from 'app/entities/submission';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -13,7 +14,6 @@ import { ButtonSize, ButtonType } from 'app/shared/components';
  */
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     ButtonType = ButtonType;
-    abstract triggerBuild: (event: any) => void;
 
     @Input() exercise: ProgrammingExercise;
     @Input() participation: Participation;
@@ -81,5 +81,13 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                 }),
             )
             .subscribe();
+    }
+
+    triggerBuild(submissionType: SubmissionType) {
+        if (this.participationHasLatestSubmissionWithoutResult) {
+            this.submissionService.triggerFailedBuild(this.participation.id, submissionType).subscribe();
+        } else {
+            this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe();
+        }
     }
 }

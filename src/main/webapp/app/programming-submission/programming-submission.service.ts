@@ -7,6 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { SubmissionType } from 'app/entities/submission';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -355,12 +356,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.resultEtaSubject.asObservable().pipe(distinctUntilChanged());
     };
 
-    public triggerBuild(participationId: number) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-build', {});
+    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-build', { submissionType });
     }
 
-    public triggerInstructorBuild(participationId: number) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-instructor-build', {});
+    public triggerFailedBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', { submissionType });
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
@@ -150,6 +151,8 @@ public interface ContinuousIntegrationService {
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
     ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
+
+    Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission);
 
     /**
      * Checks if the project with the given projectKey already exists
