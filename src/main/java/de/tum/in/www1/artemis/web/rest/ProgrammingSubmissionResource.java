@@ -122,6 +122,7 @@ public class ProgrammingSubmissionResource {
      * The build result will be treated as if the user would have done a commit.
      *
      * @param participationId of the participation.
+     * @param submissionType  will be used for the newly created submission.
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
      * The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */

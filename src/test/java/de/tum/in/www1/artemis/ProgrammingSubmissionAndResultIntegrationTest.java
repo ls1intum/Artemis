@@ -494,7 +494,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
         Long id = getParticipationIdByType(participationType, participationNumber);
-        request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-instructor-build", null, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
     }
 
     /**
