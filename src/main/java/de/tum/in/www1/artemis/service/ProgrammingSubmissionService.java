@@ -471,7 +471,7 @@ public class ProgrammingSubmissionService {
 
     /**
      * @param exerciseId the exercise we are interested in
-     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     @Transactional(readOnly = true)
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
@@ -479,11 +479,11 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the file upload submissions where the tutor has a result associated
+     * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for
      * @param tutorId    - the id of the tutor we are interested in
-     * @return a list of file upload Submissions
+     * @return a list of programming submissions
      */
     @Transactional(readOnly = true)
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
@@ -494,12 +494,12 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Given an exerciseId, returns all the file upload submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * Given an exerciseId, returns all the programming submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
      * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @return a list of file upload submissions for the given exercise id
+     * @return a list of programming submissions for the given exercise id
      */
     @Transactional(readOnly = true)
     public List<ProgrammingSubmission> getProgrammingSubmissions(Long exerciseId, boolean submittedOnly) {
@@ -513,7 +513,7 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Given an exercise id, find a random file upload submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result

@@ -277,7 +277,7 @@ public class ProgrammingSubmissionResource {
      * @param exerciseId the id of the exercise.
      * @param submittedOnly if only submitted submissions should be returned.
      * @param assessedByTutor if the submission was assessed by calling tutor.
-     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body.
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
     @GetMapping("/exercises/{exerciseId}/programming-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -306,12 +306,12 @@ public class ProgrammingSubmissionResource {
      * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
      *
      * @param exerciseId the id of the exercise
-     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
-        log.debug("REST request to get a file upload submission without assessment");
+        log.debug("REST request to get a programming submission without assessment");
         ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();
