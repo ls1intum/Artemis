@@ -22,6 +22,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     participationIsActive: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
+    isRetrievingBuildStatus: boolean;
     isBuilding: boolean;
     // If true, the trigger button is also displayed for successful submissions.
     showForSuccessfulSubmissions = false;
@@ -90,6 +91,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      * @param submissionType that is used for the creation of the submission.
      */
     triggerBuild(submissionType: SubmissionType) {
+        this.isRetrievingBuildStatus = true;
         if (this.participationHasLatestSubmissionWithoutResult) {
             this.submissionService
                 .triggerFailedBuild(this.participation.id)
@@ -101,9 +103,9 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                         }
                     }),
                 )
-                .subscribe();
+                .subscribe(() => (this.isRetrievingBuildStatus = false));
         } else {
-            this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe();
+            this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe(() => (this.isRetrievingBuildStatus = false));
         }
     }
 }
