@@ -462,7 +462,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId the id of the exercise
      */
     getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<ProgrammingSubmission> {
-        let url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+        const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
         return this.http.get<ProgrammingSubmission>(url);
     }
 
