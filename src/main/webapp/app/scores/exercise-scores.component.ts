@@ -112,6 +112,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     });
                     this.allResults = tempResults;
                     this.filterResults();
+                    // Nest submission into participation so that it is available for the result component
+                    this.results = this.results.map(result => {
+                        if (result.participation && result.submission) {
+                            result.participation.submissions = [result.submission];
+                        }
+                        return result;
+                    });
                 }),
             );
     }

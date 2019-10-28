@@ -235,7 +235,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 map(this.reconnectEntities),
             )
             .subscribe((submissions: Submission[]) => {
-                this.submissions = submissions;
+                // Set the received submissions. As the result component depends on the submission we nest it into the participation.
+                this.submissions = submissions.map(submission => {
+                    submission.participation.submissions = [submission];
+                    return submission;
+                });
             });
     }
 

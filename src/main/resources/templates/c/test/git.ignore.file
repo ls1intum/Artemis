@@ -1,0 +1,10 @@
+# IDE:
+.vscode/
+.pytest_cache/
+__pycache__
+
+# Test:
+test-reports/
+*.xml
+*.c
+main*

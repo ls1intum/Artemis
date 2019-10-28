@@ -14,13 +14,15 @@ export class ItalicCommand extends Command {
      */
     execute(): void {
         const selectedText = this.getSelectedText();
+        let textToAdd = '';
 
-        if (selectedText.includes('*')) {
-            const textToAdd = selectedText.slice(1, -1);
+        if (selectedText.charAt(0) === '*' && selectedText.charAt(selectedText.length - 1) === '*') {
+            textToAdd = selectedText.slice(1, -1);
             this.insertText(textToAdd);
         } else {
-            const textToAdd = `*${selectedText}*`;
-            this.insertText(textToAdd);
+            const trimmedText = this.deleteWhiteSpace(selectedText);
+            textToAdd = `*${trimmedText}*`;
+            this.addRefinedText(selectedText, textToAdd);
         }
     }
 }
