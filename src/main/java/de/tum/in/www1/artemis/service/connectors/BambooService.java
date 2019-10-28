@@ -795,10 +795,11 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
-
+        result.setSubmission(submission);
         addFeedbackToResult(result, buildResults);
         // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
         Result resultFromBuildMap = resultRepository.save(result);
+
         return Optional.of(resultFromBuildMap);
     }
 

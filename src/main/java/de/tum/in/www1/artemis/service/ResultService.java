@@ -430,10 +430,11 @@ public class ResultService {
         return resultRepository.existsByParticipation_ExerciseId(exerciseId);
     }
 
-    public Result saveAndNotifyUser(Result result, Long participationId) {
-        Result savedResult = resultRepository.save(result);
+    @Transactional(readOnly = true)
+    public void notifyUserAboutNewResult(Result result, Long participationId) {
+        Hibernate.unproxy(result.getSubmission());
+        Hibernate.unproxy(result.getFeedbacks());
         notifyNewResult(result, participationId);
-        return savedResult;
     }
 
     private void notifyNewResult(Result result, Long participationId) {

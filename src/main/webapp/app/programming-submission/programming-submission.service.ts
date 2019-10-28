@@ -423,7 +423,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             // Now update the exercise build state object and start the result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { [participationId]: submissionStateObj, ...(this.exerciseBuildState[exerciseId] || {}) } };
+                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj } };
                 this.subscribeForNewResult(participationId, exerciseId);
             }),
         );

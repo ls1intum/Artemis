@@ -170,7 +170,7 @@ public class ProgrammingSubmissionResource {
         // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
         Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
         if (result.isPresent()) {
-            resultService.saveAndNotifyUser(result.get(), participationId);
+            resultService.notifyUserAboutNewResult(result.get(), participationId);
             return ResponseEntity.ok().build();
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
