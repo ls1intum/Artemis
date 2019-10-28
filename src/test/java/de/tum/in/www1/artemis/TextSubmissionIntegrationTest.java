@@ -210,9 +210,9 @@ public class TextSubmissionIntegrationTest {
     }
 
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {
-        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
+        assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getResult()).isNull();
+            assertThat(submission.getResult()).as("result is hidden").isNull();
         }
         else {
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isNull();

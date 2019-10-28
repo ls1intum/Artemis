@@ -23,6 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -97,6 +98,40 @@ public class FileUploadSubmissionIntegrationTest {
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
         checkDetailsHidden(returnedSubmission, true);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void submitFileUploadSubmission_withSubmissionId() throws Exception {
+        database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", notSubmittedFileUploadSubmission, FileUploadSubmission.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void submitFileUploadSubmission_exerciseIdIncorrect() throws Exception {
+        database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + (fileUploadExercise.getId() + 1) + "/file-upload-submissions", notSubmittedFileUploadSubmission,
+                FileUploadSubmission.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void submitFileUploadSubmission_courseIdIncorrect() throws Exception {
+        var courseId = fileUploadExercise.getCourse().getId();
+        fileUploadExercise.getCourse().setId(courseId + 1);
+        database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", notSubmittedFileUploadSubmission, FileUploadSubmission.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student2")
+    public void submitFileUploadSubmission_notStudentInCourse() throws Exception {
+        database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", notSubmittedFileUploadSubmission, FileUploadSubmission.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -222,9 +257,13 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {
-        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
+        assertThat(submission.getParticipation().getSubmissions()).as("submissions are hidden in participation").isNullOrEmpty();
+        assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getResult()).isNull();
+            assertThat(submission.getResult()).as("result is hidden").isNull();
+        }
+        else {
+            assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
         }
     }
 }
