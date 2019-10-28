@@ -782,6 +782,7 @@ public class BambooService implements ContinuousIntegrationService {
         if (buildResults == null) {
             return Optional.empty();
         }
+        // The retrieved build result must match the commitHash of the provided submission.
         String commitHash = (String) buildResults.get("vcsRevisionKey");
         if(!commitHash.equalsIgnoreCase(submission.getCommitHash())) {
             return Optional.empty();
@@ -796,8 +797,8 @@ public class BambooService implements ContinuousIntegrationService {
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
         result.setSubmission(submission);
+
         addFeedbackToResult(result, buildResults);
-        // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
         Result resultFromBuildMap = resultRepository.save(result);
 
         return Optional.of(resultFromBuildMap);

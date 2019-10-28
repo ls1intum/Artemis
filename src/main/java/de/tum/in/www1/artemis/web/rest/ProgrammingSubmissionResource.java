@@ -173,17 +173,16 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
 
-        // If a build is already queued/running for the given participation, we just return.
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
-        if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
-            return ResponseEntity.accepted().build();
-        }
-
         // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
         Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
         if (result.isPresent()) {
             resultService.notifyUserAboutNewResult(result.get(), participationId);
             return ResponseEntity.ok().build();
+        }
+        // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
+        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
+        if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
+            return ResponseEntity.accepted().build();
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
         programmingSubmissionService.triggerBuildAndNotifyUser(submission.get());

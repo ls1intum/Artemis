@@ -84,6 +84,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             .subscribe();
     }
 
+    /**
+     * Trigger a regular build or a failed build, depending on the state of the latest submission.
+     *
+     * @param submissionType that is used for the creation of the submission.
+     */
     triggerBuild(submissionType: SubmissionType) {
         if (this.participationHasLatestSubmissionWithoutResult) {
             this.submissionService

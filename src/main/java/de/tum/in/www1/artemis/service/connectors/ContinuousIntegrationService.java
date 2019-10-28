@@ -152,6 +152,12 @@ public interface ContinuousIntegrationService {
      */
     ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
+    /**
+     * Retrieve the latest build result from the CIS for the given participation if it matches the commitHash of the submission.
+     * @param participation to identify the build artifact with.
+     * @param submission    for commitHash comparison.
+     * @return the saved Result instance if a build result could be retrieved from the CIS.
+     */
     Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission);
 
     /**
