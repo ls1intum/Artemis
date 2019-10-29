@@ -957,7 +957,7 @@ public class ProgrammingExerciseService {
         int index = 0;
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             // Execute requests in batches instead all at once.
-            if (index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
                 try {
                     Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
                 }
