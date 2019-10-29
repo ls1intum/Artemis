@@ -17,7 +17,7 @@
         "students": "Students",
         "cleanup": {
             "title": "Cleanup",
-            "question": "Are you sure you want to delete ALL student build plans for the programming exercise {{ title }}? This action can NOT be undone!"
+            "question": "Are you sure you want to delete ALL student build plans for the programming exercise <strong>{{ title }}</strong>? This action can NOT be undone!"
         },
         "archive": {
             "title": "Archive",
