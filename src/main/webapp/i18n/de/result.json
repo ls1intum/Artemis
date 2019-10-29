@@ -31,6 +31,7 @@
             "participation": "Teilnahme",
             "createManual": "Erstelle manuelles Ergebnis für",
             "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl sein.",
+            "scoreOutOfRange": "Die Bewertung sollte zwischen 0 und 100 liegen.",
             "resultStringRequired": "Ein Ergebnis Text ist erforderlich.",
             "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
             "studentOverride": "Das Abgabedatum dieser Aufgabe ist noch nicht erreicht. Der Student könnte das manuelle Ergebnise noch mit einer neuen Lösung überschreiben.",

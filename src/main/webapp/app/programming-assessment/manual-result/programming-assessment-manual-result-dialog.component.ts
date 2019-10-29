@@ -67,6 +67,11 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     save() {
+        // TODO: If we would use a reactive form, we could improve the validation.
+        if (this.result.score < 0 || this.result.score > 100) {
+            this.alertService.error('artemisApp.result.scoreOutOfRange');
+            return;
+        }
         this.result.feedbacks = this.feedbacks;
         this.isSaving = true;
         for (let i = 0; i < this.result.feedbacks.length; i++) {

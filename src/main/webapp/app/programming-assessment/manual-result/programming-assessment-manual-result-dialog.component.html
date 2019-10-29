@@ -8,6 +8,8 @@
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <jhi-alert></jhi-alert>
         <div *ngIf="isOpenForSubmission" class="alert alert-warning">
             <strong jhiTranslate="artemisApp.result.exerciseStillOpen">Exercise is still open for submissions!</strong>
             <span jhiTranslate="artemisApp.result.studentOverride"
@@ -42,7 +44,6 @@
                 <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</h4>
                 <input
                     type="number"
-                    max="100"
                     required
                     class="form-control"
                     name="score"
