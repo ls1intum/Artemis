@@ -19,7 +19,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
 
-    participationIsActive: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
     isBuilding: boolean;
     // If true, the trigger button is also displayed for successful submissions.
@@ -37,10 +36,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
-            if (this.participationIsActive) {
-                this.setupSubmissionSubscription();
-            }
+            this.setupSubmissionSubscription();
         }
     }
 

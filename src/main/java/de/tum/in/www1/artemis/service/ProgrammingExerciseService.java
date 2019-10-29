@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.BuildPlanNotFoundException;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -904,7 +905,7 @@ public class ProgrammingExerciseService {
      * @param newExercise The new exercise to which all plans should get copied
      * @throws HttpException If the copied build plans could not get triggered
      */
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException {
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException, BuildPlanNotFoundException {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var templatePlanName = BuildPlanType.TEMPLATE.getName();
@@ -932,7 +933,7 @@ public class ProgrammingExerciseService {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
             continuousIntegrationService.get().triggerBuild(solutionParticipation);
         }
-        catch (HttpException e) {
+        catch (HttpException | BuildPlanNotFoundException e) {
             log.error("Unable to trigger imported build plans", e);
             throw e;
         }

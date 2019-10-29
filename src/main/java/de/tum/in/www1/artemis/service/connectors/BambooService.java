@@ -203,7 +203,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation the participation with the id of the build plan that should be triggered.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
+        public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException, BuildPlanNotFoundException {
         var buildPlan = participation.getBuildPlanId();
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
@@ -213,6 +213,9 @@ public class BambooService implements ContinuousIntegrationService {
                 HttpMethod.POST,
                 entity,
                 Map.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            // Build plan does not exist, wrap and forward exception
+            throw new BuildPlanNotFoundException(e.getMessage(), e);
         } catch (RestClientException e) {
             log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
             throw new HttpException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());

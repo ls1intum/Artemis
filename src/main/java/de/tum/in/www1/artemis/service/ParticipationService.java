@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -388,7 +392,13 @@ public class ParticipationService {
             return null;
         }
         participation = copyBuildPlan(participation);
-        participation = configureBuildPlan(participation);
+        continuousIntegrationService.get().enablePlan(participation.getBuildPlanId());
+
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var planKey = participation.getBuildPlanId();
+        final var repoName = versionControlService.get().getRepositoryName(participation.getRepositoryUrlAsUrl());
+        continuousIntegrationService.get().updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, projectKey, repoName);
+
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)

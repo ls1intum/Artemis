@@ -55,7 +55,7 @@ public interface ContinuousIntegrationService {
      * @param participation the participation with the id of the build plan that should be triggered
      * @throws HttpException if the request to the CI failed.
      */
-    void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException;
+    void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException, BuildPlanNotFoundException;
 
     /**
      * Delete project with given identifier from CI system.

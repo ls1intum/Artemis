@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.BuildPlanNotFoundException;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -108,7 +109,7 @@ public class ProgrammingSubmissionService {
             try {
                 continuousIntegrationService.get().triggerBuild(peParticipation);
             }
-            catch (HttpException ex) {
+            catch (HttpException | BuildPlanNotFoundException ex) {
                 // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
             }
         }
@@ -336,9 +337,16 @@ public class ProgrammingSubmissionService {
      * @param submission ProgrammingSubmission that was just created.
      */
     public void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
+        final var participation = (ProgrammingExerciseParticipation) submission.getParticipation();
         try {
-            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            continuousIntegrationService.get().triggerBuild(participation);
             notifyUserAboutSubmission(submission);
+        }
+        catch (BuildPlanNotFoundException e) {
+            if (participation instanceof ProgrammingExerciseStudentParticipation) {
+                participationService.resumeExercise(participation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) participation);
+                triggerBuildAndNotifyUser(submission);
+            }
         }
         catch (HttpException e) {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
@@ -375,7 +383,7 @@ public class ProgrammingSubmissionService {
             continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
             notifyUserAboutSubmission(submission);
         }
-        catch (HttpException e) {
+        catch (HttpException | BuildPlanNotFoundException e) {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
@@ -406,7 +414,7 @@ public class ProgrammingSubmissionService {
         try {
             continuousIntegrationService.get().triggerBuild(solutionParticipation);
         }
-        catch (HttpException ex) {
+        catch (HttpException | BuildPlanNotFoundException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
         }
     }
@@ -427,6 +435,7 @@ public class ProgrammingSubmissionService {
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
         if (testCasesChanged == programmingExercise.getTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
+            websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);

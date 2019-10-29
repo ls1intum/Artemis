@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.BuildPlanNotFoundException;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
@@ -346,7 +347,7 @@ public class ProgrammingExerciseResource {
             programmingExerciseService.importBuildPlans(template, imported);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
         }
-        catch (HttpException e) {
+        catch (HttpException | BuildPlanNotFoundException e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
 
