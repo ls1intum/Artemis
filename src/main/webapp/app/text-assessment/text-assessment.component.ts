@@ -116,6 +116,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             if (submissionValue === 'new') {
                 this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
                     submission => {
+                        this.submission = submission;
                         this.result = submission.result;
                         const participation = <StudentParticipation>this.submission.participation;
                         this.receiveParticipation(participation);
@@ -352,7 +353,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     private receiveParticipation(participation: StudentParticipation): void {
         this.participation = participation;
-        this.submission = <TextSubmission>this.participation.submissions[0];
+        if (this.participation.submissions) {
+            this.submission = <TextSubmission>this.participation.submissions[0];
+        }
         this.exercise = <TextExercise>this.participation.exercise;
 
         if (participation.results != null) {
