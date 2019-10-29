@@ -8,6 +8,8 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.*;
@@ -187,7 +189,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
-            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getSubmissionWithoutManualResult((ModelingExercise) exercise);
+            Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getSubmissionWithoutManualResult(exercise, ModelingSubmission.class);
             if (!optionalModelingSubmission.isPresent()) {
                 return notFound();
             }
