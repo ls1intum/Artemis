@@ -11,8 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { ExerciseService } from 'app/entities/exercise';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/utils/global.utils';
 
 @Component({
@@ -31,7 +29,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
         private router: Router,
-        private modalService: NgbModal,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
