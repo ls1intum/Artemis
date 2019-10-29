@@ -28,7 +28,7 @@
                 <p *ngIf="feedback.type === 'MANUAL' && feedback.positive">
                     <span class="code-success">Feedback &nbsp;{{ feedback.text }}:</span>
                 </p>
-                <pre *ngIf="feedback.detailText">{{ feedback.detailsText | sanitizeHtml }}</pre>
+                <pre *ngIf="feedback.detailText">{{ feedback.detailText | sanitizeHtml }}</pre>
                 <pre *ngIf="!feedback.detailText">No feedback available</pre>
                 <hr *ngIf="!isLast" />
             </div>
