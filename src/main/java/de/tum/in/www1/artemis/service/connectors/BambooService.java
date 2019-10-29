@@ -203,7 +203,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation the participation with the id of the build plan that should be triggered.
      */
     @Override
-        public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException, BuildPlanNotFoundException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException, BuildPlanNotFoundException {
         var buildPlan = participation.getBuildPlanId();
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
