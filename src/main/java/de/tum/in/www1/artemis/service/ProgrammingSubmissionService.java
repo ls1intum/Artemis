@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_NOTIFICATION;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
@@ -321,11 +320,24 @@ public class ProgrammingSubmissionService {
 
     /**
      * Trigger a CI build for each submission & notify each user on a new programming submission.
+     * Instead of triggering all builds at the same time, we execute the builds in batches to not overload the CIS system.
+     *
      * @param submissions ProgrammingSubmission Collection
      */
     public void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
+        int index = 0;
         for (ProgrammingSubmission submission : submissions) {
+            // Execute requests in batches instead all at once.
+            if (index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before executing successive build for submission " + submission.getId(), ex);
+                }
+            }
             triggerBuildAndNotifyUser(submission);
+            index++;
         }
     }
 
