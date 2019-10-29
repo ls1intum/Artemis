@@ -302,6 +302,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * Gets randomly any unassessed submission of specified type without manual result
      * @param exercise exercise to which the submission belongs
      * @param submissionType concrete type of the submission
+     * @param <L> concrete exercise
      * @return submission of the specified type
      */
     @Transactional(readOnly = true)
