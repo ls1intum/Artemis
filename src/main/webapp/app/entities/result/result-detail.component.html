@@ -28,7 +28,7 @@
                 <p *ngIf="feedback.type === 'MANUAL' && feedback.positive">
                     <span class="code-success">Feedback &nbsp;{{ feedback.text }}:</span>
                 </p>
-                <pre *ngIf="feedback.detailText" [innerHtml]="feedback.detailText | safeHtml"></pre>
+                <pre *ngIf="feedback.detailText">{{ feedback.detailsText | sanitizeHtml }}</pre>
                 <pre *ngIf="!feedback.detailText">No feedback available</pre>
                 <hr *ngIf="!isLast" />
             </div>
@@ -49,8 +49,9 @@
                         [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
                         [class.text-warning]="logEntry.type === BuildLogType.WARNING"
                         [class.mb-3]="i + 1 < buildLogs.length && logEntry.time !== buildLogs[i + 1].time"
-                        [innerHtml]="logEntry.log | safeHtml"
-                    ></dd>
+                    >
+                        {{ logEntry.log | sanitizeHtml }}
+                    </dd>
                 </ng-container>
             </dl>
         </ng-container>
