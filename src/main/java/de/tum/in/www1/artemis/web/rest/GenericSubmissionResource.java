@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -97,5 +98,61 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
             submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
         }
         return submissions;
+    }
+
+    /**
+     * Returns the data needed for the editor, which includes the participation, submission with answer if existing and the assessments if the submission was already
+     * submitted.
+     *
+     * @param participation the participation for which to find the data for the editor
+     * @param exerciseType type of the exercise for which we take the data
+     * @param submissionType type of the submission for which we take the data
+     * @param newSubmission new instance of concrete submission which can be needed if we don't find submission
+     * @return the ResponseEntity with the participation as body
+     */
+    protected ResponseEntity<T> getDataForEditor(StudentParticipation participation, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
+        if (participation == null) {
+            return ResponseEntity.notFound()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
+        }
+        E exercise;
+        if (exerciseType.isInstance(participation.getExercise())) {
+            exercise = (E) participation.getExercise();
+            if (exercise == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                        .body(null);
+            }
+
+            // make sure sensitive information are not sent to the client
+            exercise.filterSensitiveInformation();
+        }
+        else {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadExercise", "wrongExerciseType",
+                    "The exercise of the participation is not a file upload exercise.")).body(null);
+        }
+
+        // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
+        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(exercise))) {
+            return forbidden();
+        }
+
+        Optional<T> optionalSubmission = participation.findLatestSubmissionOfType(submissionType);
+        T submission;
+        if (!optionalSubmission.isPresent()) {
+            // this should never happen as the submission is initialized along with the participation when the exercise is started
+            submission = newSubmission;
+            submission.setParticipation(participation);
+        }
+        else {
+            // only try to get and set the file upload if the fileUploadSubmission existed before
+            submission = optionalSubmission.get();
+        }
+
+        // make sure only the latest submission and latest result is sent to the client
+        participation.setSubmissions(null);
+        participation.setResults(null);
+
+        return ResponseEntity.ok(submission);
     }
 }

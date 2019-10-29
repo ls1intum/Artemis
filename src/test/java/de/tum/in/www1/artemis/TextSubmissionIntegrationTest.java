@@ -51,7 +51,7 @@ public class TextSubmissionIntegrationTest {
     private TextSubmission textSubmission;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    public void initTestCase() {
         database.addUsers(2, 2, 0);
         database.addCourseWithOneTextExerciseDueDateReached();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
@@ -70,23 +70,52 @@ public class TextSubmissionIntegrationTest {
         TextSubmission submission = ModelFactory.generateTextSubmission("d", Language.ENGLISH, false);
         TextSubmission returnedSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", submission, TextSubmission.class,
                 HttpStatus.OK);
-        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.getText()).as("text is set").isEqualTo("d");
-        assertThat(returnedSubmission.getLanguage()).as("language is set").isEqualTo(Language.ENGLISH);
+        assertThat(returnedSubmission).as("submission is not null").isNotNull();
+        assertThat(returnedSubmission).as("correct text submission was found").isEqualToComparingOnlyGivenFields(submission, "text", "language", "submitted");
         checkDetailsHidden(returnedSubmission, true);
     }
 
     @Test
     @WithMockUser(value = "student1")
+    public void submitTextSubmission_withSubmissionId() throws Exception {
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void submitTextSubmission_exerciseIdIncorrect() throws Exception {
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + (textExercise.getId() + 1) + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void submitTextSubmission_courseIdIncorrect() throws Exception {
+        var courseId = textExercise.getCourse().getId();
+        textExercise.getCourse().setId(courseId + 1);
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student2")
+    public void submitTextSubmission_notStudentInCourse() throws Exception {
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
     public void updateTextSubmission() throws Exception {
-        database.addParticipationForExercise(textExercise, "student1");
+        var participation = database.addParticipationForExercise(textExercise, "student1");
         textSubmission.setText("dddd");
         textSubmission.setLanguage(Language.GERMAN);
         TextSubmission returnedSubmission = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
                 HttpStatus.OK);
-        assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.getText()).isEqualTo("dddd");
-        assertThat(returnedSubmission.getLanguage()).isEqualTo(Language.GERMAN);
+        assertThat(returnedSubmission).as("submission is not null").isNotNull();
+        assertThat(returnedSubmission).as("correct text submission was found").isEqualToComparingOnlyGivenFields(textSubmission, "text", "language", "submitted");
+        assertThat(returnedSubmission.getParticipation()).isEqualTo(participation);
         checkDetailsHidden(returnedSubmission, true);
     }
 
@@ -98,10 +127,9 @@ public class TextSubmissionIntegrationTest {
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
-        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        checkSubmission(textSubmissions.get(0), textSubmission);
 
-        checkDetailsHidden(textSubmission, false);
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        checkDetailsHidden(textSubmissions.get(0), false);
     }
 
     @Test
@@ -118,10 +146,9 @@ public class TextSubmissionIntegrationTest {
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class, params);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
-        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        checkSubmission(textSubmissions.get(0), textSubmission);
 
         checkDetailsHidden(textSubmissions.get(0), false);
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -138,10 +165,9 @@ public class TextSubmissionIntegrationTest {
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class, params);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
-        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        checkSubmission(textSubmissions.get(0), textSubmission);
 
         checkDetailsHidden(textSubmissions.get(0), false);
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -153,8 +179,8 @@ public class TextSubmissionIntegrationTest {
                 TextSubmission.class);
 
         assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
-        assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        checkSubmission(textSubmissionWithoutAssessment, textSubmission);
+        checkDetailsHidden(textSubmissionWithoutAssessment, false);
     }
 
     @Test
@@ -180,12 +206,20 @@ public class TextSubmissionIntegrationTest {
         assertThat(participation.getResults(), hasSize(1));
 
         assertThat(participation.getSubmissions(), is(notNullValue()));
+        checkSubmission((TextSubmission) participation.getSubmissions().iterator().next(), textSubmission);
     }
 
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {
-        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
+        assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getResult()).isNull();
+            assertThat(submission.getResult()).as("result is hidden").isNull();
         }
+        else {
+            assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        }
+    }
+
+    private void checkSubmission(TextSubmission actualSubmission, TextSubmission expectedSubmission) {
+        assertThat(actualSubmission).as("correct text submission was found").isEqualToComparingOnlyGivenFields(expectedSubmission, "id", "text", "language", "submitted");
     }
 }
