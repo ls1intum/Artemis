@@ -16,6 +16,7 @@ import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { WindowRef } from 'app/core/websocket/window.service';
+import { CreditsCommand, FeedbackCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -37,7 +38,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand(), new CreditsCommand(), new InstructionCommand(), new FeedbackCommand(), new UsageCountCommand()];
 
     constructor(
         private jhiAlertService: JhiAlertService,

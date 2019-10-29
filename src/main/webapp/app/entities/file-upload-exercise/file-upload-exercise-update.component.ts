@@ -10,6 +10,7 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { EditorMode } from 'app/markdown-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { CreditsCommand, FeedbackCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -26,7 +27,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand(), new CreditsCommand(), new InstructionCommand(), new FeedbackCommand(), new UsageCountCommand()];
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,

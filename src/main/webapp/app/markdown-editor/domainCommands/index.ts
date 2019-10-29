@@ -4,3 +4,7 @@ export { DomainMultiOptionCommand } from './domainMultiOptionCommand';
 export { ExplanationCommand } from './explanation.command';
 export { HintCommand } from './hint.command';
 export { IncorrectOptionCommand } from './incorrectOptionCommand';
+export { CreditsCommand } from './credits.command';
+export { InstructionCommand } from './instruction.command';
+export { FeedbackCommand } from './feedback.command';
+export { UsageCountCommand } from './usageCount.command';

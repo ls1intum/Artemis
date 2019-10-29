@@ -1,6 +1,14 @@
 {
     "assessmentInstructions": {
-        "instructions": "Instructions",
+        "instructions": {
+            "instructions": "Instructions",
+            "editor": {
+                "addCredits": "[credits] Points",
+                "addInstruction": "[instruction] Grading Instructions",
+                "addFeedback": "[feedback] Feedback",
+                "addCountUsage": "[count] Usage Number"
+            }
+        },
         "problemStatement": "Problem Statement",
         "sampleSolution": "Example Solution",
         "gradingCriteria": "Grading Criteria"
