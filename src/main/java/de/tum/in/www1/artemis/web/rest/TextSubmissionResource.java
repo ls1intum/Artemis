@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +18,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing TextSubmission.
@@ -135,7 +136,8 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
@@ -147,14 +149,22 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getSubmissionWithoutManualResult((TextExercise) exercise);
-
-        // tutors should not see information about the student of a submission
-        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
-                && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
+        TextSubmission textSubmission;
+        if (lockSubmission) {
+            textSubmission = this.textSubmissionService.getLockedTextSubmissionWithoutResult((TextExercise) exercise);
+        }
+        else {
+            Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getSubmissionWithoutManualResult((TextExercise) exercise);
+            if (optionalTextSubmission.isEmpty()) {
+                return notFound();
+            }
+            textSubmission = optionalTextSubmission.get();
         }
 
-        return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
+        // Make sure the exercise is connected to the participation in the json response
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        studentParticipation.setExercise(exercise);
+        textSubmissionService.hideDetails(textSubmission);
+        return ResponseEntity.ok(textSubmission);
     }
 }

@@ -73,16 +73,6 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
     }
 
     /**
-     * Soft lock the submission to prevent other tutors from receiving and assessing it.  We set the assessor and save the result to soft lock the assessment in the client. If no result exists for this submission we create one first.
-     *
-     * @param fileUploadSubmission the submission to lock
-     */
-    private void lockFileUploadSubmission(FileUploadSubmission fileUploadSubmission) {
-        var result = super.lockSubmission(fileUploadSubmission);
-        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
-    }
-
-    /**
      * Get the file upload submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
      * submission lock limit has been reached.
      *
@@ -98,7 +88,8 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
             checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
         }
 
-        lockFileUploadSubmission(fileUploadSubmission);
+        var result = super.lockSubmission(fileUploadSubmission);
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
         return fileUploadSubmission;
     }
 
@@ -112,7 +103,7 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
     public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise) {
         FileUploadSubmission fileUploadSubmission = getSubmissionWithoutManualResult(fileUploadExercise, FileUploadSubmission.class)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
-        lockFileUploadSubmission(fileUploadSubmission);
+        super.lockSubmission(fileUploadSubmission);
         return fileUploadSubmission;
     }
 }

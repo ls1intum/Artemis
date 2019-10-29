@@ -191,7 +191,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         }
         else {
             Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getSubmissionWithoutManualResult((ModelingExercise) exercise);
-            if (!optionalModelingSubmission.isPresent()) {
+            if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }
             modelingSubmission = optionalModelingSubmission.get();

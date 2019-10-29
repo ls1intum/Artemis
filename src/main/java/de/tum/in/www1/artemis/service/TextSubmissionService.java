@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Transactional
@@ -97,5 +98,19 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
         return genericSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
                 .filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get()).collect(Collectors.toList());
+    }
+
+    /**
+     * Get a text submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param textExercise the exercise the submission should belong to
+     * @return a locked modeling submission that needs an assessment
+     */
+    @Transactional
+    public TextSubmission getLockedTextSubmissionWithoutResult(TextExercise textExercise) {
+        TextSubmission textSubmission = getSubmissionWithoutManualResult(textExercise)
+                .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
+        super.lockSubmission(textSubmission);
+        return textSubmission;
     }
 }
