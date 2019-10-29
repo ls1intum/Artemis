@@ -130,6 +130,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
      * @param exerciseId exerciseID  for which a submission should be returned
+     * @param lockSubmission if true the submission will be locked by the requesting tutor
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")

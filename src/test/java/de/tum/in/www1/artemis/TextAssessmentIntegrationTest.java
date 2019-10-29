@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -65,21 +66,6 @@ public class TextAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getParticipationForTextExerciseWithoutAssessment_studentHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
-
-        StudentParticipation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,
-                StudentParticipation.class);
-
-        assertThat(participationWithoutAssessment).as("participation without assessment was found").isNotNull();
-        assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
-                .isEqualTo(textSubmission.getId());
-        assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isNull();
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
     public void retrieveParticipationForSubmission_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
@@ -120,11 +106,13 @@ public class TextAssessmentIntegrationTest {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
 
-        Participation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,
-                Participation.class);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
 
-        Result result = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + participationWithoutAssessment.getResults().iterator().next().getId(),
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        Result result = request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId(),
                 new ArrayList<String>(), Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
@@ -137,12 +125,15 @@ public class TextAssessmentIntegrationTest {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
 
-        Participation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,
-                Participation.class);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
 
         Result result = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + participationWithoutAssessment.getResults().iterator().next().getId() + "/submit",
-                new ArrayList<String>(), Result.class, HttpStatus.OK);
+                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId() + "/submit", new ArrayList<String>(),
+                Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
@@ -154,11 +145,13 @@ public class TextAssessmentIntegrationTest {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
 
-        Participation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,
-                Participation.class);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
 
-        Result result = request.get("/api/text-assessments/result/" + participationWithoutAssessment.getResults().iterator().next().getId() + "/with-textblocks", HttpStatus.OK,
-                Result.class);
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        Result result = request.get("/api/text-assessments/result/" + submissionWithoutAssessment.getResult().getId() + "/with-textblocks", HttpStatus.OK, Result.class);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
