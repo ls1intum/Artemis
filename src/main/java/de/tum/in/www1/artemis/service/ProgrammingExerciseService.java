@@ -904,6 +904,7 @@ public class ProgrammingExerciseService {
      * @param templateExercise The template exercise which plans should get copied
      * @param newExercise The new exercise to which all plans should get copied
      * @throws HttpException If the copied build plans could not get triggered
+     * @throws BuildPlanNotFoundException If any of the build plans can not be found.
      */
     public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException, BuildPlanNotFoundException {
         final var templateParticipation = newExercise.getTemplateParticipation();
