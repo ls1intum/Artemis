@@ -118,8 +118,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                     submission => {
                         this.submission = submission;
                         this.result = submission.result;
-                        const participation = <StudentParticipation>this.submission.participation;
-                        this.receiveParticipation(participation);
+                        this.receiveParticipation(<StudentParticipation>this.submission.participation);
 
                         // Update the url with the new id, without reloading the page, to make the history consistent
                         const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
@@ -358,7 +357,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         }
         this.exercise = <TextExercise>this.participation.exercise;
 
-        if (participation.results != null) {
+        if (participation.results) {
             this.result = this.participation.results[0];
         }
         if (this.result.hasComplaint) {
@@ -371,8 +370,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.checkPermissions();
 
         // Automatically fetch suggested Feedback for Automatic Assessment Enabled exercises.
-        const needsAutomaticAssmentSuggestions = this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!this.result.feedbacks || this.result.feedbacks.length === 0);
-        if (needsAutomaticAssmentSuggestions) {
+        const needsAutomaticAssessmentSuggestions =
+            this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && (!this.result.feedbacks || this.result.feedbacks.length === 0);
+        if (needsAutomaticAssessmentSuggestions) {
             this.predefineTextBlocks();
         }
     }

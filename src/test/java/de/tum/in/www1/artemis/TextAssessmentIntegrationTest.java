@@ -53,9 +53,9 @@ public class TextAssessmentIntegrationTest {
     private TextExercise textExercise;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    public void initTestCase() {
         database.addUsers(1, 2, 0);
-        database.addCourseWithOneTextExercise();
+        database.addCourseWithOneTextExerciseDueDateReached();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
     }
 

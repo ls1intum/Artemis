@@ -283,7 +283,7 @@ public class DatabaseUtilService {
 
     public void addCourseWithOneTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         course.addExercises(textExercise);
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
