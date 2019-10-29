@@ -16,12 +16,14 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationService } from 'app/entities/participation';
 import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
+import { SCORE_PATTERN } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
     templateUrl: './programming-assessment-manual-result-dialog.component.html',
 })
 export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
+    SCORE_PATTERN = SCORE_PATTERN;
     @Input() participationId: number;
     participation: StudentParticipation;
     result: Result;

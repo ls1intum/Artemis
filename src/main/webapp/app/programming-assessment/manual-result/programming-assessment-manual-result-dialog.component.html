@@ -16,7 +16,6 @@
                 >The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.</span
             >
         </div>
-        <jhi-alert-error></jhi-alert-error>
         <div class="form-group" *ngIf="result.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="result.id" readonly />
@@ -44,6 +43,7 @@
                 <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</h4>
                 <input
                     type="number"
+                    [pattern]="SCORE_PATTERN"
                     required
                     class="form-control"
                     name="score"
