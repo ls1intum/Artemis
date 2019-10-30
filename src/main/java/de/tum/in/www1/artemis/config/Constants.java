@@ -89,6 +89,11 @@ public final class Constants {
 
     public static final String TESTS_CHECKOUT_PATH = "tests";
 
+    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
+
+    // Currently 10s.
+    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10000;
+
     private Constants() {
     }
 }
