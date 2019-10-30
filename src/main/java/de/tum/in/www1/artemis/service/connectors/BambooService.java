@@ -788,7 +788,7 @@ public class BambooService implements ContinuousIntegrationService {
             return Optional.empty();
         }
         Result result = new Result();
-        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), ZonedDateTime.now());
+        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));

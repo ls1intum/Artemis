@@ -182,7 +182,7 @@ public class ProgrammingSubmissionResource {
         // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
         ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
         if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
-            return ResponseEntity.accepted().build();
+            return ResponseEntity.accepted().build(); // returns a status code 202, that can be handled in the client
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
         programmingSubmissionService.triggerBuildAndNotifyUser(submission.get());
