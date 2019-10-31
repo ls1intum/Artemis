@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
 
@@ -12,6 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -65,6 +70,7 @@ public class GitLabService implements VersionControlService {
         }
 
         giveWritePermissions(repositoryUrl, username);
+        protectBranch("master", repositoryUrl);
     }
 
     private void giveWritePermissions(URL repositoryUrl, String username) {
@@ -74,15 +80,17 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("access_level", AccessLevel.DEVELOPER.levelCode);
 
         final var errorMessage = "Unable to set write permissions for user " + username;
-        try {
-            final var response = restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                defaultExceptionHandling(errorMessage);
-            }
-        }
-        catch (HttpClientErrorException e) {
-            defaultExceptionHandling(errorMessage);
-        }
+        executeAndExpect(errorMessage, HttpStatus.OK, JsonNode.class,
+                () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
+    }
+
+    private void protectBranch(String branch, URL repositoryUrl) {
+        final var repositoryId = getIdFromRepositoryUrl(repositoryUrl);
+        final var builder = Endpoints.PROTECT_BRANCH.buildEndpoint(BASE_API, repositoryId);
+        final var body = Map.of("name", branch, "push_access_level", AccessLevel.DEVELOPER.levelCode);
+
+        final var errorMesage = "Unable to protect branch " + branch + " for repository " + repositoryUrl;
+        executeAndExpect(errorMesage, HttpStatus.CREATED, JsonNode.class, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
     }
 
     @Override
@@ -156,6 +164,23 @@ public class GitLabService implements VersionControlService {
         return null;
     }
 
+    private <T> T executeAndExpect(String errorMessage, HttpStatus expectedStatus, Class<T> returnType, Supplier<ResponseEntity<T>> tryToDo) {
+        try {
+            final var response = tryToDo.get();
+            if (response.getStatusCode() != expectedStatus) {
+                defaultExceptionHandling(errorMessage);
+            }
+
+            return response.getBody();
+        }
+        catch (HttpClientErrorException e) {
+            defaultExceptionHandling(errorMessage, e);
+        }
+
+        // In theory unreachable, because we always throw an exception in the default handling
+        throw new GitLabException("Unable to perform request.\n" + errorMessage);
+    }
+
     private void defaultExceptionHandling(String message, Throwable exception) {
         log.error(message);
         throw new GitLabException(message, exception);
@@ -195,7 +220,8 @@ public class GitLabService implements VersionControlService {
     }
 
     private enum Endpoints {
-        ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>");
+        ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
+        PROTECT_BRANCH("projects", "<projectId>", "protected_branches");
 
         private List<String> pathSegments;
 
