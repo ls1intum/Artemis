@@ -80,8 +80,7 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("access_level", AccessLevel.DEVELOPER.levelCode);
 
         final var errorMessage = "Unable to set write permissions for user " + username;
-        executeAndExpect(errorMessage, HttpStatus.OK, JsonNode.class,
-                () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
+        executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
     }
 
     private void protectBranch(String branch, URL repositoryUrl) {
@@ -90,12 +89,33 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("name", branch, "push_access_level", AccessLevel.DEVELOPER.levelCode);
 
         final var errorMesage = "Unable to protect branch " + branch + " for repository " + repositoryUrl;
-        executeAndExpect(errorMesage, HttpStatus.CREATED, JsonNode.class, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+        executeAndExpect(errorMesage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
     }
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+        final var repositoryId = getIdFromRepositoryUrl(repositoryUrl);
+        if (!webhooksExists(repositoryId, notificationUrl)) {
+            final var builder = Endpoints.ADD_WEBHOOK.buildEndpoint(BASE_API, repositoryId);
+            final var body = Map.of("url", notificationUrl, "push_events", true, "enable_ssl_verification", false);
 
+            final var errorMessage = "Unable to add webhook for " + repositoryUrl;
+            executeAndExpect(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+        }
+    }
+
+    private boolean webhooksExists(String repositoryId, String notificationUrl) {
+        final var builder = Endpoints.GET_WEBHOOKS.buildEndpoint(BASE_API, repositoryId);
+
+        final var errorMessage = "Unable to get webhooks for " + repositoryId;
+        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+
+        for (final var hook : response) {
+            if (hook.get("url").asText().equals(notificationUrl))
+                return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -164,7 +184,7 @@ public class GitLabService implements VersionControlService {
         return null;
     }
 
-    private <T> T executeAndExpect(String errorMessage, HttpStatus expectedStatus, Class<T> returnType, Supplier<ResponseEntity<T>> tryToDo) {
+    private <T> T executeAndExpect(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
         try {
             final var response = tryToDo.get();
             if (response.getStatusCode() != expectedStatus) {
@@ -221,7 +241,7 @@ public class GitLabService implements VersionControlService {
 
     private enum Endpoints {
         ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
-        PROTECT_BRANCH("projects", "<projectId>", "protected_branches");
+        PROTECT_BRANCH("projects", "<projectId>", "protected_branches"), GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks");
 
         private List<String> pathSegments;
 
