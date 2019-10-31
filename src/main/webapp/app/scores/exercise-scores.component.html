@@ -46,76 +46,129 @@
         </label>
     </div>
     <div *ngIf="results && !isLoading; else loadingContainer" class="table-responsive">
-        <table class="table table-striped exercise-table">
-            <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th></th>
-                    <th jhiSortBy="participation.student.firstName">
-                        <a class="th-link">{{ 'artemisApp.exercise.studentName' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="participation.student.login">
-                        <a class="th-link">{{ 'artemisApp.exercise.studentId' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="completionDate">
-                        <a class="th-link">{{ 'artemisApp.exercise.completionDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="score">
-                        <a class="th-link">{{ 'artemisApp.exercise.result' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="score" *ngIf="newManualResultAllowed">
-                        <a class="th-link">{{ 'artemisApp.exercise.type' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="score">
-                        <a class="th-link">{{ 'artemisApp.exercise.score' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="submissionCount">
-                        <a class="th-link">{{ 'artemisApp.exercise.submissionCount' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="durationInMinutes">
-                        <a class="th-link">{{ 'artemisApp.exercise.duration' | translate }}</a> <fa-icon icon="sort"></fa-icon>
-                    </th>
-                    <th *ngIf="exercise.type !== QUIZ"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr [ngStyle]="result.optimal && { 'font-weight': 'bold' }" *ngFor="let result of results | sortBy: predicate:reverse; let i = index">
-                    <td>{{ i + 1 }}</td>
-                    <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</td>
-                    <td>{{ result.participation.student.login }}</td>
-                    <td>{{ result.completionDate | date: 'MMM d, y HH:mm:ss' }}</td>
-                    <td><jhi-updating-result [exercise]="exercise" [showTestNames]="true" [participation]="result.participation"></jhi-updating-result></td>
-                    <td *ngIf="newManualResultAllowed">{{ result.assessmentType }}</td>
-                    <td>
-                        <span *ngIf="result.score != null">{{ result.score }}%</span>
-                    </td>
-                    <td>{{ result.submissionCount }}</td>
-                    <td>
-                        {{ result.durationInMinutes }}
-                        minutes
-                    </td>
-                    <td *ngIf="exercise.type !== QUIZ">
-                        <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(result)">
-                            <fa-icon icon="code-branch" class="mr-1"></fa-icon>Repository
-                        </button>
-                        <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(result)">
-                            <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>Build plan
-                        </button>
-                        <button
-                            routerLink="/code-editor/{{ result.participation.id }}"
-                            class="btn btn-info btn-sm mr-1"
-                            *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor"
-                        >
-                            <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
-                        </button>
-                        <jhi-programming-assessment-manual-result
-                            *ngIf="newManualResultAllowed"
-                            [participationId]="result.participation.id"
-                            class="mr-1"
-                        ></jhi-programming-assessment-manual-result>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <ngx-datatable
+            id="resultsTable"
+            class="bootstrap"
+            [limit]="100"
+            [sortType]="SortType.multi"
+            [columnMode]="ColumnMode.flex"
+            [headerHeight]="50"
+            [footerHeight]="50"
+            [rowHeight]="50"
+            [rows]="results"
+            [rowClass]=""
+        >
+            <ngx-datatable-column prop="" [flexGrow]="1">
+                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
+                    {{ rowIndex + 1 }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="participation.student.name" [resizeable]="false" [sortable]="true" [flexGrow]="8">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" (click)="onSort('participation.student.name')">{{ 'artemisApp.exercise.studentName' | translate }}</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [flexGrow]="4">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" (click)="onSort('participation.student.login')">{{ 'artemisApp.exercise.studentId' | translate }}</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="completionDate" [flexGrow]="6">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" (click)="onSort('completionDate')">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value | date: 'MMM d, y HH:mm:ss' }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="" [flexGrow]="8">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" (click)="onSort('score')">{{ 'artemisApp.exercise.result' | translate }}</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <jhi-updating-result [exercise]="exercise" [showTestNames]="true" [participation]="value.participation"></jhi-updating-result>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="type" *ngIf="newManualResultAllowed" [flexGrow]="4">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" (click)="onSort('type')">{{ 'artemisApp.exercise.type' | translate }}</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="submissionCount" [flexGrow]="3">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" (click)="onSort('submissionCount')">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="durationInMinutes" [flexGrow]="3">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" (click)="onSort('durationInMinutes')">{{ 'artemisApp.exercise.duration' | translate }}</span>
+                        <fa-icon icon="sort"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [flexGrow]="10">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
+                        <fa-icon icon="code-branch" class="mr-1"></fa-icon>Repository
+                    </button>
+                    <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(value)">
+                        <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>Build plan
+                    </button>
+                    <button
+                        routerLink="/code-editor/{{ value.participation.id }}"
+                        class="btn btn-info btn-sm mr-1"
+                        *ngIf="exercise.type === PROGRAMMING && value.participation.exercise.allowOnlineEditor"
+                    >
+                        <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
+                    </button>
+                    <jhi-programming-assessment-manual-result
+                        *ngIf="newManualResultAllowed"
+                        [participationId]="value.participation.id"
+                        class="mr-1"
+                    ></jhi-programming-assessment-manual-result>
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
     </div>
     <ng-template #loadingContainer>
         <div class="d-flex justify-content-center mt-3">

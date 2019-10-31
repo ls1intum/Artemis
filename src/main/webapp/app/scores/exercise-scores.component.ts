@@ -16,6 +16,8 @@ import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { tap, take } from 'rxjs/operators';
 import { zip, of } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
+import { SortByPipe } from 'app/components/pipes';
 
 @Component({
     selector: 'jhi-exercise-scores',
@@ -27,6 +29,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+
+    ColumnMode = ColumnMode;
+    SortType = SortType;
 
     course: Course;
     exercise: Exercise;
@@ -53,6 +58,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
+        private sortByPipe: SortByPipe,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -210,6 +216,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             document.body.appendChild(link); // Required for FF
             link.click();
         }
+    }
+
+    onSort(sortprop: string) {
+        this.reverse = !this.reverse;
+        this.results = [...this.sortByPipe.transform(this.results, sortprop, this.reverse)];
     }
 
     refresh() {
