@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
@@ -150,7 +147,51 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws VersionControlException {
+        final var coursePath = programmingExercise.getCourse().getShortName();
+        final var optionalCourseId = groupExists(coursePath);
+        long courseId;
+        if (optionalCourseId.isEmpty()) {
+            final var courseName = coursePath + " " + programmingExercise.getCourse().getTitle();
+            courseId = createGroup(courseName, coursePath, Optional.empty());
+        }
+        else {
+            courseId = optionalCourseId.get();
+        }
 
+        final var exercisePath = programmingExercise.getShortName();
+        final var exerciseName = exercisePath + programmingExercise.getTitle();
+        createGroup(exerciseName, exercisePath, Optional.of(courseId));
+    }
+
+    private Optional<Long> groupExists(String path) {
+        final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", path);
+
+        final var errorString = "Unable to fetch groups matching " + path;
+        final var foundGroups = executeAndExpect(errorString, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+
+        for (final var group : foundGroups) {
+            if (foundGroups.get("path").asText().equals(path))
+                return Optional.of(foundGroups.get("id").asLong());
+        }
+
+        return Optional.empty();
+    }
+
+    private long createGroup(String groupName, String path, Optional<Long> parentGroupId) {
+        final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API);
+        var body = Map.<String, Object>of("name", groupName, "path", path, "visibility", "private");
+        if (parentGroupId.isPresent()) {
+            // Have to create new map, since Map.of creates immutable structures
+            body = new HashMap<>(body);
+            body.put("parent_id", parentGroupId.get());
+        }
+
+        final var groupCreationBody = body;
+        final var errorString = "Unable to create new group for course " + groupName;
+        final var createdGroup = executeAndExpect(errorString, HttpStatus.CREATED,
+                () -> restTemplate.postForEntity(builder.build(true).toUri(), groupCreationBody, JsonNode.class));
+
+        return createdGroup.get("id").asLong();
     }
 
     @Override
@@ -241,7 +282,8 @@ public class GitLabService implements VersionControlService {
 
     private enum Endpoints {
         ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
-        PROTECT_BRANCH("projects", "<projectId>", "protected_branches"), GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks");
+        PROTECT_BRANCH("projects", "<projectId>", "protected_branches"), GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"),
+        COMMITS("projects", "<projectId>", "repository", "commits"), GROUPS("groups");
 
         private List<String> pathSegments;
 
