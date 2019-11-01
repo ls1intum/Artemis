@@ -6,11 +6,11 @@
     <jhi-alert></jhi-alert>
     <div class="d-flex align-content-center">
         <div ngbDropdown class="d-inline-block mr-2">
-            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ resultsPerPage }}</button>
+            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ resultsPerPage }} results per page</button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                 <button
                     *ngFor="let pagingValue of PAGING_VALUES"
-                    (click)="setPaging(pagingValue)"
+                    (click)="setResultsPerPage(pagingValue)"
                     ngbDropdownItem
                     [style.background-color]="pagingValue === resultsPerPage ? '#3e8acc' : 'transparent'"
                 >

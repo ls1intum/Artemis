@@ -19,6 +19,7 @@ import { AssessmentType } from 'app/entities/assessment-type';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
 import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
+import { LocalStorageService } from 'ngx-webstorage';
 
 enum FilterProp {
     ALL = 'all',
@@ -38,6 +39,8 @@ type SortProp = {
     order: SortOrder;
 };
 
+const resultsPerPageCacheKey = 'exercise-scores-results-per-age';
+
 @Component({
     selector: 'jhi-exercise-scores',
     templateUrl: './exercise-scores.component.html',
@@ -49,7 +52,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
-    PAGING_VALUES = [1, 2, 10, 20, 50, 100];
+    PAGING_VALUES = [1, 2, 10, 20, 50, 100, 200, 500, 1000, 2000];
+    DEFAULT_PAGING_VALUE = 1;
 
     ColumnMode = ColumnMode;
     SortType = SortType;
@@ -62,7 +66,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     allResults: Result[];
     eventSubscriber: Subscription;
     newManualResultAllowed: boolean;
-    resultsPerPage = 1;
+    resultsPerPage: number;
 
     resultCriteria: {
         filterProp: FilterProp;
@@ -85,6 +89,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
         private sortByPipe: SortByPipe,
+        private localStorageService: LocalStorageService,
     ) {
         this.resultCriteria = {
             filterProp: FilterProp.ALL,
@@ -96,6 +101,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.resultsPerPage = this.getCachedResultsPerPage();
         this.paramSub = this.route.params.subscribe(params => {
             this.isLoading = true;
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
@@ -308,8 +314,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         );
     };
 
-    setPaging = (paging: number) => {
+    getCachedResultsPerPage = () => {
+        const cachedValue = localStorage.getItem(resultsPerPageCacheKey);
+        return cachedValue ? parseInt(cachedValue, 10) : this.DEFAULT_PAGING_VALUE;
+    };
+
+    setResultsPerPage = (paging: number) => {
         this.resultsPerPage = paging;
+        localStorage.setItem(resultsPerPageCacheKey, paging.toString());
     };
 
     refresh() {
