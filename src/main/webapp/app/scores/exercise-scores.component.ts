@@ -328,7 +328,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             debounceTime(200),
             distinctUntilChanged(),
             map(text => {
-                return text.split(',').map(word => word.trim());
+                const searchWords = text.split(',').map(word => word.trim());
+                // When the result field is cleared, we translate the resulting empty string to an empty array (otherwise no results would be found).
+                return searchWords.length === 1 && !searchWords[0] ? [] : searchWords;
             }),
             // For available results in table.
             tap(searchWords => {
