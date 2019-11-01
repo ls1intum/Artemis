@@ -22,10 +22,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
+import de.tum.in.www1.artemis.service.compass.assessment.SimilaritySetAssessment;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityElement;
@@ -75,19 +74,7 @@ class AutomaticAssessmentControllerTest {
     Feedback feedback2;
 
     @Mock
-    Assessment assessment;
-
-    private Context context1;
-
-    private Context context2;
-
-    private Context context3;
-
-    private Context context4;
-
-    private Context context5;
-
-    private Context context6;
+    SimilaritySetAssessment similaritySetAssessment;
 
     @BeforeEach
     void setUp() {
@@ -96,47 +83,39 @@ class AutomaticAssessmentControllerTest {
         automaticAssessmentController = new AutomaticAssessmentController();
 
         elementIdFeedbackMap = Map.of("element1Id", feedback1, "element2Id", feedback2);
-        context1 = new Context(123);
-        context2 = Context.NO_CONTEXT;
         when(feedback2.getCredits()).thenReturn(0.5);
-        when(assessmentIndex.getAssessment(1)).thenReturn(Optional.of(assessment));
-        when(assessmentIndex.getAssessment(2)).thenReturn(Optional.empty());
+        when(assessmentIndex.getAssessmentForSimilaritySet(1)).thenReturn(Optional.of(similaritySetAssessment));
+        when(assessmentIndex.getAssessmentForSimilaritySet(2)).thenReturn(Optional.empty());
     }
 
     @Test
     void addFeedbacksToAssessment_ClassDiagram() {
         when(classDiagram.getElementByJSONID("element1Id")).thenReturn(umlClass);
         when(classDiagram.getElementByJSONID("element2Id")).thenReturn(umlRelationship);
-        when(umlClass.getContext()).thenReturn(context1);
-        when(umlRelationship.getContext()).thenReturn(context2);
         when(umlClass.getSimilarityID()).thenReturn(1);
         when(umlRelationship.getSimilarityID()).thenReturn(2);
 
-        automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, elementIdFeedbackMap, classDiagram);
+        automaticAssessmentController.addFeedbackToSimilaritySet(assessmentIndex, elementIdFeedbackMap, classDiagram);
 
-        verify(assessment).addFeedback(feedback1, context1);
-        verify(assessment, never()).addFeedback(eq(feedback2), any(Context.class));
-        verify(assessment, never()).addFeedback(any(Feedback.class), eq(context2));
-        verify(assessmentIndex).addAssessment(eq(2), any(Assessment.class));
-        verify(assessmentIndex, never()).addAssessment(eq(1), any(Assessment.class));
+        verify(similaritySetAssessment).addFeedback(feedback1);
+        verify(similaritySetAssessment, never()).addFeedback(feedback2);
+        verify(assessmentIndex).addSimilaritySetAssessment(eq(2), any(SimilaritySetAssessment.class));
+        verify(assessmentIndex, never()).addSimilaritySetAssessment(eq(1), any(SimilaritySetAssessment.class));
     }
 
     @Test
     void addFeedbacksToAssessment_ActivityDiagram() {
         when(activityDiagram.getElementByJSONID("element1Id")).thenReturn(umlControlFlow);
         when(activityDiagram.getElementByJSONID("element2Id")).thenReturn(umlActivityElement);
-        when(umlControlFlow.getContext()).thenReturn(context1);
-        when(umlActivityElement.getContext()).thenReturn(context2);
         when(umlControlFlow.getSimilarityID()).thenReturn(1);
         when(umlActivityElement.getSimilarityID()).thenReturn(2);
 
-        automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, elementIdFeedbackMap, activityDiagram);
+        automaticAssessmentController.addFeedbackToSimilaritySet(assessmentIndex, elementIdFeedbackMap, activityDiagram);
 
-        verify(assessment).addFeedback(feedback1, context1);
-        verify(assessment, never()).addFeedback(eq(feedback2), any(Context.class));
-        verify(assessment, never()).addFeedback(any(Feedback.class), eq(context2));
-        verify(assessmentIndex).addAssessment(eq(2), any(Assessment.class));
-        verify(assessmentIndex, never()).addAssessment(eq(1), any(Assessment.class));
+        verify(similaritySetAssessment).addFeedback(feedback1);
+        verify(similaritySetAssessment, never()).addFeedback(feedback2);
+        verify(assessmentIndex).addSimilaritySetAssessment(eq(2), any(SimilaritySetAssessment.class));
+        verify(assessmentIndex, never()).addSimilaritySetAssessment(eq(1), any(SimilaritySetAssessment.class));
     }
 
     @Test
@@ -144,10 +123,10 @@ class AutomaticAssessmentControllerTest {
         when(classDiagram.getElementByJSONID("element1Id")).thenReturn(null);
         when(classDiagram.getElementByJSONID("element2Id")).thenReturn(null);
 
-        automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, elementIdFeedbackMap, classDiagram);
+        automaticAssessmentController.addFeedbackToSimilaritySet(assessmentIndex, elementIdFeedbackMap, classDiagram);
 
-        verify(assessment, never()).addFeedback(any(Feedback.class), any(Context.class));
-        verify(assessmentIndex, never()).addAssessment(anyInt(), any(Assessment.class));
+        verify(similaritySetAssessment, never()).addFeedback(any(Feedback.class));
+        verify(assessmentIndex, never()).addSimilaritySetAssessment(anyInt(), any(SimilaritySetAssessment.class));
     }
 
     @Test
@@ -194,9 +173,8 @@ class AutomaticAssessmentControllerTest {
     @Test
     void assessModelAutomatically_nullScore() {
         when(classDiagram.getClassList()).thenReturn(List.of(umlClass));
-        when(umlClass.getContext()).thenReturn(context1);
         when(umlClass.getSimilarityID()).thenReturn(1);
-        when(assessment.getScore(context1)).thenReturn(null);
+        when(similaritySetAssessment.getScore()).thenReturn(null);
 
         CompassResult compassResult = automaticAssessmentController.assessModelAutomatically(classDiagram, assessmentIndex);
 
@@ -237,17 +215,6 @@ class AutomaticAssessmentControllerTest {
         when(attribute2.getSimilarityID()).thenReturn(8);
         when(method1.getSimilarityID()).thenReturn(9);
         when(method2.getSimilarityID()).thenReturn(10);
-
-        when(class1.getContext()).thenReturn(context1);
-        when(class2.getContext()).thenReturn(context2);
-        when(relationship1.getContext()).thenReturn(context3);
-        when(relationship2.getContext()).thenReturn(Context.NO_CONTEXT);
-        when(package1.getContext()).thenReturn(Context.NO_CONTEXT);
-        when(package2.getContext()).thenReturn(context4);
-        when(attribute1.getContext()).thenReturn(Context.NO_CONTEXT);
-        when(attribute2.getContext()).thenReturn(context5);
-        when(method1.getContext()).thenReturn(context6);
-        when(method2.getContext()).thenReturn(Context.NO_CONTEXT);
     }
 
     private void prepareActivityDiagramForAutomaticAssessment() {
@@ -273,36 +240,26 @@ class AutomaticAssessmentControllerTest {
         when(controlFlow1.getSimilarityID()).thenReturn(7);
         when(controlFlow2.getSimilarityID()).thenReturn(8);
         when(controlFlow3.getSimilarityID()).thenReturn(9);
-
-        when(activityNode1.getContext()).thenReturn(context1);
-        when(activityNode2.getContext()).thenReturn(context2);
-        when(activityNode3.getContext()).thenReturn(Context.NO_CONTEXT);
-        when(activity1.getContext()).thenReturn(context3);
-        when(activity2.getContext()).thenReturn(Context.NO_CONTEXT);
-        when(activity3.getContext()).thenReturn(context4);
-        when(controlFlow1.getContext()).thenReturn(Context.NO_CONTEXT);
-        when(controlFlow2.getContext()).thenReturn(context5);
-        when(controlFlow3.getContext()).thenReturn(context6);
     }
 
     private void prepareAssessmentIndexForAutomaticAssessment() {
-        Assessment assessment1 = mock(Assessment.class);
-        Assessment assessment2 = mock(Assessment.class);
-        Assessment assessment3 = mock(Assessment.class);
-        Assessment assessment4 = mock(Assessment.class);
-        Assessment assessment5 = mock(Assessment.class);
-        Assessment assessment6 = mock(Assessment.class);
+        SimilaritySetAssessment similaritySetAssessment1 = mock(SimilaritySetAssessment.class);
+        SimilaritySetAssessment similaritySetAssessment2 = mock(SimilaritySetAssessment.class);
+        SimilaritySetAssessment similaritySetAssessment3 = mock(SimilaritySetAssessment.class);
+        SimilaritySetAssessment similaritySetAssessment4 = mock(SimilaritySetAssessment.class);
+        SimilaritySetAssessment similaritySetAssessment5 = mock(SimilaritySetAssessment.class);
+        SimilaritySetAssessment similaritySetAssessment6 = mock(SimilaritySetAssessment.class);
 
-        when(assessmentIndex.getAssessment(1)).thenReturn(Optional.of(assessment1));
-        when(assessmentIndex.getAssessment(2)).thenReturn(Optional.of(assessment2));
-        when(assessmentIndex.getAssessment(3)).thenReturn(Optional.of(assessment3));
-        when(assessmentIndex.getAssessment(4)).thenReturn(Optional.empty());
-        when(assessmentIndex.getAssessment(5)).thenReturn(Optional.empty());
-        when(assessmentIndex.getAssessment(6)).thenReturn(Optional.of(assessment4));
-        when(assessmentIndex.getAssessment(7)).thenReturn(Optional.empty());
-        when(assessmentIndex.getAssessment(8)).thenReturn(Optional.of(assessment5));
-        when(assessmentIndex.getAssessment(9)).thenReturn(Optional.of(assessment6));
-        when(assessmentIndex.getAssessment(10)).thenReturn(Optional.empty());
+        when(assessmentIndex.getAssessmentForSimilaritySet(1)).thenReturn(Optional.of(similaritySetAssessment1));
+        when(assessmentIndex.getAssessmentForSimilaritySet(2)).thenReturn(Optional.of(similaritySetAssessment2));
+        when(assessmentIndex.getAssessmentForSimilaritySet(3)).thenReturn(Optional.of(similaritySetAssessment3));
+        when(assessmentIndex.getAssessmentForSimilaritySet(4)).thenReturn(Optional.empty());
+        when(assessmentIndex.getAssessmentForSimilaritySet(5)).thenReturn(Optional.empty());
+        when(assessmentIndex.getAssessmentForSimilaritySet(6)).thenReturn(Optional.of(similaritySetAssessment4));
+        when(assessmentIndex.getAssessmentForSimilaritySet(7)).thenReturn(Optional.empty());
+        when(assessmentIndex.getAssessmentForSimilaritySet(8)).thenReturn(Optional.of(similaritySetAssessment5));
+        when(assessmentIndex.getAssessmentForSimilaritySet(9)).thenReturn(Optional.of(similaritySetAssessment6));
+        when(assessmentIndex.getAssessmentForSimilaritySet(10)).thenReturn(Optional.empty());
 
         Score score1 = mockScore(-0.5, 0.5);
         Score score2 = mockScore(-0.5, 0.6);
@@ -311,12 +268,12 @@ class AutomaticAssessmentControllerTest {
         Score score5 = mockScore(1.0, 0.9);
         Score score6 = mockScore(0.5, 1.0);
 
-        when(assessment1.getScore(context1)).thenReturn(score1);
-        when(assessment2.getScore(context2)).thenReturn(score2);
-        when(assessment3.getScore(context3)).thenReturn(score3);
-        when(assessment4.getScore(context4)).thenReturn(score4);
-        when(assessment5.getScore(context5)).thenReturn(score5);
-        when(assessment6.getScore(context6)).thenReturn(score6);
+        when(similaritySetAssessment1.getScore()).thenReturn(score1);
+        when(similaritySetAssessment2.getScore()).thenReturn(score2);
+        when(similaritySetAssessment3.getScore()).thenReturn(score3);
+        when(similaritySetAssessment4.getScore()).thenReturn(score4);
+        when(similaritySetAssessment5.getScore()).thenReturn(score5);
+        when(similaritySetAssessment6.getScore()).thenReturn(score6);
     }
 
     private Score mockScore(double points, double confidence) {
