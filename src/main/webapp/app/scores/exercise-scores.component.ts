@@ -38,6 +38,12 @@ type SortProp = {
     order: SortOrder;
 };
 
+enum PagingSteps {
+    TWENTY = 20,
+    FIFTY = 50,
+    HUNDRED = 100,
+}
+
 @Component({
     selector: 'jhi-exercise-scores',
     templateUrl: './exercise-scores.component.html',
