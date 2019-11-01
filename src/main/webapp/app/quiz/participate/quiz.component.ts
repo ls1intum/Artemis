@@ -27,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-quiz',
@@ -39,6 +40,8 @@ export class QuizComponent implements OnInit, OnDestroy {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
     mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;

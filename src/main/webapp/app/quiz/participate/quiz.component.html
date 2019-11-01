@@ -162,16 +162,15 @@
                 <span jhiTranslate="artemisApp.quizExercise.solution"></span>
             </div>
             <div class="submit-button">
-                <button
-                    id="submit-quiz"
+                <jhi-button
                     *ngIf="!showingResult"
-                    [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
-                    [class.btn-lg]="!isMobile()"
-                    [class.btn-sm]="isMobile()"
-                    class="btn btn-success"
-                    [jhiTranslate]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                    id="submit-quiz"
                     (click)="onSubmit()"
-                ></button>
+                    [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
+                    [btnType]="ButtonType.SUCCESS"
+                    [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                    [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                ></jhi-button>
             </div>
         </div>
     </div>
