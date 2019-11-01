@@ -338,13 +338,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             }),
             // For autocomplete.
             map((searchWords: string[]) => {
+                // We only execute the autocomplete for the last keyword in the provided list.
+                const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
+                // Don't execute autocomplete for less then two inputted characters.
+                if (!lastSearchWord || lastSearchWord.length < 3) {
+                    return false;
+                }
                 return this.results.filter(result => {
                     const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
                         Boolean,
                     ) as string[];
-                    // We only execute the autocomplete for the last keyword in the provided list.
-                    const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
-                    return lastSearchWord ? searchableFields.some(value => value.includes(lastSearchWord) && value !== lastSearchWord) : false;
+                    return searchableFields.some(value => value.includes(lastSearchWord) && value !== lastSearchWord);
                 });
             }),
         );
