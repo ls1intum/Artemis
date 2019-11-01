@@ -155,7 +155,7 @@ public class ProgrammingSubmissionResource {
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
-     * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered or a result already exists and 202 (accepted) if a build is still running for the given participation.
+     * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -182,7 +182,10 @@ public class ProgrammingSubmissionResource {
         // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
         ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
         if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
-            return ResponseEntity.accepted().build(); // returns a status code 202, that can be handled in the client
+            // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
+            // This resets the pending submission timer in the client.
+            programmingSubmissionService.notifyUserAboutSubmission(submission.get());
+            return ResponseEntity.ok().build();
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
         programmingSubmissionService.triggerBuildAndNotifyUser(submission.get());
