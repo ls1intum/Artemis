@@ -194,13 +194,9 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
-
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResult(null);
-
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
                 username);
-        if (!optionalParticipation.isPresent()) {
+        if (optionalParticipation.isEmpty()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
         StudentParticipation participation = optionalParticipation.get();
@@ -209,6 +205,9 @@ public class ModelingSubmissionService extends SubmissionService {
         if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        modelingSubmission.setResult(null);
 
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());

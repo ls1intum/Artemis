@@ -424,13 +424,13 @@ public class ModelingSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
-        submittedSubmission.setModel(emptyModel);
+        submittedSubmission.setModel(validModel);
         submittedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
                 HttpStatus.OK);
 
         final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
         assertThat(submissionInDb.isPresent());
-        assertThat(submissionInDb.get().getModel()).isEqualTo(emptyModel);
+        assertThat(submissionInDb.get().getModel()).isEqualTo(validModel);
     }
 
     @Test
