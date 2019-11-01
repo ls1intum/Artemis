@@ -189,7 +189,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
             Boolean,
         ) as string[];
-        return !searchWords.length || searchableFields.some(field => searchWords.some(word => word && field.includes(word)));
+        // When no search word is inputted, we return all results.
+        if (!searchWords.length) {
+            return true;
+        }
+        // Otherwise we do a fuzzy search on the inputted search words.
+        return searchableFields.some(field => searchWords.some(word => word && field.includes(word)));
     };
 
     /**
@@ -307,13 +312,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return `${login} (${name})`;
     };
 
-    /**
-     * Inserts the student login as the last textSearch value.
-     *
-     * @param result
-     */
-    searchInputFormatter = (result: Result) => {
-        this.resultCriteria.textSearch[this.resultCriteria.textSearch.length - 1] = (result.participation as StudentParticipation).student.login!;
+    searchInputFormatter = () => {
         return this.resultCriteria.textSearch.join(', ');
     };
 
@@ -351,7 +350,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         );
     };
 
-    onAutocompleteSelect = () => {
+    onAutocompleteSelect = (result: Result) => {
+        this.resultCriteria.textSearch[this.resultCriteria.textSearch.length - 1] = (result.participation as StudentParticipation).student.login!;
         this.updateResults();
     };
 

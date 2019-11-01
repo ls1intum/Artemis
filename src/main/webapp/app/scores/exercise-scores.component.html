@@ -73,7 +73,7 @@
             id="typeahead-basic"
             type="text"
             class="form-control"
-            (selectItem)="onAutocompleteSelect()"
+            (selectItem)="onAutocompleteSelect($event.item)"
             [placeholder]="'artemisApp.exercise.searchForStudents' | translate"
             [ngbTypeahead]="onSearch"
             [resultFormatter]="searchResultFormatter"
