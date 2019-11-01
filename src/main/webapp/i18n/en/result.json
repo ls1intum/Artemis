@@ -30,7 +30,7 @@
             "submission": "Submission",
             "participation": "Participation",
             "createManual": "Create manual result for",
-            "invalidScore": "Score is required and should be a number.",
+            "invalidScore": "Score is required and should be a number between 0 and 100.",
             "resultStringRequired": "Result text is required.",
             "exerciseStillOpen": "Exercise is still open for submissions!",
             "studentOverride": "The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.",
