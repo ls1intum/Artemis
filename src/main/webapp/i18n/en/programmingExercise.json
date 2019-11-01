@@ -22,6 +22,7 @@
             "detail": {
                 "title": "Programming Exercise"
             },
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
