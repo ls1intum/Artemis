@@ -178,6 +178,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         }
     };
 
+    /**
+     * Filter the given results by the provided search words.
+     * Returns results that match any of the provides search words, if searchWords is empty returns all results.
+     *
+     * @param searchWords list of student logins or names.
+     * @param result Result[]
+     */
     filterResultByTextSearch = (searchWords: string[], result: Result) => {
         const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
             Boolean,
@@ -185,6 +192,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return !searchWords.length || searchableFields.some(field => searchWords.some(word => word && field.includes(word)));
     };
 
+    /**
+     * Updates the UI with all available filter/sort settings.
+     * First performs the filtering, then sorts the remaining results.
+     */
     updateResults() {
         const filteredResults = compose(
             filter((result: Result) => this.filterResultByTextSearch(this.resultCriteria.textSearch, result)),
@@ -272,6 +283,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return order === SortOrder.ASC ? SortOrder.DESC : SortOrder.ASC;
     };
 
+    /**
+     * Sets the selected sort field, then updates the available results in the UI.
+     * Toggles the order direction (asc, desc) when the field has not changed.
+     *
+     * @param field Result field
+     */
     onSort(field: string) {
         const sameField = this.resultCriteria.sortProp && this.resultCriteria.sortProp.field === field;
         const order = sameField ? this.invertSort(this.resultCriteria.sortProp.order) : SortOrder.ASC;
@@ -279,17 +296,33 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.updateResults();
     }
 
+    /**
+     * Formats the results in the autocomplete overlay.
+     *
+     * @param result
+     */
     searchResultFormatter = (result: Result) => {
         const login = (result.participation as StudentParticipation).student.login;
         const name = (result.participation as StudentParticipation).student.name;
         return `${login} (${name})`;
     };
 
+    /**
+     * Inserts the student login as the last textSearch value.
+     *
+     * @param result
+     */
     searchInputFormatter = (result: Result) => {
         this.resultCriteria.textSearch[this.resultCriteria.textSearch.length - 1] = (result.participation as StudentParticipation).student.login!;
         return this.resultCriteria.textSearch.join(', ');
     };
 
+    /**
+     * Splits the provides search words by comma and updates the autocompletion overlay.
+     * Also updates the available results in the UI.
+     *
+     * @param text$ stream of text input.
+     */
     onSearch = (text$: Observable<string>) => {
         return text$.pipe(
             debounceTime(200),
@@ -297,6 +330,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             map(text => {
                 return text.split(',').map(word => word.trim());
             }),
+            // For available results in table.
             tap(searchWords => {
                 this.resultCriteria.textSearch = searchWords;
                 this.updateResults();
