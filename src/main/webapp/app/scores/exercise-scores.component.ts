@@ -38,12 +38,6 @@ type SortProp = {
     order: SortOrder;
 };
 
-enum PagingSteps {
-    TWENTY = 20,
-    FIFTY = 50,
-    HUNDRED = 100,
-}
-
 @Component({
     selector: 'jhi-exercise-scores',
     templateUrl: './exercise-scores.component.html',
@@ -55,6 +49,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    PAGING_VALUES = [1, 2, 10, 20, 50, 100];
 
     ColumnMode = ColumnMode;
     SortType = SortType;
@@ -67,6 +62,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     allResults: Result[];
     eventSubscriber: Subscription;
     newManualResultAllowed: boolean;
+    resultsPerPage = 1;
 
     resultCriteria: {
         filterProp: FilterProp;
@@ -310,6 +306,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 });
             }),
         );
+    };
+
+    setPaging = (paging: number) => {
+        this.resultsPerPage = paging;
     };
 
     refresh() {
