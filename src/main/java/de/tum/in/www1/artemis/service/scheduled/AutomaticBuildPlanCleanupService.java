@@ -51,9 +51,9 @@ public class AutomaticBuildPlanCleanupService {
         long start = System.currentTimeMillis();
         log.info("Find build plans for potential cleanup");
 
-        long countNoResultAfter14Days = 0;
-        long countSuccessfulLatestResultAfter7Days = 0;
-        long countUnsuccessfulLatestResultAfter14Days = 0;
+        long countNoResultAfter7Days = 0;
+        long countSuccessfulLatestResultAfter3Days = 0;
+        long countUnsuccessfulLatestResultAfter7Days = 0;
 
         List<ProgrammingExerciseStudentParticipation> allParticipationsWithBuildPlanId = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId();
         Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete = new HashSet<>();
@@ -71,24 +71,24 @@ public class AutomaticBuildPlanCleanupService {
             Result result = participation.findLatestResult();
             // 1st case: delete the build plan 14 days after the participation was initialized in case there is no result
             if (result == null) {
-                if (participation.getInitializationDate() != null && participation.getInitializationDate().plusDays(14).isBefore(now())) {
+                if (participation.getInitializationDate() != null && participation.getInitializationDate().plusDays(7).isBefore(now())) {
                     participationsWithBuildPlanToDelete.add(participation);
-                    countNoResultAfter14Days++;
+                    countNoResultAfter7Days++;
                 }
             }
             else {
                 // 2nd case: delete the build plan after 7 days in case the latest result is successful
                 if (result.isSuccessful()) {
-                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(7).isBefore(now())) {
+                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(3).isBefore(now())) {
                         participationsWithBuildPlanToDelete.add(participation);
-                        countSuccessfulLatestResultAfter7Days++;
+                        countSuccessfulLatestResultAfter3Days++;
                     }
                 }
                 // 3rd case: delete the build plan after 14 days in case the latest result is NOT successful
                 else {
-                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(14).isBefore(now())) {
+                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(7).isBefore(now())) {
                         participationsWithBuildPlanToDelete.add(participation);
-                        countUnsuccessfulLatestResultAfter14Days++;
+                        countUnsuccessfulLatestResultAfter7Days++;
                     }
                 }
             }
@@ -96,12 +96,12 @@ public class AutomaticBuildPlanCleanupService {
 
         log.info("Found " + allParticipationsWithBuildPlanId.size() + " participations with build plans in " + (System.currentTimeMillis() - start) + " ms execution time");
         log.info("Found " + participationsWithBuildPlanToDelete.size() + " old build plans to delete");
-        log.info("  Found " + countNoResultAfter14Days + " build plans without results 14 days after initialization");
-        log.info("  Found " + countSuccessfulLatestResultAfter7Days + " build plans with successful latest result is older than 7 days");
-        log.info("  Found " + countUnsuccessfulLatestResultAfter14Days + " build plans with unsuccessful latest result is older than 14 days");
+        log.info("  Found " + countNoResultAfter7Days + " build plans without results 7 days after initialization");
+        log.info("  Found " + countSuccessfulLatestResultAfter3Days + " build plans with successful latest result is older than 3 days");
+        log.info("  Found " + countUnsuccessfulLatestResultAfter7Days + " build plans with unsuccessful latest result is older than 7 days");
 
-        // Limit to 1000 deletions per night
-        List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(1000).collect(Collectors.toList());
+        // Limit to 2000 deletions per night
+        List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(2000).collect(Collectors.toList());
         List<String> buildPlanIds = actualParticipationsToClean.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).collect(Collectors.toList());
         log.info("Build plans to cleanup: " + buildPlanIds);
 
