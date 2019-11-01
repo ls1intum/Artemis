@@ -6,13 +6,21 @@
     <jhi-alert></jhi-alert>
     <div class="d-flex align-content-center">
         <div ngbDropdown class="d-inline-block mr-2">
-            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ resultsPerPage }} results per page</button>
+            <button
+                class="btn btn-outline-primary"
+                id="dropdownBasic1"
+                [innerHTML]="'artemisApp.exercise.resultsPerPage' | translate: { number: resultsPerPage }"
+                ngbDropdownToggle
+            >
+                {{ resultsPerPage }} results per page
+            </button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                 <button
                     *ngFor="let pagingValue of PAGING_VALUES"
                     (click)="setResultsPerPage(pagingValue)"
-                    ngbDropdownItem
+                    [innerHTML]="'artemisApp.exercise.resultsPerPage' | translate: { number: pagingValue }"
                     [style.background-color]="pagingValue === resultsPerPage ? '#3e8acc' : 'transparent'"
+                    ngbDropdownItem
                 >
                     <span>{{ pagingValue }} results per page</span>
                 </button>
@@ -65,7 +73,7 @@
             id="typeahead-basic"
             type="text"
             class="form-control"
-            [placeholder]="'Search for Students by login or name (comma separated)'"
+            [placeholder]="'artemisApp.exercise.searchForStudents' | translate"
             [ngbTypeahead]="onSearch"
             [resultFormatter]="searchResultFormatter"
             [inputFormatter]="searchInputFormatter"
