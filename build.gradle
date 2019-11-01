@@ -102,7 +102,7 @@ if (OperatingSystem.current().isWindows()) {
 defaultTasks "bootRun"
 
 group = "de.tum.in.www1.artemis"
-version = "3.8.6"
+version = "3.8.7"
 description = "Interactive Learning with Individual Feedback"
 
 springBoot {
