@@ -52,8 +52,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
-    PAGING_VALUES = [1, 2, 10, 20, 50, 100, 200, 500, 1000, 2000];
-    DEFAULT_PAGING_VALUE = 1;
+    PAGING_VALUES = [10, 20, 50, 100, 200, 500, 1000, 2000];
+    DEFAULT_PAGING_VALUE = 50;
 
     ColumnMode = ColumnMode;
     SortType = SortType;
@@ -341,6 +341,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
                         Boolean,
                     ) as string[];
+                    // We only execute the autocomplete for the last keyword in the provided list.
                     const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
                     return lastSearchWord ? searchableFields.some(value => value.includes(lastSearchWord) && value !== lastSearchWord) : false;
                 });
