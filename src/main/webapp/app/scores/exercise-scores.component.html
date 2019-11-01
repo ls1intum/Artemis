@@ -25,25 +25,25 @@
             </button>
         </div>
         <label for="typeahead-basic">Search for a state:</label>
-        <input id="typeahead-basic" type="text" class="form-control" [ngbTypeahead]="onSearch" />
+        <input id="typeahead-basic" type="text" class="form-control" [ngbTypeahead]="onSearch" [resultFormatter]="searchResultFormatter" [inputFormatter]="searchInputFormatter" />
         <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'" />
+            <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.ALL)" [value]="'all'" />
             {{ 'artemisApp.exercise.showAll' | translate }}
         </label>
         <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')" [value]="'unsuccessful'" />
+            <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.UNSUCCESSFUL)" [value]="'unsuccessful'" />
             {{ 'artemisApp.exercise.showUnsuccessful' | translate }}
         </label>
         <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')" [value]="'successful'" />
+            <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.SUCCESSFUL)" [value]="'successful'" />
             {{ 'artemisApp.exercise.showSuccessful' | translate }}
         </label>
         <label class="radio-inline" *ngIf="newManualResultAllowed">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('manual')" [value]="'manual'" />
+            <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.MANUAL)" [value]="'manual'" />
             {{ 'artemisApp.exercise.showManual' | translate }}
         </label>
         <label class="radio-inline" *ngIf="newManualResultAllowed">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('automatic')" [value]="'automatic'" />
+            <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.AUTOMATIC)" [value]="'automatic'" />
             {{ 'artemisApp.exercise.showAutomatic' | translate }}
         </label>
     </div>
