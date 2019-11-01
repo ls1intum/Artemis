@@ -351,6 +351,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         );
     };
 
+    onAutocompleteSelect = () => {
+        this.updateResults();
+    };
+
     getCachedResultsPerPage = () => {
         const cachedValue = localStorage.getItem(resultsPerPageCacheKey);
         return cachedValue ? parseInt(cachedValue, 10) : this.DEFAULT_PAGING_VALUE;
