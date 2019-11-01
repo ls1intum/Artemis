@@ -13,8 +13,8 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { tap, take } from 'rxjs/operators';
-import { zip, of } from 'rxjs';
+import { tap, take, distinctUntilChanged, debounceTime, map } from 'rxjs/operators';
+import { zip, of, Observable } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
 import { SortByPipe } from 'app/components/pipes';
@@ -222,6 +222,29 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.reverse = !this.reverse;
         this.results = [...this.sortByPipe.transform(this.results, sortprop, this.reverse)];
     }
+
+    onSearch = (text$: Observable<string>) => {
+        return text$.pipe(
+            debounceTime(200),
+            distinctUntilChanged(),
+            map(term => {
+                return this.allResults.filter(result => {
+                    const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
+                        Boolean,
+                    ) as string[];
+                    return searchableFields.some(value => value.includes(term));
+                });
+            }),
+            tap(filteredResults => (this.results = filteredResults)),
+            map(filteredResults => {
+                return filteredResults.map(result => {
+                    const login = (result.participation as StudentParticipation).student.login;
+                    const name = (result.participation as StudentParticipation).student.name;
+                    return `${login} (${name})`;
+                });
+            }),
+        );
+    };
 
     refresh() {
         this.getResults().subscribe();

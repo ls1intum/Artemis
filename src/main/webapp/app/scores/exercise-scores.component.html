@@ -24,6 +24,8 @@
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
             </button>
         </div>
+        <label for="typeahead-basic">Search for a state:</label>
+        <input id="typeahead-basic" type="text" class="form-control" [ngbTypeahead]="onSearch" />
         <label class="radio-inline">
             <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'" />
             {{ 'artemisApp.exercise.showAll' | translate }}
