@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -51,18 +52,25 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ResultService resultService;
+
     private final Optional<VersionControlService> versionControlService;
+
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<VersionControlService> versionControlService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
         this.messagingTemplate = messagingTemplate;
         this.authCheckService = authCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.resultService = resultService;
         this.versionControlService = versionControlService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     /**
@@ -114,23 +122,25 @@ public class ProgrammingSubmissionResource {
      * The build result will be treated as if the user would have done a commit.
      *
      * @param participationId of the participation.
+     * @param submissionType  will be used for the newly created submission.
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
      * The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId) {
+    public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
         }
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)
+                || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
             return forbidden();
         }
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.MANUAL);
+            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
         }
         catch (IllegalStateException ex) {
             return notFound();
@@ -142,34 +152,43 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * Trigger the CI build of the given participation.
-     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
-     * @param participationId of the participation.
-     * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
-     * The REST path would be: "/programming-submissions/{participationId}/trigger-instructor-build"
+     * @param participationId to which the submission belongs.
+     * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
-    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-instructor-build")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> triggerInstructorBuild(@PathVariable Long participationId) {
+    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
         }
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        if (!authCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
-        ProgrammingSubmission submission;
-        try {
-            submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, SubmissionType.INSTRUCTOR);
-        }
-        catch (IllegalStateException ex) {
-            return notFound();
+        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId);
+        if (submission.isEmpty()) {
+            return badRequest();
         }
 
-        programmingSubmissionService.triggerBuildAndNotifyUser(submission);
-
+        // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
+        Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
+        if (result.isPresent()) {
+            resultService.notifyUserAboutNewResult(result.get(), participationId);
+            return ResponseEntity.ok().build();
+        }
+        // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
+        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
+        if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
+            // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
+            // This resets the pending submission timer in the client.
+            programmingSubmissionService.notifyUserAboutSubmission(submission.get());
+            return ResponseEntity.ok().build();
+        }
+        // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
+        programmingSubmissionService.triggerBuildAndNotifyUser(submission.get());
         return ResponseEntity.ok().build();
     }
 
