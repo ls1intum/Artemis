@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
@@ -155,7 +156,7 @@ public class ProgrammingSubmissionService {
      * @throws IllegalAccessException if the user does not have access to the given participation.
      */
     @Transactional(readOnly = true)
-    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
+    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             throw new EntityNotFoundException("Participation with id " + participationId + " could not be retrieved!");
@@ -164,7 +165,7 @@ public class ProgrammingSubmissionService {
             throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
         }
         if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            throw new IllegalAccessException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
+            throw new AccessForbiddenException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 
         return findLatestPendingSubmissionForParticipation(participationId);
