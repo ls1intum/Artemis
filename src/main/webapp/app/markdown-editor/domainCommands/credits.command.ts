@@ -3,7 +3,8 @@ import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.c
 
 export class CreditsCommand extends DomainTagCommand {
     public static readonly identifier = '[credits]';
-    public static readonly text = ' Add points students should get for this instruction here';
+    public static readonly text = ' 0';
+    // ' Add points students should get for this instruction here';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addCredits';
 
@@ -12,7 +13,7 @@ export class CreditsCommand extends DomainTagCommand {
      * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n\t' + this.getOpeningIdentifier() + CreditsCommand.text;
+        const text = '\n' + this.getOpeningIdentifier() + CreditsCommand.text;
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
 

@@ -11,6 +11,7 @@
         },
         "problemStatement": "Problem Statement",
         "sampleSolution": "Example Solution",
-        "gradingCriteria": "Grading Criteria"
+        "gradingCriteria": "Grading Criteria",
+        "usageCount": "Usage Count"
     }
 }

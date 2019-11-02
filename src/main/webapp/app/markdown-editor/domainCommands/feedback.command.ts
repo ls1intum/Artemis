@@ -3,7 +3,7 @@ import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.c
 
 export class FeedbackCommand extends DomainTagCommand {
     public static readonly identifier = '[feedback]';
-    public static readonly text = 'Add feedback for students here (visible for students)';
+    public static readonly text = ' Add feedback for students here (visible for students)';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addFeedback';
 
@@ -12,7 +12,7 @@ export class FeedbackCommand extends DomainTagCommand {
      * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n\t' + this.getOpeningIdentifier() + FeedbackCommand.text;
+        const text = '\n' + this.getOpeningIdentifier() + FeedbackCommand.text;
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
 

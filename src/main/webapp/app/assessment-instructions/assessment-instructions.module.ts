@@ -11,7 +11,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 
 @NgModule({
     declarations: [AssessmentInstructionsComponent, ExpandableParagraphComponent, ExpandableSampleSolutionComponent, StructuredGradingInstructionsComponent],
-    exports: [AssessmentInstructionsComponent],
+    exports: [AssessmentInstructionsComponent, StructuredGradingInstructionsComponent],
     imports: [NgbModule, FontAwesomeModule, ArtemisSharedModule, ArtemisModelingEditorModule, ArtemisMarkdownEditorModule],
 })
 export class AssessmentInstructionsModule {}

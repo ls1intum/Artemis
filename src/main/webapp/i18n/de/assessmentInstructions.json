@@ -11,6 +11,7 @@
         },
         "problemStatement": "Aufgabenstellung",
         "sampleSolution": "Beispiel Lösung",
-        "gradingCriteria": "Bewertungskriterien"
+        "gradingCriteria": "Bewertungskriterien",
+        "usageCount": "Anzahl Anwendungen"
     }
 }
