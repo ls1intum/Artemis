@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_NOTIFICATION;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
@@ -30,6 +29,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
@@ -156,7 +156,7 @@ public class ProgrammingSubmissionService {
      * @throws IllegalAccessException if the user does not have access to the given participation.
      */
     @Transactional(readOnly = true)
-    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException, IllegalAccessException {
+    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             throw new EntityNotFoundException("Participation with id " + participationId + " could not be retrieved!");
@@ -165,7 +165,7 @@ public class ProgrammingSubmissionService {
             throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
         }
         if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            throw new IllegalAccessException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
+            throw new AccessForbiddenException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 
         return findLatestPendingSubmissionForParticipation(participationId);
@@ -321,11 +321,24 @@ public class ProgrammingSubmissionService {
 
     /**
      * Trigger a CI build for each submission & notify each user on a new programming submission.
+     * Instead of triggering all builds at the same time, we execute the builds in batches to not overload the CIS system.
+     *
      * @param submissions ProgrammingSubmission Collection
      */
     public void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
+        int index = 0;
         for (ProgrammingSubmission submission : submissions) {
+            // Execute requests in batches instead all at once.
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before executing successive build for submission " + submission.getId(), ex);
+                }
+            }
             triggerBuildAndNotifyUser(submission);
+            index++;
         }
     }
 

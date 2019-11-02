@@ -10,19 +10,26 @@ from threading import Thread
 from datetime import datetime
 
 
-def studSaveStrComp(ref: str, other: str):
+def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool = True, ignoreNonAlNum = True):
     """
     Student save compare between strings.
     Converts both to lower, strips them and removes all non alphanumeric chars
     before comparision.
     """
-    # Strip and convert to lower:
-    ref = ref.strip().lower()
-    other = other.strip().lower()
+    # Strip:
+    if strip:
+        ref = ref.strip()
+        other = other.strip()
+
+    # Convert to lower
+    if ignoreCase:
+        ref = ref.lower()
+        other = other.lower()
 
     # Remove all non alphanumeric chars:
-    ref = "".join(c for c in ref if c.isalnum())
-    other = "".join(c for c in other if c.isalnum())
+    if ignoreNonAlNum:
+        ref = "".join(c for c in ref if c.isalnum())
+        other = "".join(c for c in other if c.isalnum())
 
     # print("Ref: {}\nOther:{}".format(ref, other))
     return ref == other
@@ -137,7 +144,9 @@ class PWrap:
     """
 
     cmd: List[str]
-    prog: Optional[Popen] = None
+    prog: Optional[Popen]
+    cwd: Optional[str]
+
 
     __stdinFd: int
     __stdinMasterFd: int
@@ -145,8 +154,10 @@ class PWrap:
     __stdOutLineCache: ReadCache
     __stdErrLineCache: ReadCache
 
-    def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt"):
+    def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt", cwd: Optional[str] = None):
         self.cmd = cmd
+        self.prog = None
+        self.cwd: Optional[str] = cwd
         self.stdout = open(stdoutFilePath, "wb")
         self.stderr = open(stderrFilePath, "wb")
 
@@ -170,6 +181,7 @@ class PWrap:
                           stdin=self.__stdinMasterFd,
                           stderr=self.__stdErrLineCache.fileno(),
                           universal_newlines=True,
+                          cwd=self.cwd,
                           preexec_fn=os.setsid) # Make sure we store the process group id
 
     def readLineStdout(self, blocking: bool = True):

@@ -56,10 +56,12 @@ public class ResultService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
             ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, WebsocketMessagingService websocketMessagingService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -70,6 +72,7 @@ public class ResultService {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -425,5 +428,16 @@ public class ResultService {
 
     public boolean existsByExerciseId(Long exerciseId) {
         return resultRepository.existsByParticipation_ExerciseId(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
+    public void notifyUserAboutNewResult(Result result, Long participationId) {
+        Hibernate.unproxy(result.getSubmission());
+        Hibernate.unproxy(result.getFeedbacks());
+        notifyNewResult(result, participationId);
+    }
+
+    private void notifyNewResult(Result result, Long participationId) {
+        websocketMessagingService.sendMessage("/topic/participation/" + participationId + "/newResults", result);
     }
 }
