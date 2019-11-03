@@ -113,6 +113,8 @@ public class ProgrammingSubmissionService {
             }
         }
 
+        // TODO: if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
+        // and we should not create a new submission here
         String lastCommitHash;
         try {
             // TODO: if the commit was made in a branch different than master, ignore this

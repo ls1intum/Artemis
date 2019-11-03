@@ -12,6 +12,9 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
         super(submissionService);
         this.showForSuccessfulSubmissions = true;
     }
+
+    // TODO: we should warn the instructor in case manual results are enabled and the build and test deadline has passed
+
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
