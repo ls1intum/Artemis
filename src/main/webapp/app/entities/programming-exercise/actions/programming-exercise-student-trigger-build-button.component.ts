@@ -11,6 +11,8 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
     constructor(submissionService: ProgrammingSubmissionService) {
         super(submissionService);
     }
+
+    // TODO: this should not be allowed after the build and test deadline if manual grading is enabled for the exercise otherwise students could override the manual results
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
