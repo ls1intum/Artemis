@@ -36,6 +36,10 @@ plugins {
     id "com.diffplug.gradle.spotless" version "3.25.0"
 }
 
+group = "de.tum.in.www1.artemis"
+version = "3.8.8"
+description = "Interactive Learning with Individual Feedback"
+
 sourceCompatibility=12
 targetCompatibility=12
 
@@ -100,10 +104,6 @@ if (OperatingSystem.current().isWindows()) {
 }
 
 defaultTasks "bootRun"
-
-group = "de.tum.in.www1.artemis"
-version = "3.8.7"
-description = "Interactive Learning with Individual Feedback"
 
 springBoot {
     mainClassName = "de.tum.in.www1.artemis.ArtemisApp"
