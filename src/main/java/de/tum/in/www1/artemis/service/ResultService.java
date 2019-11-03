@@ -237,7 +237,6 @@ public class ResultService {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.
             log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
                     + " because no template participation could be found for the given exercise");
-            return;
         }
     }
 

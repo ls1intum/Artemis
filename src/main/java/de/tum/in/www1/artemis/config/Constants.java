@@ -92,7 +92,7 @@ public final class Constants {
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
 
     // Currently 10s.
-    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10000;
+    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
 
     private Constants() {
     }
