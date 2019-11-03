@@ -7,6 +7,7 @@ import static java.time.ZonedDateTime.now;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -71,19 +72,22 @@ public class AutomaticBuildPlanCleanupService {
                 // we only want to clean up build plans of students
                 continue;
             }
-            if (participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                    && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
-                // we don't clean up plans that will definitely be executed in the future
-                continue;
-            }
 
-            if (participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                    && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
-                participationsWithBuildPlanToDelete.add(participation);
+            if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())
+                    && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+
+                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
+                    // we don't clean up plans that will definitely be executed in the future
+                    continue;
+                }
+
                 // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
                 // and the students repos will be locked anyways.
-                countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
-                continue;
+                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
+                    participationsWithBuildPlanToDelete.add(participation);
+                    countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
+                    continue;
+                }
             }
 
             Result result = participation.findLatestResult();
