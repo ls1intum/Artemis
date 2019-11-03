@@ -47,45 +47,47 @@
                     <td>{{ fileUploadExercise.filePattern }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td class="text-right">
-                        <div class="btn-group flex-btn-group-container">
-                            <button
-                                type="submit"
+                        <div class="jhi-btn-group jhi-btn-group--block">
+                            <jhi-button
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course', fileUploadExercise.course.id, 'exercise', fileUploadExercise.id, 'dashboard']"
-                                class="btn btn-info btn-sm mr-1"
+                                [btnSize]="ButtonSize.SMALL"
+                                [btnType]="ButtonType.INFO"
+                                icon="eye"
+                                title="entity.action.scores"
+                                class="mr-1"
                             >
-                                <fa-icon icon="eye"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </jhi-button>
+                            <jhi-button
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/exercise', fileUploadExercise.id, 'participation']"
-                                class="btn btn-primary btn-sm mr-1"
+                                [btnSize]="ButtonSize.SMALL"
+                                [btnType]="ButtonType.PRIMARY"
+                                [icon]="['far', 'list-alt']"
+                                title="artemisApp.exercise.participations"
+                                class="mr-1"
                             >
-                                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </jhi-button>
+                            <jhi-button
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/file-upload-exercise', fileUploadExercise.id]"
-                                class="btn btn-info btn-sm mr-1"
+                                class="mr-1"
+                                [btnType]="ButtonType.INFO"
+                                [btnSize]="ButtonSize.SMALL"
+                                icon="eye"
+                                title="entity.action.view"
                             >
-                                <fa-icon icon="eye"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                            </button>
-                            <button
-                                type="submit"
+                            </jhi-button>
+                            <jhi-button
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/file-upload-exercise/' + fileUploadExercise.id + '/edit']"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-primary btn-sm mr-1"
+                                [btnSize]="ButtonSize.SMALL"
+                                [btnType]="ButtonType.PRIMARY"
+                                icon="pencil-alt"
+                                title="entity.action.edit"
+                                class="mr-1"
                             >
-                                <fa-icon icon="pencil-alt"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                            </button>
+                            </jhi-button>
                             <button
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 jhiDeleteButton

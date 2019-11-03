@@ -9,13 +9,17 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { AccountService } from 'app/core';
+import { ButtonSize, ButtonType } from 'app/shared/components';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
     templateUrl: './file-upload-exercise.component.html',
+    styleUrls: ['./file-upload-exercise.component.scss'],
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[] = [];
+    ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,

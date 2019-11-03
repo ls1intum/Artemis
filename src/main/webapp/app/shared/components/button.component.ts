@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Router } from '@angular/router';
 
 export enum ButtonType {
     PRIMARY = 'btn-primary',
@@ -24,7 +25,13 @@ export enum ButtonSize {
 @Component({
     selector: 'jhi-button',
     template: `
-        <button [ngClass]="['jhi-btn', 'btn', btnType, btnSize]" ngbTooltip="{{ tooltip | translate }}" [disabled]="disabled || isLoading" (click)="onClick.emit($event)">
+        <button
+            style="width: 100%"
+            [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
+            ngbTooltip="{{ tooltip | translate }}"
+            [disabled]="disabled || isLoading"
+            (click)="routerLink ? navigate() : onClick.emit($event)"
+        >
             <fa-icon class="jhi-btn__loading" *ngIf="isLoading" icon="circle-notch" [spin]="true" size="sm"></fa-icon>
             <fa-icon class="jhi-btn__icon" *ngIf="icon && !isLoading" [icon]="icon" size="sm"></fa-icon>
             <span class="jhi-btn__title" [class.ml-1]="icon || isLoading" *ngIf="title" [jhiTranslate]="title"></span>
@@ -35,7 +42,7 @@ export class ButtonComponent {
     @Input() btnType = ButtonType.PRIMARY;
     @Input() btnSize = ButtonSize.MEDIUM;
     // Fa-icon name.
-    @Input() icon: string;
+    @Input() icon: string | string[];
     // Translation placeholders, will be translated in the component.
     @Input() title: string;
     @Input() tooltip: string;
@@ -43,5 +50,13 @@ export class ButtonComponent {
     @Input() disabled = false;
     @Input() isLoading = false;
 
+    @Input() routerLink: any[];
+
     @Output() onClick = new EventEmitter<MouseEvent>();
+
+    constructor(private router: Router) {}
+
+    navigate() {
+        this.router.navigate(this.routerLink).then();
+    }
 }

@@ -1,0 +1,10 @@
+.jhi-btn-group {
+    display: flex;
+    overflow: hidden;
+}
+
+.jhi-btn-group--block > jhi-button,
+button {
+    flex: 1 1 auto;
+    position: relative;
+}
