@@ -436,7 +436,7 @@ public class BambooService implements ContinuousIntegrationService {
         resultRepository.save(result);
 
         if (buildResults.containsKey("vcsRevisionKey") || buildResults.containsKey("changesetId")) {
-            //we prefer 'changesetId', because it should be correct for multiple commits leading to a build or when test cases have changed.
+            // we prefer 'changesetId', because it should be correct for multiple commits leading to a build or when test cases have changed.
             // In case it does not exist (e.g. due to a manual build), we fall back to vcsRevisionKey which should be correct in most cases
             String commitHash = (String) buildResults.get("changesetId");
             if (commitHash == null || "".equals(commitHash)) {
@@ -819,7 +819,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes",
+                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
                 HttpMethod.GET,
                 entity,
                 Map.class);
@@ -843,6 +843,30 @@ public class BambooService implements ContinuousIntegrationService {
             result.put("details", resultDetails);
 
             //search for version control information
+            if (response.getBody().containsKey("vcsRevisions")) {
+                //TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
+                // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
+//                "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668",
+//                    "vcsRevisions":{
+//                    "size":2,
+//                        "expand":"vcsRevision",
+//                        "vcsRevision":[
+//                    {
+//                        "repositoryId":239584155,
+//                        "repositoryName":"tests",
+//                        "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668"
+//                    },
+//                    {
+//                        "repositoryId":239584156,
+//                        "repositoryName":"assignment",
+//                        "vcsRevisionKey":"1c140ccff2be8c3d0d00c0d370557e258c1292cb"
+//                    }
+//                    ],
+//                    "start-index":0,
+//                        "max-result":2
+//                },
+                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
+            }
             if (response.getBody().containsKey("vcsRevisionKey")) {
                 result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
             }

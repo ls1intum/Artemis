@@ -95,24 +95,26 @@ public class ProgrammingSubmissionService {
             throw new EntityNotFoundException("ProgrammingExerciseParticipation with id " + participationId + " could not be found!");
         }
 
-        ProgrammingExerciseParticipation peParticipation = (ProgrammingExerciseParticipation) participation;
+        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
         if (participation instanceof ProgrammingExerciseStudentParticipation
-                && ((ProgrammingExerciseStudentParticipation) peParticipation).getInitializationState() == InitializationState.INACTIVE) {
+                && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
-            participationService.resumeExercise(peParticipation.getProgrammingExercise(), (ProgrammingExerciseStudentParticipation) peParticipation);
+            participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
 
             try {
-                continuousIntegrationService.get().triggerBuild(peParticipation);
+                continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             }
             catch (HttpException ex) {
                 // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
             }
         }
 
+        // TODO: if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
+        // and we should not create a new submission here
         String lastCommitHash;
         try {
             // TODO: if the commit was made in a branch different than master, ignore this
@@ -350,7 +352,13 @@ public class ProgrammingSubmissionService {
      */
     public void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
         try {
-            continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            var programmingExerciseParticipation = (ProgrammingExerciseParticipation) submission.getParticipation();
+            if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation
+                    && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
+                // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
+                participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+            }
+            continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             notifyUserAboutSubmission(submission);
         }
         catch (HttpException e) {
