@@ -127,7 +127,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     getResults() {
         return this.resultService
             .getResultsForExercise(this.exercise.course!.id, this.exercise.id, {
-                showAllResults: this.resultCriteria.filterProp,
                 ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
                 withAssessors: this.exercise.type === ExerciseType.MODELING,
