@@ -19,7 +19,7 @@ const ENTITY_STATES = [
         component: ExerciseScoresComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title',
+            pageTitle: 'instructorDashboard.exerciseDashboard',
         },
         canActivate: [UserRouteAccessService],
     },

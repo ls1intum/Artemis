@@ -157,6 +157,7 @@
         "tslint": "5.20.0",
         "tslint-config-prettier": "1.18.0",
         "tslint-loader": "3.6.0",
+        "url-loader": "2.2.0",
         "webpack": "4.41.2",
         "webpack-cli": "3.3.9",
         "webpack-dev-server": "3.9.0",

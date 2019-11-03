@@ -48,27 +48,28 @@
                 <span class="ml-1">{{ 'artemisApp.exercise.showAutomatic' | translate }}</span>
             </label>
         </div>
-        <div class="button-toolbar ml-auto">
-            <button type="submit" routerLink="/exercise/{{ exercise.id }}/participation" class="btn btn-primary btn-sm mr-1">
-                <fa-icon [icon]="'list-alt'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-            </button>
-            <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
-                <fa-icon [icon]="'download'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
-            </button>
-            <button class="btn btn-info btn-sm mr-1" (click)="exportResults()">
-                <fa-icon [icon]="'download'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
-            </button>
-            <jhi-programming-assessment-repo-export *ngIf="exercise.type === PROGRAMMING" [exerciseId]="exercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
-            <button class="btn btn-primary btn-sm mr-1" (click)="refresh()">
-                <fa-icon [icon]="'sync'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-            </button>
-        </div>
     </div>
-    <div class="d-flex mt-2">
+    <div class="button-toolbar float-right">
+        <button type="submit" routerLink="/exercise/{{ exercise.id }}/participation" class="btn btn-primary btn-sm mr-1">
+            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+        </button>
+        <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
+            <fa-icon [icon]="'download'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
+        </button>
+        <button class="btn btn-info btn-sm mr-1" (click)="exportResults()">
+            <fa-icon [icon]="'download'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
+        </button>
+        <jhi-programming-assessment-repo-export *ngIf="exercise.type === PROGRAMMING" [exerciseId]="exercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
+        <button class="btn btn-primary btn-sm mr-1" (click)="refresh()">
+            <fa-icon [icon]="'sync'"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+        </button>
+    </div>
+    <br />
+    <div class="d-flex mt-3">
         <input
             id="typeahead-basic"
             type="text"
@@ -86,23 +87,26 @@
             class="bootstrap"
             [limit]="resultsPerPage"
             [sortType]="SortType.multi"
-            [columnMode]="ColumnMode.flex"
+            [columnMode]="ColumnMode.force"
             [headerHeight]="50"
             [footerHeight]="50"
-            [rowHeight]="50"
+            [rowHeight]="'auto'"
             [rows]="results"
             [rowClass]=""
+            [scrollbarH]="true"
         >
-            <ngx-datatable-column prop="" [flexGrow]="1">
+            <ngx-datatable-column prop="" [minWidth]="50" [maxWidth]="50">
                 <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
                     {{ rowIndex + 1 }}
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.student.name" [resizeable]="false" [sortable]="true" [flexGrow]="8">
+            <ngx-datatable-column prop="participation.student.name" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="200">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" (click)="onSort('participation.student.name')">{{ 'artemisApp.exercise.studentName' | translate }}</span>
+                        <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.name')">{{
+                            'artemisApp.exercise.studentName' | translate
+                        }}</span>
                         <fa-icon icon="sort"></fa-icon>
                     </span>
                 </ng-template>
@@ -111,10 +115,12 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [flexGrow]="4">
+            <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" (click)="onSort('participation.student.login')">{{ 'artemisApp.exercise.studentId' | translate }}</span>
+                        <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.login')">{{
+                            'artemisApp.exercise.studentId' | translate
+                        }}</span>
                         <fa-icon icon="sort"></fa-icon>
                     </span>
                 </ng-template>
@@ -123,19 +129,19 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="completionDate" [flexGrow]="6">
+            <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="150">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" (click)="onSort('completionDate')">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
+                        <span class="datatable-header-cell-label bold sortable" (click)="onSort('completionDate')">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
                         <fa-icon icon="sort"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value | date: 'MMM d, y HH:mm:ss' }}
+                    {{ value | date: 'dd.MM.yyyy HH:mm' }}
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="" [flexGrow]="8">
+            <ngx-datatable-column prop="" [resizeable]="false" [sortable]="true" [minWidth]="200" [maxWidth]="300">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('score')">{{ 'artemisApp.exercise.result' | translate }}</span>
@@ -147,7 +153,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="type" *ngIf="newManualResultAllowed" [flexGrow]="4">
+            <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('type')">{{ 'artemisApp.exercise.type' | translate }}</span>
@@ -159,7 +165,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="submissionCount" [flexGrow]="3">
+            <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="60" [maxWidth]="120">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('submissionCount')">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
@@ -171,7 +177,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="durationInMinutes" [flexGrow]="3">
+            <ngx-datatable-column prop="durationInMinutes" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="150">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('durationInMinutes')">{{ 'artemisApp.exercise.duration' | translate }}</span>
@@ -181,7 +187,7 @@
                 <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [flexGrow]="10">
+            <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="400">
                 <ng-template ngx-datatable-cell-template let-value="value">
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
                         <fa-icon icon="code-branch" class="mr-1"></fa-icon>Repository

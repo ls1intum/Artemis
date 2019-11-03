@@ -1,4 +1,4 @@
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
@@ -19,7 +19,6 @@ import { AssessmentType } from 'app/entities/assessment-type';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
 import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
-import { LocalStorageService } from 'ngx-webstorage';
 
 enum FilterProp {
     ALL = 'all',
@@ -44,6 +43,7 @@ const resultsPerPageCacheKey = 'exercise-scores-results-per-age';
 @Component({
     selector: 'jhi-exercise-scores',
     templateUrl: './exercise-scores.component.html',
+    styleUrls: ['exercise-scores.component.scss'],
     providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
@@ -87,9 +87,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
-        private eventManager: JhiEventManager,
         private sortByPipe: SortByPipe,
-        private localStorageService: LocalStorageService,
     ) {
         this.resultCriteria = {
             filterProp: FilterProp.ALL,
@@ -116,7 +114,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             });
         });
-        this.registerChangeInCourses();
     }
 
     /**
@@ -125,10 +122,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      */
     private loadAndCacheProgrammingExerciseSubmissionState() {
         return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
-    }
-
-    registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getResults());
     }
 
     getResults() {
@@ -194,7 +187,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             return true;
         }
         // Otherwise we do a fuzzy search on the inputted search words.
-        return searchableFields.some(field => searchWords.some(word => word && field.includes(word)));
+        return searchableFields.some(field => searchWords.some(word => word && field.toLowerCase().includes(word.toLowerCase())));
     };
 
     /**
@@ -348,7 +341,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
                         Boolean,
                     ) as string[];
-                    return searchableFields.some(value => value.includes(lastSearchWord) && value !== lastSearchWord);
+                    return searchableFields.some(value => value.toLowerCase().includes(lastSearchWord.toLowerCase()) && value.toLowerCase() !== lastSearchWord.toLowerCase());
                 });
             }),
         );
@@ -370,12 +363,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     };
 
     refresh() {
-        this.getResults().subscribe();
+        this.isLoading = true;
+        this.results = [];
+        this.getResults().subscribe(() => (this.isLoading = false));
     }
 
     ngOnDestroy() {
         this.paramSub.unsubscribe();
-        this.eventManager.destroy(this.eventSubscriber);
     }
 
     callback() {}
