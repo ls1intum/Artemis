@@ -21,6 +21,7 @@ import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
 import { filter } from 'rxjs/operators';
 import { ButtonType } from 'app/shared/components';
+import { omit } from 'lodash';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -107,6 +108,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             modelingSubmission.participation.results = [modelingSubmission.result];
                         }
                         this.participation = modelingSubmission.participation as StudentParticipation;
+
+                        // reconnect participation <--> submission
+                        this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
                         if (this.modelingExercise.course) {
                             this.complaintService.getNumberOfAllowedComplaintsInCourse(this.modelingExercise.course.id).subscribe((allowedComplaints: number) => {
