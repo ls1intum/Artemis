@@ -210,6 +210,7 @@ public interface ContinuousIntegrationService {
      * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
      * This method removes all of these unnecessary and potentially insecure permissions
      *
+     * @param projectKey The key of the build project which should get "cleaned"
      */
     void removeAllDefaultProjectPermissions(String projectKey);
 
