@@ -234,6 +234,7 @@
                                     ></jhi-programming-assessment-repo-export>
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="submission.participation.id"
+                                        [latestResult]="submission.result"
                                         (onResultCreated)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>
@@ -260,7 +261,11 @@
                                         [singleStudentMode]="true"
                                         [studentIdList]="unassessedSubmission.participation.student.login"
                                     ></jhi-programming-assessment-repo-export>
-                                    <jhi-programming-assessment-manual-result [participationId]="unassessedSubmission.participation.id"></jhi-programming-assessment-manual-result>
+                                    <jhi-programming-assessment-manual-result
+                                        [participationId]="unassessedSubmission.participation.id"
+                                        [latestResult]="unassessedSubmission.result"
+                                        (onResultCreated)="loadAll()"
+                                    ></jhi-programming-assessment-manual-result>
                                 </ng-template>
                             </td>
                         </tr>
