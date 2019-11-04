@@ -43,7 +43,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     let forwardBuildSpy: SinonSpy;
 
     const exercise = { id: 42 } as Exercise;
-    const ideState = { opened: 40 } as IntelliJState;
+    const ideState = { opened: 40, building: false, cloning: false } as IntelliJState;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -88,13 +88,13 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isOpenedInIntelliJ).to.be.false;
+        expect(comp.ideState.opened).to.not.equal(exercise.id);
 
         fixture.destroy();
         flush();
     }));
 
-    it('should should reflect that the represented exercise is opened if the same exercise is open in the IDE', fakeAsync(() => {
+    it('should reflect that the represented exercise is opened if the same exercise is open in the IDE', fakeAsync(() => {
         const stateObservable = new BehaviorSubject({ opened: exercise.id });
         comp.exercise = exercise;
         ideStateStub.returns(stateObservable);
@@ -103,7 +103,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isOpenedInIntelliJ).to.be.true;
+        expect(comp.ideState.opened).to.equal(exercise.id);
 
         fixture.destroy();
         flush();
