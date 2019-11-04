@@ -178,6 +178,19 @@ public class FileUploadSubmissionIntegrationTest {
         assertThat(submission.getResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
     }
 
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
+        database.addParticipationForExercise(fileUploadExercise, "student1");
+        var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
+        submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission,
+                "submission", file, FileUploadSubmission.class, HttpStatus.OK);
+
+        final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
+        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
+    }
+
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,

@@ -182,9 +182,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException {
         // check if we already had file associated with this submission
-        if (!fileUploadSubmission.getFilePath().isEmpty()) {
-            fileUploadSubmission.onDelete();
-        }
+        fileUploadSubmission.onDelete();
 
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
 
