@@ -115,25 +115,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     ngOnDestroy() {
         if (this.canDeactivate() && this.textExercise.id) {
-            if (!this.submission) {
-                this.submission = new TextSubmission();
+            let newSubmission = new TextSubmission();
+            if (this.submission) {
+                newSubmission = this.submission;
             }
-            this.submission.submitted = false;
-            this.submission.text = this.answer;
+            newSubmission.submitted = false;
+            newSubmission.text = this.answer;
             if (this.submission.id) {
-                this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(response => {
-                    if (response) {
-                        this.submission = response.body!;
-                        this.result = this.submission.result;
-                    }
-                });
+                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe();
             } else {
-                this.textSubmissionService.create(this.submission, this.textExercise.id).subscribe(response => {
-                    if (response) {
-                        this.submission = response.body!;
-                        this.result = this.submission.result;
-                    }
-                });
+                this.textSubmissionService.create(newSubmission, this.textExercise.id).subscribe();
             }
         }
     }
