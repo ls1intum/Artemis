@@ -17,6 +17,7 @@ import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { filter } from 'rxjs/operators';
+import { ButtonType } from 'app/shared/components';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -29,7 +30,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     fileUploadExercise: FileUploadExercise;
     participation: StudentParticipation;
     result: Result;
-    isActive: boolean;
     submissionFile: File | null;
 
     ComplaintType = ComplaintType;
@@ -47,6 +47,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     isAfterAssessmentDueDate: boolean;
 
     acceptedFileExtensions: string;
+
+    isLate: boolean; // indicates if the submission is late
+
+    readonly ButtonType = ButtonType;
 
     private submissionConfirmationText: string;
 
@@ -83,6 +87,14 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission = submission;
                 this.result = submission.result;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+
+                // checks if the student started the exercise after the due date
+                this.isLate =
+                    this.fileUploadExercise &&
+                    !!this.fileUploadExercise.dueDate &&
+                    !!this.participation.initializationDate &&
+                    moment(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
+
                 this.acceptedFileExtensions = this.fileUploadExercise.filePattern
                     .split(',')
                     .map(extension => `.${extension}`)
@@ -113,8 +125,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                             }
                         });
                 }
-                this.isActive =
-                    this.fileUploadExercise.dueDate === undefined || this.fileUploadExercise.dueDate === null || new Date() <= moment(this.fileUploadExercise.dueDate).toDate();
             },
             (error: HttpErrorResponse) => this.onError(error),
         );
@@ -215,5 +225,12 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      */
     canDeactivate(): boolean {
         return !(this.submission && !this.submission.submitted && this.submissionFile);
+    }
+
+    /**
+     * The exercise is still active if it's due date hasn't passed yet.
+     */
+    get isActive() {
+        return this.fileUploadExercise && (!this.fileUploadExercise.dueDate || moment(this.fileUploadExercise.dueDate).isSameOrAfter(moment()));
     }
 }

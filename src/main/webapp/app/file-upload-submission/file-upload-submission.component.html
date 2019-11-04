@@ -10,10 +10,14 @@
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
-            <button class="btn btn-success" (click)="submitExercise()" [disabled]="!submission || !submissionFile" *ngIf="!submission?.submitted && isActive">Submit</button>
-            <button class="btn btn-warning" (click)="submitExercise()" [disabled]="!submission || !submissionFile" *ngIf="!submission?.submitted && !isActive">
-                Submit (deadline missed)
-            </button>
+            <jhi-button
+                [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
+                [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+                (onClick)="submitExercise()"
+                [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+                [tooltip]="!isLate ? (isActive ? 'entity.action.submitTooltip' : 'entity.action.deadlineMissedTooltip') : 'entity.action.submitDeadlineMissedTooltip'"
+            >
+            </jhi-button>
         </div>
     </div>
 </div>
@@ -36,7 +40,7 @@
     </div>
 
     <div class="row">
-        <div class="col-12 col-md-6" *ngIf="!submission?.submitted && fileUploadExercise">
+        <div class="col-12 col-md-6" *ngIf="(isActive || isLate) && !result && fileUploadExercise">
             <div class="form-group">
                 <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.file">File</label>
                 <div class="input-group background-file">
@@ -47,7 +51,7 @@
                             type="file"
                             [accept]="acceptedFileExtensions"
                             class="custom-file-input"
-                            [disabled]="submission && submission.submitted"
+                            [disabled]="(!isActive && !isLate) || !submission || !!result"
                             (change)="setFileSubmissionForExercise($event)"
                         />
                         <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{
@@ -65,7 +69,7 @@
         </div>
     </div>
 
-    <div *ngIf="submission?.submitted && submittedFileName && submission?.filePath" class="card-text">
+    <div *ngIf="!isActive && !isLate && submittedFileName && submission?.filePath" class="card-text">
         <h5>
             {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
         </h5>
