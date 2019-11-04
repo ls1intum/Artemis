@@ -491,15 +491,6 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return programmingSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
-    }
-
-    /**
      * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
      *
      * @param exerciseId - the id of the exercise we are looking for

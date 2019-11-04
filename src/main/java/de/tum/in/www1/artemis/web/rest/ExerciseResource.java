@@ -70,10 +70,13 @@ public class ExerciseResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
             TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService, ProgrammingSubmissionService programmingSubmissionService) {
+            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -87,6 +90,7 @@ public class ExerciseResource {
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -186,7 +190,7 @@ public class ExerciseResource {
         // TODO: This could just be one repository method as the exercise id is provided anyway.
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
                 + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + programmingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + programmingExerciseService.countSubmissionsToAssessByExerciseId(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
