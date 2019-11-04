@@ -120,12 +120,21 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             }
             this.submission.submitted = false;
             this.submission.text = this.answer;
-            this.textSubmissionService[this.submission.id ? 'update' : 'create'](this.submission, this.textExercise.id).subscribe(response => {
-                if (response) {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
-                }
-            });
+            if (this.submission.id) {
+                this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(response => {
+                    if (response) {
+                        this.submission = response.body!;
+                        this.result = this.submission.result;
+                    }
+                });
+            } else {
+                this.textSubmissionService.create(this.submission, this.textExercise.id).subscribe(response => {
+                    if (response) {
+                        this.submission = response.body!;
+                        this.result = this.submission.result;
+                    }
+                });
+            }
         }
     }
 
