@@ -23,20 +23,24 @@ module: {
             options: {
                 minimize: true,
                 caseSensitive: true,
-                removeAttributeQuotes:false,
-                minifyJS:false,
-                minifyCSS:false
+                removeAttributeQuotes: false,
+                minifyJS: false,
+                minifyCSS: false
             },
             exclude: '/src/main/webapp/index.html'
         },
         {
-            test: /\.(jpe?g|png|gif|svg|woff2?|ttf|eot)$/i,
+            test: /\.(jpe?g|png|gif|svg)$/i,
             loader: 'file-loader',
             options: {
                 digest: 'hex',
                 hash: 'sha512',
                 name: 'content/[hash].[ext]'
             }
+        },
+        {
+            test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+            use: ['url-loader?limit=100000']
         },
         {
             test: /manifest.webapp$/,
