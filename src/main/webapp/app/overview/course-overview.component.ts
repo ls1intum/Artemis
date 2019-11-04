@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { CachingStrategy } from 'app/shared';
 import { CourseScoreCalculationService } from 'app/overview';
-import { isIntelliJ } from 'app/intellij/intellij';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -22,7 +21,6 @@ export class CourseOverviewComponent implements OnInit {
     public courseDescription: string;
     public enableShowMore: boolean;
     public longTextShown: boolean;
-    isIntelliJ = isIntelliJ;
 
     constructor(
         private courseService: CourseService,
