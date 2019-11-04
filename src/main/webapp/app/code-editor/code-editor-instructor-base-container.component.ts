@@ -60,7 +60,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     // State variables
     loadingState = LOADING_STATE.CLEAR;
 
-    constructor(
+    protected constructor(
         protected router: Router,
         private exerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
@@ -158,16 +158,20 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                 filter(domain => !!domain),
                 map(domain => domain as DomainChange),
                 tap(([domainType, domainValue]) => {
-                    this.initializeProperties();
-                    if (domainType === DomainType.PARTICIPATION) {
-                        this.setSelectedParticipation(domainValue.id);
-                    } else {
-                        this.selectedParticipation = null;
-                        this.selectedRepository = REPOSITORY.TEST;
-                    }
+                    this.applyDomainChange(domainType, domainValue);
                 }),
             )
             .subscribe();
+    }
+
+    protected applyDomainChange(domainType: any, domainValue: any) {
+        this.initializeProperties();
+        if (domainType === DomainType.PARTICIPATION) {
+            this.setSelectedParticipation(domainValue.id);
+        } else {
+            this.selectedParticipation = null;
+            this.selectedRepository = REPOSITORY.TEST;
+        }
     }
 
     /**

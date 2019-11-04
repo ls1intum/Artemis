@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { WindowRef } from 'app/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { REPOSITORY } from 'app/code-editor/code-editor-instructor-base-container.component';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -99,5 +99,17 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
 
     editExercise(exerciseJson: string): void {
         this.window.nativeWindow.intellij.editExercise(exerciseJson);
+    }
+
+    buildAndTestInstructorRepository(repository: REPOSITORY): void {
+        this.window.nativeWindow.intellij.buildAndTestInstructorRepository(repository);
+    }
+
+    selectInstructorRepository(repository: REPOSITORY): void {
+        this.window.nativeWindow.intellij.selectInstructorRepository(repository);
+    }
+
+    submitInstructorRepository(): void {
+        this.window.nativeWindow.intellij.submitInstructorRepository();
     }
 }

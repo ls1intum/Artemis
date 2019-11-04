@@ -7,6 +7,7 @@ import { CodeEditorFileService, CodeEditorSessionService, DomainService } from '
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/code-editor/code-editor-instructor-base-container.component';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-ide',
@@ -14,6 +15,7 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/code-editor/code
 })
 export class CodeEditorInstructorIdeComponent extends CodeEditorInstructorBaseContainerComponent {
     constructor(
+        private javaBridge: JavaBridgeService,
         router: Router,
         exerciseService: ProgrammingExerciseService,
         courseExerciseService: CourseExerciseService,
@@ -41,6 +43,11 @@ export class CodeEditorInstructorIdeComponent extends CodeEditorInstructorBaseCo
         );
     }
 
+    protected applyDomainChange(domainType: any, domainValue: any) {
+        super.applyDomainChange(domainType, domainValue);
+        this.javaBridge.selectInstructorRepository(this.selectedRepository);
+    }
+
     selectSolutionParticipation() {
         this.router.navigateByUrl(`/code-editor/ide/${this.exercise.id}/admin/${this.exercise.solutionParticipation.id}`);
     }
@@ -55,5 +62,9 @@ export class CodeEditorInstructorIdeComponent extends CodeEditorInstructorBaseCo
 
     selectTestRepository() {
         this.router.navigateByUrl(`/code-editor/ide/${this.exercise.id}/admin/test`);
+    }
+
+    submit(): void {
+        this.javaBridge.submitInstructorRepository();
     }
 }
