@@ -945,6 +945,8 @@ public class ProgrammingExerciseService {
      * Remove the write permissions for all students for their programming exercise repository.
      * They will still be able to read the code, but won't be able to change it.
      *
+     * Requests are executed in batches so that the VCS is not overloaded with requests.
+     *
      * @param programmingExerciseId     ProgrammingExercise id.
      * @return a list of participations for which the locking operation has failed. If everything went as expected, this should be an empty list.
      * @throws EntityNotFoundException  if the programming exercise can't be found.
@@ -954,7 +956,19 @@ public class ProgrammingExerciseService {
 
         ProgrammingExercise programmingExercise = findByIdWithEagerStudentParticipations(programmingExerciseId);
         List<ProgrammingExerciseStudentParticipation> failedLockOperations = new LinkedList<>();
+
+        int index = 0;
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
+            // Execute requests in batches instead all at once.
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before locking the student repositories for exercise " + programmingExerciseId, ex);
+                }
+            }
+
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             try {
                 versionControlService.get().setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
@@ -965,6 +979,7 @@ public class ProgrammingExerciseService {
                         + studentParticipation.getId());
                 failedLockOperations.add(programmingExerciseStudentParticipation);
             }
+            index++;
         }
         return failedLockOperations;
     }

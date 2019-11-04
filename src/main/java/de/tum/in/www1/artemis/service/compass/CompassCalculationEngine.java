@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
+import de.tum.in.www1.artemis.service.compass.assessment.SimilaritySetAssessment;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
@@ -100,8 +100,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); // TODO MJ return Optional ad throw Exception if no UMLElement found?
 
-            assessmentIndex.getAssessment(currentElement.getSimilarityID()).ifPresent(assessment -> {
-                List<Feedback> feedbacks = assessment.getFeedbacks(currentElement.getContext());
+            assessmentIndex.getAssessmentForSimilaritySet(currentElement.getSimilarityID()).ifPresent(assessment -> {
+                List<Feedback> feedbacks = assessment.getFeedbackList();
                 List<Feedback> feedbacksInConflict = feedbacks.stream().filter(feedback -> !scoresAreConsideredEqual(feedback.getCredits(), currentFeedback.getCredits()))
                         .collect(Collectors.toList());
 
@@ -399,19 +399,20 @@ public class CompassCalculationEngine implements CalculationEngine {
             return 0.0;
         }
 
-        Optional<Assessment> optionalAssessment = assessmentIndex.getAssessment(element.getSimilarityID());
-        return optionalAssessment.map(assessment -> assessment.getScore(element.getContext()).getConfidence()).orElse(0.0);
+        Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(element.getSimilarityID());
+        return optionalAssessment.map(assessment -> assessment.getScore().getConfidence()).orElse(0.0);
     }
 
     /**
-     * Adds the given feedback elements of a manual assessment to the automatic assessment controller where it can be used for automatic assessments.
+     * Tells the automatic assessment controller to add the given feedback elements of a manual assessment to the assessment of the corresponding similarity sets where it can be
+     * used for automatic assessments.
      *
      * @param modelingAssessment the feedback of a manual assessment
      * @param model              the corresponding model
      */
     private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLDiagram model) {
         Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(modelingAssessment);
-        automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, feedbackMapping, model);
+        automaticAssessmentController.addFeedbackToSimilaritySet(assessmentIndex, feedbackMapping, model);
     }
 
     /**
@@ -432,19 +433,15 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     private boolean hasConflict(int elementId) {
-        Optional<Assessment> assessment = this.assessmentIndex.getAssessment(elementId);
-        if (assessment.isPresent()) {
-            for (List<Feedback> feedbacks : assessment.get().getContextFeedbackList().values()) {
-                double uniqueScore = -1;
-                for (Feedback feedback : feedbacks) {
-                    if (uniqueScore != -1 && uniqueScore != feedback.getCredits()) {
-                        return true;
-                    }
-                    uniqueScore = feedback.getCredits();
-                }
-            }
+        Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(elementId);
+
+        if (optionalAssessment.isEmpty() || optionalAssessment.get().getFeedbackList() == null || optionalAssessment.get().getFeedbackList().isEmpty()) {
+            return false;
         }
-        return false;
+
+        List<Feedback> feedbackList = optionalAssessment.get().getFeedbackList();
+        // if not all feedback entries have the same score as the first feedback, i.e. not all scores are the same, there is a conflict in the assessment
+        return !feedbackList.stream().allMatch(feedback -> feedback.getCredits().equals(feedbackList.get(0).getCredits()));
     }
 
     private boolean scoresAreConsideredEqual(double score1, double score2) {
@@ -598,24 +595,20 @@ public class CompassCalculationEngine implements CalculationEngine {
 
         // Note, that these two value refer to all similarity sets that have an assessment, i.e. it is not the total number as it excludes the sets without assessments. This might
         // distort the analysis values below.
-        long numberOfSimilaritySets = 0;
+        long numberOfSimilaritySets = assessmentIndex.getAssessmentMap().size();
         long numberOfElementsInSimilaritySets = 0;
 
         long numberOfSimilaritySetsPositiveScore = 0;
         long numberOfSimilaritySetsPositiveScoreRegardingConfidence = 0;
 
-        for (Assessment assessment : assessmentIndex.getAssessmentsMap().values()) {
-            numberOfSimilaritySets += assessment.getContextFeedbackList().size();
-            for (List<Feedback> feedbackList : assessment.getContextFeedbackList().values()) {
-                numberOfElementsInSimilaritySets += feedbackList.size();
-            }
+        for (SimilaritySetAssessment similaritySetAssessment : assessmentIndex.getAssessmentMap().values()) {
+            numberOfElementsInSimilaritySets += similaritySetAssessment.getFeedbackList().size();
 
-            for (Score score : assessment.getContextScoreList().values()) {
-                if (score.getPoints() > 0) {
-                    numberOfSimilaritySetsPositiveScore += 1;
-                    if (score.getConfidence() >= 0.8) {
-                        numberOfSimilaritySetsPositiveScoreRegardingConfidence += 1;
-                    }
+            Score score = similaritySetAssessment.getScore();
+            if (score.getPoints() > 0) {
+                numberOfSimilaritySetsPositiveScore += 1;
+                if (score.getConfidence() >= 0.8) {
+                    numberOfSimilaritySetsPositiveScoreRegardingConfidence += 1;
                 }
             }
         }

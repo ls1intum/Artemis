@@ -13,6 +13,12 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 
 public class ModelFactory {
 
+    public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
+        return programmingExercise;
+    }
+
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
         ModelingExercise modelingExercise = new ModelingExercise();
@@ -195,6 +201,16 @@ public class ModelFactory {
 
     public static StudentParticipation generateStudentParticipation(InitializationState initializationState, Exercise exercise, User user) {
         StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setInitializationState(initializationState);
+        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setExercise(exercise);
+        studentParticipation.setStudent(user);
+        return studentParticipation;
+    }
+
+    public static ProgrammingExerciseStudentParticipation generateProgrammingExerciseStudentParticipation(InitializationState initializationState, ProgrammingExercise exercise,
+            User user) {
+        ProgrammingExerciseStudentParticipation studentParticipation = new ProgrammingExerciseStudentParticipation();
         studentParticipation.setInitializationState(initializationState);
         studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
         studentParticipation.setExercise(exercise);
