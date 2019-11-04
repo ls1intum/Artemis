@@ -13,18 +13,31 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+
 class UMLMethodTest {
 
     private UMLMethod method;
 
     @Mock
+    UMLClass parentClass;
+
+    @Mock
     UMLMethod referenceMethod;
+
+    @Mock
+    UMLClass referenceParentClass;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
 
         method = new UMLMethod("myMethod(arg1, arg2): void", "myMethod", "void", List.of("arg1", "arg2"), "methodId");
+        method.setParentClass(parentClass);
+
+        when(referenceMethod.getParentClass()).thenReturn(referenceParentClass);
+        when(parentClass.getSimilarityID()).thenReturn(123);
+        when(referenceParentClass.getSimilarityID()).thenReturn(123);
     }
 
     @Test
@@ -50,6 +63,44 @@ class UMLMethodTest {
         double similarity = method.similarity(referenceMethod);
 
         assertThat(similarity).isEqualTo(1);
+    }
+
+    @Test
+    void similarity_sameMethod_noParentSimilarityId() {
+        when(referenceMethod.getName()).thenReturn("myMethod");
+        when(referenceMethod.getReturnType()).thenReturn("void");
+        when(referenceMethod.getParameters()).thenReturn(List.of("arg1", "arg2"));
+        when(referenceParentClass.getSimilarityID()).thenReturn(-1);
+        when(parentClass.similarity(referenceParentClass)).thenReturn(CompassConfiguration.EQUALITY_THRESHOLD + 0.01);
+
+        double similarity = method.similarity(referenceMethod);
+
+        assertThat(similarity).isEqualTo(1);
+    }
+
+    @Test
+    void similarity_sameMethod_differentParent() {
+        when(referenceMethod.getName()).thenReturn("myMethod");
+        when(referenceMethod.getReturnType()).thenReturn("void");
+        when(referenceMethod.getParameters()).thenReturn(List.of("arg1", "arg2"));
+        when(referenceParentClass.getSimilarityID()).thenReturn(321);
+
+        double similarity = method.similarity(referenceMethod);
+
+        assertThat(similarity).isEqualTo(0);
+    }
+
+    @Test
+    void similarity_sameMethod_differentParent_noParentSimilarityId() {
+        when(referenceMethod.getName()).thenReturn("myMethod");
+        when(referenceMethod.getReturnType()).thenReturn("void");
+        when(referenceMethod.getParameters()).thenReturn(List.of("arg1", "arg2"));
+        when(referenceParentClass.getSimilarityID()).thenReturn(-1);
+        when(parentClass.similarity(referenceParentClass)).thenReturn(CompassConfiguration.EQUALITY_THRESHOLD - 0.01);
+
+        double similarity = method.similarity(referenceMethod);
+
+        assertThat(similarity).isEqualTo(0);
     }
 
     @Test

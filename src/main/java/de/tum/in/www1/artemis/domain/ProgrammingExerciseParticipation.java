@@ -2,25 +2,21 @@ package de.tum.in.www1.artemis.domain;
 
 import java.net.URL;
 
-public interface ProgrammingExerciseParticipation {
+public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 
-    public Long getId();
+    String getRepositoryUrl();
 
-    public String getRepositoryUrl();
+    void setRepositoryUrl(String repositoryUrl);
 
-    public void setRepositoryUrl(String repositoryUrl);
+    String getBuildPlanId();
 
-    public String getBuildPlanId();
+    void setBuildPlanId(String buildPlanId);
 
-    public void setBuildPlanId(String buildPlanId);
+    URL getRepositoryUrlAsUrl();
 
-    public URL getRepositoryUrlAsUrl();
+    ProgrammingExercise getProgrammingExercise();
 
-    public ProgrammingExercise getProgrammingExercise();
+    void setProgrammingExercise(ProgrammingExercise programmingExercise);
 
-    public void setProgrammingExercise(ProgrammingExercise programmingExercise);
-
-    public void addSubmissions(ProgrammingSubmission submission);
-
-    public void addResult(Result result);
+    void addSubmissions(ProgrammingSubmission submission);
 }

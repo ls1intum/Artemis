@@ -7,6 +7,7 @@ import { Language } from 'app/entities/tutor-group';
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
     TIMEOUT = 'TIMEOUT',
+    INSTRUCTOR = 'INSTRUCTOR',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Submission.java
