@@ -42,16 +42,19 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      */
     private injectTasks = (tasks: TaskArray) => {
         tasks.forEach(({ taskName, tests, hints }, index: number) => {
-            const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
-            componentRef.instance.exerciseHints = this.exerciseHints.filter(({ id }) => hints.includes(id.toString(10)));
-            componentRef.instance.taskName = taskName;
-            componentRef.instance.latestResult = this.latestResult;
-            componentRef.instance.tests = tests;
+            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${index}`);
 
-            this.appRef.attachView(componentRef.hostView);
-            const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-            const taskHtmlContainer = document.getElementById(`task-${index}`);
-            if (taskHtmlContainer) {
+            // The same task could appear multiple times in the instructions (edge case).
+            for (let i = 0; i < taskHtmlContainers.length; i++) {
+                const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
+                componentRef.instance.exerciseHints = this.exerciseHints.filter(({ id }) => hints.includes(id.toString(10)));
+                componentRef.instance.taskName = taskName;
+                componentRef.instance.latestResult = this.latestResult;
+                componentRef.instance.tests = tests;
+
+                this.appRef.attachView(componentRef.hostView);
+                const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+                const taskHtmlContainer = taskHtmlContainers[i];
                 taskHtmlContainer.innerHTML = '';
                 taskHtmlContainer.append(domElem);
             }
@@ -68,7 +71,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 // E.g. Implement BubbleSort, testBubbleSort
                 const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
                 // Without class="d-flex" the injected components height would be 0.
-                const taskContainer = `<div id="task-${idPlaceholder}" class="d-flex"></div>`;
+                const taskContainer = `<div class="pe-task-${idPlaceholder} d-flex"></div>`;
                 const tasks = text.match(taskRegex) || [];
                 const testsForTask: TaskArray = tasks
                     .map(task => {
