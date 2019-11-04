@@ -19,7 +19,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
-    isOpenedInIntelliJ = false;
+    ideState: IntelliJState;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -37,7 +37,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id));
+        this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.ideState = ideState));
     }
 
     /**

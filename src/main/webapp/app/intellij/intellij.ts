@@ -1,9 +1,13 @@
 export interface IntelliJState {
     opened: number;
+    cloning: boolean;
+    building: boolean;
 }
 
 export interface JavaDowncallBridge {
-    onExerciseOpened(exerciseId: number): void;
+    onExerciseOpened(opened: number): void;
+    isCloning(cloning: boolean): void;
+    isBuilding(building: boolean): void;
 }
 
 export interface JavaUpcallBridge {

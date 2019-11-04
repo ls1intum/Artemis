@@ -27,7 +27,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
 
     static initBridge(bridge: JavaBridgeService, win: WindowRef) {
         win.nativeWindow.javaDowncallBridge = bridge;
-        bridge.intellijState = { opened: -1 };
+        bridge.intellijState = { opened: -1, cloning: false, building: false };
         bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
     }
 
@@ -83,11 +83,10 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     /**
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
-     * @param exerciseId The ID of the exercise that was opened by the user.
+     * @param opened The ID of the exercise that was opened by the user.
      */
-    onExerciseOpened(exerciseId: number): void {
-        this.intellijState.opened = exerciseId;
-        this.intellijStateSubject.next(this.intellijState);
+    onExerciseOpened(opened: number): void {
+        this.setIDEStateParameter({ opened });
     }
 
     /**
@@ -122,5 +121,28 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      */
     onTestResult(success: boolean, message: string) {
         this.window.nativeWindow.intellij.onTestResult(success, message);
+    }
+
+    /**
+     * Notifies Artemis if the IDE is currently building (and testing) the checked out exercise
+     *
+     * @param building True, a building process is currently open, false otherwise
+     */
+    isBuilding(building: boolean): void {
+        this.setIDEStateParameter({ building });
+    }
+
+    /**
+     * Notifies Artemis if the IDE is in the process of importing (i.e. cloning) an exercise)
+     *
+     * @param cloning True, if there is a open clone process, false otherwise
+     */
+    isCloning(cloning: boolean): void {
+        this.setIDEStateParameter({ cloning });
+    }
+
+    private setIDEStateParameter(patch: Partial<IntelliJState>) {
+        Object.assign(this.intellijState, patch);
+        this.intellijStateSubject.next(this.intellijState);
     }
 }
