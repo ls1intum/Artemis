@@ -578,7 +578,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/students/:studentIds : sends all submissions from studentlist as zip
+     * POST /programming-exercises/:exerciseId/export-repos-by-student-logins/:studentIds : sends all submissions from studentlist as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param studentIds the studentIds seperated via semicolon to get their submissions
@@ -586,7 +586,7 @@ public class ProgrammingExerciseResource {
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */
-    @PostMapping(value = "/exercises/{exerciseId}/students/{studentIds}")
+    @PostMapping(value = "/programming-exercises/{exerciseId}/export-repos-by-student-logins/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable Long exerciseId, @PathVariable String studentIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
@@ -623,7 +623,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+     * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param participationIds the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
@@ -631,7 +631,7 @@ public class ProgrammingExerciseResource {
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */
-    @PostMapping(value = "/exercises/{exerciseId}/participations/{participationIds}")
+    @PostMapping(value = "/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable Long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
