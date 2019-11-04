@@ -20,8 +20,15 @@ export class ProgrammingAssessmentRepoExportService {
 
     constructor(private http: HttpClient) {}
 
-    exportRepos(exerciseId: number, students: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        return this.http.post(`${this.resourceUrl}/${exerciseId}/participations/${students}`, repositoryExportOptions, {
+    exportReposByStudentLogins(exerciseId: number, students: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/students/${students}`, repositoryExportOptions, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    exportReposByParticipations(exerciseId: number, participationIds: number[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/participations/${participationIds}`, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });
