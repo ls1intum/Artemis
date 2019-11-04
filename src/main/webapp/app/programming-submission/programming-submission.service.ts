@@ -8,7 +8,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation/partic
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { createRequestOption } from 'app/shared';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission';
+import { SubmissionType } from 'app/entities/submission';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -38,7 +38,6 @@ export interface IProgrammingSubmissionService {
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     getResultEtaInMs: () => Observable<number>;
     triggerBuild: (participationId: number) => Observable<Object>;
-    triggerInstructorBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
 }
@@ -357,12 +356,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.resultEtaSubject.asObservable().pipe(distinctUntilChanged());
     };
 
-    public triggerBuild(participationId: number) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-build', {});
+    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + `/trigger-build?submissionType=${submissionType}`, {});
     }
 
-    public triggerInstructorBuild(participationId: number) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-instructor-build', {});
+    public triggerFailedBuild(participationId: number) {
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { observe: 'response' });
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {
@@ -424,7 +423,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             // Now update the exercise build state object and start the result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { [participationId]: submissionStateObj, ...(this.exerciseBuildState[exerciseId] || {}) } };
+                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj } };
                 this.subscribeForNewResult(participationId, exerciseId);
             }),
         );

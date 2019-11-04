@@ -10,6 +10,7 @@ import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { isMoment } from 'moment';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -75,7 +76,15 @@ export class ResultService implements IResultService {
 
     public convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
-            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null,
+            completionDate:
+                // Result completionDate is a moment object -> toJSON.
+                result.completionDate != null && isMoment(result.completionDate)
+                    ? result.completionDate.toJSON()
+                    : // Result completionDate would be a valid date -> keep string.
+                    result.completionDate && moment(result.completionDate).isValid()
+                    ? result.completionDate
+                    : // No valid date -> remove date.
+                      null,
         });
         return copy;
     }

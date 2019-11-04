@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
-import { ActivatedRoute } from '@angular/router';
-import { Location } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
@@ -45,7 +44,7 @@ export class TutorCourseDashboardComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
-        private location: Location,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -115,7 +114,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     }
 
     back() {
-        this.location.back();
+        this.router.navigate(['course']);
     }
 
     callback() {}

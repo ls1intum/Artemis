@@ -183,7 +183,7 @@ public class ParticipationResource {
 
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
-            participation = participationService.resumeExercise(exercise, participation);
+            participation = participationService.resumeExercise(participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
@@ -193,7 +193,9 @@ public class ParticipationResource {
         }
         log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
-        participation.getExercise().filterSensitiveInformation();
+        if (participation != null && participation.getExercise() != null) {
+            participation.getExercise().filterSensitiveInformation();
+        }
         return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
                 "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }

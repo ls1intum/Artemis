@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
         @JsonSubTypes.Type(value = TemplateProgrammingExerciseParticipation.class, name = "template"),
         @JsonSubTypes.Type(value = SolutionProgrammingExerciseParticipation.class, name = "solution"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Participation implements Serializable {
+public abstract class Participation implements Serializable, ParticipationInterface {
 
     private static final long serialVersionUID = 1L;
 
@@ -162,10 +162,9 @@ public abstract class Participation implements Serializable {
         return this;
     }
 
-    public Participation addSubmissions(Submission submission) {
+    public void addSubmissions(Submission submission) {
         this.submissions.add(submission);
         submission.setParticipation(this);
-        return this;
     }
 
     public Participation removeSubmissions(Submission submission) {
