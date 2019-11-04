@@ -230,7 +230,7 @@
                                     <jhi-programming-assessment-repo-export
                                         [exerciseId]="exercise.id"
                                         [singleStudentMode]="true"
-                                        [studentIdList]="submission.participation.student.login"
+                                        [participationIdList]="submission.participation.id"
                                     ></jhi-programming-assessment-repo-export>
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="submission.participation.id"
@@ -259,7 +259,7 @@
                                     <jhi-programming-assessment-repo-export
                                         [exerciseId]="exercise.id"
                                         [singleStudentMode]="true"
-                                        [studentIdList]="unassessedSubmission.participation.student.login"
+                                        [participationIdList]="unassessedSubmission.participation.id"
                                     ></jhi-programming-assessment-repo-export>
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="unassessedSubmission.participation.id"
