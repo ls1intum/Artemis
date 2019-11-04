@@ -201,10 +201,17 @@ public interface ContinuousIntegrationService {
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
      *
      * @param projectKey The key of the project to grant permissions to
-     * @param role The role of the users that should have the permissions
+     * @param groups The role of the users that should have the permissions
      * @param permissions The permissions to grant the users
      */
-    void giveProjectPermissions(String projectKey, CIRole role, List<CIPermission> permissions);
+    void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions);
+
+    /**
+     * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
+     * This method removes all of these unnecessary and potentially insecure permissions
+     *
+     */
+    void removeAllDefaultProjectPermissions(String projectKey);
 
     /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out

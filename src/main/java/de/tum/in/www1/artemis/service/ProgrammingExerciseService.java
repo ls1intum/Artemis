@@ -345,6 +345,10 @@ public class ProgrammingExerciseService {
         // solution build plan
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoName, testRepoName);
 
+        // Give appropriate permissions for CI projects
+        continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
+        giveCIProjectPermissions(programmingExercise);
+
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -920,7 +924,7 @@ public class ProgrammingExerciseService {
         // running the plan for the first time
         continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
-        continuousIntegrationService.get().giveProjectPermissions(targetKey, CIRole.LOGGED_IN, List.of(CIPermission.READ));
+        giveCIProjectPermissions(newExercise);
         continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
         continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
@@ -939,6 +943,14 @@ public class ProgrammingExerciseService {
             log.error("Unable to trigger imported build plans", e);
             throw e;
         }
+    }
+
+    private void giveCIProjectPermissions(ProgrammingExercise exercise) {
+        final var instructorGroup = exercise.getCourse().getInstructorGroupName();
+        final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();
+
+        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup), List.of(CIPermission.CREATE, CIPermission.READ));
+        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
     }
 
     /**

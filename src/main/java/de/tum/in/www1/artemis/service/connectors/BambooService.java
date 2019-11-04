@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -347,21 +346,41 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void giveProjectPermissions(String projectKey, CIRole role, List<CIPermission> permissions) {
+    public void removeAllDefaultProjectPermissions(String projectKey) {
         final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
-        final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/roles/" + role.name();
+        // Bamboo always gives read rights
+        final var permissionData = List.of(permissionToBambooPermission(CIPermission.READ));
+        final var entity = new HttpEntity<>(permissionData, headers);
+        final var roles = List.of("ANONYMOUS", "LOGGED_IN");
+
+        roles.forEach(role -> {
+            final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/roles/" + role;
+            final var response = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
+            if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
+                throw new BambooException("Unable to remove default project permissions from exercise " + projectKey + "\n" + response.getBody());
+            }
+        });
+    }
+
+    @Override
+    public void giveProjectPermissions(String projectKey, List<String> groupNames, List<CIPermission> permissions) {
+        final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
         final var entity = new HttpEntity<>(permissionData, headers);
 
-        final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
-        if (response.getStatusCode() != HttpStatus.NO_CONTENT) {
-            throw new BambooException("Unable to give permissions to project " + projectKey + "\n" + response.getBody());
-        }
+        groupNames.forEach(group -> {
+            final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
+            final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+            if (response.getStatusCode() != HttpStatus.NO_CONTENT) {
+                throw new BambooException("Unable to give permissions to project " + projectKey + "\n" + response.getBody());
+            }
+        });
     }
 
     private String permissionToBambooPermission(CIPermission permission) {
         switch (permission) {
             case EDIT: return "WRITE";
+            case CREATE: return "CREATE";
             case READ: return "READ";
             default: throw new IllegalArgumentException("Unable to map Bamboo permission " + permission);
         }
