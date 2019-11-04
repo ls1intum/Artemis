@@ -93,7 +93,7 @@
             </a>
         </div>
 
-        <div class="col-12" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
+        <div class="col-12 mt-4" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.gradingInstructions' | translate }}</h4>
 
             <p [innerHTML]="formattedGradingInstructions"></p>
