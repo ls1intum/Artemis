@@ -86,7 +86,7 @@ class AbstractTest(ABC):
                 except TimeoutError:
                     self._timeout()
                 except Exception as e:
-                    printTester("'{}' had an internal error. {}.\nPlease report this!".format(self.name, str(e)))
+                    self.__markAsFailed("'{}' had an internal error. {}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!".format(self.name, str(e)))
                     print_exc()
                     self._onFailed()
         else:
@@ -95,8 +95,8 @@ class AbstractTest(ABC):
                 self._run()
             except TestFailedError:
                 printTester("'{}' failed.".format(self.name))
-            except Exception:
-                printTester("'{}' had an internal error. Please report this!".format(self.name))
+            except Exception as e:
+                self.__markAsFailed("'{}' had an internal error. {}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!".format(self.name, str(e)))
                 print_exc()
                 self._onFailed()
 
@@ -139,13 +139,20 @@ class AbstractTest(ABC):
         Stores the complete stderr and stdout output from the run.
         """
 
+        self.__markAsFailed(msg)
+        self._onFailed()
+        raise TestFailedError("{} failed.".format(self.name))
+
+    def __markAsFailed(self, msg: str):
+        """
+        Marks the current test case as failed and loads all stdout and stderr.
+        """
+
         self.case.message = msg
         self.case.result = Result.FAILURE
         self.case.stdout = self._loadFullStdout()
         self.case.stderr = self._loadFullStderr()
-        self._onFailed()
         printTester("Test {} failed with: {}".format(self.name, msg))
-        raise TestFailedError("{} failed.".format(self.name))
 
     def _timeout(self, msg: str = ""):
         """
@@ -154,14 +161,10 @@ class AbstractTest(ABC):
         Should be called once a test timeout occurred.
         """
 
-        self.case.message = msg
-        self.case.result = Result.FAILURE
-        self.case.stdout = self._loadFullStdout()
-        self.case.stderr = self._loadFullStderr()
         if msg:
-            printTester("'{}' triggered a timeout with message: {}".format(self.name, msg))
+            self.__markAsFailed("timeout ({})".format(msg))
         else:
-            printTester("'{}' triggered a timeout.".format(self.name))
+            self.__markAsFailed("timeout")
 
     def _loadFullStdout(self):
         """
@@ -219,12 +222,12 @@ class AbstractTest(ABC):
 
         return path.join(self._getOutputPath(), "stderr.txt")
 
-    def _createPWrap(self, cmd: List[str]):
+    def _createPWrap(self, cmd: List[str], cwd:Optional[str] = None):
         """
         Crates a new PWrap instance from the given command.
         """
 
-        return PWrap(cmd, self._getStdoutFilePath(), self._getStderrFilePath())
+        return PWrap(cmd, self._getStdoutFilePath(), self._getStderrFilePath(), cwd=cwd)
 
     def _startPWrap(self, pWrap: PWrap):
         """
@@ -234,9 +237,15 @@ class AbstractTest(ABC):
 
         try:
             pWrap.start()
-        except FileNotFoundError as e:
-            printTester(str(e))
+        except FileNotFoundError as fe:
+            printTester(str(fe))
             self._failWith("File not found for execution. Did compiling fail?")
+        except NotADirectoryError as de:
+            printTester(str(de))
+            self._failWith("Directory '{}' does not exist.".format(pWrap.cwd))
+        except PermissionError as pe:
+            printTester(str(pe))
+            self._failWith("Missing file execution permission. Make sure it has execute rights (chmod +x <FILE_NAME>).")
 
     @abstractmethod
     def _run(self):
