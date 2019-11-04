@@ -25,6 +25,12 @@ export class ProgrammingAssessmentManualResultService {
         // TODO: This is a problem with the client side modeling of the participation: It is possible that a participation is sent from the server that does not have a result array.
         // @ts-ignore
         copy.participation!.results = undefined; // This needs to be removed to avoid a circular serialization issue.
+        // @ts-ignore
+        copy.participation!.submissions = undefined; // This needs to be removed to avoid a circular serialization issue.
+        if (copy.submission && copy.submission.result) {
+            // @ts-ignore
+            copy.submission.result.submission = undefined; // This needs to be removed to avoid a circular serialization issue.
+        }
         return this.http
             .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
