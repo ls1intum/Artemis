@@ -17,7 +17,6 @@ class TestCase:
     time: timedelta = timedelta()
     result: Result = Result.SUCCESS
     message: str = ""
-    messageInner: str = ""
 
     def __init__(self, name: str):
         self.name = name
@@ -40,7 +39,7 @@ class TestCase:
             stderr.text = self.stderr
 
     def genErrFailureMessage(self):
-        msg: str = self.messageInner
+        msg: str = self.message
 
         msg += "\n======================stdout======================\n"
         if self.stdout:

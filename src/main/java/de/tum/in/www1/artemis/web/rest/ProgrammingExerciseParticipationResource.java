@@ -121,9 +121,6 @@ public class ProgrammingExerciseParticipationResource {
         catch (EntityNotFoundException | IllegalArgumentException ex) {
             return notFound();
         }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
         // Remove participation, is not needed in the response.
         submissionOpt.ifPresent(submission -> submission.setParticipation(null));
         return ResponseEntity.ok(submissionOpt.orElse(null));
