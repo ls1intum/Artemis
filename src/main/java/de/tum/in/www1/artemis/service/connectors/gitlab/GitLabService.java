@@ -170,7 +170,7 @@ public class GitLabService implements VersionControlService {
         final var foundGroups = executeAndExpect(errorString, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         for (final var group : foundGroups) {
-            if (foundGroups.get("path").asText().equals(path))
+            if (group.get("path").asText().equals(path))
                 return Optional.of(foundGroups.get("id").asLong());
         }
 
@@ -196,7 +196,6 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
-
     }
 
     @Override
@@ -283,7 +282,7 @@ public class GitLabService implements VersionControlService {
     private enum Endpoints {
         ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
         PROTECT_BRANCH("projects", "<projectId>", "protected_branches"), GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"),
-        COMMITS("projects", "<projectId>", "repository", "commits"), GROUPS("groups");
+        COMMITS("projects", "<projectId>", "repository", "commits"), GROUPS("groups"), NAMESPACES("namespaces", "<groupId>");
 
         private List<String> pathSegments;
 
