@@ -56,7 +56,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
-    unassessedSubmission: Submission;
+    unassessedSubmission: Submission | null;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -288,6 +288,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
+                    this.unassessedSubmission = null;
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
