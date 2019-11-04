@@ -1,30 +1,28 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseScoresPopupService } from '../../scores/exercise-scores-popup.service';
 import { Result } from '../../entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
 import { Feedback, FeedbackType } from '../../entities/feedback';
-import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
-
-import { Subscription } from 'rxjs/Subscription';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation';
 import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
+import { SCORE_PATTERN } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
     templateUrl: './programming-assessment-manual-result-dialog.component.html',
 })
 export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
+    SCORE_PATTERN = SCORE_PATTERN;
     @Input() participationId: number;
+    @Input() result: Result;
     participation: StudentParticipation;
-    result: Result;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
@@ -37,11 +35,37 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private datePipe: DatePipe,
         private eventManager: JhiEventManager,
         private alertService: JhiAlertService,
+        private resultService: ResultService,
     ) {}
 
     ngOnInit() {
+        // If there already is a manual result, update it instead of creating a new one.
+        if (this.result) {
+            this.initializeForResultUpdate();
+            return;
+        }
+        this.initializeForResultCreation();
+    }
+
+    initializeForResultUpdate() {
+        if (this.result.feedbacks) {
+            this.feedbacks = this.result.feedbacks;
+        } else {
+            this.isLoading = true;
+            this.resultService
+                .getFeedbackDetailsForResult(this.result.id)
+                .pipe(
+                    tap(({ body: feedbacks }) => {
+                        this.feedbacks = feedbacks!;
+                    }),
+                )
+                .subscribe(() => (this.isLoading = false));
+        }
+        this.participation = this.result.participation! as StudentParticipation;
+    }
+
+    initializeForResultCreation() {
         this.isLoading = true;
-        // TODO: Implement result update.
         this.result = this.manualResultService.generateInitialManualResult();
         this.participationService
             .find(this.participationId)
@@ -85,7 +109,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {
-        this.activeModal.close(result);
+        this.activeModal.close(result.body);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }

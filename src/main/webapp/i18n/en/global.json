@@ -203,6 +203,7 @@
             "tutorCourseDashboard": "Tutor Course Dashboard",
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
+            "updateResult": "Update result",
             "cleanupBuildPlan": "Cleanup Build Plan",
             "registerForCourse": "Register For Course",
             "exercise": "Exercises",

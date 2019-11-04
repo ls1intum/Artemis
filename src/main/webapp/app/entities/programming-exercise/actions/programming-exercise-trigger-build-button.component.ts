@@ -5,6 +5,8 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/pr
 import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
+import { SubmissionType } from 'app/entities/submission';
+import { HttpResponse } from '@angular/common/http';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -13,7 +15,6 @@ import { ButtonSize, ButtonType } from 'app/shared/components';
  */
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
     ButtonType = ButtonType;
-    abstract triggerBuild: (event: any) => void;
 
     @Input() exercise: ProgrammingExercise;
     @Input() participation: Participation;
@@ -21,8 +22,10 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     participationIsActive: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
+    isRetrievingBuildStatus: boolean;
     isBuilding: boolean;
-    alwaysShowTriggerButton: boolean;
+    // If true, the trigger button is also displayed for successful submissions.
+    showForSuccessfulSubmissions = false;
 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
@@ -80,5 +83,19 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                 }),
             )
             .subscribe();
+    }
+
+    /**
+     * Trigger a regular build or a failed build, depending on the state of the latest submission.
+     *
+     * @param submissionType that is used for the creation of the submission.
+     */
+    triggerBuild(submissionType: SubmissionType) {
+        this.isRetrievingBuildStatus = true;
+        if (this.participationHasLatestSubmissionWithoutResult) {
+            this.submissionService.triggerFailedBuild(this.participation.id).subscribe(() => (this.isRetrievingBuildStatus = false));
+        } else {
+            this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe(() => (this.isRetrievingBuildStatus = false));
+        }
     }
 }

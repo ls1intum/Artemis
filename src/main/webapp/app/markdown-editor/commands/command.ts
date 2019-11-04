@@ -79,4 +79,20 @@ export abstract class Command {
     }
 
     abstract execute(input?: string): void;
+
+    protected deleteWhiteSpace(text: string) {
+        return text.trim();
+    }
+
+    protected addRefinedText(selectedText: string, textToAdd: string) {
+        if (selectedText.charAt(0) === ' ' && selectedText.charAt(selectedText.length - 1) === ' ') {
+            return this.insertText(' ' + textToAdd + ' ');
+        } else if (selectedText.charAt(0) === ' ') {
+            return this.insertText(' ' + textToAdd);
+        } else if (selectedText.charAt(selectedText.length - 1) === ' ') {
+            return this.insertText(textToAdd + ' ');
+        } else {
+            return this.insertText(textToAdd);
+        }
+    }
 }
