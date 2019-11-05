@@ -46,11 +46,12 @@ public interface VersionControlService {
     /**
      * Get the clone URL used for cloning
      *
+     * @param courseId      The key of the course of the project
      * @param projectKey     The project key
      * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug);
+    VcsRepositoryUrl getCloneRepositoryUrl(long courseId, String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.
@@ -102,7 +103,7 @@ public interface VersionControlService {
      * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
-    String checkIfProjectExists(String projectKey, String projectName);
+    boolean checkIfProjectExists(String projectKey, String projectName);
 
     /**
      * Copies a repository from one project to another one. The project can be the same.

@@ -214,7 +214,7 @@ public class ProgrammingExerciseParticipationService {
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getCourse().getId(), projectKey, solutionRepoName).toString());
         solutionParticipation.setProgrammingExercise(newExercise);
         solutionParticipationRepository.save(solutionParticipation);
     }
@@ -232,7 +232,7 @@ public class ProgrammingExerciseParticipationService {
         final String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getCourse().getId(), projectKey, exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);

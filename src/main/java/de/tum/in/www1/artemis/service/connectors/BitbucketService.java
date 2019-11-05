@@ -182,7 +182,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
+    public VcsRepositoryUrl getCloneRepositoryUrl(long courseId, String projectKey, String repositorySlug) {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
         log.debug("getCloneURL: " + cloneUrl.toString());
 
@@ -468,7 +468,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public String checkIfProjectExists(String projectKey, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
@@ -476,7 +476,7 @@ public class BitbucketService implements VersionControlService {
             // first check that the project key is unique
             response = restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey, HttpMethod.GET, entity, Map.class);
             log.warn("Bitbucket project with key " + projectKey + " already exists");
-            return "The project " + projectKey + " already exists in the VCS Server. Please choose a different short name!";
+            return true;
         }
         catch (HttpClientErrorException e) {
             log.debug("Bitbucket project " + projectKey + " does not exit");
@@ -491,14 +491,14 @@ public class BitbucketService implements VersionControlService {
                         String vcsProjectName = (String) ((Map) vcsProject).get("name");
                         if (vcsProjectName.equalsIgnoreCase(projectName)) {
                             log.warn("Bitbucket project with name" + projectName + " already exists");
-                            return "The project " + projectName + " already exists in the VCS Server. Please choose a different title!";
+                            return true;
                         }
                     }
                 }
-                return null;
+                return false;
             }
         }
-        return "The project already exists in the VCS Server. Please choose a different title and short name!";
+        return true;
     }
 
     /**

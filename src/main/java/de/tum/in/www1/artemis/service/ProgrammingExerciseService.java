@@ -263,6 +263,7 @@ public class ProgrammingExerciseService {
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        long courseId = programmingExercise.getCourse().getId();
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -286,10 +287,10 @@ public class ProgrammingExerciseService {
         String templatePlanName = BuildPlanType.TEMPLATE.getName();
         String solutionPlanName = BuildPlanType.SOLUTION.getName();
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(courseId, projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(courseId, projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(courseId, projectKey, testRepoName).toString());
 
         // Save participations to get the ids required for the webhooks
         templateParticipation.setProgrammingExercise(programmingExercise);
@@ -297,9 +298,9 @@ public class ProgrammingExerciseService {
         templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        URL exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
-        URL testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
-        URL solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
+        URL exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(courseId, projectKey, exerciseRepoName).getURL();
+        URL testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(courseId, projectKey, testRepoName).getURL();
+        URL solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(courseId, projectKey, solutionRepoName).getURL();
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
@@ -1014,7 +1015,7 @@ public class ProgrammingExerciseService {
      */
     private void setupTestRepository(ProgrammingExercise newExercise, String projectKey) {
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getCourse().getId(), projectKey, testRepoName).toString());
     }
 
     /**

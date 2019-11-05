@@ -275,9 +275,9 @@ public class ProgrammingExerciseResource {
 
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
-        String errorMessageVCS = versionControlService.get().checkIfProjectExists(projectKey, projectName);
-        if (errorMessageVCS != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageVCS, "vcsProjectExists")).body(null);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Project does not exist in VCS: " + projectKey, "vcsProjectExists")).body(null);
         }
 
         String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);

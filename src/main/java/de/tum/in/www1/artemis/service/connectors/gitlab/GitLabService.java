@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Supplier;
@@ -117,21 +118,43 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void deleteProject(String projectKey) {
+        final var optionalGroup = groupExists(projectKey);
+        if (optionalGroup.isPresent()) {
+            final var builder = Endpoints.DELETE_GROUP.buildEndpoint(BASE_API, optionalGroup.get());
 
+            final var errorMessage = "Unable to delete group in GitLab: " + projectKey;
+            executeAndExpect(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+        }
     }
 
     @Override
     public void deleteRepository(URL repositoryUrl) {
+        final var repositoryName = getRepositorySlugFromUrl(repositoryUrl);
+        final var repositoryId = getRepositoryId(repositoryUrl);
+        final var builder = Endpoints.DELETE_PROJECT.buildEndpoint(BASE_API, repositoryId);
 
+        final var errorMessage = "Error trying to delete repository on GitLab: " + repositoryName;
+        executeAndExpect(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
     }
 
     @Override
     public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
-        return null;
+        final var exercise = participation.getProgrammingExercise();
+        final var courseKey = exercise.getCourse().getShortName();
+        final var exerciseKey = exercise.getShortName();
+        final var slug = getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl());
+
+        try {
+            return new URL(String.format("%s/%s/%s/%s", GITLAB_SERVER_URL, courseKey, exerciseKey, slug));
+        }
+        catch (MalformedURLException e) {
+            log.error(e.getMessage());
+            throw new GitLabException("Repository WEB URL cannot be built with", e);
+        }
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
+    public VcsRepositoryUrl getCloneRepositoryUrl(long courseId, String projectKey, String repositorySlug) {
         return null;
     }
 
@@ -200,12 +223,30 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public String getRepositoryName(URL repositoryUrl) {
-        return null;
+        return getRepositorySlugFromUrl(repositoryUrl);
+    }
+
+    private long getRepositoryId(URL repositoryUrl) {
+        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API);
+        final var body = Map.of("search", getRepositorySlugFromUrl(repositoryUrl));
+        final var entity = new HttpEntity<>(body);
+
+        final var errorMessage = "Error fetching ID for repository " + repositoryUrl;
+        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.GET, entity, JsonNode.class));
+
+        return response.get("id").asLong();
     }
 
     @Override
-    public String checkIfProjectExists(String projectKey, String projectName) {
-        return null;
+    public boolean checkIfProjectExists(String projectKey, String projectName) {
+        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API);
+        final var body = Map.of("search", projectKey);
+        final var entity = new HttpEntity<>(body);
+
+        final var errorMessage = "Error trying to search for project " + projectKey;
+        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.GET, entity, JsonNode.class));
+
+        return !response.isEmpty();
     }
 
     @Override
@@ -215,13 +256,18 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws Exception {
+    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) {
 
     }
 
     @Override
     public String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException {
-        return null;
+        final var splittedUrl = repositoryUrl.toString().split("/");
+        if (splittedUrl[splittedUrl.length - 1].matches(".*\\.git")) {
+            return splittedUrl[splittedUrl.length - 1].replace(".git", "");
+        }
+
+        throw new GitLabException("Repository URL is not a git URL! Can't get slug for " + repositoryUrl.toString());
     }
 
     private <T> T executeAndExpect(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
@@ -282,7 +328,8 @@ public class GitLabService implements VersionControlService {
     private enum Endpoints {
         ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
         PROTECT_BRANCH("projects", "<projectId>", "protected_branches"), GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"),
-        COMMITS("projects", "<projectId>", "repository", "commits"), GROUPS("groups"), NAMESPACES("namespaces", "<groupId>");
+        COMMITS("projects", "<projectId>", "repository", "commits"), GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"),
+        DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects");
 
         private List<String> pathSegments;
 
@@ -315,6 +362,36 @@ public class GitLabService implements VersionControlService {
 
         public int getLevelCode() {
             return levelCode;
+        }
+    }
+
+    public final class GitLabRepositoryUrl extends VcsRepositoryUrl {
+
+        public GitLabRepositoryUrl(String courseShortName, String exerciseShortName, String repositorySlug) {
+            super();
+            final var path = courseShortName + "/" + exerciseShortName + "/" + repositorySlug;
+            final var urlString = GITLAB_SERVER_URL + "/" + path;
+
+            stirngToURL(urlString);
+        }
+
+        private GitLabRepositoryUrl(String urlString) {
+            stirngToURL(urlString);
+        }
+
+        private void stirngToURL(String urlString) {
+            try {
+                this.url = new URL(urlString);
+            }
+            catch (MalformedURLException e) {
+                throw new GitLabException("Could not build GitLab URL", e);
+            }
+        }
+
+        @Override
+        public VcsRepositoryUrl withUser(String username) {
+            this.username = username;
+            return new GitLabRepositoryUrl(url.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
     }
 }
