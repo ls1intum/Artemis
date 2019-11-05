@@ -181,6 +181,10 @@ public class FileUploadSubmissionService extends SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException {
+        final var exerciseDueDate = exercise.getDueDate();
+        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         // check if we already had file associated with this submission
         fileUploadSubmission.onDelete();
 

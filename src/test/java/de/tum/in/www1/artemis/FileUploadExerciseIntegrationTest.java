@@ -59,7 +59,7 @@ public class FileUploadExerciseIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createFileUploadExercise() throws Exception {
         String filePattern = "Example file pattern";
-        FileUploadExercise fileUploadExercise = database.createFileUploadExerciseWithCourse();
+        FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(filePattern);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class);
 

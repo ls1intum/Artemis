@@ -66,17 +66,23 @@ public class FileUploadSubmissionIntegrationTest {
 
     private FileUploadExercise fileUploadExercise;
 
+    private FileUploadExercise afterDueDateFileUploadExercise;
+
     private FileUploadSubmission submittedFileUploadSubmission;
 
     private FileUploadSubmission notSubmittedFileUploadSubmission;
+
+    private MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 0);
         database.addCourseWithOneFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        afterDueDateFileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(1);
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
+        database.addParticipationForExercise(fileUploadExercise, "student3");
     }
 
     @AfterEach
@@ -85,9 +91,8 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(value = "student3")
     public void submitFileUploadSubmission() throws Exception {
-        database.addParticipationForExercise(fileUploadExercise, "student1");
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         FileUploadSubmission returnedSubmission = performInitialSubmission(fileUploadExercise.getId(), submission);
         String actualFilePath = FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
@@ -100,7 +105,6 @@ public class FileUploadSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student1")
     public void setSubmittedFileUploadSubmission_incorrectFileType() throws Exception {
-        database.addParticipationForExercise(fileUploadExercise, "student1");
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.txt", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
@@ -176,6 +180,31 @@ public class FileUploadSubmissionIntegrationTest {
         assertThat(submission.getResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDate_forbidden() throws Exception {
+        database.addParticipationForExercise(afterDueDateFileUploadExercise, "student3");
+        request.postWithMultipartFile("/api/exercises/" + afterDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
+                validFile, FileUploadSubmission.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_beforeDueDate_allowed() throws Exception {
+        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
+                FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        var afterDueDateParticipation = database.addParticipationForExercise(fileUploadExercise, "student1");
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        participationService.save(afterDueDateParticipation);
+
+        request.put("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, HttpStatus.OK);
     }
 
     @Test
