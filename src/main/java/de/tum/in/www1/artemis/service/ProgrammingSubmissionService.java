@@ -512,7 +512,6 @@ public class ProgrammingSubmissionService {
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @return a list of programming submissions for the given exercise id
      */
-    @Transactional(readOnly = true)
     public List<ProgrammingSubmission> getProgrammingSubmissions(Long exerciseId, boolean submittedOnly) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<ProgrammingSubmission> submissions = new ArrayList<>();
@@ -530,7 +529,6 @@ public class ProgrammingSubmissionService {
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    @Transactional(readOnly = true)
     public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionWithoutManualResult(ProgrammingExercise programmingExercise) {
         Random r = new Random();
         List<ProgrammingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId()).stream()
