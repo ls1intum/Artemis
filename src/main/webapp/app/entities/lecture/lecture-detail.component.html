@@ -10,7 +10,6 @@
                     <span>{{ lecture.title }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
-<!--                <dd class="editor-outline-background" [innerHTML]="formattedDescription"></dd>-->
                 <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
                 <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
                 <dd>
