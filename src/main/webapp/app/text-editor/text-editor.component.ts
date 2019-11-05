@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Location } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -14,13 +15,15 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ComponentCanDeactivate } from 'app/shared';
+import { Observable } from 'rxjs/Observable';
 import { ButtonType } from 'app/shared/components';
 
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
-export class TextEditorComponent implements OnInit {
+export class TextEditorComponent implements OnInit, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     textExercise: TextExercise;
     participation: StudentParticipation;
@@ -57,6 +60,7 @@ export class TextEditorComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
+        private translateService: TranslateService,
     ) {
         this.isSaving = false;
     }
@@ -107,6 +111,22 @@ export class TextEditorComponent implements OnInit {
         );
     }
 
+    ngOnDestroy() {
+        if (this.canDeactivate() && this.textExercise.id) {
+            let newSubmission = new TextSubmission();
+            if (this.submission) {
+                newSubmission = this.submission;
+            }
+            newSubmission.submitted = false;
+            newSubmission.text = this.answer;
+            if (this.submission.id) {
+                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe();
+            } else {
+                this.textSubmissionService.create(newSubmission, this.textExercise.id).subscribe();
+            }
+        }
+    }
+
     private checkIfSubmitAlwaysEnabled() {
         const isInitializationAfterDueDate =
             this.textExercise.dueDate && this.participation.initializationDate && moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
@@ -140,6 +160,14 @@ export class TextEditorComponent implements OnInit {
         return null;
     }
 
+    // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
+    }
+
     saveText() {
         if (this.isSaving) {
             return;
@@ -168,6 +196,10 @@ export class TextEditorComponent implements OnInit {
                 this.isSaving = false;
             },
         );
+    }
+
+    canDeactivate(): Observable<boolean> | boolean {
+        return this.submission.text !== this.answer;
     }
 
     submit() {
