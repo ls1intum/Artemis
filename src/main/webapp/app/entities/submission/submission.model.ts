@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
-import { Participation, StudentParticipation } from '../participation';
+import { Participation } from '../participation';
 import { Moment } from 'moment';
 import { Language } from 'app/entities/tutor-group';
 
