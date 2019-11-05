@@ -280,13 +280,13 @@ describe('GuidedTourService', () => {
             it('should start the tour for the matching course title', () => {
                 let courses = [course1];
                 // enable tour for matching course title
-                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                guidedTourService.enableTourForCourse(courses, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
                 guidedTourService.currentTour = null;
 
                 courses = [course2];
                 // tour not available for not matching titles
-                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                guidedTourService.enableTourForCourse(courses, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.be.null;
             });
 

@@ -1,0 +1,14 @@
+{
+    "tour": {
+        "courseAdministration": {
+            "exerciseButton": {
+                "headline": "Exercise Overview",
+                "content": "If you click on <tt>Exercise</tt> you will get an overview of all exercises of this course."
+            },
+            "tutorCourseDashboardButton": {
+                "headline": "Tutor Course Dashboard",
+                "content": "If you navigate to the <tt>Tutor Course Dashboard</tt> you will be able to get an overview of all student submission and grade them."
+            }
+        }
+    }
+}

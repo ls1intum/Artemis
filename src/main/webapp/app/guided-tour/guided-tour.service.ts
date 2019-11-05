@@ -12,10 +12,10 @@ import { GuidedTourState, Orientation, OrientationConfiguration, UserInteraction
 import { AccountService, User } from 'app/core';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { filter, take } from 'rxjs/operators';
+import { filter, take, distinctUntilChanged } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour } from 'app/guided-tour/tours/general-tour';
 
@@ -308,7 +308,6 @@ export class GuidedTourService {
         this.currentTour = null;
         this.guidedTourCurrentStepSubject.next(null);
     }
-
     /**
      * Enable a smooth user interaction
      * @param targetNode an HTMLElement of which DOM changes should be observed
@@ -316,69 +315,81 @@ export class GuidedTourService {
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
         this.isUserInteractionFinished.next(false);
+
         if (!this.currentTour) {
             return;
         }
-        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
+
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
 
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            if (nextStep && nextStep.highlightSelector) {
-                if (afterNextStep && afterNextStep.highlightSelector) {
-                    this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
-                } else {
-                    this.waitForElement(nextStep.highlightSelector);
-                }
-            } else {
-                this.enableNextStepClick();
-            }
+            const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+            const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
+            this.handleWaitForSelectorEvent(nextStep, afterNextStep);
         } else {
+            /** At a minimum one of childList, attributes, and characterData must be true, otherwise, a TypeError exception will be thrown. */
+            const options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
+
             if (userInteraction === UserInteractionEvent.CLICK) {
-                from(this.observeDomMutations(targetNode, userInteraction))
+                /** The first DOM mutation on the click event listener triggers the enableNextStepClick() call */
+                this.observeMutations(targetNode, options)
                     .pipe(take(1))
-                    .subscribe((mutations: MutationRecord[]) => {
-                        mutations.forEach(() => {
-                            this.enableNextStepClick();
-                        });
+                    .subscribe(() => {
+                        this.enableNextStepClick();
+                        if (currentStep.triggerNextStep) {
+                            this.nextStep();
+                        }
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
-                    mutations.forEach(() => {
+                /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
+                targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
+                this.observeMutations(targetNode, options)
+                    .pipe(
+                        filter(
+                            (mutation: MutationRecord) =>
+                                mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1),
+                        ),
+                    )
+                    .subscribe((mutation: MutationRecord) => {
                         this.enableNextStepClick();
                     });
-                });
             }
         }
     }
 
     /**
-     * Wraps the mutation observer in a promise
-     * @param targetNode an HTMLElement of which DOM changes should be observed
-     * @param userInteraction the user interaction to complete the tour step
+     * Enables the next step click if the highlightSelector of the next step or
+     * the highlightSelector of the after next step are visible
+     * @param nextStep  next tour step
+     * @param afterNextStep the tour step after the next tour step
      */
-    private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
-        return new Promise(resolve => {
-            const observer = new MutationObserver(mutations => {
-                if (userInteraction === UserInteractionEvent.CLICK) {
-                    observer.disconnect();
-                    this.enableNextStepClick();
-                } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                    mutations.forEach(mutation => {
-                        if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                            observer.disconnect();
-                            this.enableNextStepClick();
-                        }
-                    });
-                }
-            });
-            observer.observe(targetNode, {
-                attributes: true,
-                childList: true,
-                characterData: true,
-                subtree: false,
-            });
-        });
+    private handleWaitForSelectorEvent(nextStep: TourStep | null, afterNextStep: TourStep | null) {
+        if (nextStep && nextStep.highlightSelector) {
+            if (afterNextStep && afterNextStep.highlightSelector) {
+                this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
+            } else {
+                this.waitForElement(nextStep.highlightSelector);
+            }
+        } else {
+            this.enableNextStepClick();
+        }
     }
+
+    /**
+     * Handles the mutation observer for the user interactions
+     * @param target    target node of an HTMLElement of which DOM changes should be observed
+     * @param options   the configuration options for the mutation observer
+     */
+    private observeMutations = (target: any, options: MutationObserverInit) =>
+        new Observable<MutationRecord>(subscribe => {
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    subscribe.next(mutation);
+                });
+            });
+            observer.observe(target, options);
+            return () => observer.disconnect();
+        });
 
     /**
      * Wait for the next step selector to appear in the DOM and continue with the next step
@@ -642,10 +653,12 @@ export class GuidedTourService {
         if (!guidedTour.exerciseShortName || !course || !course.exercises) {
             return null;
         }
-        const exerciseForGuidedTour = course.exercises.find(exercise => exercise.shortName === guidedTour.exerciseShortName);
-        if (exerciseForGuidedTour) {
+        const exerciseForGuidedTourExists = course.exercises.find(
+            exercise => (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) || exercise.title === guidedTour.exerciseShortName,
+        );
+        if (exerciseForGuidedTourExists) {
             this.enableTour(guidedTour);
-            return exerciseForGuidedTour;
+            return exerciseForGuidedTourExists;
         }
         return null;
     }
@@ -655,8 +668,14 @@ export class GuidedTourService {
      * @param courses which can contain the needed course for the tour
      * @param guidedTour that should be enabled
      */
-    public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
-        const courseForTour = courses.find(course => course.shortName === guidedTour.courseShortName);
+    public enableTourForCourse(courses: Course | Course[], guidedTour: GuidedTour): Course | null {
+        let courseForTour;
+        if (courses instanceof Array) {
+            courseForTour = courses.find(course => course.shortName === guidedTour.courseShortName);
+        } else {
+            courseForTour = courses;
+        }
+
         if (courseForTour) {
             this.enableTour(guidedTour);
             return courseForTour;
@@ -669,10 +688,15 @@ export class GuidedTourService {
      * @param exercise which can contain the needed exercise for the tour
      * @param guidedTour that should be enabled
      */
-    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (exercise.shortName === guidedTour.exerciseShortName) {
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour): Exercise | null {
+        if (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === guidedTour.exerciseShortName) {
             this.enableTour(guidedTour);
+            return exercise;
+        } else if (exercise.title === guidedTour.exerciseShortName) {
+            this.enableTour(guidedTour);
+            return exercise;
         }
+        return null;
     }
 
     /**

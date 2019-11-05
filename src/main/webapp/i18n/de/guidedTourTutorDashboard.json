@@ -1,0 +1,41 @@
+{
+    "tour": {
+        "tutorCourseDashboard": {
+            "overview": {
+                "headline": "Overview",
+                "content": "Here you can see an overview of your assessments, complaints and feedback requests."
+            },
+            "exerciseTable": {
+                "headline": "Exercise Table",
+                "content": "This table displays all exercises of this course, which are not finished yet. In order to see finished exercises, just tick the checkbox <tt>Show finished exercises</tt> displayed above this table."
+            },
+            "gradingProcess": {
+                "headline": "Grading Process",
+                "content": "This graph visualizes your current grading process"
+            },
+            "exerciseDashboardButton": {
+                "headline": "Exercise Dashboard",
+                "content": "Now let's head over to the exercise dashboard to view the exercise details and student submissions."
+            }
+        },
+        "tutorExerciseDashboard": {
+            "instructions": {
+                "headline": "Instructions",
+                "content": "This section contains the <tt>problem statement</tt>, <tt>example solution</tt> and <tt>grading instruction</tt> of the exercise. Please read through them carefully and then proceed to the next step."
+            },
+            "instructionsButton": {
+                "headline": "Confirm",
+                "content": "Click on this button and confirm only after you have read and understood the instructions"
+            },
+            "studentSubmissions": {
+                "headline": "Student submissions",
+                "content": "In this table you can see the current student submissions"
+            },
+            "startAssessment": {
+                "headline": "Start Assessment",
+                "content": "If you want to assess this submission, then just click on <tt>start new assessment</tt>.",
+                "hint": "If you start an assessment, then this submission will be locked for you, so that other tutors cannot access it while you are working on the assessment."
+            }
+        }
+    }
+}

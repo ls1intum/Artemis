@@ -25,6 +25,8 @@ export abstract class TourStep {
     userInteractionEvent?: UserInteractionEvent;
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;
+    /** Enables the automatic display of the next step after a user interaction */
+    triggerNextStep?: boolean;
 }
 
 export class TextTourStep extends TourStep {

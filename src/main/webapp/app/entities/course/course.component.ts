@@ -4,6 +4,9 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { compareCourseShortName } from 'app/guided-tour/guided-tour.utils';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { courseAdministrationTour } from 'app/guided-tour/tours/course-administration-tour';
 
 @Component({
     selector: 'jhi-course',
@@ -18,7 +21,15 @@ export class CourseComponent implements OnInit, OnDestroy {
     courses: Course[];
     eventSubscriber: Subscription;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
+    readonly compareCourseShortName = compareCourseShortName;
+    public guidedTourCourse: Course | null;
+
+    constructor(
+        private courseService: CourseService,
+        private jhiAlertService: JhiAlertService,
+        private eventManager: JhiEventManager,
+        private guidedTourService: GuidedTourService,
+    ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;
@@ -28,6 +39,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
+                this.guidedTourCourse = this.guidedTourService.enableTourForCourse(this.courses, courseAdministrationTour);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

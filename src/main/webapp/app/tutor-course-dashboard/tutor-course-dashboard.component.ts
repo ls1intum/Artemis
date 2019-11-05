@@ -6,6 +6,9 @@ import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { tutorCourseDashboardTour } from 'app/guided-tour/tours/tutor-dashboard-tour';
+import { compareExerciseShortName } from 'app/guided-tour/guided-tour.utils';
 
 @Component({
     selector: 'jhi-courses',
@@ -38,12 +41,16 @@ export class TutorCourseDashboardComponent implements OnInit {
 
     tutor: User;
 
+    readonly compareExerciseShortName = compareExerciseShortName;
+    guidedTourExercise: Exercise | null;
+
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -66,6 +73,8 @@ export class TutorCourseDashboardComponent implements OnInit {
                     // sort exercises by type to get a better overview in the dashboard
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
                 }
+                console.log('enable');
+                this.guidedTourExercise = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorCourseDashboardTour);
             },
             (response: string) => this.onError(response),
         );

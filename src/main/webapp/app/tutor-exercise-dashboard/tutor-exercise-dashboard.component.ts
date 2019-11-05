@@ -24,6 +24,9 @@ import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-das
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { tutorExerciseDashboardTour } from 'app/guided-tour/tours/tutor-dashboard-tour';
+import { compareExerciseShortName } from 'app/guided-tour/guided-tour.utils';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -91,6 +94,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     tutor: User | null;
 
+    readonly compareExerciseShortName = compareExerciseShortName;
+    guidedTourExercise: Exercise | null;
+
     constructor(
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
@@ -104,6 +110,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
         private complaintService: ComplaintService,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -140,6 +147,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                         break;
                 }
 
+                this.guidedTourExercise = this.guidedTourService.enableTourForExercise(this.exercise, tutorExerciseDashboardTour);
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {

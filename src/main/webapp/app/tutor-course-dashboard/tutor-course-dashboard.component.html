@@ -16,40 +16,42 @@
 <jhi-alert></jhi-alert>
 
 <div *ngIf="course">
-    <div class="row mt-3 justify-content-around">
-        <div class="col-4 text-center">
-            <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
-            <p class="h3">{{ numberOfTutorAssessments }}</p>
+    <div class="tutor-stats">
+        <div class="row mt-3 justify-content-around">
+            <div class="col-4 text-center">
+                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
+                <p class="h3">{{ numberOfTutorAssessments }}</p>
+            </div>
+            <div class="col-4 text-center">
+                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
+                <p class="h3">{{ numberOfAssessments }} / {{ numberOfSubmissions }} ({{ totalAssessmentPercentage }} %)</p>
+            </div>
         </div>
-        <div class="col-4 text-center">
-            <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
-            <p class="h3">{{ numberOfAssessments }} / {{ numberOfSubmissions }} ({{ totalAssessmentPercentage }}%)</p>
-        </div>
-    </div>
 
-    <div class="row justify-content-around">
-        <div class="col-4 text-center">
-            <a routerLink="/complaints" [queryParams]="{ courseId: course.id, tutorId: tutor.id }">
-                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}:</p>
-                <p class="h3">{{ numberOfTutorComplaints }}</p>
-            </a>
+        <div class="row justify-content-around">
+            <div class="col-4 text-center">
+                <a routerLink="/complaints" [queryParams]="{ courseId: course.id, tutorId: tutor.id }">
+                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }} :</p>
+                    <p class="h3">{{ numberOfTutorComplaints }}</p>
+                </a>
+            </div>
+            <div class="col-4 text-center">
+                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}:</p>
+                <p class="h3">{{ numberOfComplaints }}</p>
+            </div>
         </div>
-        <div class="col-4 text-center">
-            <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}:</p>
-            <p class="h3">{{ numberOfComplaints }}</p>
-        </div>
-    </div>
 
-    <div class="row justify-content-around">
-        <div class="col-4 text-center">
-            <a routerLink="/more-feedback-requests" [queryParams]="{ courseId: course.id, tutorId: tutor.id }">
-                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.moreFeedbackRequestsForYourAssessments' | translate }}:</p>
-                <p class="h3">{{ numberOfTutorMoreFeedbackRequests }}</p>
-            </a>
-        </div>
-        <div class="col-4 text-center">
-            <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}:</p>
-            <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
+        <div class="row justify-content-around">
+            <div class="col-4 text-center">
+                <a routerLink="/more-feedback-requests" [queryParams]="{ courseId: course.id, tutorId: tutor.id }">
+                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.moreFeedbackRequestsForYourAssessments' | translate }} :</p>
+                    <p class="h3">{{ numberOfTutorMoreFeedbackRequests }}</p>
+                </a>
+            </div>
+            <div class="col-4 text-center">
+                <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }} :</p>
+                <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
+            </div>
         </div>
     </div>
 
@@ -64,17 +66,21 @@
             <thead>
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
                     <th jhiSortBy="type">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseType' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseType' | translate }}</a>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="title">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exercise' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exercise' | translate }}</a>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.yourStatus' | translate }}</th>
                     <th jhiSortBy="dueDate">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th jhiSortBy="assessmentDueDate">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a>
+                        <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.actions' | translate }}</th>
                 </tr>
@@ -101,6 +107,7 @@
                             [tutorParticipation]="exercise.tutorParticipations[0]"
                             [numberOfParticipations]="exercise.numberOfParticipations"
                             [numberOfAssessments]="exercise.numberOfAssessments"
+                            [class.guided-tour]="compareExerciseShortName(exercise, this.guidedTourExercise)"
                         >
                         </jhi-tutor-participation-graph>
                     </td>
@@ -116,7 +123,11 @@
                     </td>
 
                     <td class="text-center">
-                        <button routerLink="/course/{{ course.id }}/exercise/{{ exercise.id }}/tutor-dashboard" class="btn btn-info btn-sm mr-1">
+                        <button
+                            routerLink="/course/{{ course.id }}/exercise/{{ exercise.id }}/tutor-dashboard"
+                            class="btn btn-info btn-sm mr-1 exercise-dashboard"
+                            [class.guided-tour]="compareExerciseShortName(exercise, this.guidedTourExercise)"
+                        >
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                         </button>
                     </td>
