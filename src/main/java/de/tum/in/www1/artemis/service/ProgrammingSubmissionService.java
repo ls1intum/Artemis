@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -88,7 +87,6 @@ public class ProgrammingSubmissionService {
      * @throws IllegalStateException if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
-    @Transactional
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
@@ -155,9 +153,7 @@ public class ProgrammingSubmissionService {
      * @return the latest pending submission if exists or null.
      * @throws EntityNotFoundException if the participation for the given id can't be found.
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
-     * @throws IllegalAccessException if the user does not have access to the given participation.
      */
-    @Transactional(readOnly = true)
     public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
@@ -179,7 +175,6 @@ public class ProgrammingSubmissionService {
      * @param programmingExerciseId for which to search pending submissions
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
-    @Transactional(readOnly = true)
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(programmingExerciseId);
         return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
@@ -205,7 +200,6 @@ public class ProgrammingSubmissionService {
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
     @Async
-    @Transactional
     public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();

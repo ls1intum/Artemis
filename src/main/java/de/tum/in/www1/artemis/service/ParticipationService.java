@@ -387,8 +387,7 @@ public class ParticipationService {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
         }
-        save(participation);
-        return participation;
+        return save(participation);
     }
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {

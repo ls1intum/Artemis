@@ -776,7 +776,6 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    @Transactional
     public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
         Map<String, Object> buildResults = queryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
         if (buildResults == null) {
@@ -799,9 +798,9 @@ public class BambooService implements ContinuousIntegrationService {
         result.setSubmission(submission);
 
         addFeedbackToResult(result, buildResults);
-        Result resultFromBuildMap = resultRepository.save(result);
+        result = resultRepository.save(result);
 
-        return Optional.of(resultFromBuildMap);
+        return Optional.of(result);
     }
 
     /**
