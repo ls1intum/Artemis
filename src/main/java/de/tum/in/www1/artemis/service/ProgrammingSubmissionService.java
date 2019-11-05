@@ -357,8 +357,8 @@ public class ProgrammingSubmissionService {
      * @param submission ProgrammingSubmission that was just created.
      */
     public void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
+        var programmingExerciseParticipation = (ProgrammingExerciseParticipation) submission.getParticipation();
         try {
-            var programmingExerciseParticipation = (ProgrammingExerciseParticipation) submission.getParticipation();
             if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation
                     && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
@@ -367,7 +367,8 @@ public class ProgrammingSubmissionService {
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             notifyUserAboutSubmission(submission);
         }
-        catch (HttpException e) {
+        catch (Exception e) {
+            log.error("Trigger build failed for " + programmingExerciseParticipation.getBuildPlanId() + " with the exception " + e.getMessage());
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
