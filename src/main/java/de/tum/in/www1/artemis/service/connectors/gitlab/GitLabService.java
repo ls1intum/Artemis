@@ -140,8 +140,8 @@ public class GitLabService implements VersionControlService {
     @Override
     public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
         final var exercise = participation.getProgrammingExercise();
-        final var courseKey = exercise.getCourse().getShortName();
-        final var exerciseKey = exercise.getShortName();
+        final var courseKey = exercise.getCourse().getId();
+        final var exerciseKey = exercise.getProjectKey();
         final var slug = getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl());
 
         try {
@@ -155,7 +155,7 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(long courseId, String projectKey, String repositorySlug) {
-        return null;
+        return new GitLabRepositoryUrl(courseId, projectKey, repositorySlug);
     }
 
     @Override
@@ -170,7 +170,7 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws VersionControlException {
-        final var coursePath = programmingExercise.getCourse().getShortName();
+        final var coursePath = programmingExercise.getCourse().getId() + "";
         final var optionalCourseId = groupExists(coursePath);
         long courseId;
         if (optionalCourseId.isEmpty()) {
@@ -181,7 +181,7 @@ public class GitLabService implements VersionControlService {
             courseId = optionalCourseId.get();
         }
 
-        final var exercisePath = programmingExercise.getShortName();
+        final var exercisePath = programmingExercise.getProjectKey();
         final var exerciseName = exercisePath + programmingExercise.getTitle();
         createGroup(exerciseName, exercisePath, Optional.of(courseId));
     }
@@ -367,9 +367,9 @@ public class GitLabService implements VersionControlService {
 
     public final class GitLabRepositoryUrl extends VcsRepositoryUrl {
 
-        public GitLabRepositoryUrl(String courseShortName, String exerciseShortName, String repositorySlug) {
+        public GitLabRepositoryUrl(long courseId, String projectKey, String repositorySlug) {
             super();
-            final var path = courseShortName + "/" + exerciseShortName + "/" + repositorySlug;
+            final var path = courseId + "/" + projectKey + "/" + repositorySlug;
             final var urlString = GITLAB_SERVER_URL + "/" + path;
 
             stirngToURL(urlString);
