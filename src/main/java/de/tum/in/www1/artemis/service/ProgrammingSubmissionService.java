@@ -499,7 +499,6 @@ public class ProgrammingSubmissionService {
      */
     @Transactional(readOnly = true)
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
-        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
         List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());
@@ -532,10 +531,10 @@ public class ProgrammingSubmissionService {
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     @Transactional(readOnly = true)
-    public Optional<ProgrammingSubmission> getProgrammingSubmissionWithoutManualResult(ProgrammingExercise programmingExercise) {
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionWithoutManualResult(ProgrammingExercise programmingExercise) {
         Random r = new Random();
-        List<ProgrammingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(programmingExercise.getId())
-                .stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (ProgrammingSubmission) submission)
+        List<ProgrammingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId()).stream()
+                .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (ProgrammingSubmission) submission)
                 .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {

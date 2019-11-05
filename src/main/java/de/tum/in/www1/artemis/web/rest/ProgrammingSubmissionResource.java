@@ -344,7 +344,7 @@ public class ProgrammingSubmissionResource {
 
         // TODO: Handle lock limit.
 
-        Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getProgrammingSubmissionWithoutManualResult(programmingExercise);
+        Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
         if (programmingSubmissionOpt.isEmpty()) {
             return notFound();
         }

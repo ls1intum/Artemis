@@ -28,7 +28,7 @@ export abstract class Submission implements BaseEntity {
     public submissionExerciseType: SubmissionExerciseType;
 
     public result: Result;
-    public participation: StudentParticipation;
+    public participation: Participation;
 
     public language: Language | null;
 

@@ -657,7 +657,7 @@ public class ProgrammingExerciseResource {
     // TODO: Should not throw the IOException but handle it!
     private ResponseEntity<Resource> provideZipForParticipations(List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations, Long exerciseId,
             RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        // TODO: in case we do not find a student login, we should inform the user in the client, that this student id did not participate in the exercise
+        // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))

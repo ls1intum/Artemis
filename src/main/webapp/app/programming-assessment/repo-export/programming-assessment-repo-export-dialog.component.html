@@ -50,7 +50,7 @@
                 ></jhi-date-time-picker>
             </div>
         </ng-container>
-        <div class="checkbox">
+        <div *ngIf="!singleStudentMode" class="checkbox">
             <label class="control-label">
                 <input type="checkbox" name="addStudentName" [(ngModel)]="this.repositoryExportOptions.addStudentName" />
                 <strong jhiTranslate="artemisApp.programmingExercise.export.addStudentName">Add student name to project</strong>
