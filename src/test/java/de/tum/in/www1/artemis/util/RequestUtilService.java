@@ -45,18 +45,10 @@ public class RequestUtilService {
     }
 
     public <T> URI post(String path, T body, HttpStatus expectedStatus) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
-                .andExpect(status().is(expectedStatus.value())).andReturn();
-        if (!expectedStatus.is2xxSuccessful()) {
-            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
-            return null;
-        }
-        assertThat(res.getResponse().containsHeader("location")).isTrue();
-        return new URI(res.getResponse().getHeader("location"));
+        return post(path, body, expectedStatus, MediaType.APPLICATION_JSON);
     }
 
-    public <T> URI postWithContentType(String path, T body, HttpStatus expectedStatus, MediaType contentType) throws Exception {
+    public <T> URI post(String path, T body, HttpStatus expectedStatus, MediaType contentType) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(contentType).content(jsonBody).with(csrf()))
                 .andExpect(status().is(expectedStatus.value())).andReturn();

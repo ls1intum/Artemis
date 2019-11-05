@@ -35,7 +35,7 @@ describe('UserRouteAccessService', () => {
                 HttpClientTestingModule,
                 RouterTestingModule.withRoutes([
                     {
-                        path: 'overview/:courseId/exercises/:exerciseId',
+                        path: route,
                         component: CourseExerciseDetailsComponent,
                     },
                 ]),
@@ -63,7 +63,7 @@ describe('UserRouteAccessService', () => {
     it('should store the JWT token for LTI users', () => {
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
-        routeConfig.path = 'overview/:courseId/exercises/:exerciseId';
+        routeConfig.path = route;
         snapshot.queryParams = { ['jwt']: 'testToken' };
         snapshot.data = { authorities: ['ROLE_USER'] };
 
