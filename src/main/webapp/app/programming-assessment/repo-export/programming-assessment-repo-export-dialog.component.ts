@@ -70,6 +70,8 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.exportInProgress = true;
         // The inputted participation ids take priority over the student ids.
         if (this.participationIdList) {
+            // We anonymize the assessment process ("double-blind").
+            this.repositoryExportOptions.addStudentName = false;
             this.repoExportService.exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, err => {
                 this.exportInProgress = false;
             });
