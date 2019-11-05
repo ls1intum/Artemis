@@ -231,6 +231,19 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
+        final var exerciseGroupId = groupExists(projectKey).get();
+        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API);
+        final var body = Map.of("name", projectKey, "namespace_id", exerciseGroupId, "builds_access_level", "disabled", "visibility", "private");
+
+        final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class);
+        if (response.getStatusCode() == HttpStatus.BAD_REQUEST && response.getBody().get("message").get("name").get(0).asText().equals("has already been taken")) {
+            log.info("Repository {} (parent {}) already exists, reusing it...", repoName, projectKey);
+            return;
+        }
+
+        if (response.getStatusCode() != HttpStatus.CREATED) {
+            throw new GitLabException("Error creating new repository " + repoName);
+        }
     }
 
     @Override
