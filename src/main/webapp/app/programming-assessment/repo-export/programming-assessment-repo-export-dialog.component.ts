@@ -82,7 +82,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     handleExportRepoResponse = (response: HttpResponse<Blob>) => {
-        this.jhiAlertService.success('Export of repos was successful. The exported zip file with all repositories is currently being downloaded');
+        this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
         if (response.body) {
