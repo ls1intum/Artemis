@@ -113,7 +113,7 @@ public class ResultResource {
         final var course = participation.getExercise().getCourse();
         final var user = userService.getUserWithGroupsAndAuthorities();
         final var exercise = participation.getExercise();
-        if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
+        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise))
             return forbidden();
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
@@ -139,7 +139,7 @@ public class ResultResource {
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
         result.setSubmission(submission);
-        resultService.createNewManualResult(result, true);
+        result = resultService.createNewManualResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -303,8 +303,7 @@ public class ResultResource {
             return createProgrammingExerciseManualResult(result);
         }
 
-        // have a look how quiz-exercise handles this case with the contained questions
-        resultRepository.save(result);
+        result = resultService.updateManualProgrammingExerciseResult(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
@@ -314,7 +313,7 @@ public class ResultResource {
             final var exercise = (ProgrammingExercise) exerciseToBeChecked;
             final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
                     : exercise.getDueDate();
-            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || !relevantDueDate.isBefore(ZonedDateTime.now()));
+            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
         }
 
         return true;

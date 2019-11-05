@@ -111,7 +111,7 @@ public class ParticipationService {
      * @param participation the entity to save
      * @return the persisted entity
      */
-    public Participation save(Participation participation) {
+    public Participation save(ParticipationInterface participation) {
         // Note: unfortunately polymorphism does not always work in Hibernate due to reflective method invocation.
         // Therefore we provide a convenience method here that finds out the concrete participation type and delegates the call to the right method
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
@@ -376,17 +376,10 @@ public class ParticipationService {
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
      *
-     * @param exercise exercise to which the inactive participation belongs
      * @param participation inactive participation
      * @return resumed participation
      */
-    public ProgrammingExerciseStudentParticipation resumeExercise(Exercise exercise, ProgrammingExerciseStudentParticipation participation) {
-
-        // Reload programming exercise from database so that the template participation is available
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
-        if (programmingExercise.isEmpty()) {
-            return null;
-        }
+    public ProgrammingExerciseStudentParticipation resumeExercise(ProgrammingExerciseStudentParticipation participation) {
         participation = copyBuildPlan(participation);
         participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
