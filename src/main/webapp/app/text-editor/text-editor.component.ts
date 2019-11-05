@@ -23,7 +23,7 @@ import { ButtonType } from 'app/shared/components';
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
-export class TextEditorComponent implements OnInit, ComponentCanDeactivate {
+export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     textExercise: TextExercise;
     participation: StudentParticipation;
