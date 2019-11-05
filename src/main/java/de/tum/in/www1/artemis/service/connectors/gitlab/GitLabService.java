@@ -73,7 +73,7 @@ public class GitLabService implements VersionControlService {
 
     private void giveWritePermissions(URL repositoryUrl, String username) {
         final var userId = getUserId(username);
-        final var repositoryId = getIdFromRepositoryUrl(repositoryUrl);
+        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
         final var builder = Endpoints.EDIT_EXERCISE_PERMISSION.buildEndpoint(BASE_API, repositoryId, userId);
         final var body = Map.of("access_level", AccessLevel.DEVELOPER.levelCode);
 
@@ -82,7 +82,7 @@ public class GitLabService implements VersionControlService {
     }
 
     private void protectBranch(String branch, URL repositoryUrl) {
-        final var repositoryId = getIdFromRepositoryUrl(repositoryUrl);
+        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
         final var builder = Endpoints.PROTECT_BRANCH.buildEndpoint(BASE_API, repositoryId);
         final var body = Map.of("name", branch, "push_access_level", AccessLevel.DEVELOPER.levelCode);
 
@@ -92,7 +92,7 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        final var repositoryId = getIdFromRepositoryUrl(repositoryUrl);
+        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
         if (!webhooksExists(repositoryId, notificationUrl)) {
             final var builder = Endpoints.ADD_WEBHOOK.buildEndpoint(BASE_API, repositoryId);
             final var body = Map.of("url", notificationUrl, "push_events", true, "enable_ssl_verification", false);
@@ -160,7 +160,19 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public Boolean repositoryUrlIsValid(URL repositoryUrl) {
-        return null;
+        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
+        final var builder = Endpoints.GET_PROJECT.buildEndpoint(BASE_API, repositoryId);
+
+        try {
+            final var errorMessage = "Can't get repository under the ID " + repositoryId;
+            executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        }
+        catch (Exception emAll) {
+            log.warn("Invalid repository URL " + repositoryUrl);
+            return false;
+        }
+
+        return true;
     }
 
     @Override
@@ -317,7 +329,7 @@ public class GitLabService implements VersionControlService {
         return response.getBody().get(0).get("id").asLong();
     }
 
-    private String getIdFromRepositoryUrl(URL repository) {
+    private String getPathIdFromRepositoryURL(URL repository) {
         final var namespaces = repository.toString().split("/");
         final var last = namespaces.length - 1;
         final var idBuilder = new StringBuilder(namespaces[last - 2]);
@@ -329,7 +341,7 @@ public class GitLabService implements VersionControlService {
         ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
         PROTECT_BRANCH("projects", "<projectId>", "protected_branches"), GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"),
         COMMITS("projects", "<projectId>", "repository", "commits"), GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"),
-        DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects");
+        DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"), GET_PROJECT("projects", "<projectId>");
 
         private List<String> pathSegments;
 
