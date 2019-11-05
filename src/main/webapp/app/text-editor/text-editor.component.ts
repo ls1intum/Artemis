@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -16,12 +16,14 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintType } from 'app/entities/complaint';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ComponentCanDeactivate } from 'app/shared';
+import { Observable } from 'rxjs/Observable';
 
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
-export class TextEditorComponent implements OnInit {
+export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
@@ -58,7 +60,7 @@ export class TextEditorComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
-        translateService: TranslateService,
+        private translateService: TranslateService,
     ) {
         this.isSaving = false;
         translateService.get('artemisApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
@@ -111,6 +113,22 @@ export class TextEditorComponent implements OnInit {
         );
     }
 
+    ngOnDestroy() {
+        if (this.canDeactivate() && this.textExercise.id) {
+            let newSubmission = new TextSubmission();
+            if (this.submission) {
+                newSubmission = this.submission;
+            }
+            newSubmission.submitted = false;
+            newSubmission.text = this.answer;
+            if (this.submission.id) {
+                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe();
+            } else {
+                this.textSubmissionService.create(newSubmission, this.textExercise.id).subscribe();
+            }
+        }
+    }
+
     /**
      * Find "General Feedback" item for Result, if it exists.
      * General Feedback is stored in the same Array as  the other Feedback, but does not have a reference.
@@ -125,6 +143,14 @@ export class TextEditorComponent implements OnInit {
         }
 
         return null;
+    }
+
+    // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
     }
 
     saveText() {
@@ -155,6 +181,10 @@ export class TextEditorComponent implements OnInit {
                 this.isSaving = false;
             },
         );
+    }
+
+    canDeactivate(): Observable<boolean> | boolean {
+        return this.submission.text !== this.answer;
     }
 
     submit() {
