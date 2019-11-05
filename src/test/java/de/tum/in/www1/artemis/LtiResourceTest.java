@@ -73,7 +73,7 @@ class LtiResourceTest {
     void launchAsAnonymousUser() throws Exception {
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourse().getId();
-        URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED);
+        URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         assertTrue(header.toString().contains("?login&jwt="));
         assertTrue(header.toString().contains("/overview/" + courseId + "/exercises/" + exerciseId));
@@ -84,7 +84,7 @@ class LtiResourceTest {
     void launchAsNewStudent() throws Exception {
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourse().getId();
-        URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED);
+        URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         assertTrue(header.toString().contains("?welcome&jwt="));
         assertTrue(header.toString().contains("/overview/" + courseId + "/exercises/" + exerciseId));
