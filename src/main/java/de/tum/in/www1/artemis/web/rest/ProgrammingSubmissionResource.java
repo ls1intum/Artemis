@@ -234,6 +234,9 @@ public class ProgrammingSubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
+
+        log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
+                programmingExercise.getId());
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(
                 programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds));
         List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,

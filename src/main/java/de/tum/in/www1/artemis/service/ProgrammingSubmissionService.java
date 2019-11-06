@@ -207,6 +207,7 @@ public class ProgrammingSubmissionService {
         if (programmingExercise == null) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
+        log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
         // Also trigger the template participation. We don't trigger the solution participation because it is triggered when the tests are changed.
         participations.add(programmingExercise.getTemplateParticipation());
