@@ -111,15 +111,16 @@ public class ProgrammingSubmissionService {
             commit = versionControlService.get().getLastCommitDetails(requestBody);
             if (!commit.getBranch().equals("master")) {
                 // if the commit was made in a branch different than master, ignore this
-                return null;
+                throw new IllegalStateException(
+                        "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
             }
             if (commit.getAuthorName().equals(ARTEMIS_GIT_NAME) && commit.getAuthorEmail().equals(ARTEMIS_GIT_EMAIL)) {
                 // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
-                return null;
+                throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
             }
         }
         catch (Exception ex) {
-            log.error("Commit hash could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
+            log.error("Commit could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
             throw new IllegalArgumentException(ex);
         }
 

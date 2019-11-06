@@ -103,9 +103,9 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
         catch (IllegalStateException ex) {
-            log.error("Tried to create another submission for the same commitHash and participation: processing submission for participation {} failed with request object {}: {}",
-                    participationId, requestBody, ex);
-            return badRequest();
+            log.warn("Processing submission for participation {} failed: {}", participationId, ex.getMessage());
+            // we return ok, because the problem is not on the side of the VCS Server and we don't want the VCS Server to kill the webhook if there are too many errors
+            return ResponseEntity.status(HttpStatus.OK).build();
         }
         catch (EntityNotFoundException ex) {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
