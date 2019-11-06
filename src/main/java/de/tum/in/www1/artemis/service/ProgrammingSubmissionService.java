@@ -141,7 +141,7 @@ public class ProgrammingSubmissionService {
 
         programmingExerciseParticipation.addSubmissions(programmingSubmission);
 
-        programmingSubmissionRepository.save(programmingSubmission);
+        programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         participationService.save(programmingExerciseParticipation);
         return programmingSubmission;
     }
