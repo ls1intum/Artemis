@@ -173,7 +173,9 @@ public class BambooService implements ContinuousIntegrationService {
         if (BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY) {
             try {
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
-                gitService.commitAndPush(repo, "Setup");
+                // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
+                // notifyPush in ProgrammingSubmissionService
+                gitService.commitAndPush(repo, "Setup", null);
 
                 if (exercise == null) {
                     log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");

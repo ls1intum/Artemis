@@ -13,6 +13,7 @@ import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,12 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 public class ProgrammingSubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+
+    @Value("${artemis.git.name}")
+    private String ARTEMIS_GIT_NAME;
+
+    @Value("${artemis.git.email}")
+    private String ARTEMIS_GIT_EMAIL;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -95,6 +102,27 @@ public class ProgrammingSubmissionService {
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
+        // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
+        // and we should not create a new submission here
+        Commit commit;
+        try {
+            // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
+            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
+            commit = versionControlService.get().getLastCommitDetails(requestBody);
+            if (!commit.getBranch().equals("master")) {
+                // if the commit was made in a branch different than master, ignore this
+                return null;
+            }
+            if (commit.getAuthorName().equals(ARTEMIS_GIT_NAME) && commit.getAuthorEmail().equals(ARTEMIS_GIT_EMAIL)) {
+                // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
+                return null;
+            }
+        }
+        catch (Exception ex) {
+            log.error("Commit hash could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
+            throw new IllegalArgumentException(ex);
+        }
+
         if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
                 || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
@@ -111,29 +139,15 @@ public class ProgrammingSubmissionService {
             }
         }
 
-        // TODO: if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
-        // and we should not create a new submission here
-        String lastCommitHash;
-        try {
-            // TODO: if the commit was made in a branch different than master, ignore this
-            // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
-            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
-            lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-        }
-        catch (Exception ex) {
-            log.error("Commit hash could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
-            throw new IllegalArgumentException(ex);
-        }
-
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, lastCommitHash);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, commit.getCommitHash());
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + " already exists!");
+            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + commit.getCommitHash() + " already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.setCommitHash(lastCommitHash);
-        log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + participationId);
+        programmingSubmission.setCommitHash(commit.getCommitHash());
+        log.info("create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -142,7 +156,7 @@ public class ProgrammingSubmissionService {
         programmingExerciseParticipation.addSubmissions(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-        participationService.save(programmingExerciseParticipation);
+        // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
     }
 

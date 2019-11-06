@@ -20,10 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.base.Joiner;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -716,17 +713,24 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public String getLastCommitHash(Object requestBody) throws BitbucketException {
+    public Commit getLastCommitDetails(Object requestBody) throws BitbucketException {
 
-        // NOTE the requestBody should look like this:
+        // NOTE thegetLastCommitDetails requestBody should look like this:
         // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master","fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
         try {
-            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
-            List<Object> changes = (List<Object>) requestBodyMap.get("changes");
-            Map<String, Object> lastChange = (Map<String, Object>) changes.get(0);
-            String hash = (String) lastChange.get("toHash");
-            return hash;
+            Commit commit = new Commit();
+            var requestBodyMap = (Map<String, Object>) requestBody;
+            var changes = (List<Object>) requestBodyMap.get("changes");
+            var lastChange = (Map<String, Object>) changes.get(0);
+            var hash = (String) lastChange.get("toHash");
+            commit.setCommitHash(hash);
+            var actor = (Map<String, Object>) requestBodyMap.get("actor");
+            var name = (String) actor.get("name");
+            var email = (String) actor.get("emailAddress");
+            commit.setAuthorName(name);
+            commit.setAuthorEmail(email);
+            return commit;
         }
         catch (Exception e) {
             log.error("Error when getting hash of last commit");

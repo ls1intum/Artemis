@@ -643,12 +643,11 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to build plan and initialize there state with eager results.
      *
      * @param buildPlanId the id of build plan
-     * @param state initialization state
      * @return the list of programming exercise participations belonging to build plan
      */
-    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationStateWithEagerResults(String buildPlanId, InitializationState state) {
+    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdWithEagerResults(String buildPlanId) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
+        return programmingExerciseStudentParticipationRepository.findByBuildPlanId(buildPlanId);
     }
 
     /**

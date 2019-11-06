@@ -258,6 +258,7 @@ public class ProgrammingExerciseService {
      */
     @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+        User user = userService.getUser();
         programmingExercise.generateAndSetProjectKey();
         String projectKey = programmingExercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
@@ -320,18 +321,18 @@ public class ProgrammingExerciseService {
             String exercisePrefix = programmingLanguage + File.separator + "exercise";
             String testPrefix = programmingLanguage + File.separator + "test";
             String solutionPrefix = programmingLanguage + File.separator + "solution";
-            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise);
-            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise);
-            setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise);
+            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, "Exercise", programmingExercise, user);
+            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, "Solution", programmingExercise, user);
+            setupTestTemplateAndPush(testRepo, testResources, testPrefix, "Test", programmingExercise, user);
 
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
-            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis");
-            gitService.commitAndPush(testRepo, "Empty Setup by Artemis");
-            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis");
+            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", user);
+            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", user);
+            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", user);
         }
 
         // The creation of the webhooks must occur after the initial push, because the participation is
@@ -372,11 +373,12 @@ public class ProgrammingExerciseService {
     }
 
     // Copy template and push, if no file is in the directory
-    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
+    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise, User user)
+            throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName);
+            commitAndPushRepository(repository, templateName, user);
         }
     }
 
@@ -388,9 +390,10 @@ public class ProgrammingExerciseService {
      * @param prefix The prefix for the path to which the resources should get copied to
      * @param templateName The name of the template
      * @param programmingExercise The related programming exercise for which the template should get created
+     * @param user the user who has initiated the generation of the programming exercise
      * @throws Exception If anything goes wrong
      */
-    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise)
+    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise, User user)
             throws Exception {
         if (gitService.listFiles(repository).size() == 0 && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) { // Only copy template if repo is empty
             String templatePath = "classpath:templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/test";
@@ -451,11 +454,11 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName);
+            commitAndPushRepository(repository, templateName, user);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
-            setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise);
+            setupTemplateAndPush(repository, resources, prefix, templateName, programmingExercise, user);
         }
     }
 
@@ -499,11 +502,12 @@ public class ProgrammingExerciseService {
      * @param repository The repository to which the changes should get pushed
      * @param templateName The template name which should be put in the commit message
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
+     * @param user the user who has initiated the generation of the programming exercise
      */
     @Transactional
-    public void commitAndPushRepository(Repository repository, String templateName) throws GitAPIException {
+    public void commitAndPushRepository(Repository repository, String templateName, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis");
+        gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis", user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
@@ -675,13 +679,14 @@ public class ProgrammingExerciseService {
      * @param exerciseRepoURL The URL of the exercise repository.
      * @param testRepoURL     The URL of the tests repository.
      * @param testsPath       The path to the tests folder, e.g. the path inside the repository where the structure oracle file will be saved in.
+     * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
     @Transactional
-    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath)
+    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
@@ -710,7 +715,7 @@ public class ProgrammingExerciseService {
             try {
                 Files.write(structureOraclePath, structureOracleJSON.getBytes());
                 gitService.stageAllChanges(testRepository);
-                gitService.commitAndPush(testRepository, "Generate the structure oracle file.");
+                gitService.commitAndPush(testRepository, "Generate the structure oracle file.", user);
                 return true;
             }
             catch (GitAPIException e) {
@@ -730,7 +735,7 @@ public class ProgrammingExerciseService {
                 try {
                     Files.write(structureOraclePath, structureOracleJSON.getBytes());
                     gitService.stageAllChanges(testRepository);
-                    gitService.commitAndPush(testRepository, "Update the structure oracle file.");
+                    gitService.commitAndPush(testRepository, "Update the structure oracle file.", user);
                     return true;
                 }
                 catch (GitAPIException e) {

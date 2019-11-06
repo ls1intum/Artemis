@@ -269,7 +269,8 @@ public class ProgrammingSubmissionResource {
 
         ObjectId lastCommitId = null;
         try {
-            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+            Commit commit = versionControlService.get().getLastCommitDetails(requestBody);
+            String lastCommitHash = commit.getCommitHash();
             lastCommitId = ObjectId.fromString(lastCommitHash);
             log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for exercise " + exerciseId);
         }
