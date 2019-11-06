@@ -720,9 +720,15 @@ public class BitbucketService implements VersionControlService {
         // we are interested in the toHash
         try {
             Commit commit = new Commit();
+            // TODO: use JsonNode here to simplify the parsings
             var requestBodyMap = (Map<String, Object>) requestBody;
             var changes = (List<Object>) requestBodyMap.get("changes");
             var lastChange = (Map<String, Object>) changes.get(0);
+            var ref = (Map<String, Object>) lastChange.get("ref");
+            if (ref != null) {
+                var branch = (String) ref.get("displayId");
+                commit.setBranch(branch);
+            }
             var hash = (String) lastChange.get("toHash");
             commit.setCommitHash(hash);
             var actor = (Map<String, Object>) requestBodyMap.get("actor");

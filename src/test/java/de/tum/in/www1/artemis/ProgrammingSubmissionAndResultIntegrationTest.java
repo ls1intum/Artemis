@@ -276,7 +276,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
-        postSubmission(participationId, HttpStatus.BAD_REQUEST);
+        postSubmission(participationId, HttpStatus.OK);
         // Post the build result once.
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -290,6 +290,8 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         assertThat(submission.getResult()).isNotNull();
         assertThat(submission.getResult().getId()).isEqualTo(result.getId());
     }
+
+    // TODO: write a test case that invokes notifyPush on ProgrammingSubmissionService with two identical commits. This test should then expect an IllegalStateException
 
     /**
      * This is the case where an instructor manually triggers the build from the CI.

@@ -109,12 +109,13 @@ public class ProgrammingSubmissionService {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
             // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
-            if (!commit.getBranch().equals("master")) {
+            if (commit.getBranch() != null && !commit.getBranch().equals("master")) {
                 // if the commit was made in a branch different than master, ignore this
                 throw new IllegalStateException(
                         "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
             }
-            if (commit.getAuthorName().equals(ARTEMIS_GIT_NAME) && commit.getAuthorEmail().equals(ARTEMIS_GIT_EMAIL)) {
+            if (commit.getAuthorName() != null && commit.getAuthorName().equals(ARTEMIS_GIT_NAME) && commit.getAuthorEmail() != null
+                    && commit.getAuthorEmail().equals(ARTEMIS_GIT_EMAIL)) {
                 // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
                 throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
             }
