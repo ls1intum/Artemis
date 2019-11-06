@@ -499,7 +499,7 @@ public class ProgrammingSubmissionService {
      * @return a list of programming submissions
      */
     @Transactional(readOnly = true)
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
         List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());
@@ -513,7 +513,7 @@ public class ProgrammingSubmissionService {
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(Long exerciseId, boolean submittedOnly) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<ProgrammingSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
