@@ -233,8 +233,9 @@ public class GitService {
     /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
-     * @param repo    Local Repository Object.
-     * @param message Commit Message
+     * @param repo      Local Repository Object.
+     * @param message   Commit Message
+     * @param user      The user who should initiate the commit. If the user is null, the artemis user will be used
      * @throws GitAPIException if the commit failed.
      */
     public void commitAndPush(Repository repo, String message, @Nullable User user) throws GitAPIException {
