@@ -959,6 +959,7 @@ public class ProgrammingExerciseService {
             // Execute requests in batches instead all at once.
             if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
                 try {
+                    log.info("Sleep for {}s during removeWritePermissionsFromAllStudentRepositories", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
                     Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
                 }
                 catch (InterruptedException ex) {
