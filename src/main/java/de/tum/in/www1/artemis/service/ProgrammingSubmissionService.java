@@ -95,8 +95,8 @@ public class ProgrammingSubmissionService {
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
-        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation
-                && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
+        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
+                || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
@@ -348,8 +348,8 @@ public class ProgrammingSubmissionService {
     public void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
         var programmingExerciseParticipation = (ProgrammingExerciseParticipation) submission.getParticipation();
         try {
-            if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation
-                    && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
+            if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
+                    || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
                 participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             }
