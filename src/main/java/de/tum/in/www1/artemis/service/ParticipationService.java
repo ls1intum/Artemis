@@ -538,6 +538,21 @@ public class ParticipationService {
     }
 
     /**
+     * Get one participation by id including all submissions. Throws an EntityNotFoundException if the participation with the given id could not be found.
+     *
+     * @param participationId the id of the entity
+     * @return the participation with all its submissions and results
+     */
+    public StudentParticipation findOneWithEagerSubmissions(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerSubmissionsById(participationId);
+        if (participation.isEmpty()) {
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
      * Get one participation by id including all submissions and results. Throws an EntityNotFoundException if the participation with the given id could not be found.
      *
      * @param participationId the id of the entity

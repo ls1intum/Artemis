@@ -88,14 +88,14 @@ public class ProgrammingSubmissionService {
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationService.findOneWithEagerSubmissions(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("ProgrammingExerciseParticipation with id " + participationId + " could not be found!");
         }
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation
+        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation
                 && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
@@ -121,7 +121,7 @@ public class ProgrammingSubmissionService {
             lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
         }
         catch (Exception ex) {
-            log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
+            log.error("Commit hash could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
             throw new IllegalArgumentException(ex);
         }
 
@@ -139,10 +139,10 @@ public class ProgrammingSubmissionService {
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        participation.addSubmissions(programmingSubmission);
+        programmingExerciseParticipation.addSubmissions(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
-        participationService.save(participation);
+        participationService.save(programmingExerciseParticipation);
         return programmingSubmission;
     }
 
