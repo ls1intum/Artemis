@@ -339,7 +339,7 @@ public class CourseResource {
         List<Exercise> exercises = exerciseService.findAllForCourse(course, false, user);
 
         exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                || exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)).collect(Collectors.toList());
+                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC))).collect(Collectors.toList());
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
