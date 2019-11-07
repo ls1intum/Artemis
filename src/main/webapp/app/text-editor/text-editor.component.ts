@@ -12,9 +12,7 @@ import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
-import { ComplaintType } from 'app/entities/complaint';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ComponentCanDeactivate } from 'app/shared';
 import { Observable } from 'rxjs/Observable';
@@ -31,20 +29,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isActive: boolean;
     isSaving: boolean;
     answer: string;
-    isExampleSubmission = false;
-    showComplaintForm = false;
-    showRequestMoreFeedbackForm = false;
-    // indicates if there is a complaint for the result of the submission
-    hasComplaint = false;
-    // indicates if more feedback was requested already
-    hasRequestMoreFeedback = false;
-    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
-    numberOfAllowedComplaints: number;
-    // indicates if the result is older than one week. if it is, the complain button is disabled
-    isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
-    ComplaintType = ComplaintType;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
@@ -55,7 +41,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
-        private complaintService: ComplaintService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
@@ -78,12 +63,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.textExercise = this.participation.exercise as TextExercise;
                 this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
 
-                if (this.textExercise.course) {
-                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.textExercise.course.id).subscribe((allowedComplaints: number) => {
-                        this.numberOfAllowedComplaints = allowedComplaints;
-                    });
-                }
-
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
                     if (this.submission && data.results && this.isAfterAssessmentDueDate) {
@@ -92,18 +71,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
                     if (this.submission && this.submission.text) {
                         this.answer = this.submission.text;
-                    }
-                    if (this.result && this.result.completionDate) {
-                        this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.textExercise);
-                        this.complaintService.findByResultId(this.result.id).subscribe(res => {
-                            if (res.body) {
-                                if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
-                                    this.hasComplaint = true;
-                                } else {
-                                    this.hasRequestMoreFeedback = true;
-                                }
-                            }
-                        });
                     }
                 }
 
@@ -232,15 +199,5 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     previous() {
         this.location.back();
-    }
-
-    toggleComplaintForm() {
-        this.showRequestMoreFeedbackForm = false;
-        this.showComplaintForm = !this.showComplaintForm;
-    }
-
-    toggleRequestMoreFeedbackForm() {
-        this.showComplaintForm = false;
-        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 }
