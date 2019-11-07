@@ -1,1 +1,1 @@
-export const MAX_COMPLAINT_TIME_WEEKS = 2;
+export const MAX_COMPLAINT_TIME_WEEKS = 3;

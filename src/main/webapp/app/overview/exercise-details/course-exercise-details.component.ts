@@ -152,16 +152,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     sortResults() {
         if (this.studentParticipation && this.hasResults) {
-            this.studentParticipation.results = this.studentParticipation.results.sort((a, b) => {
-                const aValue = moment(a.completionDate!).valueOf();
-                const bValue = moment(b.completionDate!).valueOf();
-                return aValue - bValue;
-            });
+            this.studentParticipation.results = this.studentParticipation.results.sort(this.resultSortFunction);
             const sortedResultLength = this.studentParticipation.results.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
             this.sortedHistoryResult = this.studentParticipation.results.slice(startingElement, sortedResultLength);
         }
     }
+
+    private resultSortFunction = (a: Result, b: Result) => {
+        const aValue = moment(a.completionDate!).valueOf();
+        const bValue = moment(b.completionDate!).valueOf();
+        return aValue - bValue;
+    };
 
     mergeResultsAndSubmissionsForParticipations() {
         // if there are new student participation(s) from the server, we need to update this.studentParticipation
@@ -263,7 +265,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return this.studentParticipation.results.find((result: Result) => !!result.completionDate) || null;
         }
 
-        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated);
+        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated).sort(this.resultSortFunction);
         const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
         if (latestResult) {
             latestResult.participation = this.studentParticipation;
