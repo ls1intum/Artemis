@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -825,13 +828,8 @@ public class ParticipationService {
             }
         }
 
-        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                || participation.getExercise() instanceof FileUploadExercise) {
-            // For modeling, text and file upload exercises students can send complaints about their assessments and we need to remove
-            // the complaints and the according responses belonging to a participation before deleting the participation itself.
-            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
-            complaintRepository.deleteByResult_Participation_Id(participationId);
-        }
+        complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
+        complaintRepository.deleteByResult_Participation_Id(participationId);
 
         participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 
