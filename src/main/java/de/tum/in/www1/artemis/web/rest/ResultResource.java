@@ -219,8 +219,7 @@ public class ResultResource {
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
-            // TODO: change the following log to debug
-            log.info("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
+            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
                     result.get().getParticipation());
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
