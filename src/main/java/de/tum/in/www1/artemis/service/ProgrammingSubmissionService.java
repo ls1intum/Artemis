@@ -111,20 +111,21 @@ public class ProgrammingSubmissionService {
             commit = versionControlService.get().getLastCommitDetails(requestBody);
             log.info("NotifyPush invoked due to the commit " + commit.getCommitHash() + " by " + commit.getAuthorName() + " with " + commit.getAuthorEmail() + " in branch "
                     + commit.getBranch());
-            if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase("master")) {
-                // if the commit was made in a branch different than master, ignore this
-                throw new IllegalStateException(
-                        "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
-            }
-            if (commit.getAuthorName() != null && commit.getAuthorName().equalsIgnoreCase(ARTEMIS_GIT_NAME) && commit.getAuthorEmail() != null
-                    && commit.getAuthorEmail().equalsIgnoreCase(ARTEMIS_GIT_EMAIL)) {
-                // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
-                throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
-            }
         }
         catch (Exception ex) {
             log.error("Commit could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
             throw new IllegalArgumentException(ex);
+        }
+
+        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase("master")) {
+            // if the commit was made in a branch different than master, ignore this
+            throw new IllegalStateException(
+                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
+        }
+        if (commit.getAuthorName() != null && commit.getAuthorName().equalsIgnoreCase(ARTEMIS_GIT_NAME) && commit.getAuthorEmail() != null
+                && commit.getAuthorEmail().equalsIgnoreCase(ARTEMIS_GIT_EMAIL)) {
+            // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
+            throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
         }
 
         if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
