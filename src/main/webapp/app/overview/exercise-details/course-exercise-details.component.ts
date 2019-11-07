@@ -20,6 +20,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -29,6 +30,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
+    readonly AssessmentType = AssessmentType;
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;

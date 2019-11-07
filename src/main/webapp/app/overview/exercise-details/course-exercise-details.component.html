@@ -160,8 +160,16 @@
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}</h3>
                 </div>
             </div>
+            <!-- RESULTS END -->
+            <jhi-complaint-interactions
+                *ngIf="currentResult && studentParticipation && currentResult.assessmentType === AssessmentType.MANUAL"
+                class="row mb-2 mt-2"
+                [exercise]="exercise"
+                [participation]="studentParticipation"
+                [result]="currentResult"
+            >
+            </jhi-complaint-interactions>
         </div>
-        <!-- RESULTS END -->
         <div class="col-sm-12 col-md-4 col-lg-4" jhiIdeFilter [showInIDE]="false">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>

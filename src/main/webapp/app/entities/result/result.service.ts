@@ -11,6 +11,7 @@ import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { isMoment } from 'moment';
+import { MAX_COMPLAINT_TIME_WEEKS } from 'app/complaints/complaint.constants';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -125,8 +126,8 @@ export class ResultService implements IResultService {
     isTimeOfComplaintValid(result: Result, exercise: Exercise): boolean {
         const resultCompletionDate = moment(result.completionDate!);
         if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
-            return resultCompletionDate.isAfter(moment().subtract(1, 'week'));
+            return resultCompletionDate.isAfter(moment().subtract(MAX_COMPLAINT_TIME_WEEKS, 'week'));
         }
-        return moment(exercise.assessmentDueDate).isAfter(moment().subtract(1, 'week'));
+        return moment(exercise.assessmentDueDate).isAfter(moment().subtract(MAX_COMPLAINT_TIME_WEEKS, 'week'));
     }
 }
