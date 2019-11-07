@@ -7,6 +7,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -52,6 +55,9 @@ public class BitbucketService implements VersionControlService {
 
     @Value("${artemis.lti.user-prefix-u4i}")
     private String USER_PREFIX_U4I = "";
+
+    @Value("${artemis.git.name}")
+    private String ARTEMIS_GIT_NAME;
 
     private final UserService userService;
 
@@ -714,26 +720,33 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public Commit getLastCommitDetails(Object requestBody) throws BitbucketException {
-
         // NOTE thegetLastCommitDetails requestBody should look like this:
         // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master","fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
         try {
             Commit commit = new Commit();
-            // TODO: use JsonNode here to simplify the parsings
-            var requestBodyMap = (Map<String, Object>) requestBody;
-            var changes = (List<Object>) requestBodyMap.get("changes");
-            var lastChange = (Map<String, Object>) changes.get(0);
-            var ref = (Map<String, Object>) lastChange.get("ref");
+            final var commitData = new ObjectMapper().convertValue(requestBody, JsonNode.class);
+            var lastChange = commitData.get("changes").get(0);
+            var ref = lastChange.get("ref");
             if (ref != null) {
-                var branch = (String) ref.get("displayId");
+                var branch = ref.get("displayId").asText();
                 commit.setBranch(branch);
             }
-            var hash = (String) lastChange.get("toHash");
+            var hash = lastChange.get("toHash").asText();
             commit.setCommitHash(hash);
-            var actor = (Map<String, Object>) requestBodyMap.get("actor");
-            var name = (String) actor.get("name");
-            var email = (String) actor.get("emailAddress");
+            var actor = commitData.get("actor");
+            String name;
+            String email;
+            if (actor.get("name").asText().equals(ARTEMIS_GIT_NAME)) {
+                final var commitInfo = fetchCommitInfo(commitData, hash);
+                commit.setMessage(commitInfo.get("message").asText());
+                name = commitInfo.get("author").get("name").asText();
+                email = commitInfo.get("author").get("emailAddress").asText();
+            }
+            else {
+                name = actor.get("name").asText();
+                email = actor.get("emailAddress").asText();
+            }
             commit.setAuthorName(name);
             commit.setAuthorEmail(email);
             return commit;
@@ -742,6 +755,23 @@ public class BitbucketService implements VersionControlService {
             log.error("Error when getting hash of last commit");
             throw new BitbucketException("Could not get hash of last commit", e);
         }
+    }
+
+    @NotNull
+    private JsonNode fetchCommitInfo(JsonNode commitData, String hash) throws MalformedURLException, URISyntaxException {
+        final var repositoryURL = new URL(commitData.get("repository").get("links").get("clone").get(0).get("href").asText());
+        final var projectKey = getProjectKeyFromUrl(repositoryURL);
+        final var slug = getRepositorySlugFromUrl(repositoryURL);
+        final var uriBuilder = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash)
+                .build();
+        final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        final var entity = new HttpEntity<>(headers);
+
+        final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, entity, JsonNode.class).getBody();
+        if (commitInfo == null)
+            throw new BitbucketException("Unable to fetch commit info from Bitbucket for hash " + hash);
+
+        return commitInfo;
     }
 
     @Override
