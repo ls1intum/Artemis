@@ -189,7 +189,7 @@ public class ResultService {
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            resultRepository.save(result);
+            result = resultRepository.save(result);
 
             // If the solution participation was updated, also trigger the template participation build.
             if (isSolutionParticipation) {

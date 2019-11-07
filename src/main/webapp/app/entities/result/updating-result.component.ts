@@ -73,6 +73,16 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .pipe(
                 // Ignore initial null result of subscription
                 filter(result => !!result),
+                // TODO: remove logging
+                tap(result =>
+                    console.log(
+                        'Received result ' + result + ' with submission ' + result != null
+                            ? result!.submission
+                            : 'null' + ' and participation ' + result != null
+                            ? result!.participation
+                            : 'null',
+                    ),
+                ),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 filter((result: Result) => this.showUngradedResults || result.rated),
                 map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
