@@ -492,9 +492,6 @@ public class BambooService implements ContinuousIntegrationService {
             }).findFirst();
 
             Result result = createResultFromBuildResult(buildMap, participation);
-            // Save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
-            resultRepository.save(result);
-
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
@@ -521,8 +518,8 @@ public class BambooService implements ContinuousIntegrationService {
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             return resultRepository.save(result);
         } catch (Exception e) {
-            log.error("Error when getting build result: " + e.getMessage());
-            throw new BambooException("Could not get build result", e);
+            log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
+            throw new BambooException("Could not create build result from Bamboo notification", e);
         }
     }
 
@@ -556,6 +553,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
+        result = resultRepository.save(result);
 
         return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
     }
@@ -662,8 +660,8 @@ public class BambooService implements ContinuousIntegrationService {
         feedback.setDetailText(errorMessageString);
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setPositive(positive);
-        feedback = feedbackRepository.save(feedback);
         result.addFeedback(feedback);
+        feedbackRepository.save(feedback);
     }
 
     /**
@@ -718,7 +716,7 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Could not get feedback from jobs " + e);
         }
 
-        return result;
+        return resultRepository.save(result);
     }
 
     /**
