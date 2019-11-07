@@ -103,7 +103,7 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
         catch (IllegalStateException ex) {
-            log.warn("Processing submission for participation {} failed: {}", participationId, ex.getMessage());
+            log.warn("Processing submission for participation {} failed with request object {}: {}", participationId, requestBody, ex.getMessage());
             // we return ok, because the problem is not on the side of the VCS Server and we don't want the VCS Server to kill the webhook if there are too many errors
             return ResponseEntity.status(HttpStatus.OK).build();
         }
