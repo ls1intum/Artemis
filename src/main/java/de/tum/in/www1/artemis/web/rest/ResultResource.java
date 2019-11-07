@@ -232,8 +232,8 @@ public class ResultResource {
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
             }
+            log.info("The new result for {} was saved successfully", planKey);
         }
-        log.info("The new result for {} was saved successfully", planKey);
         return ResponseEntity.ok().build();
     }
 

@@ -488,7 +488,7 @@ public class BambooService implements ContinuousIntegrationService {
             List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId());
             Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(submission -> {
                 String matchingCommitHashInBuildMap = getCommitHash(buildMap, submission.getType());
-                return matchingCommitHashInBuildMap.equals(submission.getCommitHash());
+                return matchingCommitHashInBuildMap != null && matchingCommitHashInBuildMap.equals(submission.getCommitHash());
             }).findFirst();
 
             Result result = createResultFromBuildResult(buildMap, participation);
@@ -553,7 +553,6 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
-        result = resultRepository.save(result);
 
         return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
     }
@@ -661,7 +660,6 @@ public class BambooService implements ContinuousIntegrationService {
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setPositive(positive);
         result.addFeedback(feedback);
-        feedbackRepository.save(feedback);
     }
 
     /**
@@ -716,7 +714,7 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Could not get feedback from jobs " + e);
         }
 
-        return resultRepository.save(result);
+        return result;
     }
 
     /**
