@@ -7,6 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { createRequestOption } from 'app/shared';
 import { SubmissionType } from 'app/entities/submission';
 
 export enum ProgrammingSubmissionState {
@@ -439,4 +440,37 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const { participationId, submission, submissionState } = val;
         return { ...acc, [participationId]: { participationId, submissionState, submission } };
     };
+
+    /**
+     * Returns programming submissions for exercise from the server
+     * @param exerciseId the id of the exercise
+     * @param req request parameters
+     */
+    getProgrammingSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<ProgrammingSubmission[]>> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<ProgrammingSubmission[]>(`api/exercises/${exerciseId}/programming-submissions`, {
+                params: options,
+                observe: 'response',
+            })
+            .map((res: HttpResponse<ProgrammingSubmission[]>) => this.convertArrayResponse(res));
+    }
+
+    /**
+     * Returns next programming submission without assessment from the server
+     * @param exerciseId the id of the exercise
+     */
+    getProgrammingSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<ProgrammingSubmission> {
+        const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+        return this.http.get<ProgrammingSubmission>(url);
+    }
+
+    private convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {
+        const jsonResponse: ProgrammingSubmission[] = res.body!;
+        const body: ProgrammingSubmission[] = [];
+        for (let i = 0; i < jsonResponse.length; i++) {
+            body.push({ ...jsonResponse[i] });
+        }
+        return res.clone({ body });
+    }
 }
