@@ -273,6 +273,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
         }
 
+        programmingExercise.generateAndSetProjectKey();
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
         boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
