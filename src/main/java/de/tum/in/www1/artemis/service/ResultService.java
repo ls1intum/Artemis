@@ -183,7 +183,7 @@ public class ResultService {
             boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
             boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
             // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-            if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            if (isSolutionParticipation) {
                 extractTestCasesFromResult(programmingExercise, result);
             }
             // Find out which test cases were executed and calculate the score according to their status and weight.
