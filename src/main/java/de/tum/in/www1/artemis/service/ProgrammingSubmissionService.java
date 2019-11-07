@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -46,8 +48,6 @@ public class ProgrammingSubmissionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     private final GroupNotificationService groupNotificationService;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -60,14 +60,18 @@ public class ProgrammingSubmissionService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final SubmissionService submissionService;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository, SubmissionService submissionService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseService = programmingExerciseService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.versionControlService = versionControlService;
@@ -76,6 +80,8 @@ public class ProgrammingSubmissionService {
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -483,5 +489,60 @@ public class ProgrammingSubmissionService {
     public ProgrammingSubmission findByResultId(long resultId) throws EntityNotFoundException {
         Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findByResultId(resultId);
         return programmingSubmission.orElseThrow(() -> new EntityNotFoundException("Could not find programming submission for result id " + resultId));
+    }
+
+    /**
+     * Given an exercise id and a tutor id, it returns all the programming submissions where the tutor has a result associated
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutorId    - the id of the tutor we are interested in
+     * @return a list of programming submissions
+     */
+    @Transactional(readOnly = true)
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
+        List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
+        return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Given an exerciseId, returns all the programming submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
+     *
+     * @param exerciseId    - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @return a list of programming submissions for the given exercise id
+     */
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
+        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<ProgrammingSubmission> submissions = new ArrayList<>();
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
+                // filter out non submitted submissions if the flag is set to true
+                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
+                .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
+        return submissions;
+    }
+
+    /**
+     * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
+     *
+     * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionWithoutManualResult(ProgrammingExercise programmingExercise) {
+        Random r = new Random();
+        List<ProgrammingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(programmingExercise.getId()).stream()
+                .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (ProgrammingSubmission) submission)
+                .collect(Collectors.toList());
+
+        if (submissionsWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+    }
+
+    public void hideDetails(ProgrammingSubmission submission) {
+        submissionService.hideDetails(submission);
     }
 }
