@@ -60,8 +60,6 @@ public class ParticipationService {
 
     private final QuizSubmissionService quizSubmissionService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final UserService userService;
 
     private final Optional<GitService> gitService;
@@ -81,7 +79,7 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
+            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
@@ -95,7 +93,6 @@ public class ParticipationService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintRepository = complaintRepository;
         this.quizSubmissionService = quizSubmissionService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -221,8 +218,10 @@ public class ParticipationService {
             programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
+            // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
+            programmingExerciseStudentParticipation = performEmptyCommitHook(programmingExerciseStudentParticipation);
+            // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
             programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
-            // we configure the repository webhook after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
             programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
             programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
             // after saving, we need to make sure the object that is used after the if statement is the right one
@@ -382,7 +381,12 @@ public class ParticipationService {
     public ProgrammingExerciseStudentParticipation resumeExercise(ProgrammingExerciseStudentParticipation participation) {
         participation = copyBuildPlan(participation);
         participation = configureBuildPlan(participation);
+        // Note: the repository webhook already exists so we don't need to set it up again
         participation.setInitializationState(INITIALIZED);
+        participation = save(participation);
+        // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
+        // because in notifyPush we only filter out empty commits when the state is already initialized
+        participation = performEmptyCommitHook(participation);
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
@@ -454,11 +458,13 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
                     "Artemis WebHook");
-            return save(participation);
         }
-        else {
-            return participation;
-        }
+        return participation;
+    }
+
+    private ProgrammingExerciseStudentParticipation performEmptyCommitHook(ProgrammingExerciseStudentParticipation participation) {
+        continuousIntegrationService.get().performEmptySetupCommit(participation);
+        return participation;
     }
 
     /**

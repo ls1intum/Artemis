@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import com.appfire.common.cli.Settings;
+import com.appfire.common.cli.requesthelpers.DefaultAuthenticationHelper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -89,14 +90,6 @@ public class BambooService implements ContinuousIntegrationService {
         this.restTemplate = restTemplate;
     }
 
-    /**
-     * Creates the base build plan for the given programming exercise in Bamboo.
-     *
-     * @param programmingExercise   a programming exercise with the required information to create the base build plan
-     * @param planKey               the key of the plan
-     * @param repositoryName        the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testRepositoryName    the slug of the test repository, i.e. the unique identifier
-     */
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
@@ -144,15 +137,8 @@ public class BambooService implements ContinuousIntegrationService {
         return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
-    /**
-     * Configure the build plan with the given participation on the Bamboo.
-     * For Bamboo to be set up correctly an empty commit needs to be made.
-     *
-     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy.
-     */
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        ProgrammingExercise exercise = participation.getProgrammingExercise();
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
@@ -167,11 +153,16 @@ public class BambooService implements ContinuousIntegrationService {
         enablePlan(planKey);
         // We need to trigger an initial update in order for Gitlab to work correctly
         continuousIntegrationUpdateService.get().triggerUpdate(buildPlanId, true);
+    }
 
+    @Override
+    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
         // Empty commit - Bamboo bug workaround
 
         if (BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY) {
             try {
+                ProgrammingExercise exercise = participation.getProgrammingExercise();
+                URL repositoryUrl = participation.getRepositoryUrlAsUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
                 // notifyPush in ProgrammingSubmissionService
@@ -306,22 +297,6 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId) {
         return retrieveLatestBuildLogs(buildPlanId);
-    }
-
-    /**
-     * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
-     *
-     * @param participation participation for which to get the build plan URL.
-     * @return build plan url.
-     */
-    @Override
-    public URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation) {
-        try {
-            return new URL(BAMBOO_SERVER_URL + "/browse/" + participation.getBuildPlanId().toUpperCase());
-        } catch (MalformedURLException e) {
-            log.error("Couldn't construct build plan web URL");
-        }
-        return BAMBOO_SERVER_URL;
     }
 
     @Override
@@ -825,7 +800,7 @@ public class BambooService implements ContinuousIntegrationService {
                 entity,
                 Map.class);
         } catch (Exception e) {
-            log.error("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ":" + e.getMessage());
+            log.error("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ": " + e.getMessage());
         }
         if (response != null) {
             Map<String, Object> result = new HashMap<>();
@@ -844,7 +819,7 @@ public class BambooService implements ContinuousIntegrationService {
             result.put("details", resultDetails);
 
             //search for version control information
-            if (response.getBody().containsKey("vcsRevisions")) {
+//            if (response.getBody().containsKey("vcsRevisions")) {
                 //TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
                 // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
 //                "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668",
@@ -866,8 +841,8 @@ public class BambooService implements ContinuousIntegrationService {
 //                    "start-index":0,
 //                        "max-result":2
 //                },
-                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
-            }
+//                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
+//            }
             if (response.getBody().containsKey("vcsRevisionKey")) {
                 result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
             }

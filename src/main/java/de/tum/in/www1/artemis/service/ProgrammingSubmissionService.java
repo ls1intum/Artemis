@@ -109,6 +109,8 @@ public class ProgrammingSubmissionService {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
             // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
+            log.info("NotifyPush invoked due to the commit " + commit.getCommitHash() + " by " + commit.getAuthorName() + " with " + commit.getAuthorEmail() + " in branch "
+                    + commit.getBranch());
             if (commit.getBranch() != null && !commit.getBranch().equals("master")) {
                 // if the commit was made in a branch different than master, ignore this
                 throw new IllegalStateException(

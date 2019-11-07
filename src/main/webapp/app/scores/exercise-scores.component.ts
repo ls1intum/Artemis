@@ -207,11 +207,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     goToBuildPlan(result: Result) {
-        this.sourceTreeService.goToBuildPlan(result.participation!);
+        window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
     }
 
     goToRepository(result: Result) {
-        window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
+        // TODO: get the continuous integration URL as a client constant during the management info call
+        window.open('https://bamboobruegge.in.tum.de/browse/' + (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId);
     }
 
     updateResultFilter(newValue: FilterProp) {
