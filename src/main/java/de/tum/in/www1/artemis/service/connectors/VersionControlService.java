@@ -46,12 +46,11 @@ public interface VersionControlService {
     /**
      * Get the clone URL used for cloning
      *
-     * @param courseId      The key of the course of the project
      * @param projectKey     The project key
      * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUrl getCloneRepositoryUrl(long courseId, String projectKey, String repositorySlug);
+    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.

@@ -154,8 +154,8 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(long courseId, String projectKey, String repositorySlug) {
-        return new GitLabRepositoryUrl(courseId, projectKey, repositorySlug);
+    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
+        return new GitLabRepositoryUrl(projectKey, repositorySlug);
     }
 
     @Override
@@ -182,20 +182,9 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws VersionControlException {
-        final var coursePath = programmingExercise.getCourse().getId() + "";
-        final var optionalCourseId = groupExists(coursePath);
-        long courseId;
-        if (optionalCourseId.isEmpty()) {
-            final var courseName = coursePath + " " + programmingExercise.getCourse().getTitle();
-            courseId = createGroup(courseName, coursePath, Optional.empty());
-        }
-        else {
-            courseId = optionalCourseId.get();
-        }
-
         final var exercisePath = programmingExercise.getProjectKey();
-        final var exerciseName = exercisePath + programmingExercise.getTitle();
-        createGroup(exerciseName, exercisePath, Optional.of(courseId));
+        final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
+        createGroup(exerciseName, exercisePath);
     }
 
     private Optional<Long> groupExists(String path) {
@@ -206,25 +195,18 @@ public class GitLabService implements VersionControlService {
 
         for (final var group : foundGroups) {
             if (group.get("path").asText().equals(path))
-                return Optional.of(foundGroups.get("id").asLong());
+                return Optional.of(group.get("id").asLong());
         }
 
         return Optional.empty();
     }
 
-    private long createGroup(String groupName, String path, Optional<Long> parentGroupId) {
+    private long createGroup(String groupName, String path) {
         final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API);
-        var body = Map.<String, Object>of("name", groupName, "path", path, "visibility", "private");
-        if (parentGroupId.isPresent()) {
-            // Have to create new map, since Map.of creates immutable structures
-            body = new HashMap<>(body);
-            body.put("parent_id", parentGroupId.get());
-        }
+        final var body = Map.<String, Object>of("name", groupName, "path", path, "visibility", "private");
 
-        final var groupCreationBody = body;
         final var errorString = "Unable to create new group for course " + groupName;
-        final var createdGroup = executeAndExpect(errorString, HttpStatus.CREATED,
-                () -> restTemplate.postForEntity(builder.build(true).toUri(), groupCreationBody, JsonNode.class));
+        final var createdGroup = executeAndExpect(errorString, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
 
         return createdGroup.get("id").asLong();
     }
@@ -233,7 +215,7 @@ public class GitLabService implements VersionControlService {
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
         final var exerciseGroupId = groupExists(projectKey).get();
         final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API);
-        final var body = Map.of("name", projectKey, "namespace_id", exerciseGroupId, "builds_access_level", "disabled", "visibility", "private");
+        final var body = Map.of("name", repoName.toLowerCase(), "namespace_id", exerciseGroupId, "builds_access_level", "disabled", "visibility", "private");
 
         final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class);
         if (response.getStatusCode() == HttpStatus.BAD_REQUEST && response.getBody().get("message").get("name").get(0).asText().equals("has already been taken")) {
@@ -252,24 +234,20 @@ public class GitLabService implements VersionControlService {
     }
 
     private long getRepositoryId(URL repositoryUrl) {
-        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API);
-        final var body = Map.of("search", getRepositorySlugFromUrl(repositoryUrl));
-        final var entity = new HttpEntity<>(body);
+        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API).queryParam("search", getRepositorySlugFromUrl(repositoryUrl));
 
         final var errorMessage = "Error fetching ID for repository " + repositoryUrl;
-        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.GET, entity, JsonNode.class));
+        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         return response.get("id").asLong();
     }
 
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
-        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API);
-        final var body = Map.of("search", projectKey);
-        final var entity = new HttpEntity<>(body);
+        final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", projectKey);
 
         final var errorMessage = "Error trying to search for project " + projectKey;
-        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.GET, entity, JsonNode.class));
+        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         return !response.isEmpty();
     }
@@ -345,9 +323,8 @@ public class GitLabService implements VersionControlService {
     private String getPathIdFromRepositoryURL(URL repository) {
         final var namespaces = repository.toString().split("/");
         final var last = namespaces.length - 1;
-        final var idBuilder = new StringBuilder(namespaces[last - 2]);
 
-        return idBuilder.append("%2F").append(namespaces[last - 1]).append("%2F").append(namespaces[last].replace(".git", "")).toString();
+        return namespaces[last - 1] + "%2F" + namespaces[last].replace(".git", "");
     }
 
     private enum Endpoints {
@@ -392,10 +369,10 @@ public class GitLabService implements VersionControlService {
 
     public final class GitLabRepositoryUrl extends VcsRepositoryUrl {
 
-        public GitLabRepositoryUrl(long courseId, String projectKey, String repositorySlug) {
+        public GitLabRepositoryUrl(String projectKey, String repositorySlug) {
             super();
-            final var path = courseId + "/" + projectKey + "/" + repositorySlug;
-            final var urlString = GITLAB_SERVER_URL + "/" + path;
+            final var path = projectKey + "/" + repositorySlug;
+            final var urlString = GITLAB_SERVER_URL + "/" + path + ".git";
 
             stirngToURL(urlString);
         }
