@@ -206,6 +206,7 @@
                         *ngIf="newManualResultAllowed"
                         [participationId]="value.participation.id"
                         [latestResult]="value"
+                        (onResultCreated)="refresh()"
                         class="mr-1"
                     ></jhi-programming-assessment-manual-result>
                 </ng-template>

@@ -1180,4 +1180,20 @@ public class ProgrammingExerciseService {
         }
         return null;
     }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return programmingExerciseRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
+
+    /**
+     * @param courseId the course we are interested in
+     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return programmingExerciseRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
 }
