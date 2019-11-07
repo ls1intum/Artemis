@@ -34,7 +34,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isAlwaysActive: boolean;
     isAllowedToSubmitAfterDeadline: boolean;
     answer: string;
-    isExampleSubmission = false;
     showComplaintForm = false;
     showRequestMoreFeedbackForm = false;
     // indicates if there is a complaint for the result of the submission
@@ -121,8 +120,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             newSubmission.text = this.answer;
             if (this.submission.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe();
-            } else {
-                this.textSubmissionService.create(newSubmission, this.textExercise.id).subscribe();
             }
         }
     }
@@ -168,44 +165,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
-    saveText() {
-        if (this.isSaving) {
-            return;
-        }
-
-        if (!this.submission) {
-            this.submission = new TextSubmission();
-        }
-
-        this.submission.submitted = false;
-        this.submission.text = this.answer;
-        this.isSaving = true;
-
-        this.textSubmissionService[this.submission.id ? 'update' : 'create'](this.submission, this.textExercise.id).subscribe(
-            response => {
-                if (response) {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
-                    this.jhiAlertService.success('artemisApp.textExercise.saveSuccessful');
-
-                    this.isSaving = false;
-                }
-            },
-            e => {
-                this.jhiAlertService.error('artemisApp.textExercise.error');
-                this.isSaving = false;
-            },
-        );
-    }
-
     canDeactivate(): Observable<boolean> | boolean {
         return this.submission.text !== this.answer;
     }
 
     submit() {
+        if (this.isSaving) {
+            return;
+        }
+
         if (!this.submission) {
             return;
         }
+
+        this.isSaving = true;
         this.submission.text = this.answer;
         this.submission.language = this.textService.predictLanguage(this.submission.text);
 
@@ -214,6 +187,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             response => {
                 this.submission = response.body!;
                 this.result = this.submission.result;
+                this.isSaving = false;
 
                 if (!this.isAllowedToSubmitAfterDeadline) {
                     this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
@@ -224,6 +198,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             err => {
                 this.jhiAlertService.error('artemisApp.modelingEditor.error');
                 this.submission.submitted = false;
+                this.isSaving = false;
             },
         );
     }
