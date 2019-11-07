@@ -688,12 +688,6 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
-    /**
-     * Check if the given repository url is valid and accessible on Bitbucket.
-     * 
-     * @param repositoryUrl
-     * @return
-     */
     @Override
     public Boolean repositoryUrlIsValid(URL repositoryUrl) {
         String projectKey;
@@ -720,7 +714,7 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public Commit getLastCommitDetails(Object requestBody) throws BitbucketException {
-        // NOTE thegetLastCommitDetails requestBody should look like this:
+        // NOTE the requestBody should look like this:
         // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master","fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
         try {
@@ -768,8 +762,9 @@ public class BitbucketService implements VersionControlService {
         final var entity = new HttpEntity<>(headers);
 
         final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, entity, JsonNode.class).getBody();
-        if (commitInfo == null)
+        if (commitInfo == null) {
             throw new BitbucketException("Unable to fetch commit info from Bitbucket for hash " + hash);
+        }
 
         return commitInfo;
     }

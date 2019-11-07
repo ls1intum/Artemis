@@ -123,7 +123,7 @@ public class ProgrammingSubmissionService {
                     "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
         }
         if (commit.getAuthorName() != null && commit.getAuthorName().equalsIgnoreCase(ARTEMIS_GIT_NAME) && commit.getAuthorEmail() != null
-                && commit.getAuthorEmail().equalsIgnoreCase(ARTEMIS_GIT_EMAIL)) {
+                && commit.getAuthorEmail().equalsIgnoreCase(ARTEMIS_GIT_EMAIL) && commit.getMessage() != null && commit.getMessage().equals(SETUP_COMMIT_MESSAGE)) {
             // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
             throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
         }
