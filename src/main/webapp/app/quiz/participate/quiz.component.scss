@@ -22,8 +22,9 @@
 }
 
 .quiz-footer {
-    height: 100px;
+    height: 90px;
     position: fixed;
+    padding: 0 10px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -85,12 +86,19 @@
     }
 
     #remaining-time {
+        margin: 0 10px;
+        max-width: 35%;
         text-align: center;
-        width: 100%;
 
         > div {
             text-align: center;
             width: 100%;
+        }
+
+        @media (max-width: 599px) {
+            max-width: 50%;
+            max-height: 55px;
+            overflow-y: hidden;
         }
     }
 
@@ -166,16 +174,38 @@
     white-space: nowrap;
 }
 
+.hide-mobile {
+    @media (max-width: 699px) {
+        display: none;
+    }
+}
+.show-mobile {
+    @media (min-width: 700px) {
+        display: none;
+    }
+}
+
+.quiz-icons {
+    max-width: 40%;
+}
+
 .stepwizardquiz {
     display: flex;
     flex-wrap: wrap;
-    max-width: 300px;
-    max-height: 57px;
+    max-height: 60px;
+    overflow: hidden;
     position: relative;
-    text-align: center;
+
+    @media (max-width: 767.98px) {
+        max-height: 45px;
+    }
+
+    @media (max-width: 450px) {
+        max-width: 100px;
+    }
 
     &__step {
-        display: table-cell;
+        display: inline-block;
         text-align: center;
         position: relative;
 
@@ -187,6 +217,14 @@
             cursor: pointer;
             opacity: 1 !important;
         }
+    }
+}
+
+.submit-button {
+    width: 25%;
+
+    button {
+        float: right;
     }
 }
 
