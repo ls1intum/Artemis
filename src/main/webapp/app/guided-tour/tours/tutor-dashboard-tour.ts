@@ -1,5 +1,5 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 
 export const tutorCourseDashboardTour: GuidedTour = {
@@ -83,6 +83,18 @@ export const tutorExerciseDashboardTour: GuidedTour = {
             hintTranslateKey: 'tour.tutorExerciseDashboard.startAssessment.hint',
             highlightPadding: 10,
             orientation: Orientation.TOPRIGHT,
+            permission: ['ROLE_TA'],
+        }),
+        new ImageTourStep({
+            headlineTranslateKey: 'tour.assessment.modelingExercise.headline',
+            contentTranslateKey: 'tour.assessment.modelingExercise.content',
+            imageUrl: '/../../../content/images/guided-tour-images/assess-modeling-submission.gif',
+            permission: ['ROLE_TA'],
+        }),
+        new ImageTourStep({
+            headlineTranslateKey: 'tour.assessment.textExercise.headline',
+            contentTranslateKey: 'tour.assessment.textExercise.content',
+            imageUrl: '/../../../content/images/guided-tour-images/assess-text-submission.gif',
             permission: ['ROLE_TA'],
         }),
     ],

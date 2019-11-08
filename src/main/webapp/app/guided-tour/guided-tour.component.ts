@@ -235,8 +235,18 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Returns true if the current tour step is an instance of VideoTourStep, otherwise false
+     */
     public isVideoTourStep(): boolean {
         return this.currentTourStep instanceof VideoTourStep;
+    }
+
+    /**
+     * Returns true if the current tour step is an instance of ImageTourStep, otherwise false
+     */
+    public isImageTourStep(): boolean {
+        return this.currentTourStep instanceof ImageTourStep;
     }
 
     /**

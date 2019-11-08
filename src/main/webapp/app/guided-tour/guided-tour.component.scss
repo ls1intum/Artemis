@@ -130,6 +130,10 @@ jhi-guided-tour {
                 width: 40vh;
             }
 
+            &.image-tour {
+                width: 100vh;
+            }
+
             &.video-tour {
                 @media (max-width: 992px) {
                     width: 100%;
