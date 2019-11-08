@@ -516,7 +516,9 @@ public class BambooService implements ContinuousIntegrationService {
             programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
-            return resultRepository.save(result);
+            // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
+            // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
+            return result;
         } catch (Exception e) {
             log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
