@@ -18,6 +18,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { filter } from 'rxjs/operators';
 import { ButtonType } from 'app/shared/components';
+import { omit } from 'lodash';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -84,6 +85,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     submission.participation.results = [submission.result];
                 }
                 this.participation = <StudentParticipation>submission.participation;
+
+                // reconnect participation <--> submission
+                this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
+
                 this.submission = submission;
                 this.result = submission.result;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
