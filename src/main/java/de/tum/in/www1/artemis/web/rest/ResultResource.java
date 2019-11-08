@@ -231,7 +231,7 @@ public class ResultResource {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
             }
         }
-        log.info("The new result was for {} was saved successfully", planKey);
+        log.info("The new result for {} was saved successfully", planKey);
         return ResponseEntity.ok().build();
     }
 
@@ -506,9 +506,11 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        Participation participation = participationService.findOne(participationId);
 
-        if (!participationService.canAccessParticipation(participation)) {
+        if (participation instanceof StudentParticipation && !participationService.canAccessParticipation((StudentParticipation) participation)
+                || participation instanceof ProgrammingExerciseParticipation
+                        && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
             return forbidden();
         }
 

@@ -4,6 +4,8 @@ import com.appfire.bamboo.cli.BambooClient;
 import com.appfire.common.cli.Base;
 import com.appfire.common.cli.CliClient;
 import com.appfire.common.cli.Settings;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -467,7 +469,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) buildResults.get("skippedTests")));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
 
@@ -620,7 +622,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) testSummary.get("description"));
 
         result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) testSummary.get("skippedCount")));
         result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
 
@@ -794,7 +796,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param result to calculate score for.
      * @return the score calculated.
      */
-    private Long calculateScoreForResult(Result result) {
+    private Long calculateScoreForResult(Result result, int skippedTests) {
 
         if (result.isSuccessful()) {
             return (long) 100;
@@ -808,7 +810,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (matcher.find()) {
                 float failedTests = Float.parseFloat(matcher.group(1));
                 float totalTests = Float.parseFloat(matcher.group(2));
-                float score = (totalTests - failedTests) / totalTests;
+                float score = (totalTests - failedTests - skippedTests) / totalTests;
                 return (long) (score * 100);
             }
         }
@@ -833,7 +835,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) buildResults.get("skippedTests")));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
         result.setSubmission(submission);
@@ -882,8 +884,21 @@ public class BambooService implements ContinuousIntegrationService {
             //might be empty
             result.put("details", resultDetails);
 
+            // TODO The parsing for queried results is horrible. We should refactor everything here and parse it into a POJO,
+            //      or at least use a Jackson JsonNode. The following lines are a bugfix, for which I parse the result map
+            //      into a JsonNode. In a future PR, this should be expected in the result in the first place
+            //      (restTemplate.exchange(..., JsonNode.class)), or even better restTemplate.exchange(..., BambooBuildResultDTO.class)
+            try {
+                final var mapper = new ObjectMapper();
+                final var responseJson = mapper.readTree(mapper.writeValueAsString(response.getBody()));
+                result.put("skippedTests", responseJson.get("testResults").get("skipped").asInt());
+            } catch (JsonProcessingException e) {
+                log.error(e.getMessage(), e);
+                throw new BambooException(e);
+            }
+
             //search for version control information
-            if (response.getBody().containsKey("vcsRevisions")) {
+//            if (response.getBody().containsKey("vcsRevisions")) {
                 //TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
                 // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
 //                "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668",
@@ -905,8 +920,8 @@ public class BambooService implements ContinuousIntegrationService {
 //                    "start-index":0,
 //                        "max-result":2
 //                },
-                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
-            }
+//                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
+//            }
             if (response.getBody().containsKey("vcsRevisionKey")) {
                 result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
             }
