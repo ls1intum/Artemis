@@ -235,8 +235,6 @@ public class ProgrammingSubmissionService {
         }
         log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
-        // Also trigger the template participation. We don't trigger the solution participation because it is triggered when the tests are changed.
-        participations.add(programmingExercise.getTemplateParticipation());
         List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
         notifyUserTriggerBuildForNewSubmissions(submissions);
