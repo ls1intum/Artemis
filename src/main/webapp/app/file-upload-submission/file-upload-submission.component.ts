@@ -138,34 +138,30 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Uploads a submission file and submits File Upload Exercise
      */
     public submitExercise() {
-        const confirmSubmit = window.confirm(this.submissionConfirmationText);
-
-        if (confirmSubmit) {
-            const file = this.submissionFile;
-            if (!this.submission || !file) {
-                return;
-            }
-            this.submission!.submitted = true;
-            this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
-                response => {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
-                    this.setSubmittedFile();
-                    if (this.isActive) {
-                        this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
-                    } else {
-                        this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
-                    }
-                },
-                err => {
-                    this.submission!.submitted = false;
-                    this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
-                    this.fileInput.nativeElement.value = '';
-                    this.submissionFile = null;
-                    this.submission!.filePath = null;
-                },
-            );
+        const file = this.submissionFile;
+        if (!this.submission || !file) {
+            return;
         }
+        this.submission!.submitted = true;
+        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
+            response => {
+                this.submission = response.body!;
+                this.result = this.submission.result;
+                this.setSubmittedFile();
+                if (this.isActive) {
+                    this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
+                } else {
+                    this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
+                }
+            },
+            err => {
+                this.submission!.submitted = false;
+                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                this.fileInput.nativeElement.value = '';
+                this.submissionFile = null;
+                this.submission!.filePath = null;
+            },
+        );
     }
 
     /**
