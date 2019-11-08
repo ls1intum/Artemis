@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
+import { Router } from '@angular/router';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -23,12 +24,22 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     private intellijState: IntelliJState;
     private intellijStateSubject: BehaviorSubject<IntelliJState>;
 
-    constructor(private window: WindowRef) {}
+    constructor(private window: WindowRef, private injector: Injector) {}
 
     static initBridge(bridge: JavaBridgeService, win: WindowRef) {
         win.nativeWindow.javaDowncallBridge = bridge;
         bridge.intellijState = { opened: -1, cloning: false, building: false };
         bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
+    }
+
+    /**
+     * Yes, this is not best practice. But since this bridge service is an APP_INITIALIZER and has to be set on
+     * the window object right in the beginning (so that the IDE can interact with Artemis as soon as the page has been
+     * loaded), it should be fine to actually load the router only when it is needed later in the process.
+     * Otherwise we would have a cyclic dependency problem on app startup
+     */
+    get router(): Router {
+        return this.injector.get(Router);
     }
 
     /**
@@ -144,5 +155,16 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     private setIDEStateParameter(patch: Partial<IntelliJState>) {
         Object.assign(this.intellijState, patch);
         this.intellijStateSubject.next(this.intellijState);
+    }
+
+    /**
+     * Gets triggered if a build/test run was started from inside the IDE. This means that we have to navigate
+     * to the related exercise page in order to listen for any new results
+     *
+     * @param courseId
+     * @param exerciseId
+     */
+    startedBuildInIntelliJ(courseId: number, exerciseId: number) {
+        this.router.navigateByUrl(`/overview/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
     }
 }

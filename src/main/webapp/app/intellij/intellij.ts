@@ -8,6 +8,7 @@ export interface JavaDowncallBridge {
     onExerciseOpened(opened: number): void;
     isCloning(cloning: boolean): void;
     isBuilding(building: boolean): void;
+    startedBuildInIntelliJ(courseId: number, exerciseId: number): void;
 }
 
 export interface JavaUpcallBridge {

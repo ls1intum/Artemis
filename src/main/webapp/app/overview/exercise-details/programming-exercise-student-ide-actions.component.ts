@@ -8,6 +8,7 @@ import { IntelliJState } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -34,10 +35,16 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         private courseExerciseService: CourseExerciseService,
         private javaBridge: JavaBridgeService,
         private ideBuildAndTestService: IdeBuildAndTestService,
+        private route: ActivatedRoute,
     ) {}
 
     ngOnInit(): void {
         this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.ideState = ideState));
+        this.route.queryParams.subscribe(params => {
+            if (params['withIdeSubmit']) {
+                this.submitChanges();
+            }
+        });
     }
 
     /**
