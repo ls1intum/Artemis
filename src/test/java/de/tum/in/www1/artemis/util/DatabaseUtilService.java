@@ -191,6 +191,7 @@ public class DatabaseUtilService {
         }
         User user = getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
         participation.setStudent(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
@@ -440,7 +441,7 @@ public class DatabaseUtilService {
         return fileUploadExercises;
     }
 
-    public void addCourseWithOneFileUploadExercise() {
+    public void addCourseWithTwoFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         exerciseRepo.save(fileUploadExercises.get(0));
         exerciseRepo.save(fileUploadExercises.get(1));

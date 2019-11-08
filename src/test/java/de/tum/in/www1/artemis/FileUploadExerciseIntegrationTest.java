@@ -71,7 +71,7 @@ public class FileUploadExerciseIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getFileUploadExercise() throws Exception {
-        database.addCourseWithOneFileUploadExercise();
+        database.addCourseWithTwoFileUploadExercise();
         FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
@@ -83,10 +83,12 @@ public class FileUploadExerciseIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteFileUploadExercise() throws Exception {
-        database.addCourseWithOneFileUploadExercise();
+        database.addCourseWithTwoFileUploadExercise();
         FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        FileUploadExercise fileUploadExercise2 = (FileUploadExercise) exerciseRepo.findAll().get(1);
 
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.OK);
 
         assertThat(exerciseRepo.findAll().isEmpty()).isTrue();
     }

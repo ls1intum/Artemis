@@ -22,6 +22,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
@@ -64,6 +65,9 @@ public class FileUploadSubmissionIntegrationTest {
     @Autowired
     FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
+    @Autowired
+    ParticipationRepository participationRepository;
+
     private FileUploadExercise fileUploadExercise;
 
     private FileUploadExercise afterDueDateFileUploadExercise;
@@ -74,15 +78,18 @@ public class FileUploadSubmissionIntegrationTest {
 
     private MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
+    private StudentParticipation participation;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 0);
-        database.addCourseWithOneFileUploadExercise();
+        database.addCourseWithTwoFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
         afterDueDateFileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(1);
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
         database.addParticipationForExercise(fileUploadExercise, "student3");
+        participation = database.addParticipationForExercise(afterDueDateFileUploadExercise, "student3");
     }
 
     @AfterEach
@@ -185,7 +192,8 @@ public class FileUploadSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_afterDueDate_forbidden() throws Exception {
-        database.addParticipationForExercise(afterDueDateFileUploadExercise, "student3");
+        participation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        participationRepository.save(participation);
         request.postWithMultipartFile("/api/exercises/" + afterDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
                 validFile, FileUploadSubmission.class, HttpStatus.FORBIDDEN);
     }
@@ -200,17 +208,13 @@ public class FileUploadSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
-        var afterDueDateParticipation = database.addParticipationForExercise(fileUploadExercise, "student1");
-        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
-        participationService.save(afterDueDateParticipation);
-
-        request.put("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, HttpStatus.OK);
+        request.postWithMultipartFile("/api/exercises/" + afterDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
+                validFile, FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
-        database.addParticipationForExercise(fileUploadExercise, "student1");
         var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
         submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission,
                 "submission", file, FileUploadSubmission.class, HttpStatus.OK);
