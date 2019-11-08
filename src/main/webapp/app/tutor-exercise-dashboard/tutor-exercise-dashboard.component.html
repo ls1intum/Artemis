@@ -251,7 +251,8 @@
                                 <button
                                     *ngIf="exercise.type !== ExerciseType_PROGRAMMING; else programmingAssessment"
                                     class="btn btn-success btn-sm assessment-button"
-                                    [class.guided-tour]="compareExerciseShortName(exercise, this.guidedTourExercise)"
+                                    [class.guided-tour]="isGuidedTourAssessment()"
+                                    [disabled]="isGuidedTourAssessment()"
                                     (click)="openAssessmentEditor(unassessedSubmission.id, true)"
                                 >
                                     <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}

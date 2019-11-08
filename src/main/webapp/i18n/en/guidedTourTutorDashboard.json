@@ -34,7 +34,7 @@
             "startAssessment": {
                 "headline": "Start Assessment",
                 "content": "If you want to assess this submission, then just click on <tt>start new assessment</tt>.",
-                "hint": "If you start an assessment, then this submission will be locked by you, so that other tutors cannot access it while you are working on the assessment."
+                "hint": "If you start an assessment, then this submission will be locked by you, so that other tutors cannot access it, while you are working on the assessment. In this tutorial we have therefore disabled the assessment button."
             }
         }
     }

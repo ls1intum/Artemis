@@ -21,7 +21,7 @@
         "tutorExerciseDashboard": {
             "instructions": {
                 "headline": "Instruktionen",
-                "content": "Dieser Bereich enthält die  <tt>Aufgabenstellen</tt>, <tt>Beispiellösungn</tt> und <tt>Bewertungskriterien</tt> dieser Übung. Bitte lies dir diese genau durch und fahre dann mit dem nächsten Schritt fort."
+                "content": "Dieser Bereich enthält die  <tt>Aufgabenstellung</tt>, <tt>Beispiellösung</tt> und <tt>Bewertungskriterien</tt> dieser Übung. Bitte lies dir diese genau durch und fahre dann mit dem nächsten Schritt fort."
             },
             "instructionsButton": {
                 "headline": "Bestätigung",
@@ -29,12 +29,12 @@
             },
             "studentSubmissions": {
                 "headline": "Studentenabgaben",
-                "content": "In dieser Tabelle werden Studentenabgaben angezeigt."
+                "content": "In dieser Tabelle werden die Abgaben der Studenten angezeigt."
             },
             "startAssessment": {
                 "headline": "Neue Bewertung starten",
                 "content": "Wenn du diese Abgabe bewerten möchtest, dann klicke einfach auf <tt>Neue Bewertung starten</tt>.",
-                "hint": "Wenn du die Bewertung startest, dann wird diese Abgabe von dir gesperrt. So wird sichergestellt, dass andere Tutoren nicht mehr auf diese Abgabe zugreifen können, während du an der Bewertung arbeitest."
+                "hint": "Wenn du die Bewertung startest, dann wird diese Abgabe von dir gesperrt. So wird sichergestellt, dass andere Tutoren nicht mehr auf diese Abgabe zugreifen können, während du an der Bewertung arbeitest. In diesem Tutorial haben wir deshalb diese Bewertungsfunktion deaktiviert."
             }
         }
     }

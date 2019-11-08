@@ -98,6 +98,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutor: User | null;
 
     readonly compareExerciseShortName = compareExerciseShortName;
+    isGuidedTourExercise: boolean;
     guidedTourExercise: Exercise | null;
 
     constructor(
@@ -331,7 +332,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
-        if (!this.exercise || !this.exercise.type || !submissionId) {
+        if (!this.exercise || !this.exercise.type || !submissionId || this.isGuidedTourAssessment) {
             return;
         }
         const route = `/${this.exercise.type}-exercise/${this.exercise.id}/example-submission/${submissionId}`;
@@ -378,5 +379,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     back() {
         this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
+    }
+
+    isGuidedTourAssessment() {
+        return compareExerciseShortName(this.exercise, this.guidedTourExercise);
     }
 }
