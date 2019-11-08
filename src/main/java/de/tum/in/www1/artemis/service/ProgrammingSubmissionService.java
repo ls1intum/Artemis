@@ -227,6 +227,16 @@ public class ProgrammingSubmissionService {
         notifyUserTriggerBuildForNewSubmissions(submissions);
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         setTestCasesChanged(programmingExercise.getId(), false);
+        // Let the instructor know that the build run is finished.
+        notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
+    }
+
+    private void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()),
+                "All builds triggered for programming exercise with id " + programmingExercise.getId());
+        // Send a notification to the client to inform the instructor about the test case update.
+        String notificationText = BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE + programmingExercise.getId();
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, notificationText);
     }
 
     /**
@@ -470,6 +480,10 @@ public class ProgrammingSubmissionService {
 
     private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
+    }
+
+    private String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
     }
 
     /**

@@ -79,6 +79,8 @@ public final class Constants {
 
     public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
 
+    public static final String BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE = "All builds triggered for programming exercise with id: ";
+
     public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
