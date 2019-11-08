@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.common.cli.Base;
+import com.appfire.common.cli.CliClient;
 import com.appfire.common.cli.Settings;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -15,7 +20,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.common.cli.Base;
-import com.appfire.common.cli.CliClient;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -427,7 +428,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) buildResults.get("skippedTests")));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
 
@@ -580,7 +581,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) testSummary.get("description"));
 
         result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) testSummary.get("skippedCount")));
         result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
 
@@ -754,7 +755,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param result to calculate score for.
      * @return the score calculated.
      */
-    private Long calculateScoreForResult(Result result) {
+    private Long calculateScoreForResult(Result result, int skippedTests) {
 
         if (result.isSuccessful()) {
             return (long) 100;
@@ -768,7 +769,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (matcher.find()) {
                 float failedTests = Float.parseFloat(matcher.group(1));
                 float totalTests = Float.parseFloat(matcher.group(2));
-                float score = (totalTests - failedTests) / totalTests;
+                float score = (totalTests - failedTests - skippedTests) / totalTests;
                 return (long) (score * 100);
             }
         }
@@ -793,7 +794,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) buildResults.get("skippedTests")));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
         result.setSubmission(submission);
@@ -841,6 +842,19 @@ public class BambooService implements ContinuousIntegrationService {
             List resultDetails = (List) ((Map) ((Map) response.getBody().get("testResults")).get("failedTests")).get("testResult");
             //might be empty
             result.put("details", resultDetails);
+
+            // TODO The parsing for queried results is horrible. We should refactor everything here and parse it into a POJO,
+            //      or at least use a Jackson JsonNode. The following lines are a bugfix, for which I parse the result map
+            //      into a JsonNode. In a future PR, this should be expected in the result in the first place
+            //      (restTemplate.exchange(..., JsonNode.class)), or even better restTemplate.exchange(..., BambooBuildResultDTO.class)
+            try {
+                final var mapper = new ObjectMapper();
+                final var responseJson = mapper.readTree(mapper.writeValueAsString(response.getBody()));
+                result.put("skippedTests", responseJson.get("testResults").get("skipped").asInt());
+            } catch (JsonProcessingException e) {
+                log.error(e.getMessage(), e);
+                throw new BambooException(e);
+            }
 
             //search for version control information
 //            if (response.getBody().containsKey("vcsRevisions")) {
