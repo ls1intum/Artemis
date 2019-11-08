@@ -231,7 +231,7 @@ public class ResultResource {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
             }
         }
-        log.info("The new result was for {} was saved successfully", planKey);
+        log.info("The new result for {} was saved successfully", planKey);
         return ResponseEntity.ok().build();
     }
 
