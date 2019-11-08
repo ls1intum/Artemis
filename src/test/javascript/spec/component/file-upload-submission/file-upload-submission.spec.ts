@@ -33,6 +33,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
 import { FileUploadResultComponent } from 'app/file-upload-submission/file-upload-result/file-upload-result.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,6 +58,7 @@ describe('FileUploadSubmissionComponent', () => {
                 ArtemisComplaintsModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([fileUploadSubmissionRoute[0]]),
+                ArtemisSharedComponentModule,
             ],
             declarations: [
                 FileUploadSubmissionComponent,
@@ -136,7 +138,7 @@ describe('FileUploadSubmissionComponent', () => {
         expect(fileUploadLabel).to.exist;
         expect(fileUploadLabel.nativeElement.textContent).to.be.equal(fileName);
 
-        let submitFileButton = debugElement.query(By.css('.btn.btn-success'));
+        let submitFileButton = debugElement.query(By.css('jhi-button'));
         spyOn(fileUploaderService, 'uploadFile').and.returnValue(Promise.resolve({ path: 'test' }));
         submitFileButton.nativeElement.click();
         comp.submission.submitted = true;
