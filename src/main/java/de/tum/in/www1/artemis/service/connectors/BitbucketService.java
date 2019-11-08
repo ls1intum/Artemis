@@ -754,11 +754,15 @@ public class BitbucketService implements VersionControlService {
     private JsonNode fetchCommitInfo(JsonNode commitData, String hash) {
         try {
             var cloneLinks = commitData.get("repository").get("links").get("clone");
-            var repositoryURL = new URL(cloneLinks.get(0).get("href").asText());
+            URL repositoryURL;
             // it might be the case that cloneLinks contains two URLs and the first one is 'ssh'. Then we are interested in http
-            // we use contains here, because it could be the case that https is used here as well in the future
+            // we use contains here, because it could be the case that https is used here as well in the future.
+            // It should not be possible that the cloneLinks array is empty.
             if (cloneLinks.size() > 1 && !cloneLinks.get(0).get("name").asText().contains("http")) {
                 repositoryURL = new URL(cloneLinks.get(1).get("href").asText());
+            }
+            else {
+                repositoryURL = new URL(cloneLinks.get(0).get("href").asText());
             }
             final var projectKey = getProjectKeyFromUrl(repositoryURL);
             final var slug = getRepositorySlugFromUrl(repositoryURL);
