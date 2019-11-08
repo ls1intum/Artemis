@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.net.URL;
+import java.util.Set;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 
@@ -17,4 +18,6 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     ProgrammingExercise getProgrammingExercise();
 
     void setProgrammingExercise(ProgrammingExercise programmingExercise);
+
+    Set<Result> getResults();
 }
