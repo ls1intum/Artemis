@@ -19,7 +19,5 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
     void setProgrammingExercise(ProgrammingExercise programmingExercise);
 
-    void addSubmissions(ProgrammingSubmission submission);
-
     Set<Result> getResults();
 }

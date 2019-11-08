@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE;
+import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
@@ -108,9 +110,14 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
         catch (IllegalStateException ex) {
-            log.error("Tried to create another submission for the same commitHash and participation: processing submission for participation {} failed with request object {}: {}",
-                    participationId, requestBody, ex);
-            return badRequest();
+            if (ex.getMessage().contains("empty setup commit")) {
+                // ignore
+            }
+            else {
+                log.warn("Processing submission for participation {} failed: {}", participationId, ex.getMessage());
+            }
+            // we return ok, because the problem is not on the side of the VCS Server and we don't want the VCS Server to kill the webhook if there are too many errors
+            return ResponseEntity.status(HttpStatus.OK).build();
         }
         catch (EntityNotFoundException ex) {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
@@ -239,12 +246,27 @@ public class ProgrammingSubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
+
+        log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
+                programmingExercise.getId());
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(
                 programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds));
-        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
-                SubmissionType.INSTRUCTOR);
 
-        programmingSubmissionService.notifyUserTriggerBuildForNewSubmissions(submissions);
+        var index = 0;
+        for (var participation : participations) {
+            // Execute requests in batches instead all at once.
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    log.info("Sleep for {}s during triggerBuild", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
+                }
+            }
+            programmingSubmissionService.triggerBuildAndNotifyUser(participation);
+            index++;
+        }
 
         return ResponseEntity.ok().build();
     }
@@ -271,7 +293,8 @@ public class ProgrammingSubmissionResource {
 
         ObjectId lastCommitId = null;
         try {
-            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+            Commit commit = versionControlService.get().getLastCommitDetails(requestBody);
+            String lastCommitHash = commit.getCommitHash();
             lastCommitId = ObjectId.fromString(lastCommitHash);
             log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for exercise " + exerciseId);
         }
