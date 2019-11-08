@@ -182,17 +182,19 @@ public class ResultService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
             boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
             boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
+            // Find out which test cases were executed and calculate the score according to their status and weight.
+            // This needs to be done as some test cases might not have been executed.
+            Submission submission = result.getSubmission();
+            result.setSubmission(submission);
+            // We have to save the result here, because otherwise consequetive methods can fail because of a transient state exception (result is not yet persisted).
+            result = resultRepository.save(result);
             // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
             if (isSolutionParticipation) {
                 extractTestCasesFromResult(programmingExercise, result);
             }
-            // Find out which test cases were executed and calculate the score according to their status and weight.
-            // This needs to be done as some test cases might not have been executed.
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            Submission submission = result.getSubmission();
             result = resultRepository.save(result);
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
-            result.setSubmission(submission);
 
             // If the solution participation was updated, also trigger the template participation build.
             if (isSolutionParticipation) {
