@@ -4,6 +4,14 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 
+export interface IProgrammingBuildRunService {
+    emitBuildRunUpdate(programmingExerciseId: number, isBuilding: boolean): void;
+    getBuildRunUpdates(programmingExerciseId: number): Observable<boolean>;
+}
+
+/**
+ * Provides methods to retrieve information about running exercise builds.
+ */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingBuildRunService implements OnDestroy {
     // Boolean subject: true == build is running, false == build is not running.
