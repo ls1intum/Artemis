@@ -7,7 +7,8 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -729,17 +730,15 @@ public class BitbucketService implements VersionControlService {
             var hash = lastChange.get("toHash").asText();
             commit.setCommitHash(hash);
             var actor = commitData.get("actor");
-            String name;
-            String email;
-            if (actor.get("name").asText().equals(ARTEMIS_GIT_NAME)) {
+            String name = actor.get("name").asText();
+            String email = actor.get("emailAddress").asText();
+            if (actor.get("name").asText().equalsIgnoreCase(ARTEMIS_GIT_NAME)) {
                 final var commitInfo = fetchCommitInfo(commitData, hash);
-                commit.setMessage(commitInfo.get("message").asText());
-                name = commitInfo.get("author").get("name").asText();
-                email = commitInfo.get("author").get("emailAddress").asText();
-            }
-            else {
-                name = actor.get("name").asText();
-                email = actor.get("emailAddress").asText();
+                if (commitInfo != null) {
+                    commit.setMessage(commitInfo.get("message").asText());
+                    name = commitInfo.get("author").get("name").asText();
+                    email = commitInfo.get("author").get("emailAddress").asText();
+                }
             }
             commit.setAuthorName(name);
             commit.setAuthorEmail(email);
@@ -751,22 +750,34 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
-    @NotNull
-    private JsonNode fetchCommitInfo(JsonNode commitData, String hash) throws MalformedURLException, URISyntaxException {
-        final var repositoryURL = new URL(commitData.get("repository").get("links").get("clone").get(0).get("href").asText());
-        final var projectKey = getProjectKeyFromUrl(repositoryURL);
-        final var slug = getRepositorySlugFromUrl(repositoryURL);
-        final var uriBuilder = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash)
-                .build();
-        final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
-        final var entity = new HttpEntity<>(headers);
+    @Nullable
+    private JsonNode fetchCommitInfo(JsonNode commitData, String hash) {
+        try {
+            var cloneLinks = commitData.get("repository").get("links").get("clone");
+            var repositoryURL = new URL(cloneLinks.get(0).get("href").asText());
+            // it might be the case that cloneLinks contains two URLs and the first one is 'ssh'. Then we are interested in http
+            // we use contains here, because it could be the case that https is used here as well in the future
+            if (cloneLinks.size() > 1 && !cloneLinks.get(0).get("name").asText().contains("http")) {
+                repositoryURL = new URL(cloneLinks.get(1).get("href").asText());
+            }
+            final var projectKey = getProjectKeyFromUrl(repositoryURL);
+            final var slug = getRepositorySlugFromUrl(repositoryURL);
+            final var uriBuilder = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI())
+                    .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
+            final var headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+            final var entity = new HttpEntity<>(headers);
 
-        final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, entity, JsonNode.class).getBody();
-        if (commitInfo == null) {
-            throw new BitbucketException("Unable to fetch commit info from Bitbucket for hash " + hash);
+            final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, entity, JsonNode.class).getBody();
+            if (commitInfo == null) {
+                throw new BitbucketException("Unable to fetch commit info from Bitbucket for hash " + hash);
+            }
+
+            return commitInfo;
         }
-
-        return commitInfo;
+        catch (Exception e) {
+            log.warn("Cannot fetch commit info for hash {} due to error: {}", hash, e.getMessage());
+        }
+        return null;
     }
 
     @Override
