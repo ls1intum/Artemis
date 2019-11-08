@@ -134,6 +134,7 @@ public class ProgrammingExerciseTestCaseService {
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
         if (testCasesToSave.size() > 0) {
+            // TODO: This fails with a TransientObject exception in our tests (because the result is not saved?)
             testCaseRepository.saveAll(testCasesToSave);
             return true;
         }
@@ -224,7 +225,6 @@ public class ProgrammingExerciseTestCaseService {
         List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
                 .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
-        feedbackRepository.deleteAll(feedbacksToFilterForCurrentDate);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
         if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType() != null && feedback.getType().equals(FeedbackType.MANUAL)))
             result.setHasFeedback(false);
