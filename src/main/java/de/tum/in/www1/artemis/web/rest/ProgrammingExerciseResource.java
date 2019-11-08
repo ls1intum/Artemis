@@ -718,7 +718,7 @@ public class ProgrammingExerciseResource {
             String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
             // Atm we only have one folder that can have structural tests, but this could change.
             testsPath = programmingExercise.hasSequentialTestRuns() ? "structural" + File.separator + testsPath : testsPath;
-            boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
+            boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath, user);
 
             if (didGenerateOracle) {
                 HttpHeaders responseHeaders = new HttpHeaders();

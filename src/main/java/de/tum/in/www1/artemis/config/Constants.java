@@ -96,6 +96,8 @@ public final class Constants {
     // Currently 10s.
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
 
+    public static final String SETUP_COMMIT_MESSAGE = "Setup";
+
     private Constants() {
     }
 }
