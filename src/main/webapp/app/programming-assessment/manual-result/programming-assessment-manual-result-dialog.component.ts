@@ -5,14 +5,17 @@ import { Result } from '../../entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
 import { Feedback, FeedbackType } from '../../entities/feedback';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, filter } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
 import { SCORE_PATTERN } from 'app/app.constants';
+import { Complaint, ComplaintService, ComplaintType } from 'app/entities/complaint';
+import { AccountService } from 'app/core';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -27,6 +30,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     isLoading = false;
     isSaving = false;
     isOpenForSubmission = false;
+    userId: number;
+    isAssessor: boolean;
+    complaint: Complaint;
+    readonly ComplaintType = ComplaintType;
 
     constructor(
         private participationService: ParticipationService,
@@ -36,6 +43,8 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private eventManager: JhiEventManager,
         private alertService: JhiAlertService,
         private resultService: ResultService,
+        private complaintService: ComplaintService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
@@ -48,6 +57,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     initializeForResultUpdate() {
+        // Used to check if the assessor is the current user
+        this.accountService.identity().then(user => {
+            this.userId = user!.id!;
+        });
         if (this.result.feedbacks) {
             this.feedbacks = this.result.feedbacks;
         } else {
@@ -62,6 +75,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 .subscribe(() => (this.isLoading = false));
         }
         this.participation = this.result.participation! as StudentParticipation;
+        if (this.result.hasComplaint) {
+            this.getComplaint(this.result.id);
+        }
+        this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
     }
 
     initializeForResultCreation() {
@@ -126,5 +143,31 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.feedbacks.length > 0) {
             this.feedbacks.pop();
         }
+    }
+
+    private getComplaint(id: number): void {
+        if (this.result) {
+            this.complaintService
+                .findByResultId(id)
+                .pipe(filter(res => !!res.body))
+                .subscribe(
+                    res => {
+                        this.complaint = res.body!;
+                    },
+                    (err: HttpErrorResponse) => {
+                        this.alertService.error(err.message);
+                    },
+                );
+        }
+    }
+
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        //TODO: implement server endpoint to send the complaint
     }
 }

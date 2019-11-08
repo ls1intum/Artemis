@@ -94,6 +94,15 @@
             &nbsp;
             <a (click)="popFeedback()" jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</a>
         </div>
+
+        <div class="mt-3" *ngIf="complaint">
+            <jhi-complaints-for-tutor-form
+                [complaint]="complaint"
+                [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor"
+                (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+            >
+            </jhi-complaints-for-tutor-form>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
