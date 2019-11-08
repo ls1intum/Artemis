@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 
 @Service
@@ -28,11 +27,8 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final ResultRepository resultRepository;
-
     // need bamboo service and resultrepository to create and store from old feedbacks
-    public FeedbackService(ResultRepository resultService, Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackRepository feedbackRepository) {
-        this.resultRepository = resultService;
+    public FeedbackService(Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackRepository feedbackRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackRepository = feedbackRepository;
     }
@@ -59,18 +55,6 @@ public class FeedbackService {
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
         }
         return result.getFeedbacks();
-    }
-
-    /**
-     * Save a feedback.
-     *
-     * @param feedback the entity to save
-     * @return the persisted entity
-     */
-    @Transactional
-    public Feedback save(Feedback feedback) {
-        log.debug("Request to save Feedback : {}", feedback);
-        return feedbackRepository.save(feedback);
     }
 
     /**
