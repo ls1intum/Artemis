@@ -90,7 +90,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
-        log.info("REST request to inform about new commit+push for participation: {}", participationId);
+        log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
         try {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
