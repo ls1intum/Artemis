@@ -45,6 +45,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private resultService: ResultService,
         private complaintService: ComplaintService,
         private accountService: AccountService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnInit() {
@@ -168,6 +169,17 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        //TODO: implement server endpoint to send the complaint
+        this.manualResultService.updateWithComplaints(this.feedbacks, complaintResponse, this.result!.id).subscribe(
+            (result: Result) => {
+                this.result = result;
+                this.jhiAlertService.clear();
+                // TODO: replace with proper messages
+                this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+            },
+            (error: HttpErrorResponse) => {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+            },
+        );
     }
 }

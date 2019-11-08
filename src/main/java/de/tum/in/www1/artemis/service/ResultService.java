@@ -23,11 +23,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Created by Josias Montag on 06.10.16.
@@ -59,10 +62,14 @@ public class ResultService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final ComplaintResponseService complaintResponseService;
+
+    private final ComplaintRepository complaintRepository;
+
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
             ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository,
-            WebsocketMessagingService websocketMessagingService) {
+            WebsocketMessagingService websocketMessagingService, ComplaintRepository complaintRepository, ComplaintResponseService complaintResponseService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -74,6 +81,8 @@ public class ResultService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.feedbackRepository = feedbackRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseService = complaintResponseService;
     }
 
     /**
@@ -300,6 +309,41 @@ public class ResultService {
             result.setFeedbacks(savedFeedbackItems);
         }
         return createNewManualResult(result, true);
+    }
+
+    /**
+     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about. Note, that it
+     * updates the score and the feedback of the original Result, but NOT the assessor. The user that is responsible for the update can be found in the 'reviewer' field of the
+     * complaint. The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
+     *
+     * @param originalResult   the original assessment that was complained about
+     * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
+     * @return the updated Result
+     */
+    @Transactional
+    public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdate assessmentUpdate) {
+        if (assessmentUpdate.getFeedbacks() == null || assessmentUpdate.getComplaintResponse() == null) {
+            throw new BadRequestAlertException("Feedbacks and complaint response must not be null.", "AssessmentUpdate", "notnull");
+        }
+        // Save the complaint response
+        ComplaintResponse complaintResponse = complaintResponseService.createComplaintResponse(assessmentUpdate.getComplaintResponse());
+
+        try {
+            // Store the original result with the complaint
+            Complaint complaint = complaintResponse.getComplaint();
+            complaint.setResultBeforeComplaint(this.getOriginalResultAsString(originalResult));
+            complaintRepository.save(complaint);
+        }
+        catch (JsonProcessingException exception) {
+            throw new InternalServerErrorException("Failed to store original result");
+        }
+
+        // Update the result that was complained about with the new feedback
+        originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
+        originalResult.evaluateFeedback(exercise.getMaxScore());
+        // Note: This also saves the feedback objects in the database because of the 'cascade =
+        // CascadeType.ALL' option.
+        return resultRepository.save(originalResult);
     }
 
     /**

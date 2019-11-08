@@ -1,11 +1,11 @@
-import { IProgrammingSubmissionService } from 'app/programming-submission';
 import { Injectable } from '@angular/core';
 import { EntityResponseType, Result, ResultService } from 'app/entities/result';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
+import { Feedback } from 'app/entities/feedback';
+import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentManualResultService {
@@ -32,6 +32,15 @@ export class ProgrammingAssessmentManualResultService {
         return this.http
             .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
+    }
+
+    updateWithComplaints(feedbacks: Feedback[], complaintResponse: ComplaintResponse, resultId: number): Observable<Result> {
+        const url = `${SERVER_API_URL}api/manual-results/${resultId}/assessment-after-complaint`;
+        const assessmentUpdate = {
+            feedbacks,
+            complaintResponse,
+        };
+        return this.http.post<Result>(url, assessmentUpdate);
     }
 
     generateInitialManualResult() {
