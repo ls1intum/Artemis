@@ -250,7 +250,7 @@
                             <td>
                                 <button
                                     *ngIf="exercise.type !== ExerciseType_PROGRAMMING; else programmingAssessment"
-                                    class="btn btn-success btn-sm"
+                                    class="btn btn-success btn-sm assessment-button"
                                     [class.guided-tour]="compareExerciseShortName(exercise, this.guidedTourExercise)"
                                     (click)="openAssessmentEditor(unassessedSubmission.id, true)"
                                 >

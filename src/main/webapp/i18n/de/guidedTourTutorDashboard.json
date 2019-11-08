@@ -2,39 +2,39 @@
     "tour": {
         "tutorCourseDashboard": {
             "overview": {
-                "headline": "Overview",
-                "content": "Here you can see an overview of your assessments, complaints and feedback requests."
+                "headline": "Übersicht",
+                "content": "Hier siehst du eine Übersicht deiner Bewertungen und eingehenden Beschwerden und Feedbackanfragen."
             },
             "exerciseTable": {
-                "headline": "Exercise Table",
-                "content": "This table displays all exercises of this course, which are not finished yet. In order to see finished exercises, just tick the checkbox <tt>Show finished exercises</tt> displayed above this table."
+                "headline": "Übungentablle",
+                "content": "Diese Tabelle zeigt alle aktiven Übungen dieses Kurses an. Um die beendeten Übungen anzuzeigen musst du nur die Checkbox <tt>Beendete Übungen anzeigen</tt> klicken, welche direkt über dieser Tabelle abgebildet ist."
             },
             "gradingProcess": {
-                "headline": "Grading Process",
-                "content": "This graph visualizes your current grading process"
+                "headline": "Bewertungsprozess",
+                "content": "Dieser Graph visualisiert deinen aktuellen Bewertungsstatus für diese Übung."
             },
             "exerciseDashboardButton": {
-                "headline": "Exercise Dashboard",
-                "content": "Now let's head over to the exercise dashboard to view the exercise details and student submissions."
+                "headline": "Aufgaben Dashboard",
+                "content": "Lass uns nun zum Aufgaben Dashboard navigieren um die Details der Übung und der Studentenabgaben einzusehen."
             }
         },
         "tutorExerciseDashboard": {
             "instructions": {
-                "headline": "Instructions",
-                "content": "This section contains the <tt>problem statement</tt>, <tt>example solution</tt> and <tt>grading instruction</tt> of the exercise. Please read through them carefully and then proceed to the next step."
+                "headline": "Instruktionen",
+                "content": "Dieser Bereich enthält die  <tt>Aufgabenstellen</tt>, <tt>Beispiellösungn</tt> und <tt>Bewertungskriterien</tt> dieser Übung. Bitte lies dir diese genau durch und fahre dann mit dem nächsten Schritt fort."
             },
             "instructionsButton": {
-                "headline": "Confirm",
-                "content": "Click on this button and confirm only after you have read and understood the instructions"
+                "headline": "Bestätigung",
+                "content": "Wenn du die Instruktionen gelesen und verstanden hast, dann klicke auf diese Taste und bestätige dies hiermit."
             },
             "studentSubmissions": {
-                "headline": "Student submissions",
-                "content": "In this table you can see the current student submissions"
+                "headline": "Studentenabgaben",
+                "content": "In dieser Tabelle werden Studentenabgaben angezeigt."
             },
             "startAssessment": {
-                "headline": "Start Assessment",
-                "content": "If you want to assess this submission, then just click on <tt>start new assessment</tt>.",
-                "hint": "If you start an assessment, then this submission will be locked for you, so that other tutors cannot access it while you are working on the assessment."
+                "headline": "Neue Bewertung starten",
+                "content": "Wenn du diese Abgabe bewerten möchtest, dann klicke einfach auf <tt>Neue Bewertung starten</tt>.",
+                "hint": "Wenn du die Bewertung startest, dann wird diese Abgabe von dir gesperrt. So wird sichergestellt, dass andere Tutoren nicht mehr auf diese Abgabe zugreifen können, während du an der Bewertung arbeitest."
             }
         }
     }

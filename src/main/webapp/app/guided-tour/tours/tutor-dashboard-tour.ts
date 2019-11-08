@@ -19,7 +19,7 @@ export const tutorCourseDashboardTour: GuidedTour = {
             highlightSelector: '.exercise-table',
             headlineTranslateKey: 'tour.tutorCourseDashboard.exerciseTable.headline',
             contentTranslateKey: 'tour.tutorCourseDashboard.exerciseTable.content',
-            highlightPadding: 10,
+            highlightPadding: 25,
             orientation: Orientation.TOP,
             permission: ['ROLE_TA'],
         }),

@@ -7,7 +7,7 @@
             },
             "exerciseTable": {
                 "headline": "Exercise Table",
-                "content": "This table displays all exercises of this course, which are not finished yet. In order to see finished exercises, just tick the checkbox <tt>Show finished exercises</tt> displayed above this table."
+                "content": "This table displays all exercises of this course, which are not finished yet. In order to see finished exercises, just tick the checkbox <tt>Show finished exercises</tt> displayed right above this table."
             },
             "gradingProcess": {
                 "headline": "Grading Process",
@@ -34,7 +34,7 @@
             "startAssessment": {
                 "headline": "Start Assessment",
                 "content": "If you want to assess this submission, then just click on <tt>start new assessment</tt>.",
-                "hint": "If you start an assessment, then this submission will be locked for you, so that other tutors cannot access it while you are working on the assessment."
+                "hint": "If you start an assessment, then this submission will be locked by you, so that other tutors cannot access it while you are working on the assessment."
             }
         }
     }
