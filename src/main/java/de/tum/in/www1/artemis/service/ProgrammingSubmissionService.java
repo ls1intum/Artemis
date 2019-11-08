@@ -235,9 +235,23 @@ public class ProgrammingSubmissionService {
         }
         log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
-        List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
-        notifyUserTriggerBuildForNewSubmissions(submissions);
+        var index = 0;
+        for (var participation : participations) {
+            // Execute requests in batches instead all at once.
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    log.info("Sleep for {}s during triggerBuild", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
+                }
+            }
+            triggerBuildAndNotifyUser(participation);
+            index++;
+        }
+
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         setTestCasesChanged(programmingExercise.getId(), false);
     }
@@ -316,7 +330,7 @@ public class ProgrammingSubmissionService {
         ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
-        return programmingSubmissionRepository.save(newSubmission);
+        return programmingSubmissionRepository.saveAndFlush(newSubmission);
     }
 
     /**
@@ -344,29 +358,20 @@ public class ProgrammingSubmissionService {
      * Trigger a CI build for each submission & notify each user on a new programming submission.
      * Instead of triggering all builds at the same time, we execute the builds in batches to not overload the CIS system.
      *
-     * @param submissions ProgrammingSubmission Collection
+     * Note: This call "resumes the exercise", i.e. re-creates the build plan if the build plan was already cleaned before
+     *
+     * @param participation the participation for which we create a new submission and new result
      */
-    public void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
-        int index = 0;
-        for (ProgrammingSubmission submission : submissions) {
-            // Execute requests in batches instead all at once.
-            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
-                try {
-                    log.info("Sleep for {}s during triggerBuild", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
-                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
-                }
-                catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before executing successive build for submission " + submission.getId(), ex);
-                }
-            }
-            triggerBuildAndNotifyUser(submission);
-            index++;
-        }
+    public void triggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation) {
+        var submission = createSubmissionWithLastCommitHashForParticipation(participation, SubmissionType.INSTRUCTOR);
+        triggerBuildAndNotifyUser(submission);
     }
 
     /**
      * Sends a websocket message to the user about the new submission and triggers a build on the CI system.
      * Will send an error object in the case that the communication with the CI failed.
+     *
+     * Note: This call "resumes the exercise", i.e. re-creates the build plan if the build plan was already cleaned before
      *
      * @param submission ProgrammingSubmission that was just created.
      */
