@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -58,10 +60,12 @@ public class ProgrammingSubmissionResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final UserService userService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -70,6 +74,7 @@ public class ProgrammingSubmissionResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resultService = resultService;
         this.versionControlService = versionControlService;
+        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
     }
 
@@ -284,4 +289,71 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
+     * assessed by the tutor who is doing the call.
+     *
+     * @param exerciseId the id of the exercise.
+     * @param submittedOnly if only submitted submissions should be returned.
+     * @param assessedByTutor if the submission was assessed by calling tutor.
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
+     */
+    @GetMapping("/exercises/{exerciseId}/programming-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+        log.debug("REST request to get all programming submissions");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<ProgrammingSubmission> programmingSubmissions;
+        if (assessedByTutor) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+        }
+
+        return ResponseEntity.ok().body(programmingSubmissions);
+    }
+
+    /**
+     * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a programming submission without assessment");
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+
+        // TODO: Handle lock limit.
+
+        Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
+        if (programmingSubmissionOpt.isEmpty()) {
+            return notFound();
+        }
+        ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
+
+        // Make sure the exercise is connected to the participation in the json response
+        StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
+        studentParticipation.setExercise(programmingExercise);
+        programmingSubmissionService.hideDetails(programmingSubmission);
+        return ResponseEntity.ok(programmingSubmission);
+    }
 }

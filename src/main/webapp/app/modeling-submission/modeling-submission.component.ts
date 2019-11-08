@@ -16,10 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
-import { ComplaintType } from 'app/entities/complaint';
-import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -58,27 +55,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     automaticSubmissionWebsocketChannel: string;
 
-    showComplaintForm = false;
-    showRequestMoreFeedbackForm = false;
-    // indicates if there is a complaint for the result of the submission
-    hasComplaint: boolean;
-    // indicates if there is a more feedback request for the result of the submission
-    hasRequestMoreFeedback: boolean;
-    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
-    numberOfAllowedComplaints: number;
-    // indicates if the result is older than one week. if it is, the complain button is disabled.
-    isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isLoading: boolean;
-    ComplaintType = ComplaintType;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private complaintService: ComplaintService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
@@ -106,11 +91,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.participation = modelingSubmission.participation as StudentParticipation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
-                        if (this.modelingExercise.course) {
-                            this.complaintService.getNumberOfAllowedComplaintsInCourse(this.modelingExercise.course.id).subscribe((allowedComplaints: number) => {
-                                this.numberOfAllowedComplaints = allowedComplaints;
-                            });
-                        }
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
@@ -126,21 +106,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.result = this.submission.result;
                         }
                         if (this.submission.submitted && this.result && this.result.completionDate) {
-                            this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.modelingExercise);
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
                                 this.prepareAssessmentData();
                             });
-                            this.complaintService
-                                .findByResultId(this.result.id)
-                                .pipe(filter(res => !!res.body))
-                                .subscribe(res => {
-                                    if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
-                                        this.hasRequestMoreFeedback = true;
-                                    } else {
-                                        this.hasComplaint = true;
-                                    }
-                                });
                         }
                         this.setAutoSaveTimer();
                         this.isLoading = false;
@@ -213,7 +182,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.assessmentResult = newResult;
                 this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
                 this.prepareAssessmentData();
-                this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.assessmentResult, this.modelingExercise);
                 this.jhiAlertService.info('artemisApp.modelingEditor.newAssessment');
             }
         });
@@ -483,15 +451,5 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return umlModel.elements.length + umlModel.relationships.length;
         }
         return 0;
-    }
-
-    toggleComplaintForm() {
-        this.showRequestMoreFeedbackForm = false;
-        this.showComplaintForm = !this.showComplaintForm;
-    }
-
-    toggleRequestMoreFeedbackForm() {
-        this.showComplaintForm = false;
-        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 }
