@@ -56,11 +56,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *
+     * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
+     *
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and submission.submitted = true and (result is null or result.assessmentType = 'AUTOMATIC')")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(@Param("exerciseId") Long exerciseId);
+    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessmentType = 'MANUAL') and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     /**
      * Find all participations of submissions that are submitted and do not already have any result. This means neither a manual nor a automatic assessment took place
@@ -111,4 +113,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndExerciseWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") Set<Exercise> exercises);
+
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
+    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 }
