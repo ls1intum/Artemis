@@ -61,11 +61,30 @@ public class UMLAttribute extends UMLElement {
 
         UMLAttribute referenceAttribute = (UMLAttribute) reference;
 
+        if (!parentsSimilar(referenceAttribute)) {
+            return similarity;
+        }
+
         similarity += NameSimilarity.levenshteinSimilarity(name, referenceAttribute.getName()) * CompassConfiguration.ATTRIBUTE_NAME_WEIGHT;
 
         similarity += NameSimilarity.nameEqualsSimilarity(attributeType, referenceAttribute.getAttributeType()) * CompassConfiguration.ATTRIBUTE_TYPE_WEIGHT;
 
         return ensureSimilarityRange(similarity);
+    }
+
+    /**
+     * Checks if the parent classes of this attribute and the given reference attribute are similar/equal by comparing the similarity IDs of both parent classes. If the similarity
+     * IDs are not set, it calculates the similarity of the parent classes itself and checks against the configured equality threshold.
+     *
+     * @param referenceAttribute the reference attribute of which the parent class is compared against the parent class of this attribute
+     * @return true if the parent classes are similar/equal, false otherwise
+     */
+    private boolean parentsSimilar(UMLAttribute referenceAttribute) {
+        if (parentClass.getSimilarityID() != -1 && referenceAttribute.getParentClass().getSimilarityID() != -1) {
+            return parentClass.getSimilarityID() == referenceAttribute.getParentClass().getSimilarityID();
+        }
+
+        return parentClass.similarity(referenceAttribute.getParentClass()) > CompassConfiguration.EQUALITY_THRESHOLD;
     }
 
     @Override

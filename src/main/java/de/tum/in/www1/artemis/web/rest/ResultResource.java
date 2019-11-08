@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -113,7 +112,7 @@ public class ResultResource {
         final var course = participation.getExercise().getCourse();
         final var user = userService.getUserWithGroupsAndAuthorities();
         final var exercise = participation.getExercise();
-        if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
+        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise))
             return forbidden();
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
@@ -139,7 +138,7 @@ public class ResultResource {
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
         result.setSubmission(submission);
-        resultService.createNewManualResult(result, true);
+        result = resultService.createNewManualResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -220,6 +219,8 @@ public class ResultResource {
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
+            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
+                    result.get().getParticipation());
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
 
@@ -230,8 +231,8 @@ public class ResultResource {
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
             }
+            log.info("The new result for {} was saved successfully", planKey);
         }
-        log.info("The new result was for {} was saved successfully", planKey);
         return ResponseEntity.ok().build();
     }
 
@@ -257,8 +258,7 @@ public class ResultResource {
                 return Optional.empty();
             }
         }
-        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationStateWithEagerResults(planKey,
-                InitializationState.INITIALIZED);
+        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdWithEagerResults(planKey);
         Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
         if (participations.size() > 0) {
             participation = Optional.of(participations.get(0));
@@ -303,8 +303,7 @@ public class ResultResource {
             return createProgrammingExerciseManualResult(result);
         }
 
-        // have a look how quiz-exercise handles this case with the contained questions
-        resultRepository.save(result);
+        result = resultService.updateManualProgrammingExerciseResult(result);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
@@ -314,7 +313,7 @@ public class ResultResource {
             final var exercise = (ProgrammingExercise) exerciseToBeChecked;
             final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
                     : exercise.getDueDate();
-            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || !relevantDueDate.isBefore(ZonedDateTime.now()));
+            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
         }
 
         return true;
@@ -507,9 +506,11 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        Participation participation = participationService.findOne(participationId);
 
-        if (!participationService.canAccessParticipation(participation)) {
+        if (participation instanceof StudentParticipation && !participationService.canAccessParticipation((StudentParticipation) participation)
+                || participation instanceof ProgrammingExerciseParticipation
+                        && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
             return forbidden();
         }
 

@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
@@ -183,7 +182,7 @@ public class ParticipationResource {
 
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
-            participation = participationService.resumeExercise(exercise, participation);
+            participation = participationService.resumeExercise(participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
@@ -193,7 +192,9 @@ public class ParticipationResource {
         }
         log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
-        participation.getExercise().filterSensitiveInformation();
+        if (participation != null && participation.getExercise() != null) {
+            participation.getExercise().filterSensitiveInformation();
+        }
         return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
                 "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }
@@ -424,54 +425,7 @@ public class ParticipationResource {
     }
 
     /**
-     * Finds the repository web URL for a given programming exercise participation
-     *
-     * @param participationId The participationId of the participation
-     * @return The URL of the participation repository as a String
-     */
-    @GetMapping(value = "/participations/{participationId}/repositoryWebUrl")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long participationId) {
-        log.debug("REST request to get repositoryWebUrl of participation : {}", participationId);
-        ProgrammingExerciseStudentParticipation participation = participationService.findProgrammingExerciseParticipation(participationId);
-        checkAccessPermissionOwner(participation);
-        URL url = versionControlService.get().getRepositoryWebUrl(participation);
-        return Optional.ofNullable(url).map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK)).orElse(ResponseUtil.notFound());
-    }
-
-    /**
-     * Looks up the web URL for the build plan in Bamboo of a given participation
-     *
-     * @param participationId The participationId of the participation
-     * @return The URL of the participation build plan as a String
-     */
-    @GetMapping(value = "/participations/{participationId}/buildPlanWebUrl")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long participationId) {
-        log.debug("REST request to get Participation : {}", participationId);
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!courseService.userHasAtLeastTAPermissions(course)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!courseService.userHasAtLeastTAPermissions(course)) {
-            // Check if build plan URL is published, if user is owner of participation and is not TA or higher
-            if (participation.getExercise() instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
-                if (!programmingExercise.isPublishBuildPlanUrl()) {
-                    throw new AccessForbiddenException("You are not allowed to access this resource");
-                }
-            }
-        }
-
-        URL url = continuousIntegrationService.get().getBuildPlanWebUrl(participation);
-        return Optional.ofNullable(url).map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK)).orElse(ResponseUtil.notFound());
-    }
-
-    /**
-     * Retrieves the lates build artifact of a given programming exercise participation
+     * Retrieves the latest build artifact of a given programming exercise participation
      *
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation

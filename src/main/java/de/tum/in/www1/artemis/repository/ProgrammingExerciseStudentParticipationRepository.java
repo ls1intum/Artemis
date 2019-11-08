@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -20,12 +19,11 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    @EntityGraph(attributePaths = "results.feedbacks")
-    @Query("select p from ProgrammingExerciseStudentParticipation p left join p.results pr where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks prf where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacks(@Param("participationId") Long participationId);
 
-    @EntityGraph(attributePaths = "results")
-    List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state);
+    @EntityGraph(attributePaths = { "results", "exercise" })
+    List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
 
     // TODO: at the moment we don't want to consider online courses due to some legacy programming exercises where the VCS repo does not notify Artemis that there is a new
     // submission). In the future we can deactivate the last part.

@@ -18,13 +18,24 @@ class UMLAttributeTest {
     private UMLAttribute attribute;
 
     @Mock
+    UMLClass parentClass;
+
+    @Mock
     UMLAttribute referenceAttribute;
+
+    @Mock
+    UMLClass referenceParentClass;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
 
         attribute = new UMLAttribute("myAttribute", "String", "attributeId");
+        attribute.setParentClass(parentClass);
+
+        when(referenceAttribute.getParentClass()).thenReturn(referenceParentClass);
+        when(parentClass.getSimilarityID()).thenReturn(123);
+        when(referenceParentClass.getSimilarityID()).thenReturn(123);
     }
 
     @Test
@@ -49,6 +60,41 @@ class UMLAttributeTest {
         double similarity = attribute.similarity(referenceAttribute);
 
         assertThat(similarity).isEqualTo(1);
+    }
+
+    @Test
+    void similarity_sameAttribute_noParentSimilarityId() {
+        when(referenceAttribute.getName()).thenReturn("myAttribute");
+        when(referenceAttribute.getAttributeType()).thenReturn("String");
+        when(referenceParentClass.getSimilarityID()).thenReturn(-1);
+        when(parentClass.similarity(referenceParentClass)).thenReturn(CompassConfiguration.EQUALITY_THRESHOLD + 0.01);
+
+        double similarity = attribute.similarity(referenceAttribute);
+
+        assertThat(similarity).isEqualTo(1);
+    }
+
+    @Test
+    void similarity_sameAttribute_differentParent() {
+        when(referenceAttribute.getName()).thenReturn("myAttribute");
+        when(referenceAttribute.getAttributeType()).thenReturn("String");
+        when(referenceParentClass.getSimilarityID()).thenReturn(321);
+
+        double similarity = attribute.similarity(referenceAttribute);
+
+        assertThat(similarity).isEqualTo(0);
+    }
+
+    @Test
+    void similarity_sameAttribute_differentParent_noParentSimilarityId() {
+        when(referenceAttribute.getName()).thenReturn("myAttribute");
+        when(referenceAttribute.getAttributeType()).thenReturn("String");
+        when(referenceParentClass.getSimilarityID()).thenReturn(-1);
+        when(parentClass.similarity(referenceParentClass)).thenReturn(CompassConfiguration.EQUALITY_THRESHOLD - 0.01);
+
+        double similarity = attribute.similarity(referenceAttribute);
+
+        assertThat(similarity).isEqualTo(0);
     }
 
     @Test

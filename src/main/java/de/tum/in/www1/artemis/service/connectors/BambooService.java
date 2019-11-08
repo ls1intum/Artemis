@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.common.cli.Base;
+import com.appfire.common.cli.CliClient;
 import com.appfire.common.cli.Settings;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -25,15 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.common.cli.Base;
-import com.appfire.common.cli.CliClient;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -88,14 +89,6 @@ public class BambooService implements ContinuousIntegrationService {
         this.restTemplate = restTemplate;
     }
 
-    /**
-     * Creates the base build plan for the given programming exercise in Bamboo.
-     *
-     * @param programmingExercise   a programming exercise with the required information to create the base build plan
-     * @param planKey               the key of the plan
-     * @param repositoryName        the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testRepositoryName    the slug of the test repository, i.e. the unique identifier
-     */
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
@@ -143,15 +136,8 @@ public class BambooService implements ContinuousIntegrationService {
         return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
-    /**
-     * Configure the build plan with the given participation on the Bamboo.
-     * For Bamboo to be set up correctly an empty commit needs to be made.
-     *
-     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy.
-     */
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
-        ProgrammingExercise exercise = participation.getProgrammingExercise();
         String buildPlanId = participation.getBuildPlanId();
         URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
@@ -166,13 +152,20 @@ public class BambooService implements ContinuousIntegrationService {
         enablePlan(planKey);
         // We need to trigger an initial update in order for Gitlab to work correctly
         continuousIntegrationUpdateService.get().triggerUpdate(buildPlanId, true);
+    }
 
+    @Override
+    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
         // Empty commit - Bamboo bug workaround
 
         if (BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY) {
             try {
+                ProgrammingExercise exercise = participation.getProgrammingExercise();
+                URL repositoryUrl = participation.getRepositoryUrlAsUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
-                gitService.commitAndPush(repo, "Setup");
+                // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
+                // notifyPush in ProgrammingSubmissionService
+                gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, null);
 
                 if (exercise == null) {
                     log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");
@@ -289,7 +282,7 @@ public class BambooService implements ContinuousIntegrationService {
             // most probably the build was cleaned and we do not have access to it any more.
             return null;
         }
-        Map<String, Object> buildResultDetails = retrieveLatestBuildResult(programmingExerciseParticipation.getBuildPlanId());
+        Map<String, Object> buildResultDetails = queryLatestBuildResultFromBambooServer(programmingExerciseParticipation.getBuildPlanId());
         List<Feedback> feedbackItems = addFeedbackToResult(result, buildResultDetails);
         return feedbackItems;
     }
@@ -303,22 +296,6 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId) {
         return retrieveLatestBuildLogs(buildPlanId);
-    }
-
-    /**
-     * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
-     *
-     * @param participation participation for which to get the build plan URL.
-     * @return build plan url.
-     */
-    @Override
-    public URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation) {
-        try {
-            return new URL(BAMBOO_SERVER_URL + "/browse/" + participation.getBuildPlanId().toUpperCase());
-        } catch (MalformedURLException e) {
-            log.error("Couldn't construct build plan web URL");
-        }
-        return BAMBOO_SERVER_URL;
     }
 
     @Override
@@ -395,7 +372,7 @@ public class BambooService implements ContinuousIntegrationService {
         Boolean isOldBuildResult = true;
         Map buildResults = new HashMap<>();
         try {
-            buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
+            buildResults = queryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
             isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > (60 * 1000);     // older than 60s
         } catch (Exception ex) {
             log.warn("Exception when retrieving a Bamboo build result for build plan " + participation.getBuildPlanId() + ": " + ex.getMessage());
@@ -409,7 +386,7 @@ public class BambooService implements ContinuousIntegrationService {
                 log.error("Sleep error", e);
             }
             log.debug("Retrieving build result (second try)...");
-            buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
+            buildResults = queryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
         }
 
         if (buildResults != null && buildResults.containsKey("buildReason")) {
@@ -426,7 +403,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) buildResults.get("skippedTests")));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
 
@@ -435,7 +412,7 @@ public class BambooService implements ContinuousIntegrationService {
         resultRepository.save(result);
 
         if (buildResults.containsKey("vcsRevisionKey") || buildResults.containsKey("changesetId")) {
-            //we prefer 'changesetId', because it should be correct for multiple commits leading to a build or when test cases have changed.
+            // we prefer 'changesetId', because it should be correct for multiple commits leading to a build or when test cases have changed.
             // In case it does not exist (e.g. due to a manual build), we fall back to vcsRevisionKey which should be correct in most cases
             String commitHash = (String) buildResults.get("changesetId");
             if (commitHash == null || "".equals(commitHash)) {
@@ -500,7 +477,6 @@ public class BambooService implements ContinuousIntegrationService {
      * @throws Exception when the request body cannot be parsed, this method throws an exception
      */
     @Override
-    @Transactional
     @SuppressWarnings("unchecked")
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
         log.debug("Retrieving build result (NEW) ...");
@@ -514,13 +490,10 @@ public class BambooService implements ContinuousIntegrationService {
             List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId());
             Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(submission -> {
                 String matchingCommitHashInBuildMap = getCommitHash(buildMap, submission.getType());
-                return matchingCommitHashInBuildMap.equals(submission.getCommitHash());
+                return matchingCommitHashInBuildMap != null && matchingCommitHashInBuildMap.equals(submission.getCommitHash());
             }).findFirst();
 
             Result result = createResultFromBuildResult(buildMap, participation);
-            // Save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
-            resultRepository.save(result);
-
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
@@ -542,13 +515,14 @@ public class BambooService implements ContinuousIntegrationService {
                 // Save to avoid TransientPropertyValueException.
                 programmingSubmissionRepository.save(programmingSubmission);
             }
-            programmingSubmission.setResult(result);
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
-            return resultRepository.save(result);
+            // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
+            // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
+            return result;
         } catch (Exception e) {
-            log.error("Error when getting build result: " + e.getMessage());
-            throw new BambooException("Could not get build result", e);
+            log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
+            throw new BambooException("Could not create build result from Bamboo notification", e);
         }
     }
 
@@ -579,7 +553,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) testSummary.get("description"));
 
         result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
-        result.setScore(calculateScoreForResult(result));
+        result.setScore(calculateScoreForResult(result, (int) testSummary.get("skippedCount")));
         result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
 
@@ -688,7 +662,6 @@ public class BambooService implements ContinuousIntegrationService {
         feedback.setDetailText(errorMessageString);
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setPositive(positive);
-        feedback = feedbackRepository.save(feedback);
         result.addFeedback(feedback);
     }
 
@@ -753,7 +726,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param result to calculate score for.
      * @return the score calculated.
      */
-    private Long calculateScoreForResult(Result result) {
+    private Long calculateScoreForResult(Result result, int skippedTests) {
 
         if (result.isSuccessful()) {
             return (long) 100;
@@ -767,11 +740,39 @@ public class BambooService implements ContinuousIntegrationService {
             if (matcher.find()) {
                 float failedTests = Float.parseFloat(matcher.group(1));
                 float totalTests = Float.parseFloat(matcher.group(2));
-                float score = (totalTests - failedTests) / totalTests;
+                float score = (totalTests - failedTests - skippedTests) / totalTests;
                 return (long) (score * 100);
             }
         }
         return (long) 0;
+    }
+
+    @Override
+    public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
+        Map<String, Object> buildResults = queryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
+        if (buildResults == null) {
+            return Optional.empty();
+        }
+        // The retrieved build result must match the commitHash of the provided submission.
+        String commitHash = (String) buildResults.get("vcsRevisionKey");
+        if(!commitHash.equalsIgnoreCase(submission.getCommitHash())) {
+            return Optional.empty();
+        }
+        Result result = new Result();
+        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setSuccessful((boolean) buildResults.get("successful"));
+        result.setResultString((String) buildResults.get("buildTestSummary"));
+        result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
+        result.setScore(calculateScoreForResult(result, (int) buildResults.get("skippedTests")));
+        result.setBuildArtifact(buildResults.containsKey("artifact"));
+        result.setParticipation((Participation) participation);
+        result.setSubmission(submission);
+
+        addFeedbackToResult(result, buildResults);
+        result = resultRepository.save(result);
+
+        return Optional.of(result);
     }
 
     /**
@@ -783,18 +784,18 @@ public class BambooService implements ContinuousIntegrationService {
      * - buildTestSummary:      a string generated by Bamboo summarizing the build result
      * - buildCompletedDate:    the completion date of the build
      */
-    private Map<String, Object> retrieveLatestBuildResult(String planKey) {
+    public Map<String, Object> queryLatestBuildResultFromBambooServer(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes",
+                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
                 HttpMethod.GET,
                 entity,
                 Map.class);
         } catch (Exception e) {
-            log.error("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ":" + e.getMessage());
+            log.error("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ": " + e.getMessage());
         }
         if (response != null) {
             Map<String, Object> result = new HashMap<>();
@@ -812,7 +813,44 @@ public class BambooService implements ContinuousIntegrationService {
             //might be empty
             result.put("details", resultDetails);
 
+            // TODO The parsing for queried results is horrible. We should refactor everything here and parse it into a POJO,
+            //      or at least use a Jackson JsonNode. The following lines are a bugfix, for which I parse the result map
+            //      into a JsonNode. In a future PR, this should be expected in the result in the first place
+            //      (restTemplate.exchange(..., JsonNode.class)), or even better restTemplate.exchange(..., BambooBuildResultDTO.class)
+            try {
+                final var mapper = new ObjectMapper();
+                final var responseJson = mapper.readTree(mapper.writeValueAsString(response.getBody()));
+                result.put("skippedTests", responseJson.get("testResults").get("skipped").asInt());
+            } catch (JsonProcessingException e) {
+                log.error(e.getMessage(), e);
+                throw new BambooException(e);
+            }
+
             //search for version control information
+//            if (response.getBody().containsKey("vcsRevisions")) {
+                //TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
+                // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
+//                "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668",
+//                    "vcsRevisions":{
+//                    "size":2,
+//                        "expand":"vcsRevision",
+//                        "vcsRevision":[
+//                    {
+//                        "repositoryId":239584155,
+//                        "repositoryName":"tests",
+//                        "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668"
+//                    },
+//                    {
+//                        "repositoryId":239584156,
+//                        "repositoryName":"assignment",
+//                        "vcsRevisionKey":"1c140ccff2be8c3d0d00c0d370557e258c1292cb"
+//                    }
+//                    ],
+//                    "start-index":0,
+//                        "max-result":2
+//                },
+//                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
+//            }
             if (response.getBody().containsKey("vcsRevisionKey")) {
                 result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
             }
@@ -922,7 +960,7 @@ public class BambooService implements ContinuousIntegrationService {
     public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // TODO: It would be better to directly pass the buildPlanId.
         String planKey = participation.getBuildPlanId();
-        Map<String, Object> latestResult = retrieveLatestBuildResult(planKey);
+        Map<String, Object> latestResult = queryLatestBuildResultFromBambooServer(planKey);
         // If the build has an artifact, the response contains an artifact key.
         // It seems this key is only available if the "Share" checkbox in Bamboo was used.
         if (latestResult.containsKey("artifact")) {

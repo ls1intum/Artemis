@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 
 @Service
@@ -27,11 +27,8 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final ResultRepository resultRepository;
-
     // need bamboo service and resultrepository to create and store from old feedbacks
-    public FeedbackService(ResultRepository resultService, Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackRepository feedbackRepository) {
-        this.resultRepository = resultService;
+    public FeedbackService(Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackRepository feedbackRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackRepository = feedbackRepository;
     }
@@ -48,28 +45,16 @@ public class FeedbackService {
     @Transactional
     @Deprecated
     public List<Feedback> getFeedbackForBuildResult(Result result) {
-
+        boolean isAutomaticResult = result.getAssessmentType() != null && result.getAssessmentType().equals(AssessmentType.AUTOMATIC);
         // Please note: this is a migration for the old case when we did not store feedback in the database
         // Provide access to results with no feedback in the database
         // If the build failed (no feedback, but build logs) and the build plan does not exist any more (because it was cleaned up before),
         // we cannot send feedback to the student, this case is handled in the continuous integration service
-        if (!result.isSuccessful() && (result.getFeedbacks() == null || result.getFeedbacks().size() == 0)) {
+        if (!result.isSuccessful() && isAutomaticResult && (result.getFeedbacks() == null || result.getFeedbacks().size() == 0)) {
             // if the result does not contain any feedback, try to retrieve them from Bamboo and store them in the result and return these.
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
         }
         return result.getFeedbacks();
-    }
-
-    /**
-     * Save a feedback.
-     *
-     * @param feedback the entity to save
-     * @return the persisted entity
-     */
-    @Transactional
-    public Feedback save(Feedback feedback) {
-        log.debug("Request to save Feedback : {}", feedback);
-        return feedbackRepository.save(feedback);
     }
 
     /**

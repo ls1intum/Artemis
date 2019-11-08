@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -12,16 +12,16 @@ import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Feedback } from 'app/entities/feedback';
-import { ComplaintType } from 'app/entities/complaint';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ComponentCanDeactivate } from 'app/shared';
+import { Observable } from 'rxjs/Observable';
 
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
-export class TextEditorComponent implements OnInit {
+export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
@@ -29,20 +29,8 @@ export class TextEditorComponent implements OnInit {
     isActive: boolean;
     isSaving: boolean;
     answer: string;
-    isExampleSubmission = false;
-    showComplaintForm = false;
-    showRequestMoreFeedbackForm = false;
-    // indicates if there is a complaint for the result of the submission
-    hasComplaint = false;
-    // indicates if more feedback was requested already
-    hasRequestMoreFeedback = false;
-    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
-    numberOfAllowedComplaints: number;
-    // indicates if the result is older than one week. if it is, the complain button is disabled
-    isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
-    ComplaintType = ComplaintType;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
@@ -53,12 +41,11 @@ export class TextEditorComponent implements OnInit {
         private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
-        private complaintService: ComplaintService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
-        translateService: TranslateService,
+        private translateService: TranslateService,
     ) {
         this.isSaving = false;
         translateService.get('artemisApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
@@ -76,12 +63,6 @@ export class TextEditorComponent implements OnInit {
                 this.textExercise = this.participation.exercise as TextExercise;
                 this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
 
-                if (this.textExercise.course) {
-                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.textExercise.course.id).subscribe((allowedComplaints: number) => {
-                        this.numberOfAllowedComplaints = allowedComplaints;
-                    });
-                }
-
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
                     if (this.submission && data.results && this.isAfterAssessmentDueDate) {
@@ -91,24 +72,28 @@ export class TextEditorComponent implements OnInit {
                     if (this.submission && this.submission.text) {
                         this.answer = this.submission.text;
                     }
-                    if (this.result && this.result.completionDate) {
-                        this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.textExercise);
-                        this.complaintService.findByResultId(this.result.id).subscribe(res => {
-                            if (res.body) {
-                                if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
-                                    this.hasComplaint = true;
-                                } else {
-                                    this.hasRequestMoreFeedback = true;
-                                }
-                            }
-                        });
-                    }
                 }
 
                 this.isActive = this.textExercise.dueDate === undefined || this.textExercise.dueDate === null || new Date() <= moment(this.textExercise.dueDate).toDate();
             },
             (error: HttpErrorResponse) => this.onError(error),
         );
+    }
+
+    ngOnDestroy() {
+        if (this.canDeactivate() && this.textExercise.id) {
+            let newSubmission = new TextSubmission();
+            if (this.submission) {
+                newSubmission = this.submission;
+            }
+            newSubmission.submitted = false;
+            newSubmission.text = this.answer;
+            if (this.submission.id) {
+                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe();
+            } else {
+                this.textSubmissionService.create(newSubmission, this.textExercise.id).subscribe();
+            }
+        }
     }
 
     /**
@@ -125,6 +110,14 @@ export class TextEditorComponent implements OnInit {
         }
 
         return null;
+    }
+
+    // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
     }
 
     saveText() {
@@ -155,6 +148,10 @@ export class TextEditorComponent implements OnInit {
                 this.isSaving = false;
             },
         );
+    }
+
+    canDeactivate(): Observable<boolean> | boolean {
+        return this.submission.text !== this.answer;
     }
 
     submit() {
@@ -202,15 +199,5 @@ export class TextEditorComponent implements OnInit {
 
     previous() {
         this.location.back();
-    }
-
-    toggleComplaintForm() {
-        this.showRequestMoreFeedbackForm = false;
-        this.showComplaintForm = !this.showComplaintForm;
-    }
-
-    toggleRequestMoreFeedbackForm() {
-        this.showComplaintForm = false;
-        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 }
