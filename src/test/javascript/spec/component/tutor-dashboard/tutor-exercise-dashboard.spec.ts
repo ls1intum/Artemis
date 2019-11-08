@@ -30,7 +30,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -91,6 +91,7 @@ describe('TutorExerciseDashboardComponent', () => {
                         },
                     },
                 },
+                { provide: DeviceDetectorService },
             ],
         })
             .compileComponents()
