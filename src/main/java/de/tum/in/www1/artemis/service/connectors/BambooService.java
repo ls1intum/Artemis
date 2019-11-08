@@ -843,7 +843,7 @@ public class BambooService implements ContinuousIntegrationService {
             result.put("details", resultDetails);
 
             //search for version control information
-            if (response.getBody().containsKey("vcsRevisions")) {
+//            if (response.getBody().containsKey("vcsRevisions")) {
                 //TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
                 // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
 //                "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668",
@@ -865,8 +865,8 @@ public class BambooService implements ContinuousIntegrationService {
 //                    "start-index":0,
 //                        "max-result":2
 //                },
-                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
-            }
+//                List<Object> vcsRevisions = (List<Object>) response.getBody().get("vcsRevisions");
+//            }
             if (response.getBody().containsKey("vcsRevisionKey")) {
                 result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
             }
