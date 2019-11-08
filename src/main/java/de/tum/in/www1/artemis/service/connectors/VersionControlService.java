@@ -133,7 +133,6 @@ public interface VersionControlService {
      * @return The repository slug
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
-    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle
-    // this in the future
+    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle this in the future
     String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException;
 }

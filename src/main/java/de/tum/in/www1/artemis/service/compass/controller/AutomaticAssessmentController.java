@@ -7,10 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
+import de.tum.in.www1.artemis.service.compass.assessment.SimilaritySetAssessment;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
@@ -23,14 +22,14 @@ public class AutomaticAssessmentController {
     private double totalConfidence;
 
     /**
-     * For every model element it adds the feedback (together with the context of the element) to the assessment of the corresponding similarity set. If there is no assessment for
-     * the similarity set yet, it creates a new one.
+     * For every model element it adds the feedback to the assessment of the corresponding similarity set. If there is no assessment for the similarity set yet, it creates a new
+     * one.
      *
-     * @param index                manages all assessments
+     * @param index                manages the assessments of all similarity sets
      * @param elementIdFeedbackMap maps elementIds to feedbacks
      * @param model                the UML model - contains all elements with its jsonIds
      */
-    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLDiagram model) {
+    public void addFeedbackToSimilaritySet(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLDiagram model) {
         for (String jsonElementID : elementIdFeedbackMap.keySet()) {
             UMLElement element = model.getElementByJSONID(jsonElementID);
 
@@ -39,15 +38,14 @@ public class AutomaticAssessmentController {
                 continue;
             }
 
-            Context context = element.getContext();
-            Optional<Assessment> assessmentOptional = index.getAssessment(element.getSimilarityID());
+            Optional<SimilaritySetAssessment> optionalAssessment = index.getAssessmentForSimilaritySet(element.getSimilarityID());
 
-            if (assessmentOptional.isPresent()) {
-                assessmentOptional.get().addFeedback(elementIdFeedbackMap.get(jsonElementID), context);
+            if (optionalAssessment.isPresent()) {
+                optionalAssessment.get().addFeedback(elementIdFeedbackMap.get(jsonElementID));
             }
             else {
-                Assessment newAssessment = new Assessment(context, elementIdFeedbackMap.get(jsonElementID));
-                index.addAssessment(element.getSimilarityID(), newAssessment);
+                SimilaritySetAssessment newAssessment = new SimilaritySetAssessment(elementIdFeedbackMap.get(jsonElementID));
+                index.addSimilaritySetAssessment(element.getSimilarityID(), newAssessment);
             }
         }
     }
@@ -91,14 +89,14 @@ public class AutomaticAssessmentController {
         Map<UMLElement, Score> scoreHashMap = new ConcurrentHashMap<>();
 
         for (UMLElement element : model.getAllModelElements()) {
-            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(element.getSimilarityID());
+            Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(element.getSimilarityID());
             totalCount++;
 
-            if (assessmentOptional.isEmpty()) {
+            if (optionalAssessment.isEmpty()) {
                 missingCount++;
             }
             else {
-                Score score = assessmentOptional.get().getScore(element.getContext());
+                Score score = optionalAssessment.get().getScore();
 
                 if (score == null) {
                     log.debug("Unable to find score for element " + element.getJSONElementID() + " in model " + model.getModelSubmissionId() + " with the specific context");
