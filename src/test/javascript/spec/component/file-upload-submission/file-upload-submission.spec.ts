@@ -214,22 +214,10 @@ describe('FileUploadSubmissionComponent', () => {
         expect(fileUploadInput.nativeElement.value).to.be.equal('');
     }));
 
-    it('should not allow to submit after the deadline if there is no due date', fakeAsync(() => {
-        comp.fileUploadExercise = fileUploadExercise;
-        comp.submissionFile = new File([''], 'exampleSubmission.png');
-
-        fixture.detectChanges();
-        tick();
-
-        const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).to.exist;
-        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
-    }));
-
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
-        submission.participation.initializationDate = moment();
-        (<StudentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
+        submission.participation.initializationDate = moment().subtract(2, 'days');
+        (<StudentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
@@ -238,7 +226,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
-        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
     }));
 
     it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
@@ -259,15 +247,17 @@ describe('FileUploadSubmissionComponent', () => {
 
     it('should not allow to submit if there is a result and no due date', fakeAsync(() => {
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(createFileUploadSubmission()));
-        comp.result = result;
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
         fixture.detectChanges();
         tick();
 
+        comp.result = result;
+        fixture.detectChanges();
+
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
-        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+        expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
     }));
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
