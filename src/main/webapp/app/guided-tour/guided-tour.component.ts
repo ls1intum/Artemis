@@ -192,7 +192,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     throw err;
                 }
             }
-        });
+        }, 0);
     }
 
     /**
@@ -348,7 +348,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
             topPosition = this.isTop()
-                ? this.tourStep.nativeElement.getBoundingClientRect().top - 15
+                ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15
                 : window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
         }
         return topPosition;
