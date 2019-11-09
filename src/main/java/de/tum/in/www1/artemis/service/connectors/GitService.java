@@ -17,6 +17,8 @@ import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
@@ -56,10 +58,10 @@ public class GitService {
     private String REPO_CLONE_PATH;
 
     @Value("${artemis.git.name}")
-    private String GIT_NAME;
+    private String ARTEMIS_GIT_NAME;
 
     @Value("${artemis.git.email}")
-    private String GIT_EMAIL;
+    private String ARTEMIS_GIT_EMAIL;
 
     private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
 
@@ -224,20 +226,23 @@ public class GitService {
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         Git git = new Git(repo);
-        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
+        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(ARTEMIS_GIT_NAME, ARTEMIS_GIT_EMAIL).call();
         git.close();
     }
 
     /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
-     * @param repo    Local Repository Object.
-     * @param message Commit Message
+     * @param repo      Local Repository Object.
+     * @param message   Commit Message
+     * @param user      The user who should initiate the commit. If the user is null, the artemis user will be used
      * @throws GitAPIException if the commit failed.
      */
-    public void commitAndPush(Repository repo, String message) throws GitAPIException {
+    public void commitAndPush(Repository repo, String message, @Nullable User user) throws GitAPIException {
+        var name = user != null ? user.getName() : ARTEMIS_GIT_NAME;
+        var email = user != null ? user.getEmail() : ARTEMIS_GIT_EMAIL;
         Git git = new Git(repo);
-        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
+        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         git.close();
     }

@@ -87,7 +87,7 @@
             "totalPoints": "Gesamtpunktzahl",
             "totalScore": "Ergebnis",
             "maxScore": "Max. Punkte",
-            "remainingTime": "Verbleibende Zeit",
+            "remainingTime": "Restzeit",
             "waitingForStart": "Warte auf Start",
             "quizInstructions": {
                 "default": "Beantworte alle Fragen in der verbleibenden Zeit und klick erst dann auf die Schaltfläche \"Absenden\", wenn du fertig bist.",
@@ -96,7 +96,9 @@
                 "waitForStart": "Bitte warte.<br><br>Diese Seite lädt automatisch neu, sobald das Quiz beginnt.",
                 "timeUntilPlannedStart": "Zeit bis zum geplanten Start:"
             },
+            "isSaving": "Wird gespeichert...",
             "lastSaved": "Gespeichert",
+            "lastSavedTimeNever": "Nie",
             "submitted": "Abgegeben",
             "connected": "Verbunden",
             "disconnected": "Verbindung getrennt",

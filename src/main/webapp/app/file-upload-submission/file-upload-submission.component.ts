@@ -32,18 +32,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     participation: StudentParticipation;
     result: Result;
     submissionFile: File | null;
-
-    ComplaintType = ComplaintType;
-    showComplaintForm = false;
-    showRequestMoreFeedbackForm = false;
-    // indicates if there is a complaint for the result of the submission
-    hasComplaint: boolean;
-    // indicates if there is a more feedback request for the result of the submission
-    hasRequestMoreFeedback: boolean;
-    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
-    numberOfAllowedComplaints: number;
-    // indicates if the result is older than one week. if it is, the complain button is disabled
-    isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
 
@@ -59,7 +47,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private route: ActivatedRoute,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
-        private complaintService: ComplaintService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private location: Location,
@@ -106,29 +93,13 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || moment().isAfter(this.fileUploadExercise.assessmentDueDate);
 
-                if (this.fileUploadExercise.course) {
-                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.fileUploadExercise.course.id).subscribe((allowedComplaints: number) => {
-                        this.numberOfAllowedComplaints = allowedComplaints;
-                    });
-                }
                 if (this.submission.submitted) {
                     this.setSubmittedFile();
                 }
                 if (this.submission.submitted && this.result && this.result.completionDate) {
-                    this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.fileUploadExercise);
                     this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
                     });
-                    this.complaintService
-                        .findByResultId(this.result.id)
-                        .pipe(filter(res => !!res.body))
-                        .subscribe(res => {
-                            if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
-                                this.hasRequestMoreFeedback = true;
-                            } else {
-                                this.hasComplaint = true;
-                            }
-                        });
                 }
             },
             (error: HttpErrorResponse) => this.onError(error),
@@ -203,22 +174,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     downloadFile(filePath: string) {
         this.fileService.downloadAttachment(filePath);
-    }
-
-    /**
-     * Hides more feedback form and shows complaint form
-     */
-    toggleComplaintForm() {
-        this.showRequestMoreFeedbackForm = false;
-        this.showComplaintForm = !this.showComplaintForm;
-    }
-
-    /**
-     * Hides complaint form and shows more feedback form
-     */
-    toggleRequestMoreFeedbackForm() {
-        this.showComplaintForm = false;
-        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
     }
 
     /**

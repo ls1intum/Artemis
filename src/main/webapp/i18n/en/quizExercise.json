@@ -87,7 +87,7 @@
             "totalPoints": "Total Points",
             "totalScore": "Result",
             "maxScore": "Max. Score",
-            "remainingTime": "Remaining Time",
+            "remainingTime": "Time left",
             "waitingForStart": "Waiting for Start",
             "quizInstructions": {
                 "default": "Answer all questions in remaining time and only click the \"Submit\" button, when you're done.",
@@ -96,7 +96,9 @@
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
                 "timeUntilPlannedStart": "Time until planned start:"
             },
+            "isSaving": "Saving answers...",
             "lastSaved": "Saved",
+            "lastSavedTimeNever": "Never",
             "submitted": "Submitted",
             "connected": "Connected",
             "disconnected": "Disconnected",
