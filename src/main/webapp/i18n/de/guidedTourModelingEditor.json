@@ -10,7 +10,7 @@
                 "content": "Um UML Elemente hinzuzufügen, musst du nur eines der aufgelisteten UML Elemente neben der Editierfläche per Drag and Drop auf die Editierfläche ziehen. Du kannst das UML Element, indem du das Element per Doppelklick auswählst."
             },
             "createAssociation": {
-                "headline": "Beziehungen erstellen",
+                "headline": "Beziehungen erstellen und bearbeiten",
                 "content": "Um eine Beziehung hinzuzufügen, wähle die Ausgangsklasse mit einem Klick aus und erkenne die vier blaue Halbkreise. Das sind die möglichen Verbindungspunkte für Beziehungen. Klicke und halte einen dieser Punkte gedrückt und ziehe die Maus auf einen anderen blauen Halbkreis, um eine Beziehung zu erstellen. Du kannst den Typ der Beziehung ändern, indem du das Element per Doppelklick auswählst und den gewünschten Typ auswählst"
             },
             "executeTasks": {

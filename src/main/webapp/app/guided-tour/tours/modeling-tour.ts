@@ -5,7 +5,7 @@ import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'a
 
 export const modelingTour: GuidedTour = {
     courseShortName: 'artemistutorial',
-    exerciseShortName: 'Modeling',
+    exerciseShortName: 'UML Class Diagram',
     settingsKey: 'modeling_tour',
     resetUMLModel: true,
     steps: [
