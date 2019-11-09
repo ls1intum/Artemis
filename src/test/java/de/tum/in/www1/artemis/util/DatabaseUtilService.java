@@ -396,6 +396,24 @@ public class DatabaseUtilService {
     }
 
     @Transactional
+    public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
+        Course course = addCourseWithOneProgrammingExercise();
+        course = courseRepo.findById(course.getId()).get();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
+
+        List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
+        testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1).active(true).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Context]").weight(2).active(true).exercise(programmingExercise).afterDueDate(false));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(3).active(true).exercise(programmingExercise).afterDueDate(false));
+        testCaseRepository.saveAll(testCases);
+
+        List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        assertThat(tests).as("test case is initialized").hasSize(3);
+
+        return courseRepo.findById(course.getId()).get();
+    }
+
+    @Transactional
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         course = courseRepo.findById(course.getId()).get();
@@ -407,7 +425,8 @@ public class DatabaseUtilService {
         testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3).active(true).exercise(programmingExercise).afterDueDate(true));
         testCaseRepository.saveAll(testCases);
 
-        assertThat(testCaseRepository.findAll()).as("test case is initialized").hasSize(3);
+        List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        assertThat(tests).as("test case is initialized").hasSize(3);
 
         return courseRepo.findById(course.getId()).get();
     }
@@ -550,6 +569,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setSubmission(submission);
         result.setAssessor(getUserByLogin(assessorLogin));
+        result.setAssessmentType(AssessmentType.MANUAL);
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);

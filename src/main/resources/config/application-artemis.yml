@@ -13,17 +13,17 @@ artemis:
         base: <base>
     jira:
         url: https://jira.ase.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
+        user: ge56miw    # e.g. ga12abc
+        password: S1a5l6i3v2a
         admin-group-name: tumuser
     version-control:
         url: https://bitbucket.ase.in.tum.de
-        user: <username>    # e.g. ga12abc
-        secret: <password>
+        user: ge56miw    # e.g. ga12abc
+        secret: S1a5l6i3v2a
     bamboo:
         url: https://bamboobruegge.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
+        user: ge56miw    # e.g. ga12abc
+        password: S1a5l6i3v2a
         vcs-application-link-name: LS1 Bitbucket Server
         empty-commit-necessary: true
         authentication-token: <secrettoken>

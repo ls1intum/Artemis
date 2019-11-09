@@ -24,6 +24,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -139,8 +140,8 @@ public class AssessmentComplaintIntegrationTest {
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
-        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(8));
-        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusDays(8));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
