@@ -1,5 +1,5 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -24,12 +24,12 @@ import { ComplaintService } from 'app/entities/complaint';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisSharedModule } from 'app/shared';
-import { ArtemisResultModule } from 'app/entities/result';
+import { ArtemisResultModule, Result } from 'app/entities/result';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisModelingEditorModule, ModelingEditorComponent } from 'app/modeling-editor';
+import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentModule } from 'app/modeling-assessment';
 import { ArtemisComplaintsModule } from 'app/complaints';
-import { spy } from 'sinon';
+import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { MockComponent } from 'ng-mocks';
 
@@ -46,7 +46,8 @@ describe('Component Tests', () => {
         const route = ({ params: of({ participationId: 123 }) } as any) as ActivatedRoute;
         const participation = new StudentParticipation();
         participation.exercise = new ModelingExercise('ClassDiagram');
-        const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation: participation });
+        const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
+        const result = { id: 1 } as Result;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -77,14 +78,14 @@ describe('Component Tests', () => {
                     comp = fixture.componentInstance;
                     debugElement = fixture.debugElement;
                     service = debugElement.injector.get(ModelingSubmissionService);
+                    // Ignore window scroll
+                    window.scroll = () => {
+                        return false;
+                    };
                 });
         });
 
         it('Should call load getDataForModelingEditor on init', () => {
-            // Ignore window confirm
-            window.scroll = () => {
-                return false;
-            };
             // GIVEN
             const fake = sinon.fake.returns(of(submission));
             sinon.replace(service, 'getDataForModelingEditor', fake);
@@ -97,26 +98,71 @@ describe('Component Tests', () => {
             expect(comp.submission).to.be.include({ id: 20 });
         });
 
-        it('Allow to submit when exercise due date not set', () => {
-            // Ignore window confirm
-            window.scroll = () => {
-                return false;
-            };
+        it('should allow to submit when exercise due date not set', () => {
             // GIVEN
-            const fake = sinon.fake.returns(of(submission));
-            sinon.replace(service, 'getDataForModelingEditor', fake);
+            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
 
             // WHEN
-            comp.ngOnInit();
             comp.isLoading = false;
             fixture.detectChanges();
 
             expect(debugElement.query(By.css('div'))).to.exist;
 
-            let submitButton = debugElement.query(By.css('jhi-button'));
+            const submitButton = debugElement.query(By.css('jhi-button'));
             expect(submitButton).to.exist;
             expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
             expect(comp.isActive).to.be.true;
+        });
+
+        it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
+            submission.participation.initializationDate = moment().subtract(2, 'days');
+            (<StudentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
+            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+
+            fixture.detectChanges();
+
+            const submitButton = debugElement.query(By.css('jhi-button'));
+            expect(submitButton).to.exist;
+            expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+        });
+
+        it('should allow to submit after the deadline if the initialization date is after the due date', () => {
+            submission.participation.initializationDate = moment().add(1, 'days');
+            (<StudentParticipation>submission.participation).exercise.dueDate = moment();
+            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+
+            fixture.detectChanges();
+
+            expect(comp.isLate).to.be.true;
+            const submitButton = debugElement.query(By.css('jhi-button'));
+            expect(submitButton).to.exist;
+            expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+        });
+
+        it('should not allow to submit if there is a result and no due date', () => {
+            comp.result = result;
+            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+
+            fixture.detectChanges();
+
+            const submitButton = debugElement.query(By.css('jhi-button'));
+            expect(submitButton).to.exist;
+            expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+        });
+
+        it('should get inactive as soon as the due date passes the current date', () => {
+            (<StudentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
+            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+
+            fixture.detectChanges();
+            comp.participation.initializationDate = moment();
+
+            expect(comp.isActive).to.be.true;
+
+            comp.modelingExercise.dueDate = moment().subtract(1, 'days');
+
+            fixture.detectChanges();
+            expect(comp.isActive).to.be.false;
         });
     });
 });
