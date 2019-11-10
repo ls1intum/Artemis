@@ -186,7 +186,21 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     /**
      * The exercise is still active if it's due date hasn't passed yet.
      */
-    get isActive() {
+    get isActive(): boolean {
         return this.fileUploadExercise && (!this.fileUploadExercise.dueDate || moment(this.fileUploadExercise.dueDate).isSameOrAfter(moment()));
+    }
+
+    get submitButtonTooltip(): string {
+        if (!this.isLate) {
+            if (this.isActive && !this.fileUploadExercise.dueDate) {
+                return 'entity.action.submitNoDeadlineTooltip';
+            } else if (this.isActive) {
+                return 'entity.action.submitTooltip';
+            } else {
+                return 'entity.action.deadlineMissedTooltip';
+            }
+        }
+
+        return 'entity.action.submitDeadlineMissedTooltip';
     }
 }
