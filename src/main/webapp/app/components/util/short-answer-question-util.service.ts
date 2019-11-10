@@ -472,6 +472,6 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[][]}
      */
     transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): (string | null)[][] {
-        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdown(element)));
+        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdown(element).toString()));
     }
 }
