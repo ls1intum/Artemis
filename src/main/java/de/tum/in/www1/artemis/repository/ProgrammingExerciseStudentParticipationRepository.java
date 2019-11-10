@@ -19,15 +19,13 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks prf where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacks(@Param("participationId") Long participationId);
 
     @EntityGraph(attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
 
-    // TODO: at the moment we don't want to consider online courses due to some legacy programming exercises where the VCS repo does not notify Artemis that there is a new
-    // submission). In the future we can deactivate the last part.
-    @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.student is not null and participation.exercise.course.onlineCourse = false")
+    @Query("select distinct p from ProgrammingExerciseStudentParticipation p left join fetch p.results where p.buildPlanId is not null and p.student is not null")
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId();
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
