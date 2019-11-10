@@ -115,7 +115,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        this.apollonDiagramService.update(updatedDiagram).subscribe(() => this.setAutoSaveTimer(), () => this.jhiAlertService.error('artemisApp.apollonDiagram.update.error'));
+        this.apollonDiagramService.update(updatedDiagram).subscribe(
+            () => this.setAutoSaveTimer(),
+            () => this.jhiAlertService.error('artemisApp.apollonDiagram.update.error'),
+        );
     }
 
     /**

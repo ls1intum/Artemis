@@ -105,7 +105,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
-        result.subscribe(res => this.onSaveSuccess(res), err => this.onSaveError());
+        result.subscribe(
+            res => this.onSaveSuccess(res),
+            err => this.onSaveError(),
+        );
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {
