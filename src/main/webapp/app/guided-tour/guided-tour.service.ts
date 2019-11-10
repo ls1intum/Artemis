@@ -540,11 +540,6 @@ export class GuidedTourService {
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
-                console.warn(
-                    `Error finding selector ${this.currentTour.steps[this.currentTourStepIndex].highlightSelector} on step ${this.currentTourStepIndex + 1} during guided tour: ${
-                        this.currentTour.settingsKey
-                    }`,
-                );
                 return false;
             }
         }

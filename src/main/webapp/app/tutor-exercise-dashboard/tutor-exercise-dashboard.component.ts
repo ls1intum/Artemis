@@ -24,6 +24,8 @@ import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-das
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -54,7 +56,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
-    unassessedSubmission: Submission;
+    unassessedSubmission: Submission | null;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -72,6 +74,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
     readonly ExerciseType_FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
 
     stats = {
         toReview: {
@@ -104,6 +107,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
         private complaintService: ComplaintService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
     ) {}
 
     ngOnInit(): void {
@@ -209,6 +213,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
      */
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
+        // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
                 submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
@@ -219,6 +224,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
                 break;
+            case ExerciseType.PROGRAMMING:
+                submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                break;
         }
 
         submissionsObservable
@@ -227,7 +235,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 map(this.reconnectEntities),
             )
             .subscribe((submissions: Submission[]) => {
-                this.submissions = submissions;
+                // Set the received submissions. As the result component depends on the submission we nest it into the participation.
+                this.submissions = submissions.map(submission => {
+                    submission.participation.submissions = [submission];
+                    return submission;
+                });
             });
     }
 
@@ -263,6 +275,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
                 break;
+            case ExerciseType.PROGRAMMING:
+                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                break;
         }
 
         submissionObservable.subscribe(
@@ -273,6 +288,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
+                    this.unassessedSubmission = null;
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
@@ -346,6 +362,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
         }
         this.router.navigate([route]);
+    }
+
+    asProgrammingExercise(exercise: Exercise) {
+        return exercise as ProgrammingExercise;
     }
 
     back() {

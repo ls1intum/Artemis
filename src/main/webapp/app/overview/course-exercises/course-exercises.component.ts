@@ -39,7 +39,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     public course: Course | null;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
-    public upcomingExercises: Exercise[];
+    public upcomingExercises: Exercise[] = [];
     public exerciseCountMap: Map<string, number>;
     public guidedTourExercise: Exercise | null;
 

@@ -20,6 +20,9 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
 import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
 import { CourseScoreCalculationService } from 'app/overview';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
@@ -36,10 +39,13 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisSidePanelModule,
         ArtemisTutorLeaderboardModule,
+        ArtemisSharedComponentModule,
+        ArtemisProgrammingExerciseInstructionsRenderModule,
+        ArtemisProgrammingAssessmentModule,
+        ArtemisResultModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
-    exports: [ResultComponent],
-    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
+    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
     providers: [CourseService, JhiAlertService, RepositoryService, ResultService, CourseExerciseService, ParticipationService, CourseScoreCalculationService],
 })
 export class ArtemisTutorExerciseDashboardModule {}

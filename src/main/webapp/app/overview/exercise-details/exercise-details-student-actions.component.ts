@@ -18,20 +18,8 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
     providers: [JhiAlertService, SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly TEXT = ExerciseType.TEXT;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly QUIZ_UNINITIALIZED = ParticipationStatus.QUIZ_UNINITIALIZED;
-    readonly QUIZ_ACTIVE = ParticipationStatus.QUIZ_ACTIVE;
-    readonly QUIZ_SUBMITTED = ParticipationStatus.QUIZ_SUBMITTED;
-    readonly QUIZ_NOT_STARTED = ParticipationStatus.QUIZ_NOT_STARTED;
-    readonly QUIZ_NOT_PARTICIPATED = ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
-    readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
-    readonly INITIALIZED = ParticipationStatus.INITIALIZED;
-    readonly INACTIVE = ParticipationStatus.INACTIVE;
+    readonly ExerciseType = ExerciseType;
+    readonly ParticipationStatus = ParticipationStatus;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -131,6 +119,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
+                        // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
+                        participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }

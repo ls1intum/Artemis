@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 
@@ -48,7 +47,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void add(AuditEvent event) {
-        if (!AUTHORIZATION_FAILURE.equals(event.getType()) && !Constants.ANONYMOUS_USER.equals(event.getPrincipal())) {
+        if (!AUTHORIZATION_FAILURE.equals(event.getType())) {
 
             PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
             persistentAuditEvent.setPrincipal(event.getPrincipal());

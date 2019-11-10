@@ -20,6 +20,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -29,6 +30,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
+    readonly AssessmentType = AssessmentType;
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -150,16 +152,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     sortResults() {
         if (this.studentParticipation && this.hasResults) {
-            this.studentParticipation.results = this.studentParticipation.results.sort((a, b) => {
-                const aValue = moment(a.completionDate!).valueOf();
-                const bValue = moment(b.completionDate!).valueOf();
-                return aValue - bValue;
-            });
+            this.studentParticipation.results = this.studentParticipation.results.sort(this.resultSortFunction);
             const sortedResultLength = this.studentParticipation.results.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
             this.sortedHistoryResult = this.studentParticipation.results.slice(startingElement, sortedResultLength);
         }
     }
+
+    private resultSortFunction = (a: Result, b: Result) => {
+        const aValue = moment(a.completionDate!).valueOf();
+        const bValue = moment(b.completionDate!).valueOf();
+        return aValue - bValue;
+    };
 
     mergeResultsAndSubmissionsForParticipations() {
         // if there are new student participation(s) from the server, we need to update this.studentParticipation
@@ -167,6 +171,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
                 this.studentParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
                 this.sortResults();
+                // Add exercise to studentParticipation, as the result component is dependent on its existence.
+                if (this.studentParticipation && this.studentParticipation.exercise == null) {
+                    this.studentParticipation.exercise = this.exercise;
+                }
             } else if (this.studentParticipation) {
                 // otherwise we make sure that the student participation in exercise is correct
                 this.exercise.studentParticipations = [this.studentParticipation];
@@ -257,7 +265,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return this.studentParticipation.results.find((result: Result) => !!result.completionDate) || null;
         }
 
-        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated);
+        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated).sort(this.resultSortFunction);
         const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
         if (latestResult) {
             latestResult.participation = this.studentParticipation;
