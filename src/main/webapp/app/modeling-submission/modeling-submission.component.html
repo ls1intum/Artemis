@@ -16,7 +16,7 @@
                 (onClick)="submit()"
                 [isLoading]="isSaving"
                 [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
-                [tooltip]="!isLate ? (isActive ? 'entity.action.submitTooltip' : 'entity.action.deadlineMissedTooltip') : 'entity.action.submitDeadlineMissedTooltip'"
+                [tooltip]="submitButtonTooltip"
             ></jhi-button>
             <!--TODO: enable retry button again-->
             <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->

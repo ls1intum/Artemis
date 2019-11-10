@@ -287,9 +287,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.retryStarted = false;
 
                         if (this.isLate) {
-                            this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                            this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
                         } else {
-                            this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
+                            this.jhiAlertService.success('entity.action.submitSuccessfulAlert');
                         }
 
                         this.subscribeToWebsockets();
@@ -486,7 +486,21 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * The exercise is still active if it's due date hasn't passed yet.
      */
-    get isActive() {
+    get isActive(): boolean {
         return this.modelingExercise && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+    }
+
+    get submitButtonTooltip(): string {
+        if (!this.isLate) {
+            if (this.isActive && !this.modelingExercise.dueDate) {
+                return 'entity.action.submitNoDeadlineTooltip';
+            } else if (this.isActive) {
+                return 'entity.action.submitTooltip';
+            } else {
+                return 'entity.action.deadlineMissedTooltip';
+            }
+        }
+
+        return 'entity.action.submitDeadlineMissedTooltip';
     }
 }

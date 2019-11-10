@@ -181,7 +181,13 @@
             "cleanup": "Aufräumen",
             "archive": "Archivieren",
             "submit": "Absenden",
+            "submitTooltip": "Du kannst mehrmals bis zur Deadline abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
+            "submitNoDeadlineTooltip": "Du kannst mehrmals abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
+            "submitDeadlineMissedTooltip": "Die Deadline ist abgelaufen. Weitere Abgaben werden nicht gewertet!",
+            "deadlineMissedTooltip": "Die Deadline ist abgelaufen. Du kannst keine neuen Lösungen einreichen!",
             "submitDeadlineMissed": "Absenden (Deadline verpasst)",
+            "submitSuccessfulAlert": "Deine Abgabe war erfolgreich! Du kannst deine Abgabe nun ändern oder auf Feedback warten.",
+            "submitDeadlineMissedAlert": "Deine Abgabe war erfolgreich! Du kannst deine Abgabe nun ändern oder auf Feedback warten. Da du die Deadline verpasst hast, wird deine Abgabe nicht gewertet.",
             "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
@@ -199,10 +205,7 @@
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
-            "manageHints": "Verwalte Hinweise",
-            "submitTooltip": "Du kannst vor der Abgabefrist mehrmals abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
-            "submitDeadlineMissedTooltip": "Die Abgabefrist ist abgelaufen. Weitere Abgaben werden nicht gewertet!",
-            "deadlineMissedTooltip": "Die Abgabefrist ist abgelaufen. Du kannst keine neuen Lösungen einreichen!"
+            "manageHints": "Verwalte Hinweise"
         },
         "detail": {
             "field": "Feld",
