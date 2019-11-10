@@ -67,27 +67,37 @@ public class GitLabService implements VersionControlService {
             // TODO
         }
 
-        giveWritePermissions(repositoryUrl, username);
+        addMemberToProject(repositoryUrl, username);
         protectBranch("master", repositoryUrl);
     }
 
-    private void giveWritePermissions(URL repositoryUrl, String username) {
-        final var userId = getUserId(username);
+    private void addMemberToProject(URL repositoryUrl, String username) {
         final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
-        final var builder = Endpoints.EDIT_EXERCISE_PERMISSION.buildEndpoint(BASE_API, repositoryId, userId);
-        final var body = Map.of("access_level", AccessLevel.DEVELOPER.levelCode);
+        final var userId = getUserId(username);
+        final var builder = Endpoints.ADD_USER.buildEndpoint(BASE_API, repositoryId);
+        final var body = Map.of("user_id", userId, "access_level", AccessLevel.DEVELOPER.levelCode);
 
-        final var errorMessage = "Unable to set write permissions for user " + username;
-        executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
+        final var errorMessage = "Error while trying to add user to repository: " + username + " to repo " + repositoryUrl;
+        performRequest(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
     }
 
     private void protectBranch(String branch, URL repositoryUrl) {
         final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
-        final var builder = Endpoints.PROTECT_BRANCH.buildEndpoint(BASE_API, repositoryId);
+        final var builder = Endpoints.PROTECTED_BRANCHES.buildEndpoint(BASE_API, repositoryId);
         final var body = Map.of("name", branch, "push_access_level", AccessLevel.DEVELOPER.levelCode);
 
         final var errorMesage = "Unable to protect branch " + branch + " for repository " + repositoryUrl;
-        executeAndExpect(errorMesage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+        // we have to first inprotect the branch in order to set the correct access level
+        unprotectBranch(repositoryId, branch);
+        performRequest(errorMesage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+    }
+
+    private void unprotectBranch(String repositoryId, String branch) {
+        final var builder = Endpoints.PROTECTED_BRANCH.buildEndpoint(BASE_API, repositoryId, branch);
+
+        final var errorMessage = "Could not unprotect branch " + branch + " for repository " + repositoryId;
+        performRequest(errorMessage, List.of(HttpStatus.NO_CONTENT, HttpStatus.NOT_FOUND),
+                () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
     }
 
     @Override
@@ -98,7 +108,7 @@ public class GitLabService implements VersionControlService {
             final var body = Map.of("url", notificationUrl, "push_events", true, "enable_ssl_verification", false);
 
             final var errorMessage = "Unable to add webhook for " + repositoryUrl;
-            executeAndExpect(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+            performRequest(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
         }
     }
 
@@ -106,7 +116,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.GET_WEBHOOKS.buildEndpoint(BASE_API, repositoryId);
 
         final var errorMessage = "Unable to get webhooks for " + repositoryId;
-        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var response = performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         for (final var hook : response) {
             if (hook.get("url").asText().equals(notificationUrl))
@@ -123,7 +133,7 @@ public class GitLabService implements VersionControlService {
             final var builder = Endpoints.DELETE_GROUP.buildEndpoint(BASE_API, optionalGroup.get());
 
             final var errorMessage = "Unable to delete group in GitLab: " + projectKey;
-            executeAndExpect(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+            performRequest(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
         }
     }
 
@@ -134,7 +144,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.DELETE_PROJECT.buildEndpoint(BASE_API, repositoryId);
 
         final var errorMessage = "Error trying to delete repository on GitLab: " + repositoryName;
-        executeAndExpect(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+        performRequest(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
     }
 
     @Override
@@ -165,7 +175,7 @@ public class GitLabService implements VersionControlService {
 
         try {
             final var errorMessage = "Can't get repository under the ID " + repositoryId;
-            executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+            performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
         }
         catch (Exception emAll) {
             log.warn("Invalid repository URL " + repositoryUrl);
@@ -191,7 +201,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", path);
 
         final var errorString = "Unable to fetch groups matching " + path;
-        final var foundGroups = executeAndExpect(errorString, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var foundGroups = performRequest(errorString, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         for (final var group : foundGroups) {
             if (group.get("path").asText().equals(path))
@@ -206,7 +216,7 @@ public class GitLabService implements VersionControlService {
         final var body = Map.<String, Object>of("name", groupName, "path", path, "visibility", "private");
 
         final var errorString = "Unable to create new group for course " + groupName;
-        final var createdGroup = executeAndExpect(errorString, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+        final var createdGroup = performRequest(errorString, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
 
         return createdGroup.get("id").asLong();
     }
@@ -237,7 +247,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API).queryParam("search", getRepositorySlugFromUrl(repositoryUrl));
 
         final var errorMessage = "Error fetching ID for repository " + repositoryUrl;
-        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var response = performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         return response.get("id").asLong();
     }
@@ -247,7 +257,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", projectKey);
 
         final var errorMessage = "Error trying to search for project " + projectKey;
-        final var response = executeAndExpect(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var response = performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         return !response.isEmpty();
     }
@@ -255,11 +265,30 @@ public class GitLabService implements VersionControlService {
     @Override
     public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException {
-        return null;
+        final var originalNamespace = sourceProjectKey + "%2F" + sourceRepositoryName.toLowerCase();
+        final var targetRepoSlug = (targetProjectKey + "-" + targetRepositoryName).toLowerCase();
+        final var builder = Endpoints.FORK.buildEndpoint(BASE_API, originalNamespace);
+        final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
+
+        final var errorMessage = "Couldn't fork repository: " + sourceProjectKey + " to " + targetProjectKey;
+        performRequest(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
+
+        return new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
     }
 
     @Override
     public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) {
+        setRepositoryPermission(repositoryUrl, username, AccessLevel.GUEST);
+    }
+
+    private void setRepositoryPermission(URL repositoryUrl, String username, AccessLevel accessLevel) {
+        final var userId = getUserId(username);
+        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
+        final var builder = Endpoints.EDIT_EXERCISE_PERMISSION.buildEndpoint(BASE_API, repositoryId, userId);
+        final var body = Map.of("access_level", accessLevel.levelCode);
+
+        final var errorMessage = "Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel;
+        performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
 
     }
 
@@ -273,10 +302,14 @@ public class GitLabService implements VersionControlService {
         throw new GitLabException("Repository URL is not a git URL! Can't get slug for " + repositoryUrl.toString());
     }
 
-    private <T> T executeAndExpect(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
+    private <T> T performRequest(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
+        return performRequest(errorMessage, List.of(expectedStatus), tryToDo);
+    }
+
+    private <T> T performRequest(String errorMessage, List<HttpStatus> allowedStatuses, Supplier<ResponseEntity<T>> tryToDo) {
         try {
             final var response = tryToDo.get();
-            if (response.getStatusCode() != expectedStatus) {
+            if (!allowedStatuses.contains(response.getStatusCode())) {
                 defaultExceptionHandling(errorMessage);
             }
 
@@ -329,9 +362,10 @@ public class GitLabService implements VersionControlService {
 
     private enum Endpoints {
         ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
-        PROTECT_BRANCH("projects", "<projectId>", "protected_branches"), GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"),
-        COMMITS("projects", "<projectId>", "repository", "commits"), GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"),
-        DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"), GET_PROJECT("projects", "<projectId>");
+        PROTECTED_BRANCHES("projects", "<projectId>", "protected_branches"), PROTECTED_BRANCH("projects", "<projectId>", "protected_branches", "<branchName>"),
+        GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"), COMMITS("projects", "<projectId>", "repository", "commits"),
+        GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"), DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"),
+        GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork");
 
         private List<String> pathSegments;
 
