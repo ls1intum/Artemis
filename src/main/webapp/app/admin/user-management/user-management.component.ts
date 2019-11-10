@@ -101,7 +101,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
-            .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => this.onError(res));
+            .subscribe(
+                (res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers),
+                (res: HttpErrorResponse) => this.onError(res),
+            );
     }
 
     /**
