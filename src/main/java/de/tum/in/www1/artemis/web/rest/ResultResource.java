@@ -108,12 +108,15 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        // TODO: this is problematic, because this REST call should not depend on the json request body for result.
+        // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
+        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
         final var exercise = participation.getExercise();
-        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise))
+        final var course = exercise.getCourse();
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise)) {
             return forbidden();
+        }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
         }
@@ -130,7 +133,7 @@ public class ResultResource {
         else if (result.getScore() != 100 && result.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().filter(feedback -> feedback.getText() == null).count() != 0) {
+        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
@@ -293,9 +296,11 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
+        // TODO: this is problematic, because this REST call should not depend on the json request body for result.
+        // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
+        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
         final var exercise = participation.getExercise();
+        final var course = exercise.getCourse();
         if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
             return forbidden();
         }
