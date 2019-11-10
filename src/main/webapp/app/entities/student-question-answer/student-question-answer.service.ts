@@ -19,16 +19,22 @@ export class StudentQuestionAnswerService {
 
     create(studentQuestionAnswer: StudentQuestionAnswer): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestionAnswer);
-        return this.http.post<StudentQuestionAnswer>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .post<StudentQuestionAnswer>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(studentQuestionAnswer: StudentQuestionAnswer): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestionAnswer);
-        return this.http.put<StudentQuestionAnswer>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .put<StudentQuestionAnswer>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<StudentQuestionAnswer>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .get<StudentQuestionAnswer>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
