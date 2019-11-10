@@ -4,6 +4,7 @@ import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-questi
 import { AnswerOption } from '../../../entities/answer-option';
 import { Result } from 'app/entities/result';
 import { QuizExercise } from 'app/entities/quiz-exercise';
+import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -45,19 +46,19 @@ export class MultipleChoiceQuestionComponent {
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
-    rendered?: MultipleChoiceQuestion;
+    renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     watchCollection(): void {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
-        this.rendered = new MultipleChoiceQuestion();
-        this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
-        this.rendered.answerOptions = this.question.answerOptions!.map(answerOption => {
-            const renderedAnswerOption = new AnswerOption();
+        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
+        this.renderedQuestion.text = artemisMarkdown.htmlForMarkdown(this.question.text);
+        this.renderedQuestion.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
+        this.renderedQuestion.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map(answerOption => {
+            const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
             renderedAnswerOption.text = artemisMarkdown.htmlForMarkdown(answerOption.text);
             renderedAnswerOption.hint = artemisMarkdown.htmlForMarkdown(answerOption.hint);
             renderedAnswerOption.explanation = artemisMarkdown.htmlForMarkdown(answerOption.explanation);
