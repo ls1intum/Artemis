@@ -1,8 +1,8 @@
 import { BaseEntity } from 'app/shared';
 import { MultipleChoiceQuestion } from '../multiple-choice-question';
-import { MarkDownElement } from '../quiz-question';
+import { TextHintExplanationInterface } from 'app/entities/quiz-question';
 
-export class AnswerOption implements BaseEntity, MarkDownElement {
+export class AnswerOption implements BaseEntity, TextHintExplanationInterface {
     public id: number;
     public text: string | null;
     public hint: string | null;

@@ -47,7 +47,7 @@ public class TextSubmissionResource {
 
     private final CourseService courseService;
 
-    private final ParticipationService participationService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final TextSubmissionService textSubmissionService;
 
@@ -56,13 +56,13 @@ public class TextSubmissionResource {
     private final AuthorizationCheckService authCheckService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
+            CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
             AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
         this.courseService = courseService;
-        this.participationService = participationService;
+        this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
         this.authCheckService = authCheckService;
@@ -148,7 +148,8 @@ public class TextSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
                     .body(null);
         }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
