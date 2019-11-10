@@ -94,7 +94,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.exercisesPerType.set(exerciseType, exercisesPerType);
             this.exerciseTitlesPerType.set(exerciseType, exercisesPerType.map(exercise => exercise.title).join(','));
             this.exerciseMaxPointsPerType.set(exerciseType, exercisesPerType.map(exercise => exercise.maxScore).join(','));
-            this.maxNumberOfPointsPerExerciseType.set(exerciseType, exercisesPerType.reduce((total, exercise) => total + (exercise.maxScore ? exercise.maxScore : 0), 0));
+            this.maxNumberOfPointsPerExerciseType.set(
+                exerciseType,
+                exercisesPerType.reduce((total, exercise) => total + (exercise.maxScore ? exercise.maxScore : 0), 0),
+            );
         }
         this.maxNumberOfOverallPoints = this.exercises.reduce((total, exercise) => total + (exercise.maxScore ? exercise.maxScore : 0), 0);
     }

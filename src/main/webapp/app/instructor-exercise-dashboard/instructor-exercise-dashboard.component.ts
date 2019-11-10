@@ -53,9 +53,10 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         ];
     }
     private loadExercise(exerciseId: number) {
-        this.exerciseService
-            .find(exerciseId)
-            .subscribe((res: HttpResponse<Exercise>) => (this.exercise = res.body!), (response: HttpErrorResponse) => this.onError(response.message));
+        this.exerciseService.find(exerciseId).subscribe(
+            (res: HttpResponse<Exercise>) => (this.exercise = res.body!),
+            (response: HttpErrorResponse) => this.onError(response.message),
+        );
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
