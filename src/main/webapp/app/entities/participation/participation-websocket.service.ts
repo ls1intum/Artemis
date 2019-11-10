@@ -162,11 +162,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
             this.jhiWebsocketService
                 .receive(participationResultTopic)
-                .pipe(
-                    tap(this.notifyResultSubscribers),
-                    switchMap(this.addResultToParticipation),
-                    tap(this.notifyParticipationSubscribers),
-                )
+                .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
                 .subscribe();
         }
     }
@@ -185,10 +181,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
             this.jhiWebsocketService
                 .receive(participationTopic)
-                .pipe(
-                    tap(this.addParticipation),
-                    tap(this.notifyParticipationSubscribers),
-                )
+                .pipe(tap(this.addParticipation), tap(this.notifyParticipationSubscribers))
                 .subscribe();
         }
     }
