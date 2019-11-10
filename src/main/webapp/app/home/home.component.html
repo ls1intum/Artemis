@@ -82,7 +82,7 @@
                         </div>
                         <button
                             type="submit"
-                            [disabled]="isSubmittingLogin || !acceptTerms || (!password || password.length < 4) || (!username || username.length < 4)"
+                            [disabled]="isSubmittingLogin || !acceptTerms || !password || password.length < 4 || !username || username.length < 4"
                             class="btn btn-primary"
                         >
                             <span *ngIf="isSubmittingLogin" class="mr-1"><fa-icon icon="circle-notch" spin="true"></fa-icon></span>

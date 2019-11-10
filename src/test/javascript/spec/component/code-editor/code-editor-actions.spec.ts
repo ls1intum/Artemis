@@ -73,26 +73,28 @@ describe('CodeEditorActionsComponent', () => {
     const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false]);
 
-    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState).filter(commitState => commitState !== CommitState.CONFLICT), [true, false]).map(
-        (combination: [EditorState, CommitState, boolean]) => {
-            const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
-            const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
-            return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
-                enableCommitButton ? 'Enable commit button' : 'Disable commit button'
-            } for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
-                const [editorState, commitState, isBuilding] = combination;
-                comp.editorState = editorState;
-                comp.commitState = commitState;
-                comp.isBuilding = isBuilding;
-                fixture.detectChanges();
-                const saveButton = fixture.debugElement.query(By.css('#save_button'));
-                const commitButton = fixture.debugElement.query(By.css('#submit_button'));
+    cartesianProduct(
+        Object.keys(EditorState),
+        Object.keys(CommitState).filter(commitState => commitState !== CommitState.CONFLICT),
+        [true, false],
+    ).map((combination: [EditorState, CommitState, boolean]) => {
+        const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
+        const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
+        return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
+            enableCommitButton ? 'Enable commit button' : 'Disable commit button'
+        } for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
+            const [editorState, commitState, isBuilding] = combination;
+            comp.editorState = editorState;
+            comp.commitState = commitState;
+            comp.isBuilding = isBuilding;
+            fixture.detectChanges();
+            const saveButton = fixture.debugElement.query(By.css('#save_button'));
+            const commitButton = fixture.debugElement.query(By.css('#submit_button'));
 
-                expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton);
-                expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
-            });
-        },
-    );
+            expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton);
+            expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
+        });
+    });
 
     it('should update ui when saving', () => {
         comp.commitState = CommitState.CLEAN;

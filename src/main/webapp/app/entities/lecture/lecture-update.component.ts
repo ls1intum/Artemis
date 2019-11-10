@@ -50,7 +50,10 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
-        result.subscribe((res: HttpResponse<Lecture>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<Lecture>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(),
+        );
     }
 
     protected onSaveSuccess() {
