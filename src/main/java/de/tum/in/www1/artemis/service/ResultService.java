@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -173,7 +172,6 @@ public class ResultService {
      * @param requestBody   RequestBody containing the build result and its feedback items
      * @return result after compilation
      */
-    @Transactional
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation " + participation.getId());
 
@@ -190,20 +188,20 @@ public class ResultService {
         }
 
         if (result != null) {
-            // TODO: There is a design issue here: As the participation was not loaded in this session (= Transaction), getExercise will fail when the participation was not loaded
-            // in a transaction above this method invocation.
-            // The alternative would be to pass the participationId to this method, but this could result in multiple database calls for the same participation object.
             ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
             boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
             boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
-            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-            if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                extractTestCasesFromResult(programmingExercise, result);
-            }
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
+            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+            if (isSolutionParticipation) {
+                extractTestCasesFromResult(programmingExercise, result);
+            }
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            resultRepository.save(result);
+            Submission submission = result.getSubmission();
+            result.setSubmission(submission);
+            result = resultRepository.save(result);
+            // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 
             // If the solution participation was updated, also trigger the template participation build.
             if (isSolutionParticipation) {
@@ -272,7 +270,6 @@ public class ResultService {
      * @param participation participation used for notification
      * @param result result used for notification
      */
-    @Transactional(readOnly = true)
     public void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
         if (result != null) {
             // notify user via websocket
@@ -430,7 +427,6 @@ public class ResultService {
      * @param tutorId  - the tutor we are interested in
      * @return a number of assessments for the course
      */
-    @Transactional(readOnly = true)
     public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
         return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
     }
@@ -441,7 +437,6 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    @Transactional(readOnly = true)
     public long countNumberOfAssessmentsForExercise(Long exerciseId) {
         return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
     }
@@ -453,7 +448,6 @@ public class ResultService {
      * @param tutorId    - the tutor we are interested in
      * @return a number of assessments for the exercise
      */
-    @Transactional(readOnly = true)
     public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
         return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
     }
@@ -464,7 +458,6 @@ public class ResultService {
      * @param exerciseId the exercise we are interested in
      * @return number of assessments for the exercise
      */
-    @Transactional(readOnly = true)
     public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
         return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
                 asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC));
@@ -506,10 +499,7 @@ public class ResultService {
         return resultRepository.existsByParticipation_ExerciseId(exerciseId);
     }
 
-    @Transactional(readOnly = true)
     public void notifyUserAboutNewResult(Result result, Long participationId) {
-        Hibernate.unproxy(result.getSubmission());
-        Hibernate.unproxy(result.getFeedbacks());
         notifyNewResult(result, participationId);
     }
 

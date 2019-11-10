@@ -200,11 +200,12 @@ public class RepositoryService {
      * Commit all staged and unstaged changes in the given repository.
      * 
      * @param repository for which to execute the commit.
-     * @throws GitAPIException if the staging/commiting process fails.
+     * @param user the user who has committed the changes in the online editor
+     * @throws GitAPIException if the staging/committing process fails.
      */
-    public void commitChanges(Repository repository) throws GitAPIException {
+    public void commitChanges(Repository repository, User user) throws GitAPIException {
         gitService.get().stageAllChanges(repository);
-        gitService.get().commitAndPush(repository, "Changes by Online Editor");
+        gitService.get().commitAndPush(repository, "Changes by Online Editor", user);
     }
 
     /**

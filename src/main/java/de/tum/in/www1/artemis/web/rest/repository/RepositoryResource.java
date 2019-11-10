@@ -219,11 +219,12 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> commitChanges(Long domainId) {
+        User user = userService.getUser();
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            repositoryService.commitChanges(repository);
+            repositoryService.commitChanges(repository, user);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
