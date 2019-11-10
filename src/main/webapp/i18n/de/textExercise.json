@@ -19,8 +19,6 @@
             "automaticAssessmentEnabled": "Automatische Bewertung aktiviert",
             "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen.",
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
-            "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst deine Antwort nun ändern oder Feedback warten.",
-            "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst deine Antwort nun ändern oder Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
         }
     }

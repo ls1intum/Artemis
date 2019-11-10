@@ -19,8 +19,6 @@
             "automaticAssessmentEnabled": "Automatic Assessment enabled",
             "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
             "saveSuccessful": "Your answer was saved successfully!",
-            "submitSuccessful": "Your answer was submitted successfully! You can change your submission or wait for your feedback.",
-            "submitDeadlineMissed": "Your answer was submitted successfully! You can change your submission or wait for your feedback. As you missed the deadline the score will not be counted.",
             "error": "An error occured. Please try again later."
         }
     }

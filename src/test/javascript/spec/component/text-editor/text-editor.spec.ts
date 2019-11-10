@@ -23,6 +23,7 @@ import { MockComponent } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components';
 import { TextResultComponent } from 'app/text-editor/text-result/text-result.component';
 import { ComplaintsComponent } from 'app/complaints';
+import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,6 +50,7 @@ describe('TableEditableFieldComponent', () => {
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsComponent),
+                MockComponent(ComplaintInteractionsComponent),
             ],
             providers: [
                 JhiAlertService,
