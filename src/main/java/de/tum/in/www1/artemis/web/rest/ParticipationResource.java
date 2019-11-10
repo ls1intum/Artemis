@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -74,7 +73,7 @@ public class ParticipationResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final TextSubmissionService textSubmissionService;
 
@@ -84,7 +83,7 @@ public class ParticipationResource {
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, TextSubmissionService textSubmissionService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
             ResultService resultService, UserService userService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -93,7 +92,7 @@ public class ParticipationResource {
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
+        this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
         this.resultService = resultService;
         this.userService = userService;
@@ -227,7 +226,8 @@ public class ParticipationResource {
     public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
         Course course = participation.getExercise().getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (participation.getId() == null) {
@@ -242,7 +242,6 @@ public class ParticipationResource {
 
         StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
-            User user = userService.getUser();
             log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with participationId "
                     + participation.getExercise().getId());
         }
@@ -265,7 +264,8 @@ public class ParticipationResource {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -304,7 +304,7 @@ public class ParticipationResource {
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
         Optional<TextSubmission> textSubmissionWithoutAssessment = textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
-        if (!textSubmissionWithoutAssessment.isPresent()) {
+        if (textSubmissionWithoutAssessment.isEmpty()) {
             // TODO return null and avoid 404 in this case
             throw new EntityNotFoundException("No text Submission without assessment has been found");
         }
@@ -337,7 +337,8 @@ public class ParticipationResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResults(courseId, false, false);
@@ -455,7 +456,8 @@ public class ParticipationResource {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         MappingJacksonValue response;
@@ -593,15 +595,17 @@ public class ParticipationResource {
 
     private void checkAccessPermissionAtLeastTA(StudentParticipation participation) {
         Course course = findCourseFromParticipation(participation);
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionOwner(StudentParticipation participation) {
         Course course = findCourseFromParticipation(participation);
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!courseService.userHasAtLeastTAPermissions(course)) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
