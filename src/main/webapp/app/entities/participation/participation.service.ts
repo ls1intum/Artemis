@@ -23,12 +23,16 @@ export class ParticipationService {
 
     create(participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
-        return this.http.post<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .post<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
-        return this.http.put<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .put<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
@@ -77,18 +81,6 @@ export class ParticipationService {
         return this.http
             .put<StudentParticipation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
-    repositoryWebUrl(participationId: number) {
-        return this.http.get(`${this.resourceUrl}/${participationId}/repositoryWebUrl`, { responseType: 'text' }).map(repositoryWebUrl => {
-            return { url: repositoryWebUrl };
-        });
-    }
-
-    buildPlanWebUrl(participationId: number) {
-        return this.http.get(`${this.resourceUrl}/${participationId}/buildPlanWebUrl`, { responseType: 'text' }).map(buildPlanWebUrl => {
-            return { url: buildPlanWebUrl };
-        });
     }
 
     downloadArtifact(participationId: number) {

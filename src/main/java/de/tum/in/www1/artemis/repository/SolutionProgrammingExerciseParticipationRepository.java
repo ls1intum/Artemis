@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.SolutionProgrammingExerciseParticipation;
 @Repository
 public interface SolutionProgrammingExerciseParticipationRepository extends JpaRepository<SolutionProgrammingExerciseParticipation, Long> {
 
-    @EntityGraph(attributePaths = { "results" })
+    @EntityGraph(attributePaths = { "results", "programmingExercise" })
     @Query("select p from SolutionProgrammingExerciseParticipation p where p.buildPlanId = :#{#buildPlanId}")
     Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
