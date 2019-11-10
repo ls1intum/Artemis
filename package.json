@@ -97,9 +97,9 @@
         "@types/jasmine": "3.4.6",
         "@types/jest": "24.0.22",
         "@types/jquery": "3.3.31",
-        "@types/lodash": "4.14.145",
+        "@types/lodash": "4.14.146",
         "@types/mocha": "5.2.7",
-        "@types/node": "12.12.6",
+        "@types/node": "12.12.7",
         "@types/showdown": "1.9.3",
         "@types/sinon": "7.5.0",
         "@types/sinon-chai": "3.2.3",
@@ -136,12 +136,9 @@
         "moment-locales-webpack-plugin": "1.1.0",
         "node-sass": "4.13.0",
         "optimize-css-assets-webpack-plugin": "5.0.3",
-        "patch-package": "6.2.0",
         "phantomjs-prebuilt": "2.1.16",
         "postcss-loader": "3.0.0",
-        "postinstall-prepare": "1.0.1",
-        "prettier": "1.18.2",
-        "protractor": "6.0.0",
+        "prettier": "1.19.1",
         "reflect-metadata": "0.1.13",
         "rimraf": "3.0.0",
         "sass": "1.23.3",
@@ -207,7 +204,6 @@
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
         "webpack:test": "yarn run test",
         "webpack-dev-server": "node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-        "webpack": "node --max_old_space_size=5120 node_modules/webpack/bin/webpack.js",
-        "prepare": "patch-package"
+        "webpack": "node --max_old_space_size=5120 node_modules/webpack/bin/webpack.js"
     }
 }
