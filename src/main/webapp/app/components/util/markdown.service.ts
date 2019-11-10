@@ -108,27 +108,6 @@ export class ArtemisMarkdown {
     }
 
     /**
-     * add the markdown for a hint at the current cursor location in the given editor
-     * @deprecated NOTE: this method is DEPRECATED: please use the new markdown editor and appropriate domain commands
-     * @param aceEditorContainer {object} the editor container into which the hint markdown will be inserted
-     */
-    addHintAtCursor(aceEditorContainer: AceEditorComponent) {
-        const text = '\n\t' + HintCommand.identifier + HintCommand.text;
-        ArtemisMarkdown.addTextAtCursor(text, aceEditorContainer);
-    }
-
-    /**
-     * add the markdown for an explanation at the current cursor location in the given editor
-     * @deprecated NOTE: this method is DEPRECATED: please use the new markdown editor and appropriate domain commands
-     * @param aceEditorContainer {object} the editor container into which the explanation markdown will be inserted
-     */
-    // NOTE: this method is DEPRECATED: please use the new markdown editor and appropriate domain commands
-    addExplanationAtCursor(aceEditorContainer: AceEditorComponent) {
-        const text = '\n\t' + ExplanationCommand.identifier + ExplanationCommand.text;
-        ArtemisMarkdown.addTextAtCursor(text, aceEditorContainer);
-    }
-
-    /**
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
@@ -167,32 +146,6 @@ export class ArtemisMarkdown {
         }
         const sanitized = DOMPurify.sanitize(markdownText, { ALLOWED_TAGS: ['a', 'p', 'ul', 'li', 'tt', 'span'], ALLOWED_ATTR: ['class', 'href', 'rel', 'target'] });
         return this.sanitizer.bypassSecurityTrustHtml(sanitized);
-    }
-
-    /**
-     * This method is used to return sanitized html for markdown, that is not trusted by angular.
-     * Angular might strip away styles or html tags!
-     *
-     * @deprecated
-     * @param markdownText
-     */
-    htmlForMarkdownUntrusted(markdownText: string | null) {
-        if (markdownText == null || markdownText === '') {
-            return '';
-        }
-        const converter = new showdown.Converter({
-            parseImgDimensions: true,
-            headerLevelStart: 3,
-            simplifiedAutoLink: true,
-            excludeTrailingPunctuationFromURLs: true,
-            strikethrough: true,
-            tables: true,
-            openLinksInNewWindow: true,
-            backslashEscapesHTMLTags: true,
-            extensions: [showdownKatex()],
-        });
-        const html = converter.makeHtml(markdownText);
-        return DOMPurify.sanitize(html);
     }
 
     markdownForHtml(htmlText: string): string {
