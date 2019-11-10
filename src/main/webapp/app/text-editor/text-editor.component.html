@@ -16,13 +16,7 @@
                 [disabled]="!isActive || !submission"
                 [isLoading]="isSaving"
                 [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
-                [tooltip]="
-                    !isAllowedToSubmitAfterDeadline
-                        ? isActive
-                            ? 'entity.action.submitTooltip'
-                            : 'entity.action.deadlineMissedTooltip'
-                        : 'entity.action.submitDeadlineMissedTooltip'
-                "
+                [tooltip]="submitButtonTooltip"
             >
             </jhi-button>
         </div>

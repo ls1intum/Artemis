@@ -109,6 +109,19 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return !!isActive;
     }
 
+    get submitButtonTooltip(): string {
+        if (this.isAllowedToSubmitAfterDeadline) {
+            return 'entity.action.submitDeadlineMissedTooltip';
+        }
+        if (this.isActive && !this.textExercise.dueDate) {
+            return 'entity.action.submitNoDeadlineTooltip';
+        } else if (this.isActive) {
+            return 'entity.action.submitTooltip';
+        }
+
+        return 'entity.action.deadlineMissedTooltip';
+    }
+
     /**
      * Find "General Feedback" item for Result, if it exists.
      * General Feedback is stored in the same Array as  the other Feedback, but does not have a reference.
