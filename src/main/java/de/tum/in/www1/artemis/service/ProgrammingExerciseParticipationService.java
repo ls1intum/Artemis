@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -29,6 +30,8 @@ public class ProgrammingExerciseParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
 
+    private final ParticipationRepository participationRepository;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final AuthorizationCheckService authCheckService;
@@ -36,12 +39,14 @@ public class ProgrammingExerciseParticipationService {
     private final UserService userService;
 
     public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            Optional<VersionControlService> versionControlService, UserService userService, AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService, UserService userService,
+            AuthorizationCheckService authCheckService) {
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
+        this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.userService = userService;
@@ -122,6 +127,21 @@ public class ProgrammingExerciseParticipationService {
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacks(Long participationId) {
         return studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+    }
+
+    /**
+     * Try to find a programming exercise participation for the given id.
+     *
+     * @param participationId ProgrammingExerciseParticipation id
+     * @return the casted participation
+     * @throws EntityNotFoundException if the participation with the given id does not exist or is not a programming exercise participation.
+     */
+    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestResultAndFeedbacks(Long participationId) throws EntityNotFoundException {
+        Optional<Participation> participation = participationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+        if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation)) {
+            throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
+        }
+        return (ProgrammingExerciseParticipation) participation.get();
     }
 
     /**

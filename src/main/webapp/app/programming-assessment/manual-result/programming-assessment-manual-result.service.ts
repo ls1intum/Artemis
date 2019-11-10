@@ -21,10 +21,14 @@ export class ProgrammingAssessmentManualResultService {
     }
 
     update(result: Result): Observable<EntityResponseType> {
-        const copy = this.resultService.convertDateFromClient(result);
         // TODO: This is a problem with the client side modeling of the participation: It is possible that a participation is sent from the server that does not have a result array.
-        // @ts-ignore
-        copy.participation!.results = undefined; // This needs to be removed to avoid a circular serialization issue.
+        const copy = this.resultService.convertDateFromClient(result) as any;
+        // This needs to be removed to avoid a circular serialization issue.
+        copy.participation!.results = undefined;
+        copy.participation!.submissions = undefined;
+        if (copy.submission && copy.submission.result) {
+            copy.submission.result.submission = undefined;
+        }
         return this.http
             .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));

@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -109,12 +108,15 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        // TODO: this is problematic, because this REST call should not depend on the json request body for result.
+        // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
+        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
         final var exercise = participation.getExercise();
-        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise))
+        final var course = exercise.getCourse();
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise)) {
             return forbidden();
+        }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
         }
@@ -131,7 +133,7 @@ public class ResultResource {
         else if (result.getScore() != 100 && result.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().filter(feedback -> feedback.getText() == null).count() != 0) {
+        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
@@ -220,6 +222,8 @@ public class ResultResource {
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
+            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
+                    result.get().getParticipation());
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
 
@@ -230,8 +234,8 @@ public class ResultResource {
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
             }
+            log.info("The new result for {} was saved successfully", planKey);
         }
-        log.info("The new result for {} was saved successfully", planKey);
         return ResponseEntity.ok().build();
     }
 
@@ -257,8 +261,7 @@ public class ResultResource {
                 return Optional.empty();
             }
         }
-        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationStateWithEagerResults(planKey,
-                InitializationState.INITIALIZED);
+        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdWithEagerResults(planKey);
         Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
         if (participations.size() > 0) {
             participation = Optional.of(participations.get(0));
@@ -293,9 +296,11 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
+        // TODO: this is problematic, because this REST call should not depend on the json request body for result.
+        // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
+        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
         final var exercise = participation.getExercise();
+        final var course = exercise.getCourse();
         if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
             return forbidden();
         }
@@ -506,9 +511,11 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        Participation participation = participationService.findOne(participationId);
 
-        if (!participationService.canAccessParticipation(participation)) {
+        if (participation instanceof StudentParticipation && !participationService.canAccessParticipation((StudentParticipation) participation)
+                || participation instanceof ProgrammingExerciseParticipation
+                        && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
             return forbidden();
         }
 

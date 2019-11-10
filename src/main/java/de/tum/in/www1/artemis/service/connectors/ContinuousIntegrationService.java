@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,6 +48,13 @@ public interface ContinuousIntegrationService {
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
     void configureBuildPlan(ProgrammingExerciseParticipation participation);
+
+    /**
+     * An empty commit might be necessary depending on the chosen CI system (e.g. on Bamboo) so that subsequent commits trigger a new build on the build plan
+     *
+     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
+     */
+    void performEmptySetupCommit(ProgrammingExerciseParticipation participation);
 
     /**
      * triggers a build for the build plan in the given participation
@@ -135,14 +141,6 @@ public interface ContinuousIntegrationService {
      * @return list of build log entries
      */
     List<BuildLogEntry> getLatestBuildLogs(String buildPlanId);
-
-    /**
-     * Get the  URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
-     *
-     * @param participation participation for which to get the build plan URL
-     * @return build plan url
-     */
-    URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build

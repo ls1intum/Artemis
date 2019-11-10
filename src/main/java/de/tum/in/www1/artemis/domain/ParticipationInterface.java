@@ -17,4 +17,6 @@ public interface ParticipationInterface {
     ZonedDateTime getInitializationDate();
 
     void setInitializationDate(ZonedDateTime initializationDate);
+
+    void addSubmissions(Submission submission);
 }
