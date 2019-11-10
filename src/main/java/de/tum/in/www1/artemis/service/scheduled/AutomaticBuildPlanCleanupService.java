@@ -132,6 +132,7 @@ public class AutomaticBuildPlanCleanupService {
         for (ProgrammingExerciseStudentParticipation participation : actualParticipationsToClean) {
             if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
                 try {
+                    log.info("Sleep for {}s during cleanupBuildPlans", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
                     Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
                 }
                 catch (InterruptedException ex) {

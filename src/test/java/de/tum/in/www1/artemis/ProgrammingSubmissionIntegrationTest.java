@@ -157,7 +157,7 @@ public class ProgrammingSubmissionIntegrationTest {
         exerciseRepository.save(exercise);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
-        await().until(() -> submissionRepository.count() == 4);
+        await().until(() -> submissionRepository.count() == 3);
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
 
