@@ -19,12 +19,16 @@ export class StudentQuestionService {
 
     create(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
-        return this.http.post<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .post<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
-        return this.http.put<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .put<StudentQuestion>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(studentQuestionId: number): Observable<EntityResponseType> {
