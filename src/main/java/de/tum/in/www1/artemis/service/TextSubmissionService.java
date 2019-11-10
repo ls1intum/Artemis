@@ -149,7 +149,7 @@ public class TextSubmissionService extends SubmissionService {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
         Random r = new Random();
-        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(textExercise.getId()).stream()
+        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId()).stream()
                 .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {

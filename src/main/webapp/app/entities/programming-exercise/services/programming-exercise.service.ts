@@ -9,6 +9,7 @@ import { ProgrammingExercise } from '../programming-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
 import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
