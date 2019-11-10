@@ -81,6 +81,7 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAllowedToSubmitAfterDeadline).to.be.false;
+        expect(comp.isAlwaysActive).to.be.true;
     }));
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
@@ -119,17 +120,6 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAlwaysActive).to.be.false;
-    }));
-
-    it('should be always active if there is no result and no due date', fakeAsync(() => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.returns(participationSubject);
-        comp.textExercise = textExercise;
-
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.isAlwaysActive).to.be.true;
     }));
 
     it('should be always active if there is no result and the initialization date is after the due date', fakeAsync(() => {

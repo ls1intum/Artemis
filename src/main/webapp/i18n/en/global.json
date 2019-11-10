@@ -189,7 +189,7 @@
             "submitTooltip": "You can submit multiple times. Your last submission will count towards your score.",
             "submitDeadlineMissedTooltip": "The deadline has expired. Your submissions will not get graded!",
             "deadlineMissedTooltip": "The deadline has expired. You can no longer submit any solutions!",
-            "submitDeadlineMissed": "Submit (deadline has missed)",
+            "submitDeadlineMissed": "Submit (deadline missed)",
             "retry": "Retry",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
