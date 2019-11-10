@@ -4,10 +4,10 @@ import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
 import * as DOMPurify from 'dompurify';
-import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
+import { QuizQuestion, TextHintExplanationInterface } from 'app/entities/quiz-question';
 
 const Range = ace.acequire('ace/range').Range;
 
@@ -60,7 +60,7 @@ export class ArtemisMarkdown {
      * @param markdownText {string} the markdown text to parse
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
      */
-    parseTextHintExplanation(markdownText: string, targetObject: MarkDownElement) {
+    parseTextHintExplanation(markdownText: string, targetObject: TextHintExplanationInterface) {
         if (!markdownText || !targetObject) {
             return;
         }
@@ -99,7 +99,7 @@ export class ArtemisMarkdown {
      * @param sourceObject
      * @return {string}
      */
-    generateTextHintExplanation(sourceObject: MarkDownElement) {
+    generateTextHintExplanation(sourceObject: TextHintExplanationInterface) {
         return !sourceObject.text
             ? ''
             : sourceObject.text +
@@ -112,7 +112,7 @@ export class ArtemisMarkdown {
      *
      * @param {string} markdownText the original markdown text
      * @param {ShowdownExtension[]} extensions to use for markdown parsing
-     * @returns {string} the resulting html as a string
+     * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
     htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
         if (markdownText == null || markdownText === '') {
