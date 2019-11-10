@@ -13,7 +13,6 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -138,20 +137,6 @@ public class ResultService {
     public void setAssessor(Result result) {
         User currentUser = userService.getUser();
         result.setAssessor(currentUser);
-    }
-
-    /**
-     * Perform async operations after we were notified about new results.
-     *
-     * @param participation Participation for which a new build is available
-     */
-    @Async
-    @Deprecated
-    public void onResultNotifiedOld(ProgrammingExerciseParticipation participation) {
-        log.debug("Received new build result for participation " + participation.getId());
-        // fetches the new build result
-        Result result = continuousIntegrationService.get().onBuildCompletedOld(participation);
-        notifyUser(participation, result);
     }
 
     // TODO: We should think about moving this method to a separate ProgrammingResultService as it can be confusing that this functionality is exclusive for programming exercises.

@@ -79,16 +79,6 @@ public interface ContinuousIntegrationService {
     void deleteBuildPlan(String buildPlanId);
 
     /**
-     * Will be called when a POST request is sent to the '/results/{buildPlanId}'. Configure this as a build step in the build plan.
-     * <p>
-     * Important: The implementation is responsible for retrieving and saving the result from the CI system.
-     * @param participation for which build has completed
-     * @return build result
-     */
-    @Deprecated
-    Result onBuildCompletedOld(ProgrammingExerciseParticipation participation);
-
-    /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
      * bamboo-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin
      *

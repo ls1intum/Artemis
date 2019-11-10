@@ -44,7 +44,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
-    const testCases = [{ testName: 'test1', active: true }, { testName: 'test2', active: true }, { testName: 'test3', active: false }];
+    const testCases = [
+        { testName: 'test1', active: true },
+        { testName: 'test2', active: true },
+        { testName: 'test3', active: false },
+    ];
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

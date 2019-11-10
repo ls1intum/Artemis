@@ -22,7 +22,10 @@ describe('ProgrammingExerciseInstructionService', () => {
             id: 1,
             completionDate: moment('2019-06-06T22:15:29.203+02:00'),
             successful: true,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: true }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
+            feedbacks: [
+                { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: true },
+                { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
+            ],
         } as any;
         const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
 
@@ -40,7 +43,10 @@ describe('ProgrammingExerciseInstructionService', () => {
             id: 1,
             completionDate: moment('2019-06-06T22:15:29.203+02:00'),
             successful: false,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }, { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
+            feedbacks: [
+                { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false },
+                { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
+            ],
         } as any;
         const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
 

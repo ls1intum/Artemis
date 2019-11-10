@@ -45,7 +45,7 @@ public class AttachmentResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final CourseService courseService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
 
@@ -54,11 +54,11 @@ public class AttachmentResource {
     private final CacheManager cacheManager;
 
     public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            CourseService courseService, UserService userService, FileService fileService, CacheManager cacheManager) {
+            AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
-        this.courseService = courseService;
+        this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
@@ -149,7 +149,7 @@ public class AttachmentResource {
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
-        if (!optionalAttachment.isPresent()) {
+        if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Attachment attachment = optionalAttachment.get();
@@ -172,7 +172,7 @@ public class AttachmentResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        Boolean hasCourseInstructorAccess = courseService.userHasAtLeastInstructorPermissions(course);
+        boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         if (hasCourseInstructorAccess) {
             log.info(user.getLogin() + " deleted attachment with id " + id + " for " + relatedEntity, id);
             attachmentRepository.deleteById(id);
