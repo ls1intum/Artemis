@@ -7,16 +7,13 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from 'app/entities/result';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import * as moment from 'moment';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
-import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { filter } from 'rxjs/operators';
 import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
 
@@ -34,6 +31,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     submissionFile: File | null;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
+    isSaving: boolean;
 
     acceptedFileExtensions: string;
 
@@ -109,11 +107,17 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Uploads a submission file and submits File Upload Exercise
      */
     public submitExercise() {
+        if (this.isSaving) {
+            // don't execute the function if it is already currently executing
+            return;
+        }
+
         const file = this.submissionFile;
         if (!this.submission || !file) {
             return;
         }
         this.submission!.submitted = true;
+        this.isSaving = true;
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
             response => {
                 this.submission = response.body!;
@@ -125,12 +129,15 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
                 }
             },
-            err => {
+            () => {
                 this.submission!.submitted = false;
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = null;
                 this.submission!.filePath = null;
+            },
+            () => {
+                this.isSaving = false;
             },
         );
     }

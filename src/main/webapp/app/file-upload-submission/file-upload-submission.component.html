@@ -16,6 +16,7 @@
                 (onClick)="submitExercise()"
                 [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
                 [tooltip]="submitButtonTooltip"
+                [isLoading]="isSaving"
             >
             </jhi-button>
         </div>
