@@ -8,6 +8,8 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor';
 import { ModelingAssessmentModule } from 'app/modeling-assessment';
 import { ArtemisComplaintsModule } from 'app/complaints';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { MomentModule } from 'ngx-moment';
 
 const ENTITY_STATES = [...modelingSubmissionRoute];
 
@@ -21,6 +23,8 @@ const ENTITY_STATES = [...modelingSubmissionRoute];
         ArtemisModelingEditorModule,
         ModelingAssessmentModule,
         ArtemisComplaintsModule,
+        ArtemisSharedComponentModule,
+        MomentModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })
