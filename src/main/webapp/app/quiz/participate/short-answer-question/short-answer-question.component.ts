@@ -4,6 +4,7 @@ import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-question-util.service';
+import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -55,7 +56,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     submittedTextsChange = new EventEmitter();
 
     showingSampleSolution = false;
-    rendered: ShortAnswerQuestion;
+    renderedQuestion: RenderedQuizQuestionMarkDownElement;
     sampleSolutions: ShortAnswerSolution[] = [];
     textParts: (string | null)[][];
 
@@ -68,15 +69,15 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     watchCollection() {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
-        this.rendered = new ShortAnswerQuestion();
+        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
         // new way
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
 
-        this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.renderedQuestion.text = artemisMarkdown.htmlForMarkdown(this.question.text);
+        this.renderedQuestion.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
+        this.renderedQuestion.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
     }
 
     /**

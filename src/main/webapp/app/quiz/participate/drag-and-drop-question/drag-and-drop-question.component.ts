@@ -8,6 +8,7 @@ import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';
+import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question';
 
 // options are optional ;)
 polyfill({
@@ -73,7 +74,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     mappingsChange = new EventEmitter();
 
     showingSampleSolution = false;
-    rendered: DragAndDropQuestion;
+    renderedQuestion: RenderedQuizQuestionMarkDownElement;
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
     correctAnswer: number;
@@ -92,10 +93,10 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     watchCollection() {
         // update html for text, hint and explanation for the question
-        this.rendered = new DragAndDropQuestion();
-        this.rendered.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.rendered.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
+        this.renderedQuestion.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
+        this.renderedQuestion.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
     }
 
     /**
