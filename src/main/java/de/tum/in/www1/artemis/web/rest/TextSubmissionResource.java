@@ -47,25 +47,21 @@ public class TextSubmissionResource {
 
     private final CourseService courseService;
 
-    private final ParticipationService participationService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final TextSubmissionService textSubmissionService;
 
     private final UserService userService;
 
-    private final AuthorizationCheckService authCheckService;
-
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            CourseService courseService, ParticipationService participationService, TextSubmissionService textSubmissionService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
         this.courseService = courseService;
-        this.participationService = participationService;
+        this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -148,7 +144,9 @@ public class TextSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
                     .body(null);
         }
-        if (!authCheckService.isAtLeastStudentForExercise(textExercise)) {
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -171,7 +169,7 @@ public class TextSubmissionResource {
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -185,7 +183,7 @@ public class TextSubmissionResource {
         }
 
         // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
             textSubmissions.forEach(textSubmission -> {
                 if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
                     ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
@@ -209,7 +207,7 @@ public class TextSubmissionResource {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
         if (!(exercise instanceof TextExercise)) {
