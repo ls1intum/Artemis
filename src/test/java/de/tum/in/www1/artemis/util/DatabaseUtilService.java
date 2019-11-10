@@ -153,7 +153,7 @@ public class DatabaseUtilService {
      * @param numberOfStudents
      * @param numberOfTutors
      */
-    public void addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
+    public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
         LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, numberOfStudents);
         LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, numberOfTutors);
         LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, numberOfInstructors);
@@ -164,6 +164,11 @@ public class DatabaseUtilService {
         userRepo.saveAll(usersToAdd);
         assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
+
+        final var users = new LinkedList<>(students);
+        users.addAll(tutors);
+        users.addAll(instructors);
+        return users;
     }
 
     public Result addParticipationWithResultForExercise(Exercise exercise, String login) {
@@ -191,7 +196,7 @@ public class DatabaseUtilService {
         }
         User user = getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
-        participation.setInitializationDate(pastTimestamp.minusHours(1));
+        participation.setInitializationDate(ZonedDateTime.now());
         participation.setStudent(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
@@ -282,18 +287,20 @@ public class DatabaseUtilService {
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
     }
 
-    public void addCourseWithOneTextExercise() {
+    public Course addCourseWithOneTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         course.addExercises(textExercise);
+        final var exercisesNrBefore = exerciseRepo.count();
+        final var courseNrBefore = courseRepo.count();
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
-        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
-        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
+        assertThat(courseRepo.findOneWithEagerExercises(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+
+        return course;
     }
 
     public void addCourseWithOneTextExerciseDueDateReached() {
