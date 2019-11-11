@@ -48,12 +48,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             // The identification of manual results is only relevant when the deadline was passed, otherwise they could be overridden anyway.
             if (hasDeadlinePassed(this.exercise)) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
-                const newestResult =
-                    !!this.participation.results &&
-                    compose(
-                        head,
-                        orderBy('id', 'desc'),
-                    )(this.participation.results);
+                const newestResult = !!this.participation.results && compose(head, orderBy('id', 'desc'))(this.participation.results);
                 this.lastResultIsManual = !!newestResult && newestResult.assessmentType === AssessmentType.MANUAL;
             }
             if (this.participationIsActive) {
