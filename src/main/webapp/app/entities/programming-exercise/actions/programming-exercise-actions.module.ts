@@ -1,10 +1,7 @@
 import { NgModule } from '@angular/core';
 import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared';
-import {
-    ProgrammingExerciseInstructorTriggerBuildButtonComponent,
-    ProgrammingExerciseInstructorTriggerBuildDialogComponent,
-} from 'app/entities/programming-exercise/actions/programming-exercise-instructor-trigger-build-button.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-trigger-build-button.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
 import {
@@ -17,7 +14,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     imports: [ArtemisSharedModule, MomentModule, ArtemisSharedComponentModule],
     declarations: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
-        ProgrammingExerciseInstructorTriggerBuildDialogComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammmingExerciseInstructorSubmissionStateComponent,
         ProgrammingExerciseInstructorTriggerAllDialogComponent,
@@ -29,6 +25,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ProgrammmingExerciseInstructorSubmissionStateComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
     ],
-    entryComponents: [ProgrammingExerciseInstructorTriggerAllDialogComponent, ProgrammingExerciseInstructorTriggerBuildDialogComponent],
+    entryComponents: [ProgrammingExerciseInstructorTriggerAllDialogComponent],
 })
 export class ArtemisProgrammingExerciseActionsModule {}

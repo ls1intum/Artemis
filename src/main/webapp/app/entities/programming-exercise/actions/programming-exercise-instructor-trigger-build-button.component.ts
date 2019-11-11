@@ -6,6 +6,7 @@ import { SubmissionType } from 'app/entities/submission';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
 import { ProgrammingExerciseInstructorTriggerAllDialogComponent } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-all-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
@@ -25,49 +26,11 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
             return;
         }
         // The instructor needs to confirm overriding a manual result.
-        const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerBuildDialogComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.title = 'artemisApp.programmingExercise.resubmitSingle';
+        modalRef.componentInstance.text = 'artemisApp.programmingExercise.resubmitConfirmManualResultOverride';
         modalRef.result.then(() => {
             super.triggerBuild(SubmissionType.INSTRUCTOR);
         });
     };
-}
-
-/**
- * The warning modal of the trigger button that informs the user about existing manual results.
- */
-@Component({
-    template: `
-        <form (ngSubmit)="onConfirm()">
-            <div class="modal-header">
-                <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.resubmitSingle">Trigger</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="cancel()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="text-danger" jhiTranslate="artemisApp.programmingExercise.resubmitConfirmManualResultOverride">
-                    The last result of this participation is manual, which means the submission was assessed by a teaching assisstant. If you trigger the build for this submission
-                    again, the manual result will no longer be the latest result that is shown primarily to the student.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">
-                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-                </button>
-                <button type="submit" class="btn btn-danger">
-                    <fa-icon [icon]="'times'"></fa-icon>&nbsp;
-                    <span jhiTranslate="entity.action.confirm">Confirm</span>
-                </button>
-            </div>
-        </form>
-    `,
-})
-export class ProgrammingExerciseInstructorTriggerBuildDialogComponent {
-    constructor(private activeModal: NgbActiveModal) {}
-
-    cancel() {
-        this.activeModal.dismiss('cancel');
-    }
-
-    onConfirm() {
-        this.activeModal.close();
-    }
 }
