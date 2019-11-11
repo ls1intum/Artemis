@@ -1,27 +1,30 @@
 .tag-input {
     padding: 0 0.5rem;
 
-    ::ng-deep {
-        .ng2-tag-input.bootstrap {
-            border: none !important;
-            padding: 0 !important;
+    .ng2-tag-input.bootstrap {
+        border: none !important;
+        padding: 0 !important;
 
-            .ng2-tag-input__text-input {
-                height: 33px;
-            }
+        .ng2-tag-input__text-input {
+            height: 33px;
+            width: 100%;
         }
 
-        tag {
-            padding: 0;
-            height: 30px;
-            border-radius: 0.25rem !important;
-            background: transparent !important;
+        tag-input-form {
+            width: 100%;
+        }
+    }
 
-            .custom-tag {
-                padding: 0 0.45rem;
-                background: #cccccc;
-                border-radius: 0.25rem;
-            }
+    tag {
+        padding: 0;
+        height: 30px;
+        border-radius: 0.25rem !important;
+        background: transparent !important;
+
+        .custom-tag {
+            padding: 0 0.45rem;
+            background: #cccccc;
+            border-radius: 0.25rem;
         }
     }
 }
