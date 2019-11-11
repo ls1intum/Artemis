@@ -4,7 +4,7 @@ import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/internal/operators';
+import { debounceTime, tap, take, distinctUntilChanged } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -32,7 +32,6 @@ export class GuidedTourService {
     private availableTourForComponent: GuidedTour | null;
     private onResizeMessage = false;
     private modelingResultCorrect = false;
-    private mutationObserver: MutationObserver;
 
     /** Guided tour service subjects */
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
@@ -381,9 +380,6 @@ export class GuidedTourService {
         this.currentTourStepIndex = 0;
         this.currentTour = null;
         this.guidedTourCurrentStepSubject.next(null);
-        if (this.mutationObserver) {
-            this.mutationObserver.disconnect();
-        }
     }
 
     /**
@@ -393,67 +389,99 @@ export class GuidedTourService {
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string): void {
         this.isUserInteractionFinishedSubject.next(false);
+
         if (!this.currentTour) {
             return;
         }
-        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
+
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
 
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            if (nextStep && nextStep.highlightSelector) {
-                if (afterNextStep && afterNextStep.highlightSelector) {
-                    this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
-                } else {
-                    this.waitForElement(nextStep.highlightSelector);
-                }
-            } else {
-                this.enableNextStepClick();
-            }
+            const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+            const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
+            this.handleWaitForSelectorEvent(nextStep, afterNextStep);
         } else {
-            if (userInteraction === UserInteractionEvent.CLICK || userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                this.observeDomMutations(targetNode, userInteraction);
+            /** At a minimum one of childList, attributes, and characterData must be true, otherwise, a TypeError exception will be thrown. */
+            let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
+
+            if (userInteraction === UserInteractionEvent.CLICK) {
+                /** The first DOM mutation on the click event listener triggers the enableNextStepClick() call */
+                this.observeMutations(targetNode, options)
+                    .pipe(take(1))
+                    .subscribe(() => {
+                        this.enableNextStepClick();
+                        if (currentStep.triggerNextStep) {
+                            this.nextStep();
+                        }
+                    });
+            } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
+                /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
+                targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
+                this.observeMutations(targetNode, options)
+                    .pipe(
+                        filter(
+                            (mutation: MutationRecord) =>
+                                mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1),
+                        ),
+                    )
+                    .subscribe((mutation: MutationRecord) => {
+                        this.enableNextStepClick();
+                    });
             } else if (userInteraction === UserInteractionEvent.MODELING) {
+                /** We observe any DOM mutation in the .apollon-editor node and its children
+                 *  If the UML model is correct then enableNextStepClick() will be called
+                 */
+                options = { childList: true, subtree: true };
+                targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
+
                 this.modelingResultCorrect = false;
                 this.checkModelingComponentSubject.next(modelingTask);
-                targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
-                const relationObserverNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg svg') as HTMLElement;
-                this.observeDomMutations(targetNode, userInteraction, modelingTask);
-                this.observeDomMutations(relationObserverNode, userInteraction, modelingTask);
+
+                this.observeMutations(targetNode, options)
+                    .pipe(debounceTime(100), distinctUntilChanged())
+                    .subscribe(() => {
+                        this.checkModelingComponentSubject.next(modelingTask);
+                        if (this.modelingResultCorrect) {
+                            this.enableNextStepClick();
+                        }
+                    });
             }
         }
     }
 
     /**
-     * Handles the mutation observer for the user interactions
-     * @param targetNode an HTMLElement of which DOM changes should be observed
-     * @param userInteraction the user interaction to complete the tour step
+     * Enables the next step click if the highlightSelector of the next step or
+     * the highlightSelector of the after next step are visible
+     * @param nextStep  next tour step
+     * @param afterNextStep the tour step after the next tour step
      */
-    private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string) {
-        this.mutationObserver = new MutationObserver(mutations => {
-            if (userInteraction === UserInteractionEvent.CLICK) {
-                this.mutationObserver.disconnect();
-                this.enableNextStepClick();
-            } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                mutations.forEach(mutation => {
-                    if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                        this.mutationObserver.disconnect();
-                        this.enableNextStepClick();
-                    }
-                });
-            } else if (userInteraction === UserInteractionEvent.MODELING) {
-                this.checkModelingComponentSubject.next(modelingTask);
-                if (this.modelingResultCorrect) {
-                    this.mutationObserver.disconnect();
-                }
+    private handleWaitForSelectorEvent(nextStep: TourStep | null, afterNextStep: TourStep | null) {
+        if (nextStep && nextStep.highlightSelector) {
+            if (afterNextStep && afterNextStep.highlightSelector) {
+                this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
+            } else {
+                this.waitForElement(nextStep.highlightSelector);
             }
-        });
-        this.mutationObserver.observe(targetNode, {
-            attributes: true,
-            childList: true,
-            characterData: true,
-            subtree: false,
-        });
+        } else {
+            this.enableNextStepClick();
+        }
     }
+
+    /**
+     * Handles the mutation observer for the user interactions
+     * @param target    target node of an HTMLElement of which DOM changes should be observed
+     * @param options   the configuration options for the mutation observer
+     */
+    private observeMutations = (target: any, options: MutationObserverInit) =>
+        new Observable<MutationRecord>(subscribe => {
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    subscribe.next(mutation);
+                });
+            });
+            observer.observe(target, options);
+            return () => observer.disconnect();
+        });
 
     /**
      * Wait for the next step selector to appear in the DOM and continue with the next step
