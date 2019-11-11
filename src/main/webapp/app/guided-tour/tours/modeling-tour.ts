@@ -49,6 +49,17 @@ export const modelingTour: GuidedTour = {
             modelingTask: new GuidedTourModelingTask(associationUML.name, 'tour.modelingExercise.executeTasks.association'),
         }),
         new TextTourStep({
+            highlightSelector: 'jhi-modeling-submission .submission-button',
+            clickEventListenerSelector: '.alerts',
+            headlineTranslateKey: 'tour.modelingExercise.submit.headline',
+            contentTranslateKey: 'tour.modelingExercise.submit.content',
+            hintTranslateKey: 'tour.modelingExercise.submit.hint',
+            highlightPadding: 20,
+            orientation: Orientation.LEFT,
+            userInteractionEvent: UserInteractionEvent.CLICK,
+            triggerNextStep: true,
+        }),
+        new TextTourStep({
             headlineTranslateKey: 'tour.modelingExercise.finishedTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.finishedTasks.content',
         }),

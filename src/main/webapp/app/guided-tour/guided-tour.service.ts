@@ -378,6 +378,8 @@ export class GuidedTourService {
             return;
         }
 
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
             const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
             const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
@@ -392,6 +394,9 @@ export class GuidedTourService {
                     .pipe(take(1))
                     .subscribe(() => {
                         this.enableNextStepClick();
+                        if (currentStep.triggerNextStep) {
+                            this.nextStep();
+                        }
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
                 /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
@@ -417,10 +422,7 @@ export class GuidedTourService {
                 this.checkModelingComponentSubject.next(modelingTask);
 
                 this.observeMutations(targetNode, options)
-                    .pipe(
-                        debounceTime(100),
-                        distinctUntilChanged(),
-                    )
+                    .pipe(debounceTime(100), distinctUntilChanged())
                     .subscribe(() => {
                         this.checkModelingComponentSubject.next(modelingTask);
                         if (this.modelingResultCorrect) {

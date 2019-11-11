@@ -28,6 +28,8 @@ export abstract class TourStep {
     skipStepIfNoSelector?: boolean;
     /** List of tasks that have to be completed */
     modelingTask?: GuidedTourModelingTask;
+    /** Enables the automatic display of the next step after a user interaction */
+    triggerNextStep?: boolean;
 }
 
 export class TextTourStep extends TourStep {

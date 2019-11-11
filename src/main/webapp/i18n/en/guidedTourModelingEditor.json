@@ -20,6 +20,11 @@
                 "studentClass": "Create the UML class <tt>Student</tt> with the attribute <tt>major: String</tt> and method <tt>visitLecture()</tt>.",
                 "association": "Make sure that <tt>Student</tt> is a subclass of <tt>Person</tt>."
             },
+            "submit": {
+                "headline": "Submit your solution",
+                "content": "You can submit your solution here and then wait for your feedback.",
+                "hint": "You can submit multiple times until the exercise deadline. Your last submission will count towards your score."
+            },
             "finishedTasks": {
                 "headline": "Congratulations",
                 "content": "Congratulations! You have successfully completed the modeling exercise."
