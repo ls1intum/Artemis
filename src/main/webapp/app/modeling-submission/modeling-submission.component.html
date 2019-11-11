@@ -10,34 +10,14 @@
         <div class="col-12 col-lg-4 text-right submission-buttons" *ngIf="!isLoading">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
-            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
-                <ng-container *ngIf="!isSaving">
-                    <fa-icon icon="save"></fa-icon>
-                    <span jhiTranslate="entity.action.save">Save</span>
-                </ng-container>
-                <ng-container *ngIf="isSaving">
-                    <fa-icon icon="sync"></fa-icon>
-                    <span jhiTranslate="entity.action.saving">Saving...</span>
-                </ng-container>
-            </button>
-            <button
-                class="btn btn-success"
-                (click)="submit()"
-                [disabled]="!submission || !hasElements"
-                [hidden]="submission?.submitted || !isActive"
-                jhiTranslate="entity.action.submit"
-            >
-                Submit
-            </button>
-            <button
-                class="btn btn-warning"
-                (click)="submit()"
-                [disabled]="!submission || !hasElements"
-                [hidden]="submission?.submitted || isActive"
-                jhiTranslate="entity.action.submitDeadlineMissed"
-            >
-                Submit (deadline missed)
-            </button>
+            <jhi-button
+                [disabled]="(!isActive && !isLate) || !submission || !!result"
+                [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+                (onClick)="submit()"
+                [isLoading]="isSaving"
+                [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+                [tooltip]="submitButtonTooltip"
+            ></jhi-button>
             <!--TODO: enable retry button again-->
             <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->
             <!--<fa-icon icon="sync"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>-->
@@ -63,7 +43,10 @@
     </div>
 
     <div class="row flex-grow-1">
-        <div *ngIf="submission?.submitted" class="col-9">
+        <div *ngIf="submission && (isActive || isLate) && !result" class="col-12 editor-large">
+            <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
+        </div>
+        <div *ngIf="(!isActive || result) && modelingExercise" class="col-9">
             <jhi-modeling-assessment
                 [model]="umlModel"
                 [feedbacks]="assessmentResult?.feedbacks"
@@ -75,10 +58,7 @@
                 (selectionChanged)="onSelectionChanged($event)"
             ></jhi-modeling-assessment>
         </div>
-        <div *ngIf="submission && !submission.submitted" class="col-12 editor-large">
-            <jhi-modeling-editor [umlModel]="umlModel" [diagramType]="modelingExercise.diagramType"></jhi-modeling-editor>
-        </div>
-        <div class="col-3" *ngIf="submission?.submitted">
+        <div class="col-3" *ngIf="submission?.submitted && (!isActive || result)">
             <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title">Assessment</h4>
             <div class="alert alert-info" *ngIf="generalFeedbackText && generalFeedbackText.length >= 0">
                 <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
