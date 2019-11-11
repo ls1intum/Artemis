@@ -62,9 +62,9 @@ export const hasDeadlinePassed = (exercise: ProgrammingExercise) => {
         return false;
     }
     // The first priority is the buildAndTestAfterDueDate if it is set.
-    if (exercise.buildAndTestStudentSubmissionsAfterDueDate) {
-        return exercise.buildAndTestStudentSubmissionsAfterDueDate.isBefore(moment());
+    let referenceDate = exercise.buildAndTestStudentSubmissionsAfterDueDate || exercise.dueDate!;
+    if (!isMoment(referenceDate)) {
+        referenceDate = moment(referenceDate);
     }
-    // The second priority is the dueDate.
-    return exercise.dueDate!.isBefore(moment());
+    return referenceDate.isBefore(moment());
 };
