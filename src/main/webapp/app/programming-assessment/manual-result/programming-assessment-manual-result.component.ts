@@ -19,9 +19,9 @@ import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
-    templateUrl: './programming-assessment-manual-result-dialog.component.html',
+    templateUrl: './programming-assessment-manual-result.component.html',
 })
-export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
+export class ProgrammingAssessmentManualResultComponent implements OnInit {
     SCORE_PATTERN = SCORE_PATTERN;
     @Input() participationId: number;
     @Input() result: Result;

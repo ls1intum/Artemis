@@ -26,7 +26,7 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
+import { ProgrammingAssessmentManualResultComponent } from 'app/programming-assessment/manual-result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export interface ExampleSubmissionQueryParams {
@@ -366,7 +366,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 route = `/file-upload-exercise/${this.exercise.id}/submission/${submissionString}/assessment`;
                 break;
             case ExerciseType.PROGRAMMING:
-                const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+                const modalRef = this.modalService.open(ProgrammingAssessmentManualResultComponent, { keyboard: true, size: 'lg' });
                 modalRef.componentInstance.participationId = submission.participation.id;
                 modalRef.componentInstance.result = isNewAssessment ? null : submission.result;
                 modalRef.result.then();
