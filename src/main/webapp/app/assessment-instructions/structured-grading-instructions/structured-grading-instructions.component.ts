@@ -22,7 +22,7 @@ export class StructuredGradingInstructionsComponent implements OnInit {
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
-    domainCommands: DomainCommand[] = [this.katexCommand, this.creditsCommand, this.instructionCommand, this.feedbackCommand, this.usageCountCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.creditsCommand, this.instructionCommand, this.feedbackCommand, this.usageCountCommand, this.gradingCriteriaCommand];
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnInit() {
