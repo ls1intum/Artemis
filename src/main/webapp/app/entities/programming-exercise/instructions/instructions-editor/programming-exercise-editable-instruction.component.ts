@@ -275,11 +275,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 values,
             )(issues);
 
-        const lineWarnings = compose(
-            flatten,
-            map(mapIssuesToAnnotations),
-            toPairs,
-        )(analysis);
+        const lineWarnings = compose(flatten, map(mapIssuesToAnnotations), toPairs)(analysis);
 
         this.markdownEditor.aceEditorContainer
             .getEditor()

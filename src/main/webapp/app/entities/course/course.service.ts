@@ -35,12 +35,16 @@ export class CourseService {
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
-        return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .post<Course>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
-        return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .put<Course>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(courseId: number): Observable<EntityResponseType> {
@@ -97,14 +101,16 @@ export class CourseService {
 
     // the body is null, because the server can identify the user anyway
     registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
-                if (res.body != null) {
-                    this.accountService.syncGroups(res.body);
-                }
-                return res;
-            }),
-        );
+        return this.http
+            .post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' })
+            .pipe(
+                map((res: HttpResponse<User>) => {
+                    if (res.body != null) {
+                        this.accountService.syncGroups(res.body);
+                    }
+                    return res;
+                }),
+            );
     }
 
     query(): Observable<EntityArrayResponseType> {
