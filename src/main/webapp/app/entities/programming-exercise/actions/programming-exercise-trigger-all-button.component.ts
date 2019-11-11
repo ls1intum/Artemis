@@ -50,7 +50,6 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.result.then(() => {
-            this.programmingBuildRunService.emitBuildRunUpdate(this.exerciseId, true);
             this.submissionService
                 .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
                 .pipe(catchError(() => of(null)))

@@ -234,6 +234,9 @@ public class ProgrammingSubmissionService {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
         log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
+
+        // Let the instructor know that a build run was triggered.
+        notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
 
         var index = 0;
@@ -258,12 +261,18 @@ public class ProgrammingSubmissionService {
         notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
     }
 
+    private void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()),
+                "Build run triggered for programming exercise with title " + programmingExercise.getTitle());
+        // Send a notification to the client to inform the instructor about the test case update.
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE);
+    }
+
     private void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()),
-                "All builds triggered for programming exercise with id " + programmingExercise.getId());
+                "All builds triggered for programming exercise with title " + programmingExercise.getTitle());
         // Send a notification to the client to inform the instructor about the test case update.
-        String notificationText = BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE + programmingExercise.getTitle();
-        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, notificationText);
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE);
     }
 
     /**
