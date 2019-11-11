@@ -25,6 +25,7 @@ export enum EditableField {
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
 
+    courseId: number;
     exercise: ProgrammingExercise;
     editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
@@ -81,6 +82,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
             this.isLoading = true;
             const exerciseId = Number(params['exerciseId']);
+            this.courseId = Number(params['courseId']);
             this.editing = null;
             if (this.testCaseSubscription) {
                 this.testCaseSubscription.unsubscribe();
