@@ -312,22 +312,6 @@ public class ResultResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
-    @PutMapping("/manual-result/{resultId}/assessment-after-complaint")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable Long resultId) throws URISyntaxException {
-        log.debug("REST request to update Result after complaint : {}", resultId);
-        var result = resultService.findOneWithEagerSubmissionAndFeedback(resultId);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
-        final var exercise = participation.getExercise();
-        if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
-            return forbidden();
-        }
-
-        result = resultService.updateAssessmentAfterComplaint(result, exercise, assessmentUpdate);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, resultId.toString())).body(result);
-    }
-
     private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed
         if (exerciseToBeChecked instanceof ProgrammingExercise) {

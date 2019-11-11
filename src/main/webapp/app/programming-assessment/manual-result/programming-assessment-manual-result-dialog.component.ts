@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from '../../entities/result/result.model';
+import { Result } from 'app/entities/result';
 import { ResultService } from 'app/entities/result/result.service';
 import { Feedback, FeedbackType } from '../../entities/feedback';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
@@ -123,7 +123,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
-        result.subscribe(res => this.onSaveSuccess(res), err => this.onSaveError());
+        result.subscribe(
+            res => this.onSaveSuccess(res),
+            err => this.onSaveError(),
+        );
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {
@@ -169,7 +172,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.manualResultService.updateWithComplaints(this.feedbacks, complaintResponse, this.result!.id).subscribe(
+        this.manualResultService.updateAfterComplaint(this.feedbacks, complaintResponse, this.result!.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
