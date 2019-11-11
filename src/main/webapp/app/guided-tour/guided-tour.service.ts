@@ -4,7 +4,7 @@ import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { debounceTime, tap, take, distinctUntilChanged } from 'rxjs/internal/operators';
+import { debounceTime, take, distinctUntilChanged } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -747,13 +747,14 @@ export class GuidedTourService {
         if (!course || !course.exercises) {
             return null;
         }
-        const courseForGuidedTour = this.guidedTourMapping.tours[guidedTour.settingsKey];
+        const courseForGuidedTour = this.guidedTourMapping.courseShortName === course.shortName;
         if (!courseForGuidedTour) {
             return null;
         }
         const exerciseForGuidedTour = course.exercises.find(
             exercise =>
-                (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === courseForGuidedTour.exerciseName) || exercise.title === courseForGuidedTour.exerciseName,
+                (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === this.guidedTourMapping.tours[guidedTour.settingsKey]) ||
+                exercise.title === this.guidedTourMapping.tours[guidedTour.settingsKey],
         );
         if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
