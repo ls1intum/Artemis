@@ -719,7 +719,7 @@ export class GuidedTourService {
         if (!course || !course.exercises) {
             return null;
         }
-        const courseForGuidedTour = Object.values(this.guidedTourMapping.tours).find(tour => tour.key === guidedTour.settingsKey);
+        const courseForGuidedTour = this.guidedTourMapping.tours[guidedTour.settingsKey];
         if (!courseForGuidedTour) {
             return null;
         }
@@ -756,9 +756,9 @@ export class GuidedTourService {
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
         let exerciseExists = null;
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            exerciseExists = Object.values(this.guidedTourMapping.tours).find(tour => tour.exerciseName === exercise.shortName && guidedTour.settingsKey === tour.key);
+            exerciseExists = this.guidedTourMapping.tours[guidedTour.settingsKey] === exercise.shortName;
         } else {
-            exerciseExists = Object.values(this.guidedTourMapping.tours).find(tour => tour.exerciseName === exercise.title && guidedTour.settingsKey === tour.key);
+            exerciseExists = this.guidedTourMapping.tours[guidedTour.settingsKey] === exercise.title;
         }
 
         if (exerciseExists) {

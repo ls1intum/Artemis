@@ -21,7 +21,6 @@ export class GuidedTourSetting {
 export class GuidedTourMapping {
     courseShortName: string;
     tours: {
-        key: string;
-        exerciseName: string;
+        [key: string]: string;
     }[];
 }

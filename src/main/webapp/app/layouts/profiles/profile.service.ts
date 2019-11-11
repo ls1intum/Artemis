@@ -5,6 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from 'app/layouts';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
+import * as _ from 'lodash';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -24,7 +25,12 @@ export class ProfileService {
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
+
+                        /** map guided tour configuration */
                         const guidedTourMapping = data['guided-tour'];
+                        const tourArray = Object.keys(guidedTourMapping.tours).map(i => guidedTourMapping.tours[i]);
+                        guidedTourMapping.tours = _.reduce(tourArray, _.extend);
+
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
                             if (ribbonProfiles.length !== 0) {

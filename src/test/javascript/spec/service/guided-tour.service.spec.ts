@@ -264,7 +264,7 @@ describe('GuidedTourService', () => {
         describe('Tour for a certain course and exercise', () => {
             const guidedTourMapping = {
                 courseShortName: 'tutorial',
-                tours: [{ key: 'tour_with_course_and_exercise', exerciseName: 'git' }],
+                tours: [{ tour_with_course_and_exercise: 'git' }],
             } as GuidedTourMapping;
 
             const exercise1 = {
