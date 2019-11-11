@@ -10,30 +10,30 @@ import { Result, ResultService } from 'app/entities/result';
 import { ParticipationService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
-import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ComponentCanDeactivate } from 'app/shared';
 import { Observable } from 'rxjs/Observable';
+import { ButtonType } from 'app/shared/components';
 
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    readonly ButtonType = ButtonType;
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
     submission: TextSubmission;
-    isActive: boolean;
     isSaving: boolean;
+    // Is submitting always enabled?
+    isAlwaysActive: boolean;
+    isAllowedToSubmitAfterDeadline: boolean;
     answer: string;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
-
-    public getColorForIndex = HighlightColors.forIndex;
-    private submissionConfirmationText: string;
 
     constructor(
         private route: ActivatedRoute,
@@ -48,7 +48,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private translateService: TranslateService,
     ) {
         this.isSaving = false;
-        translateService.get('artemisApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
     ngOnInit() {
@@ -61,6 +60,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             (data: StudentParticipation) => {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
+                this.checkIfSubmitAlwaysEnabled();
                 this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
 
                 if (data.submissions && data.submissions.length > 0) {
@@ -73,8 +73,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.answer = this.submission.text;
                     }
                 }
-
-                this.isActive = this.textExercise.dueDate === undefined || this.textExercise.dueDate === null || new Date() <= moment(this.textExercise.dueDate).toDate();
             },
             (error: HttpErrorResponse) => this.onError(error),
         );
@@ -90,10 +88,38 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             newSubmission.text = this.answer;
             if (this.submission.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe();
-            } else {
-                this.textSubmissionService.create(newSubmission, this.textExercise.id).subscribe();
             }
         }
+    }
+
+    private checkIfSubmitAlwaysEnabled() {
+        const isInitializationAfterDueDate =
+            this.textExercise.dueDate && this.participation.initializationDate && moment(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
+        const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
+
+        this.isAllowedToSubmitAfterDeadline = !!isInitializationAfterDueDate;
+        this.isAlwaysActive = !!isAlwaysActive;
+    }
+
+    /**
+     * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
+     */
+    get isActive(): boolean {
+        const isActive = !this.result && (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && moment(this.textExercise.dueDate).isSameOrAfter(moment())));
+        return !!isActive;
+    }
+
+    get submitButtonTooltip(): string {
+        if (this.isAllowedToSubmitAfterDeadline) {
+            return 'entity.action.submitDeadlineMissedTooltip';
+        }
+        if (this.isActive && !this.textExercise.dueDate) {
+            return 'entity.action.submitNoDeadlineTooltip';
+        } else if (this.isActive) {
+            return 'entity.action.submitTooltip';
+        }
+
+        return 'entity.action.deadlineMissedTooltip';
     }
 
     /**
@@ -120,67 +146,42 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
-    saveText() {
-        if (this.isSaving) {
-            return;
-        }
-
-        if (!this.submission) {
-            this.submission = new TextSubmission();
-        }
-
-        this.submission.submitted = false;
-        this.submission.text = this.answer;
-        this.isSaving = true;
-
-        this.textSubmissionService[this.submission.id ? 'update' : 'create'](this.submission, this.textExercise.id).subscribe(
-            response => {
-                if (response) {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
-                    this.jhiAlertService.success('artemisApp.textExercise.saveSuccessful');
-
-                    this.isSaving = false;
-                }
-            },
-            e => {
-                this.jhiAlertService.error('artemisApp.textExercise.error');
-                this.isSaving = false;
-            },
-        );
-    }
-
     canDeactivate(): Observable<boolean> | boolean {
         return this.submission.text !== this.answer;
     }
 
     submit() {
+        if (this.isSaving) {
+            return;
+        }
+
         if (!this.submission) {
             return;
         }
+
+        this.isSaving = true;
         this.submission.text = this.answer;
         this.submission.language = this.textService.predictLanguage(this.submission.text);
-        const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
-        if (confirmSubmit) {
-            this.submission.submitted = true;
-            this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
-                response => {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
+        this.submission.submitted = true;
+        this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
+            response => {
+                this.submission = response.body!;
+                this.result = this.submission.result;
+                this.isSaving = false;
 
-                    if (this.isActive) {
-                        this.jhiAlertService.success('artemisApp.textExercise.submitSuccessful');
-                    } else {
-                        this.jhiAlertService.warning('artemisApp.textExercise.submitDeadlineMissed');
-                    }
-                },
-                err => {
-                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                    this.submission.submitted = false;
-                },
-            );
-        }
+                if (!this.isAllowedToSubmitAfterDeadline) {
+                    this.jhiAlertService.success('entity.action.submitSuccessfulAlert');
+                } else {
+                    this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
+                }
+            },
+            err => {
+                this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                this.submission.submitted = false;
+                this.isSaving = false;
+            },
+        );
     }
 
     onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {

@@ -380,6 +380,7 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "student2")
     public void noAutomaticAssessmentUponModelSave() throws Exception {
         saveModelingSubmissionAndAssessment(true);
+
         database.addParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), false);

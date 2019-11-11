@@ -10,18 +10,15 @@
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
-            <button class="btn btn-primary mr-2" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
-                <ng-container *ngIf="!isSaving">
-                    <fa-icon icon="save"></fa-icon>
-                    <span jhiTranslate="entity.action.save">Save</span>
-                </ng-container>
-                <ng-container *ngIf="isSaving">
-                    <fa-icon icon="sync"></fa-icon>
-                    <span>Saving...</span>
-                </ng-container>
-            </button>
-            <button class="btn btn-success" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && isActive">Submit</button>
-            <button class="btn btn-warning" (click)="submit()" [disabled]="!submission" *ngIf="!submission?.submitted && !isActive">Submit (deadline missed)</button>
+            <jhi-button
+                [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+                (onClick)="submit()"
+                [disabled]="!isActive || !submission"
+                [isLoading]="isSaving"
+                [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
+                [tooltip]="submitButtonTooltip"
+            >
+            </jhi-button>
         </div>
     </div>
 </div>
@@ -49,8 +46,8 @@
                 #textEditor
                 [(ngModel)]="answer"
                 style="width: 100%; height: 50vh;"
-                [readonly]="submission?.submitted"
-                [disabled]="submission?.submitted"
+                [readonly]="!isActive || !submission"
+                [disabled]="!isActive || !submission"
                 (keydown.tab)="onTextEditorTab(textEditor, $event)"
             ></textarea>
         </div>

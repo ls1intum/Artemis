@@ -13,6 +13,7 @@ import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,12 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 public class ProgrammingSubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+
+    @Value("${artemis.git.name}")
+    private String ARTEMIS_GIT_NAME;
+
+    @Value("${artemis.git.email}")
+    private String ARTEMIS_GIT_EMAIL;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -94,17 +101,42 @@ public class ProgrammingSubmissionService {
      * @throws IllegalStateException if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
-    @Transactional
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
-        Participation participation = participationService.findOne(participationId);
+        Participation participation = participationService.findOneWithEagerSubmissions(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("ProgrammingExerciseParticipation with id " + participationId + " could not be found!");
         }
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation
-                && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
+        // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
+        // and we should not create a new submission here
+        Commit commit;
+        try {
+            // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
+            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
+            commit = versionControlService.get().getLastCommitDetails(requestBody);
+            log.info("NotifyPush invoked due to the commit " + commit.getCommitHash() + " by " + commit.getAuthorName() + " with " + commit.getAuthorEmail() + " in branch "
+                    + commit.getBranch());
+        }
+        catch (Exception ex) {
+            log.error("Commit could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
+            throw new IllegalArgumentException(ex);
+        }
+
+        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase("master")) {
+            // if the commit was made in a branch different than master, ignore this
+            throw new IllegalStateException(
+                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
+        }
+        if (commit.getAuthorName() != null && commit.getAuthorName().equalsIgnoreCase(ARTEMIS_GIT_NAME) && commit.getAuthorEmail() != null
+                && commit.getAuthorEmail().equalsIgnoreCase(ARTEMIS_GIT_EMAIL) && commit.getMessage() != null && commit.getMessage().equals(SETUP_COMMIT_MESSAGE)) {
+            // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
+            throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
+        }
+
+        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
+                || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
@@ -119,38 +151,24 @@ public class ProgrammingSubmissionService {
             }
         }
 
-        // TODO: if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
-        // and we should not create a new submission here
-        String lastCommitHash;
-        try {
-            // TODO: if the commit was made in a branch different than master, ignore this
-            // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
-            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
-            lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-        }
-        catch (Exception ex) {
-            log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
-            throw new IllegalArgumentException(ex);
-        }
-
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, lastCommitHash);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, commit.getCommitHash());
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + lastCommitHash + " already exists!");
+            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + commit.getCommitHash() + " already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.setCommitHash(lastCommitHash);
-        log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for participation " + participationId);
+        programmingSubmission.setCommitHash(commit.getCommitHash());
+        log.info("create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        participation.addSubmissions(programmingSubmission);
+        programmingExerciseParticipation.addSubmissions(programmingSubmission);
 
-        programmingSubmissionRepository.save(programmingSubmission);
-        participationService.save(participation);
+        programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+        // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
     }
 
@@ -161,9 +179,7 @@ public class ProgrammingSubmissionService {
      * @return the latest pending submission if exists or null.
      * @throws EntityNotFoundException if the participation for the given id can't be found.
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
-     * @throws IllegalAccessException if the user does not have access to the given participation.
      */
-    @Transactional(readOnly = true)
     public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
@@ -185,7 +201,6 @@ public class ProgrammingSubmissionService {
      * @param programmingExerciseId for which to search pending submissions
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
-    @Transactional(readOnly = true)
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationService.findByExerciseId(programmingExerciseId);
         return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
@@ -211,7 +226,6 @@ public class ProgrammingSubmissionService {
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
     @Async
-    @Transactional
     public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
@@ -219,12 +233,25 @@ public class ProgrammingSubmissionService {
         if (programmingExercise == null) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
+        log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
-        // Also trigger the template participation. We don't trigger the solution participation because it is triggered when the tests are changed.
-        participations.add(programmingExercise.getTemplateParticipation());
-        List<ProgrammingSubmission> submissions = createSubmissionWithLastCommitHashForParticipationsOfExercise(participations, SubmissionType.INSTRUCTOR);
 
-        notifyUserTriggerBuildForNewSubmissions(submissions);
+        var index = 0;
+        for (var participation : participations) {
+            // Execute requests in batches instead all at once.
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    log.info("Sleep for {}s during triggerBuild", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
+                }
+            }
+            triggerBuildAndNotifyUser(participation);
+            index++;
+        }
+
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         setTestCasesChanged(programmingExercise.getId(), false);
         // Let the instructor know that the build run is finished.
@@ -313,7 +340,7 @@ public class ProgrammingSubmissionService {
         ProgrammingSubmission newSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash(commitHash.getName()).submitted(true)
                 .submissionDate(ZonedDateTime.now()).type(submissionType);
         newSubmission.setParticipation((Participation) participation);
-        return programmingSubmissionRepository.save(newSubmission);
+        return programmingSubmissionRepository.saveAndFlush(newSubmission);
     }
 
     /**
@@ -341,36 +368,28 @@ public class ProgrammingSubmissionService {
      * Trigger a CI build for each submission & notify each user on a new programming submission.
      * Instead of triggering all builds at the same time, we execute the builds in batches to not overload the CIS system.
      *
-     * @param submissions ProgrammingSubmission Collection
+     * Note: This call "resumes the exercise", i.e. re-creates the build plan if the build plan was already cleaned before
+     *
+     * @param participation the participation for which we create a new submission and new result
      */
-    public void notifyUserTriggerBuildForNewSubmissions(Collection<ProgrammingSubmission> submissions) {
-        int index = 0;
-        for (ProgrammingSubmission submission : submissions) {
-            // Execute requests in batches instead all at once.
-            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
-                try {
-                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
-                }
-                catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before executing successive build for submission " + submission.getId(), ex);
-                }
-            }
-            triggerBuildAndNotifyUser(submission);
-            index++;
-        }
+    public void triggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation) {
+        var submission = createSubmissionWithLastCommitHashForParticipation(participation, SubmissionType.INSTRUCTOR);
+        triggerBuildAndNotifyUser(submission);
     }
 
     /**
      * Sends a websocket message to the user about the new submission and triggers a build on the CI system.
      * Will send an error object in the case that the communication with the CI failed.
      *
+     * Note: This call "resumes the exercise", i.e. re-creates the build plan if the build plan was already cleaned before
+     *
      * @param submission ProgrammingSubmission that was just created.
      */
     public void triggerBuildAndNotifyUser(ProgrammingSubmission submission) {
         var programmingExerciseParticipation = (ProgrammingExerciseParticipation) submission.getParticipation();
         try {
-            if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation
-                    && (programmingExerciseParticipation.getBuildPlanId() == null || programmingExerciseParticipation.getInitializationState() == InitializationState.INACTIVE)) {
+            if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
+                    || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
                 participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             }
