@@ -72,7 +72,7 @@ public class FileUploadAssessmentIntegrationTest {
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 2, 0);
-        database.addCourseWithOneFileUploadExercise();
+        database.addCourseWithTwoFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
     }
 

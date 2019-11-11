@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -60,8 +63,6 @@ public class ParticipationService {
 
     private final QuizSubmissionService quizSubmissionService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final UserService userService;
 
     private final Optional<GitService> gitService;
@@ -81,7 +82,7 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
+            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
@@ -95,7 +96,6 @@ public class ParticipationService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintRepository = complaintRepository;
         this.quizSubmissionService = quizSubmissionService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -221,8 +221,10 @@ public class ParticipationService {
             programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
+            // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
+            programmingExerciseStudentParticipation = performEmptyCommitHook(programmingExerciseStudentParticipation);
+            // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
             programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
-            // we configure the repository webhook after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
             programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
             programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
             // after saving, we need to make sure the object that is used after the if statement is the right one
@@ -382,13 +384,17 @@ public class ParticipationService {
     public ProgrammingExerciseStudentParticipation resumeExercise(ProgrammingExerciseStudentParticipation participation) {
         participation = copyBuildPlan(participation);
         participation = configureBuildPlan(participation);
+        // Note: the repository webhook already exists so we don't need to set it up again
         participation.setInitializationState(INITIALIZED);
+        participation = save(participation);
+        // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
+        // because in notifyPush we only filter out empty commits when the state is already initialized
+        participation = performEmptyCommitHook(participation);
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
         }
-        save(participation);
-        return participation;
+        return save(participation);
     }
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
@@ -455,11 +461,13 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
                     "Artemis WebHook");
-            return save(participation);
         }
-        else {
-            return participation;
-        }
+        return participation;
+    }
+
+    private ProgrammingExerciseStudentParticipation performEmptyCommitHook(ProgrammingExerciseStudentParticipation participation) {
+        continuousIntegrationService.get().performEmptySetupCommit(participation);
+        return participation;
     }
 
     /**
@@ -532,6 +540,21 @@ public class ParticipationService {
     public StudentParticipation findOneWithEagerResults(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
         Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerResults(participationId);
+        if (participation.isEmpty()) {
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
+     * Get one participation by id including all submissions. Throws an EntityNotFoundException if the participation with the given id could not be found.
+     *
+     * @param participationId the id of the entity
+     * @return the participation with all its submissions and results
+     */
+    public Participation findOneWithEagerSubmissions(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findWithEagerSubmissionsById(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
@@ -629,12 +652,11 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to build plan and initialize there state with eager results.
      *
      * @param buildPlanId the id of build plan
-     * @param state initialization state
      * @return the list of programming exercise participations belonging to build plan
      */
-    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationStateWithEagerResults(String buildPlanId, InitializationState state) {
+    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdWithEagerResults(String buildPlanId) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
+        return programmingExerciseStudentParticipationRepository.findByBuildPlanId(buildPlanId);
     }
 
     /**
@@ -685,8 +707,8 @@ public class ParticipationService {
      * @param exerciseId the id of the exercise the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exerciseId);
     }
 
     /**
@@ -825,13 +847,8 @@ public class ParticipationService {
             }
         }
 
-        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                || participation.getExercise() instanceof FileUploadExercise) {
-            // For modeling, text and file upload exercises students can send complaints about their assessments and we need to remove
-            // the complaints and the according responses belonging to a participation before deleting the participation itself.
-            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
-            complaintRepository.deleteByResult_Participation_Id(participationId);
-        }
+        complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
+        complaintRepository.deleteByResult_Participation_Id(participationId);
 
         participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 

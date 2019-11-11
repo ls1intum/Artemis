@@ -10,10 +10,15 @@
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
             <br />
-            <button class="btn btn-success" (click)="submitExercise()" [disabled]="!submission || !submissionFile" *ngIf="!submission?.submitted && isActive">Submit</button>
-            <button class="btn btn-warning" (click)="submitExercise()" [disabled]="!submission || !submissionFile" *ngIf="!submission?.submitted && !isActive">
-                Submit (deadline missed)
-            </button>
+            <jhi-button
+                [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
+                [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+                (onClick)="submitExercise()"
+                [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+                [tooltip]="submitButtonTooltip"
+                [isLoading]="isSaving"
+            >
+            </jhi-button>
         </div>
     </div>
 </div>
@@ -36,7 +41,7 @@
     </div>
 
     <div class="row">
-        <div class="col-12 col-md-6" *ngIf="!submission?.submitted && fileUploadExercise">
+        <div class="col-12 col-md-6" *ngIf="(isActive || isLate) && !result && fileUploadExercise && submission">
             <div class="form-group">
                 <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.file">File</label>
                 <div class="input-group background-file">
@@ -47,7 +52,6 @@
                             type="file"
                             [accept]="acceptedFileExtensions"
                             class="custom-file-input"
-                            [disabled]="submission && submission.submitted"
                             (change)="setFileSubmissionForExercise($event)"
                         />
                         <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{
@@ -65,7 +69,7 @@
         </div>
     </div>
 
-    <div *ngIf="submission?.submitted && submittedFileName && submission?.filePath" class="card-text">
+    <div *ngIf="((!isActive && !isLate) || result) && submittedFileName && submission?.filePath" class="card-text">
         <h5>
             {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
         </h5>
@@ -79,37 +83,5 @@
         <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
         <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
     </div>
-    <div class="row mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
-        <button
-            class="btn btn-primary"
-            [class.not-allowed]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
-            (click)="toggleComplaintForm()"
-            [disabled]="numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid"
-            title="{{ numberOfAllowedComplaints <= 0 || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
-        >
-            {{ 'artemisApp.complaint.moreInfo' | translate }}
-        </button>
-        <button
-            class="btn btn-primary ml-1"
-            [class.not-allowed]="!isTimeOfComplaintValid"
-            (click)="toggleRequestMoreFeedbackForm()"
-            [disabled]="!isTimeOfComplaintValid"
-            title="{{ !isTimeOfComplaintValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | translate) : '' }}"
-        >
-            {{ 'artemisApp.moreFeedback.button' | translate }}
-        </button>
-    </div>
-
-    <div class="row" *ngIf="showComplaintForm || hasComplaint">
-        <jhi-complaint-form
-            class="flex-grow-1"
-            [resultId]="result?.id"
-            [allowedComplaints]="numberOfAllowedComplaints"
-            [complaintType]="ComplaintType.COMPLAINT"
-            (submit)="hasComplaint = true"
-        ></jhi-complaint-form>
-    </div>
-    <div class="row" *ngIf="showRequestMoreFeedbackForm || hasRequestMoreFeedback">
-        <jhi-complaint-form class="flex-grow-1" [resultId]="result?.id" [complaintType]="ComplaintType.MORE_FEEDBACK" (submit)="hasRequestMoreFeedback = true"></jhi-complaint-form>
-    </div>
+    <jhi-complaint-interactions *ngIf="fileUploadExercise" [result]="result" [participation]="participation" [exercise]="fileUploadExercise"> </jhi-complaint-interactions>
 </div>

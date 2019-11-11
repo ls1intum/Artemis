@@ -16,10 +16,4 @@ export class SourceTreeService {
     getRepositoryPassword(): Observable<Object> {
         return this.httpClient.get(`${SERVER_API_URL}/api/account/password`);
     }
-
-    goToBuildPlan(participation: Participation) {
-        this.participationService.buildPlanWebUrl(participation.id).subscribe(res => {
-            this.$window.nativeWindow.open(res.url);
-        });
-    }
 }

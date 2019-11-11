@@ -88,49 +88,6 @@ public class CourseService {
     }
 
     /**
-     * Check if the current user has at least Student-level permissions for the given course
-     *
-     * Deprecated: Use AuthorizationCheckService.isAtLeastStudentInCourse
-     *
-     * @param course the course to check permissions for
-     * @return true, if the user has the required permissions, false otherwise
-     */
-    @Deprecated
-    public boolean userHasAtLeastStudentPermissions(Course course) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isStudentInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user)
-                || authCheckService.isAdmin();
-    }
-
-    /**
-     * Check if the current user has at least TA-level permissions for the given course
-     *
-     * Deprecated: Use AuthorizationCheckService.isAtLeastTeachingAssistantInCourse
-     *
-     * @param course the course to check permissions for
-     * @return true, if the user has the required permissions, false otherwise
-     */
-    @Deprecated
-    public boolean userHasAtLeastTAPermissions(Course course) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
-    }
-
-    /**
-     * Check if the current user has at least Instructor-level permissions for the given course
-     *
-     * Deprecated: Use AuthorizationCheckService.isAtLeastInstructorInCourse
-     *
-     * @param course the course to check permissions for
-     * @return true, if the user has the required permissions, false otherwise
-     */
-    @Deprecated
-    public boolean userHasAtLeastInstructorPermissions(Course course) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
-    }
-
-    /**
      * Get all the courses with exercises.
      *
      * @return the list of entities
