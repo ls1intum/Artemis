@@ -182,12 +182,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (response: string) => this.onError(response),
         );
 
-        this.complaintService
-            .getComplaintsForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
-        this.complaintService
-            .getMoreFeedbackRequestsForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
+        this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
+            (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+            (error: HttpErrorResponse) => this.onError(error.message),
+        );
+        this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
+            (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
+            (error: HttpErrorResponse) => this.onError(error.message),
+        );
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {

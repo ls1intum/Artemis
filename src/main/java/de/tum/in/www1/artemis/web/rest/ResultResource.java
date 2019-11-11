@@ -108,12 +108,15 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        // TODO: this is problematic, because this REST call should not depend on the json request body for result.
+        // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
+        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
         final var exercise = participation.getExercise();
-        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise))
+        final var course = exercise.getCourse();
+        final var user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermissions(course, user) || !areManualResultsAllowed(exercise)) {
             return forbidden();
+        }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
         }
@@ -130,7 +133,7 @@ public class ResultResource {
         else if (result.getScore() != 100 && result.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().filter(feedback -> feedback.getText() == null).count() != 0) {
+        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
@@ -142,31 +145,6 @@ public class ResultResource {
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
-    }
-
-    /**
-     * POST /results/:planKey : Notify the application about a new build result for a programming exercise This API is invoked by the CI Server at the end of the build/test result
-     * and does not need any security
-     *
-     * @param planKey the plan key of the plan which is notifying about a new result
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
-     */
-    @PostMapping(value = "/results/{planKey}")
-    @Transactional
-    @Deprecated
-    public ResponseEntity<?> notifyResultOld(@PathVariable("planKey") String planKey) {
-        if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        Optional<ProgrammingExerciseParticipation> participation = getParticipationWithResults(planKey);
-        if (participation.isPresent()) {
-            resultService.onResultNotifiedOld(participation.get());
-            return ResponseEntity.ok().build();
-        }
-        else {
-            return notFound();
-        }
     }
 
     /**
@@ -293,9 +271,11 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
+        // TODO: this is problematic, because this REST call should not depend on the json request body for result.
+        // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
+        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
         final var exercise = participation.getExercise();
+        final var course = exercise.getCourse();
         if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
             return forbidden();
         }
@@ -530,11 +510,12 @@ public class ResultResource {
     @Transactional
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Optional<Result> result = resultRepository.findByIdWithEagerFeedbacks(resultId);
-        if (result.isEmpty()) {
+        Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);
+        if (optionalResult.isEmpty()) {
             return notFound();
         }
-        Participation participation = result.get().getParticipation();
+        Result result = optionalResult.get();
+        Participation participation = result.getParticipation();
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
         if (participation instanceof StudentParticipation) {
@@ -552,16 +533,7 @@ public class ResultResource {
             return forbidden();
         }
 
-        try {
-            List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
-            // TODO: send an empty list to the client and do not send a 404 - this is an issue however for some client implementations as there being no feedbacks
-            // (= e.g. build error in programming exercises) is different from there being an empty feedback list
-            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(ResponseEntity.notFound().build());
-        }
-        catch (Exception e) {
-            log.error("REST request to get Result failed : {}", resultId, e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>(result.getFeedbacks(), HttpStatus.OK);
     }
 
     /**
