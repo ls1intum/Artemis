@@ -1,10 +1,8 @@
-import { IProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
-import { of, Observable } from 'rxjs';
+import { BuildRunState, IProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { Observable, of } from 'rxjs';
 
 export class MockProgrammingBuildRunService implements IProgrammingBuildRunService {
-    emitBuildRunUpdate(programmingExerciseId: number, isBuilding: boolean): void {}
-
-    getBuildRunUpdates(programmingExerciseId: number): Observable<boolean> {
-        return of(false);
+    getBuildRunUpdates(programmingExerciseId: number): Observable<BuildRunState> {
+        return of(BuildRunState.COMPLETED);
     }
 }

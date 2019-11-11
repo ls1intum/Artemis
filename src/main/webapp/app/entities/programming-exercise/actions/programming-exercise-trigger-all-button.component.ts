@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
-import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -62,7 +62,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     private subscribeBuildRunUpdates() {
         this.programmingBuildRunService
             .getBuildRunUpdates(this.exerciseId)
-            .pipe(tap(buildIsRunning => (this.isTriggeringBuildAll = buildIsRunning)))
+            .pipe(tap(buildRunState => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
             .subscribe();
     }
 }

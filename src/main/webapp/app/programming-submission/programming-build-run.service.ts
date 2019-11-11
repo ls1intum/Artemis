@@ -1,12 +1,15 @@
-import { IProgrammingSubmissionService, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core';
 
+export enum BuildRunState {
+    RUNNING = 'RUNNING',
+    COMPLETED = 'COMPLETED',
+}
+
 export interface IProgrammingBuildRunService {
-    emitBuildRunUpdate(programmingExerciseId: number, isBuilding: boolean): void;
-    getBuildRunUpdates(programmingExerciseId: number): Observable<boolean>;
+    getBuildRunUpdates(programmingExerciseId: number): Observable<BuildRunState>;
 }
 
 /**
@@ -15,7 +18,7 @@ export interface IProgrammingBuildRunService {
 @Injectable({ providedIn: 'root' })
 export class ProgrammingBuildRunService implements OnDestroy {
     // Boolean subject: true == build is running, false == build is not running.
-    private buildRunSubjects: { [programmingExerciseId: number]: BehaviorSubject<boolean | undefined> } = {};
+    private buildRunSubjects: { [programmingExerciseId: number]: BehaviorSubject<BuildRunState | undefined> } = {};
     private buildRunTopics: { [programmingExerciseId: number]: string } = {};
 
     private BUILD_RUN_TEMPLATE_TOPIC = '/topic/programming-exercises/%programmingExerciseId%/all-builds-triggered';
@@ -26,12 +29,12 @@ export class ProgrammingBuildRunService implements OnDestroy {
         Object.values(this.buildRunSubjects).forEach(subject => subject.unsubscribe());
     }
 
-    private notifySubscribers(programmingExerciseId: number, isBuilding: boolean) {
+    private notifySubscribers(programmingExerciseId: number, buildRunState: BuildRunState) {
         const subject = this.buildRunSubjects[programmingExerciseId];
         if (subject) {
-            subject.next(isBuilding);
+            subject.next(buildRunState);
         } else {
-            this.buildRunSubjects[programmingExerciseId] = new BehaviorSubject<boolean | undefined>(isBuilding);
+            this.buildRunSubjects[programmingExerciseId] = new BehaviorSubject<BuildRunState | undefined>(buildRunState);
         }
     }
 
@@ -42,23 +45,24 @@ export class ProgrammingBuildRunService implements OnDestroy {
             this.websocketService.subscribe(newSubmissionTopic);
             this.websocketService
                 .receive(newSubmissionTopic)
-                .pipe(tap(() => this.notifySubscribers(programmingExerciseId, false))) // Atm we only get the message about completed builds from the server.
+                .pipe(tap((buildRunState: BuildRunState) => this.notifySubscribers(programmingExerciseId, buildRunState))) // Atm we only get the message about completed builds from the server.
                 .subscribe();
         }
     }
 
-    emitBuildRunUpdate(programmingExerciseId: number, isBuilding: boolean) {
-        this.notifySubscribers(programmingExerciseId, isBuilding);
-    }
-
+    /**
+     * Subscribe for updates on running build runs. Atm we assume that only build run is running for the whole exercise.
+     *
+     * @param programmingExerciseId
+     */
     getBuildRunUpdates(programmingExerciseId: number) {
         const subject = this.buildRunSubjects[programmingExerciseId];
         if (subject) {
-            return subject.asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<boolean>;
+            return subject.asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<BuildRunState>;
         }
-        const newSubject = new BehaviorSubject<boolean | undefined>(undefined);
+        const newSubject = new BehaviorSubject<BuildRunState | undefined>(undefined);
         this.buildRunSubjects[programmingExerciseId] = newSubject;
         this.subscribeWebsocket(programmingExerciseId);
-        return newSubject.pipe(filter(stateObj => stateObj !== undefined)) as Observable<boolean>;
+        return newSubject.pipe(filter(stateObj => stateObj !== undefined)) as Observable<BuildRunState>;
     }
 }
