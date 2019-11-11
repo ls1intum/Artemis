@@ -8,3 +8,4 @@ export { CreditsCommand } from './credits.command';
 export { InstructionCommand } from './instruction.command';
 export { FeedbackCommand } from './feedback.command';
 export { UsageCountCommand } from './usageCount.command';
+export { GradingCriteriaCommand } from './gradingCriteria.command';

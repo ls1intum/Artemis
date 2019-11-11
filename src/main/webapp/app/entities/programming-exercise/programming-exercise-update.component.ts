@@ -14,7 +14,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { AssessmentType } from 'app/entities/assessment-type';
-import { CreditsCommand, FeedbackCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
+import { CreditsCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -36,7 +36,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText: string | null;
-    domainCommandsGradingInstructions = [new KatexCommand(), new CreditsCommand(), new InstructionCommand(), new FeedbackCommand(), new UsageCountCommand()];
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();

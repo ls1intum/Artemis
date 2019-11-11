@@ -15,7 +15,7 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core';
-import { CreditsCommand, FeedbackCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
+import { CreditsCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -38,7 +38,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-    domainCommandsGradingInstructions = [new KatexCommand(), new CreditsCommand(), new InstructionCommand(), new FeedbackCommand(), new UsageCountCommand()];
 
     constructor(
         private jhiAlertService: JhiAlertService,

@@ -1,15 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import {
-    CorrectOptionCommand,
-    CreditsCommand,
-    DomainCommand,
-    ExplanationCommand,
-    FeedbackCommand,
-    HintCommand,
-    IncorrectOptionCommand,
-    InstructionCommand,
-    UsageCountCommand,
-} from 'app/markdown-editor/domainCommands';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { CreditsCommand, DomainCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
@@ -22,23 +12,29 @@ import { MarkdownEditorComponent } from 'app/markdown-editor';
 export class StructuredGradingInstructionsComponent implements OnInit {
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-
+    @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
 
     katexCommand = new KatexCommand();
+    gradingCriteriaCommand = new GradingCriteriaCommand();
     creditsCommand = new CreditsCommand();
     instructionCommand = new InstructionCommand();
     feedbackCommand = new FeedbackCommand();
-    usageCount = new UsageCountCommand();
+    usageCountCommand = new UsageCountCommand();
 
-    domainCommands: DomainCommand[] = [this.katexCommand, this.creditsCommand, this.instructionCommand, this.feedbackCommand, this.usageCount];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.creditsCommand, this.instructionCommand, this.feedbackCommand, this.usageCountCommand];
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnInit() {
         this.questionEditorText = this.generateMarkdown();
     }
     showStructuredGradingInstructionsPreview = true;
-    instruction: any;
+
+    private inputArr: [string, DomainCommand][];
+    credits = new Array();
+    instructions = new Array();
+    feedback = new Array();
+    usageCount = new Array();
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this question
@@ -68,18 +64,26 @@ export class StructuredGradingInstructionsComponent implements OnInit {
     prepareForSave(): void {
         this.markdownEditor.parse();
     }
+
     /**
      * @function domainCommandsFound
      * @desc todo
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+        this.credits = [];
+        this.instructions = [];
+        this.feedback = [];
+        this.usageCount = [];
         for (const [text, command] of domainCommands) {
             if (command instanceof CreditsCommand) {
-                // this.instruction.score = text;
+                this.credits.push(text);
             } else if (command instanceof InstructionCommand) {
+                this.instructions.push(text);
             } else if (command instanceof FeedbackCommand) {
+                this.feedback.push(text);
             } else {
+                this.usageCount.push(text);
             }
         }
     }

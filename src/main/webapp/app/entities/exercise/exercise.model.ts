@@ -7,6 +7,7 @@ import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { GradingCriteriaCommand } from 'app/markdown-editor/domainCommands';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -48,6 +49,9 @@ export abstract class Exercise implements BaseEntity {
     public id: number;
     public problemStatement: string | null;
     public gradingInstructions: string;
+    public feedback: string;
+    public credit?: number;
+    public usageCount?: number;
     public title: string;
     public shortName: string;
     public releaseDate: Moment | null;
