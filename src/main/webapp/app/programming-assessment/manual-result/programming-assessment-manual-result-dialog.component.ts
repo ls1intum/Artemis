@@ -79,7 +79,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
+        this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
     }
 
     initializeForResultCreation() {
@@ -176,12 +176,11 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();
-                // TODO: replace with proper messages
-                this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+                this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
-            (error: HttpErrorResponse) => {
+            () => {
                 this.jhiAlertService.clear();
-                this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
             },
         );
     }
