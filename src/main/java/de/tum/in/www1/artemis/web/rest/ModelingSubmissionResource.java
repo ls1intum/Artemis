@@ -114,11 +114,12 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
         this.modelingSubmissionService.hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);

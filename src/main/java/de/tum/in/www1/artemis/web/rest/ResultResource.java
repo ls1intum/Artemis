@@ -148,31 +148,6 @@ public class ResultResource {
     }
 
     /**
-     * POST /results/:planKey : Notify the application about a new build result for a programming exercise This API is invoked by the CI Server at the end of the build/test result
-     * and does not need any security
-     *
-     * @param planKey the plan key of the plan which is notifying about a new result
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
-     */
-    @PostMapping(value = "/results/{planKey}")
-    @Transactional
-    @Deprecated
-    public ResponseEntity<?> notifyResultOld(@PathVariable("planKey") String planKey) {
-        if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        Optional<ProgrammingExerciseParticipation> participation = getParticipationWithResults(planKey);
-        if (participation.isPresent()) {
-            resultService.onResultNotifiedOld(participation.get());
-            return ResponseEntity.ok().build();
-        }
-        else {
-            return notFound();
-        }
-    }
-
-    /**
      * This method is used by the CI system to inform Artemis about a new programming exercise build result.
      * It will make sure to:
      * - Create a result from the build result including its feedbacks
@@ -535,11 +510,12 @@ public class ResultResource {
     @Transactional
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Optional<Result> result = resultRepository.findByIdWithEagerFeedbacks(resultId);
-        if (result.isEmpty()) {
+        Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);
+        if (optionalResult.isEmpty()) {
             return notFound();
         }
-        Participation participation = result.get().getParticipation();
+        Result result = optionalResult.get();
+        Participation participation = result.getParticipation();
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
         if (participation instanceof StudentParticipation) {
@@ -557,16 +533,7 @@ public class ResultResource {
             return forbidden();
         }
 
-        try {
-            List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
-            // TODO: send an empty list to the client and do not send a 404 - this is an issue however for some client implementations as there being no feedbacks
-            // (= e.g. build error in programming exercises) is different from there being an empty feedback list
-            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(ResponseEntity.notFound().build());
-        }
-        catch (Exception e) {
-            log.error("REST request to get Result failed : {}", resultId, e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>(result.getFeedbacks(), HttpStatus.OK);
     }
 
     /**

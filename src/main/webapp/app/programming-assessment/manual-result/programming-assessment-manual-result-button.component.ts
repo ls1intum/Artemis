@@ -65,6 +65,9 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = this.participationId;
         modalRef.componentInstance.result = this.latestResult;
-        modalRef.result.then(result => this.onResultCreated.emit(result), () => {});
+        modalRef.result.then(
+            result => this.onResultCreated.emit(result),
+            () => {},
+        );
     }
 }
