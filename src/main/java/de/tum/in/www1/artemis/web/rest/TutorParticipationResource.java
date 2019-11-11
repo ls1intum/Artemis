@@ -13,10 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.TutorParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -38,14 +35,15 @@ public class TutorParticipationResource {
 
     private final ExerciseService exerciseService;
 
-    private final CourseService courseService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
 
-    public TutorParticipationResource(TutorParticipationService tutorParticipationService, CourseService courseService, ExerciseService exerciseService, UserService userService) {
+    public TutorParticipationResource(TutorParticipationService tutorParticipationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService,
+            UserService userService) {
         this.tutorParticipationService = tutorParticipationService;
         this.exerciseService = exerciseService;
-        this.courseService = courseService;
+        this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
     }
 
@@ -66,7 +64,7 @@ public class TutorParticipationResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
@@ -96,8 +94,9 @@ public class TutorParticipationResource {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
 
