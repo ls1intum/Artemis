@@ -35,8 +35,6 @@ const expect = chai.expect;
 
 describe('GuidedTourService', () => {
     const tour: GuidedTour = {
-        courseShortName: '',
-        exerciseShortName: '',
         settingsKey: 'tour',
         steps: [
             new TextTourStep({
@@ -53,8 +51,6 @@ describe('GuidedTourService', () => {
     };
 
     const tourWithUserInteraction: GuidedTour = {
-        courseShortName: '',
-        exerciseShortName: '',
         settingsKey: 'tour_user_interaction',
         steps: [
             new TextTourStep({
@@ -72,8 +68,6 @@ describe('GuidedTourService', () => {
     };
 
     const tourWithCourseAndExercise: GuidedTour = {
-        courseShortName: 'tutorial',
-        exerciseShortName: 'git',
         settingsKey: 'tour_with_course_and_exercise',
         steps: [
             new TextTourStep({
@@ -89,8 +83,6 @@ describe('GuidedTourService', () => {
     };
 
     const tourWithModelingTask: GuidedTour = {
-        courseShortName: '',
-        exerciseShortName: '',
         settingsKey: 'tour_modeling_task',
         preventBackdropFromAdvancing: true,
         steps: [
@@ -264,7 +256,7 @@ describe('GuidedTourService', () => {
         describe('Tour for a certain course and exercise', () => {
             const guidedTourMapping = {
                 courseShortName: 'tutorial',
-                tours: [{ tour_with_course_and_exercise: 'git' }],
+                tours: { tour_with_course_and_exercise: 'git' },
             } as GuidedTourMapping;
 
             const exercise1 = {
@@ -309,13 +301,11 @@ describe('GuidedTourService', () => {
             });
 
             it('should start the tour for the matching exercise short name', () => {
-                let courses = [course1];
                 // enable tour for matching course title
                 guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
                 guidedTourService.currentTour = null;
 
-                courses = [course2];
                 // tour not available for not matching titles
                 guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.be.null;
@@ -324,7 +314,7 @@ describe('GuidedTourService', () => {
             it('should start the tour for the matching course / exercise short name', () => {
                 // enable tour for matching course / exercise short name
                 let currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise) as Exercise;
-                expect(currentExercise.shortName).to.equal(tourWithCourseAndExercise.exerciseShortName);
+                expect(currentExercise.shortName).to.equal(guidedTourMapping.tours[tourWithCourseAndExercise.settingsKey]);
 
                 // tour not available for not matching course / exercise short name
                 currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise) as Exercise;

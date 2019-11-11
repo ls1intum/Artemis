@@ -22,5 +22,5 @@ export class GuidedTourMapping {
     courseShortName: string;
     tours: {
         [key: string]: string;
-    }[];
+    };
 }
