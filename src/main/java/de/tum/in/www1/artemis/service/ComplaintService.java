@@ -215,6 +215,10 @@ public class ComplaintService {
             else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
                 exerciseWithOnlyTitle = new FileUploadExercise();
             }
+
+            else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
+                exerciseWithOnlyTitle = new ProgrammingExercise();
+            }
             exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
             exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
 
@@ -232,6 +236,9 @@ public class ComplaintService {
             }
             else if (originalSubmission instanceof FileUploadSubmission) {
                 submissionWithOnlyId = new FileUploadSubmission();
+            }
+            else if (originalSubmission instanceof ProgrammingSubmission) {
+                submissionWithOnlyId = new ProgrammingSubmission();
             }
             else {
                 return;

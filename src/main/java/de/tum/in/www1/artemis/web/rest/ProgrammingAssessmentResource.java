@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 
 import org.hibernate.Hibernate;
@@ -53,7 +52,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/manual-results/{resultId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable Long resultId) throws URISyntaxException {
+    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable Long resultId) {
         log.debug("REST request to update the assessment of manual result {} after complaint.", resultId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Result originalResult = resultRepository.getOne(resultId);

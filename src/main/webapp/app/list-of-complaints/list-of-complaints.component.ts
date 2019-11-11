@@ -9,6 +9,8 @@ import { Observable } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -38,6 +40,7 @@ export class ListOfComplaintsComponent implements OnInit {
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -98,6 +101,12 @@ export class ListOfComplaintsComponent implements OnInit {
             route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
+        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+            const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+            modalRef.componentInstance.participationId = studentParticipation.id;
+            modalRef.componentInstance.result = complaint.result;
+            modalRef.result.then();
+            return;
         }
         this.router.navigate([route!]);
     }
