@@ -675,8 +675,8 @@ public class ParticipationService {
      * @param exerciseId the id of exercise
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
     }
 
     /**

@@ -48,3 +48,23 @@ export const isResultPreliminary = (result: Result, programmingExercise: Program
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
     return participation && participation.type === ParticipationType.PROGRAMMING;
 };
+
+/**
+ * The deadline has passed if:
+ * - The dueDate is set and the buildAndTestAfterDueDate is not set and the dueDate has passed.
+ * - The dueDate is set and the buildAndTestAfterDueDate is set and the buildAndTestAfterDueDate has passed.
+ *
+ * @param exercise
+ */
+export const hasDeadlinePassed = (exercise: ProgrammingExercise) => {
+    // If there is no due date, the due date can't pass.
+    if (!exercise.dueDate && !exercise.buildAndTestStudentSubmissionsAfterDueDate) {
+        return false;
+    }
+    // The first priority is the buildAndTestAfterDueDate if it is set.
+    if (exercise.buildAndTestStudentSubmissionsAfterDueDate) {
+        return exercise.buildAndTestStudentSubmissionsAfterDueDate.isBefore(moment());
+    }
+    // The second priority is the dueDate.
+    return exercise.dueDate!.isBefore(moment());
+};

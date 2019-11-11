@@ -254,13 +254,13 @@ public class ParticipationResource {
      * GET /exercise/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId The participationId of the exercise
-     * @param withEagerResults Whether the {@link Result results} for the participations should also be fetched
+     * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withEagerResults) {
+            @RequestParam(defaultValue = "false") boolean withLatestResult) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
@@ -270,8 +270,8 @@ public class ParticipationResource {
         }
 
         List<StudentParticipation> participations;
-        if (withEagerResults) {
-            participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        if (withLatestResult) {
+            participations = participationService.findByExerciseIdWithLatestResult(exerciseId);
         }
         else {
             participations = participationService.findByExerciseId(exerciseId);
