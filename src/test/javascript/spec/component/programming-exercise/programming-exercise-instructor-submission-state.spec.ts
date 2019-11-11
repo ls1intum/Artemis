@@ -16,6 +16,7 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -98,9 +99,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
             4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
 
         tick(500);
@@ -116,9 +117,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
             4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isNotBuildingSubmission);
 
         tick(500);
@@ -135,9 +136,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             4: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
         const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 2 };
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
@@ -169,9 +170,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1,
             [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION]: 1,
         };
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
@@ -199,7 +200,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         triggerAllStub.returns(triggerInstructorBuildForParticipationsOfExerciseSubject);
         const getFailedSubmissionParticipationsForExerciseStub = stub(submissionService, 'getSubmissionCountByType').returns(failedSubmissionParticipationIds);
         // Component must have at least one failed submission for the button to be enabled.
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
         comp.buildingSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
         comp.hasFailedSubmissions = true;
 
@@ -213,8 +214,8 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         triggerButton.click();
 
         expect(comp.isBuildingFailedSubmissions).to.be.true;
-        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exerciseId, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
-        expect(triggerAllStub).to.have.been.calledOnceWithExactly(comp.exerciseId, failedSubmissionParticipationIds);
+        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        expect(triggerAllStub).to.have.been.calledOnceWithExactly(comp.exercise.id, failedSubmissionParticipationIds);
 
         fixture.detectChanges();
 

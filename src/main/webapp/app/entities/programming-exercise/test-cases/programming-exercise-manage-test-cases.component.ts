@@ -95,7 +95,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                 catchError(() => of(null)),
             );
 
-            const loadExerciseTestCaseState = this.getExerciseTestCaseState().pipe(
+            const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
                 tap(releaseState => {
                     this.hasUpdatedTestCases = releaseState.testCasesChanged;
                     this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
@@ -155,8 +155,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     /**
      * Checks if the exercise is released and has at least one student result.
      */
-    getExerciseTestCaseState() {
-        return this.programmingExerciseService.getProgrammingExerciseTestCaseState(this.exercise.id).pipe(map(({ body }) => body!));
+    getExerciseTestCaseState(exerciseId: number) {
+        return this.programmingExerciseService.getProgrammingExerciseTestCaseState(exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**
