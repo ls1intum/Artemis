@@ -344,31 +344,31 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.router.navigate([route], { queryParams });
     }
 
-    openAssessmentEditor(submissionId: number, isNewAssessment = false) {
-        if (!this.exercise || !this.exercise.type || !submissionId) {
+    openAssessmentEditor(submission: Submission, isNewAssessment = false) {
+        if (!this.exercise || !this.exercise.type || !submission || !submission.id) {
             return;
         }
 
         let route = '';
-        let submission = submissionId.toString();
+        let submissionString = submission.id.toString();
         if (isNewAssessment) {
-            submission = 'new';
+            submissionString = 'new';
         }
 
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                route = `/text/${this.exercise.id}/assessment/${submission}`;
+                route = `/text/${this.exercise.id}/assessment/${submissionString}`;
                 break;
             case ExerciseType.MODELING:
-                route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
+                route = `/modeling-exercise/${this.exercise.id}/submissions/${submissionString}/assessment`;
                 break;
             case ExerciseType.FILE_UPLOAD:
-                route = `/file-upload-exercise/${this.exercise.id}/submission/${submission}/assessment`;
+                route = `/file-upload-exercise/${this.exercise.id}/submission/${submissionString}/assessment`;
                 break;
             case ExerciseType.PROGRAMMING:
                 const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
-                modalRef.componentInstance.participationId = this.submissions[submissionId].participation.id;
-                modalRef.componentInstance.result = this.submissions[submissionId].result;
+                modalRef.componentInstance.participationId = submission.participation.id;
+                modalRef.componentInstance.result = isNewAssessment ? null : submission.result;
                 modalRef.result.then();
                 return;
         }
