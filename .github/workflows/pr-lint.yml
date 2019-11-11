@@ -12,7 +12,7 @@ jobs:
       - uses: rytswd/comvent@v0.1.0
         id: request-lint
         with:
-          keyword: @github-actions.*(lint|fix.*code\sstyle|format.*code)
+          keyword: "@github-actions.*(lint|fix.*code style|format.*code)"
         if: steps.is-pr.outputs.is_pull_request == 'true'
 
       - uses: actions/checkout@v1
