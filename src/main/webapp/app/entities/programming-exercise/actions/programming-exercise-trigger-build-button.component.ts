@@ -23,7 +23,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
 
-    participationBuildCanBeTriggered: boolean;
+    participationIsActive: boolean;
     // This only works correctly when the provided participation includes its latest result.
     lastResultIsManual: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
@@ -44,9 +44,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            // We can trigger the build only if the participation is active (has build plan) or if the build plan was archived (new build plan will be created).
-            this.participationBuildCanBeTriggered =
-                this.participation.initializationState === InitializationState.INITIALIZED || this.participation.initializationState === InitializationState.INACTIVE;
+            this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
             // The identification of manual results is only relevant when the deadline was passed, otherwise they could be overridden anyway.
             if (hasDeadlinePassed(this.exercise)) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
@@ -58,7 +56,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                     )(this.participation.results);
                 this.lastResultIsManual = !!newestResult && newestResult.assessmentType === AssessmentType.MANUAL;
             }
-            if (this.participationBuildCanBeTriggered) {
+            if (this.participationIsActive) {
                 this.setupSubmissionSubscription();
             }
         }
