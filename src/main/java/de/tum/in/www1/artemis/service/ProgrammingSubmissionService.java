@@ -235,7 +235,7 @@ public class ProgrammingSubmissionService {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()),
                 "All builds triggered for programming exercise with id " + programmingExercise.getId());
         // Send a notification to the client to inform the instructor about the test case update.
-        String notificationText = BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE + programmingExercise.getId();
+        String notificationText = BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE + programmingExercise.getTitle();
         groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, notificationText);
     }
 
