@@ -43,6 +43,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         this.resultRepository = resultRepository;
     }
 
+    /**
+     * Update an assessment after a complaint was accepted. After the result is updated accordingly, Compass is notified about the changed assessment in order to adapt all
+     * automatic assessments based on this result, as well.
+     *
+     * @param resultId     the id of the result which will be updated
+     * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
+     * @return the updated result
+     */
     @PutMapping("/manual-results/{resultId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable Long resultId) throws URISyntaxException {
