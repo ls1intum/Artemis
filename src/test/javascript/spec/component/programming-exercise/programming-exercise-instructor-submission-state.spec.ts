@@ -16,7 +16,7 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
-import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
 
 chai.use(sinonChai);
@@ -33,7 +33,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
 
     let getBuildRunStateStub: SinonStub;
-    let getBuildRunStateSubject: Subject<boolean>;
+    let getBuildRunStateSubject: Subject<BuildRunState>;
 
     let triggerAllStub: SinonStub;
     let triggerParticipationsStub: SinonStub;
@@ -69,7 +69,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
                 getExerciseSubmissionStateSubject = new Subject<ExerciseSubmissionState>();
                 getExerciseSubmissionStateStub = stub(submissionService, 'getSubmissionStateOfExercise').returns(getExerciseSubmissionStateSubject);
 
-                getBuildRunStateSubject = new Subject<boolean>();
+                getBuildRunStateSubject = new Subject<BuildRunState>();
                 getBuildRunStateStub = stub(buildRunService, 'getBuildRunUpdates').returns(getBuildRunStateSubject);
 
                 triggerAllStub = stub(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').returns(of());
@@ -254,12 +254,12 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
 
         expect(getTriggerAllButton().disabled).to.be.false;
 
-        getBuildRunStateSubject.next(true);
+        getBuildRunStateSubject.next(BuildRunState.RUNNING);
         fixture.detectChanges();
 
         expect(getTriggerAllButton().disabled).to.be.true;
 
-        getBuildRunStateSubject.next(false);
+        getBuildRunStateSubject.next(BuildRunState.COMPLETED);
         fixture.detectChanges();
 
         expect(getTriggerAllButton().disabled).to.be.false;
