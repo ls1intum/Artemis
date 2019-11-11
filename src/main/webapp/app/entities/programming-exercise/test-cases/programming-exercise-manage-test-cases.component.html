@@ -18,7 +18,7 @@
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                 ></jhi-programming-exercise-manage-test-cases-status>
                 <jhi-programming-exercise-manage-test-cases-actions
-                    [exerciseId]="exerciseId"
+                    [exercise]="exercise"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
                     [disableResetWeights]="(testCases | averageBy: 'weight') <= 1"

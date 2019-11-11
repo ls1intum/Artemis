@@ -14,15 +14,15 @@ import { ParticipationWebsocketService } from 'app/entities/participation';
 import { Exercise } from 'app/entities/exercise';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ProgrammingExerciseInstructorSubmissionState', () => {
-    let comp: ProgrammmingExerciseInstructorSubmissionStateComponent;
-    let fixture: ComponentFixture<ProgrammmingExerciseInstructorSubmissionStateComponent>;
+    let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseInstructorSubmissionStateComponent>;
     let debugElement: DebugElement;
     let submissionService: ProgrammingSubmissionService;
 
@@ -52,7 +52,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammmingExerciseInstructorSubmissionStateComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseInstructorSubmissionStateComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 

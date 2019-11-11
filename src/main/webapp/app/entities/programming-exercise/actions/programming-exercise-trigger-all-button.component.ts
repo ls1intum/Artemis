@@ -1,10 +1,11 @@
-import { Component, Input, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { catchError, filter, take } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
-import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -28,7 +29,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-ex
 })
 export class ProgrammingExerciseTriggerAllButtonComponent {
     ButtonType = ButtonType;
-    @Input() exerciseId: number;
+    @Input() exercise: ProgrammingExercise;
     @Input() disabled = false;
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
@@ -46,11 +47,11 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
      */
     openTriggerAllModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.exerciseId = this.exercise.id;
         modalRef.result.then(() => {
             this.isTriggeringBuildAll = true;
             this.submissionService
-                .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
+                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id)
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
@@ -62,7 +63,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
 
     private waitForBuildResult() {
         this.programmingExerciseWebsocketService
-            .getTestCaseState(this.exerciseId)
+            .getTestCaseState(this.exercise.id)
             .pipe(
                 filter(testCasesChanged => !testCasesChanged),
                 take(1),
