@@ -35,7 +35,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    protected constructor(protected submissionService: ProgrammingSubmissionService, protected translateService: TranslateService) {}
+    protected constructor(protected submissionService: ProgrammingSubmissionService) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.

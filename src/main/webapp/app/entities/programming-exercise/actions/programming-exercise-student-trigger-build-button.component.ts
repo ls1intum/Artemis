@@ -9,8 +9,8 @@ import { SubmissionType } from 'app/entities/submission';
     templateUrl: './programming-exercise-trigger-build-button.component.html',
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
-    constructor(submissionService: ProgrammingSubmissionService, translateService: TranslateService) {
-        super(submissionService, translateService);
+    constructor(submissionService: ProgrammingSubmissionService) {
+        super(submissionService);
     }
 
     // TODO: this should not be allowed after the build and test deadline if manual grading is enabled for the exercise otherwise students could override the manual results
