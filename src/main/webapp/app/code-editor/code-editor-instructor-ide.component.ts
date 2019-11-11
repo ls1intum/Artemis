@@ -67,4 +67,8 @@ export class CodeEditorInstructorIdeComponent extends CodeEditorInstructorBaseCo
     submit(): void {
         this.javaBridge.submitInstructorRepository();
     }
+
+    buildLocally(): void {
+        this.javaBridge.buildAndTestInstructorRepository();
+    }
 }

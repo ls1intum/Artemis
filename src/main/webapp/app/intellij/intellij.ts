@@ -8,7 +8,7 @@ export interface Intellij {
     editExercise(exerciseJson: string): void;
     selectInstructorRepository(repository: string): void;
     submitInstructorRepository(): void;
-    buildAndTestInstructorRepository(repository: string): void;
+    buildAndTestInstructorRepository(): void;
 }
 
 export interface IntelliJState {

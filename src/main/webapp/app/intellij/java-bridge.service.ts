@@ -101,8 +101,8 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
         this.window.nativeWindow.intellij.editExercise(exerciseJson);
     }
 
-    buildAndTestInstructorRepository(repository: REPOSITORY): void {
-        this.window.nativeWindow.intellij.buildAndTestInstructorRepository(repository);
+    buildAndTestInstructorRepository(): void {
+        this.window.nativeWindow.intellij.buildAndTestInstructorRepository();
     }
 
     selectInstructorRepository(repository: REPOSITORY): void {

@@ -73,6 +73,7 @@
         ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
         <jhi-ide-button buttonLabel="Submit" (click)="submit()"> </jhi-ide-button>
+        <jhi-ide-button buttonLabel="Test" (click)="buildLocally()"></jhi-ide-button>
     </div>
     <jhi-programming-exercise-editable-instructions
         *ngIf="exercise"
