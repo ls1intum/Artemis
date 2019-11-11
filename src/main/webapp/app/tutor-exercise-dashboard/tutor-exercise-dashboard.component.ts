@@ -26,6 +26,8 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -108,6 +110,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private router: Router,
         private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -362,6 +365,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 route = `/file-upload-exercise/${this.exercise.id}/submission/${submission}/assessment`;
                 break;
+            case ExerciseType.PROGRAMMING:
+                const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+                modalRef.componentInstance.participationId = this.submissions[submissionId].participation.id;
+                modalRef.componentInstance.result = this.submissions[submissionId].result;
+                modalRef.result.then();
+                return;
         }
         this.router.navigate([route]);
     }
