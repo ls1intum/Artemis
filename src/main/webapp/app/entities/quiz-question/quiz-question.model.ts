@@ -1,6 +1,7 @@
 import { BaseEntity } from 'app/shared';
 import { QuizQuestionStatistic } from '../quiz-question-statistic';
 import { Exercise } from '../exercise';
+import { SafeHtml } from '@angular/platform-browser';
 
 export const enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',
@@ -15,13 +16,20 @@ export const enum QuizQuestionType {
     SHORT_ANSWER = 'short-answer',
 }
 
-export interface MarkDownElement {
+export interface TextHintExplanationInterface {
     text: string | null;
     hint: string | null;
     explanation: string | null;
 }
 
-export abstract class QuizQuestion implements BaseEntity, MarkDownElement {
+export class RenderedQuizQuestionMarkDownElement {
+    text: SafeHtml;
+    hint: SafeHtml;
+    explanation: SafeHtml;
+    renderedSubElements: RenderedQuizQuestionMarkDownElement[] = [];
+}
+
+export abstract class QuizQuestion implements BaseEntity, TextHintExplanationInterface {
     public id: number;
     public title: string;
     public text: string | null;

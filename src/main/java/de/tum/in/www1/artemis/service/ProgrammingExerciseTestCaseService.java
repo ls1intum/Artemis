@@ -126,7 +126,7 @@ public class ProgrammingExerciseTestCaseService {
         Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = existingTestCases.stream().filter(existing -> {
             Optional<ProgrammingExerciseTestCase> matchingText = testCasesFromFeedbacks.stream().filter(existing::equals).findFirst();
             // Either the test case was active and is not part of the feedback anymore OR was not active before and is now part of the feedback again.
-            return !matchingText.isPresent() && existing.isActive() || matchingText.isPresent() && matchingText.get().isActive() && !existing.isActive();
+            return matchingText.isEmpty() && existing.isActive() || matchingText.isPresent() && matchingText.get().isActive() && !existing.isActive();
         }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
@@ -134,6 +134,7 @@ public class ProgrammingExerciseTestCaseService {
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
         if (testCasesToSave.size() > 0) {
+            // TODO: This fails with a TransientObject exception in our tests (because the result is not saved?)
             testCaseRepository.saveAll(testCasesToSave);
             return true;
         }
@@ -153,7 +154,6 @@ public class ProgrammingExerciseTestCaseService {
      * @param isStudentParticipation boolean flag indicating weather the participation of the result is not a solution/template participation.
      * @return Result with updated feedbacks, score and result string.
      */
-    @Transactional
     public Result updateResultFromTestCases(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         boolean shouldTestsWithAfterDueDateFlagBeRemoved = isStudentParticipation && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                 && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
@@ -225,7 +225,6 @@ public class ProgrammingExerciseTestCaseService {
         List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
                 .filter(feedback -> testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equals(feedback.getText()))).collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
-        feedbackRepository.deleteAll(feedbacksToFilterForCurrentDate);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
         if (result.getFeedbacks().stream().noneMatch(feedback -> !feedback.isPositive() || feedback.getType() != null && feedback.getType().equals(FeedbackType.MANUAL)))
             result.setHasFeedback(false);

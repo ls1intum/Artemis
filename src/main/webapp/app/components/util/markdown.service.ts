@@ -4,10 +4,10 @@ import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
 import * as DOMPurify from 'dompurify';
-import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
+import { QuizQuestion, TextHintExplanationInterface } from 'app/entities/quiz-question';
 
 const Range = ace.acequire('ace/range').Range;
 
@@ -60,7 +60,7 @@ export class ArtemisMarkdown {
      * @param markdownText {string} the markdown text to parse
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
      */
-    parseTextHintExplanation(markdownText: string, targetObject: MarkDownElement) {
+    parseTextHintExplanation(markdownText: string, targetObject: TextHintExplanationInterface) {
         if (!markdownText || !targetObject) {
             return;
         }
@@ -99,7 +99,7 @@ export class ArtemisMarkdown {
      * @param sourceObject
      * @return {string}
      */
-    generateTextHintExplanation(sourceObject: MarkDownElement) {
+    generateTextHintExplanation(sourceObject: TextHintExplanationInterface) {
         return !sourceObject.text
             ? ''
             : sourceObject.text +
@@ -108,32 +108,11 @@ export class ArtemisMarkdown {
     }
 
     /**
-     * add the markdown for a hint at the current cursor location in the given editor
-     * @deprecated NOTE: this method is DEPRECATED: please use the new markdown editor and appropriate domain commands
-     * @param aceEditorContainer {object} the editor container into which the hint markdown will be inserted
-     */
-    addHintAtCursor(aceEditorContainer: AceEditorComponent) {
-        const text = '\n\t' + HintCommand.identifier + HintCommand.text;
-        ArtemisMarkdown.addTextAtCursor(text, aceEditorContainer);
-    }
-
-    /**
-     * add the markdown for an explanation at the current cursor location in the given editor
-     * @deprecated NOTE: this method is DEPRECATED: please use the new markdown editor and appropriate domain commands
-     * @param aceEditorContainer {object} the editor container into which the explanation markdown will be inserted
-     */
-    // NOTE: this method is DEPRECATED: please use the new markdown editor and appropriate domain commands
-    addExplanationAtCursor(aceEditorContainer: AceEditorComponent) {
-        const text = '\n\t' + ExplanationCommand.identifier + ExplanationCommand.text;
-        ArtemisMarkdown.addTextAtCursor(text, aceEditorContainer);
-    }
-
-    /**
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
      * @param {ShowdownExtension[]} extensions to use for markdown parsing
-     * @returns {string} the resulting html as a string
+     * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
     htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
         if (markdownText == null || markdownText === '') {
@@ -167,32 +146,6 @@ export class ArtemisMarkdown {
         }
         const sanitized = DOMPurify.sanitize(markdownText, { ALLOWED_TAGS: ['a', 'p', 'ul', 'li', 'tt', 'span'], ALLOWED_ATTR: ['class', 'href', 'rel', 'target'] });
         return this.sanitizer.bypassSecurityTrustHtml(sanitized);
-    }
-
-    /**
-     * This method is used to return sanitized html for markdown, that is not trusted by angular.
-     * Angular might strip away styles or html tags!
-     *
-     * @deprecated
-     * @param markdownText
-     */
-    htmlForMarkdownUntrusted(markdownText: string | null) {
-        if (markdownText == null || markdownText === '') {
-            return '';
-        }
-        const converter = new showdown.Converter({
-            parseImgDimensions: true,
-            headerLevelStart: 3,
-            simplifiedAutoLink: true,
-            excludeTrailingPunctuationFromURLs: true,
-            strikethrough: true,
-            tables: true,
-            openLinksInNewWindow: true,
-            backslashEscapesHTMLTags: true,
-            extensions: [showdownKatex()],
-        });
-        const html = converter.makeHtml(markdownText);
-        return DOMPurify.sanitize(html);
     }
 
     markdownForHtml(htmlText: string): string {

@@ -119,6 +119,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
+                        // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
+                        participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }

@@ -40,14 +40,20 @@ export class TutorGroupUpdateComponent implements OnInit {
                 filter((mayBeOk: HttpResponse<User[]>) => mayBeOk.ok),
                 map((response: HttpResponse<User[]>) => response.body),
             )
-            .subscribe((res: User[]) => (this.users = res), (res: HttpErrorResponse) => this.onError(res.message));
+            .subscribe(
+                (res: User[]) => (this.users = res),
+                (res: HttpErrorResponse) => this.onError(res.message),
+            );
         this.courseService
             .query()
             .pipe(
                 filter((mayBeOk: HttpResponse<Course[]>) => mayBeOk.ok),
                 map((response: HttpResponse<Course[]>) => response.body),
             )
-            .subscribe((res: Course[]) => (this.courses = res), (res: HttpErrorResponse) => this.onError(res.message));
+            .subscribe(
+                (res: Course[]) => (this.courses = res),
+                (res: HttpErrorResponse) => this.onError(res.message),
+            );
     }
 
     previousState() {
@@ -64,7 +70,10 @@ export class TutorGroupUpdateComponent implements OnInit {
     }
 
     protected subscribeToSaveResponse(result: Observable<HttpResponse<TutorGroup>>) {
-        result.subscribe((res: HttpResponse<TutorGroup>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<TutorGroup>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(),
+        );
     }
 
     protected onSaveSuccess() {

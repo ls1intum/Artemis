@@ -122,7 +122,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         const updatedQuestion = this.quizExercise.quizQuestions.filter(question => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as MultipleChoiceQuestion;
         // if the Anyone finds a way to the Website,
-        // with an wrong combination of QuizId and QuestionId
+        // with a wrong combination of QuizId and QuestionId
         //      -> go back to Courses
         if (this.question === null) {
             this.router.navigateByUrl('courses');

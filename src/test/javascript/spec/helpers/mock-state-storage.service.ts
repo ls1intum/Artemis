@@ -12,7 +12,7 @@ export class MockStateStorageService extends SpyObject {
         this.storeUrlSpy = this.spy('storeUrl').andReturn(this);
     }
 
-    setUrlSpy(json) {
+    setUrlSpy(json: any) {
         this.getUrlSpy = this.spy('getUrl').andReturn(json);
     }
 
