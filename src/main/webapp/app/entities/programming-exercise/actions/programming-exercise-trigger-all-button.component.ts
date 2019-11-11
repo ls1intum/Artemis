@@ -6,6 +6,7 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -48,6 +49,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
     openTriggerAllModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseId = this.exercise.id;
+        modalRef.componentInstance.deadlinePassed = hasDeadlinePassed(this.exercise);
         modalRef.result.then(() => {
             this.isTriggeringBuildAll = true;
             this.submissionService
@@ -84,6 +86,10 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
             </div>
             <div class="modal-body">
                 <jhi-alert-error></jhi-alert-error>
+                <p *ngIf="deadlinePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDeadline">
+                    The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
+                    would replace the manual results as the latest result for the participation.
+                </p>
                 <p jhiTranslate="artemisApp.programmingExercise.resubmitAllDialog">
                     WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
                 </p>
@@ -102,6 +108,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     @Input() exerciseId: number;
+    @Input() deadlinePassed: boolean;
 
     constructor(private activeModal: NgbActiveModal) {}
 
