@@ -8,12 +8,12 @@
             "addEditUmlElement": {
                 "headline": "Add and edit UML elements",
                 "content": "To add a UML element, drag and drop one of the UML elements into the editor area.",
-                "hint": "You can edit the UML element by double-clicking the element."
+                "hint": "You can edit the UML element by double-clicking it."
             },
             "createAssociation": {
                 "headline": "Create and edit associations",
                 "content": "Select the source class to see four blue circles. Click and hold on one of those and drag it to another blue circle to create a relationship.",
-                "hint": "You can change the relationship type by double-clicking on the element."
+                "hint": "You can change the relationship type by double-clicking it."
             },
             "executeTasks": {
                 "headline": "Modeling exercise.",
