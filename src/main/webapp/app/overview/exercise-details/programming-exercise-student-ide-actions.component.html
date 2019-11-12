@@ -14,15 +14,15 @@
     <jhi-ide-button
         (click)="importIntoIntelliJ()"
         [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
-        [buttonLoading]="exercise.loading"
+        [buttonLoading]="exercise.loading || ideState.cloning"
         [smallButton]="smallButtons"
-        *ngIf="!isOpenedInIntelliJ && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
+        *ngIf="ideState.opened !== exercise.id && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
     ></jhi-ide-button>
     <jhi-ide-button
         (click)="submitChanges()"
         buttonLabel="Submit"
-        [buttonLoading]="exercise.loading"
+        [buttonLoading]="exercise.loading || ideState.building"
         [smallButton]="smallButtons"
-        *ngIf="isOpenedInIntelliJ && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
+        *ngIf="ideState.opened === exercise.id && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
     ></jhi-ide-button>
 </div>

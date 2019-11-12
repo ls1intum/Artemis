@@ -3,19 +3,21 @@
         "modelingExercise": {
             "editorArea": {
                 "headline": "Modeling Exercise",
-                "content": "Here on this page you have to solve a modeling exercise. You can see a checkered canvas - the editor area - into which you can drag and drop the UML elements, which are displayed on the right side of the canvas."
+                "content": "On this page you solve a modeling exercise. We will guide you how to do that."
             },
             "addEditUmlElement": {
                 "headline": "Add and edit UML elements",
-                "content": "To add a UML element, simply drag and drop one of the elements from the right side into the editor area on the left side. You can edit the UML element by double-clicking on the element."
+                "content": "To add a UML element, drag and drop one of the UML elements into the editor area.",
+                "hint": "You can edit the UML element by double-clicking it."
             },
             "createAssociation": {
                 "headline": "Create and edit associations",
-                "content": "To create an association between elements, select the source class with a single click and you will see four blue circles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue circle to create a relationship as shown in the animation below. Afterwards you can change the relationship type by double-clicking on the element and then choosing the required type."
+                "content": "Select the source class to see four blue circles. Click and hold on one of those and drag it to another blue circle to create a relationship.",
+                "hint": "You can change the relationship type by double-clicking it."
             },
             "executeTasks": {
                 "headline": "Modeling exercise.",
-                "content": "Solve the exercise down below and proceed to the next step",
+                "content": "Solve the exercise down below and proceed to the next step.",
                 "personClass": "Create the UML class <tt>Person</tt> with the attribute <tt>name: String</tt>",
                 "studentClass": "Create the UML class <tt>Student</tt> with the attribute <tt>major: String</tt> and method <tt>visitLecture()</tt>.",
                 "association": "Make sure that <tt>Student</tt> is a subclass of <tt>Person</tt>."
