@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -41,7 +40,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -349,7 +347,10 @@ public class BambooService implements ContinuousIntegrationService {
             final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
             final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
             if (response.getStatusCode() != HttpStatus.NO_CONTENT) {
-                throw new BambooException("Unable to give permissions to project " + projectKey + "\n" + response.getBody());
+                final var errorMessage = "Unable to give permissions to project " + projectKey + "; error body: " + response.getBody() +
+                    "; headers: " + response.getHeaders() + "; status code: " + response.getStatusCode();
+                log.error(errorMessage);
+                throw new BambooException(errorMessage);
             }
         });
     }
