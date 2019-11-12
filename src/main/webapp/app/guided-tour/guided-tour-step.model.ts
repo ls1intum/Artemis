@@ -26,8 +26,6 @@ export abstract class TourStep {
     userInteractionEvent?: UserInteractionEvent;
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;
-    /** List of tasks that have to be completed */
-    modelingTask?: GuidedTourModelingTask;
     /** Enables the automatic display of the next step after a user interaction */
     triggerNextStep?: boolean;
 }
@@ -65,6 +63,16 @@ export class VideoTourStep extends TextTourStep {
     videoUrl: string;
 
     constructor(tourStep: VideoTourStep) {
+        super(tourStep);
+        Object.assign(this, tourStep);
+    }
+}
+
+export class ModelingTaskTourStep extends TextTourStep {
+    /** Modeling task that has to be completed during this step */
+    modelingTask: GuidedTourModelingTask;
+
+    constructor(tourStep: ModelingTaskTourStep) {
         super(tourStep);
         Object.assign(this, tourStep);
     }

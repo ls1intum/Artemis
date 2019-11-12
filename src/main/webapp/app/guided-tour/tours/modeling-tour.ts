@@ -1,7 +1,7 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { GuidedTourModelingTask, associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 export const modelingTour: GuidedTour = {
     courseShortName: 'artemistutorial',
@@ -23,7 +23,7 @@ export const modelingTour: GuidedTour = {
             contentTranslateKey: 'tour.modelingExercise.createAssociation.content',
             imageUrl: '/../../../content/images/guided-tour-images/apollon-add-association.gif',
         }),
-        new TextTourStep({
+        new ModelingTaskTourStep({
             highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
@@ -32,7 +32,7 @@ export const modelingTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.MODELING,
             modelingTask: new GuidedTourModelingTask(personUML.name, 'tour.modelingExercise.executeTasks.personClass'),
         }),
-        new TextTourStep({
+        new ModelingTaskTourStep({
             highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
@@ -40,7 +40,7 @@ export const modelingTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.MODELING,
             modelingTask: new GuidedTourModelingTask(studentUML.name, 'tour.modelingExercise.executeTasks.studentClass'),
         }),
-        new TextTourStep({
+        new ModelingTaskTourStep({
             highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
