@@ -143,7 +143,7 @@ public class ResultResource {
         result.setSubmission(submission);
         result = resultService.createNewManualResult(result, true);
 
-        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/manual-results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 

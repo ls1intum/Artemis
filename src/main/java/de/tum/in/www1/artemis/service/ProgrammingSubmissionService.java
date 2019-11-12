@@ -142,7 +142,7 @@ public class ProgrammingSubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
             participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
-
+            participationService.performEmptyCommit((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             }
@@ -234,6 +234,9 @@ public class ProgrammingSubmissionService {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
         log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
+
+        // Let the instructor know that a build run was triggered.
+        notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
 
         var index = 0;
@@ -254,6 +257,20 @@ public class ProgrammingSubmissionService {
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         setTestCasesChanged(programmingExercise.getId(), false);
+        // Let the instructor know that the build run is finished.
+        notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
+    }
+
+    private void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.RUNNING);
+        // Send a notification to the client to inform the instructor about the test case update.
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE);
+    }
+
+    private void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
+        // Send a notification to the client to inform the instructor about the test case update.
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE);
     }
 
     /**
@@ -385,6 +402,8 @@ public class ProgrammingSubmissionService {
             }
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             notifyUserAboutSubmission(submission);
+            // TODO: does this work and do we really need it?
+            participationService.performEmptyCommit((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
         }
         catch (Exception e) {
             log.error("Trigger build failed for " + programmingExerciseParticipation.getBuildPlanId() + " with the exception " + e.getMessage());
@@ -489,6 +508,10 @@ public class ProgrammingSubmissionService {
 
     private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
+    }
+
+    private String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
     }
 
     /**
