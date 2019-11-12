@@ -34,11 +34,14 @@ export class ProgrammingAssessmentManualResultService {
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 
-    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, result: Result, submissionId: number): Observable<Result> {
         const url = `${SERVER_API_URL}api/programming-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
+            score: result.score,
+            resultString: result.resultString,
+            completionDate: result.completionDate,
         };
         return this.http.put<Result>(url, assessmentUpdate);
     }

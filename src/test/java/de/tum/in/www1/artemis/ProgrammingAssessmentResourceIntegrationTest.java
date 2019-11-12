@@ -78,12 +78,18 @@ public class ProgrammingAssessmentResourceIntegrationTest {
         complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        ProgrammingAssessmentUpdate assessmentUpdate = new ProgrammingAssessmentUpdate();
+        assessmentUpdate.setFeedbacks(new ArrayList<>());
+        assessmentUpdate.setComplaintResponse(complaintResponse);
+        assessmentUpdate.setScore(20);
+        assessmentUpdate.setResultString("new Result!");
 
         Result updatedResult = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
+        assertThat(updatedResult.getScore()).isEqualTo(20L);
+        assertThat(updatedResult.getResultString()).isEqualTo("new Result!");
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
     }
 
