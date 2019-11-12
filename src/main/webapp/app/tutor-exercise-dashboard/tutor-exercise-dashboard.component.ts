@@ -344,35 +344,27 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.router.navigate([route], { queryParams });
     }
 
-    openAssessmentEditor(submission: Submission, isNewAssessment = false) {
-        if (!this.exercise || !this.exercise.type || !submission || !submission.id) {
+    openAssessmentEditor(submissionId: number, isNewAssessment = false) {
+        if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
 
         let route = '';
-        let submissionString = submission.id.toString();
+        let submission = submissionId.toString();
         if (isNewAssessment) {
-            submissionString = 'new';
+            submission = 'new';
         }
-
-        const originalSubmission = this.submissions.find(sub => sub.id === submission.id)!;
 
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                route = `/text/${this.exercise.id}/assessment/${submissionString}`;
+                route = `/text/${this.exercise.id}/assessment/${submission}`;
                 break;
             case ExerciseType.MODELING:
-                route = `/modeling-exercise/${this.exercise.id}/submissions/${submissionString}/assessment`;
+                route = `/modeling-exercise/${this.exercise.id}/submissions/${submission}/assessment`;
                 break;
             case ExerciseType.FILE_UPLOAD:
-                route = `/file-upload-exercise/${this.exercise.id}/submission/${submissionString}/assessment`;
+                route = `/file-upload-exercise/${this.exercise.id}/submission/${submission}/assessment`;
                 break;
-            case ExerciseType.PROGRAMMING:
-                const modalRef = this.modalService.open(ProgrammingAssessmentManualResultComponent, { keyboard: true, size: 'lg' });
-                modalRef.componentInstance.participationId = originalSubmission.participation.id;
-                modalRef.componentInstance.result = isNewAssessment ? null : originalSubmission.result;
-                modalRef.result.then();
-                return;
         }
         this.router.navigate([route]);
     }
