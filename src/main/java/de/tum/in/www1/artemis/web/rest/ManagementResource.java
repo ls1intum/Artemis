@@ -28,6 +28,13 @@ public class ManagementResource {
         this.featureToggleService = featureToggleService;
     }
 
+    /**
+     * PUT -- Updates all given features by enabling/disabling them. (Map of feature -> shouldBeEnabled)
+     *
+     * @see FeatureToggleService
+     * @param features A map of features (feature -> shouldBeActivated)
+     * @return A list of all enabled features
+     */
     @PutMapping(SUB_FEATURE_TOGGLE)
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<Feature>> toggleFeatures(@RequestBody Map<Feature, Boolean> features) {
