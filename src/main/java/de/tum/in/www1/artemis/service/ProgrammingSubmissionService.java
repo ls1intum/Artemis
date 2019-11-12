@@ -142,7 +142,7 @@ public class ProgrammingSubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
             participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
-
+            participationService.performEmptyCommit((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             }
@@ -385,6 +385,8 @@ public class ProgrammingSubmissionService {
             }
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             notifyUserAboutSubmission(submission);
+            // TODO: does this work and do we really need it?
+            participationService.performEmptyCommit((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
         }
         catch (Exception e) {
             log.error("Trigger build failed for " + programmingExerciseParticipation.getBuildPlanId() + " with the exception " + e.getMessage());
