@@ -26,7 +26,6 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { ProgrammingAssessmentManualResultComponent } from 'app/programming-assessment/manual-result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export interface ExampleSubmissionQueryParams {

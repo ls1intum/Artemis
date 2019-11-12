@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import {
     ProgrammingAssessmentManualResultButtonComponent,
-    ProgrammingAssessmentManualResultComponent,
+    ProgrammingAssessmentManualResultDialogComponent,
     ProgrammingAssessmentManualResultService,
 } from 'app/programming-assessment/manual-result';
 import { ProgrammingAssessmentRepoExportButtonComponent, ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
@@ -20,11 +20,11 @@ const ENTITY_STATES = [...programmingAssessmentRoutes];
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, FormsModule, ArtemisComplaintsForTutorModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         ProgrammingAssessmentManualResultButtonComponent,
-        ProgrammingAssessmentManualResultComponent,
+        ProgrammingAssessmentManualResultDialogComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         ProgrammingAssessmentRepoExportDialogComponent,
     ],
-    entryComponents: [ProgrammingAssessmentManualResultComponent, ProgrammingAssessmentRepoExportDialogComponent],
+    entryComponents: [ProgrammingAssessmentManualResultDialogComponent, ProgrammingAssessmentRepoExportDialogComponent],
     providers: [ProgrammingAssessmentManualResultService],
     exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
 })

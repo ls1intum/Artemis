@@ -10,15 +10,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 
+/** REST controller for managing ProgrammingAssessment. */
+@RestController
+@RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
@@ -84,27 +85,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         return ENTITY_NAME;
     }
 
-    private boolean userHasPermissions(Course course, User user) {
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return false;
-        }
-        return true;
-    }
-
-    private boolean userHasPermissions(Course course) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return userHasPermissions(course, user);
-    }
-
     private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed
-        if (exerciseToBeChecked instanceof ProgrammingExercise) {
-            final var exercise = (ProgrammingExercise) exerciseToBeChecked;
-            final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
-                    : exercise.getDueDate();
-            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
-        }
-
-        return true;
+        final var exercise = (ProgrammingExercise) exerciseToBeChecked;
+        final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
+                : exercise.getDueDate();
+        return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 }
