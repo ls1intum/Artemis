@@ -7,9 +7,9 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { JhiWebsocketService, User } from 'app/core';
 import { Course } from 'app/entities/course';
-import { User } from 'app/core/user/user.model';
+import { FeatureToggleService } from 'app/layouts';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -37,6 +37,7 @@ export class AccountService implements IAccountService {
         private sessionStorage: SessionStorageService,
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
+        private featureToggleService: FeatureToggleService,
     ) {}
 
     get userIdentity() {
@@ -48,6 +49,13 @@ export class AccountService implements IAccountService {
         this.authenticated = !!user;
         // Alert subscribers about user updates, that is when the user logs in or logs out (null).
         this.authenticationState.next(user);
+
+        // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
+        if (user) {
+            this.featureToggleService.subscribeFeatureToggleUpdates();
+        } else {
+            this.featureToggleService.unsubscribeFeatureToggleUpdates();
+        }
     }
 
     fetch(): Observable<HttpResponse<User>> {

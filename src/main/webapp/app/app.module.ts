@@ -24,9 +24,9 @@ import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from './blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from './blocks/interceptor/notification.interceptor';
-import { AccountService, JhiLanguageHelper, JhiWebsocketService, LoginService, UserRouteAccessService, UserService } from './core';
+import { JhiWebsocketService, UserRouteAccessService } from './core';
 import { ArtemisSharedModule } from './shared';
-import { ArtemisCoreModule } from 'app/core/core.module';
+import { ArtemisCoreModule } from 'app/core';
 import { ArtemisAppRoutingModule } from './app-routing.module';
 import { ArtemisHomeModule } from './home';
 import { ArtemisLegalModule } from './legal';
@@ -179,11 +179,9 @@ import { FeatureToggleModule } from 'app/layouts/feature-toggle/feature-toggle.m
         PaginationConfig,
         UserRouteAccessService,
         DifferencePipe,
+        JhiWebsocketService,
         PendingChangesGuard,
         TranslateService,
-        LoginService,
-        AccountService,
-        UserService,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.
@@ -221,7 +219,7 @@ import { FeatureToggleModule } from 'app/layouts/feature-toggle/feature-toggle.m
         {
             provide: JhiLanguageService,
             useClass: JhiLanguageService,
-            deps: [TranslateService, JhiConfigService, JhiLanguageHelper],
+            deps: [TranslateService, JhiConfigService],
         },
         {
             provide: JhiResolvePagingParams,

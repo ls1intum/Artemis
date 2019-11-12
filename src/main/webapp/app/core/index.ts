@@ -5,6 +5,7 @@ export * from './websocket/websocket.service';
 export * from './auth/state-storage.service';
 export * from './auth/account.service';
 export * from './auth/user-route-access-service';
+export * from './core.module';
 export * from './login/login.service';
 export * from './user/account.model';
 export * from './user/user.model';
