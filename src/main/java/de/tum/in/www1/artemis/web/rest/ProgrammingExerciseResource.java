@@ -591,14 +591,23 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable Long exerciseId, @PathVariable String studentIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
         if (Optional.ofNullable(programmingExercise).isEmpty()) {
             log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
             return badRequest();
         }
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
+        }
+
+        if (repositoryExportOptions.isExportAllStudents()) {
+            // only instructors are allowed to download all repos
+            if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+                return forbidden();
+            }
+        }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
