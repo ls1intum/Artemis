@@ -18,6 +18,7 @@ import {
     UserManagementUpdateComponent,
 } from './';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
@@ -44,6 +45,7 @@ const ENTITY_STATES = [...adminState];
         JhiHealthModalComponent,
         JhiTrackerComponent,
         JhiMetricsMonitoringComponent,
+        AdminFeatureToggleComponent,
     ],
     entryComponents: [JhiHealthModalComponent],
 })
