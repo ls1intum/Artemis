@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 
 @RestController
 @RequestMapping(ManagementResource.ROOT_MANAGEMENT)
@@ -21,15 +22,16 @@ public class ManagementResource {
 
     private static final String SUB_FEATURE_TOGGLE = "/feature-toggle";
 
+    private final FeatureToggleService featureToggleService;
+
+    public ManagementResource(FeatureToggleService featureToggleService) {
+        this.featureToggleService = featureToggleService;
+    }
+
     @PutMapping(SUB_FEATURE_TOGGLE)
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<Feature>> toggleFeatures(@RequestBody Map<Feature, Boolean> features) {
-        features.forEach((feature, setEnabled) -> {
-            if (setEnabled)
-                feature.enable();
-            else
-                feature.disable();
-        });
+        featureToggleService.updateFeatureToggles(features);
 
         return new ResponseEntity<>(Feature.enabledFeatures(), HttpStatus.OK);
     }
