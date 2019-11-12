@@ -245,7 +245,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         } as ExerciseSubmissionState;
         comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exercise });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
