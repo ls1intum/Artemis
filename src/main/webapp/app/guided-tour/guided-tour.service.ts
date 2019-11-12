@@ -182,7 +182,7 @@ export class GuidedTourService {
     /**
      * Check if the provided tour step is the currently active one
      */
-    public get currentStep(): TourStep | null {
+    public get currentStep(): any | null {
         if (!this.currentTour || !this.currentTour.steps) {
             return null;
         }
