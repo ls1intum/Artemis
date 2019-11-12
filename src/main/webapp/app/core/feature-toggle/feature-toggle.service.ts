@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { JhiWebsocketService } from 'app/core';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { tap, distinctUntilChanged, filter, map } from 'rxjs/operators';
 
 export enum FeatureToggle {

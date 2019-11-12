@@ -26,7 +26,7 @@ import { ErrorHandlerInterceptor } from './blocks/interceptor/errorhandler.inter
 import { NotificationInterceptor } from './blocks/interceptor/notification.interceptor';
 import { JhiWebsocketService, UserRouteAccessService } from './core';
 import { ArtemisSharedModule } from './shared';
-import { ArtemisCoreModule } from 'app/core';
+import { ArtemisCoreModule } from 'app/core/core.module';
 import { ArtemisAppRoutingModule } from './app-routing.module';
 import { ArtemisHomeModule } from './home';
 import { ArtemisLegalModule } from './legal';
@@ -177,7 +177,6 @@ import { ArtemisFileUploadAssessmentModule } from 'app/file-upload-assessment/fi
         PaginationConfig,
         UserRouteAccessService,
         DifferencePipe,
-        JhiWebsocketService,
         PendingChangesGuard,
         TranslateService,
         /**
