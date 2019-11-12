@@ -36,8 +36,6 @@ public final class Constants {
 
     public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
 
-    public static final String RESULT_RESOURCE_API_PATH = "/api/results/";
-
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api" + NEW_RESULT_RESOURCE_PATH;
@@ -78,6 +76,10 @@ public final class Constants {
     public static final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
     public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
+
+    public static final String BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE = "Build run triggered for programming exercise";
+
+    public static final String BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE = "All builds triggered for programming exercise";
 
     public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
