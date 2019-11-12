@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,7 +18,7 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabHeaderAuthorizatio
 @Configuration
 public class RestTemplateConfiguration {
 
-    @Bean
+    @Bean("gitlabRestTemplate")
     @Profile("gitlab")
     @Autowired
     public RestTemplate restTemplate(GitLabHeaderAuthorizationInterceptor gitlabInterceptor) {
@@ -33,7 +34,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("!gitlab")
+    @Primary
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
