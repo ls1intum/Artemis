@@ -28,3 +28,4 @@ export * from './notification-management/notification-management-detail.componen
 export * from './notification-management/notification-management.component';
 export * from './notification-management/notification-management.route';
 export * from './admin.route';
+export * from './features/features.route';
