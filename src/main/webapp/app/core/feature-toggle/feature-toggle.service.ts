@@ -2,14 +2,14 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { JhiWebsocketService } from 'app/core';
-import { tap } from 'rxjs/operators';
+import { tap, distinctUntilChanged, filter, map } from 'rxjs/operators';
 
-export enum FeatureToggleState {
+export enum FeatureToggle {
     PROGRAMMING_EXERCISES = 'PROGRAMMING_EXERCISES',
 }
-export type ActiveFeatures = Array<FeatureToggleState>;
+export type ActiveFeatures = Array<FeatureToggle>;
 
-const defaultActiveFeatureState: ActiveFeatures = Object.values(FeatureToggleState);
+const defaultActiveFeatureState: ActiveFeatures = Object.values(FeatureToggle);
 
 @Injectable({ providedIn: 'root' })
 export class FeatureToggleService {
@@ -33,6 +33,13 @@ export class FeatureToggleService {
     }
 
     getFeatureToggles() {
-        return this.subject.asObservable();
+        return this.subject.asObservable().pipe(distinctUntilChanged());
+    }
+
+    getFeatureToggleActive(feature: FeatureToggle) {
+        return this.subject.asObservable().pipe(
+            map(activeFeatures => activeFeatures.includes(feature)),
+            distinctUntilChanged(),
+        );
     }
 }
