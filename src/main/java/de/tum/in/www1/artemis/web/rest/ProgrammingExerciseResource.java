@@ -147,6 +147,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to save ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
@@ -322,6 +323,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
 
@@ -374,6 +376,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
@@ -526,6 +529,7 @@ public class ProgrammingExerciseResource {
      */
     @DeleteMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", id);
@@ -555,6 +559,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
@@ -591,6 +596,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping(value = "/programming-exercises/{exerciseId}/export-repos-by-student-logins/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable Long exerciseId, @PathVariable String studentIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
@@ -636,6 +642,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping(value = "/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable Long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
