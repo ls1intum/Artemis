@@ -16,13 +16,13 @@ import { FeatureToggle } from 'app/feature-toggle';
         <jhi-button
             id="trigger-all-button"
             class="ml-3"
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [disabled]="disabled"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
             [icon]="'redo'"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
+            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (onClick)="openTriggerAllModal()"
         >
         </jhi-button>
