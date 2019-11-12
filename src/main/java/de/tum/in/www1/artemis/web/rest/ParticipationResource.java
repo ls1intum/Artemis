@@ -7,6 +7,7 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.*;
@@ -129,7 +131,7 @@ public class ParticipationResource {
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> initParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
+    public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
@@ -139,8 +141,16 @@ public class ParticipationResource {
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
-
             if (authCheckService.isOnlyStudentInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+
+        // users cannot start the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
+        if (exercise instanceof ProgrammingExercise) {
+            var pExercise = (ProgrammingExercise) exercise;
+            if (pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
+                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC)) {
                 return forbidden();
             }
         }

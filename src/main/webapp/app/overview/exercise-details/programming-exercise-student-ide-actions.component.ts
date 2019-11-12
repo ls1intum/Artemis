@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise';
+import { Exercise, isStartExerciseAvailable, ParticipationStatus } from 'app/entities/exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course';
 import { JhiAlertService } from 'ng-jhipster';
@@ -60,6 +60,13 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
+    }
+
+    /**
+     * see exercise-utils -> isStartExerciseAvailable
+     */
+    isStartExerciseAvailable(): boolean {
+        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**

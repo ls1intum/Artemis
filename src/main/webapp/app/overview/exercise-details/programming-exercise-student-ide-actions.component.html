@@ -8,7 +8,7 @@
         [buttonLoading]="exercise.loading"
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
-        *ngIf="participationStatus() === UNINITIALIZED"
+        *ngIf="participationStatus() === UNINITIALIZED && isStartExerciseAvailable()"
         (click)="startExercise()"
     ></button>
     <jhi-ide-button
