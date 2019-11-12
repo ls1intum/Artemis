@@ -6,6 +6,7 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { hasExerciseChanged } from 'app/entities/exercise';
+import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:

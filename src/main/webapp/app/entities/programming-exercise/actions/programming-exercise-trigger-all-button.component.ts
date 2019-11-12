@@ -1,12 +1,12 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { catchError, filter, take } from 'rxjs/operators';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
-import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -28,18 +28,19 @@ import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/progr
         </jhi-button>
     `,
 })
-export class ProgrammingExerciseTriggerAllButtonComponent {
+export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     ButtonType = ButtonType;
     @Input() exercise: ProgrammingExercise;
     @Input() disabled = false;
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
 
-    constructor(
-        private submissionService: ProgrammingSubmissionService,
-        private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
-        private modalService: NgbModal,
-    ) {}
+    constructor(private submissionService: ProgrammingSubmissionService, private programmingBuildRunService: ProgrammingBuildRunService, private modalService: NgbModal) {}
+
+    ngOnInit() {
+        // The info that the builds were triggered comes from a websocket channel.
+        this.subscribeBuildRunUpdates();
+    }
 
     /**
      * Opens a modal in that the user has to confirm to trigger all participations.
@@ -51,26 +52,20 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
         modalRef.componentInstance.exerciseId = this.exercise.id;
         modalRef.componentInstance.deadlinePassed = hasDeadlinePassed(this.exercise);
         modalRef.result.then(() => {
-            this.isTriggeringBuildAll = true;
             this.submissionService
                 .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id)
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
-                    // The info that the builds were triggered comes from a websocket channel.
-                    this.waitForBuildResult();
                 });
         });
     }
 
-    private waitForBuildResult() {
-        this.programmingExerciseWebsocketService
-            .getTestCaseState(this.exercise.id)
-            .pipe(
-                filter(testCasesChanged => !testCasesChanged),
-                take(1),
-            )
-            .subscribe(() => (this.isTriggeringBuildAll = false));
+    private subscribeBuildRunUpdates() {
+        this.programmingBuildRunService
+            .getBuildRunUpdates(this.exercise.id)
+            .pipe(tap(buildRunState => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
+            .subscribe();
     }
 }
 
