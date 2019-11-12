@@ -81,7 +81,7 @@ describe('IdeBuildAndTestService', () => {
         expect(buildLogsStub).to.not.have.been.called;
     });
 
-    it('should should forward all results for negative results ', () => {
+    it('should should forward all results for negative results', () => {
         result.feedbacks = feedbacks;
         result.successful = false;
         result.hasFeedback = true;
