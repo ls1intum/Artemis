@@ -21,9 +21,7 @@
             <div class="row">
                 <div class="col-12">
                     <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
-                    <dd>
-                        <span>{{ lecture.description }}</span>
-                    </dd>
+                    <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
                 </div>
             </div>
             <hr class="mt-2 mb-2" />
