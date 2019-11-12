@@ -16,11 +16,13 @@ export const modelingTour: GuidedTour = {
         new ImageTourStep({
             headlineTranslateKey: 'tour.modelingExercise.addEditUmlElement.headline',
             contentTranslateKey: 'tour.modelingExercise.addEditUmlElement.content',
+            hintTranslateKey: 'tour.modelingExercise.addEditUmlElement.hint',
             imageUrl: '/../../../content/images/guided-tour-images/apollon-add-edit-element.gif',
         }),
         new ImageTourStep({
             headlineTranslateKey: 'tour.modelingExercise.createAssociation.headline',
             contentTranslateKey: 'tour.modelingExercise.createAssociation.content',
+            hintTranslateKey: 'tour.modelingExercise.createAssociation.hint',
             imageUrl: '/../../../content/images/guided-tour-images/apollon-add-association.gif',
         }),
         new ModelingTaskTourStep({
