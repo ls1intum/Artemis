@@ -20,7 +20,7 @@ public class FeatureToggleAspect {
 
     @Around(value = "callAt(featureToggle)", argNames = "joinPoint,featureToggle")
     public Object before(ProceedingJoinPoint joinPoint, FeatureToggle featureToggle) throws Throwable {
-        if (Arrays.stream(featureToggle.value()).anyMatch(toggle -> !toggle.isEnabled())) {
+        if (Arrays.stream(featureToggle.value()).allMatch(Feature::isEnabled)) {
             return joinPoint.proceed();
         }
         else {
