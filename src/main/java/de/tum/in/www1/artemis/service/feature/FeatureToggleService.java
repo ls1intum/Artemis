@@ -25,10 +25,12 @@ public class FeatureToggleService {
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
         features.forEach((feature, setEnabled) -> {
-            if (setEnabled)
+            if (setEnabled) {
                 feature.enable();
-            else
+            }
+            else {
                 feature.disable();
+            }
         });
 
         websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, Feature.enabledFeatures());
