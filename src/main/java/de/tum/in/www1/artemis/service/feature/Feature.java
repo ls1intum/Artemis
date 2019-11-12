@@ -27,6 +27,11 @@ public enum Feature {
         this.enabled = false;
     }
 
+    /**
+     * Get all features that are currently enabled on the system
+     *
+     * @return A list of enabled features
+     */
     public static List<Feature> enabledFeatures() {
         return Arrays.stream(Feature.values()).filter(feature -> feature.enabled).collect(Collectors.toList());
     }
