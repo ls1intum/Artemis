@@ -357,7 +357,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     };
 
     setResultsPerPage = (paging: number) => {
-        this.resultsPerPage = paging;
+        this.isLoading = true;
+        setTimeout(() => {
+            this.resultsPerPage = paging;
+            this.isLoading = false;
+        }, 500);
         localStorage.setItem(resultsPerPageCacheKey, paging.toString());
     };
 

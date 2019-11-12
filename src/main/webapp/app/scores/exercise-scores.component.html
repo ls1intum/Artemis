@@ -95,7 +95,7 @@
             [rowClass]=""
             [scrollbarH]="true"
         >
-            <ngx-datatable-column prop="" [minWidth]="50" [maxWidth]="50">
+            <ngx-datatable-column prop="" [minWidth]="50" [maxWidth]="60">
                 <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
                     {{ rowIndex + 1 }}
                 </ng-template>
@@ -213,7 +213,7 @@
         </ngx-datatable>
     </div>
     <ng-template #loadingContainer>
-        <div class="d-flex justify-content-center mt-3">
+        <div class="loading-container d-flex justify-content-center align-items-center">
             <fa-icon size="lg" icon="circle-notch" [spin]="true"></fa-icon>
         </div>
     </ng-template>
