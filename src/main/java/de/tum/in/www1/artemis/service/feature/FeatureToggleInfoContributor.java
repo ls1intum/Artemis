@@ -9,6 +9,6 @@ public class FeatureToggleInfoContributor implements InfoContributor {
 
     @Override
     public void contribute(Info.Builder builder) {
-        builder.withDetail("features", Feature.values());
+        builder.withDetail("features", Feature.enabledFeatures());
     }
 }
