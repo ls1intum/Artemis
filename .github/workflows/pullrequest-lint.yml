@@ -17,6 +17,8 @@ jobs:
 
       - uses: actions/checkout@v1
         if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'
+      - name: Checkout PR Branch
+        run: hub pr checkout ${{ steps.is-pr.outputs.pull_number }}
       - name: Use Java 12
         uses: actions/setup-java@v1
         with:
