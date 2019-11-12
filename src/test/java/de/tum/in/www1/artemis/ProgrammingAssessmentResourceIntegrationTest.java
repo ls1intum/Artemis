@@ -80,8 +80,8 @@ public class ProgrammingAssessmentResourceIntegrationTest {
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
-        Result updatedResult = request.putWithResponseBody("/api/manual-results/" + programmingAssessment.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
-                HttpStatus.OK);
+        Result updatedResult = request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+                Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
@@ -101,7 +101,8 @@ public class ProgrammingAssessmentResourceIntegrationTest {
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
-        request.putWithResponseBody("/api/manual-results/" + programmingAssessment.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -118,7 +119,8 @@ public class ProgrammingAssessmentResourceIntegrationTest {
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
-        request.putWithResponseBody("/api/manual-results/" + programmingAssessment.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -133,7 +135,8 @@ public class ProgrammingAssessmentResourceIntegrationTest {
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
-        request.putWithResponseBody("/api/manual-results/" + programmingAssessment.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+                HttpStatus.FORBIDDEN);
     }
 
 }

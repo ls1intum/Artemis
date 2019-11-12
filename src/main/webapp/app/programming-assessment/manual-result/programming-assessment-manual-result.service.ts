@@ -34,8 +34,8 @@ export class ProgrammingAssessmentManualResultService {
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 
-    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, resultId: number): Observable<Result> {
-        const url = `${SERVER_API_URL}api/manual-results/${resultId}/assessment-after-complaint`;
+    updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+        const url = `${SERVER_API_URL}api/programming-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,

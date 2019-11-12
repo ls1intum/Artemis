@@ -178,7 +178,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
      * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
-        this.manualResultService.updateAfterComplaint(this.feedbacks, complaintResponse, this.result!.id).subscribe(
+        this.manualResultService.updateAfterComplaint(this.feedbacks, complaintResponse, this.result!.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 this.jhiAlertService.clear();

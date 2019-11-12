@@ -8,13 +8,13 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 
 /** REST controller for managing ProgrammingAssessment. */
@@ -33,31 +33,32 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 
-    private final ResultRepository resultRepository;
+    private final ProgrammingSubmissionService programmingSubmissionService;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingAssessmentService programmingAssessmentService, ResultRepository resultRepository) {
+            ProgrammingAssessmentService programmingAssessmentService, ProgrammingSubmissionService programmingSubmissionService) {
         super(authCheckService, userService);
         this.programmingExerciseService = programmingExerciseService;
         this.programmingAssessmentService = programmingAssessmentService;
-        this.resultRepository = resultRepository;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
      * Update an assessment after a complaint was accepted. After the result is updated accordingly, Compass is notified about the changed assessment in order to adapt all
      * automatic assessments based on this result, as well.
      *
-     * @param resultId     the id of the result which will be updated
+     * @param submissionId the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
      * @return the updated result
      */
-    @PutMapping("/manual-results/{resultId}/assessment-after-complaint")
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping("/programming-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable Long resultId) {
-        log.debug("REST request to update the assessment of manual result {} after complaint.", resultId);
+    public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable Long submissionId) {
+        log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        Result originalResult = resultRepository.getOne(resultId);
-        Participation participation = originalResult.getParticipation();
+        ProgrammingSubmission programmingSubmission = programmingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        Participation participation = programmingSubmission.getParticipation();
         long exerciseId = participation.getExercise().getId();
         ProgrammingExercise programmingExercise = programmingExerciseService.findOne(exerciseId);
         checkAuthorization(programmingExercise, user);
@@ -65,7 +66,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(originalResult, programmingExercise, assessmentUpdate);
+        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getResult(), programmingExercise, assessmentUpdate);
 
         // remove circular dependencies if the results of the participation are there
         if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
