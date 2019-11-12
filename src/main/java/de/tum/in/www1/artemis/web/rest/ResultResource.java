@@ -507,7 +507,7 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);
