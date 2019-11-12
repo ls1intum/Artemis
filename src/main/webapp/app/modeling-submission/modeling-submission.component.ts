@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -21,6 +21,8 @@ import { ComplaintType } from 'app/entities/complaint';
 import { filter } from 'rxjs/operators';
 import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -77,6 +79,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private translateService: TranslateService,
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
+        private guidedTourService: GuidedTourService,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -128,6 +131,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.setAutoSaveTimer();
                         this.isLoading = false;
+                        this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour);
                     },
                     error => {
                         if (error.status === 403) {
