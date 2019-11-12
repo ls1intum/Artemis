@@ -355,6 +355,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
             submissionString = 'new';
         }
 
+        const originalSubmission = this.submissions.find(sub => sub.id === submission.id)!;
+
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
                 route = `/text/${this.exercise.id}/assessment/${submissionString}`;
@@ -367,8 +369,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
             case ExerciseType.PROGRAMMING:
                 const modalRef = this.modalService.open(ProgrammingAssessmentManualResultComponent, { keyboard: true, size: 'lg' });
-                modalRef.componentInstance.participationId = submission.participation.id;
-                modalRef.componentInstance.result = isNewAssessment ? null : submission.result;
+                modalRef.componentInstance.participationId = originalSubmission.participation.id;
+                modalRef.componentInstance.result = isNewAssessment ? null : originalSubmission.result;
                 modalRef.result.then();
                 return;
         }
