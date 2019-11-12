@@ -3,11 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -44,18 +40,15 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final Optional<VersionControlService> versionControlService;
-
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService,
             FileUploadExerciseService fileUploadExerciseService, UserService userService, FileUploadSubmissionService fileUploadSubmissionService,
-            SimpMessageSendingOperations messagingTemplate, Optional<VersionControlService> versionControlService) {
+            SimpMessageSendingOperations messagingTemplate) {
         super(authCheckService, userService);
 
         this.fileUploadAssessmentService = fileUploadAssessmentService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.messagingTemplate = messagingTemplate;
-        this.versionControlService = versionControlService;
     }
 
     /**
@@ -181,12 +174,5 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @Override
     String getEntityName() {
         return ENTITY_NAME;
-    }
-
-    @GetMapping("/files/file-upload-submission/test")
-    public ResponseEntity<String> foo() throws MalformedURLException {
-        versionControlService.get().configureRepository(new URL("http://d7fc2f1f3870/test-course/first-exercise/crstst-john.git"), "johndoe");
-
-        return new ResponseEntity<>("SUCCESS", HttpStatus.OK);
     }
 }

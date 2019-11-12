@@ -34,16 +34,16 @@
                 <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
             </div>
             <span *ngSwitchCase="'initialized'">
-                <jhi-updating-result class="mr-2" [short]="true" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
             </span>
             <span *ngSwitchCase="'inactive'">
-                <jhi-updating-result class="mr-2" [short]="true" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
             </span>
             <span *ngSwitchCase="'quiz-finished'">
-                <jhi-updating-result class="mr-2" [short]="true" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
             </span>
             <span *ngSwitchCase="'exercise-submitted'">
-                <jhi-updating-result class="mr-2" [short]="true" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
             </span>
             <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
                 <jhi-programming-exercise-student-trigger-build-button
