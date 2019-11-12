@@ -7,6 +7,6 @@ export const featureRoute: Route = {
     path: 'feature-toggles',
     component: AdminFeatureToggleComponent,
     data: {
-        pageTitle: 'features.title',
+        pageTitle: 'featureToggles.title',
     },
 };
