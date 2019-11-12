@@ -15,15 +15,19 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 @Service
 public class JenkinsService implements ContinuousIntegrationService {
 
+    private final JenkinsBuildPlanCreatorFactory buildPlanCreatorFactory;
+
     private final RestTemplate restTemplate;
 
-    public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
+    public JenkinsService(JenkinsBuildPlanCreatorFactory buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
+        this.buildPlanCreatorFactory = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String repositoryName, String testRepositoryName) {
-
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
+        final var configBuilder = buildPlanCreatorFactory.builderFor(exercise.getProgrammingLanguage());
+        // final var jobConfig = configBuilder.buildBasicConfig()
     }
 
     @Override

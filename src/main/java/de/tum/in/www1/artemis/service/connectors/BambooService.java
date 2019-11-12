@@ -93,12 +93,12 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param programmingExercise   a programming exercise with the required information to create the base build plan
      * @param planKey               the key of the plan
-     * @param repositoryName        the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testRepositoryName    the slug of the test repository, i.e. the unique identifier
+     * @param repositoryURL        the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
+     * @param testRepositoryURL    the slug of the test repository, i.e. the unique identifier
      */
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, VcsUtil.getRepositorySlugFromUrl(repositoryURL),VcsUtil.getRepositorySlugFromUrl(testRepositoryURL));
     }
 
     private Base createBase() {

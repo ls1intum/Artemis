@@ -24,10 +24,10 @@ public interface ContinuousIntegrationService {
      * 
      * @param exercise           a programming exercise with the required information to create the base build plan
      * @param planKey            the key of the plan
-     * @param repositoryName     the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testRepositoryName the slug of the test repository, i.e. the unique identifier
+     * @param repositoryURL     the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
+     * @param testRepositoryURL the slug of the test repository, i.e. the unique identifier
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String repositoryName, String testRepositoryName);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
