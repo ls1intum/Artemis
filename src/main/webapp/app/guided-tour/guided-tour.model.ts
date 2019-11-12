@@ -1,11 +1,11 @@
 import { TourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export interface GuidedTour {
-    /** Title of the course for which the tour should be displayed,
+    /** Short name of the course for which the tour should be displayed,
      * if the tour display is not limited to any course then leave an empty string
      * */
     courseShortName: string;
-    /** Name of the exercise for which the tour should be displayed
+    /** Short name of the programming exercise for which the tour should be displayed
      *  if the tour display is not limited to any exercise then leave an empty string
      *  */
     exerciseShortName: string;
@@ -24,4 +24,6 @@ export interface GuidedTour {
      * This should only be set if you are completely sure your tour is displaying correctly on all screen sizes otherwise a user can get stuck.
      */
     preventBackdropFromAdvancing?: boolean;
+    /** Defines if the UML model in the apollon editor should be resetted if the user restarts the tutorial */
+    resetUMLModel?: boolean;
 }
