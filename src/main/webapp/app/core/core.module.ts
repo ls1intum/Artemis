@@ -3,9 +3,10 @@ import { DatePipe, registerLocaleData } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import locale from '@angular/common/locales/en';
+import { FeatureToggleModule } from 'app/core/feature-toggle/feature-toggle.module';
 
 @NgModule({
-    imports: [HttpClientModule],
+    imports: [HttpClientModule, FeatureToggleModule.forRoot()],
     exports: [],
     declarations: [],
     providers: [
