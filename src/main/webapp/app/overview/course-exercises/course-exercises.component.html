@@ -31,7 +31,7 @@
                     class="pb-1"
                     [exercise]="nextRelevantExercise"
                     [course]="course"
-                    [hasGuidedTour]="guidedTourService.compareExerciseShortName(nextRelevantExercise, this.guidedTourExercise)"
+                    [hasGuidedTour]="compareExerciseShortName(nextRelevantExercise)"
                 ></jhi-course-exercise-row>
                 <div class="collapsed"></div>
             </div>
@@ -56,7 +56,7 @@
                         class="pb-1"
                         [exercise]="exercise"
                         [course]="course"
-                        [hasGuidedTour]="guidedTourService.compareExerciseShortName(exercise, this.guidedTourExercise)"
+                        [hasGuidedTour]="compareExerciseShortName(exercise)"
                         *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"
                     ></jhi-course-exercise-row>
                 </div>

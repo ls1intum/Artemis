@@ -16,7 +16,6 @@ import { CourseScoreCalculationService } from 'app/overview';
 export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
-    public guidedTourCourse: Course | null;
 
     constructor(
         private courseService: CourseService,
@@ -24,7 +23,7 @@ export class OverviewComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
-        public guidedTourService: GuidedTourService,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     loadAndFilterCourses() {
@@ -32,7 +31,7 @@ export class OverviewComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
-                this.guidedTourCourse = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
+                this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
             },
             (response: string) => this.onError(response),
         );
@@ -63,5 +62,9 @@ export class OverviewComponent implements OnInit {
             });
         }
         return relevantExercise;
+    }
+
+    compareCourseShortName(course: Course): boolean {
+        return this.guidedTourService.compareCourseShortName(course);
     }
 }

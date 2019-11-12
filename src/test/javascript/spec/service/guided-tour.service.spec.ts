@@ -271,6 +271,12 @@ describe('GuidedTourService', () => {
                 type: ExerciseType.PROGRAMMING,
             } as Exercise;
 
+            const exercise3 = {
+                id: 1,
+                shortName: 'git',
+                type: ExerciseType.MODELING,
+            } as Exercise;
+
             const course1 = {
                 id: 1,
                 shortName: 'tutorial',
@@ -295,30 +301,61 @@ describe('GuidedTourService', () => {
                 guidedTourService.currentTour = null;
 
                 courses = [course2];
-                // tour not available for not matching titles
+                // disable tour for not matching titles
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.be.null;
             });
 
             it('should start the tour for the matching exercise short name', () => {
-                // enable tour for matching course title
-                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                // disable tour for exercises without courses
                 guidedTourService.currentTour = null;
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
 
-                // tour not available for not matching titles
+                // disable tour for not matching course and exercise identifiers
+                exercise2.course = course2;
+                guidedTourService.currentTour = null;
                 guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.be.null;
+
+                // disable tour for not matching course identifier
+                exercise3.course = course2;
+                guidedTourService.currentTour = null;
+                guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+
+                // enable tour for matching course and exercise identifiers
+                exercise1.course = course1;
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
             });
 
             it('should start the tour for the matching course / exercise short name', () => {
-                // enable tour for matching course / exercise short name
-                let currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise) as Exercise;
-                expect(currentExercise.shortName).to.equal(guidedTourMapping.tours[tourWithCourseAndExercise.settingsKey]);
+                guidedTourService.currentTour = null;
 
-                // tour not available for not matching course / exercise short name
-                currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise) as Exercise;
-                expect(currentExercise).to.be.null;
+                // enable tour for matching course / exercise short name
+                guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+
+                course1.exercises.forEach(exercise => {
+                    exercise.course = course1;
+                    if (exercise === exercise1) {
+                        expect(guidedTourService.compareExerciseShortName(exercise)).to.be.true;
+                    } else {
+                        expect(guidedTourService.compareExerciseShortName(exercise)).to.be.false;
+                    }
+                });
+
+                // disable tour for not matching course without exercise
+                guidedTourService.currentTour = null;
+                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+
+                // disable tour for not matching course but matching exercise identifier
+                guidedTourService.currentTour = null;
+                course2.exercises = [exercise3];
+                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
             });
         });
 

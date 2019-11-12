@@ -41,7 +41,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     public weeklyExercisesGrouped: object;
     public upcomingExercises: Exercise[] = [];
     public exerciseCountMap: Map<string, number>;
-    public guidedTourExercise: Exercise | null;
 
     readonly ASC = ExerciseSortingOrder.DUE_DATE_ASC;
     readonly DESC = ExerciseSortingOrder.DUE_DATE_DESC;
@@ -58,7 +57,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private accountService: AccountService,
         private route: ActivatedRoute,
-        public guidedTourService: GuidedTourService,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit() {
@@ -93,7 +92,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.applyFiltersAndOrder();
         });
 
-        this.guidedTourExercise = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
+        this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
     }
 
     ngOnDestroy(): void {
@@ -245,5 +244,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     get nextRelevantExercise(): Exercise {
         return this.exerciseService.getNextExerciseForHours(this.course!.exercises);
+    }
+
+    compareExerciseShortName(exercise: Exercise): boolean {
+        return this.guidedTourService.compareExerciseShortName(exercise);
     }
 }

@@ -743,22 +743,21 @@ export class GuidedTourService {
      * @param course for which the guided tour availability should be checked
      * @param guidedTour that should be enabled
      */
-    public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour): Exercise | null {
+    public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour) {
         if (!course || !course.exercises) {
             return null;
         }
-        const courseForGuidedTour = this.guidedTourMapping.courseShortName === course.shortName;
-        if (!courseForGuidedTour) {
+        const isCourseForGuidedTour = this.guidedTourMapping.courseShortName === course.shortName;
+        if (!isCourseForGuidedTour) {
             return null;
         }
-        const exerciseForGuidedTour = course.exercises.find(
+        const hasExerciseForGuidedTour = course.exercises.find(
             exercise =>
                 (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === this.guidedTourMapping.tours[guidedTour.settingsKey]) ||
                 exercise.title === this.guidedTourMapping.tours[guidedTour.settingsKey],
         );
-        if (exerciseForGuidedTour) {
+        if (hasExerciseForGuidedTour) {
             this.enableTour(guidedTour);
-            return exerciseForGuidedTour;
         }
         return null;
     }
@@ -770,11 +769,12 @@ export class GuidedTourService {
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
         const courseForTour = courses.find(course => course.shortName === this.guidedTourMapping.courseShortName);
-        if (courseForTour) {
+        if (!courseForTour) {
+            return null;
+        } else {
             this.enableTour(guidedTour);
             return courseForTour;
         }
-        return null;
     }
 
     /**
@@ -783,14 +783,18 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
+        if (!exercise.course) {
+            return;
+        }
         let exerciseExists = null;
+        const courseExists = (exercise.course.shortName = this.guidedTourMapping.courseShortName);
         if (exercise.type === ExerciseType.PROGRAMMING) {
             exerciseExists = this.guidedTourMapping.tours[guidedTour.settingsKey] === exercise.shortName;
         } else {
             exerciseExists = this.guidedTourMapping.tours[guidedTour.settingsKey] === exercise.title;
         }
 
-        if (exerciseExists) {
+        if (courseExists && exerciseExists) {
             this.enableTour(guidedTour);
         }
     }
@@ -798,11 +802,10 @@ export class GuidedTourService {
     /**
      * Determine if the current course is a course for a guided tour
      * @param course    current course
-     * @param guidedTourCourse guided tour course for the component
      * @return true if the current course is a course for a guided tour, otherwise false
      */
-    public compareCourseShortName(course: Course, guidedTourCourse: Course | null): boolean {
-        if (!course || !guidedTourCourse) {
+    public compareCourseShortName(course: Course): boolean {
+        if (!course) {
             return false;
         }
         return course.shortName === this.guidedTourMapping.courseShortName;
@@ -811,14 +814,15 @@ export class GuidedTourService {
     /**
      * Determine if the current exercise is an exercise for a guided tour
      * @param exercise  current exercise
-     * @param guidedTourExercise guided tour exercise for the component
      * @return true if the current exercise is an exercise for a guided tour, otherwise false
      */
-    public compareExerciseShortName(exercise: Exercise, guidedTourExercise: Exercise | null): boolean {
-        if (!exercise || !guidedTourExercise) {
+    public compareExerciseShortName(exercise: Exercise): boolean {
+        if (!exercise || !exercise.course || !this.currentTour) {
             return false;
         }
-        return exercise.shortName === guidedTourExercise.shortName;
+        const courseMatches = exercise.course.shortName === this.guidedTourMapping.courseShortName;
+        const exerciseMatches = exercise.shortName === this.guidedTourMapping.tours[this.currentTour.settingsKey];
+        return courseMatches && exerciseMatches;
     }
 
     /**
