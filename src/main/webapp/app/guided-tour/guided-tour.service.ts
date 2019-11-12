@@ -152,13 +152,6 @@ export class GuidedTourService {
     }
 
     /**
-     * @return Observable of the current modeling task UML name
-     */
-    public checkModelingComponent(): Observable<string | null> {
-        return this.checkModelingComponentSubject.asObservable();
-    }
-
-    /**
      * @return Observable of resetUMLModelSubject, which is true if the UML model should be reset
      */
     resetUMLModel() {
