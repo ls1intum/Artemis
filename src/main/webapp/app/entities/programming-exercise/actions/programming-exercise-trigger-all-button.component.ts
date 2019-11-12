@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -15,6 +16,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-ex
         <jhi-button
             id="trigger-all-button"
             class="ml-3"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [disabled]="disabled"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"
@@ -27,6 +29,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-ex
     `,
 })
 export class ProgrammingExerciseTriggerAllButtonComponent {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     @Input() exerciseId: number;
     @Input() disabled = false;

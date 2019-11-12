@@ -11,12 +11,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
+    FeatureToggle = FeatureToggle;
     @Input() programmingExercises: ProgrammingExercise[];
 
     constructor(
