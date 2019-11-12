@@ -33,7 +33,7 @@ type FeatureToggleState = {
     `,
 })
 export class AdminFeatureToggleComponent implements OnInit {
-    private availableToggles: FeatureToggleState[] = [];
+    public availableToggles: FeatureToggleState[] = [];
 
     constructor(private featureToggleService: FeatureToggleService) {}
 
