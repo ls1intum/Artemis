@@ -111,6 +111,9 @@ public class ResultResource {
         // TODO: this is problematic, because this REST call should not depend on the json request body for result.
         // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
         final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
+        // make sure that the participation cannot be manipulated on the client side
+        // TODO: check that the last result for this participation is not yet manual. If it is already manuel, return badRequest()
+        result.setParticipation(participation);
         final var exercise = participation.getExercise();
         final var course = exercise.getCourse();
         final var user = userService.getUserWithGroupsAndAuthorities();
@@ -274,6 +277,8 @@ public class ResultResource {
         // TODO: this is problematic, because this REST call should not depend on the json request body for result.
         // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
         final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
+        // make sure that the participation cannot be manipulated on the client side
+        result.setParticipation(participation);
         final var exercise = participation.getExercise();
         final var course = exercise.getCourse();
         if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
