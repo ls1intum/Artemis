@@ -7,8 +7,9 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-import { JhiWebsocketService, User } from 'app/core';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course';
+import { User } from 'app/core/user/user.service';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;

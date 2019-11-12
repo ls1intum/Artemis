@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '
 import { Angulartics2 } from 'angulartics2';
 import { Angulartics2Piwik } from 'angulartics2/piwik';
 
-import { JhiLanguageHelper } from 'app/core/';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from '../profiles/profile.service';
 import { ProfileInfo } from 'app/layouts';
 

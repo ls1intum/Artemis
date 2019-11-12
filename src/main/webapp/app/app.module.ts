@@ -141,8 +141,8 @@ import { FeatureToggleModule } from 'app/layouts/feature-toggle/feature-toggle.m
         ArtemisExampleModelingSolutionModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisConnectionNotificationModule,
-        FeatureToggleModule,
         ArtemisListOfComplaintsModule,
+        FeatureToggleModule.forRoot(),
         // jhipster-needle-angular-add-module JHipster will add new module here
         TranslateModule.forRoot({
             loader: {

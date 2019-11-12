@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from 'app/layouts';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FeatureToggleService } from 'app/layouts/feature-toggle/feature-toggle.service';
+import { FeatureToggleService } from 'app/layouts/feature-toggle';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
