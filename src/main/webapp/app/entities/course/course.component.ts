@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { compareCourseShortName } from 'app/guided-tour/guided-tour.utils';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseAdministrationTour } from 'app/guided-tour/tours/course-administration-tour';
@@ -20,6 +21,8 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     courses: Course[];
     eventSubscriber: Subscription;
+
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     readonly compareCourseShortName = compareCourseShortName;
     public guidedTourCourse: Course | null;
