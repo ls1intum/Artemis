@@ -40,7 +40,7 @@ export class ProgrammingAssessmentManualResultService {
             feedbacks,
             complaintResponse,
         };
-        return this.http.post<Result>(url, assessmentUpdate);
+        return this.http.put<Result>(url, assessmentUpdate);
     }
 
     generateInitialManualResult() {

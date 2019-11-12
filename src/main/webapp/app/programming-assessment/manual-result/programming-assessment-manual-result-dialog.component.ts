@@ -75,9 +75,11 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 )
                 .subscribe(() => (this.isLoading = false));
         }
-        this.participation = this.result.participation! as StudentParticipation;
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
+            this.getParticipation();
+        } else {
+            this.participation = this.result.participation! as StudentParticipation;
         }
         this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
     }
@@ -85,6 +87,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     initializeForResultCreation() {
         this.isLoading = true;
         this.result = this.manualResultService.generateInitialManualResult();
+        this.getParticipation();
+    }
+
+    getParticipation() {
         this.participationService
             .find(this.participationId)
             .pipe(
