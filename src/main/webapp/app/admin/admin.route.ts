@@ -3,7 +3,6 @@ import { UserRouteAccessService } from 'app/core';
 import {
     auditsRoute,
     configurationRoute,
-    featureRoute,
     healthRoute,
     logsRoute,
     metricsRoute,
@@ -33,7 +32,6 @@ const ADMIN_ROUTES = [
     notificationMgmtRoutes2,
     notificationMgmtRoutes3,
     notificationMgmtRoutes4,
-    featureRoute,
 ];
 
 export const adminState: Routes = [
