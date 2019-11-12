@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
@@ -65,11 +66,22 @@ public class GitLabService implements VersionControlService {
     public void configureRepository(URL repositoryUrl, String username) {
         // Automatically created users
         if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
-            // TODO
+            if (!userExists(username)) {
+                final var user = userService.getUserByLogin(username).get();
+                createUser(user);
+            }
         }
 
         addMemberToProject(repositoryUrl, username);
         protectBranch("master", repositoryUrl);
+    }
+
+    private void createUser(User user) {
+        final var body = Map.of("email", user.getEmail(), "password", user.getPassword(), "username", user.getLogin(), "name", user.getName(), "can_create_group", false);
+        final var builder = Endpoints.USERS.buildEndpoint(BASE_API);
+
+        final var errorMessage = "Unable to create new user in GitLab " + user.getLogin();
+        performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
     }
 
     private void addMemberToProject(URL repositoryUrl, String username) {
@@ -335,7 +347,23 @@ public class GitLabService implements VersionControlService {
     }
 
     private long getUserId(String username) {
-        final var builder = Endpoints.GET_USER.buildEndpoint(BASE_API).queryParam("username", username);
+        final var optionalUser = searchUser(username);
+
+        if (optionalUser.isEmpty()) {
+            final var errorString = "Unable to get ID for user " + username;
+            log.error(errorString);
+            throw new GitLabException(errorString);
+        }
+
+        return optionalUser.get();
+    }
+
+    private boolean userExists(String username) {
+        return searchUser(username).isPresent();
+    }
+
+    private Optional<Long> searchUser(String username) {
+        final var builder = Endpoints.USERS.buildEndpoint(BASE_API).queryParam("username", username);
 
         final var response = restTemplate.getForEntity(builder.toUriString(), JsonNode.class, new HashMap<>());
 
@@ -346,12 +374,10 @@ public class GitLabService implements VersionControlService {
         }
 
         if (response.getBody() == null || response.getBody().size() == 0) {
-            final var errorString = "Unable to get ID for user " + username + " from " + response.getBody();
-            log.error(errorString);
-            throw new GitLabException(errorString);
+            return Optional.empty();
         }
 
-        return response.getBody().get(0).get("id").asLong();
+        return Optional.of(response.getBody().get(0).get("id").asLong());
     }
 
     private String getPathIdFromRepositoryURL(URL repository) {
@@ -362,7 +388,7 @@ public class GitLabService implements VersionControlService {
     }
 
     private enum Endpoints {
-        ADD_USER("projects", "<projectId>", "members"), GET_USER("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
+        ADD_USER("projects", "<projectId>", "members"), USERS("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
         PROTECTED_BRANCHES("projects", "<projectId>", "protected_branches"), PROTECTED_BRANCH("projects", "<projectId>", "protected_branches", "<branchName>"),
         GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"), COMMITS("projects", "<projectId>", "repository", "commits"),
         GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"), DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"),
