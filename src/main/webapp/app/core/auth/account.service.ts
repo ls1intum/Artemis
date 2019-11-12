@@ -9,7 +9,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { JhiWebsocketService, User } from 'app/core';
 import { Course } from 'app/entities/course';
-import { FeatureToggleService } from 'app/layouts';
+import { FeatureToggleService } from 'app/feature-toggle';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -133,8 +133,8 @@ export class AccountService implements IAccountService {
                 map((response: HttpResponse<User>) => {
                     const user = response.body!;
                     if (user) {
-                        this.userIdentity = user;
                         this.websocketService.connect();
+                        this.userIdentity = user;
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting

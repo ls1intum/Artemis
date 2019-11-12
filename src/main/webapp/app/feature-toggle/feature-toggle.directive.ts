@@ -1,5 +1,5 @@
 import { Directive, Input, ElementRef, OnInit } from '@angular/core';
-import { ActiveFeatures, FeatureToggle, FeatureToggleService } from 'app/layouts/feature-toggle/feature-toggle.service';
+import { ActiveFeatureToggles, FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
 
 @Directive({

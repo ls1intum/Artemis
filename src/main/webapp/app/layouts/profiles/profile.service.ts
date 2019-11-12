@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from 'app/layouts';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FeatureToggleService } from 'app/layouts/feature-toggle';
+import { FeatureToggleService } from 'app/feature-toggle';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -33,12 +33,13 @@ export class ProfileService {
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                         }
                         profileInfo.sentry = data.sentry;
+                        profileInfo.features = data.features;
                         return profileInfo;
                     }),
                 )
                 .subscribe((profileInfo: ProfileInfo) => {
                     this.profileInfo.next(profileInfo);
-                    this.featureToggleService.setFeatureToggles(profileInfo.features);
+                    this.featureToggleService.initializeFeatureToggles(profileInfo.features);
                 });
         }
 

@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 @Service
 public class FeatureToggleService {
 
-    private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/features";
+    private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
 
     private final WebsocketMessagingService websocketMessagingService;
 

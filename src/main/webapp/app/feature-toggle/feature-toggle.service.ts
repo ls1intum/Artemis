@@ -2,22 +2,23 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 export enum FeatureToggle {
     PROGRAMMING_EXERCISES = 'PROGRAMMING_EXERCISES',
 }
-export type ActiveFeatures = Array<FeatureToggle>;
+export type ActiveFeatureToggles = Array<FeatureToggle>;
 
-const defaultActiveFeatureState: ActiveFeatures = Object.values(FeatureToggle);
+const defaultActiveFeatureState: ActiveFeatureToggles = Object.values(FeatureToggle);
 
 @Injectable({ providedIn: 'root' })
 export class FeatureToggleService {
-    private readonly topic = `/topic/management/features`;
-    private subject: BehaviorSubject<ActiveFeatures>;
+    private readonly topic = `/topic/management/feature-toggles`;
+    private subject: BehaviorSubject<ActiveFeatureToggles>;
     private subscriptionInitialized = false;
 
-    constructor(private websocketService: JhiWebsocketService) {
-        this.subject = new BehaviorSubject<ActiveFeatures>(defaultActiveFeatureState);
+    constructor(private websocketService: JhiWebsocketService, private http: HttpClient) {
+        this.subject = new BehaviorSubject<ActiveFeatureToggles>(defaultActiveFeatureState);
     }
 
     /**
@@ -44,11 +45,11 @@ export class FeatureToggleService {
         }
     }
 
-    private notifySubscribers(activeFeatures: ActiveFeatures) {
+    private notifySubscribers(activeFeatures: ActiveFeatureToggles) {
         this.subject.next(activeFeatures);
     }
 
-    setFeatureToggles(activeFeatures: ActiveFeatures) {
+    initializeFeatureToggles(activeFeatures: ActiveFeatureToggles) {
         this.notifySubscribers(activeFeatures);
     }
 
@@ -61,5 +62,11 @@ export class FeatureToggleService {
             map(activeFeatures => activeFeatures.includes(feature)),
             distinctUntilChanged(),
         );
+    }
+
+    setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
+        const url = '/api/management/feature-toggle';
+        const toggleParam = { [featureToggle]: active };
+        return this.http.put(url, toggleParam);
     }
 }

@@ -117,6 +117,7 @@ import {
     faCogs,
     faUserCheck,
     faUserMinus,
+    faToggleOn,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -277,5 +278,6 @@ export class ArtemisIconsModule {
         library.addIcons(faHandPointUp);
         library.addIcons(faICursor);
         library.addIcons(faVideo);
+        library.addIcons(faToggleOn);
     }
 }
