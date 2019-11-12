@@ -79,7 +79,7 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("user_id", userId, "access_level", AccessLevel.DEVELOPER.levelCode);
 
         final var errorMessage = "Error while trying to add user to repository: " + username + " to repo " + repositoryUrl;
-        performRequest(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
+        performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
     }
 
     private void protectBranch(String branch, URL repositoryUrl) {
@@ -88,16 +88,16 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("name", branch, "push_access_level", AccessLevel.DEVELOPER.levelCode);
 
         final var errorMesage = "Unable to protect branch " + branch + " for repository " + repositoryUrl;
-        // we have to first inprotect the branch in order to set the correct access level
+        // we have to first unprotect the branch in order to set the correct access level
         unprotectBranch(repositoryId, branch);
-        performRequest(errorMesage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+        performExchange(errorMesage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
     }
 
     private void unprotectBranch(String repositoryId, String branch) {
         final var builder = Endpoints.PROTECTED_BRANCH.buildEndpoint(BASE_API, repositoryId, branch);
 
         final var errorMessage = "Could not unprotect branch " + branch + " for repository " + repositoryId;
-        performRequest(errorMessage, List.of(HttpStatus.NO_CONTENT, HttpStatus.NOT_FOUND),
+        performExchange(errorMessage, List.of(HttpStatus.NO_CONTENT, HttpStatus.NOT_FOUND),
                 () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
     }
 
@@ -109,7 +109,7 @@ public class GitLabService implements VersionControlService {
             final var body = Map.of("url", notificationUrl, "push_events", true, "enable_ssl_verification", false);
 
             final var errorMessage = "Unable to add webhook for " + repositoryUrl;
-            performRequest(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+            performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
         }
     }
 
@@ -117,7 +117,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.GET_WEBHOOKS.buildEndpoint(BASE_API, repositoryId);
 
         final var errorMessage = "Unable to get webhooks for " + repositoryId;
-        final var response = performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var response = performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         for (final var hook : response) {
             if (hook.get("url").asText().equals(notificationUrl))
@@ -134,7 +134,7 @@ public class GitLabService implements VersionControlService {
             final var builder = Endpoints.DELETE_GROUP.buildEndpoint(BASE_API, optionalGroup.get());
 
             final var errorMessage = "Unable to delete group in GitLab: " + projectKey;
-            performRequest(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+            performExchange(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
         }
     }
 
@@ -145,7 +145,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.DELETE_PROJECT.buildEndpoint(BASE_API, repositoryId);
 
         final var errorMessage = "Error trying to delete repository on GitLab: " + repositoryName;
-        performRequest(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+        performExchange(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
     }
 
     @Override
@@ -176,7 +176,7 @@ public class GitLabService implements VersionControlService {
 
         try {
             final var errorMessage = "Can't get repository under the ID " + repositoryId;
-            performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+            performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
         }
         catch (Exception emAll) {
             log.warn("Invalid repository URL " + repositoryUrl);
@@ -202,7 +202,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", path);
 
         final var errorString = "Unable to fetch groups matching " + path;
-        final var foundGroups = performRequest(errorString, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var foundGroups = performExchange(errorString, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         for (final var group : foundGroups) {
             if (group.get("path").asText().equals(path))
@@ -217,7 +217,7 @@ public class GitLabService implements VersionControlService {
         final var body = Map.<String, Object>of("name", groupName, "path", path, "visibility", "private");
 
         final var errorString = "Unable to create new group for course " + groupName;
-        final var createdGroup = performRequest(errorString, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+        final var createdGroup = performExchange(errorString, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
 
         return createdGroup.get("id").asLong();
     }
@@ -248,7 +248,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API).queryParam("search", getRepositorySlugFromUrl(repositoryUrl));
 
         final var errorMessage = "Error fetching ID for repository " + repositoryUrl;
-        final var response = performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var response = performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         return response.get("id").asLong();
     }
@@ -258,7 +258,7 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", projectKey);
 
         final var errorMessage = "Error trying to search for project " + projectKey;
-        final var response = performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+        final var response = performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
         return !response.isEmpty();
     }
@@ -272,7 +272,7 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
 
         final var errorMessage = "Couldn't fork repository: " + sourceProjectKey + " to " + targetProjectKey;
-        performRequest(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
+        performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
 
         return new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
     }
@@ -289,7 +289,7 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("access_level", accessLevel.levelCode);
 
         final var errorMessage = "Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel;
-        performRequest(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
+        performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
 
     }
 
@@ -303,11 +303,11 @@ public class GitLabService implements VersionControlService {
         throw new GitLabException("Repository URL is not a git URL! Can't get slug for " + repositoryUrl.toString());
     }
 
-    private <T> T performRequest(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
-        return performRequest(errorMessage, List.of(expectedStatus), tryToDo);
+    private <T> T performExchange(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
+        return performExchange(errorMessage, List.of(expectedStatus), tryToDo);
     }
 
-    private <T> T performRequest(String errorMessage, List<HttpStatus> allowedStatuses, Supplier<ResponseEntity<T>> tryToDo) {
+    private <T> T performExchange(String errorMessage, List<HttpStatus> allowedStatuses, Supplier<ResponseEntity<T>> tryToDo) {
         try {
             final var response = tryToDo.get();
             if (!allowedStatuses.contains(response.getStatusCode())) {
