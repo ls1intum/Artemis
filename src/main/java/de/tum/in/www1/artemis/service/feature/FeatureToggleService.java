@@ -17,6 +17,12 @@ public class FeatureToggleService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
+    /**
+     * Updates the given feature toggles and enables/disables the features based on the given map. Also notifies all clients
+     * by sending a message via the websocket.
+     *
+     * @param features A map of features (feature -> shouldBeActivated)
+     */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
         features.forEach((feature, setEnabled) -> {
             if (setEnabled)

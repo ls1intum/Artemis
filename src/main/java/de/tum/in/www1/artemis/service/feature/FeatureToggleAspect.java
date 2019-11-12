@@ -14,12 +14,26 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 @Aspect
 public class FeatureToggleAspect {
 
+    /**
+     * Pointcut around all methods or classes annotated with {@link FeatureToggle}.
+     *
+     * @param featureToggle The feature toggle annotation containing the relevant features
+     */
     @Pointcut("@within(featureToggle) || @annotation(featureToggle)")
     public void callAt(FeatureToggle featureToggle) {
     }
 
+    /**
+     * Aspect around all methods for which a feature toggle has been activated. Will check all specified features and only
+     * execute the underlying method if all features are enabled. Will otherwise return forbidden (as response entity)
+     *
+     * @param joinPoint Proceeding join point of the aspect
+     * @param featureToggle The feature toggle annotation containing all features that should get checked
+     * @return The original return value of the called method, if all features are enabled, a forbidden response entity otherwise
+     * @throws Throwable If there was any error during method execution (both the aspect or the actual called method)
+     */
     @Around(value = "callAt(featureToggle)", argNames = "joinPoint,featureToggle")
-    public Object before(ProceedingJoinPoint joinPoint, FeatureToggle featureToggle) throws Throwable {
+    public Object around(ProceedingJoinPoint joinPoint, FeatureToggle featureToggle) throws Throwable {
         if (Arrays.stream(featureToggle.value()).allMatch(Feature::isEnabled)) {
             return joinPoint.proceed();
         }
