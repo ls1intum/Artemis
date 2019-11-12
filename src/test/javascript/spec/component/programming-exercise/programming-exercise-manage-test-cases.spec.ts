@@ -28,6 +28,8 @@ import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programmi
 import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../mocks/mock-programming-exercise-websocket.service';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -125,6 +127,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
