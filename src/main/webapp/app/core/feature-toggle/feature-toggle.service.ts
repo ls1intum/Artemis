@@ -32,6 +32,10 @@ export class FeatureToggleService {
         this.subject.next(activeFeatures);
     }
 
+    setFeatureToggles(activeFeatures: ActiveFeatures) {
+        this.notifySubscribers(activeFeatures);
+    }
+
     getFeatureToggles() {
         return this.subject.asObservable().pipe(distinctUntilChanged());
     }
