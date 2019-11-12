@@ -10,4 +10,3 @@ export * from './user/account.model';
 export * from './user/user.model';
 export * from './user/user.service';
 export * from './language';
-export * from './feature-toggle';

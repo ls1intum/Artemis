@@ -1,4 +1,4 @@
-import { ActiveFeatures } from 'app/core/feature-toggle/feature-toggle.service';
+import { ActiveFeatures } from 'app/layouts/feature-toggle/feature-toggle.service';
 
 export class ProfileInfo {
     activeProfiles: string[];

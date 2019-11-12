@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { tap, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { AccountService } from 'app/core';
 
 export enum FeatureToggle {
     PROGRAMMING_EXERCISES = 'PROGRAMMING_EXERCISES',
@@ -16,8 +17,12 @@ export class FeatureToggleService {
     private readonly topic = `/topic/management/features`;
     private subject: BehaviorSubject<ActiveFeatures>;
 
-    constructor(private websocketService: JhiWebsocketService) {
+    constructor(private websocketService: JhiWebsocketService, private accountService: AccountService) {
         this.subject = new BehaviorSubject<ActiveFeatures>(defaultActiveFeatureState);
+        // We only subscribe the feature toggle updates when the user is logged in.
+        this.accountService.identity().then(() => {
+            this.subscribeFeatureToggleUpdates();
+        });
     }
 
     private subscribeFeatureToggleUpdates() {
