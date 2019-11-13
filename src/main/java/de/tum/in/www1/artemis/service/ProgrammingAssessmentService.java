@@ -26,6 +26,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * complaint.
      *
      * @param originalResult   the original assessment that was complained about
+     * @param exercise programming exercise
      * @param assessmentUpdate the assessment update
      * @return the updated Result
      */
