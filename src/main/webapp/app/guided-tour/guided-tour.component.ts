@@ -5,7 +5,6 @@ import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tou
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -388,7 +387,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     break;
                 }
                 case OverlayPosition.LEFT: {
-                    style = { 'top.px': selectedElementTop, 'left.px': 0, 'height.px': selectedElementHeight, 'width.px': selectedElementLeft };
+                    style = {
+                        'top.px': selectedElementTop,
+                        'left.px': selectedElementLeft < 0 ? selectedElementLeft : 0,
+                        'height.px': selectedElementHeight,
+                        'width.px': selectedElementLeft > 0 ? selectedElementLeft : 0,
+                    };
                     break;
                 }
                 case OverlayPosition.RIGHT: {

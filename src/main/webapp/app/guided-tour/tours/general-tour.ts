@@ -1,6 +1,6 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { Orientation } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const cancelTour: GuidedTour = {
@@ -17,6 +17,20 @@ export const cancelTour: GuidedTour = {
             closeAction: () => {
                 clickOnElement('#account-menu[aria-expanded="true"]');
             },
+        }),
+    ],
+};
+
+export const completedTour: GuidedTour = {
+    courseShortName: '',
+    exerciseShortName: '',
+    settingsKey: 'completed_tour',
+    steps: [
+        new ImageTourStep({
+            headlineTranslateKey: 'tour.completed.headline',
+            contentTranslateKey: 'tour.completed.content',
+            hintTranslateKey: 'tour.completed.hint',
+            imageUrl: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
         }),
     ],
 };

@@ -81,6 +81,7 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.courseClick.content',
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            disableStep: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-course-registration-selector button',
@@ -94,8 +95,8 @@ export const courseOverviewTour: GuidedTour = {
             highlightSelector: '.footer .col-sm-6',
             headlineTranslateKey: 'tour.courseOverview.contact.headline',
             contentTranslateKey: 'tour.courseOverview.contact.content',
+            highlightPadding: 5,
             orientation: Orientation.TOPLEFT,
-            disableStep: true,
         }),
     ],
 };
