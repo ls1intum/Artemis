@@ -305,7 +305,7 @@
                                     <span *ngIf="complaint.accepted !== undefined">{{ 'artemisApp.tutorExerciseDashboard.complaintEvaluated' | translate }}</span>
                                     <span *ngIf="complaint.accepted === undefined">{{ 'artemisApp.tutorExerciseDashboard.complaintNotEvaluated' | translate }}</span>
                                 </td>
-                                <td *ngIf="exercise.type !== ExerciseType_PROGRAMMING">
+                                <td>
                                     <button
                                         *ngIf="complaint.accepted === undefined; else continueButton"
                                         class="btn btn-success btn-sm"
@@ -375,28 +375,32 @@
                                         >{{ 'artemisApp.tutorExerciseDashboard.moreFeedbackRequestNotEvaluated' | translate }}
                                     </span>
                                 </td>
-                                <td *ngIf="exercise.type !== ExerciseType_PROGRAMMING">
+                                <td>
                                     <button
                                         *ngIf="moreFeedbackRequest.accepted === undefined; else continueButton"
                                         class="btn btn-success btn-sm"
-                                        (click)="openAssessmentEditor(moreFeedbackRequest.result.submission.id, false)"
+                                        (click)="
+                                            exercise.type === ExerciseType_PROGRAMMING
+                                                ? openManualResultDialog(moreFeedbackRequest.result.participation.id, moreFeedbackRequest.result)
+                                                : openAssessmentEditor(moreFeedbackRequest.result.submission.id, false)
+                                        "
                                     >
                                         <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.tutorExerciseDashboard.evaluateMoreFeedbackRequest' | translate }}
                                     </button>
                                     <ng-template #continueButton>
-                                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(moreFeedbackRequest.result.submission.id, false)">
+                                        <button
+                                            class="btn btn-primary btn-sm"
+                                            (click)="
+                                                exercise.type === ExerciseType_PROGRAMMING
+                                                    ? openManualResultDialog(moreFeedbackRequest.result.participation.id, moreFeedbackRequest.result)
+                                                    : openAssessmentEditor(moreFeedbackRequest.result.submission.id, false)
+                                            "
+                                        >
                                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.tutorExerciseDashboard.showMoreFeedbackRequests' | translate }}
                                         </button>
                                     </ng-template>
-                                </td>
-                                <td *ngIf="exercise.type === ExerciseType_PROGRAMMING">
-                                    <jhi-programming-assessment-manual-result
-                                        [participationId]="moreFeedbackRequest.result.participation.id"
-                                        [latestResult]="moreFeedbackRequest.result"
-                                        (onResultCreated)="loadAll()"
-                                    ></jhi-programming-assessment-manual-result>
                                 </td>
                             </tr>
                         </tbody>
