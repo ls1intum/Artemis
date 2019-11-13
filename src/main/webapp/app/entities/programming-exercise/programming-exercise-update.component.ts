@@ -147,6 +147,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
+        // If no release date is set, we warn the user.
+        if (!this.programmingExercise.releaseDate) {
+            const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
+            if (!window.confirm(confirmNoReleaseDate)) {
+                return;
+            }
+        }
         this.isSaving = true;
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));
@@ -162,7 +169,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError(res));
+        result.subscribe(
+            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+        );
     }
 
     private onSaveSuccess() {

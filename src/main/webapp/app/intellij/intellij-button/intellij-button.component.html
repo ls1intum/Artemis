@@ -1,8 +1,5 @@
-<div>
-    <div [hidden]="buttonLoading">
-        <img class="ide-icon" src="../../../content/images/intellij_logo.png" />
-        <span>{{ buttonLabel }}</span>
-    </div>
-
+<button class="btn" [class.btn-outline-primary]="outlined" [class.btn-primary]="btnPrimary" [class.btn-sm]="smallButton" [disabled]="buttonLoading">
     <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="'circle-notch'"></fa-icon>
-</div>
+    <img *ngIf="!buttonLoading" class="ide-icon" src="../../../content/images/intellij_logo.png" />
+    <span>{{ buttonLabel }}</span>
+</button>

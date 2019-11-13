@@ -4,37 +4,48 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
+import de.tum.in.www1.artemis.service.compass.assessment.SimilaritySetAssessment;
 
+/**
+ * The assessment index contains the assessments for all the similarity sets. It manages the assessments in a hash map that maps from similarityId to the assessment of the
+ * corresponding similarity set. A similarity set assessment contains the feedback items and a total score for the elements of the similarity set, i.e. the elements with the same
+ * similarityId.
+ */
 public class AssessmentIndex {
 
-    private Map<Integer, Assessment> modelElementAssessmentMapping;
+    private Map<Integer, SimilaritySetAssessment> similarityIdAssessmentMapping;
 
     public AssessmentIndex() {
-        modelElementAssessmentMapping = new ConcurrentHashMap<>();
+        similarityIdAssessmentMapping = new ConcurrentHashMap<>();
     }
 
     /**
-     * Get the assessment identified by the given elementID
+     * Get the assessment for the similarity set with the given similarityId.
      *
-     * @param elementID The ID of the assessment
-     * @return An Optional containing the assessment, if the ID existed. An empty Optional otherwise
+     * @param similarityId the ID of the similarity set
+     * @return an Optional containing the assessment if the similarity ID exists, an empty Optional otherwise
      */
-    public Optional<Assessment> getAssessment(int elementID) {
-        Assessment assessment = modelElementAssessmentMapping.get(elementID);
-        return Optional.ofNullable(assessment);
-    }
-
-    protected void addAssessment(int elementID, Assessment assessment) {
-        modelElementAssessmentMapping.putIfAbsent(elementID, assessment);
+    public Optional<SimilaritySetAssessment> getAssessmentForSimilaritySet(int similarityId) {
+        SimilaritySetAssessment similaritySetAssessment = similarityIdAssessmentMapping.get(similarityId);
+        return Optional.ofNullable(similaritySetAssessment);
     }
 
     /**
-     * Used for statistics. Get the complete map of model element assessments
+     * Add a new assessment for the similarity set with the given ID to the similarityId assessment mapping.
      *
-     * @return The complete map with all model element assessments
+     * @param similarityId the ID of the corresponding similarity set
+     * @param similaritySetAssessment the assessment for the corresponding similarity set
      */
-    public Map<Integer, Assessment> getAssessmentsMap() {
-        return this.modelElementAssessmentMapping;
+    protected void addSimilaritySetAssessment(int similarityId, SimilaritySetAssessment similaritySetAssessment) {
+        similarityIdAssessmentMapping.putIfAbsent(similarityId, similaritySetAssessment);
+    }
+
+    /**
+     * Used for statistics. Get the complete map of similarity set assessments.
+     *
+     * @return The complete map with all similarity set assessments
+     */
+    public Map<Integer, SimilaritySetAssessment> getAssessmentMap() {
+        return this.similarityIdAssessmentMapping;
     }
 }

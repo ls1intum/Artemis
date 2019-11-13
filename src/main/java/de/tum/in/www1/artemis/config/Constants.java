@@ -36,8 +36,6 @@ public final class Constants {
 
     public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
 
-    public static final String RESULT_RESOURCE_API_PATH = "/api/results/";
-
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
 
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api" + NEW_RESULT_RESOURCE_PATH;
@@ -79,6 +77,10 @@ public final class Constants {
 
     public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
 
+    public static final String BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE = "Build run triggered for programming exercise";
+
+    public static final String BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE = "All builds triggered for programming exercise";
+
     public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "The due date of this programming exercise has passed. When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully when the due date passed.";
@@ -88,6 +90,15 @@ public final class Constants {
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
 
     public static final String TESTS_CHECKOUT_PATH = "tests";
+
+    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
+
+    public static final int MAX_COMPLAINT_TIME_WEEKS = 3;
+
+    // Currently 10s.
+    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
+
+    public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     private Constants() {
     }

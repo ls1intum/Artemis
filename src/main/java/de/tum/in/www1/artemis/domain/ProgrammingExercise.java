@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -405,6 +406,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setTestCasesChanged(boolean testCasesChanged) {
         this.testCasesChanged = testCasesChanged;
+    }
+
+    @Override
+    public AssessmentType getAssessmentType() {
+        if (super.getAssessmentType() == null) {
+            return AssessmentType.AUTOMATIC;
+        }
+        return super.getAssessmentType();
     }
 
     /**

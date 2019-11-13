@@ -6,4 +6,8 @@ export class MockJavaBridgeService implements JavaDowncallBridge {
     clone = (repository: string, exerciseName: string, exerciseId: number, courseId: number) => of();
     submit = () => of();
     state = () => Observable.of({} as IntelliJState);
+    onBuildFinished = () => of();
+    onBuildStarted = () => of();
+    onBuildFailed = (message: string) => of();
+    onTestResult = (success: boolean, message: string) => of();
 }

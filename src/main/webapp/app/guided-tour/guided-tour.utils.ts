@@ -16,12 +16,12 @@ export function compareCourseShortName(course: Course, guidedTourCourse: Course 
     if (!course || !guidedTourCourse) {
         return false;
     }
-    return course.shortName === guidedTourCourse.shortName;
+    return course === guidedTourCourse;
 }
 
 export function compareExerciseShortName(exercise: Exercise, guidedTourExercise: Exercise | null): boolean {
     if (!exercise || !guidedTourExercise) {
         return false;
     }
-    return exercise.shortName === guidedTourExercise.shortName;
+    return exercise === guidedTourExercise;
 }

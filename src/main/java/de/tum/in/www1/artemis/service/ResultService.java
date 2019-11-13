@@ -13,9 +13,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -54,12 +53,14 @@ public class ResultService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final FeedbackRepository feedbackRepository;
+
+    private final WebsocketMessagingService websocketMessagingService;
 
     public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository,
+            WebsocketMessagingService websocketMessagingService) {
         this.userService = userService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -69,7 +70,8 @@ public class ResultService {
         this.objectMapper = objectMapper;
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.feedbackRepository = feedbackRepository;
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -137,20 +139,6 @@ public class ResultService {
         result.setAssessor(currentUser);
     }
 
-    /**
-     * Perform async operations after we were notified about new results.
-     *
-     * @param participation Participation for which a new build is available
-     */
-    @Async
-    @Deprecated
-    public void onResultNotifiedOld(ProgrammingExerciseParticipation participation) {
-        log.debug("Received new build result for participation " + participation.getId());
-        // fetches the new build result
-        Result result = continuousIntegrationService.get().onBuildCompletedOld(participation);
-        notifyUser(participation, result);
-    }
-
     // TODO: We should think about moving this method to a separate ProgrammingResultService as it can be confusing that this functionality is exclusive for programming exercises.
     /**
      * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
@@ -160,7 +148,6 @@ public class ResultService {
      * @param requestBody   RequestBody containing the build result and its feedback items
      * @return result after compilation
      */
-    @Transactional
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull Participation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation " + participation.getId());
 
@@ -177,20 +164,20 @@ public class ResultService {
         }
 
         if (result != null) {
-            // TODO: There is a design issue here: As the participation was not loaded in this session (= Transaction), getExercise will fail when the participation was not loaded
-            // in a transaction above this method invocation.
-            // The alternative would be to pass the participationId to this method, but this could result in multiple database calls for the same participation object.
             ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
             boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
             boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
-            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
-            if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                extractTestCasesFromResult(programmingExercise, result);
-            }
             // Find out which test cases were executed and calculate the score according to their status and weight.
             // This needs to be done as some test cases might not have been executed.
+            // When the result is from a solution participation , extract the feedback items (= test cases) and store them in our database.
+            if (isSolutionParticipation) {
+                extractTestCasesFromResult(programmingExercise, result);
+            }
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            resultRepository.save(result);
+            Submission submission = result.getSubmission();
+            result.setSubmission(submission);
+            result = resultRepository.save(result);
+            // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 
             // If the solution participation was updated, also trigger the template participation build.
             if (isSolutionParticipation) {
@@ -234,7 +221,6 @@ public class ResultService {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.
             log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
                     + " because no template participation could be found for the given exercise");
-            return;
         }
     }
 
@@ -260,7 +246,6 @@ public class ResultService {
      * @param participation participation used for notification
      * @param result result used for notification
      */
-    @Transactional(readOnly = true)
     public void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
         if (result != null) {
             // notify user via websocket
@@ -277,12 +262,37 @@ public class ResultService {
     }
 
     /**
+     * Update a manual result of a programming exercise.
+     * Makes sure that the feedback items are persisted correctly, taking care of the OrderingColumn attribute of result.feedbacks.
+     * See https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection and inline doc for reference.
+     *
+     * Also informs the client using a websocket about the updated result.
+     *
+     * @param result Result.
+     * @return updated result with eagerly loaded Submission and Feedback items.
+     */
+    public Result updateManualProgrammingExerciseResult(Result result) {
+        // This is a workaround for saving a result with new feedbacks.
+        // The issue seems to be that result.feedbacks is both a OneToMany relationship + has a the OrderColumn annotation.
+        // Without this a 'null index column for collection' error is triggered when trying to save the result.
+        if (result.getId() != null) {
+            // This creates a null value in the feedbacks_order column, when the result is saved below, it is filled with the next available number (e.g. last item was 2, next is
+            // 3).
+            List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
+            result.setFeedbacks(savedFeedbackItems);
+        }
+        return createNewManualResult(result, true);
+    }
+
+    /**
      * Handle the manual creation of a new result potentially including feedback
      *
      * @param result newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
+     *
+     * @return updated result with eagerly loaded Submission and Feedback items.
      */
-    public void createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
@@ -300,7 +310,13 @@ public class ResultService {
         });
 
         // this call should cascade all feedback relevant changed and save them accordingly
-        Result savedResult = resultRepository.save(result);
+        resultRepository.save(result);
+        // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
+        Optional<Result> savedResultOpt = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
+        if (savedResultOpt.isEmpty()) {
+            throw new EntityNotFoundException("Could not retrieve result with id " + result.getId() + " after save.");
+        }
+        Result savedResult = savedResultOpt.get();
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (result.isExampleResult() == Boolean.FALSE || result.isExampleResult() == null) {
@@ -312,7 +328,7 @@ public class ResultService {
                 log.warn("Unable to load result list for participation", ex);
             }
 
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", savedResult);
 
             if (!Hibernate.isInitialized(savedResult.getParticipation().getExercise())) {
                 Hibernate.initialize(savedResult.getParticipation().getExercise());
@@ -322,6 +338,7 @@ public class ResultService {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
             }
         }
+        return savedResult;
     }
 
     /**
@@ -351,7 +368,6 @@ public class ResultService {
      * @param tutorId  - the tutor we are interested in
      * @return a number of assessments for the course
      */
-    @Transactional(readOnly = true)
     public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
         return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
     }
@@ -362,7 +378,6 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    @Transactional(readOnly = true)
     public long countNumberOfAssessmentsForExercise(Long exerciseId) {
         return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
     }
@@ -374,7 +389,6 @@ public class ResultService {
      * @param tutorId    - the tutor we are interested in
      * @return a number of assessments for the exercise
      */
-    @Transactional(readOnly = true)
     public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
         return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
     }
@@ -385,7 +399,6 @@ public class ResultService {
      * @param exerciseId the exercise we are interested in
      * @return number of assessments for the exercise
      */
-    @Transactional(readOnly = true)
     public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
         return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
                 asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC));
@@ -425,5 +438,13 @@ public class ResultService {
 
     public boolean existsByExerciseId(Long exerciseId) {
         return resultRepository.existsByParticipation_ExerciseId(exerciseId);
+    }
+
+    public void notifyUserAboutNewResult(Result result, Long participationId) {
+        notifyNewResult(result, participationId);
+    }
+
+    private void notifyNewResult(Result result, Long participationId) {
+        websocketMessagingService.sendMessage("/topic/participation/" + participationId + "/newResults", result);
     }
 }
