@@ -929,6 +929,16 @@ public class ParticipationService {
     }
 
     /**
+     * Get one participation with eager course.
+     *
+     * @param participationId id of the participation
+     * @return participation with eager course
+     */
+    public StudentParticipation findOneWithEagerResultsAndCourse(Long participationId) {
+        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourse(participationId);
+    }
+
+    /**
      * Check if a participation can be accessed with the current user.
      *
      * @param participation to access
