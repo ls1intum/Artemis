@@ -142,7 +142,7 @@ public class ProgrammingSubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
             participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
-            participationService.performEmptyCommit((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+            // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             }
@@ -399,11 +399,10 @@ public class ProgrammingSubmissionService {
                     || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
                 participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+                // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             notifyUserAboutSubmission(submission);
-            // TODO: does this work and do we really need it?
-            participationService.performEmptyCommit((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
         }
         catch (Exception e) {
             log.error("Trigger build failed for " + programmingExerciseParticipation.getBuildPlanId() + " with the exception " + e.getMessage());
