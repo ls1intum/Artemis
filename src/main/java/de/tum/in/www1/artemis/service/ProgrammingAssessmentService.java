@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 
@@ -16,21 +15,20 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentService.class);
 
-    private final UserService userService;
-
-    private final ProgrammingSubmissionService programmingSubmissionService;
-
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    public ProgrammingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ComplaintRepository complaintRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            AuthorizationCheckService authCheckService, ProgrammingSubmissionService programmingSubmissionService) {
+    public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
-        this.userService = userService;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.programmingSubmissionService = programmingSubmissionService;
     }
 
+    /**
+     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about. Note, that it
+     * updates the score and the feedback of the original Result, but NOT the assessor. The user that is responsible for the update can be found in the 'reviewer' field of the
+     * complaint.
+     *
+     * @param originalResult   the original assessment that was complained about
+     * @param assessmentUpdate the assessment update
+     * @return the updated Result
+     */
     @Transactional
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, ProgrammingAssessmentUpdate assessmentUpdate) {
         super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);

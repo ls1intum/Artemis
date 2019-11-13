@@ -26,7 +26,6 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -109,7 +108,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private router: Router,
         private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {

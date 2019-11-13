@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 
 /**
- * A helper object that aggregates a feedback list and a complaint response which is used to update an assessment after a complaint.
+ * A helper object that aggregates feedback list, complaint response, score, result string and completion date which are used to update an assessment after a complaint.
  */
 public class ProgrammingAssessmentUpdate extends AssessmentUpdate {
 

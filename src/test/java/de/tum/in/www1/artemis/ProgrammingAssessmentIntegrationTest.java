@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis")
-public class ProgrammingAssessmentResourceIntegrationTest {
+public class ProgrammingAssessmentIntegrationTest {
 
     @Autowired
     DatabaseUtilService database;
