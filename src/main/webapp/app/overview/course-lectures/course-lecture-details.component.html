@@ -24,10 +24,8 @@
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | translate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2" *ngIf="lecture!.description">
-                <div class="col-12 col-md-12">
-                    {{ lecture!.description }}
-                </div>
+            <div class="row mb-2 markdown-preview" *ngIf="lecture!.description">
+                <div class="col-12 col-md-12 markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline">
                 <div class="col-auto">
