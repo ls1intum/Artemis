@@ -197,7 +197,7 @@ public class ResultServiceIntegrationTest {
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        request.post("/api/manual-results", result, HttpStatus.FORBIDDEN);
+        request.post("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -207,7 +207,7 @@ public class ResultServiceIntegrationTest {
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        request.put("/api/manual-results", result, HttpStatus.FORBIDDEN);
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
     }
 
     @ParameterizedTest
@@ -275,7 +275,7 @@ public class ResultServiceIntegrationTest {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
-        Result response = request.postWithResponseBody("/api/manual-results", result, Result.class);
+        Result response = request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class);
         assertThat(response.getResultString()).isEqualTo(result.getResultString());
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
@@ -312,7 +312,7 @@ public class ResultServiceIntegrationTest {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
-        Result response = request.putWithResponseBody("/api/manual-results", result, Result.class, HttpStatus.OK);
+        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
         assertThat(response.getResultString()).isEqualTo(result.getResultString());
         assertThat(response.getSubmission()).isEqualTo(result.getSubmission());
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
