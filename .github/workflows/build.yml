@@ -4,19 +4,19 @@ on:
   pull_request:
   push:
     branches:
-      - master
-      - develop
-      - release/**
+    - master
+    - develop
+    - release/**
     tags: '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
-      - doc/**
-      - README.md
-      - CODE_OF_CONDUCT.md
-      - CONTRIBUTING.md
-      - LICENSE
-      - data/**
-      - .github/**
-      - !.github/workflows/build.yml
+    - doc/**
+    - README.md
+    - CODE_OF_CONDUCT.md
+    - CONTRIBUTING.md
+    - LICENSE
+    - data/**
+    - .github/**
+    - !.github/workflows/build.yml
 
 env:
   CI: true
@@ -25,20 +25,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      -   name: Use Node.js 12
+    - name: Use Node.js 12
       uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-        -   name: Use Java 12
+    - name: Use Java 12
       uses: actions/setup-java@v1
       with:
         java-version: '12.0.2'
-        -   uses: actions/checkout@v1
-        -   name: Production Build
+    - uses: actions/checkout@v1
+    - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
-        -   name: Make .war file accessible
+    - name: Make .war file accessible
       run: ln -s `ls build/libs/` ./build/libs/Artemis.war
-        -   name: Upload Artifact
+    - name: Upload Artifact
       uses: actions/upload-artifact@master
       with:
         name: Artemis.war
@@ -47,30 +47,30 @@ jobs:
   server-tests:
     runs-on: ubuntu-latest
     steps:
-      -   name: Use Java 12
+    - name: Use Java 12
       uses: actions/setup-java@v1
       with:
         java-version: '12.0.2'
-        -   uses: actions/checkout@v1
-        -   name: Java Tests
+    - uses: actions/checkout@v1
+    - name: Java Tests
       run: ./gradlew executeTests
-        -   name: Comment PR on Java Test Failure
+    - name: Comment PR on Java Test Failure
       uses: thollander/actions-comment-pull-request
       with:
         message: Java tests are failing. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: failure()
-        -   name: Java Code Style
+    - name: Java Code Style
       run: ./gradlew spotlessCheck
-        -   name: Comment PR on Java Code Style Failure
+    - name: Comment PR on Java Code Style Failure
       uses: thollander/actions-comment-pull-request
       with:
         message: You Java code style does not match our conventions. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: failure()
-        -   name: Java Documentation
+    - name: Java Documentation
       run: ./gradlew checkstyleMain -x yarn_install -x webpack
-        -   name: Comment PR on Java Documentation Failure
+    - name: Comment PR on Java Documentation Failure
       uses: thollander/actions-comment-pull-request
       with:
         message: You Java code is missing documentation in the JavaDoc format. Check the logs of the _Build_ action for details.
@@ -80,32 +80,32 @@ jobs:
   client-tests:
     runs-on: ubuntu-latest
     steps:
-      -   name: Use Node.js 12
+    - name: Use Node.js 12
       uses: actions/setup-node@v1
       with:
         node-version: '12.x'
-        -   uses: actions/checkout@v1
-        -   name: Install Dependencies
+    -   uses: actions/checkout@v1
+    - name: Install Dependencies
       run: yarn install
-        -   name: TypeScript Tests
+    - name: TypeScript Tests
       run: yarn test
-        -   name: Comment PR on TS Test Failure
+    - name: Comment PR on TS Test Failure
       uses: thollander/actions-comment-pull-request
       with:
         message: Client tests are failing. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: failure()
-        -   name: TypeScript Formatting
+    - name: TypeScript Formatting
       run: yarn prettier:check
-        -   name: Comment PR on TS Formatting Failure
+    - name: Comment PR on TS Formatting Failure
       uses: thollander/actions-comment-pull-request
       with:
         message: You TypeScript code does not match our conventions. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: failure()
-        -   name: TypeScript Code Style
+    - name: TypeScript Code Style
       run: yarn lint
-        -   name: Comment PR on TS Code Style Failure
+    - name: Comment PR on TS Code Style Failure
       uses: thollander/actions-comment-pull-request
       with:
         message: You TypeScript code style does not match our conventions. Check the logs of the _Build_ action for details.
