@@ -1,6 +1,9 @@
 name: Build
 
 on:
+    pull_request:
+    tags:
+        - '*'
     push:
         branches:
             - master
@@ -15,8 +18,6 @@ on:
             - data/**
             - .github/**
             - !.github/workflows/build.yml
-    pull_request:
-    tags: '*'
 
 env:
     CI: true
