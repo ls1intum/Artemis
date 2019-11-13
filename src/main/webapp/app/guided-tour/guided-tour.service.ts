@@ -180,15 +180,21 @@ export class GuidedTourService {
     }
 
     /**
-     * Check if the provided tour step is the currently active one
-     * @param checkComplete
+     * Determines if the cancel tour is currently displayed
      */
-    public isCancelOrCompleteTour(checkComplete?: boolean): boolean {
+    public isCancelTourStep(): boolean {
         if (this.currentTour && this.currentTour.steps) {
-            if (checkComplete) {
-                return this.currentTour.settingsKey === completedTour.settingsKey;
-            }
-            return this.currentTour.settingsKey === cancelTour.settingsKey || this.currentTour.settingsKey === completedTour.settingsKey;
+            return this.currentTour.settingsKey === cancelTour.settingsKey;
+        }
+        return false;
+    }
+
+    /**
+     * Determines if the cancel tour is currently displayed
+     */
+    public isCompleteTourStep(): boolean {
+        if (this.currentTour && this.currentTour.steps) {
+            return this.currentTour.settingsKey === completedTour.settingsKey;
         }
         return false;
     }
@@ -340,7 +346,6 @@ export class GuidedTourService {
             this.currentTour = cloneDeep(completedTour);
             /** Proceed with tour if the tour has tour steps and the tour display is allowed for current window size */
             if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
-                const currentStep = this.currentTour.steps[this.currentTourStepIndex];
                 this.setPreparedTourStep();
             }
         });

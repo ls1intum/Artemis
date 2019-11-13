@@ -26,11 +26,11 @@ export const completedTour: GuidedTour = {
     exerciseShortName: '',
     settingsKey: 'completed_tour',
     steps: [
-        new ImageTourStep({
+        new TextTourStep({
             headlineTranslateKey: 'tour.completed.headline',
             contentTranslateKey: 'tour.completed.content',
             hintTranslateKey: 'tour.completed.hint',
-            imageUrl: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
+            // imageUrl: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
         }),
     ],
 };

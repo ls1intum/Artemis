@@ -72,9 +72,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'Escape': {
-                if (this.currentTourStep && !this.isCancelTour()) {
+                if (this.currentTourStep && !this.guidedTourService.isCancelTourStep()) {
                     this.guidedTourService.skipTour();
-                } else if (this.currentTourStep && (this.isCancelTour() || this.guidedTourService.isOnLastStep)) {
+                } else if (this.currentTourStep && (this.guidedTourService.isCancelTourStep() || this.guidedTourService.isOnLastStep)) {
                     // The escape key event finishes the tour when the user is seeing the cancel tour step or last tour step
                     this.guidedTourService.finishGuidedTour();
                 }
@@ -248,16 +248,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.guidedTourService.nextStep();
         }
         // When the user clicks on the backdrop or tour step while seeing the cancel tour step, the cancel tour will be finished automatically
-        if (this.isCancelTour()) {
+        if (this.guidedTourService.isCancelTourStep()) {
             this.guidedTourService.finishGuidedTour();
         }
-    }
-
-    /**
-     * Determines if the cancel tour is currently displayed
-     */
-    private isCancelTour() {
-        return this.currentTourStep ? this.currentTourStep.headlineTranslateKey === 'tour.cancel.headline' : false;
     }
 
     /**
