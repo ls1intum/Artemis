@@ -61,24 +61,32 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Calculates the classes for the steps (circles) in the tutor participation graph
+     * @param step for which the class should be calculated for (NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED)
+     */
     calculateClasses(step: TutorParticipationStatus): string {
+        // Returns 'active' if the current participation status is not trained
         if (step === this.tutorParticipationStatus && step !== this.TRAINED) {
             return 'active';
         }
 
-        if (step === this.COMPLETED && this.tutorParticipationStatus !== this.TRAINED) {
-            return 'opaque';
-        }
-
-        if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.TRAINED, this.COMPLETED].includes(this.tutorParticipationStatus)) {
+        // Returns 'opaque' if the tutor has not participated yet
+        if (step === this.TRAINED && this.tutorParticipationStatus === this.NOT_PARTICIPATED) {
             return 'opaque';
         }
 
         if (step === this.TRAINED && this.exercise.exampleSubmissions && this.tutorParticipation.trainedExampleSubmissions) {
+            const reviewedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter(exampleSubmission => !exampleSubmission.usedForTutorial);
+            const exercisesToReview = this.exercise.exampleSubmissions.filter(exampleSubmission => !exampleSubmission.usedForTutorial);
             const assessedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
             const exercisesToAssess = this.exercise.exampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
 
-            if (exercisesToAssess.length > 0 && exercisesToAssess.length > 0 && exercisesToAssess.length !== assessedByTutor.length) {
+            // Returns 'orange' if there are still open example reviews or assessments
+            if (
+                (exercisesToReview.length > 0 && exercisesToReview.length !== reviewedByTutor.length) ||
+                (exercisesToAssess.length > 0 && exercisesToAssess.length !== assessedByTutor.length)
+            ) {
                 return 'orange';
             }
         }
