@@ -29,6 +29,7 @@ export interface IResultService {
 export class ResultService implements IResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
+    private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -69,7 +70,7 @@ export class ResultService implements IResultService {
     }
 
     getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
+        return this.http.get<Result>(`${this.participationResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
     }
 
     delete(resultId: number): Observable<HttpResponse<void>> {
