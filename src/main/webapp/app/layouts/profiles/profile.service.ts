@@ -28,8 +28,7 @@ export class ProfileService {
 
                         /** map guided tour configuration */
                         const guidedTourMapping = data['guided-tour'];
-                        const tourArray = Object.keys(guidedTourMapping.tours).map(i => guidedTourMapping.tours[i]);
-                        guidedTourMapping.tours = _.reduce(tourArray, _.extend);
+                        guidedTourMapping.tours = _.reduce(guidedTourMapping.tours, _.extend);
 
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));

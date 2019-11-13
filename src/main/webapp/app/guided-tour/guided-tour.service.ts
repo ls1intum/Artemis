@@ -804,7 +804,7 @@ export class GuidedTourService {
      * @param course    current course
      * @return true if the current course is a course for a guided tour, otherwise false
      */
-    public compareCourseShortName(course: Course): boolean {
+    public isGuidedTourAvailableForCourse(course: Course): boolean {
         if (!course) {
             return false;
         }
@@ -816,7 +816,7 @@ export class GuidedTourService {
      * @param exercise  current exercise
      * @return true if the current exercise is an exercise for a guided tour, otherwise false
      */
-    public compareExerciseShortName(exercise: Exercise): boolean {
+    public isGuidedTourAvailableForExercise(exercise: Exercise): boolean {
         if (!exercise || !exercise.course || !this.currentTour) {
             return false;
         }

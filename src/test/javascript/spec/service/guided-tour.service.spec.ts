@@ -340,9 +340,9 @@ describe('GuidedTourService', () => {
                 course1.exercises.forEach(exercise => {
                     exercise.course = course1;
                     if (exercise === exercise1) {
-                        expect(guidedTourService.compareExerciseShortName(exercise)).to.be.true;
+                        expect(guidedTourService.isGuidedTourAvailableForExercise(exercise)).to.be.true;
                     } else {
-                        expect(guidedTourService.compareExerciseShortName(exercise)).to.be.false;
+                        expect(guidedTourService.isGuidedTourAvailableForExercise(exercise)).to.be.false;
                     }
                 });
 

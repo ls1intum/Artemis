@@ -65,6 +65,6 @@ export class OverviewComponent implements OnInit {
     }
 
     compareCourseShortName(course: Course): boolean {
-        return this.guidedTourService.compareCourseShortName(course);
+        return this.guidedTourService.isGuidedTourAvailableForCourse(course);
     }
 }

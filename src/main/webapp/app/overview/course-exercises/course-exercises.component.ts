@@ -251,6 +251,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     compareExerciseShortName(exercise: Exercise): boolean {
-        return this.guidedTourService.compareExerciseShortName(exercise);
+        return this.guidedTourService.isGuidedTourAvailableForExercise(exercise);
     }
 }
