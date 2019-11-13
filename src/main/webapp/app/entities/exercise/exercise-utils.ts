@@ -3,8 +3,8 @@ import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exerci
 import { hasResults, InitializationState } from 'app/entities/participation';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import * as moment from 'moment';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { now } from 'moment';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { AssessmentType } from 'app/entities/assessment-type';
 
 export const hasExerciseChanged = (changes: SimpleChanges) => {
@@ -59,20 +59,39 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
         return participationStatusForModelingTextFileUploadExercise(exercise);
     }
 
+    const programmingExerciseStates = [
+        InitializationState.UNINITIALIZED,
+        InitializationState.REPO_COPIED,
+        InitializationState.REPO_CONFIGURED,
+        InitializationState.BUILD_PLAN_COPIED,
+        InitializationState.BUILD_PLAN_CONFIGURED,
+    ];
+
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
-    if (!hasStudentParticipations(exercise)) {
-        return ParticipationStatus.UNINITIALIZED;
-    } else if (
-        [InitializationState.REPO_COPIED, InitializationState.REPO_CONFIGURED, InitializationState.BUILD_PLAN_COPIED, InitializationState.BUILD_PLAN_CONFIGURED].includes(
-            exercise.studentParticipations[0].initializationState,
-        )
-    ) {
-        // in case the programming exercise is not configured properly, we assume it is uninitalized
-        return ParticipationStatus.UNINITIALIZED;
+    if (!hasStudentParticipations(exercise) || programmingExerciseStates.includes(exercise.studentParticipations[0].initializationState)) {
+        if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise)) {
+            return ParticipationStatus.EXERCISE_MISSED;
+        } else {
+            return ParticipationStatus.UNINITIALIZED;
+        }
     } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
         return ParticipationStatus.INITIALIZED;
     }
     return ParticipationStatus.INACTIVE;
+};
+
+/**
+ * The start exercise button should be available for programming exercises when
+ * - there is no due date
+ * - now is before the due date
+ * - test run after due date is deactivated and manual grading is deactivated
+ */
+export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
+    return (
+        exercise.dueDate == null ||
+        moment() <= exercise.dueDate! ||
+        (exercise.buildAndTestStudentSubmissionsAfterDueDate == null && exercise.assessmentType === AssessmentType.AUTOMATIC)
+    );
 };
 
 /**

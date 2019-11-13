@@ -45,7 +45,11 @@
                         <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
-                <div *ngIf="currentTourStep.userInteractionEvent" class="step-hint interaction alert" [class.alert-success]="this.userInteractionFinished">
+                <div
+                    *ngIf="currentTourStep.userInteractionEvent && !currentTourStep.modelingTask"
+                    class="step-hint interaction alert"
+                    [class.alert-success]="this.userInteractionFinished"
+                >
                     <div class="step-hint__icon" *ngIf="this.userInteractionFinished; else userInteractionIcons">
                         <fa-icon icon="check"></fa-icon>
                     </div>
@@ -54,12 +58,28 @@
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" icon="hand-point-up"></fa-icon>
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" icon="i-cursor"></fa-icon>
                             <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" icon="circle-notch"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask" icon="arrows-alt"></fa-icon>
                         </div>
                     </ng-template>
                     <div class="step-hint__label">
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" jhiTranslate="tour.clickHint.text"></span>
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.typeHint.text"></span>
                         <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" jhiTranslate="tour.waitHint.text"></span>
+                        <span
+                            *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
+                            jhiTranslate="tour.modelingHint.text"
+                        ></span>
+                    </div>
+                </div>
+                <div *ngIf="currentTourStep.modelingTask" class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
+                    <div class="step-hint__icon" *ngIf="!userInteractionFinished">
+                        <fa-icon icon="clipboard-list"></fa-icon>
+                    </div>
+                    <div class="step-hint__icon" *ngIf="userInteractionFinished">
+                        <fa-icon icon="check"></fa-icon>
+                    </div>
+                    <div class="step-hint__label">
+                        <div [innerHTML]="currentTourStep.modelingTask.taskTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                     </div>
                 </div>
                 <div *ngIf="currentTourStep.imageUrl">
@@ -98,7 +118,7 @@
                 <button
                     *ngIf="!guidedTourService.isOnLastStep && !guidedTourService.isOnResizeMessage"
                     class="next-button"
-                    [disabled]="this.currentTourStep.userInteractionEvent"
+                    [disabled]="this.currentTourStep.userInteractionEvent && !userInteractionFinished"
                     (click)="guidedTourService.nextStep()"
                 >
                     <span jhiTranslate="tour.navigation.next"></span>
@@ -108,7 +128,7 @@
                     *ngIf="guidedTourService.isOnLastStep"
                     class="next-button"
                     jhiTranslate="tour.navigation.done"
-                    [disabled]="this.currentTourStep.userInteractionEvent"
+                    [disabled]="this.currentTourStep.userInteractionEvent && !userInteractionFinished"
                     (click)="guidedTourService.nextStep()"
                 ></button>
                 <button *ngIf="guidedTourService.isOnResizeMessage" class="next-button" jhiTranslate="tour.navigation.close" (click)="guidedTourService.resetTour()"></button>
