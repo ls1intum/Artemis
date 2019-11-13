@@ -192,6 +192,7 @@ public class ParticipationResource {
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resumeExercise(participation);
+            // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
             participation = participationService.performEmptyCommit(participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);

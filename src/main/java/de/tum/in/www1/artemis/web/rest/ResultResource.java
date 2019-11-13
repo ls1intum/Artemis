@@ -100,20 +100,25 @@ public class ResultResource {
      * POST /results : Create a new manual result for a programming exercise (Do NOT use it for other exercise types) NOTE: we deviate from the standard URL scheme to avoid
      * conflicts with a different POST request on results
      *
-     * @param result the result to create
+     * @param newResult the result to create
      * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
-        log.debug("REST request to save Result : {}", result);
+    public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result newResult) throws URISyntaxException {
+        log.debug("REST request to create a new result : {}", newResult);
         // TODO: this is problematic, because this REST call should not depend on the json request body for result.
         // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
-        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
+        final var participation = participationService.findOneWithEagerResultsAndCourse(newResult.getParticipation().getId());
+        final var latestExistingResult = participation.findLatestResult();
+        if (latestExistingResult != null && latestExistingResult.getAssessmentType() == AssessmentType.MANUAL) {
+            // prevent that tutors create multiple manual results
+            forbidden();
+        }
+
         // make sure that the participation cannot be manipulated on the client side
-        // TODO: check that the last result for this participation is not yet manual. If it is already manuel, return badRequest()
-        result.setParticipation(participation);
+        newResult.setParticipation(participation);
         final var exercise = participation.getExercise();
         final var course = exercise.getCourse();
         final var user = userService.getUserWithGroupsAndAuthorities();
@@ -124,30 +129,30 @@ public class ResultResource {
             return badRequest();
         }
 
-        if (result.getId() != null) {
+        if (newResult.getId() != null) {
             throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
         }
-        else if (result.getResultString() == null) {
+        else if (newResult.getResultString() == null) {
             throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
         }
-        else if (result.getScore() == null) {
+        else if (newResult.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         }
-        else if (result.getScore() != 100 && result.isSuccessful()) {
+        else if (newResult.getScore() != 100 && newResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
+        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
         // Create manual submission with last commit hash und current time stamp.
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
-        result.setSubmission(submission);
-        result = resultService.createNewManualResult(result, true);
+        newResult.setSubmission(submission);
+        newResult = resultService.createNewManualResult(newResult, true);
 
-        return ResponseEntity.created(new URI("/api/manual-results/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/manual-results/" + newResult.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
     }
 
     /**
@@ -276,7 +281,7 @@ public class ResultResource {
         log.debug("REST request to update Result : {}", result);
         // TODO: this is problematic, because this REST call should not depend on the json request body for result.
         // We should instead put the participation id (and maybe even the exercise id) into the REST URL and retrieve the actual object from the database
-        final var participation = participationService.findOneWithEagerCourse(result.getParticipation().getId());
+        final var participation = participationService.findOneWithEagerResultsAndCourse(result.getParticipation().getId());
         // make sure that the participation cannot be manipulated on the client side
         result.setParticipation(participation);
         final var exercise = participation.getExercise();
