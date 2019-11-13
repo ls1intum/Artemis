@@ -20,7 +20,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
 
-    participationIsActive: boolean;
+    participationBuildCanBeTriggered: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
     isRetrievingBuildStatus: boolean;
     isBuilding: boolean;
@@ -39,8 +39,10 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
-            if (this.participationIsActive) {
+            // We can trigger the build only if the participation is active (has build plan) or if the build plan was archived (new build plan will be created).
+            this.participationBuildCanBeTriggered =
+                this.participation.initializationState === InitializationState.INITIALIZED || this.participation.initializationState === InitializationState.INACTIVE;
+            if (this.participationBuildCanBeTriggered) {
                 this.setupSubmissionSubscription();
             }
         }
