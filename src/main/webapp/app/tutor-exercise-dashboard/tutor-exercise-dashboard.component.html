@@ -309,24 +309,28 @@
                                     <button
                                         *ngIf="complaint.accepted === undefined; else continueButton"
                                         class="btn btn-success btn-sm"
-                                        (click)="openAssessmentEditor(complaint.result.submission.id, false)"
+                                        (click)="
+                                            exercise.type === ExerciseType_PROGRAMMING
+                                                ? openManualResultDialog(complaint.result.participation.id, complaint.result)
+                                                : openAssessmentEditor(complaint.result.submission.id, false)
+                                        "
                                     >
                                         <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.tutorExerciseDashboard.evaluateComplaint' | translate }}
                                     </button>
                                     <ng-template #continueButton>
-                                        <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint.result.submission.id, false)">
+                                        <button
+                                            class="btn btn-primary btn-sm"
+                                            (click)="
+                                                exercise.type === ExerciseType_PROGRAMMING
+                                                    ? openManualResultDialog(complaint.result.participation.id, complaint.result)
+                                                    : openAssessmentEditor(complaint.result.submission.id, false)
+                                            "
+                                        >
                                             <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.tutorExerciseDashboard.showComplaint' | translate }}
                                         </button>
                                     </ng-template>
-                                </td>
-                                <td *ngIf="exercise.type === ExerciseType_PROGRAMMING">
-                                    <jhi-programming-assessment-manual-result
-                                        [participationId]="complaint.result.participation.id"
-                                        [latestResult]="complaint.result"
-                                        (onResultCreated)="loadAll()"
-                                    ></jhi-programming-assessment-manual-result>
                                 </td>
                             </tr>
                         </tbody>

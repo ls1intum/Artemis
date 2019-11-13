@@ -26,6 +26,9 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { Result } from 'app/entities/result';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -108,6 +111,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private router: Router,
         private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -364,6 +368,19 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
         }
         this.router.navigate([route]);
+    }
+
+    openManualResultDialog(participationId: number, result: Result) {
+        const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.participationId = participationId;
+        modalRef.componentInstance.result = result;
+        modalRef.result.then(
+            () => {
+                this.loadAll();
+            },
+            () => {},
+        );
+        return;
     }
 
     asProgrammingExercise(exercise: Exercise) {
