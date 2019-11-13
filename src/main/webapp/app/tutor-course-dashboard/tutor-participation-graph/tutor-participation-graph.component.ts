@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
-import { ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -13,7 +13,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfParticipations: number;
     @Input() public numberOfAssessments: number;
-    @Input() exerciseType: ExerciseType;
+    @Input() exercise: Exercise;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
 
@@ -73,8 +73,13 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             return 'opaque';
         }
 
-        if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
-            return 'orange';
+        if (step === this.TRAINED && this.exercise.exampleSubmissions && this.tutorParticipation.trainedExampleSubmissions) {
+            const assessedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
+            const exercisesToAssess = this.exercise.exampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
+
+            if (exercisesToAssess.length > 0 && exercisesToAssess.length > 0 && exercisesToAssess.length !== assessedByTutor.length) {
+                return 'orange';
+            }
         }
 
         return '';

@@ -37,16 +37,25 @@ li:first-child::before {
     background: green;
 }
 
-.active ~ li {
+.active + li {
     background: red;
-}
 
-.active ~ li::before {
-    background: red;
+    & + li {
+        background: red;
+    }
+
+    & + li::before {
+        background: red;
+    }
 }
 
 .not_participated {
     display: none;
+
+    &.active + li + li::before,
+    &.active + li + ngb-tooltip-window::ng-deep + li::before {
+        background: red !important;
+    }
 }
 
 .not_participated + li::before {
@@ -58,14 +67,14 @@ li:first-child::before {
 }
 
 .opaque::before {
-    background: darkred !important;
+    background: darkred;
 }
 
 .orange {
     background: orange !important;
 }
 
-.orange::before {
+.orange ~ li::before {
     background: orange !important;
 }
 
