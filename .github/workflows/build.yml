@@ -9,14 +9,14 @@ on:
     - release/**
     tags: '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
-    - doc/**
-    - README.md
-    - CODE_OF_CONDUCT.md
-    - CONTRIBUTING.md
-    - LICENSE
-    - data/**
-    - .github/**
-    - !.github/workflows/build.yml
+    - 'doc/**'
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'data/**'
+    - '.github/**'
+    - '!.github/workflows/build.yml'
 
 env:
   CI: true
