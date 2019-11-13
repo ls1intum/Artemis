@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -17,6 +17,12 @@ import * as moment from 'moment';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { Feedback } from 'app/entities/feedback';
+import { ComplaintType } from 'app/entities/complaint';
+import { filter } from 'rxjs/operators';
+import { ButtonType } from 'app/shared/components';
+import { omit } from 'lodash';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -27,6 +33,7 @@ import { Feedback } from 'app/entities/feedback';
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
+    ButtonType = ButtonType;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
@@ -47,7 +54,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
-    isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
     autoSaveInterval: number;
@@ -58,6 +64,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
     isLoading: boolean;
+    isLate: boolean; // indicates if the submission is late
+    ComplaintType = ComplaintType;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -71,6 +79,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private translateService: TranslateService,
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
+        private guidedTourService: GuidedTourService,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -90,11 +99,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             modelingSubmission.participation.results = [modelingSubmission.result];
                         }
                         this.participation = modelingSubmission.participation as StudentParticipation;
+
+                        // reconnect participation <--> submission
+                        this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
-                        this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
+                        // checks if the student started the exercise after the due date
+                        this.isLate =
+                            this.modelingExercise &&
+                            !!this.modelingExercise.dueDate &&
+                            !!this.participation.initializationDate &&
+                            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
                         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
                         this.submission = modelingSubmission;
                         if (this.submission.model) {
@@ -113,6 +131,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.setAutoSaveTimer();
                         this.isLoading = false;
+                        this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour);
                     },
                     error => {
                         if (error.status === 403) {
@@ -164,7 +183,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     });
                 }
                 this.jhiAlertService.info('artemisApp.modelingEditor.autoSubmit');
-                this.isActive = false;
             }
         });
     }
@@ -192,17 +210,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * to the model after at most 60 seconds.
      */
     private setAutoSaveTimer(): void {
-        if (this.submission.submitted) {
-            return;
-        }
         this.autoSaveTimer = 0;
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.submission && this.submission.submitted) {
-                clearInterval(this.autoSaveInterval);
-                this.autoSaveTimer = 0;
-            }
             if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
                 this.saveDiagram();
             }
@@ -227,12 +238,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 response => {
                     this.submission = response.body!;
                     this.result = this.submission.result;
-                    this.isSaving = false;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                 },
-                error => {
-                    this.isSaving = false;
+                () => {
                     this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                },
+                () => {
+                    this.isSaving = false;
                 },
             );
         } else {
@@ -240,59 +252,81 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 submission => {
                     this.submission = submission.body!;
                     this.result = this.submission.result;
-                    this.isSaving = false;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
-                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                     this.subscribeToAutomaticSubmissionWebsocket();
                 },
-                error => {
+                () => {
                     this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                },
+                () => {
                     this.isSaving = false;
                 },
             );
         }
     }
-
     submit(): void {
-        if (!this.submission) {
+        if (this.isSaving) {
+            // don't execute the function if it is already currently executing
             return;
         }
+        if (!this.submission) {
+            this.submission = new ModelingSubmission();
+        }
+        this.submission.submitted = true;
         this.updateSubmissionModel();
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
         }
+        this.isSaving = true;
+        this.autoSaveTimer = 0;
+        if (this.submission.id) {
+            this.modelingSubmissionService
+                .update(this.submission, this.modelingExercise.id)
+                .pipe(filter(res => !!res.body))
+                .subscribe(
+                    response => {
+                        this.submission = response.body!;
+                        this.result = this.submission.result;
+                        this.retryStarted = false;
 
-        let confirmSubmit = true;
-        if (this.calculateNumberOfModelElements() < 10) {
-            confirmSubmit = window.confirm('Are you sure you want to submit? You cannot edit your model anymore until you get an assessment!');
-        }
+                        if (this.isLate) {
+                            this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
+                        } else {
+                            this.jhiAlertService.success('entity.action.submitSuccessfulAlert');
+                        }
 
-        if (confirmSubmit) {
-            this.submission.submitted = true;
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
-                response => {
-                    this.submission = response.body!;
-                    this.umlModel = JSON.parse(this.submission.model);
-                    this.result = this.submission.result;
-                    this.retryStarted = false;
-
-                    if (this.isActive) {
-                        this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
-                    } else {
-                        this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
-                    }
-
-                    this.subscribeToWebsockets();
-                    if (this.automaticSubmissionWebsocketChannel) {
-                        this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
-                    }
-                },
-                err => {
-                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                    this.submission.submitted = false;
-                },
-            );
+                        this.subscribeToWebsockets();
+                        if (this.automaticSubmissionWebsocketChannel) {
+                            this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
+                        }
+                    },
+                    () => {
+                        this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                        this.submission.submitted = false;
+                    },
+                    () => (this.isSaving = false),
+                );
+        } else {
+            this.modelingSubmissionService
+                .create(this.submission, this.modelingExercise.id)
+                .pipe(filter(res => !!res.body))
+                .subscribe(
+                    submission => {
+                        this.submission = submission.body!;
+                        this.result = this.submission.result;
+                        if (this.isLate) {
+                            this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
+                        } else {
+                            this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
+                        }
+                        this.subscribeToAutomaticSubmissionWebsocket();
+                    },
+                    () => {
+                        this.jhiAlertService.error('artemisApp.modelingEditor.error');
+                    },
+                    () => (this.isSaving = false),
+                );
         }
     }
 
@@ -405,7 +439,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Checks whether there are pending changes in the current model. Returns true if there are NO unsaved changes, false otherwise.
      */
     canDeactivate(): Observable<boolean> | boolean {
-        if (!this.modelingEditor || (this.submission && this.submission.submitted)) {
+        if (!this.modelingEditor) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
@@ -451,5 +485,26 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return umlModel.elements.length + umlModel.relationships.length;
         }
         return 0;
+    }
+
+    /**
+     * The exercise is still active if it's due date hasn't passed yet.
+     */
+    get isActive(): boolean {
+        return this.modelingExercise && (!this.modelingExercise.dueDate || moment(this.modelingExercise.dueDate).isSameOrAfter(moment()));
+    }
+
+    get submitButtonTooltip(): string {
+        if (!this.isLate) {
+            if (this.isActive && !this.modelingExercise.dueDate) {
+                return 'entity.action.submitNoDeadlineTooltip';
+            } else if (this.isActive) {
+                return 'entity.action.submitTooltip';
+            } else {
+                return 'entity.action.deadlineMissedTooltip';
+            }
+        }
+
+        return 'entity.action.submitDeadlineMissedTooltip';
     }
 }

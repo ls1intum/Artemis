@@ -82,10 +82,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
         StudentParticipation participation = optionalParticipation.get();
 
-        if (participation.getInitializationState() == InitializationState.FINISHED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
-        }
-
         return save(fileUploadSubmission, file, participation, fileUploadExercise);
     }
 
@@ -185,6 +181,13 @@ public class FileUploadSubmissionService extends SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException {
+        final var exerciseDueDate = exercise.getDueDate();
+        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        // check if we already had file associated with this submission
+        fileUploadSubmission.onDelete();
+
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
 
         // update submission properties
@@ -219,7 +222,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final var submissionId = submission.getId();
         final var filename = file.getOriginalFilename().replaceAll("\\s", "");
         final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
-        final var filePath = dirPath + File.separator + filename;
+        final var filePath = dirPath + filename;
         final var savedFile = new java.io.File(filePath);
         final var dir = new java.io.File(dirPath);
 

@@ -1,0 +1,47 @@
+name: Pull Request Linting
+on: issue_comment
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jmatsu/detect-issue-comment-to-pr-action@v1.0
+        id: is-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: rytswd/comvent@v0.1.0
+        id: request-lint
+        with:
+          keyword: "@github-actions.*(lint|fix.*code style|format.*code)"
+        if: steps.is-pr.outputs.is_pull_request == 'true'
+
+      - uses: actions/checkout@v1
+        if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'
+      - name: Checkout PR Branch
+        run: hub pr checkout ${{ steps.is-pr.outputs.pull_number }}
+      - name: Use Java 12
+        uses: actions/setup-java@v1
+        with:
+          java-version: '12.0.2'
+        if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'
+      - name: Use Node.js 12
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+        if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'
+      - run: yarn install
+        if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'
+
+      - name: Apply Java Style
+        run: ./gradlew spotlessApply
+        if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'
+
+      - name: Apply TypeScript Style
+        run: yarn prettier:format
+        if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'
+          
+      - uses: matheusalbino/git-commit@v1.0.1
+        with:
+          message: This a commit from Github Actions
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.request-lint.outputs.comvent == 'found' && steps.is-pr.outputs.is_pull_request == 'true'

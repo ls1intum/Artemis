@@ -142,7 +142,7 @@ public class ProgrammingSubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
             participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
-
+            // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             }
@@ -234,6 +234,9 @@ public class ProgrammingSubmissionService {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
         log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
+
+        // Let the instructor know that a build run was triggered.
+        notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseParticipationService.findByExerciseId(exerciseId));
 
         var index = 0;
@@ -254,6 +257,20 @@ public class ProgrammingSubmissionService {
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         setTestCasesChanged(programmingExercise.getId(), false);
+        // Let the instructor know that the build run is finished.
+        notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
+    }
+
+    private void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.RUNNING);
+        // Send a notification to the client to inform the instructor about the test case update.
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE);
+    }
+
+    private void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
+        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
+        // Send a notification to the client to inform the instructor about the test case update.
+        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE);
     }
 
     /**
@@ -382,6 +399,7 @@ public class ProgrammingSubmissionService {
                     || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 // in this case, we first have to resume the exercise: this includes that we again setup the build plan properly before we trigger it
                 participationService.resumeExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+                // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
             continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             notifyUserAboutSubmission(submission);
@@ -489,6 +507,10 @@ public class ProgrammingSubmissionService {
 
     private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
+    }
+
+    private String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
+        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
     }
 
     /**

@@ -7,9 +7,9 @@ import {
 import { ProgrammingAssessmentRepoExportButtonComponent, ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { FormsModule } from '@angular/forms';
+import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 
 @NgModule({
@@ -21,7 +21,7 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
         ProgrammingAssessmentRepoExportDialogComponent,
     ],
     entryComponents: [ProgrammingAssessmentManualResultDialogComponent, ProgrammingAssessmentRepoExportDialogComponent],
-    providers: [ProgrammingAssessmentManualResultService],
+    providers: [ProgrammingAssessmentManualResultService, BuildLogService],
     exports: [ProgrammingAssessmentManualResultButtonComponent, ProgrammingAssessmentRepoExportButtonComponent],
 })
 export class ArtemisProgrammingAssessmentModule {}
