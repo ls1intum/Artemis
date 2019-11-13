@@ -55,7 +55,7 @@ jobs:
     - name: Java Tests
       run: ./gradlew executeTests
     - name: Comment PR on Java Test Failure
-      uses: thollander/actions-comment-pull-request
+      uses: thollander/actions-comment-pull-request@1.0.0
       with:
         message: Java tests are failing. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,7 +63,7 @@ jobs:
     - name: Java Code Style
       run: ./gradlew spotlessCheck
     - name: Comment PR on Java Code Style Failure
-      uses: thollander/actions-comment-pull-request
+      uses: thollander/actions-comment-pull-request@1.0.0
       with:
         message: You Java code style does not match our conventions. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
     - name: Java Documentation
       run: ./gradlew checkstyleMain -x yarn_install -x webpack
     - name: Comment PR on Java Documentation Failure
-      uses: thollander/actions-comment-pull-request
+      uses: thollander/actions-comment-pull-request@1.0.0
       with:
         message: You Java code is missing documentation in the JavaDoc format. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -90,7 +90,7 @@ jobs:
     - name: TypeScript Tests
       run: yarn test
     - name: Comment PR on TS Test Failure
-      uses: thollander/actions-comment-pull-request
+      uses: thollander/actions-comment-pull-request@1.0.0
       with:
         message: Client tests are failing. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -98,7 +98,7 @@ jobs:
     - name: TypeScript Formatting
       run: yarn prettier:check
     - name: Comment PR on TS Formatting Failure
-      uses: thollander/actions-comment-pull-request
+      uses: thollander/actions-comment-pull-request@1.0.0
       with:
         message: You TypeScript code does not match our conventions. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +106,7 @@ jobs:
     - name: TypeScript Code Style
       run: yarn lint
     - name: Comment PR on TS Code Style Failure
-      uses: thollander/actions-comment-pull-request
+      uses: thollander/actions-comment-pull-request@1.0.0
       with:
         message: You TypeScript code style does not match our conventions. Check the logs of the _Build_ action for details.
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
