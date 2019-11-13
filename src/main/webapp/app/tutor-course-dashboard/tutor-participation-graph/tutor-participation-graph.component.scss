@@ -1,89 +1,91 @@
-ul {
-    padding-left: 0;
-    z-index: 1;
-    position: relative;
-}
+jhi-tutor-participation-graph {
+    ul {
+        padding-left: 0;
+        z-index: 1;
+        position: relative;
+    }
 
-li {
-    width: 2em;
-    height: 2em;
-    text-align: center;
-    line-height: 2em;
-    border-radius: 1em;
-    background: green;
-    margin: 0 1em;
-    display: inline-block;
-    color: white;
-    position: relative;
-    /*z-index: 1;*/
-}
+    li {
+        width: 2em;
+        height: 2em;
+        text-align: center;
+        line-height: 2em;
+        border-radius: 1em;
+        background: green;
+        margin: 0 1em;
+        display: inline-block;
+        color: white;
+        position: relative;
+        /*z-index: 1;*/
+    }
 
-li::before {
-    content: '';
-    position: absolute;
-    top: 0.9em;
-    left: -4em;
-    width: 4em;
-    height: 0.2em;
-    background: green;
-    z-index: -1;
-}
+    li::before {
+        content: '';
+        position: absolute;
+        top: 0.9em;
+        left: -4em;
+        width: 4em;
+        height: 0.2em;
+        background: green;
+        z-index: -1;
+    }
 
-li:first-child::before {
-    display: none;
-}
+    li:first-child::before {
+        display: none;
+    }
 
-.active {
-    background: green;
-}
+    .active {
+        background: green;
+    }
 
-.active + li {
-    background: red;
-
-    & + li {
+    .active + li {
         background: red;
+
+        & + li {
+            background: red;
+        }
+
+        & + li::before {
+            background: red;
+        }
     }
 
-    & + li::before {
-        background: red;
+    .not_participated {
+        display: none;
+
+        &.active + li + li::before,
+        &.active + li + ngb-tooltip-window + li::before {
+            background: red !important;
+        }
     }
-}
 
-.not_participated {
-    display: none;
-
-    &.active + li + li::before,
-    &.active + li + ngb-tooltip-window::ng-deep + li::before {
-        background: red !important;
+    .not_participated + li::before {
+        display: none !important;
     }
-}
 
-.not_participated + li::before {
-    display: none !important;
-}
+    .opaque {
+        background: darkred !important;
+    }
 
-.opaque {
-    background: darkred !important;
-}
+    .opaque::before {
+        background: darkred;
+    }
 
-.opaque::before {
-    background: darkred;
-}
+    .orange {
+        background: orange !important;
+    }
 
-.orange {
-    background: orange !important;
-}
+    .orange ~ li::before {
+        background: orange !important;
+    }
 
-.orange ~ li::before {
-    background: orange !important;
-}
+    .progress-bar-li {
+        width: 8em;
+        background: white !important;
+        top: 0.2em;
+    }
 
-.progress-bar-li {
-    width: 8em;
-    background: white !important;
-    top: 0.2em;
-}
-
-.progress-bar-li::before {
-    top: 0.5em;
+    .progress-bar-li::before {
+        top: 0.5em;
+    }
 }
