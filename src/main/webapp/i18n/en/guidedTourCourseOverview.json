@@ -48,8 +48,8 @@
             },
             "contact": {
                 "headline": "Contact the Artemis team",
-                "content": "Feel free to contact us to leave us some feedback, request features or to report bugs in the application. If you're motivated and want to contribute to Artemis, then head over to our Github and submit your first Pull Requests",
-                "link": "Visit the Artemis Github page"
+                "content": "Feel free to contact us to leave us some feedback, request features or to report bugs in the application.",
+                "hint": "If want to contribute to Artemis, then head over to our <a href='https://github.com/ls1intum/ArTEMiS' target='_blank'>Github page</a> and submit your first Pull Requests"
             }
         }
     }

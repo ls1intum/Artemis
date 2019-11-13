@@ -113,7 +113,7 @@
                 </button>
                 <button
                     *ngIf="guidedTourService.isCancelOrCompleteTour(true)"
-                    class="back-button"
+                    class="restart-button"
                     [disabled]="guidedTourService.isOnResizeMessage"
                     (click)="guidedTourService.startTour()"
                 >
