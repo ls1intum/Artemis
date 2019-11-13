@@ -16,7 +16,7 @@ on:
             - .github/**
             - !.github/workflows/build.yml
     pull_request:
-    tags:
+    tags: *
 
 env:
     CI: true
