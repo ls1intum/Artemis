@@ -15,5 +15,10 @@ import java.lang.annotation.Target;
 @Target({ ElementType.METHOD, ElementType.TYPE })
 public @interface FeatureToggle {
 
+    /**
+     * Set a list of features that should get checked before the endpoint is activated
+     *
+     * @return All features that should be active for the annotated endpoint
+     */
     Feature[] value();
 }
