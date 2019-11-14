@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
+@Profile("jenkins")
 @Component
 public class JenkinsBuildPlanCreatorFactory {
 

@@ -27,7 +27,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
         final var configBuilder = buildPlanCreatorFactory.builderFor(exercise.getProgrammingLanguage());
-        // final var jobConfig = configBuilder.buildBasicConfig()
+        final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
     }
 
     @Override
