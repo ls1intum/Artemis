@@ -17,13 +17,15 @@
                     </th>
                     <th jhiSortBy="score"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</a> <fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="duration"><a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="student.firstName" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.student">Student</a> <fa-icon icon="sort"></fa-icon>
+                    </th>
                     <th jhiSortBy="assessor.firstName">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon icon="sort"></fa-icon>
                     </th>
                     <th>
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</a>
                     </th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -49,6 +51,9 @@
                             )
                         }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
+                    </td>
+                    <td *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                        {{ submission.participation.student.firstName }} {{ submission.participation.student.lastName }}
                     </td>
                     <td>
                         <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>

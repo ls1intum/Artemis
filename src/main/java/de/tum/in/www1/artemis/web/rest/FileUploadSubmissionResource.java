@@ -169,7 +169,7 @@ public class FileUploadSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<FileUploadSubmission> fileUploadSubmissions;
+        final List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
             fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
@@ -177,6 +177,8 @@ public class FileUploadSubmissionResource {
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
         }
+
+        fileUploadSubmissions.forEach(fileUploadSubmissionService::hideDetails);
 
         return ResponseEntity.ok().body(fileUploadSubmissions);
     }

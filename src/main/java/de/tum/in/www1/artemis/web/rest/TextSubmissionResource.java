@@ -182,14 +182,7 @@ public class TextSubmissionResource {
             textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
         }
 
-        // tutors should not see information about the student of a submission
-        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            textSubmissions.forEach(textSubmission -> {
-                if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
-                    ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
-                }
-            });
-        }
+        textSubmissions.forEach(textSubmissionService::hideDetails);
 
         return ResponseEntity.ok().body(textSubmissions);
     }
