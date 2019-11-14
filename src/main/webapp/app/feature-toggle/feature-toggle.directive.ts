@@ -26,6 +26,10 @@ export class FeatureToggleDirective implements OnInit {
         }
     }
 
+    /**
+     * This will disable the feature component (normally a button) if the specified feature flag is inactive OR
+     * if there is some other condition given as an Input, which takes higher priority (input overwriteDisabled)
+     */
     @HostBinding('disabled')
     get disabled(): boolean {
         return this.overwriteDisabled || !this.featureActive;
