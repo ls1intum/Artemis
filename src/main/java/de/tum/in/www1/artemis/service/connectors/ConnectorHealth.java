@@ -25,6 +25,12 @@ public class ConnectorHealth {
         this.exception = exception;
     }
 
+    /**
+     * Converts the health instance into a for the Spring Boot actuator readable health object. This can then be
+     * exposed on the /health endpoint using a custom {@link org.springframework.boot.actuate.health.HealthIndicator}
+     *
+     * @return The health object to be exposed in a HealthIndicator
+     */
     public Health asActuatorHealth() {
         final var health = this.isUp ? Health.up() : Health.down();
         if (this.exception != null) {
