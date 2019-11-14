@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
@@ -81,24 +83,28 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request) {
         return super.createFile(exerciseId, filename, request);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request) {
         return super.createFolder(exerciseId, folderName, request);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
         return super.renameFile(exerciseId, fileMove);
     }
 
     @Override
     @DeleteMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         return super.deleteFile(exerciseId, filename);
     }
@@ -111,6 +117,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) {
         return super.commitChanges(exerciseId);
     }
