@@ -17,7 +17,9 @@
             "hystrix": "Hystrix",
             "diskSpace": "Disk space",
             "mail": "Email",
-            "db": "Database"
+            "db": "Database",
+            "bamboo": "Bamboo",
+            "bitbucket": "Bitbucket"
         },
         "table": {
             "service": "Service name",

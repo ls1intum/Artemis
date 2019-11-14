@@ -185,6 +185,14 @@ public interface ContinuousIntegrationService {
     void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
 
     /**
+     * Checks if the underlying CI server is up and running and gives some additional information about the running
+     * services if available
+     *
+     * @return The health of the CI service containing if it is up and running and any additional data, or the throwing exception otherwise
+     */
+    ConnectorHealth health();
+
+    /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out
      * to a subdirectory called "assignment" for the Python programming language.
      */

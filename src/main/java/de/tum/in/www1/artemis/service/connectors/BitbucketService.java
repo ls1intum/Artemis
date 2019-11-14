@@ -545,6 +545,17 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
+    @Override
+    public ConnectorHealth health() {
+        try {
+            final var status = restTemplate.getForObject(BITBUCKET_SERVER_URL + "/status", JsonNode.class);
+            return status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+        }
+        catch (Exception emAll) {
+            return new ConnectorHealth(emAll);
+        }
+    }
+
     /**
      * Create a new repo
      *
