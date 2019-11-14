@@ -93,6 +93,7 @@ public class ResultResource {
      * POST /participations/{participationId}/manual-results : Create a new manual result for a programming exercise (Do NOT use it for other exercise types)
      * NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
      *
+     * @param participationId the id of the participation for which the new manual result is created
      * @param newResult the result to create
      * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -148,6 +149,7 @@ public class ResultResource {
     /**
      * PUT /participations/{participationId}/manual-results : Updates an existing result.
      *
+     * @param participationId the id of the participation for which the manual result is updated
      * @param updatedResult the result to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated result, or with status 400 (Bad Request) if the result is not valid, or with status 500 (Internal
      *         Server Error) if the result couldn't be updated
