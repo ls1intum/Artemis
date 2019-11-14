@@ -1,5 +1,5 @@
 <jhi-button
-    *ngIf="participationIsActive && (showForSuccessfulSubmissions || participationHasLatestSubmissionWithoutResult)"
+    *ngIf="participationBuildCanBeTriggered && (showForSuccessfulSubmissions || participationHasLatestSubmissionWithoutResult)"
     [btnSize]="btnSize"
     [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
     [icon]="'redo'"
