@@ -14,6 +14,7 @@ on:
     - 'CODE_OF_CONDUCT.md'
     - 'CONTRIBUTING.md'
     - 'LICENSE'
+    - 'SECURITY.md'
     - 'data/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
