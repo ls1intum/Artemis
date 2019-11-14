@@ -1,5 +1,5 @@
-import { Directive, Input, ElementRef, OnInit, OnChanges, SimpleChanges, Renderer2, HostBinding } from '@angular/core';
-import { ActiveFeatureToggles, FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
+import { Directive, HostBinding, Input, OnInit } from '@angular/core';
+import { FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
 
 @Directive({
@@ -7,7 +7,8 @@ import { tap } from 'rxjs/operators';
 })
 export class FeatureToggleDirective implements OnInit {
     @Input('jhiFeatureToggle') feature: FeatureToggle;
-    @HostBinding('disabled') disabled = false;
+    @Input() overwriteDisabled: boolean | null;
+    private featureActive = true;
 
     constructor(private featureToggleService: FeatureToggleService) {}
 
@@ -18,10 +19,15 @@ export class FeatureToggleDirective implements OnInit {
                 .pipe(
                     // Disable the element if the feature is inactive.
                     tap(active => {
-                        this.disabled = !active;
+                        this.featureActive = active;
                     }),
                 )
                 .subscribe();
         }
+    }
+
+    @HostBinding('disabled')
+    get disabled(): boolean {
+        return this.overwriteDisabled || !this.featureActive;
     }
 }
