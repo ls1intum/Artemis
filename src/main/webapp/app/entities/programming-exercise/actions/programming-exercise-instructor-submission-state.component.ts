@@ -7,6 +7,7 @@ import { ButtonType } from 'app/shared/components';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { hasExerciseChanged } from 'app/entities/exercise';
 import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -20,6 +21,7 @@ import { ProgrammingBuildRunService } from 'app/programming-submission/programmi
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 

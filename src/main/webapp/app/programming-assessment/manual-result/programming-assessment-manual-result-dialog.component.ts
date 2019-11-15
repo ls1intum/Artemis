@@ -97,10 +97,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
         if (this.result.id != null) {
-            this.subscribeToSaveResponse(this.manualResultService.update(this.result));
+            this.subscribeToSaveResponse(this.manualResultService.update(this.participation.id, this.result));
         } else {
             // in case id is null or undefined
-            this.subscribeToSaveResponse(this.manualResultService.create(this.result));
+            this.subscribeToSaveResponse(this.manualResultService.create(this.participation.id, this.result));
         }
     }
 

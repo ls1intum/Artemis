@@ -119,6 +119,7 @@ import {
     faUserCheck,
     faUserMinus,
     faClipboardList,
+    faToggleOn,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -281,5 +282,6 @@ export class ArtemisIconsModule {
         library.addIcons(faICursor);
         library.addIcons(faVideo);
         library.addIcons(faClipboardList);
+        library.addIcons(faToggleOn);
     }
 }

@@ -31,6 +31,7 @@ import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-l
 import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -49,6 +50,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArtemisCourseRegistrationSelector,
         IntellijModule,
         ArtemisComplaintsModule,
+        FeatureToggleModule,
     ],
     declarations: [
         OverviewComponent,

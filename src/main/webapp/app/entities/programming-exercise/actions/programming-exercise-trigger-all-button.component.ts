@@ -7,6 +7,7 @@ import { ButtonType } from 'app/shared/components';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -23,12 +24,14 @@ import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submi
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
             [icon]="'redo'"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
+            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (onClick)="openTriggerAllModal()"
         >
         </jhi-button>
     `,
 })
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     @Input() exercise: ProgrammingExercise;
     @Input() disabled = false;

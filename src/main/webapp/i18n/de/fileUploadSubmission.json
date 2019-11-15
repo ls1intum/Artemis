@@ -20,12 +20,15 @@
             "feedbackResultDetail": "mit folgendem Feedback: {{ detailText }}",
             "confirmSubmission": "Bist du sicher, dass du abgeben möchtest? Du kannst deine Antwort nicht mehr bearbeiten, bis du eine Bewertung erhältst!",
             "file": "Datei",
-            "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 2 MB",
+            "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 2 MB.",
             "fileExtensionError": "Falsche Dateierweiterung. Bitte lade eine Datei mit einer der unten aufgeführten zulässigen Dateierweiterungen hoch.",
             "fileUploadError": "Deine Einreichung der Datei {{ fileName }} ist fehlgeschlagen!",
             "submitted": "Abgegeben",
             "submittedFile": "Die Datei {{ filename }} wurde als Lösung für die Übung eingereicht",
-            "download": "Datei herunterladen"
+            "download": "Datei herunterladen",
+            "selectFile": "Bitte wähle zuerst eine Datei aus und sende sie dann ab.",
+            "fileUpload": "Datei hochladen",
+            "forExercise": "für Übung"
         }
     }
 }

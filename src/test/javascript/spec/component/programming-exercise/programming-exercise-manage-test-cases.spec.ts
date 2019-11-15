@@ -31,6 +31,8 @@ import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-ex
 import { MockProgrammingExerciseWebsocketService } from '../../mocks/mock-programming-exercise-websocket.service';
 import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -133,6 +135,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
