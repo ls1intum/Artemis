@@ -12,7 +12,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -78,8 +77,12 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation) {
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var planKey = participation.getBuildPlanId();
 
+        final var errorMessage = "Unable to trigger build " + planKey;
+        post(Endpoint.TRIGGER_BUILD, HttpStatus.OK, errorMessage, String.class, projectKey, planKey);
     }
 
     @Override
@@ -248,7 +251,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private enum Endpoint {
         NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
-        DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml");
+        DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
+        TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build");
 
         private List<String> pathSegments;
 
