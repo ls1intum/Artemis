@@ -1,10 +1,10 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { tap } from 'rxjs/operators';
+import { tap, filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { compose, head, orderBy } from 'lodash/fp';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
+import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { SubmissionType } from 'app/entities/submission';
@@ -12,6 +12,7 @@ import { AssessmentType } from 'app/entities/assessment-type';
 import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/feature-toggle';
+import { Result } from 'app/entities/result';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -38,7 +39,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    protected constructor(protected submissionService: ProgrammingSubmissionService) {}
+    protected constructor(protected submissionService: ProgrammingSubmissionService, protected participationWebsocketService: ParticipationWebsocketService) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.
@@ -58,6 +59,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                 this.participation.initializationState === InitializationState.INITIALIZED || this.participation.initializationState === InitializationState.INACTIVE;
             if (this.participationBuildCanBeTriggered) {
                 this.setupSubmissionSubscription();
+                this.setupResultSubscription();
             }
         }
     }
@@ -96,6 +98,25 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                             this.isBuilding = false;
                             break;
                     }
+                }),
+            )
+            .subscribe();
+    }
+
+    /**
+     * Set up a websocket subscription to incoming results.
+     * The subscription is used to determine the type of the latest result.
+     */
+    setupResultSubscription() {
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
+        }
+        this.resultSubscription = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id)
+            .pipe(
+                filter((result: Result | null) => !!result),
+                tap((result: Result) => {
+                    this.lastResultIsManual = !!result && result.assessmentType === AssessmentType.MANUAL;
                 }),
             )
             .subscribe();

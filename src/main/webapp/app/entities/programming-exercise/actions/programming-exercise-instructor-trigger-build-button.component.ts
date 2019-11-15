@@ -7,14 +7,20 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
 import { ProgrammingExerciseInstructorTriggerAllDialogComponent } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-all-button.component';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components';
+import { ParticipationWebsocketService } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
-    constructor(submissionService: ProgrammingSubmissionService, private translateService: TranslateService, private modalService: NgbModal) {
-        super(submissionService);
+    constructor(
+        submissionService: ProgrammingSubmissionService,
+        participationWebsocketService: ParticipationWebsocketService,
+        private translateService: TranslateService,
+        private modalService: NgbModal,
+    ) {
+        super(submissionService, participationWebsocketService);
         this.showForSuccessfulSubmissions = true;
     }
 
