@@ -17,9 +17,12 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 
 /**
  * A Exercise.
@@ -549,6 +552,129 @@ public abstract class Exercise implements Serializable {
      */
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
         return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
+    }
+
+    /**
+     * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
+     * result. Filter everything else that is not relevant
+     *
+     * @param participations the set of participations, wherein to search for the relevant participation
+     * @param username used to get quiz submission for the user
+     * @param isStudent defines if the current user is a student
+     */
+    public void filterForCourseDashboard(List<StudentParticipation> participations, String username, boolean isStudent) {
+        // remove the unnecessary inner course attribute
+        setCourse(null);
+
+        // get user's participation for the exercise
+        StudentParticipation participation = participations != null ? findRelevantParticipation(participations) : null;
+
+        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
+        // if participation was not found in database
+        if (participation == null && this instanceof QuizExercise) {
+            QuizSubmission submission = QuizScheduleService.getQuizSubmission(getId(), username);
+            if (submission.getSubmissionDate() != null) {
+                participation = new StudentParticipation().exercise(this);
+                participation.initializationState(InitializationState.INITIALIZED);
+            }
+        }
+
+        // add relevant submission (relevancy depends on InitializationState) with its result to participation
+        if (participation != null) {
+            // find the latest submission with a rated result, otherwise the latest submission with
+            // an unrated result or alternatively the latest submission without a result
+            Set<Submission> submissions = participation.getSubmissions();
+
+            // only transmit the relevant result
+            Submission submission;
+            if (participation instanceof ProgrammingExerciseStudentParticipation) {
+                submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateProgrammingSubmission(this, submissions);
+            }
+            else {
+                submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
+            }
+            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
+
+            Set<Result> results = result != null ? Set.of(result) : Set.of();
+
+            if (result != null) {
+                // remove inner participation from result
+                result.setParticipation(null);
+                // filter sensitive information about the assessor if the current user is a student
+                if (isStudent) {
+                    result.filterSensitiveInformation();
+                }
+            }
+
+            // filter sensitive information in submission's result
+            if (isStudent && submission != null && submission.getResult() != null) {
+                submission.getResult().filterSensitiveInformation();
+            }
+
+            // add submission to participation
+            if (submission != null) {
+                participation.setSubmissions(Set.of(submission));
+            }
+
+            participation.setResults(results);
+
+            // remove inner exercise from participation
+            participation.setExercise(null);
+
+            // add participation into an array
+            setStudentParticipations(Set.of(participation));
+        }
+    }
+
+    /**
+     * Filter for appropriate submission. Relevance in the following order:
+     * - submission with rated result
+     * - submission with unrated result (late submission)
+     * - no submission with any result > latest submission
+     *
+     * @param submissions that need to be filtered
+     * @return filtered submission
+     */
+    private Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+        List<Submission> submissionsWithRatedResult = new ArrayList<>();
+        List<Submission> submissionsWithUnratedResult = new ArrayList<>();
+        List<Submission> submissionsWithoutResult = new ArrayList<>();
+
+        for (Submission submission : submissions) {
+            Result result = submission.getResult();
+            if (result != null) {
+                if (result.isRated() == Boolean.TRUE) {
+                    submissionsWithRatedResult.add(submission);
+                }
+                else {
+                    submissionsWithUnratedResult.add(submission);
+                }
+            }
+            else {
+                submissionsWithoutResult.add(submission);
+            }
+        }
+
+        if (submissionsWithRatedResult.size() > 0) {
+            return submissionsWithRatedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }
+        else if (submissionsWithUnratedResult.size() > 0) {
+            return submissionsWithUnratedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }
+        else if (submissionsWithoutResult.size() > 0) {
+            return submissionsWithoutResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }
+        return null;
+    }
+
+    private Submission findAppropriateProgrammingSubmission(Exercise exercise, Set<Submission> submissions) {
+        return submissions.stream().filter(submission -> {
+            if (submission.getResult() != null) {
+                return submission.getResult().isRated();
+            }
+            return exercise.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
+                    || submission.getSubmissionDate().isBefore(exercise.getDueDate());
+        }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
     }
 
     @Override
