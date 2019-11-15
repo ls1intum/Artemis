@@ -346,7 +346,7 @@ public class BambooService implements ContinuousIntegrationService {
         groupNames.forEach(group -> {
             final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
             final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
-            if (response.getStatusCode() != HttpStatus.NO_CONTENT) {
+            if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
                 final var errorMessage = "Unable to give permissions to project " + projectKey + "; error body: " + response.getBody() +
                     "; headers: " + response.getHeaders() + "; status code: " + response.getStatusCode();
                 log.error(errorMessage);
