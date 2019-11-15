@@ -92,6 +92,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
             .pipe(
+                // The updating result must ignore submissions that are ungraded if ungraded results should not be shown (otherwise the building animation will be shown even though not relevant).
+                filter(({ submission }) => this.showUngradedResults || !submission || !this.exercise.dueDate || this.exercise.dueDate.isAfter(moment(submission.submissionDate!))),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
                 }),
