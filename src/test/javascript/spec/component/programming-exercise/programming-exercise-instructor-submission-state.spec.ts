@@ -16,6 +16,10 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,9 +29,13 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     let fixture: ComponentFixture<ProgrammmingExerciseInstructorSubmissionStateComponent>;
     let debugElement: DebugElement;
     let submissionService: ProgrammingSubmissionService;
+    let buildRunService: ProgrammingBuildRunService;
 
     let getExerciseSubmissionStateStub: SinonStub;
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
+
+    let getBuildRunStateStub: SinonStub;
+    let getBuildRunStateSubject: Subject<BuildRunState>;
 
     let triggerAllStub: SinonStub;
     let triggerParticipationsStub: SinonStub;
@@ -46,8 +54,10 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             providers: [
                 JhiLanguageHelper,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
@@ -57,9 +67,13 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
                 debugElement = fixture.debugElement;
 
                 submissionService = debugElement.injector.get(ProgrammingSubmissionService);
+                buildRunService = debugElement.injector.get(ProgrammingBuildRunService);
 
                 getExerciseSubmissionStateSubject = new Subject<ExerciseSubmissionState>();
                 getExerciseSubmissionStateStub = stub(submissionService, 'getSubmissionStateOfExercise').returns(getExerciseSubmissionStateSubject);
+
+                getBuildRunStateSubject = new Subject<BuildRunState>();
+                getBuildRunStateStub = stub(buildRunService, 'getBuildRunUpdates').returns(getBuildRunStateSubject);
 
                 triggerAllStub = stub(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').returns(of());
                 triggerParticipationsStub = stub(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').returns(of());
@@ -225,4 +239,32 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
 
         expect(comp.isBuildingFailedSubmissions).to.be.false;
     });
+
+    it('should disable the trigger all button while a build is running and re-enable it when it is complete', fakeAsync(() => {
+        const isBuildingSubmissionState = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
+        comp.exerciseId = exercise.id;
+
+        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
+
+        // Wait for a second as the view is updated with a debounce.
+        tick(500);
+
+        fixture.detectChanges();
+
+        expect(getTriggerAllButton().disabled).to.be.false;
+
+        getBuildRunStateSubject.next(BuildRunState.RUNNING);
+        fixture.detectChanges();
+
+        expect(getTriggerAllButton().disabled).to.be.true;
+
+        getBuildRunStateSubject.next(BuildRunState.COMPLETED);
+        fixture.detectChanges();
+
+        expect(getTriggerAllButton().disabled).to.be.false;
+    }));
 });

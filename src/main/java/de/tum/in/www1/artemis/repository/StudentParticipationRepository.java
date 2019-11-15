@@ -49,18 +49,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}")
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results par where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId} and (par.id = (select max(id) from participation.results) or par.id = null)")
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId} and (par.id = (select max(id) from participation.results) or par.id = null)")
     Optional<StudentParticipation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *
+     * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
+     *
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and submission.submitted = true and (result is null or result.assessmentType = 'AUTOMATIC')")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(@Param("exerciseId") Long exerciseId);
+    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessmentType = 'MANUAL') and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     /**
      * Find all participations of submissions that are submitted and do not already have any result. This means neither a manual nor a automatic assessment took place
@@ -103,6 +105,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
     StudentParticipation findOneByIdWithEagerExerciseAndEagerCourse(@Param("participationId") Long participationId);
 
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
+    StudentParticipation findOneByIdWithEagerResultsAndExerciseAndEagerCourse(@Param("participationId") Long participationId);
+
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.exercise left join fetch participation.results where participation.student.id = :#{#studentId}")
     List<StudentParticipation> findByStudentIdWithEagerResults(@Param("studentId") Long studentId);
 
@@ -111,4 +116,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndExerciseWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") Set<Exercise> exercises);
+
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
+    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 }

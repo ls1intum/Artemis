@@ -56,6 +56,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     private notifyResultSubscribers = (result: Result) => {
         const resultObservable = this.resultObservables.get(result.participation!.id);
+        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Moment object - this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
             this.resultObservables.set(result.participation!.id, new BehaviorSubject(result));
         } else {
@@ -212,7 +213,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * If there is no observable for the participation a new one will be created.
      *
      * @param participationId Id of Participation of which result to subscribe to
-     * @param exercise Exercise to which the Participation belongs
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
         this.createResultWSConnectionIfNotExisting(participationId);

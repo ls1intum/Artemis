@@ -16,6 +16,9 @@ import { ArtemisSharedCommonModule } from 'app/shared';
 import { SortByModule } from 'app/components/pipes';
 import { DifferencePipe } from 'ngx-moment';
 import { ButtonComponent } from 'app/shared/components';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,9 +36,13 @@ describe('ProgrammingExerciseImportComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, SortByModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, SortByModule, FeatureToggleModule],
             declarations: [ProgrammingExerciseImportComponent, ButtonComponent],
-            providers: [DifferencePipe, { provide: ProgrammingExercisePagingService, useClass: MockProgrammingExercisePagingService }],
+            providers: [
+                DifferencePipe,
+                { provide: ProgrammingExercisePagingService, useClass: MockProgrammingExercisePagingService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+            ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
             .compileComponents()

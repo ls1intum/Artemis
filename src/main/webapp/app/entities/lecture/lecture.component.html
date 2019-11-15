@@ -23,13 +23,13 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="markdown-preview">
                 <tr *ngFor="let lecture of lectures; trackBy: trackId">
                     <td>
                         <a [routerLink]="[lecture.id, 'view']">{{ lecture.id }}</a>
                     </td>
                     <td>{{ lecture.title }}</td>
-                    <td>{{ lecture.description }}</td>
+                    <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
                     <td>{{ lecture.startDate | date: 'medium' }}</td>
                     <td>{{ lecture.endDate | date: 'medium' }}</td>
                     <td>

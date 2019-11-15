@@ -19,10 +19,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.StudentQuestionService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -45,18 +42,18 @@ public class StudentQuestionResource {
 
     private final StudentQuestionService studentQuestionService;
 
-    private final CourseService courseService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
 
     GroupNotificationService groupNotificationService;
 
     public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService,
-            StudentQuestionService studentQuestionService, CourseService courseService, UserService userService) {
+            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
         this.groupNotificationService = groupNotificationService;
-        this.courseService = courseService;
+        this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
     }
 
@@ -156,7 +153,7 @@ public class StudentQuestionResource {
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(id);
-        if (!optionalStudentQuestion.isPresent()) {
+        if (optionalStudentQuestion.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         StudentQuestion studentQuestion = optionalStudentQuestion.get();
@@ -173,8 +170,8 @@ public class StudentQuestionResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        Boolean hasCourseTAAccess = courseService.userHasAtLeastTAPermissions(course);
-        Boolean isUserAuthor = user.getId() == studentQuestion.getAuthor().getId();
+        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        Boolean isUserAuthor = user.getId().equals(studentQuestion.getAuthor().getId());
         if (hasCourseTAAccess || isUserAuthor) {
             log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
             studentQuestionRepository.deleteById(id);

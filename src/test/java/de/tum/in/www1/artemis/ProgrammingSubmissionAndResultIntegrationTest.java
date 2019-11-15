@@ -125,7 +125,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     @BeforeEach
     void reset() {
         doReturn(true).when(bambooService).isBuildPlanEnabled(anyString());
-        database.addUsers(2, 2, 2);
+        database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
@@ -188,6 +188,42 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         // The submission should be manual and submitted.
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
+    }
+
+    /**
+     * The student commits, the code change is pushed to the VCS.
+     * The VCS notifies Artemis about a new submission.
+     *
+     * Here the participation provided does exist so Artemis can create the submission.
+     *
+     * After that the CI builds the code submission and notifies Artemis so it can create the result.
+     *
+     */
+    @Test
+    void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
+        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
+        ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
+        final long submissionId = submission.getId();
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
+
+        // Check that the result was created successfully and is linked to the participation and submission.
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).hasSize(1);
+        Result createdResult = results.get(0);
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+        List<Feedback> feedbacks = createdResult.getFeedbacks();
+        assertThat(feedbacks).hasSize(3);
+        assertThat(createdResult.getAssessor()).isNull();
+        // Needs to be set for using a custom repository method, known spring bug.
+        SecurityUtils.setAuthorizationObject();
+        var updatedParticipation = participationRepository.getOneWithEagerSubmissions(participation.getId());
+        submission = submissionRepository.findByIdWithEagerResult(submission.getId());
+        assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
+        assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
+        assertThat(updatedParticipation.getSubmissions()).hasSize(1);
+        assertThat(updatedParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
     }
 
     /**
@@ -276,7 +312,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
-        postSubmission(participationId, HttpStatus.BAD_REQUEST);
+        postSubmission(participationId, HttpStatus.OK);
         // Post the build result once.
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -290,6 +326,8 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         assertThat(submission.getResult()).isNotNull();
         assertThat(submission.getResult().getId()).isEqualTo(result.getId());
     }
+
+    // TODO: write a test case that invokes notifyPush on ProgrammingSubmissionService with two identical commits. This test should then expect an IllegalStateException
 
     /**
      * This is the case where an instructor manually triggers the build from the CI.
@@ -476,7 +514,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
     }
 
-    private String getPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
+    private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
         switch (participationType) {
         case TEMPLATE:
             return "BASE";
@@ -494,21 +532,25 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
         Long id = getParticipationIdByType(participationType, participationNumber);
-        request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-instructor-build", null, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
     }
 
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
-    @SuppressWarnings("unchecked")
     private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        String id = getPlanIdByParticipationType(participationType, participationNumber);
+        String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationNumber);
+        postResult("TEST201904BPROGRAMMINGEXERCISE6-" + buildPlanStudentId, expectedStatus, additionalCommit);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void postResult(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BAMBOO_REQUEST);
 
         Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
         Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
-        planMap.put("key", "TEST201904BPROGRAMMINGEXERCISE6-" + id.toUpperCase());
+        planMap.put("key", participationId.toUpperCase());
 
         if (additionalCommit) {
             Map<String, Object> buildMap = (Map<String, Object>) requestBodyMap.get("build");

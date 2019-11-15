@@ -14,6 +14,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -21,6 +22,7 @@ import { AssessmentType } from 'app/entities/assessment-type';
     styleUrls: ['./programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
+    FeatureToggle = FeatureToggle;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
     readonly C = ProgrammingLanguage.C;
@@ -147,6 +149,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
+        // If no release date is set, we warn the user.
+        if (!this.programmingExercise.releaseDate) {
+            const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
+            if (!window.confirm(confirmNoReleaseDate)) {
+                return;
+            }
+        }
         this.isSaving = true;
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise));

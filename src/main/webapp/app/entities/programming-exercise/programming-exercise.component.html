@@ -9,6 +9,7 @@
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-link-entity"
             class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -21,6 +22,7 @@
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-import-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -33,6 +35,7 @@
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [routerLink]="['/course', courseId, 'programming-exercise', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>

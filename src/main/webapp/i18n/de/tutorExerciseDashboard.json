@@ -58,6 +58,9 @@
             "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",
             "numberOfManualAssessedSubmissions": "Manuell bewertete Abgaben",
             "nextAssessment": "Nächste Abgabe bewerten",
+            "programmingExercise": {
+                "exampleSolution": "Beispiellösungs-Repository"
+            },
             "language": "Sprache",
             "languages": {
                 "ENGLISH": "Englisch",

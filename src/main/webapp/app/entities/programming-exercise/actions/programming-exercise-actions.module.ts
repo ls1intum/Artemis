@@ -9,9 +9,10 @@ import {
     ProgrammingExerciseTriggerAllButtonComponent,
 } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-all-button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, MomentModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedModule, MomentModule, ArtemisSharedComponentModule, FeatureToggleModule],
     declarations: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,

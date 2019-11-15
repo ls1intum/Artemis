@@ -9,7 +9,8 @@ import { Result } from './result.model';
 import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { ExerciseService } from 'app/entities/exercise';
+import { isMoment } from 'moment';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -28,6 +29,7 @@ export interface IResultService {
 export class ResultService implements IResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
+    private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -66,7 +68,7 @@ export class ResultService implements IResultService {
     }
 
     getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
+        return this.http.get<Result>(`${this.participationResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
     }
 
     delete(resultId: number): Observable<HttpResponse<void>> {
@@ -75,7 +77,15 @@ export class ResultService implements IResultService {
 
     public convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
-            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null,
+            completionDate:
+                // Result completionDate is a moment object -> toJSON.
+                result.completionDate != null && isMoment(result.completionDate)
+                    ? result.completionDate.toJSON()
+                    : // Result completionDate would be a valid date -> keep string.
+                    result.completionDate && moment(result.completionDate).isValid()
+                    ? result.completionDate
+                    : // No valid date -> remove date.
+                      null,
         });
         return copy;
     }
@@ -106,18 +116,5 @@ export class ResultService implements IResultService {
             }
         }
         return participation;
-    }
-
-    /**
-     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
-     * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
-     * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
-     */
-    isTimeOfComplaintValid(result: Result, exercise: Exercise): boolean {
-        const resultCompletionDate = moment(result.completionDate!);
-        if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
-            return resultCompletionDate.isAfter(moment().subtract(1, 'week'));
-        }
-        return moment(exercise.assessmentDueDate).isAfter(moment().subtract(1, 'week'));
     }
 }

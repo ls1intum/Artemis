@@ -1,10 +1,12 @@
-import { Component, Input, EventEmitter, Output } from '@angular/core';
-import { catchError, filter, take } from 'rxjs/operators';
+import { Component, Input, EventEmitter, Output, OnChanges, OnInit } from '@angular/core';
+import { catchError, filter, take, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.
@@ -21,23 +23,26 @@ import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-ex
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
             [icon]="'redo'"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
+            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (onClick)="openTriggerAllModal()"
         >
         </jhi-button>
     `,
 })
-export class ProgrammingExerciseTriggerAllButtonComponent {
+export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     @Input() exerciseId: number;
     @Input() disabled = false;
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
 
-    constructor(
-        private submissionService: ProgrammingSubmissionService,
-        private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
-        private modalService: NgbModal,
-    ) {}
+    constructor(private submissionService: ProgrammingSubmissionService, private programmingBuildRunService: ProgrammingBuildRunService, private modalService: NgbModal) {}
+
+    ngOnInit() {
+        // The info that the builds were triggered comes from a websocket channel.
+        this.subscribeBuildRunUpdates();
+    }
 
     /**
      * Opens a modal in that the user has to confirm to trigger all participations.
@@ -48,26 +53,20 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.result.then(() => {
-            this.isTriggeringBuildAll = true;
             this.submissionService
                 .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
-                    // The info that the builds were triggered comes from a websocket channel.
-                    this.waitForBuildResult();
                 });
         });
     }
 
-    private waitForBuildResult() {
-        this.programmingExerciseWebsocketService
-            .getTestCaseState(this.exerciseId)
-            .pipe(
-                filter(testCasesChanged => !testCasesChanged),
-                take(1),
-            )
-            .subscribe(() => (this.isTriggeringBuildAll = false));
+    private subscribeBuildRunUpdates() {
+        this.programmingBuildRunService
+            .getBuildRunUpdates(this.exerciseId)
+            .pipe(tap(buildRunState => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
+            .subscribe();
     }
 }
 

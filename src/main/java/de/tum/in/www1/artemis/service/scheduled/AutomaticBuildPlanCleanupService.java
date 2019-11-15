@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE;
+import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 import static java.time.ZonedDateTime.now;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -39,6 +42,7 @@ public class AutomaticBuildPlanCleanupService {
     /**
      *  Cleans up all build plans
      */
+    // TODO: remove transactional here
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     @Transactional
     public void cleanupBuildPlans() {
@@ -51,9 +55,10 @@ public class AutomaticBuildPlanCleanupService {
         long start = System.currentTimeMillis();
         log.info("Find build plans for potential cleanup");
 
-        long countNoResultAfter14Days = 0;
-        long countSuccessfulLatestResultAfter7Days = 0;
-        long countUnsuccessfulLatestResultAfter14Days = 0;
+        long countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate = 0;
+        long countNoResultAfter7Days = 0;
+        long countSuccessfulLatestResultAfter3Days = 0;
+        long countUnsuccessfulLatestResultAfter7Days = 0;
 
         List<ProgrammingExerciseStudentParticipation> allParticipationsWithBuildPlanId = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanId();
         Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete = new HashSet<>();
@@ -68,27 +73,45 @@ public class AutomaticBuildPlanCleanupService {
                 // we only want to clean up build plans of students
                 continue;
             }
-            Result result = participation.findLatestResult();
-            // 1st case: delete the build plan 14 days after the participation was initialized in case there is no result
-            if (result == null) {
-                if (participation.getInitializationDate() != null && participation.getInitializationDate().plusDays(14).isBefore(now())) {
+
+            if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())
+                    && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+
+                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
+                    // we don't clean up plans that will definitely be executed in the future
+                    continue;
+                }
+
+                // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
+                // and the students repos will be locked anyways.
+                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
                     participationsWithBuildPlanToDelete.add(participation);
-                    countNoResultAfter14Days++;
+                    countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
+                    continue;
+                }
+            }
+
+            Result result = participation.findLatestResult();
+            // 2nd case: delete the build plan 7 days after the participation was initialized in case there is no result
+            if (result == null) {
+                if (participation.getInitializationDate() != null && participation.getInitializationDate().plusDays(7).isBefore(now())) {
+                    participationsWithBuildPlanToDelete.add(participation);
+                    countNoResultAfter7Days++;
                 }
             }
             else {
-                // 2nd case: delete the build plan after 7 days in case the latest result is successful
+                // 3rd case: delete the build plan after 3 days in case the latest result is successful
                 if (result.isSuccessful()) {
-                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(7).isBefore(now())) {
+                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(3).isBefore(now())) {
                         participationsWithBuildPlanToDelete.add(participation);
-                        countSuccessfulLatestResultAfter7Days++;
+                        countSuccessfulLatestResultAfter3Days++;
                     }
                 }
-                // 3rd case: delete the build plan after 14 days in case the latest result is NOT successful
+                // 4th case: delete the build plan after 7 days in case the latest result is NOT successful
                 else {
-                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(14).isBefore(now())) {
+                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(7).isBefore(now())) {
                         participationsWithBuildPlanToDelete.add(participation);
-                        countUnsuccessfulLatestResultAfter14Days++;
+                        countUnsuccessfulLatestResultAfter7Days++;
                     }
                 }
             }
@@ -96,22 +119,36 @@ public class AutomaticBuildPlanCleanupService {
 
         log.info("Found " + allParticipationsWithBuildPlanId.size() + " participations with build plans in " + (System.currentTimeMillis() - start) + " ms execution time");
         log.info("Found " + participationsWithBuildPlanToDelete.size() + " old build plans to delete");
-        log.info("  Found " + countNoResultAfter14Days + " build plans without results 14 days after initialization");
-        log.info("  Found " + countSuccessfulLatestResultAfter7Days + " build plans with successful latest result is older than 7 days");
-        log.info("  Found " + countUnsuccessfulLatestResultAfter14Days + " build plans with unsuccessful latest result is older than 14 days");
+        log.info("  Found " + countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate + " build plans at least 1 day older than 'build and test submissions after due date");
+        log.info("  Found " + countNoResultAfter7Days + " build plans without results 7 days after initialization");
+        log.info("  Found " + countSuccessfulLatestResultAfter3Days + " build plans with successful latest result is older than 3 days");
+        log.info("  Found " + countUnsuccessfulLatestResultAfter7Days + " build plans with unsuccessful latest result is older than 7 days");
 
-        // Limit to 1000 deletions per night
-        List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(1000).collect(Collectors.toList());
+        // Limit to 2000 deletions per night
+        List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(2000).collect(Collectors.toList());
         List<String> buildPlanIds = actualParticipationsToClean.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).collect(Collectors.toList());
         log.info("Build plans to cleanup: " + buildPlanIds);
 
+        int index = 0;
         for (ProgrammingExerciseStudentParticipation participation : actualParticipationsToClean) {
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    log.info("Sleep for {}s during cleanupBuildPlans", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before cleaning up build plans", ex);
+                }
+            }
+
             try {
                 participationService.cleanupBuildPlan(participation);
             }
             catch (Exception ex) {
                 log.error("Could not cleanup build plan in participation " + participation.getId(), ex);
             }
+
+            index++;
         }
         log.info(actualParticipationsToClean.size() + " build plans have been cleaned");
     }

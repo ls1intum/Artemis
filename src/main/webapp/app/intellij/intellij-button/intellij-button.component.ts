@@ -1,5 +1,6 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-ide-button',
@@ -9,9 +10,10 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 export class IntellijButtonComponent {
     @Input() buttonLabel: string;
     @Input() buttonLoading = false;
-    @HostBinding('class.btn-outline-primary') @Input() outlined = false;
-    @HostBinding('class.btn-sm') @Input() smallButton = false;
-    @HostBinding('class.btn') isButton = true;
+    @Input() outlined = false;
+    @Input() smallButton = false;
+    @Input() disabled = false;
+    @Input() featureToggle = FeatureToggle; // Disable by feature toggle.
 
     javaBridge: JavaBridgeService;
 
@@ -19,7 +21,6 @@ export class IntellijButtonComponent {
         this.javaBridge = javaBridge;
     }
 
-    @HostBinding('class.btn-primary')
     public get btnPrimary(): boolean {
         return !this.outlined;
     }

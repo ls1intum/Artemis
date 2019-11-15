@@ -11,6 +11,7 @@ import {
     faArrowLeft,
     faArrowRight,
     faArrowsAltV,
+    faArrowsAlt,
     faAsterisk,
     faBan,
     faBars,
@@ -117,6 +118,8 @@ import {
     faCogs,
     faUserCheck,
     faUserMinus,
+    faClipboardList,
+    faToggleOn,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -164,6 +167,7 @@ export class ArtemisIconsModule {
         library.addIcons(faTimes);
         library.addIcons(faArrowLeft);
         library.addIcons(faArrowRight);
+        library.addIcons(faArrowsAlt);
         library.addIcons(faSave);
         library.addIcons(faPlus);
         library.addIcons(faPencilAlt);
@@ -277,5 +281,7 @@ export class ArtemisIconsModule {
         library.addIcons(faHandPointUp);
         library.addIcons(faICursor);
         library.addIcons(faVideo);
+        library.addIcons(faClipboardList);
+        library.addIcons(faToggleOn);
     }
 }

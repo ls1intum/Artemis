@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/utils/global.utils';
 
 @Component({
@@ -19,6 +20,8 @@ export class CourseComponent implements OnInit, OnDestroy {
     courses: Course[];
     eventSubscriber: Subscription;
     closeDialogTrigger: boolean;
+
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
         this.predicate = 'id';

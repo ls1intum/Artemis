@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -16,12 +19,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.web.rest.FileMove;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
@@ -93,18 +98,21 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
         return super.createFile(participationId, filename, request);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
         return super.createFolder(participationId, folderName, request);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
         return super.renameFile(participationId, fileMove);
     }
@@ -130,12 +138,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      */
     @Override
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
         return super.commitChanges(participationId);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
         return super.resetToLastCommit(participationId);
     }
@@ -156,20 +166,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        Participation participation;
-        try {
-            participation = participationService.findParticipation(participationId);
-        }
-        catch (EntityNotFoundException ex) {
-            return notFound();
-        }
-        if (!(participation instanceof ProgrammingExerciseParticipation))
-            return badRequest();
+        ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestResultAndFeedbacks(participationId);
 
-        if (!participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation))
+        if (!participationService.canAccessParticipation(participation)) {
             return forbidden();
+        }
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(((ProgrammingExerciseParticipation) participation).getBuildPlanId());
+        Optional<Result> latestResult = participation.getResults().stream().findFirst();
+        // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
+        if (latestResult.isPresent() && latestResult.get().getAssessmentType().equals(AssessmentType.MANUAL)) {
+            // Don't throw an error here, just return an empty list.
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getBuildPlanId());
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }

@@ -79,18 +79,6 @@ export class ParticipationService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    repositoryWebUrl(participationId: number) {
-        return this.http.get(`${this.resourceUrl}/${participationId}/repositoryWebUrl`, { responseType: 'text' }).map(repositoryWebUrl => {
-            return { url: repositoryWebUrl };
-        });
-    }
-
-    buildPlanWebUrl(participationId: number) {
-        return this.http.get(`${this.resourceUrl}/${participationId}/buildPlanWebUrl`, { responseType: 'text' }).map(buildPlanWebUrl => {
-            return { url: buildPlanWebUrl };
-        });
-    }
-
     downloadArtifact(participationId: number) {
         return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { responseType: 'blob' }).map(artifact => {
             return artifact;

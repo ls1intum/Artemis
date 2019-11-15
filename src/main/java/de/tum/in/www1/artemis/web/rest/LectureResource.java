@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -107,6 +106,28 @@ public class LectureResource {
     }
 
     /**
+     * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
+     *
+     * @param courseId the courseId of the course for which all lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
+     */
+    @GetMapping(value = "/courses/{courseId}/lectures")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseService.findOne(courseId);
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(lectureService.findAllByCourseId(courseId));
+    }
+
+    /**
      * GET /lectures/:id : get the "id" lecture.
      *
      * @param id the id of the lecture to retrieve
@@ -128,29 +149,6 @@ public class LectureResource {
         }
         lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get()));
         return ResponseUtil.wrapOrNotFound(lecture);
-    }
-
-    /**
-     * GET /courses/:courseId/lectures : get all the lectures of a course.
-     *
-     * @param courseId the courseId of the course for which all lectures should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
-     */
-    @GetMapping(value = "/courses/{courseId}/lectures")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
-
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOne(courseId);
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return forbidden();
-        }
-        return ResponseEntity.ok().body(lectureService.findAllByCourseId(courseId));
     }
 
     /**

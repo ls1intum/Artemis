@@ -39,7 +39,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                     tap((plantUmlSvg: string) => {
                         const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                         if (plantUmlHtmlContainer) {
-                            // We need to sanitize the received svg theoretically as it could contain malicious code in a script tag.
+                            // We need to sanitize the received svg as it could contain malicious code in a script tag.
                             plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUmlSvg);
                         }
                     }),
@@ -56,7 +56,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
                 const plantUmlRegex = /@startuml([^@]*)@enduml/g;
                 // E.g. Implement BubbleSort, testBubbleSort
-                const plantUmlContainer = `<div id="plantUml-${idPlaceholder}"/>`;
+                const plantUmlContainer = `<div class="mb-4" id="plantUml-${idPlaceholder}"></div>`;
                 // Replace test status markers.
                 const plantUmls = text.match(plantUmlRegex) || [];
                 const replacedText = plantUmls.reduce(

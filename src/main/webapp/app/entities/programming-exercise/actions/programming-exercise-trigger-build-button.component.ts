@@ -5,6 +5,9 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/pr
 import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
+import { SubmissionType } from 'app/entities/submission';
+import { HttpResponse } from '@angular/common/http';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -12,15 +15,16 @@ import { ButtonSize, ButtonType } from 'app/shared/components';
  * If there is no result, the button is disabled because this would mean that the student has not made a commit yet.
  */
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
-    abstract triggerBuild: (event: any) => void;
 
     @Input() exercise: ProgrammingExercise;
     @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
 
-    participationIsActive: boolean;
+    participationBuildCanBeTriggered: boolean;
     participationHasLatestSubmissionWithoutResult: boolean;
+    isRetrievingBuildStatus: boolean;
     isBuilding: boolean;
     // If true, the trigger button is also displayed for successful submissions.
     showForSuccessfulSubmissions = false;
@@ -37,8 +41,10 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            this.participationIsActive = this.participation.initializationState === InitializationState.INITIALIZED;
-            if (this.participationIsActive) {
+            // We can trigger the build only if the participation is active (has build plan) or if the build plan was archived (new build plan will be created).
+            this.participationBuildCanBeTriggered =
+                this.participation.initializationState === InitializationState.INITIALIZED || this.participation.initializationState === InitializationState.INACTIVE;
+            if (this.participationBuildCanBeTriggered) {
                 this.setupSubmissionSubscription();
             }
         }
@@ -81,5 +87,19 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                 }),
             )
             .subscribe();
+    }
+
+    /**
+     * Trigger a regular build or a failed build, depending on the state of the latest submission.
+     *
+     * @param submissionType that is used for the creation of the submission.
+     */
+    triggerBuild(submissionType: SubmissionType) {
+        this.isRetrievingBuildStatus = true;
+        if (this.participationHasLatestSubmissionWithoutResult) {
+            this.submissionService.triggerFailedBuild(this.participation.id).subscribe(() => (this.isRetrievingBuildStatus = false));
+        } else {
+            this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe(() => (this.isRetrievingBuildStatus = false));
+        }
     }
 }

@@ -12,12 +12,14 @@ import { AccountService } from 'app/core';
 import { ExerciseService } from 'app/entities/exercise';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/utils/global.utils';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
+    FeatureToggle = FeatureToggle;
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     closeDialogTrigger: boolean;

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.File;
@@ -18,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
@@ -66,10 +68,15 @@ public class ExerciseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
             TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService) {
+            FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -82,6 +89,8 @@ public class ExerciseResource {
         this.resultService = resultService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
+        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -125,6 +134,10 @@ public class ExerciseResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
+        }
+        // Programming exercises without semi automatic assessment should not be available on the tutor dashboard!
+        if (exercise instanceof ProgrammingExercise && !exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)) {
+            return badRequest();
         }
 
         // TODO CZ: load results of submissions eagerly to prevent additional database calls
@@ -174,8 +187,10 @@ public class ExerciseResource {
         Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
+        // TODO: This could just be one repository method as the exercise id is provided anyway.
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
+                + programmingExerciseService.countSubmissionsToAssessByExerciseId(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
