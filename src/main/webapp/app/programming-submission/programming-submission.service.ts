@@ -298,7 +298,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     return false;
                 }
                 // If we already have a value cached for the participation we don't override it.
-                if (!forceCacheOverride || !!this.submissionSubjects[exercise.studentParticipations[0].id]) {
+                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations[0].id]) {
                     return false;
                 }
                 // Without submissions we can't determine if the latest submission is pending.
