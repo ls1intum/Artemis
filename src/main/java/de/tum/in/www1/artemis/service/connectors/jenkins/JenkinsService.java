@@ -74,7 +74,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void deleteProject(String projectKey) {
-
+        final var errorMessage = "Error while trying to delete folder in Jenkins for " + projectKey;
+        post(Endpoint.DELETE_FOLDER, HttpStatus.OK, errorMessage, String.class);
     }
 
     @Override
@@ -155,6 +156,22 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) {
     }
 
+    private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
+        final var builder = endpoint.buildEndpoint(JENKINS_SERVER_URL.toString(), args);
+        try {
+            final var response = restTemplate.postForEntity(builder.build(true).toString(), null, responseType);
+            if (response.getStatusCode() != allowedStatus) {
+                throw new VersionControlException(
+                        messageInCaseOfError + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
+            }
+            return response.getBody();
+        }
+        catch (HttpClientErrorException e) {
+            log.error(messageInCaseOfError);
+            throw new VersionControlException(messageInCaseOfError, e);
+        }
+    }
+
     private <T> T postXml(Document doc, Class<T> responseType, HttpStatus allowedStatus, String messagInCaseOfError, Endpoint endpoint, Map<String, Object> queryParams,
             Object... args) {
         return postXml(doc, responseType, List.of(allowedStatus), messagInCaseOfError, endpoint, queryParams, args);
@@ -206,7 +223,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private enum Endpoint {
-        NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem");
+        NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete");
 
         private List<String> pathSegments;
 
