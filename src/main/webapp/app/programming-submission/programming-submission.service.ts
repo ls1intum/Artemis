@@ -303,7 +303,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     return false;
                 }
                 // Without submissions we can't determine if the latest submission is pending.
-                return !!exercise.studentParticipations[0].submissions.length;
+                return !!exercise.studentParticipations[0].submissions && !!exercise.studentParticipations[0].submissions.length;
             })
             .forEach(exercise => {
                 const participation = exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
