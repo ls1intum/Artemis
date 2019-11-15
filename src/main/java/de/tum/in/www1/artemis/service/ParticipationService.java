@@ -772,7 +772,8 @@ public class ParticipationService {
     @Transactional
     public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getBuildPlanId() != null) { // ignore participations without build plan id
-            continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+            final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
+            continuousIntegrationService.get().deleteBuildPlan(projectKey, participation.getBuildPlanId());
             participation.setInitializationState(INACTIVE);
             participation.setBuildPlanId(null);
             save(participation);
@@ -810,7 +811,8 @@ public class ParticipationService {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
             if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExerciseParticipation.getBuildPlanId());
+                final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+                continuousIntegrationService.get().deleteBuildPlan(projectKey, programmingExerciseParticipation.getBuildPlanId());
             }
             if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {

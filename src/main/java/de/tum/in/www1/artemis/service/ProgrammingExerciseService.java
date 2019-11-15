@@ -756,11 +756,11 @@ public class ProgrammingExerciseService {
 
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
             if (templateBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
             }
             final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
             if (solutionBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
             }
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 

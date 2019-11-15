@@ -236,10 +236,11 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Delete the build plan with given identifier from Bamboo.
      *
+     * @param projectKey The key of the project of the related programming exercise
      * @param buildPlanId unique identifier for the build plan on Bamboo.
      */
     @Override
-    public void deleteBuildPlan(String buildPlanId) {
+    public void deleteBuildPlan(String projectKey, String buildPlanId) {
         deletePlan(buildPlanId);
     }
 

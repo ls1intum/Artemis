@@ -75,12 +75,13 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void deleteProject(String projectKey) {
         final var errorMessage = "Error while trying to delete folder in Jenkins for " + projectKey;
-        post(Endpoint.DELETE_FOLDER, HttpStatus.OK, errorMessage, String.class);
+        post(Endpoint.DELETE_FOLDER, HttpStatus.OK, errorMessage, String.class, projectKey);
     }
 
     @Override
-    public void deleteBuildPlan(String buildPlanId) {
-
+    public void deleteBuildPlan(String projectKey, String buildPlanId) {
+        final var errorMessage = "Error while trying to delete job in Jenkins: " + buildPlanId;
+        post(Endpoint.DELETE_JOB, HttpStatus.OK, errorMessage, String.class, projectKey, buildPlanId);
     }
 
     @Override
@@ -223,7 +224,8 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private enum Endpoint {
-        NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete");
+        NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
+        DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete");
 
         private List<String> pathSegments;
 

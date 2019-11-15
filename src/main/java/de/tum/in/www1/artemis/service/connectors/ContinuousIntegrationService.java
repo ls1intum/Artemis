@@ -67,9 +67,10 @@ public interface ContinuousIntegrationService {
     /**
      * Delete build plan with given identifier from CI system.
      *
+     * @param projectKey The key of the related programming exercise
      * @param buildPlanId unique identifier for build plan on CI system
      */
-    void deleteBuildPlan(String buildPlanId);
+    void deleteBuildPlan(String projectKey, String buildPlanId);
 
     /**
      * Will be called when a POST request is sent to the '/results/{buildPlanId}'. Configure this as a build step in the build plan.
