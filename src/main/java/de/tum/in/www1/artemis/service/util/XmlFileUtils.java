@@ -22,6 +22,10 @@ public class XmlFileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(XmlFileUtils.class);
 
+    public static Document readFromString(String xmlString) {
+        return parseDocument(xmlString);
+    }
+
     public static Document readXmlFile(Path path) {
         return readXmlFile(path, null);
     }
@@ -36,6 +40,17 @@ public class XmlFileUtils {
                 }
             }
 
+            return parseDocument(configXmlText);
+        }
+        catch (IOException e) {
+            final var errorMessage = "Error loading template Jenins build XML: " + e.getMessage();
+            log.error(errorMessage, e);
+            throw new IllegalStateException(errorMessage, e);
+        }
+    }
+
+    private static Document parseDocument(String configXmlText) {
+        try {
             final var domFactory = DocumentBuilderFactory.newInstance();
             final var builder = domFactory.newDocumentBuilder();
             return builder.parse(new InputSource(new StringReader(configXmlText)));

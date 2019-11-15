@@ -64,7 +64,17 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
+        final var config = getPlanConfig(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+        final var urlElements = config.getElementsByTagName("url");
+        if (urlElements.getLength() != 2) {
+            throw new IllegalArgumentException("Configuration of build plans currently only supports a model with two repositories, ASSIGNMENT and TESTS");
+        }
+        urlElements.item(1).getFirstChild().setNodeValue(participation.getRepositoryUrl());
 
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + participation.getBuildPlanId();
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var planKey = participation.getBuildPlanId();
+        postXml(config, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planKey);
     }
 
     @Override
@@ -157,6 +167,19 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) {
     }
 
+    private Document getPlanConfig(String projectKey, String planKey) {
+        final var builder = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey);
+        try {
+            final var configString = restTemplate.getForObject(builder.build(true).toString(), String.class);
+            return XmlFileUtils.readFromString(configString);
+        }
+        catch (HttpClientErrorException e) {
+            final var errorMessage = "Unable to fetch job config for " + planKey;
+            log.error(errorMessage);
+            throw new JenkinsException(errorMessage, e);
+        }
+    }
+
     private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
         final var builder = endpoint.buildEndpoint(JENKINS_SERVER_URL.toString(), args);
         try {
@@ -225,7 +248,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private enum Endpoint {
         NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
-        DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete");
+        DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml");
 
         private List<String> pathSegments;
 
