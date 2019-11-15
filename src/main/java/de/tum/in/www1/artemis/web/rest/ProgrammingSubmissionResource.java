@@ -191,7 +191,8 @@ public class ProgrammingSubmissionResource {
         }
 
         // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
-        // TODO: If the submission is not the latest but the latest graded submission, this does not work - any way to implement this?
+        // TODO: If the submission is not the latest but the latest graded submission, this does not work if there have been commits since. To make it work we would have to find
+        // the correct build for the given commit hash.
         Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
         if (result.isPresent()) {
             resultService.notifyUserAboutNewResult(result.get(), participationId);
