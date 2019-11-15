@@ -7,6 +7,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { SubmissionType } from 'app/entities/submission';
 import { HttpResponse } from '@angular/common/http';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -14,6 +15,7 @@ import { HttpResponse } from '@angular/common/http';
  * If there is no result, the button is disabled because this would mean that the student has not made a commit yet.
  */
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
 
     @Input() exercise: ProgrammingExercise;
