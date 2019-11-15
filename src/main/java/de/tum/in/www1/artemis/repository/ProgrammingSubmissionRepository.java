@@ -25,6 +25,16 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(attributePaths = "result")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
 
+    /**
+     * Provide a list of graded submissions. To be graded a submission must:
+     * - be of type 'INSTRUCTOR' or 'TEST'
+     * - have a submission date before the exercise due date
+     * - or related to an exercise without a due date
+     *
+     * @param participationId to which the submissions belong.
+     * @param pageable Pageable
+     * @return ProgrammingSubmission list (can be empty!)
+     */
     @EntityGraph(attributePaths = "result")
     @Query("select s from ProgrammingSubmission s left join s.participation p left join p.exercise e where p.id = :#{#participationId} and (s.type = 'INSTRUCTOR' or s.type = 'TEST' or e.dueDate is null or s.submissionDate <= e.dueDate) order by s.submissionDate desc")
     List<ProgrammingSubmission> findGradedByParticipationAIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);

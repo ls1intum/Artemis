@@ -588,7 +588,7 @@ public abstract class Exercise implements Serializable {
             // only transmit the relevant result
             Submission submission;
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateProgrammingSubmission(this, submissions);
+                submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateProgrammingSubmission((ProgrammingExercise) this, submissions);
             }
             else {
                 submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
@@ -667,7 +667,15 @@ public abstract class Exercise implements Serializable {
         return null;
     }
 
-    private Submission findAppropriateProgrammingSubmission(Exercise exercise, Set<Submission> submissions) {
+    /**
+     * Get the latest (potentially) graded submission for a programming exercise.
+     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed, but that e.g. the CI system failed to deliver the build results.
+     * @param exercise Programming Exercise.
+     * @param submissions Submissions for the given student.
+     * @return the latest graded submission.
+     */
+    @Nullable
+    private Submission findAppropriateProgrammingSubmission(ProgrammingExercise exercise, Set<Submission> submissions) {
         return submissions.stream().filter(submission -> {
             if (submission.getResult() != null) {
                 return submission.getResult().isRated();
