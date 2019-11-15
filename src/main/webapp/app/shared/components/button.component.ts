@@ -49,7 +49,7 @@ export class ButtonComponent {
 
     @Input() disabled = false;
     @Input() isLoading = false;
-    @Input() featureToggle = FeatureToggle; // Disable by feature toggle.
+    @Input() featureToggle: FeatureToggle; // Disable by feature toggle.
 
     @Output() onClick = new EventEmitter<MouseEvent>();
 }
