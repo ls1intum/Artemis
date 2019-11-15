@@ -9,7 +9,7 @@ import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { createRequestOption } from 'app/shared';
 import { SubmissionType } from 'app/entities/submission';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
