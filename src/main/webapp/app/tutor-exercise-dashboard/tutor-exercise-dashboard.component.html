@@ -311,7 +311,7 @@
                                         class="btn btn-success btn-sm"
                                         (click)="
                                             exercise.type === ExerciseType_PROGRAMMING
-                                                ? openManualResultDialog(complaint.result.participation.id, complaint.result)
+                                                ? openManualResultDialog(complaint.result)
                                                 : openAssessmentEditor(complaint.result.submission.id, false)
                                         "
                                     >
@@ -323,7 +323,7 @@
                                             class="btn btn-primary btn-sm"
                                             (click)="
                                                 exercise.type === ExerciseType_PROGRAMMING
-                                                    ? openManualResultDialog(complaint.result.participation.id, complaint.result)
+                                                    ? openManualResultDialog(complaint.result)
                                                     : openAssessmentEditor(complaint.result.submission.id, false)
                                             "
                                         >
@@ -381,7 +381,7 @@
                                         class="btn btn-success btn-sm"
                                         (click)="
                                             exercise.type === ExerciseType_PROGRAMMING
-                                                ? openManualResultDialog(moreFeedbackRequest.result.participation.id, moreFeedbackRequest.result)
+                                                ? openManualResultDialog(moreFeedbackRequest.result)
                                                 : openAssessmentEditor(moreFeedbackRequest.result.submission.id, false)
                                         "
                                     >
@@ -393,7 +393,7 @@
                                             class="btn btn-primary btn-sm"
                                             (click)="
                                                 exercise.type === ExerciseType_PROGRAMMING
-                                                    ? openManualResultDialog(moreFeedbackRequest.result.participation.id, moreFeedbackRequest.result)
+                                                    ? openManualResultDialog(moreFeedbackRequest.result)
                                                     : openAssessmentEditor(moreFeedbackRequest.result.submission.id, false)
                                             "
                                         >

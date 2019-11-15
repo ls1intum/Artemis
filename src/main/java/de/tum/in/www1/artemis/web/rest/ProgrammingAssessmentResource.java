@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,9 +24,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);
 
     private static final String ENTITY_NAME = "programmingAssessment";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -66,7 +62,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getResult(), programmingExercise, assessmentUpdate);
-
         // remove circular dependencies if the results of the participation are there
         if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
             result.getParticipation().setResults(null);
@@ -74,7 +69,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).setStudent(null);
+            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);

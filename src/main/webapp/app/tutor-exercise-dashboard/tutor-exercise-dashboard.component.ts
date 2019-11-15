@@ -177,14 +177,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (response: string) => this.onError(response),
         );
 
-        this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
-        this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
+        this.complaintService
+            .getComplaintsForTutor(this.exerciseId)
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
+        this.complaintService
+            .getMoreFeedbackRequestsForTutor(this.exerciseId)
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
@@ -370,9 +368,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.router.navigate([route]);
     }
 
-    openManualResultDialog(participationId: number, result: Result) {
+    openManualResultDialog(result: Result) {
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.participationId = participationId;
+        modalRef.componentInstance.participationId = result.participation!.id;
         modalRef.componentInstance.result = result;
         modalRef.result.then(
             () => {
