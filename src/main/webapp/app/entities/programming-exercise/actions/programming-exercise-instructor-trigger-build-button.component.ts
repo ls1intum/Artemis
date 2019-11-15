@@ -19,9 +19,9 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
         if (this.participationHasLatestSubmissionWithoutResult) {
-            super.triggerWithType(SubmissionType.INSTRUCTOR);
-        } else {
             super.triggerFailed();
+        } else {
+            super.triggerWithType(SubmissionType.INSTRUCTOR);
         }
     };
 }
