@@ -52,7 +52,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var configBuilder = buildPlanCreatorFactory.builderFor(exercise.getProgrammingLanguage());
         final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
 
-        postXml(jobConfig, String.class, HttpStatus.OK, "", Endpoint.NEW_PLAN, Map.of("name", planKey));
+        postXml(jobConfig, String.class, HttpStatus.OK, "", Endpoint.NEW_PLAN, Map.of("name", planKey), exercise.getProjectKey());
     }
 
     @Override
@@ -141,6 +141,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) {
+    }
+
+    @Override
     public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) {
     }
 
@@ -195,7 +199,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private enum Endpoint {
-        NEW_PLAN("createItem");
+        NEW_PLAN("job", "<projectKey>", "createItem");
 
         private List<String> pathSegments;
 

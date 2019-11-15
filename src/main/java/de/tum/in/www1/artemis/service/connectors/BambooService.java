@@ -197,6 +197,11 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    @Override
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) {
+        // Do nothing since Bamboo automatically creates projects
+    }
+
     /**
      * Triggers a build for the build plan in the given participation.
      *

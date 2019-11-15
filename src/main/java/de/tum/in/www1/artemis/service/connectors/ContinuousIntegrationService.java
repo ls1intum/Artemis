@@ -188,6 +188,13 @@ public interface ContinuousIntegrationService {
     void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
 
     /**
+     * Creates a project on the CI server.
+     *
+     * @param programmingExercise for which a project should be created
+     */
+    void createProjectForExercise(ProgrammingExercise programmingExercise);
+
+    /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out
      * to a subdirectory called "assignment" for the Python programming language.
      */
