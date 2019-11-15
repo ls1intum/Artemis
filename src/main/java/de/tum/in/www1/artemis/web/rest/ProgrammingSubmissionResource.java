@@ -170,12 +170,13 @@ public class ProgrammingSubmissionResource {
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
+     * @param lastGraded if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or after the deadline by the INSTRUCTOR.
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId) {
+    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
@@ -184,7 +185,7 @@ public class ProgrammingSubmissionResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
-        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId);
+        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded);
         if (submission.isEmpty()) {
             return badRequest();
         }

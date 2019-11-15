@@ -113,10 +113,10 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId) {
+    public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean graded) {
         Optional<ProgrammingSubmission> submissionOpt;
         try {
-            submissionOpt = submissionService.getLatestPendingSubmission(participationId);
+            submissionOpt = submissionService.getLatestPendingSubmission(participationId, graded);
         }
         catch (EntityNotFoundException | IllegalArgumentException ex) {
             return notFound();
