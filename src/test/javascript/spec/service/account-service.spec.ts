@@ -8,6 +8,7 @@ import { AccountService, User } from '../../../../main/webapp/app/core';
 import { MockLanguageService } from '../helpers/mock-language.service';
 import { MockSyncStorage } from '../mocks';
 import { MockHttpService } from '../mocks/mock-http.service';
+import { MockFeatureToggleService } from '../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,7 +26,7 @@ describe('AccountService', () => {
     beforeEach(async(() => {
         httpService = new MockHttpService();
         // @ts-ignore
-        accountService = new AccountService(new MockLanguageService(), new MockSyncStorage(), httpService, new MockWebsocketService());
+        accountService = new AccountService(new MockLanguageService(), new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = stub(httpService, 'get');
         getAuthenticated = accountService.getAuthenticationState();
 
