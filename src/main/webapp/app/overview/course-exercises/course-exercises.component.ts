@@ -13,6 +13,7 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { compareExerciseShortName } from 'app/guided-tour/guided-tour.utils';
 import { CourseScoreCalculationService } from 'app/overview';
 import { isIntelliJ } from 'app/intellij/intellij';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -63,6 +64,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private route: ActivatedRoute,
         private guidedTourService: GuidedTourService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
     ) {}
 
     ngOnInit() {
@@ -88,8 +90,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
                 this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
+                this.programmingSubmissionService.initializeCacheForStudent(this.course!.exercises, true);
             });
         }
+        this.programmingSubmissionService.initializeCacheForStudent(this.course!.exercises, true);
 
         this.applyFiltersAndOrder();
 

@@ -9,6 +9,7 @@ import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { createRequestOption } from 'app/shared';
 import { SubmissionType } from 'app/entities/submission';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -275,6 +276,44 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     /**
+     * Initialize the cache from outside of the service.
+     *
+     * The service expects that:
+     * - Each exercise does only have one student participation for the given student.
+     * - Each student participation does only have the latest submission and the latest result attached.
+     *
+     * If the expectations are violated, the service might not work as intended anymore!
+     *
+     * @param exercises
+     */
+    public initializeCacheForStudent(exercises: Exercise[], forceCacheOverride = false) {
+        exercises
+            .filter(exercise => {
+                // We only process programming exercises in this service.
+                if (exercise.type !== ExerciseType.PROGRAMMING) {
+                    return false;
+                }
+                // We can't process exercises without participations.
+                if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
+                    return false;
+                }
+                // If we already have a value cached for the participation we don't override it.
+                if (!forceCacheOverride || !!this.submissionSubjects[exercise.studentParticipations[0].id]) {
+                    return false;
+                }
+                // Without submissions we can't determine if the latest submission is pending.
+                return !!exercise.studentParticipations[0].submissions.length;
+            })
+            .forEach(exercise => {
+                const latestSubmission = exercise.studentParticipations[0].submissions[0] as ProgrammingSubmission;
+                const latestResult = exercise.studentParticipations[0].results && exercise.studentParticipations[0].results[0];
+                const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
+                this.submissionSubjects[exercise.studentParticipations[0].id] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                this.processPendingSubmission(isPendingSubmission ? latestSubmission : null, exercise.studentParticipations[0].id, exercise.id).subscribe();
+            });
+    }
+
+    /**
      * Subscribe for the latest pending submission for the given participation.
      * A latest pending submission is characterized by the following properties:
      * - Submission is the newest one (by submissionDate)
@@ -291,9 +330,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId id of ProgrammingExerciseStudentParticipation
      * @param exerciseId id of ProgrammingExercise
      */
-    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number) => {
+    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, forceCacheOverride = false) => {
         const subject = this.submissionSubjects[participationId];
-        if (subject) {
+        if (!forceCacheOverride && subject) {
             return subject.asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
         }
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
