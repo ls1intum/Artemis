@@ -146,7 +146,9 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         final var resourcePath = Path.of("build", "jenkins", "exerciseConfig.xml");
         final var projectConfig = XmlFileUtils.readXmlFile(resourcePath);
+        final var errorMessage = "Error creating folder for exercise " + programmingExercise;
 
+        postXml(projectConfig, String.class, HttpStatus.OK, errorMessage, Endpoint.NEW_FOLDER, Map.of("name", programmingExercise.getProjectKey()));
     }
 
     @Override
