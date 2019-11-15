@@ -8,6 +8,10 @@ import { Subscription } from 'rxjs';
 })
 export class FeatureToggleDirective implements OnInit, OnDestroy {
     @Input('jhiFeatureToggle') feature: FeatureToggle;
+    /**
+     * This input must be used to overwrite the disabled state given that the feature toggle is inactive.
+     * If the normal [disabled] directive of Angular would be used, the HostBinding in this directive would always enable the element if the feature is active.
+     */
     @Input() overwriteDisabled: boolean | null;
     private featureActive = true;
 
@@ -16,6 +20,7 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
     constructor(private featureToggleService: FeatureToggleService) {}
 
     ngOnInit() {
+        // If no feature is set for the toggle, the directive does nothing.
         if (this.feature) {
             this.featureToggleActiveSubscription = this.featureToggleService
                 .getFeatureToggleActive(this.feature)
