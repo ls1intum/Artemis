@@ -22,6 +22,11 @@ import { ArtemisSharedModule } from 'app/shared';
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
+import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
+import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-test.service';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,23 +37,27 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     let debugElement: DebugElement;
     let javaBridge: JavaBridgeService;
     let courseExerciseService: CourseExerciseService;
+    let ideBuildService: IdeBuildAndTestService;
 
     let startExerciseStub: SinonStub;
     let ideStateStub: SinonStub;
     let cloneSpy: SinonSpy;
     let submitSpy: SinonSpy;
+    let forwardBuildSpy: SinonSpy;
 
     const exercise = { id: 42 } as Exercise;
-    const ideState = { opened: 40 } as IntelliJState;
+    const ideState = { opened: 40, building: false, cloning: false } as IntelliJState;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, IntellijModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, IntellijModule, ArtemisSharedModule, FeatureToggleModule],
             declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent)],
             providers: [
+                { provide: IdeBuildAndTestService, useClass: MockIdeBuildAndTestService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
@@ -58,8 +67,10 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 javaBridge = debugElement.injector.get(JavaBridgeService);
+                ideBuildService = debugElement.injector.get(IdeBuildAndTestService);
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
+                forwardBuildSpy = spy(ideBuildService, 'listenOnBuildOutputAndForwardChanges');
                 cloneSpy = spy(javaBridge, 'clone');
                 submitSpy = spy(javaBridge, 'submit');
                 ideStateStub = stub(javaBridge, 'state');
@@ -81,13 +92,13 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isOpenedInIntelliJ).to.be.false;
+        expect(comp.ideState.opened).to.not.equal(exercise.id);
 
         fixture.destroy();
         flush();
     }));
 
-    it('should should reflect that the represented exercise is opened if the same exercise is open in the IDE', fakeAsync(() => {
+    it('should reflect that the represented exercise is opened if the same exercise is open in the IDE', fakeAsync(() => {
         const stateObservable = new BehaviorSubject({ opened: exercise.id });
         comp.exercise = exercise;
         ideStateStub.returns(stateObservable);
@@ -96,7 +107,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isOpenedInIntelliJ).to.be.true;
+        expect(comp.ideState.opened).to.equal(exercise.id);
 
         fixture.destroy();
         flush();
@@ -138,5 +149,14 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
 
         comp.importIntoIntelliJ();
         expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', 'Test Title', 42, 456);
+    });
+
+    it('should submit the changes and then forward the build results on submit', () => {
+        comp.exercise = exercise;
+        comp.submitChanges();
+
+        expect(submitSpy).to.have.been.calledOnce;
+        expect(forwardBuildSpy).to.have.been.calledOnce;
+        expect(forwardBuildSpy).to.have.been.calledImmediatelyAfter(submitSpy);
     });
 });

@@ -7,7 +7,7 @@ import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.mo
  */
 export const courseOverviewTour: GuidedTour = {
     courseShortName: 'artemistutorial',
-    exerciseShortName: 'tutorial',
+    exerciseShortName: '',
     settingsKey: 'course_overview_tour',
     steps: [
         new ImageTourStep({
@@ -76,7 +76,7 @@ export const courseOverviewTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.card.guided-tour',
-            eventListenerSelector: 'body',
+            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.courseOverview.courseClick.headline',
             contentTranslateKey: 'tour.courseOverview.courseClick.content',
             orientation: Orientation.RIGHT,

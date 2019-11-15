@@ -166,6 +166,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     private setSubmittedFile() {
+        // clear submitted file so that it is not displayed in the input (this might be confusing)
+        this.submissionFile = null;
         const filePath = this.submission!.filePath!.split('/');
         this.submittedFileName = filePath[filePath.length - 1];
         const fileName = this.submittedFileName.split('.');
@@ -198,6 +200,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     get submitButtonTooltip(): string {
+        if (!this.submissionFile) {
+            return 'artemisApp.fileUploadSubmission.selectFile';
+        }
+
         if (!this.isLate) {
             if (this.isActive && !this.fileUploadExercise.dueDate) {
                 return 'entity.action.submitNoDeadlineTooltip';

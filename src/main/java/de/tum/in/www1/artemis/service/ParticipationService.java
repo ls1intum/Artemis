@@ -222,7 +222,7 @@ public class ParticipationService {
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
-            programmingExerciseStudentParticipation = performEmptyCommitHook(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
             // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
             programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
@@ -389,7 +389,6 @@ public class ParticipationService {
         participation = save(participation);
         // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
         // because in notifyPush we only filter out empty commits when the state is already initialized
-        participation = performEmptyCommitHook(participation);
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
@@ -465,7 +464,13 @@ public class ParticipationService {
         return participation;
     }
 
-    private ProgrammingExerciseStudentParticipation performEmptyCommitHook(ProgrammingExerciseStudentParticipation participation) {
+    /**
+     * Perform an empty commit so that the Bamboo build plan definitely runs for the actual student commit
+     *
+     * @param participation the participation of the student
+     * @return the participation of the student
+     */
+    public ProgrammingExerciseStudentParticipation performEmptyCommit(ProgrammingExerciseStudentParticipation participation) {
         continuousIntegrationService.get().performEmptySetupCommit(participation);
         return participation;
     }
@@ -921,6 +926,16 @@ public class ParticipationService {
      */
     public StudentParticipation findOneWithEagerCourse(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
+
+    /**
+     * Get one participation with eager course.
+     *
+     * @param participationId id of the participation
+     * @return participation with eager course
+     */
+    public StudentParticipation findOneWithEagerResultsAndCourse(Long participationId) {
+        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourse(participationId);
     }
 
     /**

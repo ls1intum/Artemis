@@ -16,6 +16,9 @@ import { CodeEditorActionsComponent, CodeEditorConflictStateService, CommitState
 import { CommitState, EditorState } from 'app/code-editor/model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
@@ -34,7 +37,7 @@ describe('CodeEditorActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, FeatureToggleModule],
             declarations: [CodeEditorActionsComponent],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
@@ -43,6 +46,7 @@ describe('CodeEditorActionsComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()

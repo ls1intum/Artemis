@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Attachment;
@@ -131,10 +130,8 @@ public class AttachmentResource {
      */
     @GetMapping(value = "/lectures/{lectureId}/attachments")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-
         return attachmentService.findAllByLectureId(lectureId);
     }
 

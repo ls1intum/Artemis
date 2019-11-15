@@ -3,7 +3,8 @@
         <div class="col-12 col-lg-8">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
-                File Upload <span *ngIf="fileUploadExercise">for Exercise: {{ fileUploadExercise.title }}</span>
+                {{ 'artemisApp.fileUploadSubmission.fileUpload' | translate }}
+                <span *ngIf="fileUploadExercise">{{ 'artemisApp.fileUploadSubmission.forExercise' | translate }}: {{ fileUploadExercise.title }}</span>
             </h2>
         </div>
 
@@ -43,7 +44,7 @@
     <div class="row">
         <div class="col-12 col-md-6" *ngIf="(isActive || isLate) && !result && fileUploadExercise && submission">
             <div class="form-group">
-                <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.file">File</label>
+                <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">
                         <input
@@ -54,9 +55,7 @@
                             class="custom-file-input"
                             (change)="setFileSubmissionForExercise($event)"
                         />
-                        <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{
-                            submissionFile ? submissionFile!.name : submittedFileName ? submittedFileName : ''
-                        }}</label>
+                        <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{ submissionFile ? submissionFile!.name : '' }}</label>
                     </div>
                 </div>
                 <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
@@ -69,10 +68,10 @@
         </div>
     </div>
 
-    <div *ngIf="((!isActive && !isLate) || result) && submittedFileName && submission?.filePath" class="card-text">
-        <h5>
+    <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
+        <h6>
             {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
-        </h5>
+        </h6>
         <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
         <span class="ml-1 badge badge-info" *ngIf="submittedFileExtension">
             {{ submittedFileExtension | uppercase }}
