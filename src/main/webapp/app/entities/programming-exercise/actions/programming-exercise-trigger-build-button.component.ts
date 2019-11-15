@@ -1,6 +1,6 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import { Subscription, of } from 'rxjs';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
@@ -8,6 +8,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components';
 import { SubmissionType } from 'app/entities/submission';
 import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/feature-toggle';
+import { JhiAlertService } from 'ng-jhipster';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -32,7 +33,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    protected constructor(protected submissionService: ProgrammingSubmissionService) {}
+    protected constructor(protected submissionService: ProgrammingSubmissionService, protected alertService: JhiAlertService) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.
@@ -93,11 +94,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     triggerWithType(submissionType: SubmissionType) {
         this.isRetrievingBuildStatus = true;
-        this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe(() => (this.isRetrievingBuildStatus = false));
+        return this.submissionService.triggerBuild(this.participation.id, submissionType).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
     }
 
     triggerFailed(lastGraded = false) {
         this.isRetrievingBuildStatus = true;
-        this.submissionService.triggerFailedBuild(this.participation.id, lastGraded).subscribe(() => (this.isRetrievingBuildStatus = false));
+        return this.submissionService.triggerFailedBuild(this.participation.id, lastGraded).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
     }
 }

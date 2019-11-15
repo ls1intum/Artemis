@@ -112,6 +112,7 @@
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
+            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte kontaktiere deinen Tutor.",
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
             "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",
