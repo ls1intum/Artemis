@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import org.w3c.dom.Document;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Service
@@ -142,6 +144,9 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
+        final var resourcePath = Path.of("build", "jenkins", "exerciseConfig.xml");
+        final var projectConfig = XmlFileUtils.readXmlFile(resourcePath);
+
     }
 
     @Override
@@ -199,7 +204,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private enum Endpoint {
-        NEW_PLAN("job", "<projectKey>", "createItem");
+        NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem");
 
         private List<String> pathSegments;
 
