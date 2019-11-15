@@ -17,9 +17,9 @@
             "hystrix": "Hystrix",
             "diskSpace": "Disk space",
             "mail": "Email",
-            "db": "Database",
-            "bamboo": "Bamboo",
-            "bitbucket": "Bitbucket"
+            "db": "Datenbank",
+            "continuousIntegrationServer": "Continuous Integration Server",
+            "versionControlServer": "Version Control Server"
         },
         "table": {
             "service": "Service name",
