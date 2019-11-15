@@ -64,14 +64,10 @@ jobs:
       run: ./gradlew executeTests
     - name: Java Code Style
       run: ./gradlew spotlessCheck
+      if: success() || failure()
     - name: Java Documentation
       run: ./gradlew checkstyleMain -x yarn_install -x webpack
-    - name: Comment PR on Java Failure
-      uses: thollander/actions-comment-pull-request@1.0.0
-      with:
-        message: Your Java code does not pass all tests or violates our conventions. Check the logs of the _Build_ action for details.
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: failure()
+      if: success() || failure()
 
   client-tests:
     runs-on: ubuntu-latest
@@ -94,11 +90,7 @@ jobs:
       run: yarn test
     - name: TypeScript Formatting
       run: yarn prettier:check
+      if: success() || failure()
     - name: TypeScript Code Style
       run: yarn lint
-    - name: Comment PR on TS Failure
-      uses: thollander/actions-comment-pull-request@1.0.0
-      with:
-        message: Your TypeScript code does not pass all tests or violates our conventions. Check the logs of the _Build_ action for details.
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: failure()
+      if: success() || failure()
