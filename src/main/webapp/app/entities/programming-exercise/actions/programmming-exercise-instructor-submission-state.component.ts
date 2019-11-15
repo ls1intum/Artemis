@@ -5,6 +5,7 @@ import { of, Subscription } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -18,6 +19,7 @@ import { ProgrammingBuildRunService } from 'app/programming-submission/programmi
     templateUrl: './programmming-exercise-instructor-submission-state.component.html',
 })
 export class ProgrammmingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 

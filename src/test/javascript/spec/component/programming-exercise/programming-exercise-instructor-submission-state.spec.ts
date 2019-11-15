@@ -18,6 +18,8 @@ import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/enti
 import { triggerChanges } from '../../utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -55,6 +57,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()

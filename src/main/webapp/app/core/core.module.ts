@@ -3,6 +3,7 @@ import { DatePipe, registerLocaleData } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import locale from '@angular/common/locales/en';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @NgModule({
     imports: [HttpClientModule],
@@ -15,6 +16,7 @@ import locale from '@angular/common/locales/en';
             useValue: 'en',
         },
         DatePipe,
+        JhiWebsocketService,
     ],
 })
 export class ArtemisCoreModule {
