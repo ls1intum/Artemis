@@ -7,11 +7,11 @@ import org.springframework.stereotype.Component;
 
 @Profile("bamboo")
 @Component
-public class BambooHealthIndicator implements HealthIndicator {
+public class ContinuousIntegrationServerHealthIndicator implements HealthIndicator {
 
     private final ContinuousIntegrationService continuousIntegrationService;
 
-    public BambooHealthIndicator(ContinuousIntegrationService continuousIntegrationService) {
+    public ContinuousIntegrationServerHealthIndicator(ContinuousIntegrationService continuousIntegrationService) {
         this.continuousIntegrationService = continuousIntegrationService;
     }
 

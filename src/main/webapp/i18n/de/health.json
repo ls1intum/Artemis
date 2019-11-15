@@ -18,8 +18,8 @@
             "diskSpace": "Festplattenspeicher",
             "mail": "Email",
             "db": "Datenbank",
-            "bamboo": "Bamboo",
-            "bitbucket": "Bitbucket"
+            "continuousIntegrationServer": "Continuous Integration Server",
+            "versionControlServer": "Version Control Server"
         },
         "table": {
             "service": "Dienst Name",

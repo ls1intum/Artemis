@@ -7,11 +7,11 @@ import org.springframework.stereotype.Component;
 
 @Profile("bitbucket")
 @Component
-public class BitbucketHealthIndicator implements HealthIndicator {
+public class VersionControlServerHealthIndicator implements HealthIndicator {
 
     private final VersionControlService versionControlService;
 
-    public BitbucketHealthIndicator(VersionControlService versionControlService) {
+    public VersionControlServerHealthIndicator(VersionControlService versionControlService) {
         this.versionControlService = versionControlService;
     }
 
