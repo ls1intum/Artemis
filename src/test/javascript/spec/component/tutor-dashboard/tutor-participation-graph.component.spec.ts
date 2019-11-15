@@ -69,7 +69,10 @@ describe('TutorParticipationGraphComponent', () => {
 
             comp.exercise = {
                 id: 1,
-                exampleSubmissions: [{ id: 1, usedForTutorial: false }, { id: 2, usedForTutorial: true }],
+                exampleSubmissions: [
+                    { id: 1, usedForTutorial: false },
+                    { id: 2, usedForTutorial: true },
+                ],
             } as Exercise;
 
             comp.tutorParticipation = {

@@ -100,7 +100,10 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
-            .subscribe((res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers), (res: HttpErrorResponse) => onError(this.alertService, res));
+            .subscribe(
+                (res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers),
+                (res: HttpErrorResponse) => onError(this.alertService, res),
+            );
     }
 
     /**

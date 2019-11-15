@@ -32,7 +32,10 @@ describe('IdeBuildAndTestService', () => {
     let buildLogsStub: SinonStub;
     let participationSubscriptionStub: SinonStub;
 
-    const feedbacks = [{ id: 2, positive: false, detailText: 'abc' }, { id: 3, positive: true, detailText: 'cde' }] as [Feedback];
+    const feedbacks = [
+        { id: 2, positive: false, detailText: 'abc' },
+        { id: 3, positive: true, detailText: 'cde' },
+    ] as [Feedback];
     const result = { id: 1 } as Result;
     const exercise = { id: 42, studentParticipations: [{ id: 32 }] } as ProgrammingExercise;
 

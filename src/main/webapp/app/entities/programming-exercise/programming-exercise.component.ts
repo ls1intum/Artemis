@@ -83,9 +83,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
     resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService
-            .reset(programmingExerciseId)
-            .subscribe(() => (this.closeDialogTrigger = !this.closeDialogTrigger), (error: HttpErrorResponse) => onError(this.jhiAlertService, error));
+        this.exerciseService.reset(programmingExerciseId).subscribe(
+            () => (this.closeDialogTrigger = !this.closeDialogTrigger),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+        );
     }
 
     protected getChangeEventName(): string {

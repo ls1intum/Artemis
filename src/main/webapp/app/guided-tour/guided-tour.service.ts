@@ -422,10 +422,7 @@ export class GuidedTourService {
                 this.checkModelingComponentSubject.next(modelingTask);
 
                 this.observeMutations(targetNode, options)
-                    .pipe(
-                        debounceTime(100),
-                        distinctUntilChanged(),
-                    )
+                    .pipe(debounceTime(100), distinctUntilChanged())
                     .subscribe(() => {
                         this.checkModelingComponentSubject.next(modelingTask);
                         if (this.modelingResultCorrect) {

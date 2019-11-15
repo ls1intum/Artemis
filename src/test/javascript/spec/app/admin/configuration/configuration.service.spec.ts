@@ -50,7 +50,10 @@ describe('Service Tests', () => {
 
             it('should get the env', () => {
                 const propertySources = new HttpResponse({
-                    body: [{ name: 'test1', properties: 'test1' }, { name: 'test2', properties: 'test2' }],
+                    body: [
+                        { name: 'test1', properties: 'test1' },
+                        { name: 'test2', properties: 'test2' },
+                    ],
                 });
                 service.get().subscribe(received => {
                     expect(received.body[0]).toEqual(propertySources);

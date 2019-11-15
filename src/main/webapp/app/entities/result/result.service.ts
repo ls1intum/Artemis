@@ -34,7 +34,9 @@ export class ResultService implements IResultService {
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
