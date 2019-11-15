@@ -38,6 +38,7 @@ import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/entities/programming-exercise/programming-exercise-plans-and-repositories-preview.component';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisComplaintsModule } from 'app/complaints';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -62,6 +63,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         OwlDateTimeModule,
         ArtemisMarkdownEditorModule,
         ArtemisComplaintsModule,
+        FeatureToggleModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
