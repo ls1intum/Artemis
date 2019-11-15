@@ -21,17 +21,17 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
 @Configuration
 public class RestTemplateConfiguration {
 
-    @Bean("gitlabRestTemplate")
+    @Bean
     @Profile("gitlab")
     @Autowired
-    public RestTemplate restTemplate(GitLabHeaderAuthorizationInterceptor gitlabInterceptor) {
+    public RestTemplate gitlabRestTemplate(GitLabHeaderAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor);
     }
 
-    @Bean("jenkinsRestTemplate")
+    @Bean
     @Profile("jenkins")
     @Autowired
-    public RestTemplate restTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
+    public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor);
     }
 

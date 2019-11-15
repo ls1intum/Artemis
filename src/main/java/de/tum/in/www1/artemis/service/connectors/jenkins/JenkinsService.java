@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -50,7 +52,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var configBuilder = buildPlanCreatorFactory.builderFor(exercise.getProgrammingLanguage());
         final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
 
-        postXml(jobConfig, String.class, HttpStatus.OK, "", Endpoint.NEW_PLAN, planKey);
+        postXml(jobConfig, String.class, HttpStatus.OK, "", Endpoint.NEW_PLAN, Map.of("name", planKey));
     }
 
     @Override
@@ -142,14 +144,23 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) {
     }
 
-    private <T> T postXml(Document doc, Class<T> responseType, HttpStatus allowedStatus, String messagInCaseOfError, Endpoint endpoint, Object... args) {
-        return postXml(doc, responseType, List.of(allowedStatus), messagInCaseOfError, endpoint, args);
+    private <T> T postXml(Document doc, Class<T> responseType, HttpStatus allowedStatus, String messagInCaseOfError, Endpoint endpoint, Map<String, Object> queryParams,
+            Object... args) {
+        return postXml(doc, responseType, List.of(allowedStatus), messagInCaseOfError, endpoint, queryParams, args);
     }
 
-    private <T> T postXml(Document doc, Class<T> responseType, List<HttpStatus> allowedStatuses, String messagInCaseOfError, Endpoint endpoint, Object... args) {
+    private <T> T postXml(Document doc, Class<T> responseType, HttpStatus allowedStatus, String messagInCaseOfError, Endpoint endpoint, Object... args) {
+        return postXml(doc, responseType, List.of(allowedStatus), messagInCaseOfError, endpoint, null, args);
+    }
+
+    private <T> T postXml(Document doc, Class<T> responseType, List<HttpStatus> allowedStatuses, String messagInCaseOfError, Endpoint endpoint,
+            @Nullable Map<String, Object> queryParams, Object... args) {
         final var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_XML);
         final var builder = endpoint.buildEndpoint(JENKINS_SERVER_URL.toString(), args);
+        if (queryParams != null) {
+            queryParams.forEach(builder::queryParam);
+        }
         final var entity = new HttpEntity<>(writeXmlToString(doc), headers);
 
         try {
@@ -184,7 +195,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private enum Endpoint {
-        NEW_PLAN("creteItem", "<planKey>");
+        NEW_PLAN("createItem");
 
         private List<String> pathSegments;
 
