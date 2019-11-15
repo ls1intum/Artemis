@@ -1,20 +1,23 @@
-import { Directive, HostBinding, Input, OnInit } from '@angular/core';
+import { Directive, HostBinding, Input, OnInit, OnDestroy } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Directive({
     selector: '[jhiFeatureToggle]',
 })
-export class FeatureToggleDirective implements OnInit {
+export class FeatureToggleDirective implements OnInit, OnDestroy {
     @Input('jhiFeatureToggle') feature: FeatureToggle;
     @Input() overwriteDisabled: boolean | null;
     private featureActive = true;
+
+    private featureToggleActiveSubscription: Subscription;
 
     constructor(private featureToggleService: FeatureToggleService) {}
 
     ngOnInit() {
         if (this.feature) {
-            this.featureToggleService
+            this.featureToggleActiveSubscription = this.featureToggleService
                 .getFeatureToggleActive(this.feature)
                 .pipe(
                     // Disable the element if the feature is inactive.
@@ -23,6 +26,12 @@ export class FeatureToggleDirective implements OnInit {
                     }),
                 )
                 .subscribe();
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.featureToggleActiveSubscription) {
+            this.featureToggleActiveSubscription.unsubscribe();
         }
     }
 
