@@ -123,7 +123,7 @@ public class ComplaintResponseResource {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
 
-        if (!complaintResponse.isPresent()) {
+        if (complaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }
 
@@ -148,7 +148,7 @@ public class ComplaintResponseResource {
         User originalAuthor = complaintResponse.getComplaint().getStudent();
         StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.getComplaint().getResult().getParticipation();
         Exercise exercise = studentParticipation.getExercise();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !originalAuthor.getLogin().equals(username)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise) && (originalAuthor.getLogin() == null || !originalAuthor.getLogin().equals(username))) {
             throw new AccessForbiddenException("Insufficient permission for this complaint response");
         }
     }
