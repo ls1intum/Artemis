@@ -10,6 +10,7 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
+import { SubmissionType } from 'app/entities/submission';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
@@ -93,7 +94,15 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
             .pipe(
                 // The updating result must ignore submissions that are ungraded if ungraded results should not be shown (otherwise the building animation will be shown even though not relevant).
-                filter(({ submission }) => this.showUngradedResults || !submission || !this.exercise.dueDate || this.exercise.dueDate.isAfter(moment(submission.submissionDate!))),
+                filter(
+                    ({ submission }) =>
+                        this.showUngradedResults ||
+                        !submission ||
+                        !this.exercise.dueDate ||
+                        submission.type === SubmissionType.INSTRUCTOR ||
+                        submission.type === SubmissionType.TEST ||
+                        this.exercise.dueDate.isAfter(moment(submission.submissionDate!)),
+                ),
                 tap(({ submissionState }) => {
                     this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
                 }),
