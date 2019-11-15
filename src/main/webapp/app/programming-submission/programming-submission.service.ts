@@ -10,6 +10,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { createRequestOption } from 'app/shared';
 import { SubmissionType } from 'app/entities/submission';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -280,11 +281,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * The service expects that:
      * - Each exercise does only have one student participation for the given student.
-     * - Each student participation does only have the latest submission and the latest result attached.
      *
      * If the expectations are violated, the service might not work as intended anymore!
      *
      * @param exercises
+     * @param forceCacheOverride if true it will clear the current value in the cache for each participation of the exercises.
      */
     public initializeCacheForStudent(exercises: Exercise[], forceCacheOverride = false) {
         exercises
@@ -305,11 +306,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 return !!exercise.studentParticipations[0].submissions.length;
             })
             .forEach(exercise => {
-                const latestSubmission = exercise.studentParticipations[0].submissions[0] as ProgrammingSubmission;
-                const latestResult = exercise.studentParticipations[0].results && exercise.studentParticipations[0].results[0];
+                const participation = exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+                const latestSubmission = participation.submissions.reduce((current, next) => (current.id > next.id ? current : next)) as ProgrammingSubmission;
+                const latestResult: Result | null =
+                    participation.results && participation.results.length ? participation.results.reduce((current, next) => (current.id > next.id ? current : next)) : null;
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
-                this.submissionSubjects[exercise.studentParticipations[0].id] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-                this.processPendingSubmission(isPendingSubmission ? latestSubmission : null, exercise.studentParticipations[0].id, exercise.id).subscribe();
+                // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
+                this.submissionSubjects[participation.id] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                this.processPendingSubmission(isPendingSubmission ? latestSubmission : null, participation.id, exercise.id).subscribe();
             });
     }
 
