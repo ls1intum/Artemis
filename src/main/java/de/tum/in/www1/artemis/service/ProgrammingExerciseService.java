@@ -49,7 +49,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.connectors.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -954,7 +957,8 @@ public class ProgrammingExerciseService {
         final var instructorGroup = exercise.getCourse().getInstructorGroupName();
         final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();
 
-        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup), List.of(CIPermission.CREATE, CIPermission.READ));
+        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup),
+                List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
         continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
     }
 

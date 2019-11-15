@@ -360,6 +360,7 @@ public class BambooService implements ContinuousIntegrationService {
             case EDIT: return "WRITE";
             case CREATE: return "CREATE";
             case READ: return "READ";
+            case ADMIN: return "ADMINISTRATION";
             default: throw new IllegalArgumentException("Unable to map Bamboo permission " + permission);
         }
     }
