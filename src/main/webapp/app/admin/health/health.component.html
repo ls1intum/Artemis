@@ -14,7 +14,14 @@
             </thead>
             <tbody>
                 <tr *ngFor="let health of healthData">
-                    <td>{{ 'health.indicator.' + baseName(health.name) | translate }} {{ subSystemName(health.name) }}</td>
+                    <td>
+                        <span>
+                            {{ 'health.indicator.' + baseName(health.name) | translate }} {{ subSystemName(health.name) }}
+                            <a class="badge badge-info" [href]="health.details.details.url">
+                                {{ health.details.details.url }}
+                            </a>
+                        </span>
+                    </td>
                     <td class="text-center">
                         <span class="badge" [ngClass]="getBadgeClass(health.status)" jhiTranslate="{{ 'health.status.' + health.status }}">
                             {{ health.status }}

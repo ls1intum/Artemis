@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class BambooHealthIndicator implements HealthIndicator {
 
-    private final BambooService bambooService;
+    private final ContinuousIntegrationService continuousIntegrationService;
 
-    public BambooHealthIndicator(BambooService bambooService) {
-        this.bambooService = bambooService;
+    public BambooHealthIndicator(ContinuousIntegrationService continuousIntegrationService) {
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     @Override
     public Health health() {
-        return bambooService.health().asActuatorHealth();
+        return continuousIntegrationService.health().asActuatorHealth();
     }
 }

@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class BitbucketHealthIndicator implements HealthIndicator {
 
-    private final BitbucketService bitbucketService;
+    private final VersionControlService versionControlService;
 
-    public BitbucketHealthIndicator(BitbucketService bitbucketService) {
-        this.bitbucketService = bitbucketService;
+    public BitbucketHealthIndicator(VersionControlService versionControlService) {
+        this.versionControlService = versionControlService;
     }
 
     @Override
     public Health health() {
-        return bitbucketService.health().asActuatorHealth();
+        return versionControlService.health().asActuatorHealth();
     }
 }

@@ -437,15 +437,19 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
+        ConnectorHealth health;
         try {
             final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
             final var entity = new HttpEntity<>(headers);
             final var status = restTemplate.exchange(BAMBOO_SERVER_URL + "/rest/api/latest/server", HttpMethod.GET, entity, JsonNode.class);
-            return status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+            health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
         } catch (Exception emAll) {
-            return new ConnectorHealth(emAll);
+            health = new ConnectorHealth(emAll);
         }
+
+        health.setAdditionalInfo(Map.of("url", BAMBOO_SERVER_URL));
+        return health;
     }
 
     /**
