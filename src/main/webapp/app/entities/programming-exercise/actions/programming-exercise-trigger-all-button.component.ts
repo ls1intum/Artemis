@@ -1,10 +1,11 @@
-import { Component, Input, EventEmitter, Output, OnChanges, OnInit } from '@angular/core';
-import { catchError, filter, take, tap } from 'rxjs/operators';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
-import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
-import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 import { FeatureToggle } from 'app/feature-toggle';
 
@@ -32,7 +33,7 @@ import { FeatureToggle } from 'app/feature-toggle';
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
-    @Input() exerciseId: number;
+    @Input() exercise: ProgrammingExercise;
     @Input() disabled = false;
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
@@ -51,10 +52,11 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
      */
     openTriggerAllModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.exerciseId = this.exercise.id;
+        modalRef.componentInstance.deadlinePassed = hasDeadlinePassed(this.exercise);
         modalRef.result.then(() => {
             this.submissionService
-                .triggerInstructorBuildForAllParticipationsOfExercise(this.exerciseId)
+                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id)
                 .pipe(catchError(() => of(null)))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
@@ -64,7 +66,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 
     private subscribeBuildRunUpdates() {
         this.programmingBuildRunService
-            .getBuildRunUpdates(this.exerciseId)
+            .getBuildRunUpdates(this.exercise.id)
             .pipe(tap(buildRunState => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
             .subscribe();
     }
@@ -82,6 +84,10 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
             </div>
             <div class="modal-body">
                 <jhi-alert-error></jhi-alert-error>
+                <p *ngIf="deadlinePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDeadline">
+                    The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
+                    would replace the manual results as the latest result for the participation.
+                </p>
                 <p jhiTranslate="artemisApp.programmingExercise.resubmitAllDialog">
                     WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
                 </p>
@@ -100,6 +106,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
     @Input() exerciseId: number;
+    @Input() deadlinePassed: boolean;
 
     constructor(private activeModal: NgbActiveModal) {}
 

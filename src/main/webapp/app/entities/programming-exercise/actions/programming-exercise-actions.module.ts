@@ -3,7 +3,7 @@ import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-trigger-build-button.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-student-trigger-build-button.component';
-import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-submission-state.component';
 import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
     ProgrammingExerciseTriggerAllButtonComponent,
@@ -16,14 +16,14 @@ import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
     declarations: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ProgrammmingExerciseInstructorSubmissionStateComponent,
+        ProgrammingExerciseInstructorSubmissionStateComponent,
         ProgrammingExerciseInstructorTriggerAllDialogComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
     ],
     exports: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ProgrammmingExerciseInstructorSubmissionStateComponent,
+        ProgrammingExerciseInstructorSubmissionStateComponent,
         ProgrammingExerciseTriggerAllButtonComponent,
     ],
     entryComponents: [ProgrammingExerciseInstructorTriggerAllDialogComponent],

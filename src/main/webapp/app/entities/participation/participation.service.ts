@@ -61,8 +61,8 @@ export class ParticipationService {
             });
     }
 
-    findAllParticipationsByExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
+    findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
+        const options = createRequestOption({ withLatestResult });
         return this.http
             .get<StudentParticipation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, {
                 params: options,
