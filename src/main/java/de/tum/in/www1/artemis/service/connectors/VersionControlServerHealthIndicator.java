@@ -18,7 +18,7 @@ public class VersionControlServerHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         if (versionControlService.isEmpty()) {
-            return Health.down(new IllegalStateException("No active Spring profile providing a version controle service")).build();
+            return Health.down(new IllegalStateException("No active Spring profile providing a version control service")).build();
         }
         return versionControlService.get().health().asActuatorHealth();
     }
