@@ -9799,10 +9799,10 @@ ngx-cookie@4.1.2:
   dependencies:
     tslib "^1.9.0"
 
-ngx-device-detector@1.3.11:
-  version "1.3.11"
-  resolved "https://registry.yarnpkg.com/ngx-device-detector/-/ngx-device-detector-1.3.11.tgz#8a2efcd754b96668d6b78e05c8ac6a64282081e9"
-  integrity sha512-ei1Q2ohi7RXZiSRCe8VojIZAeaNNLsW+dElN8kwK+AKm/spCt65/a8jMomFHuj7ZVsCEGtL3Lnjni+JJfn/X3Q==
+ngx-device-detector@1.3.16:
+  version "1.3.16"
+  resolved "https://registry.yarnpkg.com/ngx-device-detector/-/ngx-device-detector-1.3.16.tgz#5a575b7b473c9284d1abf4ff9fbafbf27f3b3d44"
+  integrity sha512-bEGR4CMxbOSat+dFJYewA1f+cZNGEMct9W5n3o/mzhIxQLQquBMcungFlQqYaB0vwlYnj/6vM0PlzCnwn/SRiw==
   dependencies:
     tslib "^1.9.0"
 
