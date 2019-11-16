@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 public class UMLRelationship extends UMLElement {
 
     public enum UMLRelationshipType {
+
         CLASS_BIDIRECTIONAL, CLASS_UNIDIRECTIONAL, CLASS_INHERITANCE, CLASS_REALIZATION, CLASS_DEPENDENCY, CLASS_AGGREGATION, CLASS_COMPOSITION;
 
         /**
