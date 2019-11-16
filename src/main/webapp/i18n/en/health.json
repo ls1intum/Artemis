@@ -17,7 +17,7 @@
             "hystrix": "Hystrix",
             "diskSpace": "Disk space",
             "mail": "Email",
-            "db": "Datenbank",
+            "db": "Database",
             "continuousIntegrationServer": "Continuous Integration Server",
             "versionControlServer": "Version Control Server"
         },

@@ -18,8 +18,8 @@
             "diskSpace": "Festplattenspeicher",
             "mail": "Email",
             "db": "Datenbank",
-            "continuousIntegrationServer": "Continuous Integration Server",
-            "versionControlServer": "Version Control Server"
+            "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
+            "versionControlServer": "Versionskontrollserver"
         },
         "table": {
             "service": "Dienst Name",
