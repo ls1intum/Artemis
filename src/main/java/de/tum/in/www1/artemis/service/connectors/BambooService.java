@@ -1062,7 +1062,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return true if the build plan id is valid.
      */
     @Override
-    public Boolean buildPlanIdIsValid(String buildPlanId) {
+    public Boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;

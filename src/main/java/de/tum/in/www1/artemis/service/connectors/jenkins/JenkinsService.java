@@ -118,8 +118,14 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Boolean buildPlanIdIsValid(String buildPlanId) {
-        return null;
+    public Boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
+        try {
+            getPlanConfig(projectKey, buildPlanId);
+            return true;
+        }
+        catch (Exception emAll) {
+            return false;
+        }
     }
 
     @Override
