@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
 ########################################################################################################################
-# Script: 		artemis-server-cli																					   #
-#																													   #
-# Description:	Provide a Wrapper to conveniently perform commom operations on Artemis Servers.						   #
-#				This asumes a standardized server configuration and properly configured SSH access.					   #
-#				Run artemis-server-cli -h for usage information														   #
-#																													   #
-# Author: 		Jan Philip Bernius																					   #
-# Email:		janphilip.bernius@tum.de																			   #
-# GitHub:		@jpbernius																							   #
-#																													   #
+# Script:         artemis-server-cli                                                                                   #
+#                                                                                                                      #
+# Description:    Provide a Wrapper to conveniently perform commom operations on Artemis Servers.                      #
+#                This asumes a standardized server configuration and properly configured SSH access.                   #
+#                Run artemis-server-cli -h for usage information                                                       #
+#                                                                                                                      #
+# Author:       Jan Philip Bernius                                                                                     #
+# Email:        janphilip.bernius@tum.de                                                                               #
+# GitHub:       @jpbernius                                                                                             #
+#                                                                                                                      #
 ########################################################################################################################
 
 
@@ -177,7 +177,7 @@ HELP
 }
 
 ########################################################################################################################
-# Subcommand Menus																									   #
+# Subcommand Menus                                                                                                     #
 ########################################################################################################################
 
 
@@ -343,7 +343,7 @@ function logs_menu {
 
 
 ########################################################################################################################
-# Main Menu																											   #
+# Main Menu                                                                                                            #
 ########################################################################################################################
 
 # Parse options to the `artemis-server-cli` command
