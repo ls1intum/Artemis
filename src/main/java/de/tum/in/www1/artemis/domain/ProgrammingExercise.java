@@ -462,6 +462,7 @@ public class ProgrammingExercise extends Exercise {
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
     public enum ProgrammingExerciseSearchColumn {
+
         ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
         private String mappedColumnName;
