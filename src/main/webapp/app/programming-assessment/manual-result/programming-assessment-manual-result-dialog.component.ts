@@ -77,10 +77,8 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         }
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
-            this.getParticipation();
-        } else {
-            this.participation = this.result.participation! as StudentParticipation;
         }
+        this.participation = this.result.participation! as StudentParticipation;
         this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
     }
 
