@@ -13,6 +13,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as chai from 'chai';
 import {
     EditableField,
+    ProgrammingExercise,
     ProgrammingExerciseManageTestCasesComponent,
     ProgrammingExerciseService,
     ProgrammingExerciseTestCaseService,
@@ -51,6 +52,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
     let notifyTestCasesSpy: SinonSpy;
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
+    let loadExerciseStub: SinonStub;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
@@ -69,6 +71,9 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const testCasesNoUpdated = '#test-case-status-no-updated';
 
     const exerciseId = 1;
+    const exercise = {
+        id: exerciseId,
+    } as ProgrammingExercise;
     const testCases1 = [
         { id: 1, testName: 'testBubbleSort', active: true, weight: 1, afterDueDate: false },
         { id: 2, testName: 'testMergeSort', active: true, weight: 1, afterDueDate: true },
@@ -152,6 +157,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
                 testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
                 getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
+                loadExerciseStub = stub(programmingExerciseService, 'find');
 
                 routeSubject = new Subject();
                 // @ts-ignore
@@ -161,6 +167,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 testCasesChangedSubject = new Subject<boolean>();
                 testCasesChangedStub.returns(testCasesChangedSubject);
                 getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
+                loadExerciseStub.returns(of({ body: exercise }));
             });
     }));
 
