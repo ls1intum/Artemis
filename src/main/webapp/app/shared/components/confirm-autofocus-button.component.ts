@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
 
 @Component({
@@ -47,7 +47,7 @@ export class ConfirmAutofocusButtonComponent {
     constructor(private modalService: NgbModal) {}
 
     onOpenConfirmationModal() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent as Component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ConfirmAutofocusModalComponent as Component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.text = this.confirmationText;
         modalRef.componentInstance.title = this.confirmationTitle;
         modalRef.result.then(
