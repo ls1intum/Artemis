@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 ########################################################################################################################
-# Script:         artemis-server-cli                                                                                   #
+# Script:       artemis-server-cli                                                                                     #
 #                                                                                                                      #
-# Description:    Provide a Wrapper to conveniently perform commom operations on Artemis Servers.                      #
-#                This asumes a standardized server configuration and properly configured SSH access.                   #
-#                Run artemis-server-cli -h for usage information                                                       #
+# Description:  Provide a Wrapper to conveniently perform commom operations on Artemis Servers.                        #
+#               This asumes a standardized server configuration and properly configured SSH access.                    #
+#               Run artemis-server-cli -h for usage information                                                        #
 #                                                                                                                      #
 # Author:       Jan Philip Bernius                                                                                     #
 # Email:        janphilip.bernius@tum.de                                                                               #
