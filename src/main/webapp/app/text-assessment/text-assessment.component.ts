@@ -17,7 +17,7 @@ import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { AccountService, WindowRef } from 'app/core';
+import { WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
@@ -27,6 +27,7 @@ import { ExerciseType } from 'app/entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],

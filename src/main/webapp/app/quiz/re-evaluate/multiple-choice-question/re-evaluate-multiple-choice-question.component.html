@@ -5,7 +5,7 @@
                 <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px" />
                 <span class="input-group-btn">
                     <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
-                        <fa-icon icon="undo"></fa-icon>
+                        <fa-icon [icon]="'undo'"></fa-icon>
                     </button>
                 </span>
             </div>
@@ -13,16 +13,16 @@
         <div class="col-md-2 text-right">
             <div class="form-group">
                 <div class="re-evaluate-button" (click)="moveUp()">
-                    <fa-icon icon="chevron-up" size="2x"></fa-icon>
+                    <fa-icon [icon]="'chevron - up'" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" (click)="moveDown()">
-                    <fa-icon icon="chevron-down" size="2x"></fa-icon>
+                    <fa-icon [icon]="'chevron - down'" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" (click)="resetQuestion()">
-                    <fa-icon icon="undo" size="2x"></fa-icon>
+                    <fa-icon [icon]="'undo'" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" (click)="delete()">
-                    <fa-icon icon="trash" size="2x"></fa-icon>
+                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
                 </div>
             </div>
         </div>
@@ -75,7 +75,7 @@
                 </ace-editor>
                 <span class="input-group-btn" style="vertical-align: top">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
-                        <fa-icon icon="undo"></fa-icon>
+                        <fa-icon [icon]="'undo'"></fa-icon>
                     </button>
                 </span>
             </div>
@@ -85,7 +85,7 @@
         <div class="answer-border" *ngFor="let answer of question.answerOptions; let i = index" dnd-sortable [sortableIndex]="i">
             <div class="question-options">
                 <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
-                    <fa-icon icon="arrows-alt-v" size="2x"></fa-icon>
+                    <fa-icon [icon]="'arrows - alt - v'" size="2x"></fa-icon>
                 </span>
                 <ace-editor [mode]="editorMode" [autoUpdateContent]="editorAutoUpdate" style="min-height: 40px; height: 60px; width:65%; overflow: auto;" class="form-control">
                 </ace-editor>
@@ -104,10 +104,10 @@
                     ></button
                     >&nbsp;
                     <span class="re-evaluate-button" (click)="resetAnswer(answer)">
-                        <fa-icon icon="undo" size="2x"></fa-icon>
+                        <fa-icon [icon]="'undo'" size="2x"></fa-icon>
                     </span>
                     <span class="re-evaluate-button" (click)="deleteAnswer(answer)">
-                        <fa-icon icon="trash" size="2x"></fa-icon>
+                        <fa-icon [icon]="'trash'" size="2x"></fa-icon>
                     </span>
                 </div>
             </div>

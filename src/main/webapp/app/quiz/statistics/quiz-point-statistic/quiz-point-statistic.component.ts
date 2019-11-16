@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AccountService, JhiWebsocketService } from '../../../core';
+import { JhiWebsocketService } from '../../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizPointStatistic } from '../../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';
@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { PointCounter } from 'app/entities/point-counter';
 import * as moment from 'moment';
 import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',

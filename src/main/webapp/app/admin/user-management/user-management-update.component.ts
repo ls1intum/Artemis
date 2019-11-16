@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { JhiLanguageHelper, User, UserService } from 'app/core';
+import { User, UserService } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -9,7 +10,7 @@ import { JhiLanguageHelper, User, UserService } from 'app/core';
 })
 export class UserManagementUpdateComponent implements OnInit {
     user: User;
-    languages: any[];
+    languages: string[];
     authorities: any[];
     isSaving: boolean;
 
@@ -27,9 +28,7 @@ export class UserManagementUpdateComponent implements OnInit {
         this.userService.authorities().subscribe(authorities => {
             this.authorities = authorities;
         });
-        this.languageHelper.getAll().then(languages => {
-            this.languages = languages;
-        });
+        this.languages = this.languageHelper.getAll();
     }
 
     /**

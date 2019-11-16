@@ -20,6 +20,7 @@ import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
     providers: [FileService, FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }, CacheableImageService, DeleteDialogService],
     entryComponents: [DeleteDialogComponent],
     exports: [
+        ArtemisSharedLibsModule,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         HasAnyAuthorityDirective,
@@ -30,10 +31,4 @@ import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
         SecureLinkDirective,
     ],
 })
-export class ArtemisSharedModule {
-    static forRoot() {
-        return {
-            ngModule: ArtemisSharedModule,
-        };
-    }
-}
+export class ArtemisSharedModule {}

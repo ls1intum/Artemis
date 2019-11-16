@@ -10,7 +10,7 @@ import * as $ from 'jquery';
 import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { AccountService, WindowRef } from 'app/core';
+import { WindowRef } from 'app/core';
 import { StudentParticipation } from 'app/entities/participation';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
@@ -21,6 +21,7 @@ import { FileUploadSubmission, FileUploadSubmissionService } from 'app/entities/
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { filter, finalize } from 'rxjs/operators';
 import { FileService } from 'app/shared';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],

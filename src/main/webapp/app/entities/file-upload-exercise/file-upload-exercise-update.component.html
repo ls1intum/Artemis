@@ -74,7 +74,12 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
-                    <fa-icon icon="question-circle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"></fa-icon>
+                    <fa-icon
+                        [icon]="'question - circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"
+                    ></fa-icon>
                     <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
                 </div>
                 <jhi-presentation-score-checkbox [exercise]="fileUploadExercise"></jhi-presentation-score-checkbox>

@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AccountService, JhiWebsocketService } from '../../../core';
+import { JhiWebsocketService } from '../../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
@@ -14,6 +14,7 @@ import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface BackgroundColorConfig {
     backgroundColor: string;

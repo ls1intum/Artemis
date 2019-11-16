@@ -25,7 +25,7 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleCh
                 [value]="value"
                 type="text"
             />
-            <button class="table-editable-field__edit btn-light" [disabled]="!canEdit" (click)="sendEditStart($event)"><fa-icon icon="pencil-alt"></fa-icon></button>
+            <button class="table-editable-field__edit btn-light" [disabled]="!canEdit" (click)="sendEditStart($event)"><fa-icon [icon]="'pencil - alt'"></fa-icon></button>
         </div>
     `,
 })

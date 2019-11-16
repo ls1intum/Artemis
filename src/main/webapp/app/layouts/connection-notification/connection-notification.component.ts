@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ConnectionNotification, ConnectionNotificationType } from 'app/layouts/connection-notification';
-import { AccountService, JhiWebsocketService, User } from 'app/core';
+import { JhiWebsocketService, User } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-connection-notification',

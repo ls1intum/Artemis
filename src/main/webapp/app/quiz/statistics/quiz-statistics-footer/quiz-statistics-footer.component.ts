@@ -7,11 +7,12 @@ import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-qu
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { QuizPointStatistic } from 'app/entities/quiz-point-statistic';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { AccountService, JhiWebsocketService } from 'app/core';
+import { JhiWebsocketService } from 'app/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',

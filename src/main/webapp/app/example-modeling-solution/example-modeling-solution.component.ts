@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService } from '../core';
+import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingExercise, ModelingExerciseService } from 'app/entities/modeling-exercise';
 import { ModelingEditorComponent } from 'app/modeling-editor';

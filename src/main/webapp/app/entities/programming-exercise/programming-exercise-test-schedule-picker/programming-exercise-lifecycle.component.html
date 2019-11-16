@@ -16,7 +16,7 @@
                     <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle">
-                    <fa-icon icon="cogs" size="lg"></fa-icon>
+                    <fa-icon [icon]="'cogs'" size="lg"></fa-icon>
                 </div>
             </div>
             <jhi-programming-exercise-test-schedule-date-picker
@@ -51,7 +51,7 @@
                     class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle btn-lifecycle--deactivated"
                     (click)="toggleHasManualTests()"
                 >
-                    <fa-icon icon="user-plus" size="lg"></fa-icon>
+                    <fa-icon [icon]="'user - plus'" size="lg"></fa-icon>
                 </div>
                 <div
                     *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC"

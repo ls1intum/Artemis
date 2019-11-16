@@ -8,7 +8,7 @@
             [routerLink]="['/course', courseId, 'quiz-exercise', 'new']"
             id="create-quiz-button"
         >
-            <fa-icon icon="plus"></fa-icon>
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel">
                 Create new Quiz
             </span>
@@ -18,13 +18,13 @@
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
             [routerLink]="['/course', courseId, 'quiz-exercise', 'export']"
         >
-            <fa-icon icon="plus"></fa-icon>
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel">
                 Export Quiz Exercises
             </span>
         </button>
         <button *ngIf="course && course.isAtLeastInstructor" class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
-            <fa-icon icon="plus"></fa-icon>
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop">
                 Create new Drag and Drop Model Quiz
             </span>
@@ -37,12 +37,12 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th>{{ 'artemisApp.quizExercise.quizLifecycle' | translate }}</th>
                     <th></th>
                 </tr>
@@ -81,7 +81,7 @@
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED"
                             >
-                                <fa-icon icon="play-circle"></fa-icon>
+                                <fa-icon [icon]="'play - circle'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
                             </button>
                             <button
@@ -91,7 +91,7 @@
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE"
                             >
-                                <fa-icon icon="play-circle"></fa-icon>
+                                <fa-icon [icon]="'play - circle'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startNow">Start Now</span>
                             </button>
                             <button
@@ -101,7 +101,7 @@
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.HIDDEN"
                             >
-                                <fa-icon icon="eye"></fa-icon>
+                                <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow">Set Visible</span>
                             </button>
                         </div>
@@ -115,7 +115,7 @@
                                     [routerLink]="['/quiz', quizExercise.id, 'preview']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon icon="eye"></fa-icon>
+                                    <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
                                 </button>
                                 <button
@@ -124,7 +124,7 @@
                                     [routerLink]="['/quiz', quizExercise.id, 'solution']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon icon="eye"></fa-icon>
+                                    <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                                 </button>
                             </div>
@@ -135,7 +135,7 @@
                                     [routerLink]="['/quiz', quizExercise.id, 'quiz-point-statistic']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon icon="signal"></fa-icon>
+                                    <fa-icon [icon]="'signal'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
                                 </button>
                                 <button
@@ -144,7 +144,7 @@
                                     [routerLink]="['/course', quizExercise.course.id, 'exercise', quizExercise.id, 'dashboard']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon icon="eye"></fa-icon>
+                                    <fa-icon [icon]="'eye'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </button>
                             </div>
@@ -166,7 +166,7 @@
                                     [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon icon="pencil-alt"></fa-icon>
+                                    <fa-icon [icon]="'pencil - alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                 </button>
                                 <button
@@ -176,7 +176,7 @@
                                     [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon icon="pencil-alt"></fa-icon>
+                                    <fa-icon [icon]="'pencil - alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                                 </button>
                             </div>
@@ -189,7 +189,7 @@
                                     queryParamsHandling="merge"
                                     class="btn btn-danger btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon icon="times"></fa-icon>
+                                    <fa-icon [icon]="'times'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
                                 </button>
                                 <button
@@ -202,7 +202,7 @@
                                     id="delete-quiz-{{ quizExercise.id }}"
                                     class="mb-1"
                                 >
-                                    <fa-icon icon="times"></fa-icon>
+                                    <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                             </div>
                         </div>

@@ -5,7 +5,7 @@
             <h3>{{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.title' | translate) : ('artemisApp.complaint.title' | translate) }}</h3>
             <p *ngIf="complaintType === ComplaintType.MORE_FEEDBACK; else complaintDescription">
                 {{ 'artemisApp.moreFeedback.description' | translate }}
-                <fa-icon icon="info-circle" title="{{ 'artemisApp.moreFeedback.info' | translate }}" class="info-icon"></fa-icon>
+                <fa-icon [icon]="'info - circle'" title="{{ 'artemisApp.moreFeedback.info' | translate }}" class="info-icon"></fa-icon>
             </p>
             <ng-template #complaintDescription>
                 <p>
@@ -19,7 +19,7 @@
                         jhiTranslate="artemisApp.complaint.descriptionExtended"
                         [translateValues]="{ maxComplaintNumber: maxComplaintNumberPerStudent, allowedComplaints: allowedComplaints }"
                     ></span>
-                    <fa-icon icon="info-circle" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
+                    <fa-icon [icon]="'info - circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
                 </p>
             </ng-template>
         </div>
@@ -77,6 +77,6 @@
 
 <ng-template #loading>
     <h2>
-        <span class="spinner"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.dashboard.loading">Loading..</span></span>
+        <span class="spinner"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.dashboard.loading">Loading..</span></span>
     </h2>
 </ng-template>

@@ -3,12 +3,13 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
 
-import { AccountService, Credentials, LoginService, StateStorageService, User } from '../core';
+import { Credentials, LoginService, StateStorageService, User } from '../core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { isIntelliJ } from 'app/intellij/intellij';
 import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-home',

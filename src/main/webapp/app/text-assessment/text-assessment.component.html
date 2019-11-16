@@ -78,7 +78,7 @@
 </div>
 
 <h2>
-    <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.loading"></span></span>
+    <span *ngIf="busy" style="color:grey"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.textAssessment.loading"></span></span>
 </h2>
 
 <div class="alert alert-info" *ngIf="complaint">

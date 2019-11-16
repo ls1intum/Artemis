@@ -6,7 +6,7 @@
                 {{ 'artemisApp.tutorCourseDashboard.pageHeader' | translate }} {{ course?.title }}
 
                 <a class="text-primary card-link" *ngIf="course?.isAtLeastInstructor" routerLink="/course/{{ course?.id }}/dashboard" routerLinkActive="active">
-                    <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
+                    <fa-icon [icon]="'info - circle'" [fixedWidth]="true" style="color:white;"></fa-icon>
                 </a>
             </h2>
         </div>
@@ -64,17 +64,17 @@
             <thead>
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
                     <th jhiSortBy="type">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseType' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseType' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="title">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exercise' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exercise' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.yourStatus' | translate }}</th>
                     <th jhiSortBy="dueDate">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.exerciseDueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="assessmentDueDate">
-                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.tutorCourseDashboard.assessmentsDueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>{{ 'artemisApp.tutorCourseDashboard.actions' | translate }}</th>
                 </tr>
