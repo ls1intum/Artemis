@@ -1,22 +1,25 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.util.Optional;
+
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Profile("bitbucket")
 @Component
 public class VersionControlServerHealthIndicator implements HealthIndicator {
 
-    private final VersionControlService versionControlService;
+    private final Optional<VersionControlService> versionControlService;
 
-    public VersionControlServerHealthIndicator(VersionControlService versionControlService) {
+    public VersionControlServerHealthIndicator(Optional<VersionControlService> versionControlService) {
         this.versionControlService = versionControlService;
     }
 
     @Override
     public Health health() {
-        return versionControlService.health().asActuatorHealth();
+        if (versionControlService.isEmpty()) {
+            return Health.down(new IllegalStateException("No active Spring profile providing a version controle service")).build();
+        }
+        return versionControlService.get().health().asActuatorHealth();
     }
 }
