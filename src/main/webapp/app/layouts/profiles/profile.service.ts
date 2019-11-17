@@ -29,7 +29,10 @@ export class ProfileService {
 
                         /** map guided tour configuration */
                         const guidedTourMapping = data['guided-tour'];
-                        guidedTourMapping.tours = _.reduce(guidedTourMapping.tours, _.extend);
+                        if (guidedTourMapping) {
+                            guidedTourMapping.tours = _.reduce(guidedTourMapping.tours, _.extend);
+                            profileInfo.guidedTourMapping = guidedTourMapping;
+                        }
 
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
@@ -40,7 +43,7 @@ export class ProfileService {
                         }
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
-                        profileInfo.guidedTourMapping = guidedTourMapping;
+
                         return profileInfo;
                     }),
                 )

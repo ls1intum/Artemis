@@ -17,6 +17,8 @@ export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
 
+    courseForGuidedTour: Course | null;
+
     constructor(
         private courseService: CourseService,
         private exerciseService: ExerciseService,
@@ -31,7 +33,7 @@ export class OverviewComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
-                this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
+                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
             },
             (response: string) => this.onError(response),
         );
@@ -62,9 +64,5 @@ export class OverviewComponent implements OnInit {
             });
         }
         return relevantExercise;
-    }
-
-    compareCourseShortName(course: Course): boolean {
-        return this.guidedTourService.isGuidedTourAvailableForCourse(course);
     }
 }

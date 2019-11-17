@@ -49,6 +49,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sortingOrder: ExerciseSortingOrder;
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
+    exerciseForGuidedTour: Exercise | null;
 
     constructor(
         private courseService: CourseService,
@@ -93,7 +94,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.applyFiltersAndOrder();
         });
 
-        this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
+        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
     }
 
     ngOnDestroy(): void {
@@ -248,9 +249,5 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     get nextRelevantExercise(): Exercise {
         return this.exerciseService.getNextExerciseForHours(this.course!.exercises);
-    }
-
-    compareExerciseShortName(exercise: Exercise): boolean {
-        return this.guidedTourService.isGuidedTourAvailableForExercise(exercise);
     }
 }
