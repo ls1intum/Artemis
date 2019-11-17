@@ -7,12 +7,13 @@ import { Notification, NotificationType } from 'app/entities/notification';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
-import { JhiWebsocketService, User } from 'app/core';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification';
 import { SystemNotification } from 'app/entities/system-notification';
 import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { User } from 'app/core';
 
 type EntityResponseType = HttpResponse<Notification>;
 type EntityArrayResponseType = HttpResponse<Notification[]>;

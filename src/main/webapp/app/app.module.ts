@@ -3,7 +3,7 @@ import './vendor.ts';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { ArtemisSharedModule } from './shared';
-import { ArtemisCoreModule, LoginService } from 'app/core';
+import { ArtemisCoreModule } from 'app/core';
 import { ArtemisAppRoutingModule } from './app-routing.module';
 import { ArtemisHomeModule } from './home';
 import { ArtemisEntityModule } from './entities/entity.module';
@@ -50,11 +50,12 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { QuizExerciseExportComponent } from 'app/entities/quiz-exercise/quiz-exercise-export.component';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { AccountService } from 'app/core/auth/account.service';
+import { CookieModule } from 'ngx-cookie';
 
 @NgModule({
     imports: [
         BrowserModule,
+        CookieModule.forRoot(),
         ArtemisSharedModule,
         ArtemisCoreModule,
         ArtemisHomeModule,
@@ -93,7 +94,7 @@ import { AccountService } from 'app/core/auth/account.service';
         ArtemisExampleModelingSolutionModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisListOfComplaintsModule,
-        FeatureToggleModule.forRoot(),
+        // FeatureToggleModule.forRoot(),
     ],
     declarations: [
         JhiMainComponent,

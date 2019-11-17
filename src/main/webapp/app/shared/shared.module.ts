@@ -10,13 +10,11 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
-import { AccountService } from 'app/core/auth/account.service';
-import { LoginService } from 'app/core';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
     declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective, SecureLinkDirective],
-    providers: [FileService, FileUploaderService, DatePipe, CacheableImageService, DeleteDialogService, AccountService, LoginService],
+    providers: [FileService, FileUploaderService, DatePipe, CacheableImageService, DeleteDialogService],
     entryComponents: [DeleteDialogComponent],
     exports: [
         ArtemisSharedLibsModule,

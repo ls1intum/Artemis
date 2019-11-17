@@ -5,8 +5,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
-import { ProfileService } from 'app/layouts/profiles/profile.service';
-import { LoginService, User } from 'app/core';
+import { User } from 'app/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
@@ -14,6 +13,8 @@ import { VERSION } from 'app/app.constants';
 import * as moment from 'moment';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { AccountService } from 'app/core/auth/account.service';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { LoginService } from 'app/core/login/login.service';
 
 @Component({
     selector: 'jhi-navbar',

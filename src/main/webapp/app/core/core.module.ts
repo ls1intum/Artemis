@@ -1,8 +1,7 @@
-import { LOCALE_ID, NgModule, Sanitizer, ErrorHandler } from '@angular/core';
+import { LOCALE_ID, NgModule, ErrorHandler } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { Title, BrowserModule } from '@angular/platform-browser';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { RepositoryInterceptor, RepositoryService } from 'app/entities/repository';
@@ -12,18 +11,7 @@ import { AuthInterceptor } from 'app/blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from 'app/blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/blocks/interceptor/notification.interceptor';
-import {
-    JhiLanguageService,
-    JhiConfigService,
-    JhiResolvePagingParams,
-    JhiAlertService,
-    JhiPaginationUtil,
-    JhiModuleConfig,
-    NgJhipsterModule,
-    translatePartialLoader,
-    missingTranslationHandler,
-} from 'ng-jhipster';
-import { TranslateService, TranslateModule, TranslateLoader, MissingTranslationHandler } from '@ngx-translate/core';
+import { JhiConfigService, JhiLanguageService, missingTranslationHandler, NgJhipsterModule, translatePartialLoader } from 'ng-jhipster';
 import { NgbDatepickerConfig, NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -37,7 +25,7 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
     imports: [
@@ -86,9 +74,7 @@ import { ProfileService } from 'app/layouts/profiles/profile.service';
             useClass: SentryErrorHandler,
         },
         DatePipe,
-        JhiWebsocketService,
         GuidedTourService,
-        ProfileService,
         RepositoryService,
         PaginationConfig,
         UserRouteAccessService,

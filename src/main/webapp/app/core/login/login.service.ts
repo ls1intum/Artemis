@@ -4,8 +4,9 @@ import { Router } from '@angular/router';
 import { EMPTY, from } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 
-import { AuthServerProvider, Credentials, JhiWebsocketService } from 'app/core';
+import { AuthServerProvider, Credentials } from 'app/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {

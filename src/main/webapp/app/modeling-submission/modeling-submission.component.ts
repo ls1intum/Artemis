@@ -10,7 +10,6 @@ import { Result, ResultService } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from '../shared';
-import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -23,6 +22,7 @@ import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-modeling-submission',

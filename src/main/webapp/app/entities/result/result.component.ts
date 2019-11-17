@@ -8,10 +8,10 @@ import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import * as moment from 'moment';
 import { isResultPreliminary, isProgrammingExerciseStudentParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',

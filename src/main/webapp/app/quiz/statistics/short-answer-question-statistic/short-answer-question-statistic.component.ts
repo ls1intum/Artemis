@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService } from '../../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-question-util.service';
@@ -15,6 +14,7 @@ import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-
 import { Subscription } from 'rxjs/Subscription';
 import { ShortAnswerSolution } from 'app/entities/short-answer-solution';
 import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
