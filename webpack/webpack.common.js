@@ -39,7 +39,7 @@ module: {
             }
         },
         {
-            test: /\.(woff|woff2|eot|ttf)$/,
+            test: /\.(woff|eot|ttf)$/,
             use: ['url-loader?limit=100000']
         },
         {
