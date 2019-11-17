@@ -5,7 +5,8 @@ import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
-import { JhiLanguageHelper, User, UserService } from 'app/core';
+import { JhiLanguageHelper, User } from 'app/core';
+import { UserService } from 'app/core/user/user.service';
 
 describe('Component Tests', () => {
     describe('User Management Update Component', () => {
