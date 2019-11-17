@@ -10,6 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -18,6 +19,7 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
     providers: [JhiAlertService, SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
+    FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly ParticipationStatus = ParticipationStatus;
 

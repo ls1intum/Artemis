@@ -1,4 +1,5 @@
 import { Component, Input, EventEmitter, Output } from '@angular/core';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 /**
  * The actions of the test case table:
@@ -24,14 +25,14 @@ import { Component, Input, EventEmitter, Output } from '@angular/core';
             jhiTranslate="artemisApp.programmingExercise.manageTestCases.resetWeights"
         ></button>
         <jhi-programming-exercise-trigger-all-button
-            [exerciseId]="exerciseId"
+            [exercise]="exercise"
             [disabled]="isSaving || !hasUpdatedTestCases"
             (onBuildTriggered)="onBuildTriggered.emit()"
         ></jhi-programming-exercise-trigger-all-button>
     `,
 })
 export class ProgrammingExerciseManageTestCasesActionsComponent {
-    @Input() exerciseId: number;
+    @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
     @Input() hasUpdatedTestCases: boolean;
     @Input() isSaving: boolean;

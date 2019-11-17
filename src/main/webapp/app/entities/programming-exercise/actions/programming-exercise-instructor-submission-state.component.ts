@@ -4,7 +4,10 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 import { of, Subscription } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { hasExerciseChanged } from 'app/entities/exercise';
 import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -15,13 +18,14 @@ import { ProgrammingBuildRunService } from 'app/programming-submission/programmi
  */
 @Component({
     selector: 'jhi-programming-exercise-instructor-submission-state',
-    templateUrl: './programmming-exercise-instructor-submission-state.component.html',
+    templateUrl: './programming-exercise-instructor-submission-state.component.html',
 })
-export class ProgrammmingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+    FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
-    @Input() exerciseId: number;
+    @Input() exercise: ProgrammingExercise;
 
     hasFailedSubmissions = false;
     hasBuildingSubmissions = false;
@@ -46,9 +50,9 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
      * @param changes only relevant for change of exerciseId.
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.exerciseId && !!changes.exerciseId.currentValue) {
+        if (hasExerciseChanged(changes)) {
             this.submissionStateSubscription = this.programmingSubmissionService
-                .getSubmissionStateOfExercise(this.exerciseId)
+                .getSubmissionStateOfExercise(this.exercise.id)
                 .pipe(
                     map(this.sumSubmissionStates),
                     // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
@@ -68,9 +72,9 @@ export class ProgrammmingExerciseInstructorSubmissionStateComponent implements O
      */
     triggerBuildOfFailedSubmissions() {
         this.isBuildingFailedSubmissions = true;
-        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exerciseId, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         this.programmingSubmissionService
-            .triggerInstructorBuildForParticipationsOfExercise(this.exerciseId, failedSubmissionParticipations)
+            .triggerInstructorBuildForParticipationsOfExercise(this.exercise.id, failedSubmissionParticipations)
             .subscribe(() => (this.isBuildingFailedSubmissions = false));
     }
 

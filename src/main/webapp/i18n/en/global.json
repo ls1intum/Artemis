@@ -86,6 +86,7 @@
                 "main": "Server Administration",
                 "userManagement": "User management",
                 "notificationManagement": "Notification management",
+                "featureToggles": "Feature Toggles",
                 "tracker": "User tracker",
                 "metrics": "Metrics",
                 "health": "Health",

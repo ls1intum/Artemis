@@ -9,6 +9,7 @@ import { CodeEditorSubmissionService } from 'app/code-editor/service/code-editor
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -17,6 +18,7 @@ import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions
 export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     CommitState = CommitState;
     EditorState = EditorState;
+    FeatureToggle = FeatureToggle;
 
     @Input()
     buildable = true;
