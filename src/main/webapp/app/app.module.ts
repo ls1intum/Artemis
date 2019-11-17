@@ -107,7 +107,6 @@ import { AccountService } from 'app/core/auth/account.service';
         // TODO: this should be much lower in the hierarchy
         QuizExerciseExportComponent,
     ],
-    providers: [AccountService, LoginService],
     bootstrap: [JhiMainComponent],
 })
 export class ArtemisAppModule {}
