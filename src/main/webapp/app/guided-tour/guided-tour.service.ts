@@ -810,12 +810,12 @@ export class GuidedTourService {
      * @return true if the current exercise is an exercise for a guided tour, otherwise false
      */
     public isGuidedTourAvailableForExercise(exercise: Exercise, guidedTour?: GuidedTour): boolean {
-        if (!exercise || !exercise.course || !this.currentTour) {
+        if (!exercise || !exercise.course) {
             return false;
         }
 
         let exerciseMatches = false;
-        const settingsKey = guidedTour ? guidedTour.settingsKey : this.currentTour.settingsKey;
+        const settingsKey = guidedTour ? guidedTour.settingsKey : this.currentTour ? this.currentTour.settingsKey : '';
         const courseMatches = this.isGuidedTourAvailableForCourse(exercise.course);
 
         if (exercise.type === ExerciseType.PROGRAMMING) {

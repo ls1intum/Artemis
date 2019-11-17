@@ -21,7 +21,7 @@ import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-t
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -86,7 +86,7 @@ describe('GuidedTourService', () => {
         settingsKey: 'tour_modeling_task',
         preventBackdropFromAdvancing: true,
         steps: [
-            new TextTourStep({
+            new ModelingTaskTourStep({
                 headlineTranslateKey: '',
                 contentTranslateKey: '',
                 modelingTask: new GuidedTourModelingTask(personUML.name, ''),
@@ -102,7 +102,12 @@ describe('GuidedTourService', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
-                providers: [GuidedTourService, { provide: DeviceDetectorService }],
+                providers: [
+                    GuidedTourService,
+                    { provide: DeviceDetectorService },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                ],
             });
 
             service = TestBed.get(GuidedTourService);
