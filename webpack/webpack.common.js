@@ -30,7 +30,7 @@ module: {
             exclude: '/src/main/webapp/index.html'
         },
         {
-            test: /\.(jpe?g|png|gif|svg)$/i,
+            test: /\.(jpe?g|png|gif|svg|woff2?)$/i,
             loader: 'file-loader',
             options: {
                 digest: 'hex',
