@@ -72,6 +72,12 @@
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item" routerLink="admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.featureToggles">Feature Toggles</span>
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" routerLink="admin/jhi-tracker" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'eye'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.tracker">User tracker</span>

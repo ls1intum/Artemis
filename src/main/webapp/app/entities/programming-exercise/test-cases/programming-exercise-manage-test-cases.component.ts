@@ -2,14 +2,15 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { of, Subscription } from 'rxjs';
-import { catchError, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { of, Subscription, zip } from 'rxjs';
+import { catchError, distinctUntilChanged, map, tap, take } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ComponentCanDeactivate } from 'app/shared';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 export enum EditableField {
     WEIGHT = 'weight',
@@ -24,8 +25,8 @@ export enum EditableField {
 export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
 
-    exerciseId: number;
     courseId: number;
+    exercise: ProgrammingExercise;
     editing: [ProgrammingExerciseTestCase, EditableField] | null = null;
     testCaseSubscription: Subscription;
     testCaseChangedSubscription: Subscription;
@@ -80,7 +81,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     ngOnInit(): void {
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
             this.isLoading = true;
-            this.exerciseId = Number(params['exerciseId']);
+            const exerciseId = Number(params['exerciseId']);
             this.courseId = Number(params['courseId']);
             this.editing = null;
             if (this.testCaseSubscription) {
@@ -90,15 +91,23 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                 this.testCaseChangedSubscription.unsubscribe();
             }
 
-            this.getExerciseTestCaseState()
-                .pipe(
-                    tap(releaseState => {
-                        this.hasUpdatedTestCases = releaseState.testCasesChanged;
-                        this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
-                        this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
-                    }),
-                    catchError(() => of(null)),
-                )
+            const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
+                map(res => res.body!),
+                tap(exercise => (this.exercise = exercise)),
+                catchError(() => of(null)),
+            );
+
+            const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
+                tap(releaseState => {
+                    this.hasUpdatedTestCases = releaseState.testCasesChanged;
+                    this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
+                    this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
+                }),
+                catchError(() => of(null)),
+            );
+
+            zip(loadExercise, loadExerciseTestCaseState)
+                .pipe(take(1))
                 .subscribe(() => {
                     // This subscription e.g. adds new new tests to the table that were just created.
                     this.subscribeForTestCaseUpdates();
@@ -126,7 +135,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.testCaseSubscription.unsubscribe();
         }
         this.testCaseSubscription = this.testCaseService
-            .subscribeForTestCases(this.exerciseId)
+            .subscribeForTestCases(this.exercise.id)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.testCases = testCases;
@@ -140,7 +149,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             this.testCaseChangedSubscription.unsubscribe();
         }
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
-            .getTestCaseState(this.exerciseId)
+            .getTestCaseState(this.exercise.id)
             .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedTestCases = testCasesChanged)))
             .subscribe();
     }
@@ -148,8 +157,8 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     /**
      * Checks if the exercise is released and has at least one student result.
      */
-    getExerciseTestCaseState() {
-        return this.programmingExerciseService.getProgrammingExerciseTestCaseState(this.exerciseId).pipe(map(({ body }) => body!));
+    getExerciseTestCaseState(exerciseId: number) {
+        return this.programmingExerciseService.getProgrammingExerciseTestCaseState(exerciseId).pipe(map(({ body }) => body!));
     }
 
     /**
@@ -204,7 +213,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         const testCaseUpdates = testCasesToUpdate.map(({ id, weight, afterDueDate }) => ({ id, weight, afterDueDate }));
 
         this.testCaseService
-            .updateTestCase(this.exerciseId, testCaseUpdates)
+            .updateTestCase(this.exercise.id, testCaseUpdates)
             .pipe(
                 tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                     // From successfully updated test cases from dirty checking list.
@@ -212,7 +221,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
 
                     // Generate the new list of test cases with the updated weights and notify the test case service.
                     const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
-                    this.testCaseService.notifyTestCases(this.exerciseId, newTestCases);
+                    this.testCaseService.notifyTestCases(this.exercise.id, newTestCases);
 
                     // Find out if there are test cases that were not updated, show an error.
                     const notUpdatedTestCases = _differenceBy(testCasesToUpdate, updatedTestCases, 'id');
@@ -256,11 +265,11 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
 
         this.testCaseService
-            .resetWeights(this.exerciseId)
+            .resetWeights(this.exercise.id)
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsReset`);
-                    this.testCaseService.notifyTestCases(this.exerciseId, testCases);
+                    this.testCaseService.notifyTestCases(this.exercise.id, testCases);
                 }),
                 catchError((err: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightsResetFailed`);

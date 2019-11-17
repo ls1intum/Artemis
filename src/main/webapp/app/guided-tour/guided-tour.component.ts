@@ -5,6 +5,7 @@ import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tou
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -56,19 +57,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             case 'ArrowRight': {
                 /**
                  * Check if the currentTourStep is defined so that the guided tour cannot be started by pressing the right arrow
-                 * If the user interaction is enabled, then the user has can only move to the next step after doing the interaction
                  */
-                if (
-                    this.currentTourStep &&
-                    !this.currentTourStep.userInteractionEvent &&
-                    this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount
-                ) {
-                    this.guidedTourService.nextStep();
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay <= this.guidedTourService.currentTourStepCount) {
+                    /** If the user interaction is enabled, then the user has can only move to the next step after finishing the interaction */
+                    if (!this.currentTourStep.userInteractionEvent || (this.currentTourStep.userInteractionEvent && this.userInteractionFinished)) {
+                        this.guidedTourService.nextStep();
+                    }
                 }
                 break;
             }
             case 'ArrowLeft': {
-                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1 && !this.currentTourStep.userInteractionEvent) {
+                if (this.currentTourStep && this.guidedTourService.currentTourStepDisplay > 1) {
                     this.guidedTourService.backStep();
                 }
                 break;
@@ -193,7 +192,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     throw err;
                 }
             }
-        });
+        }, 0);
     }
 
     /**
@@ -287,6 +286,21 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         return false;
     }
 
+    /**
+     * Check if the current tour step has a top orientation
+     * @return true if the current tour step orientation is bottom, otherwise false
+     */
+    public isTop(): boolean {
+        if (this.currentTourStep && this.currentTourStep.orientation) {
+            return (
+                this.currentTourStep.orientation === Orientation.TOP ||
+                this.currentTourStep.orientation === Orientation.TOPLEFT ||
+                this.currentTourStep.orientation === Orientation.TOPRIGHT
+            );
+        }
+        return false;
+    }
+
     /* ==========     Tour step calculation methods     ========== */
 
     /**
@@ -343,7 +357,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const positionAdjustment = this.isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
+            topPosition = this.isTop()
+                ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15
+                : window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
         }
         return topPosition;
     }
@@ -440,11 +456,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Get Element for the current tour step event listener selector
      * @return selected element for the event listener or null
      */
-    public getEventListenerSelector(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.eventListenerSelector) {
+    public getClickEventListenerSelector(): HTMLElement | null {
+        if (!this.currentTourStep || !this.currentTourStep.clickEventListenerSelector) {
             return null;
         }
-        return document.querySelector(this.currentTourStep.eventListenerSelector);
+        return document.querySelector(this.currentTourStep.clickEventListenerSelector);
     }
 
     /**
@@ -532,11 +548,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
             if (this.currentTourStep && this.currentTourStep.userInteractionEvent && !isResizeOrScroll) {
-                const eventListenerElement = this.getEventListenerSelector();
-                if (eventListenerElement) {
-                    selectedElement = eventListenerElement;
+                const clickEventListenerElement = this.getClickEventListenerSelector();
+                if (clickEventListenerElement) {
+                    selectedElement = clickEventListenerElement;
                 }
-                this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
+                if (this.currentTourStep.modelingTask) {
+                    this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent, this.currentTourStep.modelingTask.umlName);
+                } else {
+                    this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent);
+                }
             }
         }
         return selectedElementRect;

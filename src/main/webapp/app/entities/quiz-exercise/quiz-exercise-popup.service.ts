@@ -41,7 +41,7 @@ export class QuizExercisePopupService {
     }
 
     quizExerciseModalRef(component: Component, quizExercise: QuizExercise): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.quizExercise = quizExercise;
         modalRef.result.then(
             result => {

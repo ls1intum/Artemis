@@ -9,7 +9,7 @@
         <div class="col-4 text-center">
             <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph
-                [exerciseType]="exercise.type"
+                [exercise]="exercise"
                 [tutorParticipation]="tutorParticipation"
                 [numberOfParticipations]="numberOfSubmissions"
                 [numberOfAssessments]="numberOfAssessments"

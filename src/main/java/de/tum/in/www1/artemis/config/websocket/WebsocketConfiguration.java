@@ -28,6 +28,8 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import io.github.jhipster.config.JHipsterProperties;
 
 @Configuration
@@ -102,7 +104,9 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
             @Override
             public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
-
+                if (exception != null) {
+                    log.warn("Exception occurred in WS.afterHandshake: " + exception.getMessage(), exception);
+                }
             }
         };
     }
@@ -115,6 +119,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
                 Principal principal = request.getPrincipal();
                 if (principal == null) {
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                    authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
                     principal = new AnonymousAuthenticationToken("WebsocketConfiguration", "anonymous", authorities);
                 }
                 return principal;

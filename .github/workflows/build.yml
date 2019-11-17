@@ -1,12 +1,30 @@
 name: Build
 
-on: [push]
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+    - develop
+    - release/**
+    tags: '[0-9]+.[0-9]+.[0-9]+'
+    paths-ignore:
+    - 'doc/**'
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'SECURITY.md'
+    - 'data/**'
+    - '.github/**'
+    - '!.github/workflows/build.yml'
+
+env:
+  CI: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - name: Use Node.js 12
       uses: actions/setup-node@v1
@@ -17,10 +35,15 @@ jobs:
       with:
         java-version: '12.0.2'
     - uses: actions/checkout@v1
+    - name: Cache node modules
+      uses: actions/cache@v1
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node_modules-
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
-      env:
-        CI: true
     - name: Make .war file accessible
       run: ln -s `ls build/libs/` ./build/libs/Artemis.war
     - name: Upload Artifact
@@ -28,3 +51,46 @@ jobs:
       with:
         name: Artemis.war
         path: build/libs/Artemis.war
+
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Use Java 12
+      uses: actions/setup-java@v1
+      with:
+        java-version: '12.0.2'
+    - uses: actions/checkout@v1
+    - name: Java Tests
+      run: ./gradlew executeTests
+    - name: Java Code Style
+      run: ./gradlew spotlessCheck
+      if: success() || failure()
+    - name: Java Documentation
+      run: ./gradlew checkstyleMain -x yarn_install -x webpack
+      if: success() || failure()
+
+  client-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Use Node.js 12
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - uses: actions/checkout@v1
+    - name: Cache node modules
+      uses: actions/cache@v1
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node_modules-
+    - name: Install Dependencies
+      run: yarn install
+    - name: TypeScript Tests
+      run: yarn test
+    - name: TypeScript Formatting
+      run: yarn prettier:check
+      if: success() || failure()
+    - name: TypeScript Code Style
+      run: yarn lint
+      if: success() || failure()

@@ -126,11 +126,15 @@ describe('CourseExerciseRowComponent', () => {
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.UNINITIALIZED);
     });
 
-    it('Participation status of programming exercise should evaluate to UNINITIALIZED', () => {
-        setupExercise(ExerciseType.PROGRAMMING, moment());
-
+    it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
+        setupExercise(ExerciseType.PROGRAMMING, moment().subtract(1, 'day'));
         comp.ngOnInit();
+        expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.EXERCISE_MISSED);
+    });
 
+    it('Participation status of programming exercise should evaluate to UNINITIALIZED', () => {
+        setupExercise(ExerciseType.PROGRAMMING, moment().add(1, 'day'));
+        comp.ngOnInit();
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.UNINITIALIZED);
     });
 

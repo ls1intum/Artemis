@@ -9,6 +9,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -544,6 +545,21 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
+    @Override
+    public ConnectorHealth health() {
+        ConnectorHealth health;
+        try {
+            final var status = restTemplate.getForObject(BITBUCKET_SERVER_URL + "/status", JsonNode.class);
+            health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+        }
+        catch (Exception emAll) {
+            health = new ConnectorHealth(emAll);
+        }
+
+        health.setAdditionalInfo(Map.of("url", BITBUCKET_SERVER_URL));
+        return health;
+    }
+
     /**
      * Create a new repo
      *
@@ -714,12 +730,13 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
+    @NotNull
     public Commit getLastCommitDetails(Object requestBody) throws BitbucketException {
         // NOTE the requestBody should look like this:
         // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master","fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
+        Commit commit = new Commit();
         try {
-            Commit commit = new Commit();
             final var commitData = new ObjectMapper().convertValue(requestBody, JsonNode.class);
             var lastChange = commitData.get("changes").get(0);
             var ref = lastChange.get("ref");
@@ -732,7 +749,7 @@ public class BitbucketService implements VersionControlService {
             var actor = commitData.get("actor");
             String name = actor.get("name").asText();
             String email = actor.get("emailAddress").asText();
-            if (actor.get("name").asText().equalsIgnoreCase(ARTEMIS_GIT_NAME)) {
+            if (ARTEMIS_GIT_NAME.equalsIgnoreCase(name)) {
                 final var commitInfo = fetchCommitInfo(commitData, hash);
                 if (commitInfo != null) {
                     commit.setMessage(commitInfo.get("message").asText());
@@ -742,12 +759,12 @@ public class BitbucketService implements VersionControlService {
             }
             commit.setAuthorName(name);
             commit.setAuthorEmail(email);
-            return commit;
         }
         catch (Exception e) {
-            log.error("Error when getting hash of last commit");
-            throw new BitbucketException("Could not get hash of last commit", e);
+            // silently fail because this step is not absolutely necessary
+            log.error("Error when getting hash of last commit. Will continue, but the following error happened: " + e.getMessage(), e);
         }
+        return commit;
     }
 
     @Nullable

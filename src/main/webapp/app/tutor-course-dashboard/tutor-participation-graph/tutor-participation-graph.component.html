@@ -5,7 +5,7 @@
             <fa-icon icon="book"></fa-icon>
         </li>
         <li
-            *ngIf="exerciseType !== ExerciseType.PROGRAMMING"
+            *ngIf="exercise.type !== ExerciseType.PROGRAMMING"
             [ngClass]="calculateClasses(TRAINED)"
             (click)="navigate()"
             [ngbTooltip]="'artemisApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate"
