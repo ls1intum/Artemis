@@ -34,6 +34,13 @@ export class ProgrammingAssessmentManualResultService {
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 
+    /**
+     * Send request to update the assessment after the complaint
+     * @param feedbacks list of feedback items
+     * @param complaintResponse response to the complaint
+     * @param result updated result
+     * @param submissionId the id of the submission
+     */
     updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, result: Result, submissionId: number): Observable<Result> {
         const url = `${SERVER_API_URL}api/programming-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
