@@ -1,9 +1,9 @@
 from testUtils.Tester import Tester
+from tests.TestCompile import TestCompile
 from tests.TestASan import TestASan
 from tests.TestUBSan import TestUBSan
 from tests.TestLSan import TestLSan
 from tests.TestInput import TestInput
-from tests.TestCompile import TestCompile
 from random import randint
 from sys import argv
 
@@ -41,7 +41,7 @@ def main():
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testASan.name], name="TestInputASan_5", executable="asan.out"))
 
     # Undefined Behavior Sanitizer:
-    testUBSan: TestUBSan = TestUBSan(makefileLocation)
+    testUBSan: TestUBSan = TestUBSan(makefileLocation, requirements=[testCompile.name])
     tester.addTest(testUBSan)
     tester.addTest(TestInput(makefileLocation, 1, requirements=[testUBSan.name], name="TestInputUBSan_1", executable="ubsan.out"))
     tester.addTest(TestInput(makefileLocation, 5, requirements=[testUBSan.name], name="TestInputUBSan_5", executable="ubsan.out"))
@@ -56,10 +56,7 @@ def main():
     tester.run()
     # Export the results into the JUnit XML format:
     # Test run name
-    if len(argv) is 1:
-        run = ""
-    else:
-        run = argv[1] + "-"
+    run = "" if len(argv) is 1 else argv[1] + "-"
     tester.exportResult(f"../test-reports/{run}results.xml")
 
 if __name__ == '__main__':
