@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -9,19 +8,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
-import net.logstash.logback.encoder.org.apache.commons.lang3.StringUtils;
-import net.logstash.logback.encoder.org.apache.commons.lang3.exception.ExceptionUtils;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.ConcurrencyFailureException;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.zalando.problem.DefaultProblem;
 import org.zalando.problem.Problem;
@@ -122,18 +115,5 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     public ResponseEntity<Problem> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
         Problem problem = Problem.builder().withStatus(Status.CONFLICT).with(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE).build();
         return create(ex, problem, request);
-    }
-
-    @ExceptionHandler(IOException.class)
-    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    // taken from https://mtyurt.net/post/spring-how-to-handle-ioexception-broken-pipe.html
-    public Object exceptionHandler(IOException e, HttpServletRequest request) {
-        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
-            // (2) socket is closed, cannot return any response
-            return null;
-        }
-        else {
-            return new HttpEntity<>(e.getMessage());
-        }
     }
 }
