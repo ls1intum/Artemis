@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE;
+import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -58,10 +62,12 @@ public class ProgrammingSubmissionResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final UserService userService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseService exerciseService,
             ProgrammingExerciseService programmingExerciseService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService) {
+            UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
@@ -70,6 +76,7 @@ public class ProgrammingSubmissionResource {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.resultService = resultService;
         this.versionControlService = versionControlService;
+        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
     }
 
@@ -83,7 +90,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
-        log.info("REST request to inform about new commit+push for participation: {}", participationId);
+        log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
         try {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
@@ -103,9 +110,14 @@ public class ProgrammingSubmissionResource {
             return badRequest();
         }
         catch (IllegalStateException ex) {
-            log.error("Tried to create another submission for the same commitHash and participation: processing submission for participation {} failed with request object {}: {}",
-                    participationId, requestBody, ex);
-            return badRequest();
+            if (ex.getMessage().contains("empty setup commit")) {
+                // ignore
+            }
+            else {
+                log.warn("Processing submission for participation {} failed: {}", participationId, ex.getMessage());
+            }
+            // we return ok, because the problem is not on the side of the VCS Server and we don't want the VCS Server to kill the webhook if there are too many errors
+            return ResponseEntity.status(HttpStatus.OK).build();
         }
         catch (EntityNotFoundException ex) {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
@@ -234,12 +246,27 @@ public class ProgrammingSubmissionResource {
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
+
+        log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
+                programmingExercise.getId());
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(
                 programmingExerciseParticipationService.findByExerciseAndParticipationIds(exerciseId, participationIds));
-        List<ProgrammingSubmission> submissions = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipationsOfExercise(participations,
-                SubmissionType.INSTRUCTOR);
 
-        programmingSubmissionService.notifyUserTriggerBuildForNewSubmissions(submissions);
+        var index = 0;
+        for (var participation : participations) {
+            // Execute requests in batches instead all at once.
+            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+                try {
+                    log.info("Sleep for {}s during triggerBuild", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
+                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                }
+                catch (InterruptedException ex) {
+                    log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
+                }
+            }
+            programmingSubmissionService.triggerBuildAndNotifyUser(participation);
+            index++;
+        }
 
         return ResponseEntity.ok().build();
     }
@@ -266,7 +293,8 @@ public class ProgrammingSubmissionResource {
 
         ObjectId lastCommitId = null;
         try {
-            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+            Commit commit = versionControlService.get().getLastCommitDetails(requestBody);
+            String lastCommitHash = commit.getCommitHash();
             lastCommitId = ObjectId.fromString(lastCommitHash);
             log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for exercise " + exerciseId);
         }
@@ -284,4 +312,71 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
+     * assessed by the tutor who is doing the call.
+     *
+     * @param exerciseId the id of the exercise.
+     * @param submittedOnly if only submitted submissions should be returned.
+     * @param assessedByTutor if the submission was assessed by calling tutor.
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
+     */
+    @GetMapping("/exercises/{exerciseId}/programming-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+            @RequestParam(defaultValue = "false") boolean assessedByTutor) {
+        log.debug("REST request to get all programming submissions");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<ProgrammingSubmission> programmingSubmissions;
+        if (assessedByTutor) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
+        }
+
+        return ResponseEntity.ok().body(programmingSubmissions);
+    }
+
+    /**
+     * GET /programming-submission-without-assessment : get one Programming Submission without assessment.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a programming submission without assessment");
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return forbidden();
+        }
+
+        // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
+        if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
+                && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+            return notFound();
+        }
+
+        // TODO: Handle lock limit.
+
+        Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
+        if (programmingSubmissionOpt.isEmpty()) {
+            return notFound();
+        }
+        ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
+
+        // Make sure the exercise is connected to the participation in the json response
+        StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
+        studentParticipation.setExercise(programmingExercise);
+        programmingSubmissionService.hideDetails(programmingSubmission);
+        return ResponseEntity.ok(programmingSubmission);
+    }
 }

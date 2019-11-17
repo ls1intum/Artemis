@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.web.rest.FileMove;
+import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
 /**
@@ -156,15 +156,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<?> getResultDetails(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        Optional<ProgrammingExerciseStudentParticipation> participationOpt = participationService.findStudentParticipationWithLatestResultAndFeedbacks(participationId);
-        if (participationOpt.isEmpty()) {
-            return notFound();
-        }
+        ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestResultAndFeedbacks(participationId);
 
-        ProgrammingExerciseStudentParticipation participation = participationOpt.get();
-
-        if (!participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation))
+        if (!participationService.canAccessParticipation(participation)) {
             return forbidden();
+        }
 
         Optional<Result> latestResult = participation.getResults().stream().findFirst();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
@@ -173,7 +169,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(((ProgrammingExerciseParticipation) participation).getBuildPlanId());
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getBuildPlanId());
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }

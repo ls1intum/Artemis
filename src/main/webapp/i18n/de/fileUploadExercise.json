@@ -18,8 +18,8 @@
             },
             "filePattern": "Dateimuster",
             "filePatternInfo": "Hier kannst du eine kommagetrennte Liste der erlaubten Dateierweiterungen angeben.",
-            "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst deine Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback.",
-            "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst deine Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast, wird deine Bewertung nicht gezählt.",
+            "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten.",
+            "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
             "assessedSubmission": "Deine bewertete Abgabe",
             "supportedFileExtensions": "Unterstützte Dateierweiterungen: "

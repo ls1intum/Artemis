@@ -9,7 +9,7 @@ import { Result } from './result.model';
 import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { ExerciseService } from 'app/entities/exercise';
 import { isMoment } from 'moment';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -29,11 +29,14 @@ export interface IResultService {
 export class ResultService implements IResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
+    private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
@@ -67,7 +70,7 @@ export class ResultService implements IResultService {
     }
 
     getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
+        return this.http.get<Result>(`${this.participationResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
     }
 
     delete(resultId: number): Observable<HttpResponse<void>> {
@@ -115,18 +118,5 @@ export class ResultService implements IResultService {
             }
         }
         return participation;
-    }
-
-    /**
-     * This function is used to check whether the student is allowed to submit a complaint or not. Submitting a complaint is allowed within one week after the student received the
-     * result. If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was
-     * submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
-     */
-    isTimeOfComplaintValid(result: Result, exercise: Exercise): boolean {
-        const resultCompletionDate = moment(result.completionDate!);
-        if (!exercise.assessmentDueDate || resultCompletionDate.isAfter(exercise.assessmentDueDate)) {
-            return resultCompletionDate.isAfter(moment().subtract(1, 'week'));
-        }
-        return moment(exercise.assessmentDueDate).isAfter(moment().subtract(1, 'week'));
     }
 }

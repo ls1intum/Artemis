@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, OnDestroy, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
@@ -6,7 +6,7 @@ import { Result } from 'app/entities/result';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { Subscription } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/entities/participation';
-import { filter, tap } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',
@@ -25,6 +25,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     @Input() participationId: number;
+    @Output() onResultCreated = new EventEmitter<Result>();
     @Input() latestResult?: Result | null;
 
     latestResultSubscription: Subscription;
@@ -64,5 +65,9 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = this.participationId;
         modalRef.componentInstance.result = this.latestResult;
+        modalRef.result.then(
+            result => this.onResultCreated.emit(result),
+            () => {},
+        );
     }
 }

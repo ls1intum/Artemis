@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus, participationStatus } from 'app/entities/exercise';
+import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
@@ -61,6 +61,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate!).isBefore(moment());
     }
 
+    /**
+     * see exercise-utils -> isStartExerciseAvailable
+     */
+    isStartExerciseAvailable(): boolean {
+        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+    }
+
     isOnlineEditorAllowed(): boolean {
         return (this.exercise as ProgrammingExercise).allowOnlineEditor;
     }
@@ -119,6 +126,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
+                        // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
+                        participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }
