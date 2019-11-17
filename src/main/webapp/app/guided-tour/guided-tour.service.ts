@@ -748,7 +748,7 @@ export class GuidedTourService {
             return null;
         }
 
-        const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise));
+        const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
         if (this.isGuidedTourAvailableForCourse(course) && exerciseForGuidedTour) {
             this.enableTour(guidedTour);
             return exerciseForGuidedTour;
@@ -806,20 +806,19 @@ export class GuidedTourService {
      * @return true if the current exercise is an exercise for a guided tour, otherwise false
      */
     public isGuidedTourAvailableForExercise(exercise: Exercise, guidedTour?: GuidedTour): boolean {
-        if (!exercise || !exercise.course || !this.guidedTourMapping) {
+        if (!exercise || !this.guidedTourMapping) {
             return false;
         }
 
         let exerciseMatches = false;
         const settingsKey = guidedTour ? guidedTour.settingsKey : this.currentTour ? this.currentTour.settingsKey : '';
-        const courseMatches = this.isGuidedTourAvailableForCourse(exercise.course);
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
             exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.shortName;
         } else {
             exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.title;
         }
-        return courseMatches && exerciseMatches;
+        return exerciseMatches;
     }
 
     /**
