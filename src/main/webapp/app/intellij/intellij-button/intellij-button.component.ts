@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-ide-button',
@@ -11,6 +12,8 @@ export class IntellijButtonComponent {
     @Input() buttonLoading = false;
     @Input() outlined = false;
     @Input() smallButton = false;
+    @Input() disabled = false;
+    @Input() featureToggle = FeatureToggle; // Disable by feature toggle.
 
     javaBridge: JavaBridgeService;
 

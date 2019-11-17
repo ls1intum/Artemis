@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise';
+import { Exercise, isStartExerciseAvailable, ParticipationStatus } from 'app/entities/exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course';
 import { JhiAlertService } from 'ng-jhipster';
@@ -9,6 +9,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -21,6 +22,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
     ideState: IntelliJState;
+    FeatureToggle = FeatureToggle;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -60,6 +62,13 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
+    }
+
+    /**
+     * see exercise-utils -> isStartExerciseAvailable
+     */
+    isStartExerciseAvailable(): boolean {
+        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**

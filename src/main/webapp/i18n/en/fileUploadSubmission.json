@@ -25,7 +25,10 @@
             "fileUploadError": "Your submission for file {{ fileName }} failed!",
             "submitted": "Submitted",
             "submittedFile": "File {{ filename }} was submitted as a solution for exercise",
-            "download": "Download file"
+            "download": "Download file",
+            "selectFile": "Please first select a file and then submit it.",
+            "fileUpload": "File Upload",
+            "forExercise": "for Exercise"
         }
     }
 }

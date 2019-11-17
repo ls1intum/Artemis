@@ -4,14 +4,16 @@
     <button
         jhi-exercise-action-button
         buttonIcon="play-circle"
+        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
         [buttonLoading]="exercise.loading"
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
-        *ngIf="participationStatus() === UNINITIALIZED"
+        *ngIf="participationStatus() === UNINITIALIZED && isStartExerciseAvailable()"
         (click)="startExercise()"
     ></button>
     <jhi-ide-button
+        [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         (click)="importIntoIntelliJ()"
         [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
         [buttonLoading]="exercise.loading || ideState.cloning"
@@ -19,6 +21,7 @@
         *ngIf="ideState.opened !== exercise.id && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
     ></jhi-ide-button>
     <jhi-ide-button
+        [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         (click)="submitChanges()"
         buttonLabel="Submit"
         [buttonLoading]="exercise.loading || ideState.building"
