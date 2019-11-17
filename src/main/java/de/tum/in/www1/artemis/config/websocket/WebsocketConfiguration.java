@@ -105,7 +105,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
             @Override
             public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
                 if (exception != null) {
-                    log.warn("Exception occurred in WS.afterHandshake: " + exception.getMessage(), exception);
+                    log.warn("Exception occurred in WS.afterHandshake: " + exception.getMessage());
                 }
             }
         };
