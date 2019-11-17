@@ -5,7 +5,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { compareCourseShortName } from 'app/guided-tour/guided-tour.utils';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseAdministrationTour } from 'app/guided-tour/tours/course-administration-tour';
 
@@ -24,8 +23,7 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    readonly compareCourseShortName = compareCourseShortName;
-    public guidedTourCourse: Course | null;
+    courseForGuidedTour: Course | null;
 
     constructor(
         private courseService: CourseService,
@@ -42,7 +40,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
-                this.guidedTourCourse = this.guidedTourService.enableTourForCourse(this.courses, courseAdministrationTour);
+                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseAdministrationTour);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );

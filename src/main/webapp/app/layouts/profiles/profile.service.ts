@@ -6,6 +6,7 @@ import { ProfileInfo } from 'app/layouts';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FeatureToggleService } from 'app/feature-toggle';
+import * as _ from 'lodash';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -25,6 +26,14 @@ export class ProfileService {
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
+
+                        /** map guided tour configuration */
+                        const guidedTourMapping = data['guided-tour'];
+                        if (guidedTourMapping) {
+                            guidedTourMapping.tours = _.reduce(guidedTourMapping.tours, _.extend);
+                            profileInfo.guidedTourMapping = guidedTourMapping;
+                        }
+
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
                             if (ribbonProfiles.length !== 0) {
@@ -34,6 +43,7 @@ export class ProfileService {
                         }
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
+
                         return profileInfo;
                     }),
                 )

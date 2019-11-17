@@ -3,8 +3,6 @@ import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.mo
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 
 export const tutorCourseDashboardTour: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: 'Patterns in Software Engineering',
     settingsKey: 'tutor_course_dashboard_tour',
     steps: [
         new TextTourStep({
@@ -44,8 +42,6 @@ export const tutorCourseDashboardTour: GuidedTour = {
 };
 
 export const tutorExerciseDashboardTour: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: 'Patterns in Software Engineering',
     settingsKey: 'tutor_exercise_dashboard_tour',
     steps: [
         new TextTourStep({
@@ -58,7 +54,7 @@ export const tutorExerciseDashboardTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.instructions-button',
-            eventListenerSelector: '.exercise-dashboard',
+            clickEventListenerSelector: '.exercise-dashboard',
             headlineTranslateKey: 'tour.tutorExerciseDashboard.instructionsButton.headline',
             contentTranslateKey: 'tour.tutorExerciseDashboard.instructionsButton.content',
             highlightPadding: 10,

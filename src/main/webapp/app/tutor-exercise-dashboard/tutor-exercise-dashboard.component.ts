@@ -28,7 +28,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorExerciseDashboardTour } from 'app/guided-tour/tours/tutor-dashboard-tour';
-import { compareExerciseShortName } from 'app/guided-tour/guided-tour.utils';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -97,9 +96,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     tutor: User | null;
 
-    readonly compareExerciseShortName = compareExerciseShortName;
-    isGuidedTourExercise: boolean;
-    guidedTourExercise: Exercise | null;
+    exerciseForGuidedTour: Exercise | null;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -152,7 +149,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                         break;
                 }
 
-                this.guidedTourExercise = this.guidedTourService.enableTourForExercise(this.exercise, tutorExerciseDashboardTour);
+                this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorExerciseDashboardTour);
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
@@ -334,7 +331,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
-        if (!this.exercise || !this.exercise.type || !submissionId || this.isGuidedTourAssessment) {
+        if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
         const route = `/${this.exercise.type}-exercise/${this.exercise.id}/example-submission/${submissionId}`;
@@ -381,9 +378,5 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     back() {
         this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
-    }
-
-    isGuidedTourAssessment() {
-        return compareExerciseShortName(this.exercise, this.guidedTourExercise);
     }
 }

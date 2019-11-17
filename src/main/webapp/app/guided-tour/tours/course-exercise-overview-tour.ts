@@ -3,8 +3,6 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 import { TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export const courseExerciseOverviewTour: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: 'tutorial',
     settingsKey: 'course_exercise_overview_tour',
     steps: [
         new TextTourStep({

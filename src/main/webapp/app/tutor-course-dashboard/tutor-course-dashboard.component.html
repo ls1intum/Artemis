@@ -108,7 +108,7 @@
                             [tutorParticipation]="exercise.tutorParticipations[0]"
                             [numberOfParticipations]="exercise.numberOfParticipations"
                             [numberOfAssessments]="exercise.numberOfAssessments"
-                            [class.guided-tour]="compareExerciseShortName(exercise, this.guidedTourExercise)"
+                            [class.guided-tour]="exercise === exerciseForGuidedTour"
                         >
                         </jhi-tutor-participation-graph>
                     </td>
@@ -127,7 +127,7 @@
                         <button
                             routerLink="/course/{{ course.id }}/exercise/{{ exercise.id }}/tutor-dashboard"
                             class="btn btn-info btn-sm mr-1 exercise-dashboard"
-                            [class.guided-tour]="compareExerciseShortName(exercise, this.guidedTourExercise)"
+                            [class.guided-tour]="exercise === exerciseForGuidedTour"
                         >
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                         </button>
