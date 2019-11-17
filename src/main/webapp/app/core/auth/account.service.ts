@@ -38,8 +38,8 @@ export class AccountService implements IAccountService {
         private sessionStorage: SessionStorageService,
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
-    ) // private featureToggleService: FeatureToggleService,
-    {}
+        private featureToggleService: FeatureToggleService,
+    ) {}
 
     get userIdentity() {
         return this.userIdentityValue;
@@ -52,11 +52,11 @@ export class AccountService implements IAccountService {
         this.authenticationState.next(user);
 
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
-        // if (user) {
-        //     this.featureToggleService.subscribeFeatureToggleUpdates();
-        // } else {
-        //     this.featureToggleService.unsubscribeFeatureToggleUpdates();
-        // }
+        if (user) {
+            this.featureToggleService.subscribeFeatureToggleUpdates();
+        } else {
+            this.featureToggleService.unsubscribeFeatureToggleUpdates();
+        }
     }
 
     fetch(): Observable<HttpResponse<User>> {
