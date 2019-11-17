@@ -786,15 +786,7 @@ export class GuidedTourService {
         if (!exercise.course) {
             return;
         }
-        let exerciseExists = null;
-        const courseExists = (exercise.course.shortName = this.guidedTourMapping.courseShortName);
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            exerciseExists = this.guidedTourMapping.tours[guidedTour.settingsKey] === exercise.shortName;
-        } else {
-            exerciseExists = this.guidedTourMapping.tours[guidedTour.settingsKey] === exercise.title;
-        }
-
-        if (courseExists && exerciseExists) {
+        if (this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
             this.enableTour(guidedTour);
         }
     }
@@ -814,14 +806,23 @@ export class GuidedTourService {
     /**
      * Determine if the current exercise is an exercise for a guided tour
      * @param exercise  current exercise
+     * @param guidedTour of which the availability should be checked
      * @return true if the current exercise is an exercise for a guided tour, otherwise false
      */
-    public isGuidedTourAvailableForExercise(exercise: Exercise): boolean {
+    public isGuidedTourAvailableForExercise(exercise: Exercise, guidedTour?: GuidedTour): boolean {
         if (!exercise || !exercise.course || !this.currentTour) {
             return false;
         }
-        const courseMatches = exercise.course.shortName === this.guidedTourMapping.courseShortName;
-        const exerciseMatches = exercise.shortName === this.guidedTourMapping.tours[this.currentTour.settingsKey];
+
+        let exerciseMatches = false;
+        const settingsKey = guidedTour ? guidedTour.settingsKey : this.currentTour.settingsKey;
+        const courseMatches = this.isGuidedTourAvailableForCourse(exercise.course);
+
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.shortName;
+        } else {
+            exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.title;
+        }
         return courseMatches && exerciseMatches;
     }
 
