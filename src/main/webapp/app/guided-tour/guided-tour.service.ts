@@ -747,16 +747,9 @@ export class GuidedTourService {
         if (!course || !course.exercises || !this.guidedTourMapping) {
             return null;
         }
-        const isCourseForGuidedTour = this.guidedTourMapping.courseShortName === course.shortName;
-        if (!isCourseForGuidedTour) {
-            return null;
-        }
-        const exerciseForGuidedTour = course.exercises.find(
-            exercise =>
-                (exercise.type === ExerciseType.PROGRAMMING && exercise.shortName === this.guidedTourMapping!.tours[guidedTour.settingsKey]) ||
-                exercise.title === this.guidedTourMapping!.tours[guidedTour.settingsKey],
-        );
-        if (exerciseForGuidedTour) {
+
+        const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise));
+        if (this.isGuidedTourAvailableForCourse(course) && exerciseForGuidedTour) {
             this.enableTour(guidedTour);
             return exerciseForGuidedTour;
         }
@@ -772,7 +765,7 @@ export class GuidedTourService {
         if (!this.guidedTourMapping) {
             return null;
         }
-        const courseForTour = courses.find(course => course.shortName === this.guidedTourMapping!.courseShortName);
+        const courseForTour = courses.find(course => this.isGuidedTourAvailableForCourse(course));
         if (courseForTour) {
             this.enableTour(guidedTour);
             return courseForTour;
