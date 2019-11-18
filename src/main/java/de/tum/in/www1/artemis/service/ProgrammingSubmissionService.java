@@ -194,10 +194,7 @@ public class ProgrammingSubmissionService {
             throw new AccessForbiddenException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 
-        if (filterGraded) {
-            return findLatestGradedPendingSubmissionForParticipation(participationId);
-        }
-        return findLatestPendingSubmissionForParticipation(participationId);
+        return findLatestPendingSubmissionForParticipation(participationId, filterGraded);
     }
 
     /**
@@ -212,23 +209,18 @@ public class ProgrammingSubmissionService {
     }
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
-        Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
-            // This is not an error case, it is very likely that there is no pending submission for a participation.
-            return Optional.empty();
-        }
-        return submissionOpt;
+        return findLatestPendingSubmissionForParticipation(participationId, false);
     }
 
-    private Optional<ProgrammingSubmission> findLatestGradedPendingSubmissionForParticipation(final long participationId) {
-        Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findGradedByParticipationAIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1))
-                .stream().findFirst();
-        if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
+    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
+        final var optionalSubmission = isGraded
+                ? programmingSubmissionRepository.findGradedByParticipationAIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
+                : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        if (optionalSubmission.isEmpty() || optionalSubmission.get().getResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
         }
-
-        return submissionOpt;
+        return optionalSubmission;
     }
 
     /**
