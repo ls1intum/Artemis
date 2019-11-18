@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -407,6 +408,14 @@ public class ProgrammingExercise extends Exercise {
         this.testCasesChanged = testCasesChanged;
     }
 
+    @Override
+    public AssessmentType getAssessmentType() {
+        if (super.getAssessmentType() == null) {
+            return AssessmentType.AUTOMATIC;
+        }
+        return super.getAssessmentType();
+    }
+
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
@@ -453,6 +462,7 @@ public class ProgrammingExercise extends Exercise {
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
     public enum ProgrammingExerciseSearchColumn {
+
         ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
         private String mappedColumnName;

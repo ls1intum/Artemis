@@ -107,10 +107,14 @@
                 "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
                 "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "squashAfterInstructor": "Squash all student changes into one commit (to simplify the review)",
-                "normalizeCodeStyle": "Normalize code style (line endings, encoding)"
+                "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
+                "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
             },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
+            "resubmitSingle": "Trigger build for participation",
+            "resubmitConfirmManualResultOverride": "The last result of this participation is manual, which means the submission was assessed by a teaching assistant. If you trigger the build for this submission again, the manual result will no longer be the latest result that is shown primarily to the student.",
+            "resubmitAllConfirmAfterDeadline": "The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results would replace the manual results as the latest result for the participation. ",
             "resubmitAll": "Trigger all",
             "resubmitAllTooltip": "Trigger the last submission of all participations again. The results will be rated.",
             "resubmitAllDialog": "WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",

@@ -14,6 +14,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -21,6 +22,7 @@ import { AssessmentType } from 'app/entities/assessment-type';
     styleUrls: ['./programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
+    FeatureToggle = FeatureToggle;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
     readonly C = ProgrammingLanguage.C;
@@ -169,7 +171,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError(res));
+        result.subscribe(
+            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+        );
     }
 
     private onSaveSuccess() {

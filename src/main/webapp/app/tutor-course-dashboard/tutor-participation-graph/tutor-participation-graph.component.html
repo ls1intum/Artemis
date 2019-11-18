@@ -4,7 +4,12 @@
         <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()" [ngbTooltip]="'artemisApp.tutorCourseDashboard.readGradingInstructions' | translate">
             <fa-icon icon="book"></fa-icon>
         </li>
-        <li [ngClass]="calculateClasses(TRAINED)" (click)="navigate()" [ngbTooltip]="'artemisApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate">
+        <li
+            *ngIf="exercise.type !== ExerciseType.PROGRAMMING"
+            [ngClass]="calculateClasses(TRAINED)"
+            (click)="navigate()"
+            [ngbTooltip]="'artemisApp.tutorCourseDashboard.trainOnExampleSubmissions' | translate"
+        >
             <fa-icon icon="chalkboard-teacher"></fa-icon>
         </li>
 

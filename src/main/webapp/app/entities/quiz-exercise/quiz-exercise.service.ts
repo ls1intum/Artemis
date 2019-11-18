@@ -27,7 +27,9 @@ export class QuizExerciseService {
 
     create(quizExercise: QuizExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        return this.http.post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
+        return this.http
+            .post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     update(quizExercise: QuizExercise, req?: any): Observable<EntityResponseType> {
@@ -86,7 +88,9 @@ export class QuizExerciseService {
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
-        return this.http.get<QuizExercise[]>(this.resourceUrl, { observe: 'response' }).map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
+        return this.http
+            .get<QuizExercise[]>(this.resourceUrl, { observe: 'response' })
+            .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
     delete(quizExerciseId: number): Observable<HttpResponse<void>> {

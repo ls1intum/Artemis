@@ -9,6 +9,7 @@ import { ProgrammingExercise } from '../programming-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
 import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -28,12 +29,16 @@ export class ProgrammingExerciseService {
 
     create(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.convertDataFromClient(programmingExercise);
-        return this.http.post<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .post<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.convertDataFromClient(programmingExercise);
-        return this.http.post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     generateStructureOracle(exerciseId: number) {

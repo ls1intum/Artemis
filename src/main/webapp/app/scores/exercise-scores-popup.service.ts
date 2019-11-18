@@ -49,7 +49,7 @@ export class ExerciseScoresPopupService {
     }
 
     exerciseModalRef(component: Component, exercise: Exercise): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exercise = exercise;
         modalRef.result.then(
             result => {
@@ -65,7 +65,7 @@ export class ExerciseScoresPopupService {
     }
 
     resultModalRef(component: Component, participation: Participation): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participation = participation;
         const newResult = new Result();
         newResult.completionDate = moment();
