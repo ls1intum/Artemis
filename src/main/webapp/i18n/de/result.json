@@ -29,7 +29,7 @@
             "feedbacks": "Feedback",
             "submission": "Einreichung",
             "participation": "Teilnahme",
-            "createManual": "Erstelle manuelles Ergebnis für",
+            "createManual": "Erstelle manuelles Ergebnis",
             "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl zwischen 0 und 100 sein.",
             "resultStringRequired": "Ein Ergebnis Text ist erforderlich.",
             "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
