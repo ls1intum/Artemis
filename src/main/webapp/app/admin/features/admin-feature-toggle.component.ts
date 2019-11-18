@@ -1,5 +1,5 @@
 import { ResultService } from 'app/entities/result';
-import { RepositoryService } from 'app/entities/repository';
+import { RepositoryService } from 'app/entities/repository/repository.service';
 import { Component, OnInit } from '@angular/core';
 import { ActiveFeatureToggles, FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';

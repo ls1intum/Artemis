@@ -3,10 +3,7 @@ import { DatePipe, registerLocaleData } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { Title, BrowserModule } from '@angular/platform-browser';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { RepositoryInterceptor, RepositoryService } from 'app/entities/repository';
-import { PaginationConfig } from 'app/blocks/config/uib-pagination.config';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { RepositoryInterceptor } from 'app/entities/repository';
 import { AuthInterceptor } from 'app/blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from 'app/blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/blocks/interceptor/errorhandler.interceptor';
@@ -16,7 +13,7 @@ import { NgbDatepickerConfig, NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap'
 import * as moment from 'moment';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxWebstorageModule } from 'ngx-webstorage';
-import { MomentModule, DifferencePipe } from 'ngx-moment';
+import { DifferencePipe, MomentModule } from 'ngx-moment';
 import { DeviceDetectorModule } from 'ngx-device-detector';
 import { Angulartics2Module } from 'angulartics2';
 import { NgbDateMomentAdapter } from 'app/shared/util/datepicker-adapter';
@@ -24,7 +21,6 @@ import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
@@ -74,12 +70,7 @@ import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ng
             useClass: SentryErrorHandler,
         },
         DatePipe,
-        GuidedTourService,
-        RepositoryService,
-        PaginationConfig,
-        UserRouteAccessService,
         DifferencePipe,
-        PendingChangesGuard,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.

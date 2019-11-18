@@ -49,7 +49,6 @@ import { ArtemisExampleModelingSolutionModule } from 'app/example-modeling-solut
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { QuizExerciseExportComponent } from 'app/entities/quiz-exercise/quiz-exercise-export.component';
-import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { CookieModule } from 'ngx-cookie';
 
 @NgModule({
@@ -94,7 +93,6 @@ import { CookieModule } from 'ngx-cookie';
         ArtemisExampleModelingSolutionModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisListOfComplaintsModule,
-        // FeatureToggleModule.forRoot(),
     ],
     declarations: [
         JhiMainComponent,
