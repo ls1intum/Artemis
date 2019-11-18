@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.config.websocket;
 import java.security.Principal;
 import java.util.*;
 
+import javax.annotation.PostConstruct;
+
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,33 +25,35 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurationSupport;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import io.github.jhipster.config.JHipsterProperties;
 
 @Configuration
-// @EnableWebSocketMessageBroker
 public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationSupport {
 
     private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
-    private final JHipsterProperties jHipsterProperties;
-
     private final ObjectMapper objectMapper;
 
     private TaskScheduler messageBrokerTaskScheduler;
 
-    public WebsocketConfiguration(JHipsterProperties jHipsterProperties, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
-        this.jHipsterProperties = jHipsterProperties;
+    private WebSocketMessageBrokerStats webSocketMessageBrokerStats;
+
+    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+    }
+
+    @PostConstruct
+    public void init() {
+        webSocketMessageBrokerStats.setLoggingPeriod(20 * 1000);
     }
 
     @Autowired
@@ -56,9 +61,14 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         this.messageBrokerTaskScheduler = taskScheduler;
     }
 
+    @Autowired
+    public void setWebSocketMessageBrokerStats(WebSocketMessageBrokerStats webSocketMessageBrokerStats) {
+        this.webSocketMessageBrokerStats = webSocketMessageBrokerStats;
+    }
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
+        config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 25000, 25000 }).setTaskScheduler(messageBrokerTaskScheduler);
     }
 
     @Override
@@ -69,11 +79,13 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
                 .setAllowedOrigins("*").withSockJS().setInterceptors(httpSessionHandshakeInterceptor());
     }
 
+    @NotNull
     @Override
     public WebSocketHandler subProtocolWebSocketHandler() {
         return new CustomSubProtocolWebSocketHandler(clientInboundChannel(), clientOutboundChannel());
     }
 
+    @NotNull
     @Override
     public CompositeMessageConverter brokerMessageConverter() {
         // NOTE: We need to replace the default messageConverter for WebSocket messages
