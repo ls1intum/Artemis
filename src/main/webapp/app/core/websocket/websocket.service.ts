@@ -1,13 +1,13 @@
-import { Injectable, OnDestroy, Injector } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs/Rx';
 
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { CSRFService } from 'app/core/auth/csrf.service';
 
-import * as SockJS from 'sockjs-client';
 import * as Stomp from 'webstomp-client';
 import { WindowRef } from 'app/core/websocket/window.service';
+import * as SockJS from 'sockjs-client';
 
 export interface IWebsocketService {
     stompFailureCallback(): void;
@@ -39,20 +39,12 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     connecting = false;
 
     constructor(
-        private injector: Injector,
+        private router: Router,
         private authServerProvider: AuthServerProvider,
         private $window: WindowRef,
         // tslint:disable-next-line: no-unused-variable
         private csrfService: CSRFService,
     ) {}
-
-    /**
-     * We need to load the router during runtime as the Routing module might not prepared when the websocket service is instantiated (at core module level).
-     * https://stackoverflow.com/questions/39767019/app-initializer-raises-cannot-instantiate-cyclic-dependency-applicationref-w
-     */
-    get router() {
-        return this.injector.get(Router);
-    }
 
     stompFailureCallback() {
         this.connecting = false;

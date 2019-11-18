@@ -5,7 +5,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { UserManagementDeleteDialogComponent } from 'app/admin/user-management/user-management-delete-dialog.component';
-import { UserService } from 'app/core';
+import { UserService } from 'app/core/user/user.service';
 
 describe('Component Tests', () => {
     describe('User Management Delete Component', () => {

@@ -107,7 +107,7 @@
                         <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.name')">{{
                             'artemisApp.exercise.studentName' | translate
                         }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -123,7 +123,7 @@
                         <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.login')">{{
                             'artemisApp.exercise.studentId' | translate
                         }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -135,7 +135,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold sortable" (click)="onSort('completionDate')">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -147,7 +147,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('score')">{{ 'artemisApp.exercise.result' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -159,7 +159,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('type')">{{ 'artemisApp.exercise.type' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -171,7 +171,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('submissionCount')">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -183,7 +183,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('durationInMinutes')">{{ 'artemisApp.exercise.duration' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                        <fa-icon [icon]="'sort'"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min </ng-template>
@@ -192,7 +192,7 @@
             <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="400">
                 <ng-template ngx-datatable-cell-template let-value="value">
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
-                        <fa-icon icon="code-branch" class="mr-1"></fa-icon>Repository
+                        <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>Repository
                     </button>
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(value)">
                         <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>Build plan

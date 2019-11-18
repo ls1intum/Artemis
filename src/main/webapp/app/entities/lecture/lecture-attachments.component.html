@@ -62,7 +62,7 @@
                                             {{ attachment.name }}
                                         </a>
                                         <a class="text-primary" *ngIf="isDownloadingAttachmentLink === attachment.link">
-                                            <fa-icon icon="spinner" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | translate }}
+                                            <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | translate }}
                                         </a>
                                     </td>
                                     <td>{{ attachment.releaseDate | date: 'dd.MM.yy HH:mm' }}</td>

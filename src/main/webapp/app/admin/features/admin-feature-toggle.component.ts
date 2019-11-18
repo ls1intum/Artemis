@@ -1,7 +1,5 @@
-import { ResultService } from 'app/entities/result';
-import { RepositoryService } from 'app/entities/repository';
 import { Component, OnInit } from '@angular/core';
-import { ActiveFeatureToggles, FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
 
 type FeatureToggleState = {
