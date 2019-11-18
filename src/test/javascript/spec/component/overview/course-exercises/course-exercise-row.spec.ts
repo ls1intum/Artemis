@@ -11,15 +11,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
-import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisOverviewModule, CourseExerciseRowComponent } from 'app/overview';
 import { MockParticipationWebsocketService } from '../../../mocks';
-import { ArtemisResultModule, Result } from 'app/entities/result';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { Result } from 'app/entities/result';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { of } from 'rxjs';
@@ -51,7 +47,7 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: JhiAlertService, useClass: MockAlertService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseExerciseRowComponent);
