@@ -111,7 +111,9 @@ describe('GuidedTourService', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
                 providers: [GuidedTourService, { provide: DeviceDetectorService }],
-            });
+            })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+                .compileComponents();
 
             service = TestBed.get(GuidedTourService);
             httpMock = TestBed.get(HttpTestingController);
@@ -164,6 +166,7 @@ describe('GuidedTourService', () => {
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
                 .compileComponents()
                 .then(() => {

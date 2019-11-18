@@ -71,7 +71,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [ProgrammingExerciseInstructionTaskStatusComponent] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);

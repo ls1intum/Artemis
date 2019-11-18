@@ -67,6 +67,7 @@ describe('UpdatingResultComponent', () => {
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(UpdatingResultComponent);

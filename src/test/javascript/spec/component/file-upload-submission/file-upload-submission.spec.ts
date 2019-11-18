@@ -82,6 +82,7 @@ describe('FileUploadSubmissionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadSubmissionComponent);
