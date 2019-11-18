@@ -24,7 +24,7 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { of } from 'rxjs';
 import { InitializationState, StudentParticipation } from 'app/entities/participation';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../mocks/mock-account.service';
 import * as moment from 'moment';
 import { QuizExercise } from 'app/entities/quiz-exercise';

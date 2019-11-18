@@ -23,7 +23,7 @@ import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
