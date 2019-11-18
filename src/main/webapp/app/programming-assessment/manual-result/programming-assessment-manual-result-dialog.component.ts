@@ -61,10 +61,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
             this.userId = user!.id!;
+            this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
         });
         if (this.result.feedbacks) {
             this.feedbacks = this.result.feedbacks;
-            this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
         } else {
             this.isLoading = true;
             this.resultService
