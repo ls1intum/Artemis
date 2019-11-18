@@ -190,7 +190,7 @@ export class GuidedTourService {
     }
 
     /**
-     * Determines if the cancel tour is currently displayed
+     * Determines if the completed tour is currently displayed
      */
     public isCompleteTourStep(): boolean {
         if (this.currentTour && this.currentTour.steps) {
