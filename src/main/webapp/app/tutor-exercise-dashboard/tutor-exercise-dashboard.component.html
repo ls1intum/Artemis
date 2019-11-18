@@ -143,7 +143,7 @@
                             <button class="btn btn-link" (click)="openExampleSubmission(exampleSubmission.id, true, false)">
                                 {{ 'artemisApp.tutorExerciseDashboard.reviewExampleSubmission' | translate }} {{ i + 1 }}
                             </button>
-                            <fa-icon [icon]="'check - circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
+                            <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                         </li>
                     </ul>
                 </div>
