@@ -17,7 +17,6 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -586,13 +585,7 @@ public abstract class Exercise implements Serializable {
             Set<Submission> submissions = participation.getSubmissions();
 
             // only transmit the relevant result
-            Submission submission;
-            if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateProgrammingSubmission((ProgrammingExercise) this, submissions);
-            }
-            else {
-                submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
-            }
+            Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
             Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
 
             Set<Result> results = result != null ? Set.of(result) : Set.of();
@@ -635,7 +628,7 @@ public abstract class Exercise implements Serializable {
      * @param submissions that need to be filtered
      * @return filtered submission
      */
-    private Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();
@@ -665,24 +658,6 @@ public abstract class Exercise implements Serializable {
             return submissionsWithoutResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
         }
         return null;
-    }
-
-    /**
-     * Get the latest (potentially) graded submission for a programming exercise.
-     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed, but that e.g. the CI system failed to deliver the build results.
-     * @param exercise Programming Exercise.
-     * @param submissions Submissions for the given student.
-     * @return the latest graded submission.
-     */
-    @Nullable
-    private Submission findAppropriateProgrammingSubmission(ProgrammingExercise exercise, Set<Submission> submissions) {
-        return submissions.stream().filter(submission -> {
-            if (submission.getResult() != null) {
-                return submission.getResult().isRated();
-            }
-            return exercise.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
-                    || submission.getSubmissionDate().isBefore(exercise.getDueDate());
-        }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
     }
 
     @Override
