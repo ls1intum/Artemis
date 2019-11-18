@@ -12,14 +12,20 @@ import { MockAccountService } from './helpers/mock-account.service';
 import { MockActivatedRoute, MockRouter } from './helpers/mock-route.service';
 import { MockActiveModal } from './helpers/mock-active-modal.service';
 import { MockEventManager } from './helpers/mock-event-manager.service';
+import { CookieModule, CookieOptionsProvider, CookieService } from 'ngx-cookie';
+import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 // TODO: This module was taken from auto generated tests. Needs to be reworked completely.
 @NgModule({
+    imports: [CookieModule, HttpClientTestingModule],
     providers: [
         DatePipe,
         JhiDataUtils,
         JhiDateUtils,
         JhiParseLinks,
+        CookieService,
+        CookieOptionsProvider,
         {
             provide: JhiLanguageService,
             useClass: MockLanguageService,
@@ -73,6 +79,7 @@ import { MockEventManager } from './helpers/mock-event-manager.service';
             useValue: null,
         },
     ],
-    imports: [HttpClientTestingModule],
+    declarations: [MockComponent(FaIconComponent)],
+    exports: [MockComponent(FaIconComponent)],
 })
 export class ArtemisTestModule {}
