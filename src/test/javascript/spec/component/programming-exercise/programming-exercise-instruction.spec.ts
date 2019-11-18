@@ -72,7 +72,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [ProgrammingExerciseInstructionTaskStatusComponent] } })
+            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
