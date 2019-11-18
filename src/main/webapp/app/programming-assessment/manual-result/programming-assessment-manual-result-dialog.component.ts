@@ -14,7 +14,7 @@ import { catchError, tap, filter } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { Complaint, ComplaintService, ComplaintType } from 'app/entities/complaint';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 
 @Component({
@@ -127,7 +127,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
-        result.subscribe(res => this.onSaveSuccess(res), err => this.onSaveError());
+        result.subscribe(
+            res => this.onSaveSuccess(res),
+            err => this.onSaveError(),
+        );
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {
