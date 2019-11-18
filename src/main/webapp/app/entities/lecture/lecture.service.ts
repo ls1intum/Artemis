@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
 import { Lecture } from 'app/entities/lecture';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;

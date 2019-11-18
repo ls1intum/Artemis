@@ -52,7 +52,7 @@ export class ProgrammingExercisePopupService {
     }
 
     programmingExerciseModalRef(component: Component, programmingExercise: ProgrammingExercise): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.programmingExercise = programmingExercise;
         modalRef.result.then(
             result => {

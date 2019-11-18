@@ -1,11 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
-import { UserRouteAccessService } from '../../core';
+import { UserRouteAccessService } from 'app/core';
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-import { PendingChangesGuard } from '../../shared';
 
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
@@ -13,7 +11,8 @@ import { QuizExerciseComponent } from './quiz-exercise.component';
 import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
 import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
 import { QuizExerciseResetPopupComponent } from './quiz-exercise-reset-dialog.component';
-import { QuizReEvaluateComponent } from '../../quiz/re-evaluate/quiz-re-evaluate.component';
+import { QuizReEvaluateComponent } from 'app/quiz/re-evaluate';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseResolve implements Resolve<QuizExercise> {

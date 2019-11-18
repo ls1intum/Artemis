@@ -1,4 +1,11 @@
-<button class="btn" [class.btn-outline-primary]="outlined" [class.btn-primary]="btnPrimary" [class.btn-sm]="smallButton" [disabled]="buttonLoading">
+<button
+    class="btn"
+    [jhiFeatureToggle]="featureToggle"
+    [overwriteDisabled]="disabled || buttonLoading"
+    [class.btn-outline-primary]="outlined"
+    [class.btn-primary]="btnPrimary"
+    [class.btn-sm]="smallButton"
+>
     <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="'circle-notch'"></fa-icon>
     <img *ngIf="!buttonLoading" class="ide-icon" src="../../../content/images/intellij_logo.png" />
     <span>{{ buttonLabel }}</span>

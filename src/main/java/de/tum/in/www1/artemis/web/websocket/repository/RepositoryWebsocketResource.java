@@ -29,6 +29,8 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -79,6 +81,7 @@ public class RepositoryWebsocketResource {
      * @param principal       used to check if the user can update the files
      */
     @MessageMapping("/topic/repository/{participationId}/files")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public void updateParticipationFiles(@DestinationVariable Long participationId, @Payload List<FileSubmission> submissions, Principal principal) {
         // Without this, custom jpa repository methods don't work in a websocket channel.
         SecurityUtils.setAuthorizationObject();
@@ -135,6 +138,7 @@ public class RepositoryWebsocketResource {
      * @param principal   used to check if the user can update the files
      */
     @MessageMapping("/topic/test-repository/{exerciseId}/files")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public void updateTestFiles(@DestinationVariable Long exerciseId, @Payload List<FileSubmission> submissions, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();

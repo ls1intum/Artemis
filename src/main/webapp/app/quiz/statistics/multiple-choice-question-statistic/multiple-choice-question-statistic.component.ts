@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AccountService, JhiWebsocketService } from '../../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.service';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
@@ -11,6 +10,8 @@ import { MultipleChoiceQuestionStatistic } from '../../../entities/multiple-choi
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
+import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',

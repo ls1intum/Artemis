@@ -9,6 +9,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -21,6 +22,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
     ideState: IntelliJState;
+    FeatureToggle = FeatureToggle;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;

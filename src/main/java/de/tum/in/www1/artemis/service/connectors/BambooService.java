@@ -5,6 +5,7 @@ import com.appfire.common.cli.Base;
 import com.appfire.common.cli.CliClient;
 import com.appfire.common.cli.Settings;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -26,7 +27,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -41,9 +41,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
@@ -147,11 +147,10 @@ public class BambooService implements ContinuousIntegrationService {
             planKey,
             ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
-            versionControlService.get().getRepositoryName(repositoryUrl)
+            versionControlService.get().getRepositoryName(repositoryUrl),
+            Optional.empty()
         );
         enablePlan(planKey);
-        // We need to trigger an initial update in order for Gitlab to work correctly
-        continuousIntegrationUpdateService.get().triggerUpdate(buildPlanId, true);
     }
 
     @Override
@@ -323,6 +322,51 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
+    public void removeAllDefaultProjectPermissions(String projectKey) {
+        final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        // Bamboo always gives read rights
+        final var permissionData = List.of(permissionToBambooPermission(CIPermission.READ));
+        final var entity = new HttpEntity<>(permissionData, headers);
+        final var roles = List.of("ANONYMOUS", "LOGGED_IN");
+
+        roles.forEach(role -> {
+            final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/roles/" + role;
+            final var response = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
+            if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
+                throw new BambooException("Unable to remove default project permissions from exercise " + projectKey + "\n" + response.getBody());
+            }
+        });
+    }
+
+    @Override
+    public void giveProjectPermissions(String projectKey, List<String> groupNames, List<CIPermission> permissions) {
+        final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
+        final var entity = new HttpEntity<>(permissionData, headers);
+
+        groupNames.forEach(group -> {
+            final var url = BAMBOO_SERVER_URL + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
+            final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+            if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
+                final var errorMessage = "Unable to give permissions to project " + projectKey + "; error body: " + response.getBody() +
+                    "; headers: " + response.getHeaders() + "; status code: " + response.getStatusCode();
+                log.error(errorMessage);
+                throw new BambooException(errorMessage);
+            }
+        });
+    }
+
+    private String permissionToBambooPermission(CIPermission permission) {
+        switch (permission) {
+            case EDIT: return "WRITE";
+            case CREATE: return "CREATE";
+            case READ: return "READ";
+            case ADMIN: return "ADMINISTRATION";
+            default: throw new IllegalArgumentException("Unable to map Bamboo permission " + permission);
+        }
+    }
+
+    @Override
     public String enablePlan(String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + planKey);
@@ -337,8 +381,8 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
-        continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
+    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy) throws BambooException {
+        continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName, triggeredBy);
     }
 
     /**
@@ -434,6 +478,23 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
         }
+    }
+
+    @Override
+    public ConnectorHealth health() {
+        ConnectorHealth health;
+        try {
+            final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            final var entity = new HttpEntity<>(headers);
+            final var status = restTemplate.exchange(BAMBOO_SERVER_URL + "/rest/api/latest/server", HttpMethod.GET, entity, JsonNode.class);
+            health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+        } catch (Exception emAll) {
+            health = new ConnectorHealth(emAll);
+        }
+
+        health.setAdditionalInfo(Map.of("url", BAMBOO_SERVER_URL));
+        return health;
     }
 
     /**

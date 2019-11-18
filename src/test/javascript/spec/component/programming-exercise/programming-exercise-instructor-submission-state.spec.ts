@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
@@ -14,17 +14,20 @@ import { ParticipationWebsocketService } from 'app/entities/participation';
 import { Exercise } from 'app/entities/exercise';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammmingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programmming-exercise-instructor-submission-state.component';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ProgrammingExerciseInstructorSubmissionState', () => {
-    let comp: ProgrammmingExerciseInstructorSubmissionStateComponent;
-    let fixture: ComponentFixture<ProgrammmingExerciseInstructorSubmissionStateComponent>;
+    let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseInstructorSubmissionStateComponent>;
     let debugElement: DebugElement;
     let submissionService: ProgrammingSubmissionService;
     let buildRunService: ProgrammingBuildRunService;
@@ -55,11 +58,12 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammmingExerciseInstructorSubmissionStateComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseInstructorSubmissionStateComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
@@ -109,9 +113,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
             4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
 
         tick(500);
@@ -127,9 +131,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
             4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isNotBuildingSubmission);
 
         tick(500);
@@ -146,9 +150,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             4: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
         const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 2 };
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
@@ -180,9 +184,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1,
             [ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION]: 1,
         };
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
@@ -210,7 +214,7 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         triggerAllStub.returns(triggerInstructorBuildForParticipationsOfExerciseSubject);
         const getFailedSubmissionParticipationsForExerciseStub = stub(submissionService, 'getSubmissionCountByType').returns(failedSubmissionParticipationIds);
         // Component must have at least one failed submission for the button to be enabled.
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
         comp.buildingSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 };
         comp.hasFailedSubmissions = true;
 
@@ -224,8 +228,8 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
         triggerButton.click();
 
         expect(comp.isBuildingFailedSubmissions).to.be.true;
-        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exerciseId, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
-        expect(triggerAllStub).to.have.been.calledOnceWithExactly(comp.exerciseId, failedSubmissionParticipationIds);
+        expect(getFailedSubmissionParticipationsForExerciseStub).to.have.been.calledOnceWithExactly(comp.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        expect(triggerAllStub).to.have.been.calledOnceWithExactly(comp.exercise.id, failedSubmissionParticipationIds);
 
         fixture.detectChanges();
 
@@ -242,9 +246,9 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
             1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
             4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
         } as ExerciseSubmissionState;
-        comp.exerciseId = exercise.id;
+        comp.exercise = exercise as ProgrammingExercise;
 
-        triggerChanges(comp, { property: 'exerciseId', currentValue: comp.exerciseId });
+        triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
 
         // Wait for a second as the view is updated with a debounce.
