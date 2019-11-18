@@ -23,9 +23,7 @@ public class CustomWebsocketSessionHandler {
     private static final int PERIOD = 20 * 1000;
 
     public CustomWebsocketSessionHandler() {
-        scheduler.scheduleAtFixedRate(() -> {
-            log.info("There are " + sessionMap.size() + " websocket sessions open!");
-        }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(() -> log.info("There are " + sessionMap.size() + " websocket sessions open!"), PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public void register(WebSocketSession session) {
