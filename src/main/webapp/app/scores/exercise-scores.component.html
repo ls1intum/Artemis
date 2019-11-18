@@ -95,13 +95,13 @@
             [rowClass]=""
             [scrollbarH]="true"
         >
-            <ngx-datatable-column prop="" [minWidth]="50" [maxWidth]="60">
+            <ngx-datatable-column prop="" [minWidth]="50" [width]="60" [maxWidth]="70">
                 <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
                     {{ rowIndex + 1 }}
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.student.name" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="200">
+            <ngx-datatable-column prop="participation.student.name" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="200">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.name')">{{
@@ -115,7 +115,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="100">
+            <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.login')">{{
@@ -129,7 +129,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="150">
+            <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="150">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold sortable" (click)="onSort('completionDate')">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
@@ -141,7 +141,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="" [resizeable]="false" [sortable]="true" [minWidth]="200" [maxWidth]="300">
+            <ngx-datatable-column prop="" [resizeable]="false" [sortable]="true" [minWidth]="200" [width]="300">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('score')">{{ 'artemisApp.exercise.result' | translate }}</span>
@@ -153,7 +153,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="100">
+            <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('type')">{{ 'artemisApp.exercise.type' | translate }}</span>
@@ -165,7 +165,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="60" [maxWidth]="120">
+            <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="60" [width]="120">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('submissionCount')">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
@@ -177,7 +177,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="durationInMinutes" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="150">
+            <ngx-datatable-column prop="durationInMinutes" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
                         <span class="datatable-header-cell-label bold" (click)="onSort('durationInMinutes')">{{ 'artemisApp.exercise.duration' | translate }}</span>
