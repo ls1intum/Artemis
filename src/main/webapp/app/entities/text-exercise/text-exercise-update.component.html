@@ -120,13 +120,13 @@
                     </button>
                     <fa-icon
                         *ngIf="exampleSubmission.usedForTutorial"
-                        icon="chalkboard-teacher"
+                        icon="'chalkboard-teacher'"
                         style="margin-left: 10px"
                         [title]="'artemisApp.exampleSubmission.usedForTutorial' | translate"
                     ></fa-icon>
                     <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                     <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
-                        <fa-icon icon="ban"></fa-icon>
+                        <fa-icon [icon]="'ban'"></fa-icon>
                     </button>
                 </li>
             </ul>
@@ -151,10 +151,10 @@
     </div>
     <div>
         <button type="button" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary" (click)="save()">
-            <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>
 </form>

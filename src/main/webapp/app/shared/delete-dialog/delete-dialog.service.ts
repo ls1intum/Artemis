@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { Observable, from } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 /**

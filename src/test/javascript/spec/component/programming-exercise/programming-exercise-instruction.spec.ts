@@ -71,6 +71,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
             .compileComponents()
             .then(() => {

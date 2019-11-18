@@ -6,20 +6,26 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
 
 import { MockLanguageHelper, MockLanguageService } from './helpers/mock-language.service';
-import { AccountService, JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mock-account.service';
 import { MockActivatedRoute, MockRouter } from './helpers/mock-route.service';
 import { MockActiveModal } from './helpers/mock-active-modal.service';
 import { MockEventManager } from './helpers/mock-event-manager.service';
-import { ArtemisIconsModule } from 'app/shared/icons/icons.module';
+import { CookieModule, CookieOptionsProvider, CookieService } from 'ngx-cookie';
+import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 // TODO: This module was taken from auto generated tests. Needs to be reworked completely.
 @NgModule({
+    imports: [CookieModule.forRoot(), HttpClientTestingModule],
     providers: [
         DatePipe,
         JhiDataUtils,
         JhiDateUtils,
         JhiParseLinks,
+        CookieService,
+        CookieOptionsProvider,
         {
             provide: JhiLanguageService,
             useClass: MockLanguageService,
@@ -73,7 +79,7 @@ import { ArtemisIconsModule } from 'app/shared/icons/icons.module';
             useValue: null,
         },
     ],
-    imports: [HttpClientTestingModule, ArtemisIconsModule],
-    exports: [ArtemisIconsModule],
+    declarations: [MockComponent(FaIconComponent)],
+    exports: [MockComponent(FaIconComponent)],
 })
 export class ArtemisTestModule {}

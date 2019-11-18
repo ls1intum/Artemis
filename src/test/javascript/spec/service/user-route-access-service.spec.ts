@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie';
