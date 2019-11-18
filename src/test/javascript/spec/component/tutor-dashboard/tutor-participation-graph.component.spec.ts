@@ -24,6 +24,7 @@ describe('TutorParticipationGraphComponent', () => {
             declarations: [TutorParticipationGraphComponent],
             providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorParticipationGraphComponent);

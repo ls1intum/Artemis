@@ -56,7 +56,6 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../utils/general.utils';
-import { ArtemisIconTestModule } from '../../test-icon.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;

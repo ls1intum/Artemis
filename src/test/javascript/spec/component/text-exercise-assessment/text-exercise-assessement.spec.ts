@@ -68,6 +68,7 @@ describe('TextAssessmentComponent', () => {
                 { provide: ComplaintService, useClass: MockComplaintService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextAssessmentComponent);

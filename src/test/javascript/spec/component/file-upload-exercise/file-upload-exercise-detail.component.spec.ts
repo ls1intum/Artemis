@@ -42,7 +42,9 @@ describe('Component Tests', () => {
                     { provide: ActivatedRoute, useValue: route },
                     { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 ],
-            }).compileComponents();
+            })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+                .compileComponents();
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             comp = fixture.componentInstance;
             debugElement = fixture.debugElement;

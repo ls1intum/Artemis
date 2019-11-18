@@ -18,7 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 // TODO: This module was taken from auto generated tests. Needs to be reworked completely.
 @NgModule({
-    imports: [CookieModule, HttpClientTestingModule],
+    imports: [CookieModule.forRoot(), HttpClientTestingModule],
     providers: [
         DatePipe,
         JhiDataUtils,
