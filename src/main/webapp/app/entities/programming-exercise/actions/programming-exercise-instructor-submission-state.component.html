@@ -25,7 +25,7 @@
             Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
         </span>
     </div>
-    <jhi-programming-exercise-trigger-all-button [exerciseId]="exerciseId"></jhi-programming-exercise-trigger-all-button>
+    <jhi-programming-exercise-trigger-all-button [exercise]="exercise"></jhi-programming-exercise-trigger-all-button>
     <jhi-button
         id="trigger-failed-button"
         class="ml-3"
@@ -34,6 +34,7 @@
         [icon]="'redo'"
         [title]="'artemisApp.programmingExercise.resubmitFailed'"
         [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
+        [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         (onClick)="triggerBuildOfFailedSubmissions()"
     ></jhi-button>
 </div>

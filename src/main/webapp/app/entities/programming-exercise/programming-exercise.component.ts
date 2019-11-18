@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { FeatureToggle } from 'app/feature-toggle';
 import { isIntelliJ } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
@@ -20,6 +21,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    FeatureToggle = FeatureToggle;
     readonly isIDE = isIntelliJ;
 
     constructor(

@@ -9,7 +9,7 @@ import { Lecture } from 'app/entities/lecture';
 export class LectureDetailComponent implements OnInit {
     lecture: Lecture;
 
-    constructor(protected activatedRoute: ActivatedRoute) {}
+    constructor(private activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ lecture }) => {

@@ -154,7 +154,7 @@ jhi-guided-tour {
             background-color: $tour-step-color;
             box-shadow: 0 0.4rem 0.6rem $tour-shadow-color;
             color: $tour-text-color;
-            padding: 25px 20px 20px;
+            padding: 20px;
             border-radius: 5px;
             -webkit-border-radius: 5px;
             -moz-border-radius: 5px;
@@ -170,7 +170,7 @@ jhi-guided-tour {
 
                 .headline {
                     display: block;
-                    font-size: 20px;
+                    font-size: 18px;
                     padding-bottom: 5px;
                 }
 
@@ -203,10 +203,10 @@ jhi-guided-tour {
             }
 
             &__content {
-                font-size: 16px;
+                font-size: 15px;
                 min-height: 40px;
                 max-height: 80vh;
-                overflow-y: scroll;
+                overflow-y: auto;
                 margin-bottom: 20px;
 
                 @media (max-height: 600px) {
@@ -220,7 +220,6 @@ jhi-guided-tour {
                 tt {
                     background-color: #f2f2f2;
                     padding: 4px;
-                    margin: 0 5px;
                 }
 
                 ul {

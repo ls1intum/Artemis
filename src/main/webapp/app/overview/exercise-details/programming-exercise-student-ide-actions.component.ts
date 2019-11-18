@@ -1,11 +1,15 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise';
+import { Exercise, isStartExerciseAvailable, ParticipationStatus } from 'app/entities/exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { IntelliJState } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ActivatedRoute } from '@angular/router';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -17,7 +21,8 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
-    isOpenedInIntelliJ = false;
+    ideState: IntelliJState;
+    FeatureToggle = FeatureToggle;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -27,10 +32,21 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
 
     @Input() smallButtons: boolean;
 
-    constructor(private jhiAlertService: JhiAlertService, private courseExerciseService: CourseExerciseService, private javaBridge: JavaBridgeService) {}
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private courseExerciseService: CourseExerciseService,
+        private javaBridge: JavaBridgeService,
+        private ideBuildAndTestService: IdeBuildAndTestService,
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit(): void {
-        this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.isOpenedInIntelliJ = ideState.opened === this.exercise.id && !ideState.inInstructorView));
+        this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.ideState = ideState));
+        this.route.queryParams.subscribe(params => {
+            if (params['withIdeSubmit']) {
+                this.submitChanges();
+            }
+        });
     }
 
     /**
@@ -46,6 +62,13 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
+    }
+
+    /**
+     * see exercise-utils -> isStartExerciseAvailable
+     */
+    isStartExerciseAvailable(): boolean {
+        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**
@@ -107,5 +130,6 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     submitChanges() {
         this.javaBridge.submit();
+        this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
     }
 }

@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { CachingStrategy } from 'app/shared';
 import { CourseScoreCalculationService } from 'app/overview';
+import { isIntelliJ } from 'app/intellij/intellij';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -14,6 +15,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     styleUrls: ['course-overview.scss'],
 })
 export class CourseOverviewComponent implements OnInit {
+    readonly isIntelliJ = isIntelliJ;
     CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;

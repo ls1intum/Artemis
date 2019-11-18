@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
+import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/code-editor/code-editor-instructor-base-container.component';
 
 /**
@@ -24,12 +25,22 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     private intellijState: IntelliJState;
     private intellijStateSubject: BehaviorSubject<IntelliJState>;
 
-    constructor(private window: WindowRef) {}
+    constructor(private window: WindowRef, private injector: Injector) {}
 
     static initBridge(bridge: JavaBridgeService, win: WindowRef) {
         win.nativeWindow.javaDowncallBridge = bridge;
-        bridge.intellijState = { opened: -1, inInstructorView: false };
+        bridge.intellijState = { opened: -1, inInstructorView: false, cloning: false, building: false };
         bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
+    }
+
+    /**
+     * Yes, this is not best practice. But since this bridge service is an APP_INITIALIZER and has to be set on
+     * the window object right in the beginning (so that the IDE can interact with Artemis as soon as the page has been
+     * loaded), it should be fine to actually load the router only when it is needed later in the process.
+     * Otherwise we would have a cyclic dependency problem on app startup
+     */
+    get router(): Router {
+        return this.injector.get(Router);
     }
 
     /**
@@ -84,11 +95,78 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     /**
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
-     * @param exerciseId The ID of the exercise that was opened by the user.
+     * @param opened The ID of the exercise that was opened by the user.
      */
-    onExerciseOpened(exerciseId: number): void {
-        this.intellijState.opened = exerciseId;
+    onExerciseOpened(opened: number): void {
+        this.setIDEStateParameter({ opened });
+    }
+
+    /**
+     * Notify the IDE that a new build has started
+     */
+    onBuildStarted() {
+        this.window.nativeWindow.intellij.onBuildStarted();
+    }
+
+    /**
+     * Notify the IDE that a build finished and all results have been sent
+     */
+    onBuildFinished() {
+        this.window.nativeWindow.intellij.onBuildFinished();
+    }
+
+    /**
+     * Notify the IDE that a build failed. Alternative to onBuildFinished
+     *
+     * @param message The message containing all compile errors for the current build
+     */
+    onBuildFailed(message: string) {
+        this.window.nativeWindow.intellij.onBuildFailed(message);
+    }
+
+    /**
+     * Notifies the IDE about a completed test (both positive or negative). In the case of an error,
+     * you can also send a message containing some information about why the test failed.
+     *
+     * @param success True if the test was successful, false otherwise
+     * @param message A detail message explaining the test result
+     */
+    onTestResult(success: boolean, message: string) {
+        this.window.nativeWindow.intellij.onTestResult(success, message);
+    }
+
+    /**
+     * Notifies Artemis if the IDE is currently building (and testing) the checked out exercise
+     *
+     * @param building True, a building process is currently open, false otherwise
+     */
+    isBuilding(building: boolean): void {
+        this.setIDEStateParameter({ building });
+    }
+
+    /**
+     * Notifies Artemis if the IDE is in the process of importing (i.e. cloning) an exercise)
+     *
+     * @param cloning True, if there is a open clone process, false otherwise
+     */
+    isCloning(cloning: boolean): void {
+        this.setIDEStateParameter({ cloning });
+    }
+
+    private setIDEStateParameter(patch: Partial<IntelliJState>) {
+        Object.assign(this.intellijState, patch);
         this.intellijStateSubject.next(this.intellijState);
+    }
+
+    /**
+     * Gets triggered if a build/test run was started from inside the IDE. This means that we have to navigate
+     * to the related exercise page in order to listen for any new results
+     *
+     * @param courseId
+     * @param exerciseId
+     */
+    startedBuildInIntelliJ(courseId: number, exerciseId: number) {
+        this.router.navigateByUrl(`/overview/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
     }
 
     onExerciseOpenedAsInstructor(exerciseId: number): void {

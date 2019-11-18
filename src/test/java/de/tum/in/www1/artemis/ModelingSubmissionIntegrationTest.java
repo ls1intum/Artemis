@@ -66,9 +66,13 @@ public class ModelingSubmissionIntegrationTest {
 
     private ModelingExercise useCaseExercise;
 
+    private ModelingExercise afterDueDateExercise;
+
     private ModelingSubmission submittedSubmission;
 
     private ModelingSubmission unsubmittedSubmission;
+
+    private StudentParticipation afterDueDateParticipation;
 
     private String emptyModel;
 
@@ -82,6 +86,10 @@ public class ModelingSubmissionIntegrationTest {
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
         objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+        afterDueDateExercise = (ModelingExercise) exerciseRepo.findAll().get(4);
+        afterDueDateParticipation = database.addParticipationForExercise(afterDueDateExercise, "student3");
+        database.addParticipationForExercise(classExercise, "student3");
+
         emptyModel = database.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
         submittedSubmission = generateSubmittedSubmission();
@@ -168,7 +176,7 @@ public class ModelingSubmissionIntegrationTest {
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
 
         submission = ModelFactory.generateModelingSubmission(validModel, false);
-        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
     }
@@ -399,6 +407,41 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDate_forbidden() throws Exception {
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        participationService.save(afterDueDateParticipation);
+        request.put("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_beforeDueDate_allowed() throws Exception {
+        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
+        submittedSubmission.setModel(validModel);
+        submittedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
+                HttpStatus.OK);
+
+        final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
+        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb.get().getModel()).isEqualTo(validModel);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        participationService.save(afterDueDateParticipation);
+
+        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {

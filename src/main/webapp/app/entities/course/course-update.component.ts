@@ -101,7 +101,10 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
-        result.subscribe((res: HttpResponse<Course>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError(res));
+        result.subscribe(
+            (res: HttpResponse<Course>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+        );
     }
 
     private onSaveSuccess() {

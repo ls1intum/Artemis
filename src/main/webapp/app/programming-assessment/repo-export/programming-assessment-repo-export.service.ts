@@ -16,12 +16,19 @@ export type RepositoryExportOptions = {
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentRepoExportService {
     // TODO: We should move this endpoint to api/programming-exercises.
-    public resourceUrl = SERVER_API_URL + 'api/exercises';
+    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
     constructor(private http: HttpClient) {}
 
-    exportRepos(exerciseId: number, students: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        return this.http.post(`${this.resourceUrl}/${exerciseId}/participations/${students}`, repositoryExportOptions, {
+    exportReposByStudentLogins(exerciseId: number, students: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-student-logins/${students}`, repositoryExportOptions, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    exportReposByParticipations(exerciseId: number, participationIds: number[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${participationIds}`, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });

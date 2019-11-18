@@ -58,7 +58,7 @@
 <div class="quiz-footer" *ngIf="quizExercise">
     <div class="container">
         <div class="quiz-footer-content">
-            <div>
+            <div class="quiz-icons">
                 <div class="stepwizardquiz">
                     <div *ngFor="let question of quizExercise.quizQuestions; let i = index" class="stepwizardquiz__step">
                         <div
@@ -94,13 +94,12 @@
                         <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | translate }}</ng-template>
                     </div>
                 </div>
-                <div *ngIf="quizExercise.quizQuestions" class="align-text">
-                    <span jhiTranslate="artemisApp.quizExercise.questions" class="colon-suffix"></span>
-                    {{ quizExercise.quizQuestions ? quizExercise.quizQuestions.length : 0 }}
+                <div *ngIf="quizExercise.quizQuestions && !this.isMobile()" class="align-text hide-mobile">
+                    {{ quizExercise.quizQuestions ? quizExercise.quizQuestions.length : 0 }} <span jhiTranslate="artemisApp.quizExercise.questions"></span>, {{ totalScore }}
+                    <span jhiTranslate="artemisApp.quizExercise.totalPoints"></span>
                 </div>
-                <div *ngIf="quizExercise.quizQuestions" class="align-text">
-                    <span jhiTranslate="artemisApp.quizExercise.totalPoints" class="colon-suffix"></span>
-                    {{ totalScore }}
+                <div *ngIf="quizExercise.quizQuestions && this.isMobile()" class="align-text show-mobile">
+                    {{ quizExercise.quizQuestions ? quizExercise.quizQuestions.length : 0 }} Q / {{ totalScore }} P
                 </div>
             </div>
             <div *ngIf="!showingResult" id="remaining-time">
@@ -120,12 +119,18 @@
                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                 </div>
                 <div *ngIf="mode === 'default' && !waitingForQuizStart">
-                    <span *ngIf="isSaving">Saving Answers...</span>
-                    <span *ngIf="!isSaving" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
+                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.isSaving">Saving answers...</span>
+                    <span *ngIf="!isSaving && !isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
                         <span *ngIf="justSaved" jhiTranslate="justNow"></span>
-                        <span *ngIf="!justSaved">{{ lastSavedTimeText }}</span>
+                        <span *ngIf="!justSaved && lastSavedTimeText !== ''">{{ lastSavedTimeText }}</span>
+                        <span *ngIf="!justSaved && lastSavedTimeText === ''" jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
+                    </span>
+                    <!-- Only display save and submission hint without time stamps for mobile -->
+                    <span *ngIf="!isSaving && isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
+                        <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
+                        <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>
                 </div>
                 <div *ngIf="mode === 'default'" class="connection-status" [ngClass]="{ disconnected: disconnected }">
@@ -156,15 +161,17 @@
             <div *ngIf="mode === 'solution'">
                 <span jhiTranslate="artemisApp.quizExercise.solution"></span>
             </div>
-            <button
-                id="submit-quiz"
-                *ngIf="!submission.submitted && !showingResult"
-                [disabled]="isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
-                class="btn btn-success btn-lg"
-                jhiTranslate="entity.action.submit"
-                (click)="onSubmit()"
-            ></button>
-            <button *ngIf="submission.submitted && !showingResult" disabled class="btn btn-success btn-lg" jhiTranslate="artemisApp.quizExercise.submitted"></button>
+            <div class="submit-button">
+                <jhi-button
+                    *ngIf="!showingResult"
+                    id="submit-quiz"
+                    (click)="onSubmit()"
+                    [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
+                    [btnType]="ButtonType.SUCCESS"
+                    [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                    [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                ></jhi-button>
+            </div>
         </div>
     </div>
 </div>

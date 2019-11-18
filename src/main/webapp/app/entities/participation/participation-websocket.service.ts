@@ -162,11 +162,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
             this.jhiWebsocketService
                 .receive(participationResultTopic)
-                .pipe(
-                    tap(this.notifyResultSubscribers),
-                    switchMap(this.addResultToParticipation),
-                    tap(this.notifyParticipationSubscribers),
-                )
+                .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
                 .subscribe();
         }
     }
@@ -185,10 +181,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
             this.jhiWebsocketService
                 .receive(participationTopic)
-                .pipe(
-                    tap(this.addParticipation),
-                    tap(this.notifyParticipationSubscribers),
-                )
+                .pipe(tap(this.addParticipation), tap(this.notifyParticipationSubscribers))
                 .subscribe();
         }
     }
@@ -213,7 +206,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * If there is no observable for the participation a new one will be created.
      *
      * @param participationId Id of Participation of which result to subscribe to
-     * @param exercise Exercise to which the Participation belongs
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
         this.createResultWSConnectionIfNotExisting(participationId);

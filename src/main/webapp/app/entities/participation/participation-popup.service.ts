@@ -38,7 +38,7 @@ export class ParticipationPopupService {
     }
 
     participationModalRef(component: Component, participation: Participation): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participation = participation;
         modalRef.result.then(
             result => {

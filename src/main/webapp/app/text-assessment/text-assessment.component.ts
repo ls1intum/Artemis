@@ -135,9 +135,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 );
             } else {
                 const submissionId = Number(submissionValue);
-                this.assessmentsService
-                    .getFeedbackDataForExerciseSubmission(exerciseId, submissionId)
-                    .subscribe(participation => this.receiveParticipation(participation), (error: HttpErrorResponse) => this.onError(error.message));
+                this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(
+                    participation => this.receiveParticipation(participation),
+                    (error: HttpErrorResponse) => this.onError(error.message),
+                );
             }
         });
     }
@@ -172,7 +173,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -197,7 +198,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.minHeight = event.rect.height + 'px';

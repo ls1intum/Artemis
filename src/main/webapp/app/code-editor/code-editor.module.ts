@@ -39,6 +39,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { CodeEditorInstructorIdeComponent } from 'app/code-editor/code-editor-instructor-ide.component';
 import { IntellijModule } from 'app/intellij/intellij.module';
 
@@ -56,6 +57,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArtemisProgrammingExerciseActionsModule,
         TreeviewModule.forRoot(),
         ArtemisExerciseHintModule,
+        FeatureToggleModule,
         IntellijModule,
     ],
     declarations: [

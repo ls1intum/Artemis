@@ -97,11 +97,6 @@ public class TemplateProgrammingExerciseParticipation extends Participation impl
     }
 
     @Override
-    public void addSubmissions(ProgrammingSubmission programmingSubmission) {
-        this.getSubmissions().add(programmingSubmission);
-    }
-
-    @Override
     public String toString() {
         return "Participation{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
     }

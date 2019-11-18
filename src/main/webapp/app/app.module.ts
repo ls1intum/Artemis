@@ -81,6 +81,7 @@ import { ArtemisParticipationModule } from 'app/entities/participation/participa
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ArtemisFileUploadSubmissionModule } from 'app/file-upload-submission/file-upload-submission.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/file-upload-assessment/file-upload-assessment.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 @NgModule({
     imports: [
@@ -141,6 +142,7 @@ import { ArtemisFileUploadAssessmentModule } from 'app/file-upload-assessment/fi
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisConnectionNotificationModule,
         ArtemisListOfComplaintsModule,
+        FeatureToggleModule.forRoot(),
         // jhipster-needle-angular-add-module JHipster will add new module here
         TranslateModule.forRoot({
             loader: {
@@ -177,7 +179,6 @@ import { ArtemisFileUploadAssessmentModule } from 'app/file-upload-assessment/fi
         PaginationConfig,
         UserRouteAccessService,
         DifferencePipe,
-        JhiWebsocketService,
         PendingChangesGuard,
         TranslateService,
         /**

@@ -12,7 +12,10 @@ export class NotificationMgmtUpdateComponent implements OnInit {
     notification: SystemNotification;
     isSaving: boolean;
 
-    systemNotificationTypes = [{ name: 'INFO', value: SystemNotificationType.INFO }, { name: 'WARNING', value: SystemNotificationType.WARNING }];
+    systemNotificationTypes = [
+        { name: 'INFO', value: SystemNotificationType.INFO },
+        { name: 'WARNING', value: SystemNotificationType.WARNING },
+    ];
 
     constructor(private userService: UserService, private systemNotificationService: SystemNotificationService, private route: ActivatedRoute) {}
 
@@ -39,9 +42,15 @@ export class NotificationMgmtUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.notification.id) {
-            this.systemNotificationService.update(this.notification).subscribe(response => this.onSaveSuccess(response.body!), () => this.onSaveError());
+            this.systemNotificationService.update(this.notification).subscribe(
+                response => this.onSaveSuccess(response.body!),
+                () => this.onSaveError(),
+            );
         } else {
-            this.systemNotificationService.create(this.notification).subscribe(response => this.onSaveSuccess(response.body!), () => this.onSaveError());
+            this.systemNotificationService.create(this.notification).subscribe(
+                response => this.onSaveSuccess(response.body!),
+                () => this.onSaveError(),
+            );
         }
     }
 
