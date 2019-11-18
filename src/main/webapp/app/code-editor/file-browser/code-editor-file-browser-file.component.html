@@ -1,6 +1,6 @@
 <!--File-->
 <li (click)="onNodeSelect.emit(item)" class="list-group-item file-item" [class.node-selected]="item.checked" [class.text-danger]="!item.checked && hasError">
-    <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
+    <fa-icon aria-hidden="true" [icon]="'file'" [fixedWidth]="true"></fa-icon>
     <fa-icon
         *ngIf="hasUnsavedChanges"
         aria-hidden="true"
@@ -23,10 +23,10 @@
     <!-- File level actions -->
     <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
         <button [disabled]="disableActions" (click)="setRenamingNode($event)" class="btn btn-small">
-            <fa-icon icon="edit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | translate }}"></fa-icon>
+            <fa-icon [icon]="'edit'" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | translate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="deleteNode($event)" class="btn btn-small">
-            <fa-icon icon="trash" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | translate }}"></fa-icon>
+            <fa-icon [icon]="'trash'" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | translate }}"></fa-icon>
         </button>
     </span>
 </li>

@@ -3,12 +3,10 @@
 // In some cases it needs to be checked explicitly wether a result is legacy or not.
 // The date used is the date of the merge: 2019-05-10T22:12:28Z.
 import { Result } from 'app/entities/result';
-import { ProgrammingExercise, programmingExerciseRoute } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import * as moment from 'moment';
-import { Participation, ParticipationType, StudentParticipation } from 'app/entities/participation';
-import { ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { isMoment } from 'moment';
+import { Participation, ParticipationType } from 'app/entities/participation';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 

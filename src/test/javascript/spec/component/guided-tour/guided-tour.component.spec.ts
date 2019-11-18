@@ -88,6 +88,7 @@ describe('GuidedTourComponent', () => {
                 { provide: DeviceDetectorService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);

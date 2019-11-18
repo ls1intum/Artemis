@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { JhiWebsocketService } from 'app/core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
@@ -28,6 +27,7 @@ import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-quiz',

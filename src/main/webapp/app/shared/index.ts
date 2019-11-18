@@ -4,7 +4,6 @@ export * from './alert/alert-error.component';
 export * from './auth/has-any-authority.directive';
 export * from './constants/error.constants';
 export * from './constants/pagination.constants';
-export * from './guard/pending-changes.guard';
 export * from './http/file-uploader.service';
 export * from './http/file.service';
 export * from './image/cacheable-image.service';

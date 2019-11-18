@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
-import { catchError, filter, flatMap, map, switchMap, tap, debounceTime } from 'rxjs/operators';
+import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { merge, Observable, of, Subscription } from 'rxjs';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';

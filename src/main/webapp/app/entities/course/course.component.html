@@ -24,31 +24,31 @@
                     <th></th>
                     <th jhiSortBy="id">
                         <span>{{ 'global.field.id' | translate }}</span
-                        ><fa-icon icon="sort"></fa-icon>
+                        ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
 
                     <th jhiSortBy="title">
                         <span>{{ 'artemisApp.course.title' | translate }}</span
-                        ><fa-icon icon="sort"></fa-icon>
+                        ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
                         <span>{{ 'artemisApp.course.accessGroups' | translate }}</span>
                     </th>
                     <th jhiSortBy="startDate">
                         <span>{{ 'artemisApp.course.startDate' | translate }}</span
-                        ><fa-icon icon="sort"></fa-icon>
+                        ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="endDate">
                         <span>{{ 'artemisApp.course.endDate' | translate }}</span
-                        ><fa-icon icon="sort"></fa-icon>
+                        ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="onlineCourse">
                         <span>{{ 'artemisApp.course.onlineCourse' | translate }}</span
-                        ><fa-icon icon="sort"></fa-icon>
+                        ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="presentationScoreEnabled">
                         <span>{{ 'artemisApp.course.presentationScoreEnabled.title' | translate }}</span
-                        ><fa-icon icon="sort"></fa-icon>
+                        ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
                 </tr>
@@ -155,7 +155,7 @@
                                         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
                                         (delete)="deleteCourse(course.id)"
                                     >
-                                        <fa-icon icon="times"></fa-icon>
+                                        <fa-icon [icon]="'times'"></fa-icon>
                                     </button>
                                 </div>
                             </div>

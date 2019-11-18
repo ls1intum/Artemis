@@ -74,6 +74,7 @@ describe('Component Tests', () => {
                     { provide: DeviceDetectorService },
                 ],
             })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .compileComponents()
                 .then(() => {
                     fixture = TestBed.createComponent(ModelingSubmissionComponent);
