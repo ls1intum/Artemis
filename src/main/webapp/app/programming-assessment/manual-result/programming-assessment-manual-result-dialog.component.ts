@@ -61,6 +61,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
             this.userId = user!.id!;
+            this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
         });
         if (this.result.feedbacks) {
             this.feedbacks = this.result.feedbacks;
@@ -79,7 +80,6 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             this.getComplaint(this.result.id);
         }
         this.participation = this.result.participation! as StudentParticipation;
-        this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
     }
 
     initializeForResultCreation() {
@@ -127,10 +127,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
-        result.subscribe(
-            res => this.onSaveSuccess(res),
-            err => this.onSaveError(),
-        );
+        result.subscribe(res => this.onSaveSuccess(res), err => this.onSaveError());
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {

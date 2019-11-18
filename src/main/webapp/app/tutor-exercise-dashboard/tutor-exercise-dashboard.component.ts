@@ -178,14 +178,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (response: string) => this.onError(response),
         );
 
-        this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
-        this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
-            (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-            (error: HttpErrorResponse) => this.onError(error.message),
-        );
+        this.complaintService
+            .getComplaintsForTutor(this.exerciseId)
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
+        this.complaintService
+            .getMoreFeedbackRequestsForTutor(this.exerciseId)
+            .subscribe((res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
@@ -371,7 +369,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.router.navigate([route]);
     }
 
-    openManualResultDialog(result: Result) {
+    private openManualResultDialog(result: Result) {
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = result.participation!.id;
         modalRef.componentInstance.result = result;
@@ -384,6 +382,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
         return;
     }
 
+    /**
+     * Show complaint depending on the exercise type
+     * @param complaint that we want to show
+     */
     viewComplaint(complaint: Complaint) {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.openManualResultDialog(complaint.result);
