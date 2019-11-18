@@ -3,7 +3,7 @@ import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/mode
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { AccountService, User } from 'app/core';
+import { User } from 'app/core';
 import * as $ from 'jquery';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
@@ -11,6 +11,7 @@ import { Feedback, FeedbackHighlightColor } from 'app/entities/feedback';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { StudentParticipation } from 'app/entities/participation';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',

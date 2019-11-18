@@ -10,7 +10,7 @@
             aria-label="Toggle navigation"
             (click)="toggleNavbar()"
         >
-            <fa-icon icon="bars"></fa-icon>
+            <fa-icon [icon]="'bars'"></fa-icon>
         </a>
         <a class="navbar-brand logo float-left" routerLink="/" (click)="collapseNavbar()">
             <span class="logo-img"></span>

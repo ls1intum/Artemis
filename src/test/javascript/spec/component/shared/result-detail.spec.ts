@@ -5,7 +5,7 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisResultModule, Result, ResultDetailComponent, ResultService } from 'app/entities/result';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared';
-import { RepositoryService } from 'app/entities/repository';
+import { RepositoryService } from 'app/entities/repository/repository.service';
 import { SinonStub, stub } from 'sinon';
 import { ExerciseType } from 'app/entities/exercise';
 import { of } from 'rxjs';

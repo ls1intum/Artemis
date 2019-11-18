@@ -8,8 +8,8 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core';
 import { onError } from 'app/utils/global.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-text-exercise',

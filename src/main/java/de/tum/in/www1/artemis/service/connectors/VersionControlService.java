@@ -136,4 +136,12 @@ public interface VersionControlService {
      */
     // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle this in the future
     String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException;
+
+    /**
+     * Checks if the underlying VCS server is up and running and gives some additional information about the running
+     * services if available
+     *
+     * @return The health of the VCS service containing if it is up and running and any additional data, or the throwing exception otherwise
+     */
+    ConnectorHealth health();
 }

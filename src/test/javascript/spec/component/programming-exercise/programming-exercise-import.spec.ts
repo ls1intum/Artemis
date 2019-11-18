@@ -44,7 +44,7 @@ describe('ProgrammingExerciseImportComponent', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseImportComponent);

@@ -18,7 +18,7 @@
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                 ></jhi-programming-exercise-manage-test-cases-status>
                 <jhi-programming-exercise-manage-test-cases-actions
-                    [exerciseId]="exerciseId"
+                    [exercise]="exercise"
                     [hasUpdatedTestCases]="hasUpdatedTestCases"
                     [hasUnsavedChanges]="!!changedTestCaseIds.length"
                     [disableResetWeights]="(testCases | averageBy: 'weight') <= 1"
@@ -75,7 +75,7 @@
                     <ng-template #popoverContent>
                         <div class="d-flex flex-column run-after-due-date-disabled">
                             <pre jhiTranslate="artemisApp.programmingExercise.manageTestCases.runAfterDueDateDisabled"></pre>
-                            <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exerciseId, 'edit']" class="ml-auto">
+                            <a [routerLink]="['/course/', this.courseId, 'programming-exercise', this.exercise.id, 'edit']" class="ml-auto">
                                 <jhi-button icon="arrow-right" ngbTooltip="{{ 'entity.action.edit' | translate }}"></jhi-button>
                             </a>
                         </div>
@@ -98,7 +98,7 @@
     </ng-container>
     <ng-template #loadingContainer>
         <div class="d-flex justify-content-center mt-4">
-            <fa-icon icon="circle-notch" [spin]="true" size="lg"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" [spin]="true" size="lg"></fa-icon>
         </div>
     </ng-template>
 </div>

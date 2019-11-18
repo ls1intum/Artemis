@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture';
 import { ActivatedRoute } from '@angular/router';

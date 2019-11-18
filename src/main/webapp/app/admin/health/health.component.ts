@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { JhiHealthModalComponent, JhiHealthService } from 'app/admin';
-import { JhiWebsocketService } from 'app/core';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-health',

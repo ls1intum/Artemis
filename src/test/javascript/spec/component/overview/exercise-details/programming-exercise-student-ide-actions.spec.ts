@@ -12,8 +12,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IntelliJState } from 'app/intellij/intellij';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
@@ -60,7 +58,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseStudentIdeActionsComponent);

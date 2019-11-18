@@ -11,10 +11,10 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
 import { HelpIconComponent } from 'app/shared/components';
+import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,7 +33,7 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
             declarations: [ProgrammingExerciseLifecycleComponent, MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent), MockComponent(HelpIconComponent)],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseLifecycleComponent);

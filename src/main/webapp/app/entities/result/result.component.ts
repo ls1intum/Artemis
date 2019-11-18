@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { isModelingOrTextOrFileUpload, isProgrammingOrQuiz, isParticipationInDueTime, ParticipationService, Participation, getExercise } from 'app/entities/participation';
+import { getExercise, isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz, Participation, ParticipationService } from 'app/entities/participation';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
@@ -8,10 +8,10 @@ import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import * as moment from 'moment';
-import { isResultPreliminary, isProgrammingExerciseStudentParticipation } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
