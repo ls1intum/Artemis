@@ -1,7 +1,7 @@
 import { LOCALE_ID, NgModule, ErrorHandler } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
-import { Title, BrowserModule } from '@angular/platform-browser';
+import { Title } from '@angular/platform-browser';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/entities/repository';
 import { AuthInterceptor } from 'app/blocks/interceptor/auth.interceptor';
@@ -11,7 +11,6 @@ import { NotificationInterceptor } from 'app/blocks/interceptor/notification.int
 import { JhiConfigService, JhiLanguageService, missingTranslationHandler, NgJhipsterModule, translatePartialLoader } from 'ng-jhipster';
 import { NgbDatepickerConfig, NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { DifferencePipe, MomentModule } from 'ngx-moment';
 import { DeviceDetectorModule } from 'ngx-device-detector';
@@ -22,12 +21,12 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { CookieModule } from 'ngx-cookie';
 
 @NgModule({
     imports: [
         HttpClientModule,
-        BrowserModule,
-        BrowserAnimationsModule,
+        CookieModule.forRoot(),
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         DeviceDetectorModule,
         /**

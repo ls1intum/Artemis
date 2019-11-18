@@ -49,12 +49,12 @@ import { ArtemisExampleModelingSolutionModule } from 'app/example-modeling-solut
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { QuizExerciseExportComponent } from 'app/entities/quiz-exercise/quiz-exercise-export.component';
-import { CookieModule } from 'ngx-cookie';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
     imports: [
         BrowserModule,
-        CookieModule.forRoot(),
+        BrowserAnimationsModule,
         ArtemisSharedModule,
         ArtemisCoreModule,
         ArtemisHomeModule,
