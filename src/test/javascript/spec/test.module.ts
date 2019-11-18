@@ -12,7 +12,6 @@ import { MockAccountService } from './helpers/mock-account.service';
 import { MockActivatedRoute, MockRouter } from './helpers/mock-route.service';
 import { MockActiveModal } from './helpers/mock-active-modal.service';
 import { MockEventManager } from './helpers/mock-event-manager.service';
-import { ArtemisIconsModule } from 'app/core/icons/font-awesome-icons';
 
 // TODO: This module was taken from auto generated tests. Needs to be reworked completely.
 @NgModule({
@@ -74,7 +73,6 @@ import { ArtemisIconsModule } from 'app/core/icons/font-awesome-icons';
             useValue: null,
         },
     ],
-    imports: [HttpClientTestingModule, ArtemisIconsModule],
-    exports: [ArtemisIconsModule],
+    imports: [HttpClientTestingModule],
 })
 export class ArtemisTestModule {}
