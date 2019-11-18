@@ -5,7 +5,7 @@
 <ng-container [ngSwitch]="templateStatus">
     <ng-container *ngSwitchCase="ResultTemplateStatus.IS_BUILDING">
         <span class="text-primary">
-            <fa-icon [icon]="'circle - notch'" size="lg" [spin]="true" class="mr-2"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" size="lg" [spin]="true" class="mr-2"></fa-icon>
             <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </span>
     </ng-container>
@@ -13,7 +13,7 @@
         <ng-container *ngIf="result"
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass">
-                <fa-icon [icon]="'resultIconClass'" size="lg"></fa-icon>
+                <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
                 <span *ngIf="hasFeedback">
                     <span class="result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip">{{ resultString }}</span>
@@ -37,7 +37,7 @@
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.LATE">
         <span [ngClass]="textColorClass">
-            <fa-icon [icon]="'resultIconClass'" size="lg"></fa-icon>
+            <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
             <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result!.score }}%, </span>
             <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | translate }}</span>
         </span>

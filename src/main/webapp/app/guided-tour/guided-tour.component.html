@@ -31,7 +31,7 @@
                 <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                 <div *ngIf="currentTourStep.hintTranslateKey" class="step-hint">
                     <div class="step-hint__icon">
-                        <fa-icon [icon]="'info - circle'"></fa-icon>
+                        <fa-icon [icon]="'info-circle'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
@@ -73,7 +73,7 @@
                 </div>
                 <div *ngIf="currentTourStep.modelingTask" class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
                     <div class="step-hint__icon" *ngIf="!userInteractionFinished">
-                        <fa-icon [icon]="'clipboard - list'"></fa-icon>
+                        <fa-icon [icon]="'clipboard-list'"></fa-icon>
                     </div>
                     <div class="step-hint__icon" *ngIf="userInteractionFinished">
                         <fa-icon [icon]="'check'"></fa-icon>
@@ -99,7 +99,7 @@
             </div>
             <div class="tour-block__buttons">
                 <button [disabled]="guidedTourService.isOnFirstStep || guidedTourService.isOnResizeMessage" class="back-button" (click)="guidedTourService.backStep()">
-                    <fa-icon [icon]="'chevron - left'"></fa-icon>
+                    <fa-icon [icon]="'chevron-left'"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">
@@ -122,7 +122,7 @@
                     (click)="guidedTourService.nextStep()"
                 >
                     <span jhiTranslate="tour.navigation.next"></span>
-                    <fa-icon [icon]="'chevron - right'"></fa-icon>
+                    <fa-icon [icon]="'chevron-right'"></fa-icon>
                 </button>
                 <button
                     *ngIf="guidedTourService.isOnLastStep"

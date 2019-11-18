@@ -13,10 +13,10 @@
         <div class="col-md-2 text-right">
             <div class="form-group">
                 <div class="re-evaluate-button" (click)="moveUp()">
-                    <fa-icon [icon]="'chevron - up'" size="2x"></fa-icon>
+                    <fa-icon [icon]="'chevron-up'" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" (click)="moveDown()">
-                    <fa-icon [icon]="'chevron - down'" size="2x"></fa-icon>
+                    <fa-icon [icon]="'chevron-down'" size="2x"></fa-icon>
                 </div>
                 <div class="re-evaluate-button" (click)="resetQuestion()">
                     <fa-icon [icon]="'undo'" size="2x"></fa-icon>
@@ -85,7 +85,7 @@
         <div class="answer-border" *ngFor="let answer of question.answerOptions; let i = index" dnd-sortable [sortableIndex]="i">
             <div class="question-options">
                 <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
-                    <fa-icon [icon]="'arrows - alt - v'" size="2x"></fa-icon>
+                    <fa-icon [icon]="'arrows - alt-v'" size="2x"></fa-icon>
                 </span>
                 <ace-editor [mode]="editorMode" [autoUpdateContent]="editorAutoUpdate" style="min-height: 40px; height: 60px; width:65%; overflow: auto;" class="form-control">
                 </ace-editor>

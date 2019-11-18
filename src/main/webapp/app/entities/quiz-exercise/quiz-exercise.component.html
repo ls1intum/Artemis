@@ -81,7 +81,7 @@
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED"
                             >
-                                <fa-icon [icon]="'play - circle'"></fa-icon>
+                                <fa-icon [icon]="'play-circle'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
                             </button>
                             <button
@@ -91,7 +91,7 @@
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE"
                             >
-                                <fa-icon [icon]="'play - circle'"></fa-icon>
+                                <fa-icon [icon]="'play-circle'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startNow">Start Now</span>
                             </button>
                             <button
@@ -166,7 +166,7 @@
                                     [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'pencil - alt'"></fa-icon>
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                 </button>
                                 <button
@@ -176,7 +176,7 @@
                                     [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'pencil - alt'"></fa-icon>
+                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                                 </button>
                             </div>

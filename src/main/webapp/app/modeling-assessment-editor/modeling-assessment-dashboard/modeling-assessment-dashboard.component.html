@@ -10,7 +10,7 @@
                 class="btn btn-success btn-sm mr-1"
                 (click)="assessNextOptimal()"
             >
-                <fa-icon [icon]="'folder - open'" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
+                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
             </button>
             <button [disabled]="busy" class="btn btn-primary btn-sm mr-1" (click)="refresh()"><fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;Refresh</button>
             <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm mr-1" [disabled]="busy" (click)="resetOptimality()">
@@ -71,7 +71,7 @@
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-outline-success btn-sm"
                         >
-                            <fa-icon [icon]="'folder - open'" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
                         </button>
                     </td>
                 </tr>
@@ -160,7 +160,7 @@
                                 [queryParams]="{ optimal: false, hideBackButton: true }"
                                 class="btn btn-outline-secondary btn-sm"
                             >
-                                <fa-icon [icon]="'folder - open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.modelingAssessment.dashboard.actions.assess' | translate }}
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.modelingAssessment.dashboard.actions.assess' | translate }}
                             </button>
                         </span>
                         <button
@@ -170,7 +170,7 @@
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-outline-secondary btn-sm"
                         >
-                            <fa-icon [icon]="'folder - open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                         </button>
                     </td>
                 </tr>

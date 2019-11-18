@@ -3,11 +3,11 @@
         <div class="navigation-container row-container">
             <span jhiTranslate="modelingAssessmentEditor.conflicts">Conflicts</span>
             <button class="btn btn-primary" (click)="onPrevConflict()">
-                <fa-icon [icon]="'arrow - left'"></fa-icon>
+                <fa-icon [icon]="'arrow-left'"></fa-icon>
             </button>
             <span *ngIf="conflicts">{{ conflictIndex + 1 }}/{{ conflicts.length }}</span>
             <button class="btn btn-primary" (click)="onNextConflict()">
-                <fa-icon [icon]="'arrow - right'"></fa-icon>
+                <fa-icon [icon]="'arrow-right'"></fa-icon>
             </button>
         </div>
         <jhi-alert></jhi-alert>

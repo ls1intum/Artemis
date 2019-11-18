@@ -4,7 +4,7 @@ import { Component, HostBinding } from '@angular/core';
     selector: 'jhi-code-editor-repository-is-locked',
     template: `
         <span class="badge badge-warning d-flex align-items-center locked-container">
-            <fa-icon [icon]="'info - circle'" class="text-white" size="2x"></fa-icon>
+            <fa-icon [icon]="'info-circle'" class="text-white" size="2x"></fa-icon>
             <span
                 class="ml-2 locked-lable"
                 jhiTranslate="artemisApp.programmingExercise.repositoryIsLocked.title"

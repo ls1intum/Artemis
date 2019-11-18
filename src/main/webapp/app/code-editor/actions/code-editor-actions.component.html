@@ -11,7 +11,7 @@
         title="Reset your repository to continue with your participation"
     >
         <span *ngIf="isResolvingConflict"
-            ><fa-icon [icon]="'circle - notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span></span
+            ><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span></span
         >
         <span *ngIf="!isResolvingConflict"><fa-icon [icon]="'times'"></fa-icon> <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span></span>
     </button>
@@ -35,7 +35,7 @@
         title="Save all unsaved changes in your files."
     >
         <span *ngIf="editorState === EditorState.SAVING"
-            ><fa-icon [icon]="'circle - notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span></span
+            ><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.saving">Saving</span></span
         >
         <span *ngIf="editorState !== EditorState.SAVING"><fa-icon [icon]="['far', 'save']"></fa-icon> <span jhiTranslate="artemisApp.editor.saveFiles">Save Files</span></span>
     </button>

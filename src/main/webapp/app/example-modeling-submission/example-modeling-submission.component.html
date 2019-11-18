@@ -34,12 +34,12 @@
 
         <div class="mt-2 mb-3" *ngIf="exampleSubmission && !isNewSubmission">
             <button class="btn btn-secondary button-resize" *ngIf="!assessmentMode" (click)="showAssessment()">
-                <fa-icon [icon]="'chalkboard - teacher'"></fa-icon>
+                <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment">Show assessment</span>
             </button>
 
             <button class="btn btn-secondary button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
-                <fa-icon [icon]="'code - branch'"></fa-icon>
+                <fa-icon [icon]="'code-branch'"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
             </button>
         </div>
@@ -89,7 +89,7 @@
                     {{ 'artemisApp.exampleSubmission.assessmentExplanation' | translate }}
                     <sup>
                         <small>
-                            <fa-icon [icon]="'info - circle'" title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | translate }}" style="color:#ffc107;"></fa-icon>
+                            <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | translate }}" style="color:#ffc107;"></fa-icon>
                         </small>
                     </sup>
                 </h3>
