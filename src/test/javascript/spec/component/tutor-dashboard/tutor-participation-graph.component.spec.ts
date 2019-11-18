@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
