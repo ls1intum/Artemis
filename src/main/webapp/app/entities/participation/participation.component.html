@@ -6,7 +6,7 @@
         <jhi-programming-exercise-instructor-submission-state
             class="ml-auto"
             *ngIf="exercise?.isAtLeastInstructor && exercise?.type === PROGRAMMING"
-            [exerciseId]="exercise.id"
+            [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
     </div>
     <jhi-alert></jhi-alert>

@@ -17,7 +17,9 @@
             "hystrix": "Hystrix",
             "diskSpace": "Festplattenspeicher",
             "mail": "Email",
-            "db": "Datenbank"
+            "db": "Datenbank",
+            "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
+            "versionControlServer": "Versionskontrollserver"
         },
         "table": {
             "service": "Dienst Name",

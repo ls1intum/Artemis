@@ -5,6 +5,7 @@ import com.appfire.common.cli.Base;
 import com.appfire.common.cli.CliClient;
 import com.appfire.common.cli.Settings;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -477,6 +478,23 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
         }
+    }
+
+    @Override
+    public ConnectorHealth health() {
+        ConnectorHealth health;
+        try {
+            final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            final var entity = new HttpEntity<>(headers);
+            final var status = restTemplate.exchange(BAMBOO_SERVER_URL + "/rest/api/latest/server", HttpMethod.GET, entity, JsonNode.class);
+            health = status.getBody().get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+        } catch (Exception emAll) {
+            health = new ConnectorHealth(emAll);
+        }
+
+        health.setAdditionalInfo(Map.of("url", BAMBOO_SERVER_URL));
+        return health;
     }
 
     /**
