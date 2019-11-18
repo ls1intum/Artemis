@@ -1,6 +1,6 @@
-import { LOCALE_ID, NgModule, ErrorHandler } from '@angular/core';
+import { ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
-import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/entities/repository';
@@ -9,7 +9,7 @@ import { AuthExpiredInterceptor } from 'app/blocks/interceptor/auth-expired.inte
 import { ErrorHandlerInterceptor } from 'app/blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/blocks/interceptor/notification.interceptor';
 import { JhiConfigService, JhiLanguageService, missingTranslationHandler, NgJhipsterModule, translatePartialLoader } from 'ng-jhipster';
-import { NgbDatepickerConfig, NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { DifferencePipe, MomentModule } from 'ngx-moment';

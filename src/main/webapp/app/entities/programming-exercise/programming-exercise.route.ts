@@ -5,8 +5,6 @@ import { UserRouteAccessService } from 'app/core';
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';

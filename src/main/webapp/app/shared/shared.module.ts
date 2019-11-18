@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { ArtemisSharedCommonModule, ArtemisSharedLibsModule, HasAnyAuthorityDirective, JhiAlertErrorComponent, JhiAlertComponent, FindLanguageFromKeyPipe } from './';
+import { ArtemisSharedCommonModule, ArtemisSharedLibsModule, FindLanguageFromKeyPipe, HasAnyAuthorityDirective, JhiAlertComponent, JhiAlertErrorComponent } from './';
 import { FileUploaderService } from './http/file-uploader.service';
 import { FileService } from './http/file.service';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';

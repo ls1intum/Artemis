@@ -1,5 +1,4 @@
 import * as $ from 'jquery';
-import { SafeHtml } from '@angular/platform-browser';
 import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';

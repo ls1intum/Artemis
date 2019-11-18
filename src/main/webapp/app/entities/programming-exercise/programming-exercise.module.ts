@@ -10,6 +10,7 @@ import {
     ProgrammingExerciseComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
+    ProgrammingExerciseImportComponent,
     ProgrammingExerciseParticipationService,
     ProgrammingExercisePopupComponent,
     programmingExercisePopupRoute,
@@ -18,7 +19,6 @@ import {
     ProgrammingExerciseService,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
-    ProgrammingExerciseImportComponent,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -31,8 +31,10 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
-import { ProgrammingExerciseLifecycleComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
+import {
+    ProgrammingExerciseLifecycleComponent,
+    ProgrammingExerciseTestScheduleDatePickerComponent,
+} from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
 import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/entities/programming-exercise/programming-exercise-plans-and-repositories-preview.component';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
