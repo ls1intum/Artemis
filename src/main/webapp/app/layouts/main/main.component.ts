@@ -3,9 +3,9 @@ import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '
 import { Angulartics2 } from 'angulartics2';
 import { Angulartics2Piwik } from 'angulartics2/piwik';
 
-import { JhiLanguageHelper } from 'app/core';
-import { ProfileService } from '../profiles/profile.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/layouts';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-main',

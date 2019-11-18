@@ -7,7 +7,7 @@ import * as DOMPurify from 'dompurify';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-import { QuizQuestion, TextHintExplanationInterface } from 'app/entities/quiz-question';
+import { TextHintExplanationInterface } from 'app/entities/quiz-question';
 
 const Range = ace.acequire('ace/range').Range;
 

@@ -4,7 +4,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
-import { AccountService } from '../../core';
+import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
 import { CourseService } from '../course';

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { UserService } from 'app/core';
+import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
 
 @Component({

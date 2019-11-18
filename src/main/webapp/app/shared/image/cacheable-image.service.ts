@@ -4,7 +4,7 @@ import { Cacheable } from 'ngx-cacheable';
 import { HttpClient } from '@angular/common/http';
 import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
 import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { blobToBase64String } from 'blob-util';
 import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
 

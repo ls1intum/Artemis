@@ -1,11 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { SubmissionType } from 'app/entities/submission';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export';
-import { ProgrammingExerciseInstructorTriggerAllDialogComponent } from 'app/entities/programming-exercise/actions/programming-exercise-trigger-all-button.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 
