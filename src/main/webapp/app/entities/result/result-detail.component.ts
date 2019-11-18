@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Result, ResultService } from './';
-import { RepositoryService } from 'app/entities/repository';
+import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log';

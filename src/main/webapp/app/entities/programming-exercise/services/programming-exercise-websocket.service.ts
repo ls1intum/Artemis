@@ -3,9 +3,9 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
 import { ProgrammingExercise } from '../programming-exercise.model';
-import { JhiWebsocketService } from 'app/core';
 import { BehaviorSubject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;

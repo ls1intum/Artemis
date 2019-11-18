@@ -2,13 +2,13 @@
 <nav *ngIf="loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED" class="card">
     <div class="card-body">
         <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
-            <fa-icon icon="circle-notch" spin="true"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.fetchingParticipation">
                 Your participation is being loaded...
             </span>
         </span>
         <span *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED">
-            <fa-icon icon="times-circle" class="text-danger"></fa-icon>
+            <fa-icon [icon]="'times-circle'" class="text-danger"></fa-icon>
             <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
         </span>
     </div>
@@ -78,7 +78,7 @@
                     [disabled]="loadingState !== LOADING_STATE.CLEAR"
                     class="btn btn-primary mr-2"
                 >
-                    <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="plus" class="text-white mr-2"></fa-icon>
+                    <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'plus'" class="text-white mr-2"></fa-icon>
                     <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" icon="circle-notch" [spin]="true" class="text-white mr-2"></fa-icon>
                     <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
                 </button>
@@ -90,7 +90,7 @@
                 >
                     <fa-icon
                         *ngIf="loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                        icon="times"
+                        [icon]="'times'"
                         class="text-white mr-2"
                     ></fa-icon>
                     <fa-icon

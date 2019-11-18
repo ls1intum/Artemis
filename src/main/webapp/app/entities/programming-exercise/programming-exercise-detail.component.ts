@@ -10,7 +10,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',

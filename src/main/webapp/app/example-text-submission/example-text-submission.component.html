@@ -15,7 +15,7 @@
             </div>
 
             <button (click)="upsertExampleTextSubmission()" class="btn btn-primary col-6">
-                <fa-icon icon="save"></fa-icon>
+                <fa-icon [icon]="'save'"></fa-icon>
                 <span *ngIf="isNewSubmission">{{ 'artemisApp.exampleSubmission.createNewSubmission' | translate }}</span>
                 <span *ngIf="!isNewSubmission">{{ 'artemisApp.exampleSubmission.updateTextSubmission' | translate }}</span>
             </button>
@@ -68,7 +68,7 @@
 
             <div class="col-2" *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">
                 <button class="btn btn-primary col-12" (click)="saveAssessments()" [disabled]="!assessments || !assessmentsAreValid">
-                    <fa-icon icon="save"></fa-icon>
+                    <fa-icon [icon]="'save'"></fa-icon>
                     <span *ngIf="areNewAssessments">{{ 'artemisApp.exampleSubmission.createNewAssessment' | translate }}</span>
                     <span *ngIf="!areNewAssessments">{{ 'artemisApp.exampleSubmission.updateAssessment' | translate }}</span>
                 </button>
@@ -137,7 +137,7 @@
 
 <div class="col-12 text-right" *ngIf="readOnly">
     <button (click)="readAndUnderstood()" class="btn btn-success col-3">
-        <fa-icon icon="save"></fa-icon>
+        <fa-icon [icon]="'save'"></fa-icon>
         {{ 'artemisApp.exampleSubmission.readAndUnderstood' | translate }}
     </button>
 </div>

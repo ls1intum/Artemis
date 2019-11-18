@@ -9,7 +9,7 @@ import { Exercise, ExerciseCategory } from './exercise.model';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
