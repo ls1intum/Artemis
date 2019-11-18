@@ -313,9 +313,9 @@ describe('GuidedTourService', () => {
 
             it('should start the tour for the matching exercise short name', () => {
                 // disable tour for exercises without courses
-                guidedTourService.currentTour = null;
-                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.be.null;
+                // guidedTourService.currentTour = null;
+                // guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                // expect(guidedTourService.currentTour).to.be.null;
 
                 // disable tour for not matching course and exercise identifiers
                 exercise2.course = course2;
