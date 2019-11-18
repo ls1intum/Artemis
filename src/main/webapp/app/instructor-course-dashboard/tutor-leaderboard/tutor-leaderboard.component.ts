@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/entities/course';
 import { Exercise } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',

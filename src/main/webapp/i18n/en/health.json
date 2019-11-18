@@ -17,7 +17,9 @@
             "hystrix": "Hystrix",
             "diskSpace": "Disk space",
             "mail": "Email",
-            "db": "Database"
+            "db": "Database",
+            "continuousIntegrationServer": "Continuous Integration Server",
+            "versionControlServer": "Version Control Server"
         },
         "table": {
             "service": "Service name",

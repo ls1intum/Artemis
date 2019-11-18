@@ -143,7 +143,7 @@
                             <button class="btn btn-link" (click)="openExampleSubmission(exampleSubmission.id, true, false)">
                                 {{ 'artemisApp.tutorExerciseDashboard.reviewExampleSubmission' | translate }} {{ i + 1 }}
                             </button>
-                            <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
+                            <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -165,7 +165,7 @@
                             <button class="btn btn-link" (click)="openExampleSubmission(exampleSubmission.id, false, true)">
                                 {{ 'artemisApp.tutorExerciseDashboard.assessExampleSubmission' | translate }} {{ i + 1 }}
                             </button>
-                            <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
+                            <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -212,7 +212,7 @@
                                         (click)="openAssessmentEditor(submission.id)"
                                         class="btn btn-warning btn-sm"
                                     >
-                                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.tutorExerciseDashboard.continueAssessment' | translate }}
+                                        <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.tutorExerciseDashboard.continueAssessment' | translate }}
                                     </button>
                                     <ng-template #continueButton>
                                         <button
@@ -220,7 +220,7 @@
                                             (click)="openAssessmentEditor(submission.id)"
                                             class="btn btn-primary btn-sm"
                                         >
-                                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.tutorExerciseDashboard.openAssessment' | translate }}
+                                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.tutorExerciseDashboard.openAssessment' | translate }}
                                         </button>
                                     </ng-template>
                                 </ng-container>
@@ -253,7 +253,7 @@
                                     class="btn btn-success btn-sm"
                                     (click)="openAssessmentEditor(unassessedSubmission.id, true)"
                                 >
-                                    <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}
+                                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}
                                 </button>
                                 <ng-template #programmingAssessment>
                                     <jhi-programming-assessment-repo-export
@@ -307,12 +307,12 @@
                                 </td>
                                 <td>
                                     <button *ngIf="complaint.accepted === undefined; else continueButton" class="btn btn-success btn-sm" (click)="viewComplaint(complaint)">
-                                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
+                                        <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.tutorExerciseDashboard.evaluateComplaint' | translate }}
                                     </button>
                                     <ng-template #continueButton>
                                         <button class="btn btn-primary btn-sm" (click)="viewComplaint(complaint)">
-                                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
+                                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.tutorExerciseDashboard.showComplaint' | translate }}
                                         </button>
                                     </ng-template>
@@ -366,12 +366,12 @@
                                         class="btn btn-success btn-sm"
                                         (click)="viewComplaint(moreFeedbackRequest)"
                                     >
-                                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
+                                        <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.tutorExerciseDashboard.evaluateMoreFeedbackRequest' | translate }}
                                     </button>
                                     <ng-template #continueButton>
                                         <button class="btn btn-primary btn-sm" (click)="viewComplaint(moreFeedbackRequest)">
-                                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>
+                                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.tutorExerciseDashboard.showMoreFeedbackRequests' | translate }}
                                         </button>
                                     </ng-template>

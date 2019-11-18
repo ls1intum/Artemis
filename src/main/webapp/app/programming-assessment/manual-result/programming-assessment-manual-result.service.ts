@@ -12,15 +12,15 @@ export class ProgrammingAssessmentManualResultService {
     // TODO: It would be good to refactor the convertDate methods into a separate service, so that we don't have to import the result service here.
     constructor(private http: HttpClient, private resultService: ResultService) {}
 
-    create(result: Result): Observable<EntityResponseType> {
+    create(participationId: number, result: Result): Observable<EntityResponseType> {
         const copy = this.resultService.convertDateFromClient(result);
         // NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
         return this.http
-            .post<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
+            .post<Result>(SERVER_API_URL + 'api/participations/' + participationId + '/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 
-    update(result: Result): Observable<EntityResponseType> {
+    update(participationId: number, result: Result): Observable<EntityResponseType> {
         // TODO: This is a problem with the client side modeling of the participation: It is possible that a participation is sent from the server that does not have a result array.
         const copy = this.resultService.convertDateFromClient(result) as any;
         // This needs to be removed to avoid a circular serialization issue.
@@ -30,7 +30,7 @@ export class ProgrammingAssessmentManualResultService {
             copy.submission.result.submission = undefined;
         }
         return this.http
-            .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
+            .put<Result>(SERVER_API_URL + 'api/participations/' + participationId + '/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 

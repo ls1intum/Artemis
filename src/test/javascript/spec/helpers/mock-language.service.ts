@@ -1,6 +1,6 @@
 import { SpyObject } from './spyobject';
 import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { of } from 'rxjs';
 import Spy = jasmine.Spy;
 

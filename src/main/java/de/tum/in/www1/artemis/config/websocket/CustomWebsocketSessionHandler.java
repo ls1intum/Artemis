@@ -20,36 +20,10 @@ public class CustomWebsocketSessionHandler {
 
     private final Map<String, CustomWebsocketSessionHolder> sessionMap = new ConcurrentHashMap<>();
 
-    private static final int SESSION_TIMEOUT = 60 * 1000;
+    private static final int PERIOD = 20 * 1000;
 
     public CustomWebsocketSessionHandler() {
-        scheduler.scheduleAtFixedRate(() -> {
-            // DEACTIVATED AT THE MOMENT because we don't receive the Heart Beats and it is not necessary because the websockets work reliably
-            // long currentTime = System.currentTimeMillis();
-            //// log.info("Try to close old websocket sessions");
-            // sessionMap.keySet().forEach(sessionId -> {
-            //// try {
-            // CustomWebsocketSessionHolder sessionHolder = sessionMap.get(sessionId);
-            // long timeSinceLastMessage = currentTime - sessionHolder.getLastMessageTime();
-            // log.debug("Session " + sessionId + ": time since last message: " + timeSinceLastMessage);
-            // WebSocketSession session = sessionHolder.getSession();
-            // if (session.isOpen()) {
-            // if (timeSinceLastMessage > SESSION_TIMEOUT) {
-            //// log.info("Try to close websocket session " + sessionId + " for user " + session.getPrincipal().getName());
-            //
-            //// session.close();
-            //// sessionMap.remove(sessionId);
-            // }
-            // }
-            // else {
-            // sessionMap.remove(sessionId);
-            // }
-            //// } catch (IOException e) {
-            //// log.error("Error while closing websocket session: {}", e.getMessage());
-            //// }
-            // });
-            log.info("There are " + sessionMap.size() + " websocket sessions open!");
-        }, 60, 60, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(() -> log.info("There are " + sessionMap.size() + " websocket sessions open!"), PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public void register(WebSocketSession session) {
@@ -70,33 +44,4 @@ public class CustomWebsocketSessionHandler {
             sessionMap.remove(session.getId());
         }
     }
-
-    // public void handleOutboundMessage(String sessionId, Message<?> message) {
-    // if (sessionId != null) {
-    // CustomWebsocketSessionHolder sessionHolder = sessionMap.get(sessionId);
-    // if (sessionHolder != null) {
-    // WebSocketSession session = sessionHolder.getSession();
-    // if (session != null) {
-    // String user = "unknown";
-    // if (session.getPrincipal() != null) {
-    // user = session.getPrincipal().getName();
-    // }
-    // log.debug("Websocket outbound message was handled for session " + sessionId + " for user " + user);
-    // sessionHolder.setLastMessageTime(System.currentTimeMillis());
-    // }
-    // }
-    // }
-    // }
-    //
-    // public void handleInboundMessage(WebSocketSession session, WebSocketMessage<?> message) {
-    // CustomWebsocketSessionHolder sessionHolder = sessionMap.get(session.getId());
-    // if (sessionHolder != null) {
-    // String user = "unknown";
-    // if (session.getPrincipal() != null) {
-    // user = session.getPrincipal().getName();
-    // }
-    // log.debug("Websocket inbound message was handled for session " + session.getId() + " for user " + user);
-    // sessionHolder.setLastMessageTime(System.currentTimeMillis());
-    // }
-    // }
 }

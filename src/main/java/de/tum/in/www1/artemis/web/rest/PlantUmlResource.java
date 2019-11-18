@@ -67,13 +67,13 @@ public class PlantUmlResource {
     @GetMapping(value = "/plantuml/svg")
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml) throws IOException {
 
-        // Create PNG output stream
+        // Create SVG output stream
         ByteArrayOutputStream svgOutputStream = new ByteArrayOutputStream();
 
         // Create input stream reader
         SourceStringReader reader = new SourceStringReader(plantuml);
 
-        // Create PNG
+        // Create SVN
         reader.generateImage(svgOutputStream, new FileFormatOption(FileFormat.SVG));
         svgOutputStream.close();
 

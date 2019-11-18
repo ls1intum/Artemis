@@ -21,7 +21,7 @@
         </span>
         <ng-container *ngIf="!result?.completionDate">
             <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor">
-                <fa-icon icon="save"></fa-icon>
+                <fa-icon [icon]="'save'"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
             <button class="btn ml-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor">
@@ -43,7 +43,7 @@
             [disabled]="busy"
             (click)="nextSubmission.emit()"
         >
-            <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
+            <fa-icon *ngIf="busy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.nextSubmission"> Next Submission</span>
         </button>
     </div>

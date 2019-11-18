@@ -2,13 +2,13 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
-import { JhiWebsocketService } from 'app/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { createRequestOption } from 'app/shared';
 import { SubmissionType } from 'app/entities/submission';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.

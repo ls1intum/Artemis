@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService, User } from '../core';
+import { User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
@@ -29,6 +29,7 @@ import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { Result } from 'app/entities/result';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -120,7 +121,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.loadAll();
 
-        this.accountService.identity().then(user => (this.tutor = user));
+        this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
     loadAll() {
