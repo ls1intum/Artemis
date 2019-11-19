@@ -17,7 +17,7 @@
         },
         "completed": {
             "headline": "Congratulations 🎉",
-            "content": "You have successfully completed the tutorial. You can restart the tutorial with <tt>Restart tutorial</tt> or at any other time from the account menu dropdown",
+            "content": "You have successfully completed the tutorial. You can restart the tutorial by clicking on <tt>Restart tutorial</tt>.",
             "hint": "Please note that any tutorial exercise - if available - will be reset once you restart the tutorial."
         },
         "clickHint": {

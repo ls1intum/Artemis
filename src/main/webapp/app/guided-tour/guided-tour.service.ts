@@ -180,21 +180,12 @@ export class GuidedTourService {
     }
 
     /**
-     * Determines if the cancel tour is currently displayed
+     * Determines if the given tour is the current tour
+     * @param guidedTour that is checked
      */
-    public isCancelTourStep(): boolean {
+    public isCurrentTour(guidedTour: GuidedTour) {
         if (this.currentTour && this.currentTour.steps) {
-            return this.currentTour.settingsKey === cancelTour.settingsKey;
-        }
-        return false;
-    }
-
-    /**
-     * Determines if the completed tour is currently displayed
-     */
-    public isCompleteTourStep(): boolean {
-        if (this.currentTour && this.currentTour.steps) {
-            return this.currentTour.settingsKey === completedTour.settingsKey;
+            return this.currentTour.settingsKey === guidedTour.settingsKey;
         }
         return false;
     }

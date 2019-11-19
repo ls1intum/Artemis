@@ -27,7 +27,9 @@
                 <div
                     *ngIf="guidedTourService.currentTour"
                     class="close"
-                    (click)="guidedTourService.isCancelTourStep() || guidedTourService.isCompleteTourStep() ? guidedTourService.resetTour() : guidedTourService.skipTour()"
+                    (click)="
+                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour) ? guidedTourService.resetTour() : guidedTourService.skipTour()
+                    "
                 ></div>
             </div>
             <div class="tour-block__content">
@@ -103,7 +105,7 @@
             </div>
             <div class="tour-block__buttons">
                 <button
-                    *ngIf="!guidedTourService.isCancelTourStep() && !guidedTourService.isCompleteTourStep() && !guidedTourService.isOnResizeMessage"
+                    *ngIf="!guidedTourService.isCurrentTour(cancelTour) && !guidedTourService.isCurrentTour(completedTour) && !guidedTourService.isOnResizeMessage"
                     class="back-button"
                     [disabled]="guidedTourService.isOnFirstStep"
                     (click)="guidedTourService.backStep()"
@@ -112,7 +114,7 @@
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <button
-                    *ngIf="guidedTourService.isCompleteTourStep()"
+                    *ngIf="guidedTourService.isCurrentTour(completedTour)"
                     class="restart-button"
                     [disabled]="guidedTourService.isOnResizeMessage"
                     (click)="guidedTourService.startTour()"
@@ -144,7 +146,10 @@
                 </button>
                 <button
                     *ngIf="
-                        guidedTourService.isOnLastStep && !guidedTourService.isCancelTourStep() && !guidedTourService.isCompleteTourStep() && !guidedTourService.isOnResizeMessage
+                        guidedTourService.isOnLastStep &&
+                        !guidedTourService.isCurrentTour(cancelTour) &&
+                        !guidedTourService.isCurrentTour(completedTour) &&
+                        !guidedTourService.isOnResizeMessage
                     "
                     class="next-button"
                     jhiTranslate="tour.navigation.done"
@@ -152,7 +157,7 @@
                     (click)="guidedTourService.nextStep()"
                 ></button>
                 <button
-                    *ngIf="guidedTourService.isOnResizeMessage || guidedTourService.isCancelTourStep() || guidedTourService.isCompleteTourStep()"
+                    *ngIf="guidedTourService.isOnResizeMessage || guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour)"
                     class="next-button"
                     jhiTranslate="tour.navigation.close"
                     (click)="guidedTourService.resetTour()"

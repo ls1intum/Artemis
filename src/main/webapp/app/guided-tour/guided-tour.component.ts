@@ -5,6 +5,7 @@ import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tou
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -40,6 +41,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     readonly OverlayPosition = OverlayPosition;
     readonly UserInteractionEvent = UserInteractionEvent;
+    readonly cancelTour = cancelTour;
+    readonly completedTour = completedTour;
 
     constructor(public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
@@ -72,9 +75,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'Escape': {
-                if (this.currentTourStep && !this.guidedTourService.isCancelTourStep()) {
+                if (this.currentTourStep && !this.guidedTourService.isCurrentTour(cancelTour)) {
                     this.guidedTourService.skipTour();
-                } else if (this.currentTourStep && (this.guidedTourService.isCancelTourStep() || this.guidedTourService.isOnLastStep)) {
+                } else if (this.currentTourStep && (this.guidedTourService.isCurrentTour(cancelTour) || this.guidedTourService.isOnLastStep)) {
                     // The escape key event finishes the tour when the user is seeing the cancel tour step or last tour step
                     this.guidedTourService.finishGuidedTour();
                 }
@@ -248,7 +251,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.guidedTourService.nextStep();
         }
         // When the user clicks on the backdrop or tour step while seeing the cancel tour step, the cancel tour will be finished automatically
-        if (this.guidedTourService.isCancelTourStep()) {
+        if (this.guidedTourService.isCurrentTour(cancelTour)) {
             this.guidedTourService.finishGuidedTour();
         }
     }
