@@ -27,7 +27,7 @@ export class AssessmentDetailComponent {
 
     public delete() {
         const referencedText = this.block ? this.block.text : this.assessment.reference;
-        const confirmationMessage = referencedText ? 'Delete Assessment "${referencedText}"?' : 'Delete Assessment ?';
+        const confirmationMessage = referencedText ? `Delete Assessment for ${referencedText}?` : 'Delete Assessment?';
         const confirmation = confirm(confirmationMessage);
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);

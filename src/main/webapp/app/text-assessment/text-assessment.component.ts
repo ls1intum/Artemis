@@ -1,5 +1,4 @@
 import * as $ from 'jquery';
-import { SafeHtml } from '@angular/platform-browser';
 import * as moment from 'moment';
 
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
@@ -17,7 +16,7 @@ import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { AccountService, WindowRef } from 'app/core';
+import { WindowRef } from 'app/core';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
@@ -27,6 +26,7 @@ import { ExerciseType } from 'app/entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -137,9 +137,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 );
             } else {
                 const submissionId = Number(submissionValue);
-                this.assessmentsService
-                    .getFeedbackDataForExerciseSubmission(exerciseId, submissionId)
-                    .subscribe(participation => this.receiveParticipation(participation), (error: HttpErrorResponse) => this.onError(error.message));
+                this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(
+                    participation => this.receiveParticipation(participation),
+                    (error: HttpErrorResponse) => this.onError(error.message),
+                );
             }
         });
     }
@@ -174,7 +175,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -199,7 +200,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.minHeight = event.rect.height + 'px';

@@ -49,6 +49,8 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
             Principal principal) throws IOException {
         fileUploadSubmission = save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
+        // check if we already had file associated with this submission
+        fileUploadSubmission.onDelete();
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, fileUploadExercise);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
         genericSubmissionRepository.save(fileUploadSubmission);

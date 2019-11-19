@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,7 +10,7 @@ import * as $ from 'jquery';
 import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { AccountService, WindowRef } from 'app/core';
+import { WindowRef } from 'app/core';
 import { StudentParticipation } from 'app/entities/participation';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
@@ -21,6 +21,7 @@ import { FileUploadSubmission, FileUploadSubmissionService } from 'app/entities/
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { filter, finalize } from 'rxjs/operators';
 import { FileService } from 'app/shared';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
@@ -209,7 +210,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -234,7 +235,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .on('resizeend', function(event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.minHeight = event.rect.height + 'px';
@@ -265,6 +266,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNextOptimal() {
+        this.generalFeedback = new Feedback();
+        this.referencedFeedback = [];
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exercise.id).subscribe(
             (response: FileUploadSubmission) => {
                 this.unassessedSubmission = response;

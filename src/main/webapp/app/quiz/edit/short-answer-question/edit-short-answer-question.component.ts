@@ -297,22 +297,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function addHintAtCursor
-     * @desc Add the markdown for a hint at the current cursor location
-     */
-    addHintAtCursor(): void {
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor);
-    }
-
-    /**
-     * @function addExplanationAtCursor
-     * @desc Add the markdown for an explanation at the current cursor location
-     */
-    addExplanationAtCursor(): void {
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor);
-    }
-
-    /**
      * @function addSpotAtCursor
      * @desc Add the markdown for a spot at the current cursor location and
      * an option connected to the spot below the last visible row

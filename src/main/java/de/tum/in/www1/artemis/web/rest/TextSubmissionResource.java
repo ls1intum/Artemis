@@ -29,14 +29,17 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
-    private final TextExerciseService textExerciseService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final TextSubmissionService textSubmissionService;
+
+    private final TextExerciseService textExerciseService;
 
     public TextSubmissionResource(ExerciseService exerciseService, TextExerciseService textExerciseService, CourseService courseService, ParticipationService participationService,
             TextSubmissionService textSubmissionService, UserService userService, AuthorizationCheckService authCheckService) {
         super(courseService, authCheckService, userService, exerciseService, participationService);
         this.textExerciseService = textExerciseService;
+        this.authorizationCheckService = authCheckService;
         this.textSubmissionService = textSubmissionService;
     }
 
@@ -110,7 +113,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 

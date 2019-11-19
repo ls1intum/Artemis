@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -26,6 +24,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -41,20 +41,38 @@ public class TextSubmissionIntegrationTest {
     ExerciseRepository exerciseRepo;
 
     @Autowired
+    TextSubmissionRepository submissionRepository;
+
+    @Autowired
+    StudentParticipationRepository participationRepository;
+
+    @Autowired
     RequestUtilService request;
 
     @Autowired
     DatabaseUtilService database;
 
-    private TextExercise textExercise;
+    private TextExercise textExerciseAfterDueDate;
+
+    private TextExercise textExerciseBeforeDueDate;
 
     private TextSubmission textSubmission;
+
+    private StudentParticipation afterDueDateParticipation;
+
+    private User student;
 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 0);
         database.addCourseWithOneTextExerciseDueDateReached();
-        textExercise = (TextExercise) exerciseRepo.findAll().get(0);
+        textExerciseBeforeDueDate = (TextExercise) database.addCourseWithOneTextExercise().getExercises().iterator().next();
+        textExerciseAfterDueDate = (TextExercise) exerciseRepo.findAll().get(0);
+        afterDueDateParticipation = database.addParticipationForExercise(textExerciseAfterDueDate, student.getLogin());
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        participationRepository.save(afterDueDateParticipation);
+        database.addParticipationForExercise(textExerciseBeforeDueDate, student.getLogin());
+
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
     }
 
@@ -66,10 +84,10 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student1")
     public void submitTextSubmission() throws Exception {
-        database.addParticipationForExercise(textExercise, "student1");
+        database.addParticipationForExercise(textExerciseBeforeDueDate, "student1");
         TextSubmission submission = ModelFactory.generateTextSubmission("d", Language.ENGLISH, false);
-        TextSubmission returnedSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", submission, TextSubmission.class,
-                HttpStatus.OK);
+        TextSubmission returnedSubmission = request.postWithResponseBody("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", submission,
+                TextSubmission.class, HttpStatus.OK);
         assertThat(returnedSubmission).as("submission is not null").isNotNull();
         assertThat(returnedSubmission).as("correct text submission was found").isEqualToComparingOnlyGivenFields(submission, "text", "language", "submitted");
         checkDetailsHidden(returnedSubmission, true);
@@ -78,41 +96,42 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student1")
     public void submitTextSubmission_withSubmissionId() throws Exception {
-        database.addTextSubmission(textExercise, textSubmission, "student1");
-        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "student1")
     public void submitTextSubmission_exerciseIdIncorrect() throws Exception {
-        database.addTextSubmission(textExercise, textSubmission, "student1");
-        request.postWithResponseBody("/api/exercises/" + (textExercise.getId() + 1) + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + (textExerciseBeforeDueDate.getId() + 1) + "/text-submissions", textSubmission, TextSubmission.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "student1")
     public void submitTextSubmission_courseIdIncorrect() throws Exception {
-        var courseId = textExercise.getCourse().getId();
-        textExercise.getCourse().setId(courseId + 1);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
-        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+        var courseId = textExerciseBeforeDueDate.getCourse().getId();
+        textExerciseBeforeDueDate.getCourse().setId(courseId + 1);
+        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "student2")
     public void submitTextSubmission_notStudentInCourse() throws Exception {
-        database.addTextSubmission(textExercise, textSubmission, "student1");
-        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
+        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        request.postWithResponseBody("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "student1")
     public void updateTextSubmission() throws Exception {
-        var participation = database.addParticipationForExercise(textExercise, "student1");
+        var participation = database.addParticipationForExercise(textExerciseBeforeDueDate, "student1");
         textSubmission.setText("dddd");
         textSubmission.setLanguage(Language.GERMAN);
-        TextSubmission returnedSubmission = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
-                HttpStatus.OK);
+        TextSubmission returnedSubmission = request.putWithResponseBody("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission,
+                TextSubmission.class, HttpStatus.OK);
         assertThat(returnedSubmission).as("submission is not null").isNotNull();
         assertThat(returnedSubmission).as("correct text submission was found").isEqualToComparingOnlyGivenFields(textSubmission, "text", "language", "submitted");
         assertThat(returnedSubmission.getParticipation()).isEqualTo(participation);
@@ -122,9 +141,9 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextSubmissions_studentHidden() throws Exception {
-        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
 
-        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         checkSubmission(textSubmissions.get(0), textSubmission);
@@ -135,15 +154,16 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextSubmissions_assessedByTutor() throws Exception {
-        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExerciseBeforeDueDate, textSubmission, "student1", "tutor1");
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("d", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission2, "tutor2", "student2");
-        database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(1));
+        database.addTextSubmissionWithResultAndAssessor(textExerciseBeforeDueDate, textSubmission2, "tutor2", "student2");
+        database.updateExerciseDueDate(textExerciseBeforeDueDate.getId(), ZonedDateTime.now().minusHours(1));
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("assessedByTutor", "true");
 
-        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class, params);
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class,
+                params);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         checkSubmission(textSubmissions.get(0), textSubmission);
@@ -154,15 +174,16 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextSubmissions_submittedOnly() throws Exception {
-        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        textSubmission = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("d", Language.ENGLISH, false);
-        database.addTextSubmission(textExercise, textSubmission2, "student2");
-        database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(1));
+        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission2, "student2");
+        database.updateExerciseDueDate(textExerciseBeforeDueDate.getId(), ZonedDateTime.now().minusHours(1));
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submittedOnly", "true");
 
-        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class, params);
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class,
+                params);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         checkSubmission(textSubmissions.get(0), textSubmission);
@@ -173,9 +194,9 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
-        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
 
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class);
 
         assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
@@ -187,9 +208,9 @@ public class TextSubmissionIntegrationTest {
     @WithMockUser(username = "student1")
     public void getResultsForCurrentStudent_assessorHiddenForStudent() throws Exception {
         textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        database.addTextSubmissionWithResultAndAssessor(textExerciseAfterDueDate, textSubmission, "student1", "tutor1");
 
-        Exercise returnedExercise = request.get("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Exercise.class);
+        Exercise returnedExercise = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/results", HttpStatus.OK, Exercise.class);
 
         assertThat(returnedExercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
     }
@@ -197,7 +218,7 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getDataForTextEditorWithResult() throws Exception {
-        TextSubmission textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, this.textSubmission, "student1", "tutor1");
+        TextSubmission textSubmission = database.addTextSubmissionWithResultAndAssessor(textExerciseAfterDueDate, this.textSubmission, "student1", "tutor1");
         Long participationId = textSubmission.getParticipation().getId();
 
         StudentParticipation participation = request.get("/api/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
@@ -213,16 +234,51 @@ public class TextSubmissionIntegrationTest {
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getParticipationForTextExerciseWithoutAssessment_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
         assertThat(submissionWithoutAssessment).as("submission without assessment was found").isNotNull();
         checkDetailsHidden(submissionWithoutAssessment, false);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_afterDueDate_forbidden() throws Exception {
+        request.put("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_beforeDueDate_allowed() throws Exception {
+        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_beforeDueDateWithTwoSubmissions_allowed() throws Exception {
+        final var submitPath = "/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions";
+        final var newSubmissionText = "Some other test text";
+        textSubmission = request.putWithResponseBody(submitPath, textSubmission, TextSubmission.class, HttpStatus.OK);
+        textSubmission.setText(newSubmissionText);
+        request.put(submitPath, textSubmission, HttpStatus.OK);
+
+        final var submissionInDb = submissionRepository.findById(textSubmission.getId());
+        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        participationRepository.save(afterDueDateParticipation);
+
+        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
     }
 
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {

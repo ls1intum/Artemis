@@ -1,8 +1,9 @@
 import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
-import { AccountService, StateStorageService } from 'app/core';
+import { StateStorageService } from 'app/core';
 import { LocalStorageService } from 'ngx-webstorage';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {

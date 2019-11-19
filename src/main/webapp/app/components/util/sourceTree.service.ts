@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Participation, ParticipationService } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation';
 import { WindowRef } from 'app/core';
 
 @Injectable({ providedIn: 'root' })
@@ -15,11 +15,5 @@ export class SourceTreeService {
 
     getRepositoryPassword(): Observable<Object> {
         return this.httpClient.get(`${SERVER_API_URL}/api/account/password`);
-    }
-
-    goToBuildPlan(participation: Participation) {
-        this.participationService.buildPlanWebUrl(participation.id).subscribe(res => {
-            this.$window.nativeWindow.open(res.url);
-        });
     }
 }

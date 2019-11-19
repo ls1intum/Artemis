@@ -5,8 +5,8 @@ import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -21,24 +21,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -74,7 +67,7 @@ public class ParticipationResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final TextSubmissionService textSubmissionService;
 
@@ -84,7 +77,7 @@ public class ParticipationResource {
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, TextSubmissionService textSubmissionService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
             ResultService resultService, UserService userService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -93,7 +86,7 @@ public class ParticipationResource {
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
+        this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
         this.resultService = resultService;
         this.userService = userService;
@@ -110,6 +103,11 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> createParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
+
+        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
+            return forbidden();
+        }
+
         checkAccessPermissionAtLeastTA(participation);
         if (participation.getId() != null) {
             throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
@@ -130,7 +128,7 @@ public class ParticipationResource {
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> initParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
+    public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
@@ -140,8 +138,17 @@ public class ParticipationResource {
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
-
             if (authCheckService.isOnlyStudentInCourse(course, null)) {
+                return forbidden();
+            }
+        }
+
+        // users cannot start the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
+        // Also don't allow participations of the feature is disabled
+        if (exercise instanceof ProgrammingExercise) {
+            var pExercise = (ProgrammingExercise) exercise;
+            if (!Feature.PROGRAMMING_EXERCISES.isEnabled() || (pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
+                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
                 return forbidden();
             }
         }
@@ -162,6 +169,7 @@ public class ParticipationResource {
      */
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-programming-participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise;
@@ -182,7 +190,9 @@ public class ParticipationResource {
 
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
-            participation = participationService.resumeExercise(exercise, participation);
+            participation = participationService.resumeExercise(participation);
+            // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
+            participation = participationService.performEmptyCommit(participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
@@ -192,7 +202,9 @@ public class ParticipationResource {
         }
         log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
-        participation.getExercise().filterSensitiveInformation();
+        if (participation != null && participation.getExercise() != null) {
+            participation.getExercise().filterSensitiveInformation();
+        }
         return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
                 "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }
@@ -225,7 +237,8 @@ public class ParticipationResource {
     public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
         Course course = participation.getExercise().getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (participation.getId() == null) {
@@ -240,7 +253,6 @@ public class ParticipationResource {
 
         StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
-            User user = userService.getUser();
             log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with participationId "
                     + participation.getExercise().getId());
         }
@@ -253,23 +265,24 @@ public class ParticipationResource {
      * GET /exercise/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId The participationId of the exercise
-     * @param withEagerResults Whether the {@link Result results} for the participations should also be fetched
+     * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withEagerResults) {
+            @RequestParam(defaultValue = "false") boolean withLatestResult) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
         List<StudentParticipation> participations;
-        if (withEagerResults) {
-            participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        if (withLatestResult) {
+            participations = participationService.findByExerciseIdWithLatestResult(exerciseId);
         }
         else {
             participations = participationService.findByExerciseId(exerciseId);
@@ -291,7 +304,8 @@ public class ParticipationResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResults(courseId, false, false);
@@ -379,54 +393,7 @@ public class ParticipationResource {
     }
 
     /**
-     * Finds the repository web URL for a given programming exercise participation
-     *
-     * @param participationId The participationId of the participation
-     * @return The URL of the participation repository as a String
-     */
-    @GetMapping(value = "/participations/{participationId}/repositoryWebUrl")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long participationId) {
-        log.debug("REST request to get repositoryWebUrl of participation : {}", participationId);
-        ProgrammingExerciseStudentParticipation participation = participationService.findProgrammingExerciseParticipation(participationId);
-        checkAccessPermissionOwner(participation);
-        URL url = versionControlService.get().getRepositoryWebUrl(participation);
-        return Optional.ofNullable(url).map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK)).orElse(ResponseUtil.notFound());
-    }
-
-    /**
-     * Looks up the web URL for the build plan in Bamboo of a given participation
-     *
-     * @param participationId The participationId of the participation
-     * @return The URL of the participation build plan as a String
-     */
-    @GetMapping(value = "/participations/{participationId}/buildPlanWebUrl")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long participationId) {
-        log.debug("REST request to get Participation : {}", participationId);
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!courseService.userHasAtLeastTAPermissions(course)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!courseService.userHasAtLeastTAPermissions(course)) {
-            // Check if build plan URL is published, if user is owner of participation and is not TA or higher
-            if (participation.getExercise() instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
-                if (!programmingExercise.isPublishBuildPlanUrl()) {
-                    throw new AccessForbiddenException("You are not allowed to access this resource");
-                }
-            }
-        }
-
-        URL url = continuousIntegrationService.get().getBuildPlanWebUrl(participation);
-        return Optional.ofNullable(url).map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK)).orElse(ResponseUtil.notFound());
-    }
-
-    /**
-     * Retrieves the lates build artifact of a given programming exercise participation
+     * Retrieves the latest build artifact of a given programming exercise participation
      *
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation
@@ -456,7 +423,8 @@ public class ParticipationResource {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         MappingJacksonValue response;
@@ -557,6 +525,11 @@ public class ParticipationResource {
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+
+        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
+            return forbidden();
+        }
+
         checkAccessPermissionAtInstructor(participation);
         String username = participation.getStudent().getFirstName();
         log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
@@ -575,6 +548,7 @@ public class ParticipationResource {
      */
     @PutMapping("/participations/{participationId}/cleanupBuildPlan")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
         checkAccessPermissionAtInstructor(participation);
@@ -594,15 +568,17 @@ public class ParticipationResource {
 
     private void checkAccessPermissionAtLeastTA(StudentParticipation participation) {
         Course course = findCourseFromParticipation(participation);
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
 
     private void checkAccessPermissionOwner(StudentParticipation participation) {
         Course course = findCourseFromParticipation(participation);
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!courseService.userHasAtLeastTAPermissions(course)) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }

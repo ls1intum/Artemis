@@ -1,11 +1,10 @@
 import * as $ from 'jquery';
 
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService, WindowRef } from '../core';
+import { WindowRef } from '../core';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -21,6 +20,7 @@ import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-example-text-submission',

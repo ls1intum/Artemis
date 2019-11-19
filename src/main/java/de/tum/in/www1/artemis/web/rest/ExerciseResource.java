@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.File;
@@ -18,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.*;
@@ -118,6 +120,10 @@ public class ExerciseResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
+        }
+        // Programming exercises without semi automatic assessment should not be available on the tutor dashboard!
+        if (exercise instanceof ProgrammingExercise && !exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)) {
+            return badRequest();
         }
 
         // TODO CZ: load results of submissions eagerly to prevent additional database calls

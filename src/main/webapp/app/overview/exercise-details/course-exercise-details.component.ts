@@ -7,19 +7,15 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
-import { AccountService, JhiWebsocketService, User } from 'app/core';
-import {
-    InitializationState,
-    Participation,
-    ParticipationService,
-    ParticipationWebsocketService,
-    ProgrammingExerciseStudentParticipation,
-    StudentParticipation,
-} from 'app/entities/participation';
+import { User } from 'app/core';
+import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
+import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
+import { AssessmentType } from 'app/entities/assessment-type';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -29,6 +25,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
+    readonly AssessmentType = AssessmentType;
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -150,16 +147,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     sortResults() {
         if (this.studentParticipation && this.hasResults) {
-            this.studentParticipation.results = this.studentParticipation.results.sort((a, b) => {
-                const aValue = moment(a.completionDate!).valueOf();
-                const bValue = moment(b.completionDate!).valueOf();
-                return aValue - bValue;
-            });
+            this.studentParticipation.results = this.studentParticipation.results.sort(this.resultSortFunction);
             const sortedResultLength = this.studentParticipation.results.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
             this.sortedHistoryResult = this.studentParticipation.results.slice(startingElement, sortedResultLength);
         }
     }
+
+    private resultSortFunction = (a: Result, b: Result) => {
+        const aValue = moment(a.completionDate!).valueOf();
+        const bValue = moment(b.completionDate!).valueOf();
+        return aValue - bValue;
+    };
 
     mergeResultsAndSubmissionsForParticipations() {
         // if there are new student participation(s) from the server, we need to update this.studentParticipation
@@ -261,7 +260,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return this.studentParticipation.results.find((result: Result) => !!result.completionDate) || null;
         }
 
-        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated);
+        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated).sort(this.resultSortFunction);
         const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
         if (latestResult) {
             latestResult.participation = this.studentParticipation;

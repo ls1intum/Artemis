@@ -6,7 +6,24 @@ export interface Coordinates {
     top: number;
 }
 
-const DEFAULT_COLORS = [ARTEMIS_DEFAULT_COLOR, '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
+const DEFAULT_COLORS = [
+    ARTEMIS_DEFAULT_COLOR,
+    '#1b97ca',
+    '#0d3cc2',
+    '#009999',
+    '#0ab84f',
+    '#94a11c',
+    '#9dca53',
+    '#ffd014',
+    '#c6aa1c',
+    '#ffa500',
+    '#ffb2b2',
+    '#ca94bd',
+    '#a95292',
+    '#691b0b',
+    '#ad5658',
+    '#ff1a35',
+];
 
 @Component({
     selector: 'jhi-color-selector',

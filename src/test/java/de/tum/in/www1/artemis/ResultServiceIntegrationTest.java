@@ -4,12 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,12 +31,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.connectors.BambooService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -67,10 +66,19 @@ public class ResultServiceIntegrationTest {
     private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
+    UserRepository userRepo;
+
+    @Autowired
     DatabaseUtilService database;
 
     @Autowired
     RequestUtilService request;
+
+    @Autowired
+    ResultRepository resultRepository;
+
+    @MockBean
+    GitService gitService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -189,7 +197,7 @@ public class ResultServiceIntegrationTest {
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        request.post("/api/manual-results", result, HttpStatus.FORBIDDEN);
+        request.post("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -199,7 +207,7 @@ public class ResultServiceIntegrationTest {
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        request.put("/api/manual-results", result, HttpStatus.FORBIDDEN);
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
     }
 
     @ParameterizedTest
@@ -241,5 +249,73 @@ public class ResultServiceIntegrationTest {
                 Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture),
                 // The build and test date has not passed, due date has passed, normal student submission => unrated result.
                 Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
+        User tutor = (userRepo.findOneByLogin("tutor1")).get();
+        Set<String> groups = new HashSet<>();
+        groups.add(course.getTeachingAssistantGroupName());
+        tutor.setGroups(groups);
+        userRepo.save(tutor);
+
+        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
+        result.setParticipation(participation);
+
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+
+        Result response = request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class);
+        assertThat(response.getResultString()).isEqualTo(result.getResultString());
+        assertThat(response.getSubmission()).isNotNull();
+        assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
+        assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void updateManualProgrammingExerciseResult() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
+        User tutor = (userRepo.findOneByLogin("tutor1")).get();
+        Set<String> groups = new HashSet<>();
+        groups.add(course.getTeachingAssistantGroupName());
+        tutor.setGroups(groups);
+        userRepo.save(tutor);
+
+        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
+        result.setParticipation(participation);
+        result = resultRepository.save(result);
+
+        // Remove feedbacks, change text and score.
+        result.setFeedbacks(feedbacks.subList(0, 1));
+        result.setResultString("Changed text");
+        result.setScore(77L);
+
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+
+        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
+        assertThat(response.getResultString()).isEqualTo(result.getResultString());
+        assertThat(response.getSubmission()).isEqualTo(result.getSubmission());
+        assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
+        assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
     }
 }

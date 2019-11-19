@@ -157,8 +157,9 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
         }
         StudentParticipation participation = optionalParticipation.get();
 
-        if (participation.getInitializationState() == InitializationState.FINISHED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
+        final var exerciseDueDate = exercise.getDueDate();
+        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         // For now, we do not allow students to retry their modeling exercise after they have received feedback, because this could lead to unfair situations. Some students might
@@ -308,8 +309,8 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
     @Transactional(readOnly = true)
     public <L extends Exercise> Optional<T> getSubmissionWithoutManualResult(L exercise, Class<T> submissionType) {
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        List<T> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exercise.getId()).stream()
-                .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
+        List<T> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId()).stream()
+                .map(studentParticipation -> studentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {

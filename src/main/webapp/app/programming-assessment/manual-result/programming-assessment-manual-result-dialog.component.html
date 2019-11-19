@@ -8,13 +8,14 @@
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <jhi-alert></jhi-alert>
         <div *ngIf="isOpenForSubmission" class="alert alert-warning">
             <strong jhiTranslate="artemisApp.result.exerciseStillOpen">Exercise is still open for submissions!</strong>
             <span jhiTranslate="artemisApp.result.studentOverride"
                 >The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.</span
             >
         </div>
-        <jhi-alert-error></jhi-alert-error>
         <div class="form-group" *ngIf="result.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="result.id" readonly />
@@ -42,7 +43,7 @@
                 <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</h4>
                 <input
                     type="number"
-                    max="100"
+                    [pattern]="SCORE_PATTERN"
                     required
                     class="form-control"
                     name="score"
@@ -96,15 +97,15 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
-            <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
-            <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>
 </form>
 <ng-template #loadingContainer>
     <div class="d-flex justify-content-center mt-4 mb-4">
-        <fa-icon icon="circle-notch" [spin]="true"></fa-icon>
+        <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
     </div>
 </ng-template>

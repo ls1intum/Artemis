@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Attachment;
@@ -45,7 +44,7 @@ public class AttachmentResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final CourseService courseService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
 
@@ -54,11 +53,11 @@ public class AttachmentResource {
     private final CacheManager cacheManager;
 
     public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            CourseService courseService, UserService userService, FileService fileService, CacheManager cacheManager) {
+            AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
-        this.courseService = courseService;
+        this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
@@ -131,10 +130,8 @@ public class AttachmentResource {
      */
     @GetMapping(value = "/lectures/{lectureId}/attachments")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-
         return attachmentService.findAllByLectureId(lectureId);
     }
 
@@ -149,7 +146,7 @@ public class AttachmentResource {
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
-        if (!optionalAttachment.isPresent()) {
+        if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Attachment attachment = optionalAttachment.get();
@@ -172,7 +169,7 @@ public class AttachmentResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        Boolean hasCourseInstructorAccess = courseService.userHasAtLeastInstructorPermissions(course);
+        boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         if (hasCourseInstructorAccess) {
             log.info(user.getLogin() + " deleted attachment with id " + id + " for " + relatedEntity, id);
             attachmentRepository.deleteById(id);
