@@ -33,7 +33,7 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
             super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
         }
         if (!this.lastResultIsManual) {
-            super.triggerBuild(SubmissionType.INSTRUCTOR);
+            super.triggerWithType(SubmissionType.INSTRUCTOR);
             return;
         }
         // The instructor needs to confirm overriding a manual result.
@@ -41,7 +41,7 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
         modalRef.componentInstance.title = 'artemisApp.programmingExercise.resubmitSingle';
         modalRef.componentInstance.text = 'artemisApp.programmingExercise.resubmitConfirmManualResultOverride';
         modalRef.result.then(() => {
-            super.triggerBuild(SubmissionType.INSTRUCTOR);
+            super.triggerWithType(SubmissionType.INSTRUCTOR);
         });
     };
 }
