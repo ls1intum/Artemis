@@ -282,7 +282,7 @@ export class GuidedTourService {
             this.currentTour.completeCallback();
         }
 
-        if (this.currentTour.settingsKey !== completedTour.settingsKey) {
+        if (!this.isCurrentTour(completedTour)) {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
             this.showCompletedTourStep();
         }
