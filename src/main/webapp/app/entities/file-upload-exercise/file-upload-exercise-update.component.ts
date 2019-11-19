@@ -6,7 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 import { Course, CourseService } from 'app/entities/course';
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { EditorMode } from 'app/markdown-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
@@ -19,8 +19,6 @@ import { MAX_SCORE_PATTERN } from 'app/app.constants';
 export class FileUploadExerciseUpdateComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
-    assessmentDueDateError: boolean;
-    dueDateError: boolean;
     maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -47,8 +45,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         // new page from previous page.
         window.scroll(0, 0);
 
-        this.dueDateError = false;
-        this.assessmentDueDateError = false;
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
@@ -94,16 +90,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Validates if the date is correct
      */
     validateDate() {
-        this.dueDateError =
-            this.fileUploadExercise.releaseDate && this.fileUploadExercise.dueDate ? !this.fileUploadExercise.dueDate.isAfter(this.fileUploadExercise.releaseDate) : false;
-
-        this.assessmentDueDateError =
-            this.fileUploadExercise.assessmentDueDate && this.fileUploadExercise.releaseDate
-                ? !this.fileUploadExercise.assessmentDueDate.isAfter(this.fileUploadExercise.releaseDate)
-                : this.fileUploadExercise.assessmentDueDate && this.fileUploadExercise.dueDate
-                ? !this.fileUploadExercise.assessmentDueDate.isAfter(this.fileUploadExercise.dueDate)
-                : false;
+        this.exerciseService.validateDate(this.fileUploadExercise);
     }
+
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercies categories

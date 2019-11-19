@@ -50,12 +50,12 @@
                 <div class="form-group-narrow">
                     <jhi-date-time-picker
                         name="assessmentDueDate"
-                        [error]="this.assessmentDueDateError"
+                        [error]="fileUploadExercise.assessmentDueDateError"
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | translate }}"
-                        (valueChange)="validateDate()"
+                        (valueChange)="validateDate(fileUploadExercise)"
                         [(ngModel)]="fileUploadExercise.assessmentDueDate"
                     ></jhi-date-time-picker>
-                    <div *ngIf="this.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</div>
+                    <div *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
