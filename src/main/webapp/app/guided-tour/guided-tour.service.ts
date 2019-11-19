@@ -111,10 +111,6 @@ export class GuidedTourService {
             });
     }
 
-    private setGuidedTourCourseExerciseMapping(guidedTourMapping: GuidedTourMapping) {
-        this.guidedTourMapping = guidedTourMapping;
-    }
-
     /**
      * @return defined minimum screen size number
      */
@@ -748,9 +744,11 @@ export class GuidedTourService {
         if (!course || !course.exercises || !this.guidedTourMapping) {
             return null;
         }
-
+        if (!this.isGuidedTourAvailableForCourse(course)) {
+            return null;
+        }
         const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
-        if (this.isGuidedTourAvailableForCourse(course) && exerciseForGuidedTour) {
+        if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
             return exerciseForGuidedTour;
         }
