@@ -1,4 +1,4 @@
-import { PendingChangesGuard } from '../shared';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UserRouteAccessService } from '../core';
 import { Routes } from '@angular/router';
 import { ModelingSubmissionComponent } from './modeling-submission.component';

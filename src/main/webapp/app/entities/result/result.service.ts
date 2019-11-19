@@ -4,13 +4,13 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
+import { isMoment } from 'moment';
 
 import { Result } from './result.model';
 import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
 import { ExerciseService } from 'app/entities/exercise';
-import { isMoment } from 'moment';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;

@@ -1,7 +1,11 @@
 import { Component } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { SubmissionType } from 'app/entities/submission';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components';
+import { ParticipationWebsocketService } from 'app/entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
@@ -9,12 +13,16 @@ import { JhiAlertService } from 'ng-jhipster';
     templateUrl: './programming-exercise-trigger-build-button.component.html',
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
-    constructor(submissionService: ProgrammingSubmissionService, alertService: JhiAlertService) {
-        super(submissionService, alertService);
+    constructor(
+        submissionService: ProgrammingSubmissionService,
+        alertService: JhiAlertService,
+        participationWebsocketService: ParticipationWebsocketService,
+        private translateService: TranslateService,
+        private modalService: NgbModal,
+    ) {
+        super(submissionService, participationWebsocketService, alertService);
         this.showForSuccessfulSubmissions = true;
     }
-
-    // TODO: we should warn the instructor in case manual results are enabled and the build and test deadline has passed
 
     triggerBuild = (event: any) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
@@ -24,5 +32,16 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
         } else {
             super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
         }
+        if (!this.lastResultIsManual) {
+            super.triggerBuild(SubmissionType.INSTRUCTOR);
+            return;
+        }
+        // The instructor needs to confirm overriding a manual result.
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.title = 'artemisApp.programmingExercise.resubmitSingle';
+        modalRef.componentInstance.text = 'artemisApp.programmingExercise.resubmitConfirmManualResultOverride';
+        modalRef.result.then(() => {
+            super.triggerBuild(SubmissionType.INSTRUCTOR);
+        });
     };
 }

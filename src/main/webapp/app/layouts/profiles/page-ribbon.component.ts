@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ProfileService } from './profile.service';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { ProfileInfo } from './profile-info.model';
 
 @Component({

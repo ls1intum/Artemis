@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { Result } from 'app/entities/result';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';

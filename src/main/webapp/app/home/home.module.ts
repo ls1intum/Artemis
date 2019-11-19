@@ -2,15 +2,11 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from '../shared';
-
-import { HOME_ROUTES, HomeComponent } from './';
-
-const ENTITY_STATES = [...HOME_ROUTES];
+import { HOME_ROUTE } from './home.route';
+import { HomeComponent } from './';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [ArtemisSharedModule, RouterModule.forChild([HOME_ROUTE])],
     declarations: [HomeComponent],
-    entryComponents: [],
-    providers: [],
 })
 export class ArtemisHomeModule {}

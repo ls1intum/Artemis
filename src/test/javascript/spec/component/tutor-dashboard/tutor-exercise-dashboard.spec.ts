@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
@@ -30,7 +30,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -51,7 +50,6 @@ describe('TutorExerciseDashboardComponent', () => {
             imports: [
                 ArtemisTestModule,
                 ArtemisSharedModule,
-                ArtemisSharedComponentModule,
                 ArtemisSharedComponentModule,
                 ArtemisProgrammingAssessmentModule,
                 ArtemisProgrammingExerciseInstructionsRenderModule,
@@ -93,6 +91,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
