@@ -583,9 +583,9 @@ public abstract class Exercise implements Serializable {
             // find the latest submission with a rated result, otherwise the latest submission with
             // an unrated result or alternatively the latest submission without a result
             Set<Submission> submissions = participation.getSubmissions();
-            Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
 
             // only transmit the relevant result
+            Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
             Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
 
             Set<Result> results = result != null ? Set.of(result) : Set.of();
@@ -628,7 +628,7 @@ public abstract class Exercise implements Serializable {
      * @param submissions that need to be filtered
      * @return filtered submission
      */
-    private Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
         List<Submission> submissionsWithRatedResult = new ArrayList<>();
         List<Submission> submissionsWithUnratedResult = new ArrayList<>();
         List<Submission> submissionsWithoutResult = new ArrayList<>();

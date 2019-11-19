@@ -1,6 +1,6 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { filter, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { filter, tap, catchError } from 'rxjs/operators';
+import { Subscription, of } from 'rxjs';
 import { compose, head, orderBy } from 'lodash/fp';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
@@ -11,6 +11,7 @@ import { AssessmentType } from 'app/entities/assessment-type';
 import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { FeatureToggle } from 'app/feature-toggle';
 import { Result } from 'app/entities/result';
+import { JhiAlertService } from 'ng-jhipster';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -37,7 +38,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private submissionSubscription: Subscription;
     private resultSubscription: Subscription;
 
-    protected constructor(protected submissionService: ProgrammingSubmissionService, protected participationWebsocketService: ParticipationWebsocketService) {}
+    protected constructor(
+        protected submissionService: ProgrammingSubmissionService,
+        protected participationWebsocketService: ParticipationWebsocketService,
+        protected alertService: JhiAlertService,
+    ) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.
@@ -120,17 +125,15 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             .subscribe();
     }
 
-    /**
-     * Trigger a regular build or a failed build, depending on the state of the latest submission.
-     *
-     * @param submissionType that is used for the creation of the submission.
-     */
-    triggerBuild(submissionType: SubmissionType) {
+    abstract triggerBuild(submissionType: SubmissionType): void;
+
+    triggerWithType(submissionType: SubmissionType) {
         this.isRetrievingBuildStatus = true;
-        if (this.participationHasLatestSubmissionWithoutResult) {
-            this.submissionService.triggerFailedBuild(this.participation.id).subscribe(() => (this.isRetrievingBuildStatus = false));
-        } else {
-            this.submissionService.triggerBuild(this.participation.id, submissionType).subscribe(() => (this.isRetrievingBuildStatus = false));
-        }
+        return this.submissionService.triggerBuild(this.participation.id, submissionType).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
+    }
+
+    triggerFailed(lastGraded = false) {
+        this.isRetrievingBuildStatus = true;
+        return this.submissionService.triggerFailedBuild(this.participation.id, lastGraded).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
     }
 }
