@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';

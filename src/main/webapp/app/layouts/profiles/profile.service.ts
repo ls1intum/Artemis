@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileInfo } from './profile-info.model';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FeatureToggleService } from 'app/feature-toggle';

@@ -1,5 +1,4 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, ActivatedRouteSnapshot } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
@@ -18,7 +17,9 @@ describe('AssessmentHeaderComponent', () => {
             imports: [ArtemisTestModule, ArtemisSharedModule],
             declarations: [AssessmentHeaderComponent],
             providers: [JhiAlertService],
-        }).compileComponents();
+        })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+            .compileComponents();
     }));
 
     beforeEach(() => {

@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
+import { JhiLanguageService } from 'ng-jhipster';
+import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { JhiLanguageService } from 'ng-jhipster';
-import { SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-import { JhiWebsocketService, User } from 'app/core';
-import { Course } from 'app/entities/course';
+import { User } from 'app/core/user/user.model';
+import { Course } from 'app/entities/course/course.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/feature-toggle';
 
 export interface IAccountService {

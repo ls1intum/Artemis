@@ -5,7 +5,7 @@
 <ng-container [ngSwitch]="templateStatus">
     <ng-container *ngSwitchCase="ResultTemplateStatus.IS_BUILDING">
         <span class="text-primary">
-            <fa-icon icon="circle-notch" size="lg" [spin]="true" class="mr-2"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" size="lg" [spin]="true" class="mr-2"></fa-icon>
             <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </span>
     </ng-container>
@@ -26,7 +26,7 @@
             </span>
             <span *ngIf="result.buildArtifact">
                 <a (click)="downloadBuildResult(participation.id)">
-                    &nbsp; <fa-icon icon="file"></fa-icon>
+                    &nbsp; <fa-icon [icon]="'file'"></fa-icon>
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>

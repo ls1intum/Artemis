@@ -1,7 +1,6 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { tap, filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { compose, head, orderBy } from 'lodash/fp';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
@@ -10,7 +9,6 @@ import { ButtonSize, ButtonType } from 'app/shared/components';
 import { SubmissionType } from 'app/entities/submission';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
-import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/feature-toggle';
 import { Result } from 'app/entities/result';
 

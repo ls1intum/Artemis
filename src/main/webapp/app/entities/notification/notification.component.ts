@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { Subscription } from 'rxjs';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
-import { AccountService, User } from 'app/core';
+import { User } from 'app/core';
 import { Lecture } from 'app/entities/lecture';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NotificationService } from 'app/entities/notification/notification.service';
@@ -11,6 +11,7 @@ import { Notification } from 'app/entities/notification/notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { SystemNotification } from 'app/entities/system-notification';
 import * as moment from 'moment';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-notification',

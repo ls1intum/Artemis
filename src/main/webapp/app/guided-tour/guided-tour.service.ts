@@ -4,12 +4,12 @@ import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { debounceTime, take, distinctUntilChanged } from 'rxjs/internal/operators';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
-import { AccountService, User } from 'app/core';
+import { User } from 'app/core';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { filter } from 'rxjs/operators';
@@ -19,6 +19,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour } from 'app/guided-tour/tours/general-tour';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 

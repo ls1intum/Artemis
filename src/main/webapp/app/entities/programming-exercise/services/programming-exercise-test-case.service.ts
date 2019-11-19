@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingExerciseTestCase } from '../programming-exercise-test-case.model';
-import { JhiWebsocketService } from 'app/core';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean };
 

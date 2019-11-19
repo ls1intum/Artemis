@@ -4,7 +4,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { DeviceDetectorService } from 'ngx-device-detector';
 
 import { ArtemisSharedModule } from '../../shared';
-import { JhiWebsocketService } from '../../core';
 import { quizRoute } from './quiz.route';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { HomeComponent } from '../../home';
@@ -32,7 +31,7 @@ const ENTITY_STATES = [...quizRoute];
         DragItemComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
-    providers: [RepositoryService, JhiWebsocketService, JhiAlertService, DeviceDetectorService],
+    providers: [RepositoryService, JhiAlertService, DeviceDetectorService],
     exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
 })
 export class ArtemisQuizModule {}

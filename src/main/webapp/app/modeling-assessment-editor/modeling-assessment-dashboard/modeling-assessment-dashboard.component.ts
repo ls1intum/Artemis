@@ -9,7 +9,7 @@ import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/mode
 import { ActivatedRoute, Router } from '@angular/router';
 import { ResultService } from 'app/entities/result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { DifferencePipe } from 'ngx-moment';

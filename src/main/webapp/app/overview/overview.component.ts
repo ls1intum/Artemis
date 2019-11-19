@@ -3,7 +3,7 @@ import { Course, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview';
