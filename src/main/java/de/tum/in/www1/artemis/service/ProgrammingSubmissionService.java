@@ -14,6 +14,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -176,11 +177,12 @@ public class ProgrammingSubmissionService {
      * A pending submission is one that does not have a result yet.
      *
      * @param participationId the id of the participation get the latest submission for
+     * @param filterGraded if true will not use the latest submission, but the latest graded submission.
      * @return the latest pending submission if exists or null.
      * @throws EntityNotFoundException if the participation for the given id can't be found.
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
      */
-    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId) throws EntityNotFoundException, IllegalArgumentException {
+    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             throw new EntityNotFoundException("Participation with id " + participationId + " could not be retrieved!");
@@ -192,7 +194,7 @@ public class ProgrammingSubmissionService {
             throw new AccessForbiddenException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 
-        return findLatestPendingSubmissionForParticipation(participationId);
+        return findLatestPendingSubmissionForParticipation(participationId, filterGraded);
     }
 
     /**
@@ -207,13 +209,18 @@ public class ProgrammingSubmissionService {
     }
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
-        Optional<ProgrammingSubmission> submissionOpt = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        if (submissionOpt.isEmpty() || submissionOpt.get().getResult() != null) {
+        return findLatestPendingSubmissionForParticipation(participationId, false);
+    }
+
+    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
+        final var optionalSubmission = isGraded
+                ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
+                : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        if (optionalSubmission.isEmpty() || optionalSubmission.get().getResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
         }
-
-        return submissionOpt;
+        return optionalSubmission;
     }
 
     /**

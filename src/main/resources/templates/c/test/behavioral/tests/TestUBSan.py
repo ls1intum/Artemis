@@ -1,48 +1,30 @@
-from testUtils.AbstractTest import AbstractTest
-from testUtils.Utils import PWrap
-from time import sleep
-from subprocess import call
-from os import path
+from testUtils.AbstractProgramTest import AbstractProgramTest
+
 from typing import List
 
-class TestUBSan(AbstractTest):
+class TestUBSan(AbstractProgramTest):
     """
     Test case that tries to compile the given program with undefined behavior sanitizer enabled.
     All warnings will be treated as errors and compilation will fail.
     Requires "libubsan" to be installed on your system.
     """
 
-    makefileLocation: str
     makeTarget: str
-    pWrap: PWrap
 
-    def __init__(self, makefileLocation: str, makeTarget: str = "ubsan", requirements: List[str] = list(), name: str = "TestCompileUBSan"):
-        super(TestUBSan, self).__init__(name, requirements, timeoutSec=5)
-        self.makefileLocation = makefileLocation
+    def __init__(self, executionDirectory: str, makeTarget: str = "ubsan", requirements: List[str] = None, name: str = "TestCompileUBSan"):
+        super(TestUBSan, self).__init__(name, executionDirectory, "make", requirements, timeoutSec=5)
         self.makeTarget = makeTarget
 
     def _run(self):
         # Start the program:
-        self.pWrap = self._createPWrap(["make", "-C", self.makefileLocation, self.makeTarget])
+        self.pWrap = self._createPWrap([self.executable, "-C", self.executionDirectory, self.makeTarget])
         self._startPWrap(self.pWrap)
 
         self.pWrap.waitUntilTerminationReading()
 
         retCode: int = self.pWrap.getReturnCode()
         if retCode != 0:
-            self._failWith("Make for directory {} failed. Returncode is {}.".format(str(self.makefileLocation), retCode))
+            self._failWith("Make for directory {} failed. Returncode is {}.".format(str(self.executionDirectory), retCode))
 
         # Allways cleanup to make sure all threads get joined:
         self.pWrap.cleanup()
-
-    def _onTimeout(self):
-        self._terminateProgramm()
-
-    def _onFailed(self):
-        self._terminateProgramm()
-
-    def _terminateProgramm(self):
-        if self.pWrap:
-            if not self.pWrap.hasTerminated():
-                self.pWrap.kill()
-            self.pWrap.cleanup()

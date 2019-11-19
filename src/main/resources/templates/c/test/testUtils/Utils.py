@@ -10,7 +10,7 @@ from threading import Thread
 from datetime import datetime
 
 
-def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool = True, ignoreNonAlNum = True):
+def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool = True, ignoreNonAlNum=True):
     """
     Student save compare between strings.
     Converts both to lower, strips them and removes all non alphanumeric chars
@@ -34,8 +34,10 @@ def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool =
     # print("Ref: {}\nOther:{}".format(ref, other))
     return ref == other
 
+
 # A cache of all that the tester has been writing to stdout:
 testerOutputCache: List[str] = list()
+
 
 def clearTesterOutputCache():
     """
@@ -43,17 +45,20 @@ def clearTesterOutputCache():
     """
     testerOutputCache.clear()
 
+
 def getTesterOutput():
     """
-    Returns the complet tester output as a single string.
+    Returns the complete tester output as a single string.
     """
     return "\n".join(testerOutputCache)
+
 
 def __getCurDateTimeStr():
     """
     Returns the current date and time string (e.g. 11.10.2019_17:02:33)
     """
     return datetime.now().strftime("%d.%m.%Y_%H:%M:%S")
+
 
 def printTester(text: str):
     """
@@ -75,6 +80,18 @@ def printProg(text: str):
     msg: str = "[{}][PROG]: {}".format(__getCurDateTimeStr(), text)
     print(msg)
     testerOutputCache.append(msg)
+
+
+def shortenText(text: str, maxNumChars: int):
+    """
+    Shortens the given text to a maximum number of chars.
+    If there are more chars than specified in maxNumChars,
+    it will append: "\n[And {} chars more...]".
+    """
+
+    if len(text) > maxNumChars:
+        return "{}\n[And {} chars more...]".format(text[:maxNumChars], len(text) - maxNumChars)
+    return text
 
 
 class ReadCache(Thread):
@@ -102,11 +119,18 @@ class ReadCache(Thread):
         return self.__outFd
 
     def join(self):
-        os.close(self.__outFd)
-        os.close(self.__outSlaveFd)
+        try:
+            os.close(self.__outFd)
+        except OSError as e:
+            printTester("Closing stdout FD failed with: {}".format(e))
+        try:
+            os.close(self.__outSlaveFd)
+        except OSError as e:
+            printTester("Closing stdout slave FD failed with: {}".format(e))
         Thread.join(self)
 
-    def __isFdValid(self, fd: int):
+    @staticmethod
+    def __isFdValid(fd: int):
         try:
             os.stat(fd)
         except OSError:
@@ -147,14 +171,14 @@ class PWrap:
     prog: Optional[Popen]
     cwd: Optional[str]
 
-
     __stdinFd: int
     __stdinMasterFd: int
 
     __stdOutLineCache: ReadCache
     __stdErrLineCache: ReadCache
 
-    def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt", cwd: Optional[str] = None):
+    def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt",
+                 cwd: Optional[str] = None):
         self.cmd = cmd
         self.prog = None
         self.cwd: Optional[str] = cwd
@@ -165,8 +189,14 @@ class PWrap:
         self.__stdErrLineCache = ReadCache(stderrFilePath)
 
     def __del__(self):
-        os.close(self.__stdinFd)
-        os.close(self.__stdinMasterFd)
+        try:
+            os.close(self.__stdinFd)
+        except OSError as e:
+            printTester("Closing stdin FD failed with: {}".format(e))
+        try:
+            os.close(self.__stdinMasterFd)
+        except OSError as e:
+            printTester("Closing stdin master FD failed with: {}".format(e))
 
     def start(self):
         """
@@ -182,7 +212,24 @@ class PWrap:
                           stderr=self.__stdErrLineCache.fileno(),
                           universal_newlines=True,
                           cwd=self.cwd,
-                          preexec_fn=os.setsid) # Make sure we store the process group id
+                          preexec_fn=os.setsid)  # Make sure we store the process group id
+
+    def __readLine(self, lineCache: ReadCache, blocking: bool):
+        """
+        Reads a single line from the given ReadCache and returns it.
+
+        ---
+
+        blocking:
+            When set to True will only return if the process terminated or we read a non empty string.
+        """
+        while blocking:
+            if not lineCache.canReadLine():
+                sleep(0.1)
+            else:
+                line: str = lineCache.readLine()
+                printProg(line)
+                return line
 
     def readLineStdout(self, blocking: bool = True):
         """
@@ -193,13 +240,7 @@ class PWrap:
         blocking:
             When set to True will only return if the process terminated or we read a non empty string.
         """
-        while blocking:
-            if not self.__stdOutLineCache.canReadLine():
-                sleep(0.1)
-            else:
-                line: str = self.__stdOutLineCache.readLine()
-                printProg(line)
-                return line
+        return self.__readLine(self.__stdOutLineCache, blocking)
 
     def canReadLineStdout(self):
         """
@@ -216,13 +257,7 @@ class PWrap:
         blocking:
             When set to True will only return if the process terminated or we read a non empty string.
         """
-        while blocking:
-            if not self.__stdErrLineCache.canReadLine():
-                sleep(0.1)
-            else:
-                line: str = self.__stdErrLineCache.readLine()
-                printProg(line)
-                return line
+        return self.__readLine(self.__stdErrLineCache, blocking)
 
     def canReadLineStderr(self):
         """
@@ -266,12 +301,12 @@ class PWrap:
         while True:
             if self.hasTerminated():
                 return True
-            elif secs >= 0 and (datetime.now() - start).total_seconds() >= secs:
+            elif 0 <= secs <= (datetime.now() - start).total_seconds():
                 return False
             self.readLineStdout(False)
             sleep(0.1)
 
-    def kill(self, signal: int = signal.SIGTERM):
+    def kill(self, signal: int = signal.SIGKILL):
         """
         Sends the given signal to the complet process group started by the process.
 
@@ -288,7 +323,6 @@ class PWrap:
         Should be called once the execution has terminated.
         Will join the stdout and stderr reader threads.
         """
-
         self.__stdOutLineCache.join()
         self.__stdErrLineCache.join()
 
