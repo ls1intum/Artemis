@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass;
 
+import static com.google.gson.JsonParser.parseString;
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.ELEMENT_CONFIDENCE_THRESHOLD;
 
 import java.io.IOException;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -133,7 +133,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     private void buildModel(ModelingSubmission modelingSubmission) {
         if (modelingSubmission.getModel() != null) {
-            buildModel(modelingSubmission.getId(), new JsonParser().parse(modelingSubmission.getModel()).getAsJsonObject());
+            buildModel(modelingSubmission.getId(), parseString(modelingSubmission.getModel()).getAsJsonObject());
         }
     }
 
@@ -245,7 +245,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         if (modelIndex.getModelMap().containsKey(modelId)) {
             return;
         }
-        buildModel(modelId, new JsonParser().parse(model).getAsJsonObject());
+        buildModel(modelId, parseString(model).getAsJsonObject());
     }
 
     @Override
