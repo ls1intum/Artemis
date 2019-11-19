@@ -21,7 +21,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     question: MultipleChoiceQuestion;
     @Input()
     questionIndex: number;
-
     @Output()
     questionUpdated = new EventEmitter();
     @Output()
