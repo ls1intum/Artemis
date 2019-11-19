@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ListOfComplaintsComponent } from 'app/list-of-complaints/list-of-complaints.component';
 import { ComplaintType } from 'app/entities/complaint';
 

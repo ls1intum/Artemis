@@ -3,7 +3,8 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
 
-import { Credentials, StateStorageService, User } from '../core';
+import { StateStorageService, User } from '../core';
+import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';

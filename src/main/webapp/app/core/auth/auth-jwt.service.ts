@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SERVER_API_URL } from 'app/app.constants';
+import { LocalStorageProvider } from 'app/core/storage/local-storage-provider.service';
 
 export interface Credentials {
     username: string | null;
@@ -21,13 +22,14 @@ export interface IAuthServerProvider {
 
 @Injectable({ providedIn: 'root' })
 export class AuthServerProvider implements IAuthServerProvider {
-    constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
+    constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService, private provider: LocalStorageProvider) {}
 
     getToken() {
         return this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
     }
 
     login(credentials: Credentials): Observable<string> {
+        this.provider.foo();
         const data = {
             username: credentials.username,
             password: credentials.password,
@@ -66,10 +68,15 @@ export class AuthServerProvider implements IAuthServerProvider {
     }
 
     storeAuthenticationToken(jwt: string, rememberMe: string) {
-        if (rememberMe) {
-            this.localStorage.store('authenticationToken', jwt);
-        } else {
-            this.sessionStorage.store('authenticationToken', jwt);
+        try {
+            if (rememberMe) {
+                this.localStorage.store('authenticationToken', jwt);
+            } else {
+                this.sessionStorage.store('authenticationToken', jwt);
+            }
+        } catch (e) {
+            // @ts-ignore
+            window.intellij.log(e);
         }
     }
 

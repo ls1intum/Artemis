@@ -1,5 +1,5 @@
 import { Injectable, Injector } from '@angular/core';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
 import { Router } from '@angular/router';

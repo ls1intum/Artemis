@@ -23,7 +23,7 @@ import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComp
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-test.service';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/feature-toggle';
+import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);

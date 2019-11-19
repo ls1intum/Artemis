@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent } from './';
 import { CodeEditorInstructorIdeComponent } from 'app/code-editor/code-editor-instructor-ide.component';
