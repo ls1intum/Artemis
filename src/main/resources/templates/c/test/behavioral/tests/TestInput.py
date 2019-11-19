@@ -17,7 +17,7 @@ class TestInput(AbstractTest):
     count: int
 
     def __init__(self, makefileLocation: str, count: int, requirements: List[str] = list(), name: str = "TestInput", executable: str = "main.out"):
-        super(TestInput, self).__init__(name, requirements, timeoutSec=20)
+        super(TestInput, self).__init__(name, requirements, timeoutSec=30)
         self.makefileLocation = makefileLocation
         self.count = count
         self.executable: str = executable
