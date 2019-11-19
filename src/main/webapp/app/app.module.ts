@@ -61,7 +61,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
         ArtemisEntityModule,
         ArtemisAppRoutingModule,
         ArtemisConnectionNotificationModule,
-        GuidedTourModule.forRoot(),
+        GuidedTourModule,
         ArtemisLegalModule,
         ArtemisParticipationModule.forRoot(),
         ArtemisProgrammingSubmissionModule.forRoot(),
