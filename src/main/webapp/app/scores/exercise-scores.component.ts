@@ -33,6 +33,17 @@ enum SortOrder {
     DESC = 'desc',
 }
 
+enum SortIcon {
+    NONE = 'sort',
+    ASC = 'sort-up',
+    DESC = 'sort-down',
+}
+
+const SortOrderIcon = {
+    [SortOrder.ASC]: SortIcon.ASC,
+    [SortOrder.DESC]: SortIcon.DESC,
+};
+
 type SortProp = {
     field: string;
     order: SortOrder;
@@ -280,6 +291,19 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private invertSort = (order: SortOrder) => {
         return order === SortOrder.ASC ? SortOrder.DESC : SortOrder.ASC;
     };
+
+    /**
+     * Returns the Font Awesome icon name for a column header's sorting icon
+     * based on the currently active sortProp field and order.
+     *
+     * @param field Result field
+     */
+    iconForSortPropField(field: string) {
+        if (this.resultCriteria.sortProp.field !== field) {
+            return SortIcon.NONE;
+        }
+        return SortOrderIcon[this.resultCriteria.sortProp.order];
+    }
 
     /**
      * Sets the selected sort field, then updates the available results in the UI.
