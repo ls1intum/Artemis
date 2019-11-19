@@ -17,9 +17,7 @@ export class IntellijButtonComponent {
 
     javaBridge: JavaBridgeService;
 
-    constructor(javaBridge: JavaBridgeService) {
-        this.javaBridge = javaBridge;
-    }
+    constructor() {}
 
     public get btnPrimary(): boolean {
         return !this.outlined;
