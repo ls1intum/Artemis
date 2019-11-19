@@ -38,7 +38,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     constructor(
         private participationService: ParticipationService,
         private manualResultService: ProgrammingAssessmentManualResultService,
-        public activeModal: NgbActiveModal,
+        private activeModal: NgbActiveModal,
         private datePipe: DatePipe,
         private eventManager: JhiEventManager,
         private alertService: JhiAlertService,
