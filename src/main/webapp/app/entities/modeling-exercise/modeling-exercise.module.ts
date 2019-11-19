@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared';
-import { ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent, modelingExerciseRoute, ModelingExerciseService } from './';
+import { ModelingExerciseComponent, ModelingExerciseDetailComponent, modelingExerciseRoute, ModelingExerciseService, ModelingExerciseUpdateComponent } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';

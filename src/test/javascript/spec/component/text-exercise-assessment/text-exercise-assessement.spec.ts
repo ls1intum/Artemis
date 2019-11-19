@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { AccountService, JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
@@ -67,6 +68,7 @@ describe('TextAssessmentComponent', () => {
                 { provide: ComplaintService, useClass: MockComplaintService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextAssessmentComponent);

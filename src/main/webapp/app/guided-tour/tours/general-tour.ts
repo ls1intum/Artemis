@@ -1,5 +1,5 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
@@ -30,7 +30,6 @@ export const completedTour: GuidedTour = {
             headlineTranslateKey: 'tour.completed.headline',
             contentTranslateKey: 'tour.completed.content',
             hintTranslateKey: 'tour.completed.hint',
-            // imageUrl: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
         }),
     ],
 };

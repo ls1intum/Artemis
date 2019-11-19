@@ -37,7 +37,7 @@
                 <div [innerHTML]="currentTourStep.contentTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
                 <div *ngIf="currentTourStep.hintTranslateKey" class="step-hint">
                     <div class="step-hint__icon">
-                        <fa-icon icon="info-circle"></fa-icon>
+                        <fa-icon [icon]="'info-circle'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.hintTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
@@ -45,7 +45,7 @@
                 </div>
                 <div *ngIf="currentTourStep.alreadyExecutedTranslateKey" class="step-hint interaction alert alert-success">
                     <div class="step-hint__icon">
-                        <fa-icon icon="check"></fa-icon>
+                        <fa-icon [icon]="'check'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
@@ -56,8 +56,8 @@
                     class="step-hint interaction alert"
                     [class.alert-success]="userInteractionFinished"
                 >
-                    <div class="step-hint__icon" *ngIf="userInteractionFinished; else userInteractionIcons">
-                        <fa-icon icon="check"></fa-icon>
+                    <div class="step-hint__icon" *ngIf="this.userInteractionFinished; else userInteractionIcons">
+                        <fa-icon [icon]="'check'"></fa-icon>
                     </div>
                     <ng-template #userInteractionIcons>
                         <div class="step-hint__icon">
@@ -79,10 +79,10 @@
                 </div>
                 <div *ngIf="currentTourStep.modelingTask" class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
                     <div class="step-hint__icon" *ngIf="!userInteractionFinished">
-                        <fa-icon icon="clipboard-list"></fa-icon>
+                        <fa-icon [icon]="'clipboard-list'"></fa-icon>
                     </div>
                     <div class="step-hint__icon" *ngIf="userInteractionFinished">
-                        <fa-icon icon="check"></fa-icon>
+                        <fa-icon [icon]="'check'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <div [innerHTML]="currentTourStep.modelingTask.taskTranslateKey | translate | htmlForGuidedTourMarkdown"></div>
@@ -93,7 +93,7 @@
                 </div>
                 <div *ngIf="currentTourStep.videoUrl" class="step-hint interaction alert">
                     <div class="step-hint__icon">
-                        <fa-icon icon="video"></fa-icon>
+                        <fa-icon [icon]="'video'"></fa-icon>
                     </div>
                     <div class="step-hint__label">
                         <span jhiTranslate="tour.videoHint.text"></span>
@@ -110,7 +110,7 @@
                     [disabled]="guidedTourService.isOnFirstStep"
                     (click)="guidedTourService.backStep()"
                 >
-                    <fa-icon icon="chevron-left"></fa-icon>
+                    <fa-icon icon="'chevron-left'"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <button
@@ -142,7 +142,7 @@
                     (click)="guidedTourService.nextStep()"
                 >
                     <span jhiTranslate="tour.navigation.next"></span>
-                    <fa-icon icon="chevron-right"></fa-icon>
+                    <fa-icon [icon]="'chevron-right'"></fa-icon>
                 </button>
                 <button
                     *ngIf="

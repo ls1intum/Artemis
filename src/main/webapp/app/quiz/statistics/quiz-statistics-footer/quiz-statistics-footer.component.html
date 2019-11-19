@@ -56,7 +56,7 @@
                     </span>
                 </div>
                 <div *ngIf="waitingForQuizStart || remainingTimeSeconds >= 0" class="connection-status" [ngClass]="{ disconnected: disconnected }">
-                    <fa-icon icon="circle" size="sm"></fa-icon>
+                    <fa-icon [icon]="'circle'" size="sm"></fa-icon>
                     <span *ngIf="!disconnected" jhiTranslate="artemisApp.quizExercise.connected"></span>
                     <span *ngIf="disconnected" jhiTranslate="artemisApp.quizExercise.disconnected"></span>
                 </div>

@@ -1,12 +1,10 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { catchError, debounceTime, map, tap } from 'rxjs/operators';
+import { debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { of, Subscription } from 'rxjs';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subscription } from 'rxjs';
 import { ButtonType } from 'app/shared/components';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { hasExerciseChanged } from 'app/entities/exercise';
-import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
 import { FeatureToggle } from 'app/feature-toggle';
 
 /**
