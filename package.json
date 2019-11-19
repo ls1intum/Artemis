@@ -186,7 +186,7 @@
         "lint:fix": "yarn run lint --fix",
         "ngc": "ngc -p tsconfig-aot.json",
         "cleanup": "rimraf build/{aot,www}",
-        "clean-www": "rimraf build//www/app/{src,build/}",
+        "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
         "start": "yarn run webpack:dev --hot",
         "start-docker": "yarn run webpack:dev --hot --env.docker",
         "start-cold": "yarn run webpack:dev",

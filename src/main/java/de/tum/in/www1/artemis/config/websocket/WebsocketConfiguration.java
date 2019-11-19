@@ -53,17 +53,15 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     @PostConstruct
     public void init() {
+        // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
+        // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
+        webSocketMessageBrokerStats = webSocketMessageBrokerStats();
         webSocketMessageBrokerStats.setLoggingPeriod(20 * 1000);
     }
 
     @Autowired
     public void setMessageBrokerTaskScheduler(TaskScheduler taskScheduler) {
         this.messageBrokerTaskScheduler = taskScheduler;
-    }
-
-    @Autowired
-    public void setWebSocketMessageBrokerStats(WebSocketMessageBrokerStats webSocketMessageBrokerStats) {
-        this.webSocketMessageBrokerStats = webSocketMessageBrokerStats;
     }
 
     @Override
