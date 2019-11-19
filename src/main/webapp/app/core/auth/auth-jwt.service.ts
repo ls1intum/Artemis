@@ -22,14 +22,13 @@ export interface IAuthServerProvider {
 
 @Injectable({ providedIn: 'root' })
 export class AuthServerProvider implements IAuthServerProvider {
-    constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService, private provider: LocalStorageProvider) {}
+    constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
     getToken() {
         return this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
     }
 
     login(credentials: Credentials): Observable<string> {
-        this.provider.foo();
         const data = {
             username: credentials.username,
             password: credentials.password,
