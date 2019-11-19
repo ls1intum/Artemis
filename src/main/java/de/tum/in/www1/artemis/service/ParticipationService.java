@@ -685,13 +685,23 @@ public class ParticipationService {
     }
 
     /**
-     * Get all programming exercise participations belonging to exercise with eager results.
+     * Get all programming exercise participations belonging to exercise with eager submissions -> result.
      *
      * @param exerciseId the id of exercise
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(Long exerciseId) {
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
+    }
+
+    /**
+     * Get all programming exercise participations belonging to exercise with eager submissions -> result --> assessor.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
     }
 
     /**
