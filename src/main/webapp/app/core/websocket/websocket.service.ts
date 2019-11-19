@@ -2,10 +2,12 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, Observer, Subscription } from 'rxjs/Rx';
 
-import { AuthServerProvider, CSRFService, WindowRef } from 'app/core';
+import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { CSRFService } from 'app/core/auth/csrf.service';
 
-import * as SockJS from 'sockjs-client';
 import * as Stomp from 'webstomp-client';
+import { WindowRef } from 'app/core/websocket/window.service';
+import * as SockJS from 'sockjs-client';
 
 export interface IWebsocketService {
     stompFailureCallback(): void;

@@ -680,8 +680,8 @@ public class ParticipationService {
      * @param exerciseId the id of exercise
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
     }
 
     /**
@@ -926,6 +926,16 @@ public class ParticipationService {
      */
     public StudentParticipation findOneWithEagerCourse(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
+
+    /**
+     * Get one participation with eager course.
+     *
+     * @param participationId id of the participation
+     * @return participation with eager course
+     */
+    public StudentParticipation findOneWithEagerResultsAndCourse(Long participationId) {
+        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourse(participationId);
     }
 
     /**

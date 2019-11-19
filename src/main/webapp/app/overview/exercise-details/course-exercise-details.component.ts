@@ -7,20 +7,15 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
-import { AccountService, JhiWebsocketService, User } from 'app/core';
-import {
-    InitializationState,
-    Participation,
-    ParticipationService,
-    ParticipationWebsocketService,
-    ProgrammingExerciseStudentParticipation,
-    StudentParticipation,
-} from 'app/entities/participation';
+import { User } from 'app/core';
+import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
+import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 

@@ -10,7 +10,7 @@
             aria-label="Toggle navigation"
             (click)="toggleNavbar()"
         >
-            <fa-icon icon="bars"></fa-icon>
+            <fa-icon [icon]="'bars'"></fa-icon>
         </a>
         <a class="navbar-brand logo float-left" routerLink="/" (click)="collapseNavbar()">
             <span class="logo-img"></span>
@@ -69,6 +69,12 @@
                         <a class="dropdown-item" routerLink="admin/notification-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'bell'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.notificationManagement">Notification management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.featureToggles">Feature Toggles</span>
                         </a>
                     </li>
                     <li>

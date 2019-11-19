@@ -1,17 +1,17 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { participationStatus } from 'app/entities/exercise';
 import { ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
 import { Course } from 'app/entities/course';
-import { AccountService, WindowRef } from 'app/core';
+import { WindowRef } from 'app/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-course-exercise-row',

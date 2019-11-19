@@ -3,9 +3,8 @@ import { fromEvent, Subscription } from 'rxjs';
 
 import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-guided-tour',
