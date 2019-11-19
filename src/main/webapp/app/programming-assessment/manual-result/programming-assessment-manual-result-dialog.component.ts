@@ -129,7 +129,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
         result.subscribe(
             res => this.onSaveSuccess(res),
-            err => this.onSaveError(),
+            () => this.onSaveError(),
         );
     }
 
@@ -154,19 +154,17 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     private getComplaint(id: number): void {
-        if (this.result) {
-            this.complaintService
-                .findByResultId(id)
-                .pipe(filter(res => !!res.body))
-                .subscribe(
-                    res => {
-                        this.complaint = res.body!;
-                    },
-                    (err: HttpErrorResponse) => {
-                        this.alertService.error(err.message);
-                    },
-                );
-        }
+        this.complaintService
+            .findByResultId(id)
+            .pipe(filter(res => !!res.body))
+            .subscribe(
+                res => {
+                    this.complaint = res.body!;
+                },
+                (err: HttpErrorResponse) => {
+                    this.alertService.error(err.message);
+                },
+            );
     }
 
     /**

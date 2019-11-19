@@ -29,6 +29,8 @@ import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { User } from 'app/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService, LocalStorageService } from 'ngx-webstorage';
+import { By } from '@angular/platform-browser';
+import { JhiAlertService } from 'ng-jhipster';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,6 +46,18 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
     let updateAfterComplaintStub: SinonStub;
     let findByResultId: SinonStub;
     let getIdentity: SinonStub;
+    const user = <User>{ id: 1 };
+    const result = <any>{
+        feedbacks: [new Feedback()],
+        participation: new StudentParticipation(),
+        score: 80,
+        successful: true,
+        submission: new ProgrammingSubmission(),
+        assessor: user,
+        hasComplaint: true,
+    };
+    result.submission.id = 1;
+    const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result: result };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -54,6 +68,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
                 ComplaintService,
                 BuildLogService,
                 AccountService,
+                JhiAlertService,
                 { provide: ResultService, useClass: MockResultService },
                 {
                     provide: ProgrammingExerciseParticipationService,
@@ -70,6 +85,10 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
+                // Ignore console errors
+                console.error = () => {
+                    return false;
+                };
                 fixture = TestBed.createComponent(ProgrammingAssessmentManualResultDialogComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
@@ -87,25 +106,31 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         findByResultId.restore();
     });
 
-    it('should get complaint for result with complaint and check assessor', fakeAsync(() => {
-        let complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?' };
-        let result = new Result();
-        let user = new User();
-        user.id = 1;
-        result.assessor = user;
-        result.hasComplaint = true;
-        result.participation = new StudentParticipation();
-        result.feedbacks = [new Feedback()];
-        result.submission = new ProgrammingSubmission();
-        result.submission.id = 1;
-        result.score = 80;
-        complaint.result = result;
-        findByResultId.returns(of(complaint));
+    it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
+        findByResultId.returns(of({ body: complaint }));
         getIdentity.returns(new Promise(resolve => resolve(user)));
         comp.result = result;
         comp.ngOnInit();
         tick();
         expect(findByResultId.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
+        expect(comp.complaint).to.exist;
+        fixture.detectChanges();
+        let complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
+        expect(complaintsForm).to.exist;
+        expect(comp.complaint).to.exist;
+    }));
+
+    it("should not show complaint when result doesn't have it", fakeAsync(() => {
+        getIdentity.returns(new Promise(resolve => resolve(user)));
+        result.hasComplaint = false;
+        comp.result = result;
+        comp.ngOnInit();
+        tick();
+        expect(findByResultId.notCalled).to.be.true;
+        expect(comp.complaint).to.not.exist;
+        fixture.detectChanges();
+        let complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
+        expect(complaintsForm).to.not.exist;
     }));
 });
