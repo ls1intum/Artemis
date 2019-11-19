@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -111,9 +110,9 @@ public class ResultResource {
 
         // make sure that the participation cannot be manipulated on the client side
         newResult.setParticipation(participation);
-        final var exercise = participation.getExercise();
+        final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !areManualResultsAllowed(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
             return forbidden();
         }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
@@ -162,9 +161,9 @@ public class ResultResource {
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
         // make sure that the participation cannot be manipulated on the client side
         updatedResult.setParticipation(participation);
-        final var exercise = participation.getExercise();
+        final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !areManualResultsAllowed(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
             return forbidden();
         }
         if (updatedResult.getId() == null) {
@@ -285,18 +284,6 @@ public class ResultResource {
         else {
             return Optional.empty();
         }
-    }
-
-    private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
-        // Only allow manual results for programming exercises if option was enabled and due dates have passed
-        if (exerciseToBeChecked instanceof ProgrammingExercise) {
-            final var exercise = (ProgrammingExercise) exerciseToBeChecked;
-            final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
-                    : exercise.getDueDate();
-            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
-        }
-
-        return true;
     }
 
     /**

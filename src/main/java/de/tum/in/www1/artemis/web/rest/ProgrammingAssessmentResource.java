@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.time.ZonedDateTime;
-
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +11,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.service.*;
 
 /** REST controller for managing ProgrammingAssessment. */
@@ -57,7 +54,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         long exerciseId = participation.getExercise().getId();
         ProgrammingExercise programmingExercise = programmingExerciseService.findOne(exerciseId);
         checkAuthorization(programmingExercise, user);
-        if (!areManualResultsAllowed(programmingExercise)) {
+        if (!programmingExercise.areManualResultsAllowed()) {
             return forbidden();
         }
 
@@ -78,13 +75,5 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @Override
     String getEntityName() {
         return ENTITY_NAME;
-    }
-
-    private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
-        // Only allow manual results for programming exercises if option was enabled and due dates have passed
-        final var exercise = (ProgrammingExercise) exerciseToBeChecked;
-        final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
-                : exercise.getDueDate();
-        return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 }

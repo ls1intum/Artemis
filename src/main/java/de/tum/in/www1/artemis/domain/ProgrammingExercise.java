@@ -429,6 +429,16 @@ public class ProgrammingExercise extends Exercise {
         super.filterSensitiveInformation();
     }
 
+    /**
+     * Check if manual results are allowed for the exercise
+     * @return true if manual results are allowed, false otherwise
+     */
+    public boolean areManualResultsAllowed() {
+        // Only allow manual results for programming exercises if option was enabled and due dates have passed;
+        final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
+        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
