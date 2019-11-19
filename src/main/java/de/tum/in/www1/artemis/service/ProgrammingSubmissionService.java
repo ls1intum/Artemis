@@ -214,7 +214,7 @@ public class ProgrammingSubmissionService {
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
         final var optionalSubmission = isGraded
-                ? programmingSubmissionRepository.findGradedByParticipationAIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
+                ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
                 : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
         if (optionalSubmission.isEmpty() || optionalSubmission.get().getResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
