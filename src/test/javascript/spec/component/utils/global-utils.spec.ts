@@ -8,7 +8,11 @@ describe('GlobalUtils', () => {
         it('should return correct segments of provided string and single character delimiter', () => {
             const testString = 'word1,word2,word3';
             const delimiter = ',';
-            const expectedResult = [{ start: 0, end: 4, word: 'word1' }, { start: 6, end: 10, word: 'word2' }, { start: 12, end: 16, word: 'word3' }];
+            const expectedResult = [
+                { start: 0, end: 4, word: 'word1' },
+                { start: 6, end: 10, word: 'word2' },
+                { start: 12, end: 16, word: 'word3' },
+            ];
 
             const segments = getStringSegmentPositions(testString, delimiter);
             expect(segments).to.deep.equal(expectedResult);
@@ -17,7 +21,11 @@ describe('GlobalUtils', () => {
         it('should return correct segments of provided string and multiple character delimiter', () => {
             const testString = 'word1 - word2 - word3';
             const delimiter = ' - ';
-            const expectedResult = [{ start: 0, end: 4, word: 'word1' }, { start: 8, end: 12, word: 'word2' }, { start: 16, end: 20, word: 'word3' }];
+            const expectedResult = [
+                { start: 0, end: 4, word: 'word1' },
+                { start: 8, end: 12, word: 'word2' },
+                { start: 16, end: 20, word: 'word3' },
+            ];
 
             const segments = getStringSegmentPositions(testString, delimiter);
             expect(segments).to.deep.equal(expectedResult);
@@ -49,7 +57,11 @@ describe('GlobalUtils', () => {
         const nonMultilineText = 'abc def abc def';
 
         it('should match the line numbers correctly in the given multiline string', () => {
-            const expectedMatches = [[1, 'def'], [3, 'def'], [4, 'def']];
+            const expectedMatches = [
+                [1, 'def'],
+                [3, 'def'],
+                [4, 'def'],
+            ];
             const matches = matchRegexWithLineNumbers(multilineText, globalRegex);
 
             expect(matches).to.be.deep.equal(expectedMatches);

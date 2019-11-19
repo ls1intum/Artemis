@@ -32,7 +32,7 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
             declarations: [ProgrammingExerciseInstructionStepWizardComponent],
             providers: [ProgrammingExerciseInstructionService],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionStepWizardComponent);

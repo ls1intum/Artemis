@@ -7,6 +7,11 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ModelingSubmissionComponent } from 'app/entities/modeling-submission/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
 import { ModelingSubmission } from 'app/shared/model/modeling-submission.model';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('Component Tests', () => {
     describe('ModelingSubmission Management Component', () => {

@@ -22,6 +22,7 @@
             "detail": {
                 "title": "Programmieraufgabe"
             },
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studenten sein.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
@@ -106,10 +107,14 @@
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
                 "addStudentName": "Name der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "squashAfterInstructor": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
-                "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)"
+                "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
+                "successMessage": "Die Repositories wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
+            "resubmitSingle": "Neues Ergebnis für Teilnahme erzeugen",
+            "resubmitConfirmManualResultOverride": "Das letzte Ergebnis des Studenten ist ein manuelles Ergebnis, das heißt es wurde von einem Tutor bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für den Studenten angezeigt.",
+            "resubmitAllConfirmAfterDeadline": "Die Abgabefrist ist verstrichen, manche der Studententeilnahmen besitzen möglicherweise manuelle Ergebnisse, die von Tutoren erstellt wurden. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
             "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",

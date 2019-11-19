@@ -5,9 +5,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -15,7 +17,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -145,8 +146,8 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(modelingExercise.getId())
-                .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId()).stream()
+                .map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -193,27 +194,20 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
-
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResult(null);
-
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
                 username);
-        if (!optionalParticipation.isPresent()) {
+        if (optionalParticipation.isEmpty()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
         }
         StudentParticipation participation = optionalParticipation.get();
 
-        // For now, we do not allow students to retry their modeling exercise after they have received feedback, because this could lead to unfair situations. Some students might
-        // get the manual feedback early and can then retry the exercise within the deadline and have a second chance, others might get the manual feedback late and would not have
-        // a chance to try it out again.
-        // TODO: think about how we can enable retry again in the future in a fair way
-        // make sure that no (submitted) submission exists for the given user and exercise to prevent retry submissions
-        boolean submittedSubmissionExists = participation.getSubmissions().stream().anyMatch(Submission::isSubmitted);
-        if (submittedSubmissionExists) {
-            throw new BadRequestAlertException("User " + username + " already participated in exercise with id " + modelingExercise.getId(), "modelingSubmission",
-                    "participationExists");
+        final var exerciseDueDate = modelingExercise.getDueDate();
+        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        modelingSubmission.setResult(null);
 
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -233,6 +227,7 @@ public class ModelingSubmissionService extends SubmissionService {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
+
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
             Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();

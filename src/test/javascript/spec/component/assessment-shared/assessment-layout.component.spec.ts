@@ -6,7 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Complaint } from 'app/entities/complaint';
 import { AssessmentLayoutComponent } from 'app/assessment-shared/assessment-layout/assessment-layout.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';

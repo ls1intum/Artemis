@@ -8,7 +8,7 @@ import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise',

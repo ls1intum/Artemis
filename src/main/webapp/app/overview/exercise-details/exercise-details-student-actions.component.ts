@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus, participationStatus } from 'app/entities/exercise';
+import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
@@ -8,8 +8,9 @@ import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { HttpClient } from '@angular/common/http';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -18,20 +19,9 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
     providers: [JhiAlertService, SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly TEXT = ExerciseType.TEXT;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly QUIZ_UNINITIALIZED = ParticipationStatus.QUIZ_UNINITIALIZED;
-    readonly QUIZ_ACTIVE = ParticipationStatus.QUIZ_ACTIVE;
-    readonly QUIZ_SUBMITTED = ParticipationStatus.QUIZ_SUBMITTED;
-    readonly QUIZ_NOT_STARTED = ParticipationStatus.QUIZ_NOT_STARTED;
-    readonly QUIZ_NOT_PARTICIPATED = ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    readonly QUIZ_FINISHED = ParticipationStatus.QUIZ_FINISHED;
-    readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
-    readonly INITIALIZED = ParticipationStatus.INITIALIZED;
-    readonly INACTIVE = ParticipationStatus.INACTIVE;
+    FeatureToggle = FeatureToggle;
+    readonly ExerciseType = ExerciseType;
+    readonly ParticipationStatus = ParticipationStatus;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -71,6 +61,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
         return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate!).isBefore(moment());
+    }
+
+    /**
+     * see exercise-utils -> isStartExerciseAvailable
+     */
+    isStartExerciseAvailable(): boolean {
+        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
     isOnlineEditorAllowed(): boolean {
@@ -131,6 +128,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
+                        // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
+                        participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }

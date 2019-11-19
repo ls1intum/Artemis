@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from '../../../../../app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ngx-cacheable';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
@@ -37,6 +38,27 @@ export class ProgrammingExercisePlantUmlService {
                 responseType: 'arraybuffer',
             })
             .map(res => this.convertPlantUmlResponseToBase64(res));
+    }
+
+    /**
+     * @function getPlantUmlSvg
+     * @param plantUml definition obtained by parsing the README markdown file
+     * @desc Requests the plantuml svg as string
+     *
+     * TODO provide a rationale about the cache configuration
+     *
+     */
+    @Cacheable({
+        /** Cacheable configuration **/
+        maxCacheCount: 3,
+        maxAge: 3000,
+        slidingExpiration: true,
+    })
+    getPlantUmlSvg(plantUml: string): Observable<string> {
+        return this.http.get(`${this.resourceUrl}/svg`, {
+            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
+            responseType: 'text',
+        });
     }
 
     private convertPlantUmlResponseToBase64(res: any): string {

@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -65,10 +64,6 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final FeedbackService feedbackService;
-
-    private final UserService userService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
@@ -79,17 +74,14 @@ public class ResultResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, FeedbackService feedbackService, UserService userService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            SimpMessageSendingOperations messagingTemplate, LtiService ltiService, ProgrammingSubmissionService programmingSubmissionService) {
+    public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
+            ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate, ProgrammingSubmissionService programmingSubmissionService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
-        this.feedbackService = feedbackService;
-        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingTemplate = messagingTemplate;
@@ -98,76 +90,89 @@ public class ResultResource {
     }
 
     /**
-     * POST /results : Create a new manual result for a programming exercise (Do NOT use it for other exercise types) NOTE: we deviate from the standard URL scheme to avoid
-     * conflicts with a different POST request on results
+     * POST /participations/{participationId}/manual-results : Create a new manual result for a programming exercise (Do NOT use it for other exercise types)
+     * NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
      *
-     * @param result the result to create
+     * @param participationId the id of the participation for which the new manual result is created
+     * @param newResult the result to create
      * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/manual-results")
+    @PostMapping("participations/{participationId}/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> createProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
-        log.debug("REST request to save Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
-        final var user = userService.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<Result> createProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result newResult) throws URISyntaxException {
+        log.debug("REST request to create a new result : {}", newResult);
+        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        final var latestExistingResult = participation.findLatestResult();
+        if (latestExistingResult != null && latestExistingResult.getAssessmentType() == AssessmentType.MANUAL) {
+            // prevent that tutors create multiple manual results
+            forbidden();
+        }
+
+        // make sure that the participation cannot be manipulated on the client side
+        newResult.setParticipation(participation);
         final var exercise = participation.getExercise();
-        if (!userHasPermissions(course, user) || areManualResultsAllowed(exercise))
+        final var course = exercise.getCourse();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !areManualResultsAllowed(exercise)) {
             return forbidden();
+        }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
             return badRequest();
         }
 
-        if (result.getId() != null) {
+        if (newResult.getId() != null) {
             throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
         }
-        else if (result.getResultString() == null) {
+        else if (newResult.getResultString() == null) {
             throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
         }
-        else if (result.getScore() == null) {
+        else if (newResult.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         }
-        else if (result.getScore() != 100 && result.isSuccessful()) {
+        else if (newResult.getScore() != 100 && newResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
-        else if (!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream().filter(feedback -> feedback.getText() == null).count() != 0) {
+        else if (!newResult.getFeedbacks().isEmpty() && newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getText() == null)) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
         // Create manual submission with last commit hash und current time stamp.
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
-        result.setSubmission(submission);
-        resultService.createNewManualResult(result, true);
+        newResult.setSubmission(submission);
+        newResult = resultService.createNewManualResult(newResult, true);
 
-        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/participations/" + participation.getId() + "/manual-results/" + newResult.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
     }
 
     /**
-     * POST /results/:planKey : Notify the application about a new build result for a programming exercise This API is invoked by the CI Server at the end of the build/test result
-     * and does not need any security
+     * PUT /participations/{participationId}/manual-results : Updates an existing result.
      *
-     * @param planKey the plan key of the plan which is notifying about a new result
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
+     * @param participationId the id of the participation for which the manual result is updated
+     * @param updatedResult the result to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated result, or with status 400 (Bad Request) if the result is not valid, or with status 500 (Internal
+     *         Server Error) if the result couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "/results/{planKey}")
-    @Transactional
-    @Deprecated
-    public ResponseEntity<?> notifyResultOld(@PathVariable("planKey") String planKey) {
-        if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    @PutMapping("participations/{participationId}/manual-results")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result updatedResult) throws URISyntaxException {
+        log.debug("REST request to update Result : {}", updatedResult);
+        final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        // make sure that the participation cannot be manipulated on the client side
+        updatedResult.setParticipation(participation);
+        final var exercise = participation.getExercise();
+        final var course = exercise.getCourse();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !areManualResultsAllowed(exercise)) {
+            return forbidden();
+        }
+        if (updatedResult.getId() == null) {
+            return createProgrammingExerciseManualResult(participationId, updatedResult);
         }
 
-        Optional<ProgrammingExerciseParticipation> participation = getParticipationWithResults(planKey);
-        if (participation.isPresent()) {
-            resultService.onResultNotifiedOld(participation.get());
-            return ResponseEntity.ok().build();
-        }
-        else {
-            return notFound();
-        }
+        updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
     }
 
     /**
@@ -184,7 +189,7 @@ public class ResultResource {
      */
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
-        log.info("Received result notify (NEW)");
+        log.debug("Received result notify (NEW)");
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
@@ -204,11 +209,11 @@ public class ResultResource {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             return badRequest();
         }
-        log.info("PlanKey for received notifyResultNew is {}", planKey);
+        log.info("Artemis received a new result from Bamboo for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
         Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
-        if (!optionalParticipation.isPresent()) {
+        if (optionalParticipation.isEmpty()) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             return notFound();
         }
@@ -220,6 +225,8 @@ public class ResultResource {
 
         // Only notify the user about the new result if the result was created successfully.
         if (result.isPresent()) {
+            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
+                    result.get().getParticipation());
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
 
@@ -230,8 +237,8 @@ public class ResultResource {
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
             }
+            log.info("The new result for {} was saved successfully", planKey);
         }
-        log.info("ResultService succeeded for notifyResultNew (PlanKey: {}).", planKey);
         return ResponseEntity.ok().build();
     }
 
@@ -257,8 +264,7 @@ public class ResultResource {
                 return Optional.empty();
             }
         }
-        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdAndInitializationStateWithEagerResults(planKey,
-                InitializationState.INITIALIZED);
+        List<ProgrammingExerciseStudentParticipation> participations = participationService.findByBuildPlanIdWithEagerResults(planKey);
         Optional<ProgrammingExerciseStudentParticipation> participation = Optional.empty();
         if (participations.size() > 0) {
             participation = Optional.of(participations.get(0));
@@ -281,40 +287,13 @@ public class ResultResource {
         }
     }
 
-    /**
-     * PUT /results : Updates an existing result.
-     *
-     * @param result the result to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated result, or with status 400 (Bad Request) if the result is not valid, or with status 500 (Internal
-     *         Server Error) if the result couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PutMapping("/manual-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateProgrammingExerciseManualResult(@RequestBody Result result) throws URISyntaxException {
-        log.debug("REST request to update Result : {}", result);
-        final var participation = result.getParticipation();
-        final var course = participation.getExercise().getCourse();
-        final var exercise = participation.getExercise();
-        if (!userHasPermissions(course) || !areManualResultsAllowed(exercise)) {
-            return forbidden();
-        }
-        if (result.getId() == null) {
-            return createProgrammingExerciseManualResult(result);
-        }
-
-        // have a look how quiz-exercise handles this case with the contained questions
-        resultRepository.save(result);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
-    }
-
     private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed
         if (exerciseToBeChecked instanceof ProgrammingExercise) {
             final var exercise = (ProgrammingExercise) exerciseToBeChecked;
             final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
                     : exercise.getDueDate();
-            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || !relevantDueDate.isBefore(ZonedDateTime.now()));
+            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
         }
 
         return true;
@@ -361,8 +340,9 @@ public class ResultResource {
         else {
             if (!authCheckService.isOwnerOfParticipation(participation)) {
                 Course course = participation.getExercise().getCourse();
-                if (!userHasPermissions(course))
+                if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
                     return forbidden();
+                }
             }
         }
 
@@ -420,8 +400,9 @@ public class ResultResource {
 
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
-        if (!userHasPermissions(course))
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
+        }
 
         // TODO use rated only in case the given request param is true
 
@@ -491,25 +472,29 @@ public class ResultResource {
         if (result.isPresent()) {
             Participation participation = result.get().getParticipation();
             Course course = participation.getExercise().getCourse();
-            if (!userHasPermissions(course))
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
                 return forbidden();
+            }
         }
         return result.map(foundResult -> new ResponseEntity<>(foundResult, HttpStatus.OK)).orElse(notFound());
     }
 
     /**
-     * GET /latest-result/:participationId : get the latest result with feedbacks of the given participation. The order of results is determined by completionDate desc.
+     * GET /participations/:participationId/latest-result : get the latest result with feedbacks for the given participation.
+     * The order of results is determined by completionDate desc.
      *
      * @param participationId the id of the participation for which to retrieve the latest result.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @GetMapping("results/{participationId}/latest-result")
+    @GetMapping("participations/{participationId}/latest-result")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        Participation participation = participationService.findOne(participationId);
 
-        if (!participationService.canAccessParticipation(participation)) {
+        if (participation instanceof StudentParticipation && !participationService.canAccessParticipation((StudentParticipation) participation)
+                || participation instanceof ProgrammingExerciseParticipation
+                        && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
             return forbidden();
         }
 
@@ -526,14 +511,15 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Optional<Result> result = resultRepository.findByIdWithEagerFeedbacks(resultId);
-        if (result.isEmpty()) {
+        Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);
+        if (optionalResult.isEmpty()) {
             return notFound();
         }
-        Participation participation = result.get().getParticipation();
+        Result result = optionalResult.get();
+        Participation participation = result.getParticipation();
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
         if (participation instanceof StudentParticipation) {
@@ -551,16 +537,7 @@ public class ResultResource {
             return forbidden();
         }
 
-        try {
-            List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
-            // TODO: send an empty list to the client and do not send a 404 - this is an issue however for some client implementations as there being no feedbacks
-            // (= e.g. build error in programming exercises) is different from there being an empty feedback list
-            return Optional.ofNullable(feedbackItems).map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK)).orElse(ResponseEntity.notFound().build());
-        }
-        catch (Exception e) {
-            log.error("REST request to get Result failed : {}", resultId, e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>(result.getFeedbacks(), HttpStatus.OK);
     }
 
     /**
@@ -577,8 +554,9 @@ public class ResultResource {
         if (result.isPresent()) {
             Participation participation = result.get().getParticipation();
             Course course = participation.getExercise().getCourse();
-            if (!userHasPermissions(course))
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
                 return forbidden();
+            }
             resultRepository.deleteById(resultId);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
         }
@@ -597,17 +575,5 @@ public class ResultResource {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
         return ResponseUtil.wrapOrNotFound(result);
-    }
-
-    private boolean userHasPermissions(Course course, User user) {
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return false;
-        }
-        return true;
-    }
-
-    private boolean userHasPermissions(Course course) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return userHasPermissions(course, user);
     }
 }

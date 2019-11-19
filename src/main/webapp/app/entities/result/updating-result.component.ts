@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
@@ -9,7 +9,7 @@ import { RepositoryService } from 'app/entities/repository/repository.service';
 
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
@@ -91,7 +91,11 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         }
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
-            .pipe(tap(({ submission: pendingSubmission }) => (this.isBuilding = !!pendingSubmission)))
+            .pipe(
+                tap(({ submissionState }) => {
+                    this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+                }),
+            )
             .subscribe();
     }
 }

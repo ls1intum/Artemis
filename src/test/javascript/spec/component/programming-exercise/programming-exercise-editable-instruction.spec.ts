@@ -4,15 +4,13 @@ import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { Subject } from 'rxjs';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
-import { Participation, ParticipationWebsocketService, StudentParticipation, TemplateProgrammingExerciseParticipation } from 'src/main/webapp/app/entities/participation';
-import { Result, ResultDetailComponent, ResultService } from 'src/main/webapp/app/entities/result';
+import { Participation, ParticipationWebsocketService, TemplateProgrammingExerciseParticipation } from 'src/main/webapp/app/entities/participation';
+import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise';
 import { MockParticipationWebsocketService } from '../../mocks';
@@ -44,7 +42,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
     const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
-    const testCases = [{ testName: 'test1', active: true }, { testName: 'test2', active: true }, { testName: 'test3', active: false }];
+    const testCases = [
+        { testName: 'test1', active: true },
+        { testName: 'test2', active: true },
+        { testName: 'test3', active: false },
+    ];
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -56,7 +58,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);

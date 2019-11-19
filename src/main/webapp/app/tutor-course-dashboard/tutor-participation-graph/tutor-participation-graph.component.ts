@@ -1,19 +1,24 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
     templateUrl: './tutor-participation-graph.component.html',
     styleUrls: ['./tutor-participation-graph.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfParticipations: number;
     @Input() public numberOfAssessments: number;
+    @Input() exercise: Exercise;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
+
+    ExerciseType = ExerciseType;
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
     REVIEWED_INSTRUCTIONS = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
     TRAINED = TutorParticipationStatus.TRAINED;
@@ -56,21 +61,34 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Calculates the classes for the steps (circles) in the tutor participation graph
+     * @param step for which the class should be calculated for (NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED)
+     */
     calculateClasses(step: TutorParticipationStatus): string {
+        // Returns 'active' if the current participation status is not trained
         if (step === this.tutorParticipationStatus && step !== this.TRAINED) {
             return 'active';
         }
 
-        if (step === this.COMPLETED && this.tutorParticipationStatus !== this.TRAINED) {
+        // Returns 'opaque' if the tutor has not participated yet
+        if (step === this.TRAINED && this.tutorParticipationStatus === this.NOT_PARTICIPATED) {
             return 'opaque';
         }
 
-        if (step === this.TRAINED && ![this.REVIEWED_INSTRUCTIONS, this.TRAINED, this.COMPLETED].includes(this.tutorParticipationStatus)) {
-            return 'opaque';
-        }
+        if (step === this.TRAINED && this.exercise.exampleSubmissions && this.tutorParticipation.trainedExampleSubmissions) {
+            const reviewedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter(exampleSubmission => !exampleSubmission.usedForTutorial);
+            const exercisesToReview = this.exercise.exampleSubmissions.filter(exampleSubmission => !exampleSubmission.usedForTutorial);
+            const assessedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
+            const exercisesToAssess = this.exercise.exampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
 
-        if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
-            return 'orange';
+            // Returns 'orange' if there are still open example reviews or assessments
+            if (
+                (exercisesToReview.length > 0 && exercisesToReview.length !== reviewedByTutor.length) ||
+                (exercisesToAssess.length > 0 && exercisesToAssess.length !== assessedByTutor.length)
+            ) {
+                return 'orange';
+            }
         }
 
         return '';

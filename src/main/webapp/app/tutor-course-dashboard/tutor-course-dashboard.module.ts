@@ -6,7 +6,7 @@ import { ArtemisSharedModule } from '../shared';
 import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
 import { CourseComponent, CourseExerciseService, CourseService } from '../entities/course';
 import { TutorCourseDashboardComponent } from './tutor-course-dashboard.component';
-import { RepositoryService } from 'app/entities/repository';
+import { RepositoryService } from 'app/entities/repository/repository.service';
 import { ArtemisResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';

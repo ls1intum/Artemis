@@ -16,11 +16,15 @@ export class ComplaintResponseService {
 
     create(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaintResponse);
-        return this.http.post<ComplaintResponse>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .post<ComplaintResponse>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<ComplaintResponse>(`${this.resourceUrl}/${id}`, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .get<ComplaintResponse>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findByComplaintId(complaintId: number): Observable<EntityResponseType> {

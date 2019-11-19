@@ -425,7 +425,7 @@ public class UserService {
     /**
      * Get all managed users
      * @param pageable used to find users
-     * @return all users with roles other than ROLE_ANONYMOUS
+     * @return all users
      */
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAll(pageable).map(UserDTO::new);
@@ -531,6 +531,7 @@ public class UserService {
      * @param guidedTourSettings the updated set of guided tour settings
      * @return the updated user object with the changed guided tour settings
      */
+    @Transactional
     public User updateGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         loggedInUser.getGuidedTourSettings().clear();
