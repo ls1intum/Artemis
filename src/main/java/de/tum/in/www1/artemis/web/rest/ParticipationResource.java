@@ -344,16 +344,16 @@ public class ParticipationResource {
      * @return A list of all participations for the given course
      */
     @GetMapping(value = "/courses/{courseId}/participations")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResults(courseId, false, false);
+        List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResults(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
             // we only need participationId, title, dates and max points
