@@ -19,6 +19,8 @@ import { MAX_SCORE_PATTERN } from 'app/app.constants';
 export class FileUploadExerciseUpdateComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
+    assessmentDueDateError: boolean;
+    dueDateError: boolean;
     maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -45,6 +47,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         // new page from previous page.
         window.scroll(0, 0);
 
+        this.dueDateError = false;
+        this.assessmentDueDateError = false;
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
@@ -86,7 +90,20 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             this.subscribeToSaveResponse(this.fileUploadExerciseService.create(this.fileUploadExercise));
         }
     }
+    /**
+     * Validates if the date is correct
+     */
+    validateDate() {
+        this.dueDateError =
+            this.fileUploadExercise.releaseDate && this.fileUploadExercise.dueDate ? !this.fileUploadExercise.dueDate.isAfter(this.fileUploadExercise.releaseDate) : false;
 
+        this.assessmentDueDateError =
+            this.fileUploadExercise.assessmentDueDate && this.fileUploadExercise.releaseDate
+                ? !this.fileUploadExercise.assessmentDueDate.isAfter(this.fileUploadExercise.releaseDate)
+                : this.fileUploadExercise.assessmentDueDate && this.fileUploadExercise.dueDate
+                ? !this.fileUploadExercise.assessmentDueDate.isAfter(this.fileUploadExercise.dueDate)
+                : false;
+    }
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercies categories
