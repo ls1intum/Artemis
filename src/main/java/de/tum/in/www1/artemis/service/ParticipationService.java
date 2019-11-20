@@ -732,7 +732,7 @@ public class ParticipationService {
      * @param courseId the id of the exercise
      * @return list of participations belonging to course
      */
-    public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId) {
+    public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
 
         return participations.stream()
@@ -741,13 +741,14 @@ public class ParticipationService {
                 // These participations are used e.g. to store template and solution build plans in programming exercises
                 .filter(participation -> participation.getStudent() != null)
 
-                // filter all irrelevant results, i.e. rated = false or before exercise due date
+                // filter all irrelevant results, i.e. rated = false or no completion date or no score
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<Result>();
 
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
+                        // this should not happen because the database call above only retrieves rated results
                         if (result.isRated() == Boolean.FALSE) {
                             continue;
                         }
@@ -755,20 +756,9 @@ public class ParticipationService {
                             // we are only interested in results with completion date and with score
                             continue;
                         }
-                        // in quizzes and programming exercises we take the last rated result
-                        if (participation.getExercise().getDueDate() != null) {
-                            if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                                    || participation.getExercise() instanceof FileUploadExercise) {
-                                if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
-                                        && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
-                                    // Filter out late results using the submission date, because in this exercise types, the
-                                    // difference between submissionDate and result.completionDate can be significant due to manual assessment
-                                    continue;
-                                }
-                            }
-                        }
                         relevantResults.add(result);
                     }
+                    // we take the last rated result
                     if (!relevantResults.isEmpty()) {
                         // make sure to take the latest result
                         relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
