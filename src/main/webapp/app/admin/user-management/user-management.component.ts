@@ -7,7 +7,9 @@ import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
-import { AccountService, User, UserService } from 'app/core';
+import { User } from 'app/core';
+import { UserService } from 'app/core/user/user.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-user-management',

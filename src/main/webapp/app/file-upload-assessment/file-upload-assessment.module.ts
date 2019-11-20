@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { fileUploadAssessmentRoutes } from './file-upload-assessment.route';
 import { ArtemisSharedModule } from 'app/shared';
@@ -23,7 +23,5 @@ const ENTITY_STATES = [...fileUploadAssessmentRoutes];
     ],
     declarations: [FileUploadAssessmentComponent, FileUploadAssessmentDashboardComponent],
     exports: [FileUploadAssessmentComponent],
-    providers: [],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArtemisFileUploadAssessmentModule {}

@@ -55,7 +55,7 @@
         <ng-template #loadingScreen>
             <p></p>
             <h3>
-                <span style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while loading the statistics!</span></span>
+                <span style="color:grey"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>Please wait while loading the statistics!</span></span>
             </h3>
         </ng-template>
 
@@ -67,24 +67,24 @@
             <table class="table" *ngIf="course.exercises.length >= 0">
                 <thead>
                     <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
-                        <th jhiSortBy="id"><a class="th-link">#</a> <fa-icon icon="sort"></fa-icon></th>
+                        <th jhiSortBy="id"><a class="th-link">#</a> <fa-icon [icon]="'sort'"></fa-icon></th>
                         <th jhiSortBy="title">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="dueDate">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="assessmentDueDate">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="submissions">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="complaints">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="requests">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}</a> <fa-icon icon="sort"></fa-icon>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th>{{ 'artemisApp.instructorCourseDashboard.completedAssessments' | translate }}</th>
                         <th>{{ 'artemisApp.instructorCourseDashboard.action' | translate }}</th>

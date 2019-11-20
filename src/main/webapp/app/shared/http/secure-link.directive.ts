@@ -1,5 +1,3 @@
-import { ResultService } from 'app/entities/result';
-import { RepositoryService } from 'app/entities/repository';
 import { Directive, ElementRef } from '@angular/core';
 
 /**

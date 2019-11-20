@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { AccountService, JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
@@ -31,7 +32,7 @@ import { SubmissionService } from 'app/entities/submission/submission.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { participationSubmissionRoute } from 'app/entities/participation-submission';
-import { TranslateService, TranslateStore, TranslateLoader, TranslateCompiler, TranslateParser, TranslateModule, MissingTranslationHandler } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { StudentParticipation } from 'app/entities/participation';
 
 chai.use(sinonChai);
@@ -73,6 +74,7 @@ describe('ParticipationSubmissionComponent', () => {
                 { provide: ComplaintService, useClass: MockComplaintService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ParticipationSubmissionComponent);

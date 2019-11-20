@@ -1,14 +1,16 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
-import { JhiWebsocketService } from 'app/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { createRequestOption } from 'app/shared';
 import { SubmissionType } from 'app/entities/submission';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -275,6 +277,47 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     };
 
     /**
+     * Initialize the cache from outside of the service.
+     *
+     * The service expects that:
+     * - Each exercise does only have one student participation for the given student.
+     *
+     * If the expectations are violated, the service might not work as intended anymore!
+     *
+     * @param exercises
+     * @param forceCacheOverride if true it will clear the current value in the cache for each participation of the exercises.
+     */
+    public initializeCacheForStudent(exercises: Exercise[], forceCacheOverride = false) {
+        exercises
+            .filter(exercise => {
+                // We only process programming exercises in this service.
+                if (exercise.type !== ExerciseType.PROGRAMMING) {
+                    return false;
+                }
+                // We can't process exercises without participations.
+                if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
+                    return false;
+                }
+                // If we already have a value cached for the participation we don't override it.
+                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations[0].id]) {
+                    return false;
+                }
+                // Without submissions we can't determine if the latest submission is pending.
+                return !!exercise.studentParticipations[0].submissions && !!exercise.studentParticipations[0].submissions.length;
+            })
+            .forEach(exercise => {
+                const participation = exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+                const latestSubmission = participation.submissions.reduce((current, next) => (current.id > next.id ? current : next)) as ProgrammingSubmission;
+                const latestResult: Result | null =
+                    participation.results && participation.results.length ? participation.results.reduce((current, next) => (current.id > next.id ? current : next)) : null;
+                const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
+                // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
+                this.submissionSubjects[participation.id] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                this.processPendingSubmission(isPendingSubmission ? latestSubmission : null, participation.id, exercise.id).subscribe();
+            });
+    }
+
+    /**
      * Subscribe for the latest pending submission for the given participation.
      * A latest pending submission is characterized by the following properties:
      * - Submission is the newest one (by submissionDate)
@@ -291,9 +334,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId id of ProgrammingExerciseStudentParticipation
      * @param exerciseId id of ProgrammingExercise
      */
-    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number) => {
+    public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, forceCacheOverride = false) => {
         const subject = this.submissionSubjects[participationId];
-        if (subject) {
+        if (!forceCacheOverride && subject) {
             return subject.asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
         }
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
@@ -360,8 +403,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + `/trigger-build?submissionType=${submissionType}`, {});
     }
 
-    public triggerFailedBuild(participationId: number) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { observe: 'response' });
+    public triggerFailedBuild(participationId: number, lastGraded: boolean) {
+        const params = new HttpParams().set('lastGraded', lastGraded.toString());
+        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { params, observe: 'response' });
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {

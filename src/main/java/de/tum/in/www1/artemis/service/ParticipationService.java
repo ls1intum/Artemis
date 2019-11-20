@@ -685,13 +685,23 @@ public class ParticipationService {
     }
 
     /**
-     * Get all programming exercise participations belonging to exercise with eager results.
+     * Get all programming exercise participations belonging to exercise with eager submissions -> result.
      *
      * @param exerciseId the id of exercise
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(Long exerciseId) {
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
+    }
+
+    /**
+     * Get all programming exercise participations belonging to exercise with eager submissions -> result --> assessor.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
     }
 
     /**
@@ -720,14 +730,10 @@ public class ParticipationService {
      * Get all participations belonging to course with relevant results.
      *
      * @param courseId the id of the exercise
-     * @param includeNotRatedResults specify is not rated results are included
-     * @param includeAssessors specify id assessors are included
      * @return list of participations belonging to course
      */
-    @Transactional(readOnly = true)
-    public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
-        List<StudentParticipation> participations = includeAssessors ? studentParticipationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
-                : studentParticipationRepository.findByCourseIdWithEagerResults(courseId);
+    public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId) {
+        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
 
         return participations.stream()
 
@@ -742,19 +748,15 @@ public class ParticipationService {
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
-                        if (!includeNotRatedResults && result.isRated() == Boolean.FALSE) {
-                            // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
-                            // TODO: for compatibility reasons, we include rated == null, in the future we can remove this
+                        if (result.isRated() == Boolean.FALSE) {
                             continue;
                         }
                         if (result.getCompletionDate() == null || result.getScore() == null) {
                             // we are only interested in results with completion date and with score
                             continue;
                         }
-                        if (participation.getExercise() instanceof QuizExercise) {
-                            // in quizzes we take all rated results, because we only have one! (independent of later checks)
-                        }
-                        else if (participation.getExercise().getDueDate() != null) {
+                        // in quizzes and programming exercises we take the last rated result
+                        if (participation.getExercise().getDueDate() != null) {
                             if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
                                     || participation.getExercise() instanceof FileUploadExercise) {
                                 if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
@@ -763,11 +765,6 @@ public class ParticipationService {
                                     // difference between submissionDate and result.completionDate can be significant due to manual assessment
                                     continue;
                                 }
-                            }
-                            // For all other exercises the result completion date is the same as the submission date
-                            else if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                                // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
-                                continue;
                             }
                         }
                         relevantResults.add(result);

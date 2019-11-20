@@ -33,14 +33,14 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
         super.setDomain(domain);
         const [domainType, domainValue] = domain;
         // Subscribe to the submission state of the currently selected participation, map the submission to the isBuilding state.
-        if (domainType === DomainType.PARTICIPATION && domainValue.id !== this.participationId) {
+        if (domainType === DomainType.PARTICIPATION) {
             this.participationId = domainValue.id;
             // There is no differentiation between the participation types atm. This could be implemented in the domain service, but this would make the implementation more complicated, too.
             this.exerciseId = (domainValue as StudentParticipation).exercise
                 ? (domainValue as StudentParticipation).exercise.id
                 : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise.id;
             this.submissionSubscription = this.submissionService
-                .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId)
+                .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, true)
                 .pipe(
                     tap(({ submissionState }) => submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION && this.onError()),
                     map(({ submission }) => !!submission),
