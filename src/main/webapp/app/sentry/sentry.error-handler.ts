@@ -4,7 +4,7 @@ import { VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/layouts';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
     private static get environment(): string {
         switch (window.location.host) {
@@ -13,30 +13,26 @@ export class SentryErrorHandler extends ErrorHandler {
             case 'artemistest.ase.in.tum.de':
                 return 'test';
             case 'vmbruegge60.in.tum.de':
-                return 'e2e';
+                return 'apitests';
             default:
                 return 'local';
         }
     }
 
-    private async initSentry(): Promise<void> {
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
-            if (!profileInfo || !profileInfo.sentry) {
-                return;
-            }
+    public async initSentry(profileInfo: ProfileInfo): Promise<void> {
+        if (!profileInfo || !profileInfo.sentry) {
+            return;
+        }
 
-            init({
-                dsn: profileInfo.sentry.dsn,
-                release: VERSION,
-                environment: SentryErrorHandler.environment,
-            });
+        init({
+            dsn: profileInfo.sentry.dsn,
+            release: VERSION,
+            environment: SentryErrorHandler.environment,
         });
     }
 
-    constructor(private profileService: ProfileService) {
+    constructor() {
         super();
-        // noinspection JSIgnoredPromiseFromCall
-        this.initSentry();
     }
 
     handleError(error: any): void {

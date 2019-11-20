@@ -154,7 +154,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             if (!allowedFileExtensions.some(extension => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile['name'] });
+                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
             }

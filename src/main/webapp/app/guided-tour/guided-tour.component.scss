@@ -9,12 +9,28 @@ $tour-next-button-color: #17a2b8 !default;
 $tour-next-button-hover: #117a8b !default;
 $tour-back-button-color: #17a2b8 !default;
 $tour-back-button-hover: #117a8b !default;
+$tour-restart-button-color: #28a745 !default;
+$tour-restart-button-hover: #1e7e34 !default;
 $tour-button-color-disabled: #f2f2f2 !default;
 $tour-button-text-color: #ffffff !default;
 $tour-button-text-disabled: #a3a3a3 !default;
 $tour-shadow-color: #4c4c4c !default;
 
 // Mixins
+@mixin tour-button($background-color, $hover-background-color) {
+    background-color: $background-color;
+    color: $tour-button-text-color;
+
+    &:hover {
+        background-color: $hover-background-color;
+        color: $tour-button-text-color;
+    }
+
+    fa-icon {
+        padding-right: 10px;
+    }
+}
+
 @mixin tour-triangle($direction, $color: currentColor, $size: 1rem) {
     @if not index(top right bottom left, $direction) {
         @error 'Direction must be either `top`, `right`, `bottom` or `left`.';
@@ -311,31 +327,15 @@ jhi-guided-tour {
                     }
 
                     &.back-button {
-                        background-color: $tour-back-button-color;
-                        color: $tour-button-text-color;
-
-                        &:hover {
-                            background-color: $tour-back-button-hover;
-                            color: $tour-button-text-color;
-                        }
-
-                        fa-icon {
-                            padding-right: 10px;
-                        }
+                        @include tour-button($tour-back-button-color, $tour-back-button-hover);
                     }
 
                     &.next-button {
-                        background-color: $tour-next-button-color;
-                        color: $tour-button-text-color;
+                        @include tour-button($tour-next-button-color, $tour-next-button-hover);
+                    }
 
-                        &:hover {
-                            background-color: $tour-next-button-hover;
-                            color: $tour-button-text-color;
-                        }
-
-                        fa-icon {
-                            padding-left: 10px;
-                        }
+                    &.restart-button {
+                        @include tour-button($tour-restart-button-color, $tour-restart-button-hover);
                     }
                 }
             }
