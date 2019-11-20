@@ -36,6 +36,8 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
                             [(ngModel)]="fileUploadExercise.releaseDate"
+                            (valueChange)="validateDate()"
+                            [error]="false"
                             name="releaseDate"
                         ></jhi-date-time-picker>
                     </div>
@@ -44,7 +46,10 @@
                             labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
                             [(ngModel)]="fileUploadExercise.dueDate"
                             name="dueDate"
+                            [error]="fileUploadExercise.dueDateError"
+                            (valueChange)="validateDate()"
                         ></jhi-date-time-picker>
+                        <div *ngIf="fileUploadExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</div>
                     </div>
                 </div>
                 <div class="form-group-narrow">
