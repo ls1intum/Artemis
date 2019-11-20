@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -45,9 +47,15 @@ public class ProgrammingAssessmentIntegrationTest {
     @Autowired
     ComplaintRepository complaintRepo;
 
-    ProgrammingExercise programmingExercise;
+    @Autowired
+    ProgrammingSubmissionService programmingSubmissionService;
 
-    ProgrammingSubmission programmingSubmission;
+    @Autowired
+    ResultRepository resultRepository;
+
+    private ProgrammingExercise programmingExercise;
+
+    private ProgrammingSubmission programmingSubmission;
 
     @BeforeEach
     void initTestCase() {
@@ -91,6 +99,12 @@ public class ProgrammingAssessmentIntegrationTest {
         assertThat(updatedResult.getScore()).isEqualTo(20L);
         assertThat(updatedResult.getResultString()).isEqualTo("new Result!");
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+
+        // Check that result and submission are properly connected
+        var submissionFromDb = programmingSubmissionService.findOneWithEagerResultAndFeedback(programmingSubmission.getId());
+        var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).get();
+        assertThat(submissionFromDb.getResult()).isEqualTo(updatedResult);
+        assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
     }
 
     @Test
