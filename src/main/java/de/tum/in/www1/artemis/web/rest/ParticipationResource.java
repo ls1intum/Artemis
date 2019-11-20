@@ -353,7 +353,7 @@ public class ParticipationResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResults(courseId);
+        List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResult(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
             // we only need participationId, title, dates and max points
