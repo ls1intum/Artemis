@@ -227,7 +227,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             filename = components[components.length - 1];
         }
         // replace all illegal characters with ascii characters \w means A-Za-z0-9 to avoid problems during download later on
-        filename = filename.replaceAll("[^\\w().-]", "");
+        filename = filename.replaceAll("[^\\w.-]", "");
         // if the filename is now too short, we prepend "file"
         // this prevents potential problems when users call their file e.g. ßßß.pdf
         if (filename.length() < 5) {
