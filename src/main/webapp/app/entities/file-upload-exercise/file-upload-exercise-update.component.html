@@ -52,7 +52,7 @@
                         name="assessmentDueDate"
                         [error]="fileUploadExercise.assessmentDueDateError"
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | translate }}"
-                        (valueChange)="validateDate(fileUploadExercise)"
+                        (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise.assessmentDueDate"
                     ></jhi-date-time-picker>
                     <div *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</div>
@@ -125,7 +125,12 @@
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <button
+                    type="submit"
+                    id="save-entity"
+                    [disabled]="editForm.form.invalid || isSaving || fileUploadExercise.dueDateError || fileUploadExercise.assessmentDueDateError"
+                    class="btn btn-primary"
+                >
                     <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>
