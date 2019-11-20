@@ -51,8 +51,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         ProgrammingSubmission programmingSubmission = programmingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         Participation participation = programmingSubmission.getParticipation();
-        long exerciseId = participation.getExercise().getId();
-        ProgrammingExercise programmingExercise = programmingExerciseService.findOne(exerciseId);
+        var programmingExercise = (ProgrammingExercise) participation.getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
             return forbidden();

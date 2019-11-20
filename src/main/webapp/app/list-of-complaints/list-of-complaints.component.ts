@@ -2,14 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { ExerciseType } from 'app/entities/exercise';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({

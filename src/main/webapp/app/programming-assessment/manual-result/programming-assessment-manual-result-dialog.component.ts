@@ -1,21 +1,22 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
-import { Feedback, FeedbackType } from '../../entities/feedback';
+import { Feedback, FeedbackType } from '../../entities/feedback/feedback.model';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationService } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 import { catchError, tap, filter } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
 import { SCORE_PATTERN } from 'app/app.constants';
-import { Complaint, ComplaintService, ComplaintType } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
