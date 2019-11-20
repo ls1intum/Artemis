@@ -18,10 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -102,6 +99,25 @@ public class ExampleSubmissionIntegrationTest {
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createAndDeleteExampleModelingSubmission() throws Exception {
         exampleSubmission = generateExampleSubmission(validModel, modelingExercise, false);
+        ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+        Long submissionId = returnedExampleSubmission.getSubmission().getId();
+
+        database.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
+        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(submissionId);
+        assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
+        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+
+        request.delete("/api/example-submissions/" + submissionId, HttpStatus.OK);
+        assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createAndDeleteExampleModelingSubmissionWithResult() throws Exception {
+        exampleSubmission = generateExampleSubmission(validModel, modelingExercise, false);
+        exampleSubmission.setUsedForTutorial(true);
+        exampleSubmission.addTutorParticipations(new TutorParticipation());
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
                 ExampleSubmission.class, HttpStatus.OK);
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
