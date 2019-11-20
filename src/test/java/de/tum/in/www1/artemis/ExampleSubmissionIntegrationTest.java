@@ -99,6 +99,23 @@ public class ExampleSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createAndDeleteExampleModelingSubmission() throws Exception {
+        exampleSubmission = generateExampleSubmission(validModel, modelingExercise, false);
+        ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+        Long submissionId = returnedExampleSubmission.getSubmission().getId();
+
+        database.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
+        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(submissionId);
+        assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
+        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+
+        request.delete("/api/example-submissions/" + submissionId, HttpStatus.OK);
+        assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).hasSize(0);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createExampleModelingSubmission_asTutor_forbidden() throws Exception {
         exampleSubmission = generateExampleSubmission(emptyModel, modelingExercise, true);

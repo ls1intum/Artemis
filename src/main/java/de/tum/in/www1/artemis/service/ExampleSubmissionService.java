@@ -110,9 +110,14 @@ public class ExampleSubmissionService {
                 tutorParticipation.getTrainedExampleSubmissions().remove(exampleSubmission);
             }
 
-            resultRepository.delete(exampleSubmission.getSubmission().getResult());
-            submissionRepository.delete(exampleSubmission.getSubmission());
             exampleSubmissionRepository.delete(exampleSubmission);
+
+            if (exampleSubmission.getSubmission() != null) {
+                if (exampleSubmission.getSubmission().getResult() != null) {
+                    resultRepository.delete(exampleSubmission.getSubmission().getResult());
+                }
+                submissionRepository.delete(exampleSubmission.getSubmission());
+            }
         }
     }
 }
