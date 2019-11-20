@@ -48,7 +48,6 @@ export class ProgrammingAssessmentManualResultService {
             complaintResponse,
             score: result.score,
             resultString: result.resultString,
-            completionDate: result.completionDate,
         };
         return this.http.put<Result>(url, assessmentUpdate);
     }

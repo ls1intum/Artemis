@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.time.ZonedDateTime;
-
 /**
- * A helper object that aggregates feedback list, complaint response, score, result string and completion date which are used to update an assessment after a complaint.
+ * A helper object that aggregates feedback list, complaint response, score and result string which are used to update an assessment after a complaint.
  */
 public class ProgrammingAssessmentUpdate extends AssessmentUpdate {
 
     private String resultString;
-
-    private ZonedDateTime completionDate;
 
     private long score;
 
@@ -19,14 +15,6 @@ public class ProgrammingAssessmentUpdate extends AssessmentUpdate {
 
     public void setResultString(String resultString) {
         this.resultString = resultString;
-    }
-
-    public ZonedDateTime getCompletionDate() {
-        return completionDate;
-    }
-
-    public void setCompletionDate(ZonedDateTime completionDate) {
-        this.completionDate = completionDate;
     }
 
     public long getScore() {

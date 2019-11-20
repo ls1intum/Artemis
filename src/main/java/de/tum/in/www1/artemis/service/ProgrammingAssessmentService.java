@@ -29,7 +29,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);
         originalResult.setResultString(assessmentUpdate.getResultString());
         originalResult.setScore(assessmentUpdate.getScore());
-        originalResult.setCompletionDate(assessmentUpdate.getCompletionDate());
         return resultRepository.save(originalResult);
     }
 }
