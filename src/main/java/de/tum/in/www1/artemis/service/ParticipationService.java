@@ -732,7 +732,6 @@ public class ParticipationService {
      * @param courseId the id of the exercise
      * @return list of participations belonging to course
      */
-    @Transactional(readOnly = true)
     public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId) {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
 
