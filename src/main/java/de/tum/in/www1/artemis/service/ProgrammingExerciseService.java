@@ -1222,7 +1222,6 @@ public class ProgrammingExerciseService {
      * @param id the id of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
     public ProgrammingExercise findOne(Long id) {
         log.debug("Request to get Programming Exercise : {}", id);
         return programmingExerciseRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + id + "\" does not exist"));
