@@ -108,7 +108,7 @@ public class ExampleSubmissionIntegrationTest {
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
-        request.delete("/api/example-submissions/" + submissionId, HttpStatus.OK);
+        request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
         assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).hasSize(0);
     }
 
@@ -127,7 +127,7 @@ public class ExampleSubmissionIntegrationTest {
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
-        request.delete("/api/example-submissions/" + submissionId, HttpStatus.OK);
+        request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
         assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).hasSize(0);
     }
 
