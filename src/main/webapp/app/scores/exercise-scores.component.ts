@@ -33,6 +33,17 @@ enum SortOrder {
     DESC = 'desc',
 }
 
+enum SortIcon {
+    NONE = 'sort',
+    ASC = 'sort-up',
+    DESC = 'sort-down',
+}
+
+const SortOrderIcon = {
+    [SortOrder.ASC]: SortIcon.ASC,
+    [SortOrder.DESC]: SortIcon.DESC,
+};
+
 type SortProp = {
     field: string;
     order: SortOrder;
@@ -282,6 +293,19 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     };
 
     /**
+     * Returns the Font Awesome icon name for a column header's sorting icon
+     * based on the currently active sortProp field and order.
+     *
+     * @param field Result field
+     */
+    iconForSortPropField(field: string) {
+        if (this.resultCriteria.sortProp.field !== field) {
+            return SortIcon.NONE;
+        }
+        return SortOrderIcon[this.resultCriteria.sortProp.order];
+    }
+
+    /**
      * Sets the selected sort field, then updates the available results in the UI.
      * Toggles the order direction (asc, desc) when the field has not changed.
      *
@@ -358,7 +382,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     };
 
     setResultsPerPage = (paging: number) => {
-        this.resultsPerPage = paging;
+        this.isLoading = true;
+        setTimeout(() => {
+            this.resultsPerPage = paging;
+            this.isLoading = false;
+        }, 500);
         localStorage.setItem(resultsPerPageCacheKey, paging.toString());
     };
 

@@ -37,7 +37,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.9.2"
+version = "3.9.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=12
@@ -305,7 +305,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.0"
+    gradleVersion = "6.0.1"
 }
 
 task stage(dependsOn: "bootWar") {
