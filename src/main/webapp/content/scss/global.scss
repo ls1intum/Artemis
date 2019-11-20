@@ -147,7 +147,9 @@ Generic styles
     color: white;
     background-color: red;
 }
-
+.invalid-feedback {
+    display: block;
+}
 .pad {
     padding: 10px;
 }

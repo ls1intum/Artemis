@@ -6,7 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 import { Course, CourseService } from 'app/entities/course';
-import { Exercise, ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { EditorMode } from 'app/markdown-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
