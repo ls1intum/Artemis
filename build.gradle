@@ -305,7 +305,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.0"
+    gradleVersion = "6.0.1"
 }
 
 task stage(dependsOn: "bootWar") {
