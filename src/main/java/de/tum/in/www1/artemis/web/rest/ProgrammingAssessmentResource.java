@@ -59,6 +59,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getResult(), programmingExercise, assessmentUpdate);
+        // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
+        result.setSubmission(programmingSubmission);
         // remove circular dependencies if the results of the participation are there
         if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
             result.getParticipation().setResults(null);

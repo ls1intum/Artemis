@@ -161,6 +161,10 @@ public class ResultResource {
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
         // make sure that the participation cannot be manipulated on the client side
         updatedResult.setParticipation(participation);
+        // TODO: we should basically set the submission here to prevent possible manipulation of the submission
+        if (updatedResult.getSubmission() == null) {
+            throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
+        }
         final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
