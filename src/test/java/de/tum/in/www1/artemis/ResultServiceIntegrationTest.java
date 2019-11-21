@@ -266,7 +266,6 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult() throws Exception {
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -284,7 +283,6 @@ public class ResultServiceIntegrationTest {
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
-        result.setSubmission(programmingSubmission);
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
@@ -299,6 +297,8 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void updateManualProgrammingExerciseResult() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -317,6 +317,7 @@ public class ResultServiceIntegrationTest {
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
         result = resultRepository.save(result);
+        result.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
         result.setFeedbacks(feedbacks.subList(0, 1));
