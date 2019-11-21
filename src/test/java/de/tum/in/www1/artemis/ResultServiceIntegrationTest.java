@@ -203,11 +203,23 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "student1", roles = "INSTRUCTOR")
     public void programmingExerciseManualResultNew_noManualReviewsAllowed_forbidden() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        final var result = ModelFactory.generateResult(true, 1);
+        result.setParticipation(programmingExerciseStudentParticipation);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setSubmission(programmingSubmission);
+
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
+    public void programmingExerciseManualResultNew_noManualReviewsWithoutSubmission_badRequest() throws Exception {
         final var result = ModelFactory.generateResult(true, 1);
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
@@ -254,6 +266,7 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -271,6 +284,7 @@ public class ResultServiceIntegrationTest {
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
+        result.setSubmission(programmingSubmission);
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
