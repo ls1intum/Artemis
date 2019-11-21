@@ -797,4 +797,10 @@ public class DatabaseUtilService {
 
         return exercise;
     }
+
+    public ExampleSubmission generateExampleSubmission(String path, Exercise exercise, boolean flagAsExampleSubmission) {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(path, false);
+        submission.setExampleSubmission(flagAsExampleSubmission);
+        return ModelFactory.generateExampleSubmission(submission, exercise, false);
+    }
 }

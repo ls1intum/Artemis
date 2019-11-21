@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -22,10 +23,14 @@ public class ExampleSubmissionService {
 
     private final ResultRepository resultRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            ExerciseRepository exerciseRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     public Optional<ExampleSubmission> get(long id) {
@@ -108,7 +113,10 @@ public class ExampleSubmissionService {
                 tutorParticipation.getTrainedExampleSubmissions().remove(exampleSubmission);
             }
 
-            exampleSubmissionRepository.delete(exampleSubmission);
+            Long exerciseId = exampleSubmission.getExercise().getId();
+            Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findById(exerciseId);
+
+            // exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
 
             if (exampleSubmission.getSubmission() != null) {
                 if (exampleSubmission.getSubmission().getResult() != null) {
@@ -116,6 +124,8 @@ public class ExampleSubmissionService {
                 }
                 submissionRepository.delete(exampleSubmission.getSubmission());
             }
+
+            exampleSubmissionRepository.delete(exampleSubmission);
         }
     }
 }

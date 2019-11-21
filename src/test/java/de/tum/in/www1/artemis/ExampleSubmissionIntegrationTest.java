@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 @ExtendWith(SpringExtension.class)
@@ -76,7 +75,7 @@ public class ExampleSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createAndUpdateExampleModelingSubmission() throws Exception {
-        exampleSubmission = generateExampleSubmission(emptyModel, modelingExercise, false);
+        exampleSubmission = database.generateExampleSubmission(emptyModel, modelingExercise, false);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
                 ExampleSubmission.class, HttpStatus.OK);
 
@@ -85,7 +84,7 @@ public class ExampleSubmissionIntegrationTest {
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
-        exampleSubmission = generateExampleSubmission(validModel, modelingExercise, false);
+        exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
         returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, ExampleSubmission.class,
                 HttpStatus.OK);
 
@@ -98,7 +97,7 @@ public class ExampleSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createAndDeleteExampleModelingSubmission() throws Exception {
-        exampleSubmission = generateExampleSubmission(validModel, modelingExercise, false);
+        exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
                 ExampleSubmission.class, HttpStatus.OK);
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
@@ -115,7 +114,7 @@ public class ExampleSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createAndDeleteExampleModelingSubmissionWithResult() throws Exception {
-        exampleSubmission = generateExampleSubmission(validModel, modelingExercise, false);
+        exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
         exampleSubmission.setUsedForTutorial(true);
         exampleSubmission.addTutorParticipations(new TutorParticipation());
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
@@ -134,21 +133,21 @@ public class ExampleSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createExampleModelingSubmission_asTutor_forbidden() throws Exception {
-        exampleSubmission = generateExampleSubmission(emptyModel, modelingExercise, true);
+        exampleSubmission = database.generateExampleSubmission(emptyModel, modelingExercise, true);
         request.post("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "student1")
     public void createExampleModelingSubmission_asStudent_forbidden() throws Exception {
-        exampleSubmission = generateExampleSubmission(emptyModel, modelingExercise, true);
+        exampleSubmission = database.generateExampleSubmission(emptyModel, modelingExercise, true);
         request.post("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getExampleModelingSubmission() throws Exception {
-        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true), "student1");
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, modelingExercise, true), "student1");
 
         exampleSubmission = request.get("/api/example-submissions/" + storedExampleSubmission.getId(), HttpStatus.OK, ExampleSubmission.class);
 
@@ -158,7 +157,7 @@ public class ExampleSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "student1")
     public void getExampleModelingSubmission_asStudent_forbidden() throws Exception {
-        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true), "student1");
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, modelingExercise, true), "student1");
 
         request.get("/api/example-submissions/" + storedExampleSubmission.getId(), HttpStatus.FORBIDDEN, ExampleSubmission.class);
     }
@@ -166,7 +165,7 @@ public class ExampleSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createExampleModelingAssessment() throws Exception {
-        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true), "student1");
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, modelingExercise, true), "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
         request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/exampleAssessment", feedbacks, Result.class, HttpStatus.OK);
@@ -174,12 +173,6 @@ public class ExampleSubmissionIntegrationTest {
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
-    }
-
-    private ExampleSubmission generateExampleSubmission(String path, Exercise exercise, boolean flagAsExampleSubmission) {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(path, false);
-        submission.setExampleSubmission(flagAsExampleSubmission);
-        return ModelFactory.generateExampleSubmission(submission, exercise, false);
     }
 
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
