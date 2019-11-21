@@ -37,6 +37,7 @@ export const codeEditorTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            triggerNextStep: true,
         }),
         new TextTourStep({
             highlightSelector: '#submit_button',
@@ -47,6 +48,7 @@ export const codeEditorTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            triggerNextStep: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-updating-result',

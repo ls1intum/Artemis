@@ -20,8 +20,6 @@ export const cancelTour: GuidedTour = {
 };
 
 export const completedTour: GuidedTour = {
-    courseShortName: '',
-    exerciseShortName: '',
     settingsKey: 'completed_tour',
     steps: [
         new TextTourStep({
