@@ -59,9 +59,5 @@ export const modelingTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.CLICK,
             triggerNextStep: true,
         }),
-        new TextTourStep({
-            headlineTranslateKey: 'tour.modelingExercise.finishedTasks.headline',
-            contentTranslateKey: 'tour.modelingExercise.finishedTasks.content',
-        }),
     ],
 };

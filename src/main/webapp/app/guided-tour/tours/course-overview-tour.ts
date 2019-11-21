@@ -72,6 +72,7 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.courseFooter.content',
             orientation: Orientation.TOPLEFT,
         }),
+        // disabled
         new TextTourStep({
             highlightSelector: '.card.guided-tour',
             clickEventListenerSelector: 'body',
@@ -79,7 +80,9 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.courseClick.content',
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            disableStep: true,
         }),
+        // disabled
         new TextTourStep({
             highlightSelector: 'jhi-course-registration-selector button',
             headlineTranslateKey: 'tour.courseOverview.register.headline',
@@ -92,8 +95,9 @@ export const courseOverviewTour: GuidedTour = {
             highlightSelector: '.footer .col-sm-6',
             headlineTranslateKey: 'tour.courseOverview.contact.headline',
             contentTranslateKey: 'tour.courseOverview.contact.content',
+            hintTranslateKey: 'tour.courseOverview.contact.hint',
+            highlightPadding: 5,
             orientation: Orientation.TOPLEFT,
-            disableStep: true,
         }),
     ],
 };

@@ -5,7 +5,6 @@ import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
-
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
@@ -17,9 +16,9 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
-import { cancelTour } from 'app/guided-tour/tours/general-tour';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { AccountService } from 'app/core/auth/account.service';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -193,6 +192,17 @@ export class GuidedTourService {
     }
 
     /**
+     * Determines if the given tour is the current tour
+     * @param guidedTour that is checked
+     */
+    public isCurrentTour(guidedTour: GuidedTour) {
+        if (this.currentTour && this.currentTour.steps) {
+            return this.currentTour.settingsKey === guidedTour.settingsKey;
+        }
+        return false;
+    }
+
+    /**
      * Check if the provided tour step is the currently active one
      */
     public get currentStep(): any | null {
@@ -279,10 +289,15 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
+
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
         }
-        this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
+
+        if (!this.isCurrentTour(completedTour)) {
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
+            this.showCompletedTourStep();
+        }
     }
 
     /**
@@ -321,6 +336,19 @@ export class GuidedTourService {
                 if (currentStep.action) {
                     currentStep.action();
                 }
+                this.setPreparedTourStep();
+            }
+        });
+    }
+
+    /**
+     * Show the completed tour step every time a user completes a tour
+     */
+    private showCompletedTourStep(): void {
+        setTimeout(() => {
+            this.currentTour = cloneDeep(completedTour);
+            /** Proceed with tour if the tour has tour steps and the tour display is allowed for current window size */
+            if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
                 this.setPreparedTourStep();
             }
         });
