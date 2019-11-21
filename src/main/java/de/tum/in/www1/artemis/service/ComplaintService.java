@@ -261,7 +261,7 @@ public class ComplaintService {
     private List<Complaint> buildComplaintsListForAssessor(Optional<List<Complaint>> databaseComplaints, Principal principal, boolean assessorSameAsCaller) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
-        if (!databaseComplaints.isPresent()) {
+        if (databaseComplaints.isEmpty()) {
             return responseComplaints;
         }
 

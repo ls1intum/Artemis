@@ -67,8 +67,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
-    complaints: Complaint[];
-    moreFeedbackRequests: Complaint[];
+    complaints: Complaint[] = [];
+    moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
 
     formattedGradingInstructions: SafeHtml | null;

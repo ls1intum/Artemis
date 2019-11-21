@@ -173,9 +173,9 @@
             <div class="alert alert-danger" *ngIf="submissionLockLimitReached && tutorParticipationStatus !== REVIEWED_INSTRUCTIONS">
                 {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | translate }}
             </div>
-            <h2 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
+            <h4 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
                 {{ 'artemisApp.tutorExerciseDashboard.studentsSubmissions' | translate }}
-            </h2>
+            </h4>
             <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
                 <table class="table table-striped exercise-table" *ngIf="(unassessedSubmission && unassessedSubmission?.id > 0) || submissions.length > 0; else noSubmissions">
                     <thead>
@@ -280,9 +280,9 @@
             </div>
             <!-- Complaints -->
             <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-                <h2>
+                <h4>
                     {{ 'artemisApp.tutorExerciseDashboard.complaints' | translate }}
-                </h2>
+                </h4>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="complaints?.length > 0; else noComplaints">
                         <thead>
@@ -331,9 +331,9 @@
 
             <!-- More Feedback Requests -->
             <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-                <h2>
+                <h4>
                     {{ 'artemisApp.tutorExerciseDashboard.moreFeedback' | translate }}
-                </h2>
+                </h4>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="moreFeedbackRequests?.length > 0; else noComplaints">
                         <thead>
