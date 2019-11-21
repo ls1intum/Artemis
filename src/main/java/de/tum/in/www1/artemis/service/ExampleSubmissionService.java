@@ -116,6 +116,7 @@ public class ExampleSubmissionService {
             Long exerciseId = exampleSubmission.getExercise().getId();
             Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findById(exerciseId);
 
+            // Remove the reference to the exercise when the example submission is deleted
             exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
 
             if (exampleSubmission.getSubmission() != null) {
