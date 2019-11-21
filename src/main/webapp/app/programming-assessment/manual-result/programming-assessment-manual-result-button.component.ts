@@ -16,7 +16,7 @@ import { filter } from 'rxjs/operators';
             [btnType]="ButtonType.WARNING"
             [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
-            [title]="latestResult ? 'entity.action.updateResult' : 'entity.action.newResult'"
+            [title]="latestResult ? (latestResult.hasComplaint ? 'artemisApp.tutorExerciseDashboard.evaluateComplaint' : 'entity.action.updateResult') : 'entity.action.newResult'"
             (onClick)="openManualResultDialog($event)"
         ></jhi-button>
     `,
@@ -25,9 +25,8 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     @Input() participationId: number;
-    @Output() onResultCreated = new EventEmitter<Result>();
+    @Output() onResultModified = new EventEmitter<Result>();
     @Input() latestResult?: Result | null;
-    private ngbModalRef: NgbModalRef | null;
 
     latestResultSubscription: Subscription;
 
@@ -66,8 +65,9 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = this.participationId;
         modalRef.componentInstance.result = this.latestResult;
+        modalRef.componentInstance.onResultModified = this.onResultModified;
         modalRef.result.then(
-            result => this.onResultCreated.emit(result),
+            result => this.onResultModified.emit(result),
             () => {},
         );
     }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, EventEmitter, Output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result/result.model';
@@ -26,6 +26,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     SCORE_PATTERN = SCORE_PATTERN;
     @Input() participationId: number;
     @Input() result: Result;
+    @Output() onResultModified = new EventEmitter<Result>();
     participation: StudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
@@ -180,6 +181,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 this.result = result;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+                this.onResultModified.emit(result);
             },
             () => {
                 this.jhiAlertService.clear();

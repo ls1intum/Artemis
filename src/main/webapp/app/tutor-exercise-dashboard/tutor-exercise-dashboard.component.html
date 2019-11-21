@@ -36,23 +36,23 @@
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
-                    <div class="col-4">
-                        <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor?.id }">{{ numberOfComplaints }}</a>
-                    </div>
+                    <div class="col-4">{{ numberOfComplaints }}</div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.complaintsAboutYourAssessments' | translate }}</div>
-                    <div class="col-4">{{ numberOfTutorComplaints }}</div>
-                </div>
-                <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}</div>
                     <div class="col-4">
-                        <a routerLink="/more-feedback-requests" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor?.id }">{{ numberOfMoreFeedbackRequests }}</a>
+                        <a routerLink="/complaints" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor?.id }">{{ numberOfTutorComplaints }}</a>
                     </div>
                 </div>
                 <div class="row mb-1">
+                    <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}</div>
+                    <div class="col-4">{{ numberOfMoreFeedbackRequests }}</div>
+                </div>
+                <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.moreFeedbackRequestsForYourAssessments' | translate }}</div>
-                    <div class="col-4">{{ numberOfTutorMoreFeedbackRequests }}</div>
+                    <div class="col-4">
+                        <a routerLink="/more-feedback-requests" [queryParams]="{ exerciseId: exerciseId, tutorId: tutor?.id }">{{ numberOfTutorMoreFeedbackRequests }}</a>
+                    </div>
                 </div>
             </jhi-side-panel>
         </div>
@@ -233,7 +233,7 @@
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="submission.participation.id"
                                         [latestResult]="submission.result"
-                                        (onResultCreated)="loadAll()"
+                                        (onResultModified)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>
                             </td>
@@ -264,7 +264,7 @@
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="unassessedSubmission.participation.id"
                                         [latestResult]="unassessedSubmission.result"
-                                        (onResultCreated)="loadAll()"
+                                        (onResultModified)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>
                             </td>

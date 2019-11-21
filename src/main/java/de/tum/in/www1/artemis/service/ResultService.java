@@ -37,8 +37,6 @@ public class ResultService {
 
     private final UserService userService;
 
-    private final ParticipationService participationService;
-
     private final ResultRepository resultRepository;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -57,12 +55,10 @@ public class ResultService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository,
-            WebsocketMessagingService websocketMessagingService) {
+    public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
+            SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
+            ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService) {
         this.userService = userService;
-        this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;

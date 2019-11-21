@@ -109,9 +109,14 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
-                    <a routerLink="/participation/{{ value.id }}/submissions">
+                    <span *ngIf="exercise.isAtLeastInstructor">
+                        <a routerLink="/participation/{{ value.id }}/submissions">
+                            {{ value.student.name }}
+                        </a>
+                    </span>
+                    <span *ngIf="!exercise.isAtLeastInstructor">
                         {{ value.student.name }}
-                    </a>
+                    </span>
                 </ng-template>
             </ngx-datatable-column>
 
@@ -201,10 +206,10 @@
                         <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                     </button>
                     <jhi-programming-assessment-manual-result
-                        *ngIf="newManualResultAllowed"
+                        *ngIf="newManualResultAllowed && exercise.isAtLeastInstructor"
                         [participationId]="value.participation.id"
                         [latestResult]="value"
-                        (onResultCreated)="refresh()"
+                        (onResultModified)="refresh()"
                         class="mr-1"
                     ></jhi-programming-assessment-manual-result>
                 </ng-template>

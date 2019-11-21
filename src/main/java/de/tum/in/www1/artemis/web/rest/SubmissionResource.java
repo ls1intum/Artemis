@@ -10,16 +10,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -41,26 +43,29 @@ public class SubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private SubmissionRepository submissionRepository;
+    private final SubmissionRepository submissionRepository;
 
-    private ResultRepository resultRepository;
+    private final ResultRepository resultRepository;
 
-    private CourseService courseService;
+    private final ParticipationService participationService;
 
-    private ParticipationService participationService;
+    private final AuthorizationCheckService authCheckService;
 
-    private AuthorizationCheckService authCheckService;
+    private final ComplaintResponseRepository complaintResponseRepository;
 
-    private UserService userService;
+    private final ComplaintRepository complaintRepository;
 
-    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository, CourseService courseService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserService userService) {
+    private final UserService userService;
+
+    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository, ParticipationService participationService,
+            AuthorizationCheckService authCheckService, UserService userService, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository) {
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
-        this.courseService = courseService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.userService = userService;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -131,12 +136,13 @@ public class SubmissionResource {
      */
     @DeleteMapping("/submissions/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @Transactional
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
 
         Optional<Submission> submission = submissionRepository.findById(id);
 
-        if (!submission.isPresent()) {
+        if (submission.isEmpty()) {
             log.error("Submission with id: " + id + " cannot be deleted");
             return ResponseEntity.notFound().build();
         }
@@ -144,7 +150,11 @@ public class SubmissionResource {
         checkAccessPermissionAtInstructor(submission.get());
 
         if (submission.get().getResult() != null) {
-            resultRepository.delete(submission.get().getResult());
+            // TODO: move this into a ResultService
+            var resultId = submission.get().getResult().getId();
+            complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+            complaintRepository.deleteByResult_Id(resultId);
+            resultRepository.deleteById(resultId);
         }
         submissionRepository.deleteById(id);
 
