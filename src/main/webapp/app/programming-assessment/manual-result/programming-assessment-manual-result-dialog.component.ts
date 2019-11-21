@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result/result.model';
@@ -179,9 +179,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         this.manualResultService.updateAfterComplaint(this.feedbacks, complaintResponse, this.result, this.result!.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
+                this.onResultModified.emit(result);
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-                this.onResultModified.emit(result);
             },
             () => {
                 this.jhiAlertService.clear();
