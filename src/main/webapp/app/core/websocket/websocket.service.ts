@@ -5,7 +5,7 @@ import { Observable, Observer, Subscription } from 'rxjs/Rx';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { CSRFService } from 'app/core/auth/csrf.service';
 
-import * as Stomp from 'webstomp-client';
+import { Client, Subscription as StompSubscription, over, VERSIONS, ConnectionHeaders } from 'webstomp-client';
 import { WindowRef } from 'app/core/websocket/window.service';
 import * as SockJS from 'sockjs-client';
 
@@ -24,8 +24,8 @@ export interface IWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class JhiWebsocketService implements IWebsocketService, OnDestroy {
-    stompClient: Stomp.Client | null;
-    subscribers: { [key: string]: Stomp.Subscription } = {};
+    stompClient: Client | null;
+    subscribers: { [key: string]: StompSubscription } = {};
     connection: Promise<void>;
     connectedPromise: Function;
     myListeners: { [key: string]: Observable<any> } = {};
@@ -90,11 +90,18 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             url += '?access_token=' + authToken;
         }
         const socket = new SockJS(url);
-        this.stompClient = Stomp.over(socket, { debug: false });
+        const options = {
+            heartbeat: { outgoing: 25000, incoming: 25000 },
+            // Note: at the moment, debug is activated, in the future we might want to deactivate it again
+            // debug: false,
+            protocols: ['v12.stomp'],
+        };
+        this.stompClient = over(socket, options);
+        // Note: at the moment, debugging is activated, in the future we might want to deactivate it again
         // deactivate websocket debugging
-        this.stompClient.debug = function(str) {};
-        const headers = <Stomp.ConnectionHeaders>{};
-        headers['X-CSRFToken'] = this.csrfService.getCSRF('csrftoken');
+        // this.stompClient.debug = function(str) {};
+        const headers = <ConnectionHeaders>{};
+        headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 
         this.stompClient.connect(
             headers,
