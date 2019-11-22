@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -446,33 +445,36 @@ public class QuizExercise extends Exercise implements Serializable {
 
     @Override
     @Nullable
-    public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
             return null;
         }
         else {
             // only rated results are considered relevant
-            Result latestRatedResult = null;
+            Submission latestSubmission = null;
             if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
                 return null;
             }
             // we get the results over the submissions
-            var results = participation.getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).collect(Collectors.toSet());
-            for (Result result : results) {
+            for (var submission : participation.getSubmissions()) {
+                var result = submission.getResult();
+                if (result == null) {
+                    continue;
+                }
                 if (result.isRated() == Boolean.TRUE && result.getCompletionDate() != null) {
                     // take the first found result that fulfills the above requirements
-                    if (latestRatedResult == null) {
-                        latestRatedResult = result;
+                    if (latestSubmission == null) {
+                        latestSubmission = submission;
                     }
                     // take newer results and thus disregard older ones
                     // this should actually not be the case for quiz exercises, because they only should have one rated result
-                    else if (latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate())) {
-                        latestRatedResult = result;
+                    else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                        latestSubmission = submission;
                     }
                 }
             }
-            return latestRatedResult;
+            return latestSubmission;
         }
     }
 
