@@ -15,15 +15,11 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
-import org.springframework.messaging.converter.CompositeMessageConverter;
-import org.springframework.messaging.converter.DefaultContentTypeResolver;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
-import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -67,6 +63,8 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 25000, 25000 }).setTaskScheduler(messageBrokerTaskScheduler);
+        // increase the limit of concurrent connections (default is 1024 which is much too low)
+        config.setCacheLimit(10000);
     }
 
     @Override
@@ -85,18 +83,13 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     @NotNull
     @Override
-    public CompositeMessageConverter brokerMessageConverter() {
-        // NOTE: We need to replace the default messageConverter for WebSocket messages
+    protected MappingJackson2MessageConverter createJacksonConverter() {
+        // NOTE: We need to adapt the default messageConverter for WebSocket messages
         // with a messageConverter that uses the same ObjectMapper that our REST endpoints use.
         // This gives us consistency in how specific datatypes are serialized (e.g. timestamps)
-        DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
-        resolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);
-        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+        MappingJackson2MessageConverter converter = super.createJacksonConverter();
         converter.setObjectMapper(objectMapper);
-        converter.setContentTypeResolver(resolver);
-        Set<MessageConverter> messageConverterSet = new HashSet<>();
-        messageConverterSet.add(converter);
-        return new CompositeMessageConverter(messageConverterSet);
+        return converter;
     }
 
     @Bean
@@ -132,6 +125,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
                     authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
                     principal = new AnonymousAuthenticationToken("WebsocketConfiguration", "anonymous", authorities);
                 }
+                log.debug("determineUser: " + principal);
                 return principal;
             }
         };
