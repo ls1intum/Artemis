@@ -3,7 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SERVER_API_URL } from 'app/app.constants';
-import { LocalStorageProvider } from 'app/core/storage/local-storage-provider.service';
 
 export interface Credentials {
     username: string | null;

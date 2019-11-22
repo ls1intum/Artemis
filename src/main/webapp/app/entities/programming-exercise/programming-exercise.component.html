@@ -146,12 +146,27 @@
                     <td class="d-none d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
                     <td jhiIdeFilter [showInIDE]="true" class="align-middle">
                         <jhi-ide-button
-                            *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
-                            [buttonLabel]="'entity.action.editInIntelliJ' | translate"
+                            *ngIf="
+                                intelliJState.inInstructorView &&
+                                    intelliJState.opened === programmingExercise.id &&
+                                    programmingExercise.isAtLeastInstructor &&
+                                    programmingExercise.templateParticipation;
+                                else importAsInstructor
+                            "
+                            [buttonLabel]="'Open code editor'"
                             [smallButton]="false"
-                            (click)="editInIDE(programmingExercise)"
+                            (click)="openIntelliJEditor(programmingExercise)"
                         >
                         </jhi-ide-button>
+                        <ng-template #importAsInstructor>
+                            <jhi-ide-button
+                                *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                [buttonLabel]="'entity.action.editInIntelliJ' | translate"
+                                [smallButton]="false"
+                                (click)="editInIDE(programmingExercise)"
+                            >
+                            </jhi-ide-button>
+                        </ng-template>
                     </td>
                     <td jhiIdeFilter [showInIDE]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">

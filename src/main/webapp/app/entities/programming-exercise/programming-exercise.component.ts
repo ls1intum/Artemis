@@ -12,7 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { FeatureToggle } from 'app/feature-toggle';
-import { isIntelliJ } from 'app/intellij/intellij';
+import { IntelliJState, isIntelliJ } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 @Component({
@@ -22,6 +22,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     FeatureToggle = FeatureToggle;
+    intelliJState: IntelliJState;
     readonly isIDE = isIntelliJ;
 
     constructor(
@@ -39,6 +40,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     ) {
         super(courseService, translateService, route, eventManager);
         this.programmingExercises = [];
+    }
+
+    ngOnInit(): void {
+        super.ngOnInit();
+        this.javaBridge.state().subscribe(state => (this.intelliJState = state));
     }
 
     protected loadExercises(): void {
@@ -100,5 +106,13 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     editInIDE(programmingExercise: ProgrammingExercise) {
         this.javaBridge.editExercise(JSON.stringify(programmingExercise));
+    }
+
+    openIntelliJEditor(exericse: ProgrammingExercise) {
+        try {
+            this.router.navigate(['code-editor', 'ide', exericse.id, 'admin', 'test']);
+        } catch (e) {
+            this.javaBridge.log(e);
+        }
     }
 }

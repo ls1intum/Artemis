@@ -47,7 +47,7 @@ export const codeEditorRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'ide/:exerciseId/admin/:participationId',
+        path: 'ide/:exerciseId/admin/test',
         component: CodeEditorInstructorIdeComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
@@ -60,7 +60,7 @@ export const codeEditorRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'ide/:exerciseId/admin/test',
+        path: 'ide/:exerciseId/admin/:participationId',
         component: CodeEditorInstructorIdeComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
