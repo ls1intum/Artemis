@@ -19,7 +19,8 @@ export let options = {
     maxRedirects: 0,
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
-    rps: 5
+    rps: 5,
+    setupTimeout: '30s'
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;
@@ -47,11 +48,11 @@ export function setup() {
 export default function(data) {
     const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
-    // Delay so that not all users start at the same time, batches of 3 users per second
-    const delay = Math.floor(__VU / 3);
-    sleep(delay);
+    // Delay so that not all users start at the same time, batches of 2 users per second
+    const delay = Math.floor(__VU / 2);
+    sleep(delay * 3);
 
-    group('Artemis Programming Exercise Participation Loadtest', function() {
+    group('Artemis Programming Exercise Participation Websocket Stresstest', function() {
         // The user is randomly selected
         const userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -64,14 +65,15 @@ export default function(data) {
         // Initiate websocket connection if connection time is set to value greater than 0
         if (websocketConnectionTime > 0) {
             if (participationId) {
-                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContent, 1);
+                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContent, 20);
                 simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
             }
-            sleep(websocketConnectionTime - delay);
+            // Remaining time until the end of the test
+            sleep(websocketConnectionTime - (delay + 20 * 5));
         }
     });
 
-  return data;
+    return data;
 }
 
 export function teardown(data) {

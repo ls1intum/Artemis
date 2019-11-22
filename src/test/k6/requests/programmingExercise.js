@@ -3,12 +3,13 @@ import { PROGRAMMING_EXERCISES_SETUP, COMMIT, PARTICIPATIONS, PROGRAMMING_EXERCI
 import { sleep, fail } from 'k6';
 import { programmingExerciseProblemStatement } from "../resource/constants.js";
 
-export function ParticipationSimulation(timeout, exerciseId, participationId, content) {
+export function ParticipationSimulation(timeout, exerciseId, participationId, content, wsLoopCount) {
     this.timeout = timeout;
     this.exerciseId = exerciseId;
     this.participationId = participationId;
     this.newFiles = content.newFiles;
     this.content = content.content;
+    this.wsLoopCount = wsLoopCount;
 
     this.returnsExpectedResult = function(message, expectedResult, resultString) {
         const resReg = /(.*\n\n)([^\u0000]*)(\u0000)/g;
@@ -135,13 +136,19 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
             subscribe(participationSimulation.exerciseId, participationSimulation.participationId);
         }, 5 * 1000);
 
-        socket.setTimeout(function() {
-            submitChange(participationSimulation.content);
-        }, 10 * 1000);
+        // Annoy the websocket by continuously sending file contents
+        for (let i = 0; i < participationSimulation.wsLoopCount; i++) {
+            socket.setTimeout(function() {
+                submitChange(participationSimulation.content);
+                console.log('USED WS for sending file data for ' + __VU)
+            }, 10 * 1000);
+            sleep(10);
+        }
 
         // Commit changes
         socket.setTimeout(function() {
             artemis.post(COMMIT(participationSimulation.participationId));
+            console.log('COMMITTED changes for ' + __VU);
         }, 15 * 1000);
 
         // Wait for new result
