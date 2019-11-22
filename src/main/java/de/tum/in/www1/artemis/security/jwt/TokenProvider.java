@@ -132,7 +132,7 @@ public class TokenProvider implements InitializingBean {
             return tokenAuthorities.contains(authority + fileName);
         }
         catch (Exception e) {
-            log.trace("Invalid action: {}", e);
+            log.warn("Invalid action validateTokenForAuthorityAndFile: ", e);
         }
         return false;
     }
