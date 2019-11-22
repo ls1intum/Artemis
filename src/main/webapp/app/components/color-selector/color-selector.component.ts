@@ -48,8 +48,8 @@ export class ColorSelectorComponent implements OnInit {
     }
 
     selectColorForTag(selectedColor: string) {
-        this.selectedColor.emit(selectedColor);
         this.showColorSelector = false;
+        this.selectedColor.emit(selectedColor);
     }
 
     cancelColorSelector() {

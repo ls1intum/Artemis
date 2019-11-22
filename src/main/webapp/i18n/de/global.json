@@ -95,6 +95,7 @@
             "language": "Sprache",
             "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
+            "restartTutorial": "Tutorial wiederholen",
             "continueTutorial": "Tutorial fortsetzen",
             "noNotifications": "Keine Mitteilungen verfügbar",
             "showAllNotifications": "Alle Mitteilungen anzeigen"

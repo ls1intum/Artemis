@@ -783,8 +783,8 @@ public class DatabaseUtilService {
 
     @Transactional
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
-        final var lazyExcercise = programmingExerciseRepository.findAll().get(0);
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExcercise);
+        final var lazyExercise = programmingExerciseRepository.findAll().get(0);
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise);
     }
 
     @Transactional
@@ -796,5 +796,18 @@ public class DatabaseUtilService {
         exerciseRepo.save(exercise);
 
         return exercise;
+    }
+
+    /**
+     * Generates an example submission for a given model and exercise
+     * @param model given uml model for the example submission
+     * @param exercise exercise for which the example submission is created
+     * @param flagAsExampleSubmission true if the submission is an example submission
+     * @return  created example submission
+     */
+    public ExampleSubmission generateExampleSubmission(String model, Exercise exercise, boolean flagAsExampleSubmission) {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, false);
+        submission.setExampleSubmission(flagAsExampleSubmission);
+        return ModelFactory.generateExampleSubmission(submission, exercise, false);
     }
 }
