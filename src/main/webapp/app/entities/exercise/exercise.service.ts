@@ -34,6 +34,19 @@ export class ExerciseService {
             .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
+    /**
+     * Validates if the date is correct
+     */
+    validateDate(exercise: Exercise) {
+        exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
+
+        exercise.assessmentDueDateError =
+            exercise.assessmentDueDate && exercise.releaseDate
+                ? !exercise.assessmentDueDate.isAfter(exercise.releaseDate)
+                : exercise.assessmentDueDate && exercise.dueDate
+                ? !exercise.assessmentDueDate.isAfter(exercise.dueDate)
+                : false;
+    }
 
     find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
