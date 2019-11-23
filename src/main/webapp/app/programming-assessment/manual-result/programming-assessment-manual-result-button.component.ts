@@ -16,7 +16,7 @@ import { filter } from 'rxjs/operators';
             [btnType]="ButtonType.WARNING"
             [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
-            [title]="latestResult ? (latestResult.hasComplaint ? 'artemisApp.tutorExerciseDashboard.evaluateComplaint' : 'entity.action.updateResult') : 'entity.action.newResult'"
+            [title]="latestResult ? 'entity.action.updateResult' : 'entity.action.newResult'"
             (onClick)="openManualResultDialog($event)"
         ></jhi-button>
     `,
