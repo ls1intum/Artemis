@@ -72,20 +72,25 @@ public class ComplaintResponseService {
         if (complaintResponseRepository.findByComplaint_Id(originalComplaint.getId()).isPresent()) {
             throw new BadRequestAlertException("The complaint you are referring to does already have a response", ENTITY_NAME, "complaintresponseexists");
         }
+
+        Result originalResult = originalComplaint.getResult();
+
         // Only tutors who are not the original assessor of the submission can reply to a complaint
-        StudentParticipation studentParticipation = (StudentParticipation) originalComplaint.getResult().getParticipation();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(studentParticipation.getExercise()) || (originalComplaint.getResult().getAssessor().equals(reviewer)
+        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(studentParticipation.getExercise()) || (originalResult.getAssessor().equals(reviewer)
                 && (originalComplaint.getComplaintType() == null || originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT)))) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 
         // Only tutors who are the original assessor of the submission can reply to more feedback request
-        else if (!originalComplaint.getResult().getAssessor().equals(reviewer)
+        else if (!originalResult.getAssessor().equals(reviewer)
                 && (originalComplaint.getComplaintType() != null && originalComplaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK))) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 
         originalComplaint.setAccepted(complaintResponse.getComplaint().isAccepted());
+        // make sure the original result is connected to the complaint
+        originalComplaint.setResult(originalResult);
         originalComplaint = complaintRepository.save(originalComplaint);
 
         complaintResponse.setSubmittedTime(ZonedDateTime.now());
