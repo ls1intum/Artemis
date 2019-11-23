@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
+import { ExerciseView, IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/code-editor/code-editor-instructor-base-container.component';
 
@@ -57,12 +57,9 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * "Imports" a project/exercise by cloning th repository on the local machine of the user and opening the new project.
      *
      * @param repository The full URL of the repository of a programming exercise
-     * @param exerciseName The name of the programming exercise
-     * @param exerciseId The ID of the exercise
-     * @param courseId THe ID of the course of the exercise
      */
-    clone(repository: string, exerciseName: string, exerciseId: number, courseId: number) {
-        this.window.nativeWindow.intellij.clone(repository, exerciseName, exerciseId, courseId);
+    clone(repository: string, exerciseJson: string) {
+        this.window.nativeWindow.intellij.clone(repository, exerciseJson);
     }
 
     /**
@@ -97,7 +94,9 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      *
      * @param opened The ID of the exercise that was opened by the user.
      */
-    onExerciseOpened(opened: number): void {
+    onExerciseOpened(opened: number, view: string): void {
+        const inInstructorView = view === ExerciseView.INSTRUCTOR;
+        this.setIDEStateParameter({ inInstructorView });
         this.setIDEStateParameter({ opened });
     }
 
@@ -167,12 +166,6 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      */
     startedBuildInIntelliJ(courseId: number, exerciseId: number) {
         this.router.navigateByUrl(`/overview/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
-    }
-
-    onExerciseOpenedAsInstructor(exerciseId: number): void {
-        this.intellijState.opened = exerciseId;
-        this.intellijState.inInstructorView = true;
-        this.intellijStateSubject.next(this.intellijState);
     }
 
     editExercise(exerciseJson: string): void {

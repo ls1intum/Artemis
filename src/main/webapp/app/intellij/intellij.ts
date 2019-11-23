@@ -7,9 +7,13 @@ export interface IntelliJState {
     inInstructorView: boolean;
 }
 
+export enum ExerciseView {
+    STUDENT = 'STUDENT',
+    INSTRUCTOR = 'INSTRUCTOR',
+}
+
 export interface JavaDowncallBridge {
-    onExerciseOpened(opened: number): void;
-    onExerciseOpenedAsInstructor(exerciseId: number): void;
+    onExerciseOpened(opened: number, view: string): void;
     isCloning(cloning: boolean): void;
     isBuilding(building: boolean): void;
     startedBuildInIntelliJ(courseId: number, exerciseId: number): void;
@@ -17,7 +21,7 @@ export interface JavaDowncallBridge {
 
 export interface JavaUpcallBridge {
     login(username: string, password: string): void;
-    clone(repository: string, exerciseName: string, exerciseId: number, courseId: number): void;
+    clone(repository: string, exerciseJson: string): void;
     submit(): void;
     log(message: string): void;
     onBuildStarted(): void;

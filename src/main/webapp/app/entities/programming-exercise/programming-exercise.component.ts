@@ -14,6 +14,7 @@ import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exe
 import { FeatureToggle } from 'app/feature-toggle';
 import { IntelliJState, isIntelliJ } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { stringifyCricular } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -105,7 +106,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     editInIDE(programmingExercise: ProgrammingExercise) {
-        this.javaBridge.editExercise(JSON.stringify(programmingExercise));
+        this.javaBridge.editExercise(stringifyCricular(programmingExercise));
     }
 
     openIntelliJEditor(exericse: ProgrammingExercise) {

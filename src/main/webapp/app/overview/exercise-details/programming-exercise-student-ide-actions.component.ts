@@ -10,6 +10,7 @@ import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/feature-toggle';
+import { stringifyCricular } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -119,10 +120,8 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
      */
     importIntoIntelliJ() {
-        const title = this.exercise.title;
-        const id = this.exercise.id;
         const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
-        this.javaBridge.clone(repo, title, id, this.courseId);
+        this.javaBridge.clone(repo, stringifyCricular(this.exercise));
     }
 
     /**
