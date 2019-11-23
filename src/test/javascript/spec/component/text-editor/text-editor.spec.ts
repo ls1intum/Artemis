@@ -60,6 +60,7 @@ describe('TableEditableFieldComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TextEditorComponent);

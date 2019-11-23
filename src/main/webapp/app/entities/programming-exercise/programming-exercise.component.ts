@@ -8,10 +8,12 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core';
 import { ExerciseService } from 'app/entities/exercise';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/utils/global.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
@@ -30,6 +32,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private exerciseService: ExerciseService,
         private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
+        private modalService: NgbModal,
         private router: Router,
         courseService: CourseService,
         translateService: TranslateService,
@@ -83,9 +86,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param programmingExerciseId the id of the programming exercise that we want to delete
      */
     resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService
-            .reset(programmingExerciseId)
-            .subscribe(() => (this.closeDialogTrigger = !this.closeDialogTrigger), (error: HttpErrorResponse) => onError(this.jhiAlertService, error));
+        this.exerciseService.reset(programmingExerciseId).subscribe(
+            () => (this.closeDialogTrigger = !this.closeDialogTrigger),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+        );
     }
 
     protected getChangeEventName(): string {
@@ -93,4 +97,14 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     callback() {}
+
+    openImportModal() {
+        const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.result.then(
+            (result: ProgrammingExercise) => {
+                this.router.navigate(['course', this.courseId, 'programming-exercise', 'import', result.id]);
+            },
+            reason => {},
+        );
+    }
 }

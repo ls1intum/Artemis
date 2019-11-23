@@ -1,9 +1,7 @@
-import { IProgrammingSubmissionService } from 'app/programming-submission';
 import { Injectable } from '@angular/core';
 import { EntityResponseType, Result, ResultService } from 'app/entities/result';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
 

@@ -10,7 +10,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { onError } from 'app/utils/global.utils';

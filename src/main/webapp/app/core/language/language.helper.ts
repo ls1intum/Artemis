@@ -1,10 +1,10 @@
 import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
-import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 import { LANGUAGES } from './language.constants';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
@@ -17,8 +17,8 @@ export class JhiLanguageHelper {
         this.init();
     }
 
-    getAll(): Promise<string[]> {
-        return Promise.resolve(LANGUAGES);
+    getAll(): string[] {
+        return LANGUAGES;
     }
 
     get language(): Observable<string> {
@@ -43,7 +43,7 @@ export class JhiLanguageHelper {
     }
 
     private init() {
-        this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translateService.onLangChange.subscribe(() => {
             this._language.next(this.translateService.currentLang);
             this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.currentLang);
             this.updateTitle();

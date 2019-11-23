@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from './participation.model';
-import { JhiWebsocketService } from 'app/core';
 import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';
@@ -162,11 +162,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
             this.jhiWebsocketService
                 .receive(participationResultTopic)
-                .pipe(
-                    tap(this.notifyResultSubscribers),
-                    switchMap(this.addResultToParticipation),
-                    tap(this.notifyParticipationSubscribers),
-                )
+                .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
                 .subscribe();
         }
     }
@@ -185,10 +181,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
             this.jhiWebsocketService
                 .receive(participationTopic)
-                .pipe(
-                    tap(this.addParticipation),
-                    tap(this.notifyParticipationSubscribers),
-                )
+                .pipe(tap(this.addParticipation), tap(this.notifyParticipationSubscribers))
                 .subscribe();
         }
     }

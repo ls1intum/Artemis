@@ -1,5 +1,5 @@
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { Input, Directive, HostListener, Renderer2, ElementRef, OnInit, EventEmitter, Output } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 

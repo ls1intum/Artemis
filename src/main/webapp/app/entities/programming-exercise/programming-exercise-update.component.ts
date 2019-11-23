@@ -171,7 +171,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError(res));
+        result.subscribe(
+            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+        );
     }
 
     private onSaveSuccess() {

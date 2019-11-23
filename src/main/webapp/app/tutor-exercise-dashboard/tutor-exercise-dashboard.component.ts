@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService, User } from '../core';
+import { User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
@@ -26,6 +26,7 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { AccountService } from 'app/core/auth/account.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -116,7 +117,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.loadAll();
 
-        this.accountService.identity().then(user => (this.tutor = user));
+        this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
     loadAll() {
@@ -173,12 +174,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (response: string) => this.onError(response),
         );
 
-        this.complaintService
-            .getComplaintsForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
-        this.complaintService
-            .getMoreFeedbackRequestsForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
+        this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
+            (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+            (error: HttpErrorResponse) => this.onError(error.message),
+        );
+        this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
+            (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
+            (error: HttpErrorResponse) => this.onError(error.message),
+        );
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {

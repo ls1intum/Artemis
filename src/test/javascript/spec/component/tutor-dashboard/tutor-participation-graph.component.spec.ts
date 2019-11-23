@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
@@ -24,6 +24,7 @@ describe('TutorParticipationGraphComponent', () => {
             declarations: [TutorParticipationGraphComponent],
             providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorParticipationGraphComponent);
@@ -69,7 +70,10 @@ describe('TutorParticipationGraphComponent', () => {
 
             comp.exercise = {
                 id: 1,
-                exampleSubmissions: [{ id: 1, usedForTutorial: false }, { id: 2, usedForTutorial: true }],
+                exampleSubmissions: [
+                    { id: 1, usedForTutorial: false },
+                    { id: 2, usedForTutorial: true },
+                ],
             } as Exercise;
 
             comp.tutorParticipation = {

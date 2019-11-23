@@ -4,11 +4,11 @@ import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
-import { JhiWebsocketService } from 'app/core';
 import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
 import { CommitState } from 'app/code-editor';
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
@@ -153,11 +153,15 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     };
 
     createFile = (fileName: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
+        return this.http
+            .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
+            .pipe(handleErrorResponse(this.conflictService));
     };
 
     createFolder = (folderName: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) }).pipe(handleErrorResponse(this.conflictService));
+        return this.http
+            .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
+            .pipe(handleErrorResponse(this.conflictService));
     };
 
     updateFileContent = (fileName: string, fileContent: string) => {
@@ -205,10 +209,14 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpoint imp
     };
 
     renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }).pipe(handleErrorResponse(this.conflictService));
+        return this.http
+            .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
+            .pipe(handleErrorResponse(this.conflictService));
     };
 
     deleteFile = (fileName: string) => {
-        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
+        return this.http
+            .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
+            .pipe(handleErrorResponse(this.conflictService));
     };
 }

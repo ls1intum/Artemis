@@ -12,7 +12,7 @@ import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { FileUploadExerciseService } from 'app/entities/file-upload-exercise';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisSharedModule } from 'app/shared';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -42,7 +42,9 @@ describe('Component Tests', () => {
                     { provide: ActivatedRoute, useValue: route },
                     { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 ],
-            }).compileComponents();
+            })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+                .compileComponents();
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             comp = fixture.componentInstance;
             debugElement = fixture.debugElement;

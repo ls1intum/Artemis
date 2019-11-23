@@ -59,6 +59,7 @@ describe('ListOfComplaintsComponent', () => {
                 },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ListOfComplaintsComponent);

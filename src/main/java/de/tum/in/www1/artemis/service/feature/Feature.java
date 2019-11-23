@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public enum Feature {
+
     PROGRAMMING_EXERCISES(true);
 
     private boolean enabled;

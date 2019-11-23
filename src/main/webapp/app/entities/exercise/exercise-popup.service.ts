@@ -45,7 +45,7 @@ export class ExercisePopupService {
     }
 
     exerciseModalRef(component: Component, exercise: Exercise, ltiConfiguration: LtiConfiguration | null): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exercise = exercise;
         modalRef.componentInstance.ltiConfiguration = ltiConfiguration;
         modalRef.result.then(

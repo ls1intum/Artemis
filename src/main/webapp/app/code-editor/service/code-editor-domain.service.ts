@@ -2,11 +2,11 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { Injectable, OnDestroy } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient } from '@angular/common/http';
-import { JhiWebsocketService } from 'app/core';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { DomainParticipationChange, DomainType } from 'app/code-editor/service';
 import { SolutionProgrammingExerciseParticipation, StudentParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export type DomainParticipationChange = [DomainType.PARTICIPATION, StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation];
 export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];
