@@ -77,12 +77,6 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     @NotNull
     @Override
-    public WebSocketHandler subProtocolWebSocketHandler() {
-        return new CustomSubProtocolWebSocketHandler(clientInboundChannel(), clientOutboundChannel());
-    }
-
-    @NotNull
-    @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
         // NOTE: We need to adapt the default messageConverter for WebSocket messages
         // with a messageConverter that uses the same ObjectMapper that our REST endpoints use.

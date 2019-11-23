@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
+import static com.google.gson.JsonParser.parseString;
 import static de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE;
 import static de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode.UMLActivityNodeType.ACTIVITY_DECISION_NODE;
 import static de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FINAL_NODE;
@@ -29,7 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.ResourceUtils;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -142,7 +142,7 @@ class JSONParserTest {
         StringBuilder builder = new StringBuilder();
         Files.lines(file.toPath()).forEach(builder::append);
         assertThat(builder.toString()).as("model has been correctly read from file").isNotEqualTo("");
-        return new JsonParser().parse(builder.toString()).getAsJsonObject();
+        return parseString(builder.toString()).getAsJsonObject();
     }
 
     private List<UMLElement> createExampleClassDiagramElements() {
