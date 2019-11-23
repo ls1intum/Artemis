@@ -22,9 +22,9 @@ const exerciseId = 241;
 export default function() {
     const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
-    // Delay so that not all users start at the same time, batches of 2 users per second
-    const delay = Math.floor(__VU / 2);
-    sleep(delay * 3);
+    // Delay so that not all users start at the same time, batches of 50 users per second
+    const delay = Math.floor(__VU / 50);
+    sleep(delay);
 
     group('Artemis Programming Exercise Participation Websocket Stresstest', function() {
         // The user is randomly selected
