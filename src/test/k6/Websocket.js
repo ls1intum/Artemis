@@ -1,15 +1,6 @@
 import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
-import { deleteCourse, newCourse } from './requests/course.js';
-import {
-    startExercise,
-    createExercise,
-    deleteExercise,
-    ParticipationSimulation,
-    simulateSubmission,
-    TestResult
-} from './requests/programmingExercise.js';
-import { buildErrorContent } from './resource/constants.js';
+import { getQuizQuestions, simulateQuizWork } from "./requests/quiz.js";
 
 // Version: 1.1
 // Creator: Firefox
@@ -20,32 +11,15 @@ export let options = {
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
     rps: 5,
-    setupTimeout: '30s'
 };
 
-const adminUsername = __ENV.ADMIN_USERNAME;
-const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 
-export function setup() {
-    // Create course
-    let artemis = login(adminUsername, adminPassword);
-    const courseId = newCourse(artemis);
+const courseId = 1;
+const exerciseId = 241;
 
-    const instructorUsername = baseUsername.replace('USERID', '1');
-    const instructorPassword = basePassword.replace('USERID', '1');
-
-    // Login to Artemis
-    artemis = login(instructorUsername, instructorPassword);
-
-    // Create new exercise
-    const exerciseId = createExercise(artemis, courseId);
-
-    return { exerciseId: exerciseId, courseId: courseId };
-}
-
-export default function(data) {
+export default function() {
     const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
     // Delay so that not all users start at the same time, batches of 2 users per second
@@ -59,28 +33,7 @@ export default function(data) {
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
 
-        // Start exercise
-        const participationId = startExercise(artemis, data.courseId, data.exerciseId);
-
-        // Initiate websocket connection if connection time is set to value greater than 0
-        if (websocketConnectionTime > 0) {
-            if (participationId) {
-                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContent, 20);
-                simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
-            }
-            // Remaining time until the end of the test
-            sleep(websocketConnectionTime - (delay + 20 * 5));
-        }
+        const questions = getQuizQuestions(artemis, courseId, exerciseId);
+        simulateQuizWork(artemis, exerciseId, questions, websocketConnectionTime - delay);
     });
-
-    return data;
-}
-
-export function teardown(data) {
-    const artemis = login(adminUsername, adminPassword);
-    const courseId = data.courseId;
-    const exerciseId = data.exerciseId;
-
-    deleteExercise(artemis, exerciseId);
-    deleteCourse(artemis, courseId);
 }
