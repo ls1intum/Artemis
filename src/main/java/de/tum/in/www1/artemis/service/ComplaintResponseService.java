@@ -71,22 +71,24 @@ public class ComplaintResponseService {
         }
 
         Result originalResult = originalComplaint.getResult();
+        User assessor = originalResult.getAssessor();
 
         // Only tutors who are not the original assessor of the submission can reply to a complaint
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(studentParticipation.getExercise()) || (originalResult.getAssessor().equals(reviewer)
-                && (originalComplaint.getComplaintType() == null || originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT)))) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(studentParticipation.getExercise())
+                || (assessor.equals(reviewer) && (originalComplaint.getComplaintType() == null || originalComplaint.getComplaintType().equals(ComplaintType.COMPLAINT)))) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 
         // Only tutors who are the original assessor of the submission can reply to more feedback request
-        else if (!originalResult.getAssessor().equals(reviewer)
-                && (originalComplaint.getComplaintType() != null && originalComplaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK))) {
+        else if (!assessor.equals(reviewer) && (originalComplaint.getComplaintType() != null && originalComplaint.getComplaintType().equals(ComplaintType.MORE_FEEDBACK))) {
             throw new AccessForbiddenException("Insufficient permission for creating a complaint response");
         }
 
         originalComplaint.setAccepted(complaintResponse.getComplaint().isAccepted());
-        // make sure the original result is connected to the complaint
+
+        // make sure the original result and assessor are connected to the complaint
+        originalResult.setAssessor(assessor);
         originalComplaint.setResult(originalResult);
         originalComplaint = complaintRepository.save(originalComplaint);
 
