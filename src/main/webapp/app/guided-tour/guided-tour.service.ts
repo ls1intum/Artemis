@@ -13,7 +13,7 @@ import { User } from 'app/core/user/user.model';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Exercise } from 'app/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { Course } from 'app/entities/course/course.model';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
@@ -838,9 +838,14 @@ export class GuidedTourService {
         }
 
         let exerciseMatches = false;
-        const settingsKey = guidedTour ? guidedTour.settingsKey : this.currentTour ? this.currentTour.settingsKey : '';
+        let settingsKey = '';
+        if (guidedTour) {
+            settingsKey = guidedTour.settingsKey;
+        } else {
+            settingsKey = this.currentTour ? this.currentTour.settingsKey : '';
+        }
 
-        if (exercise.type === 'programming') {
+        if (exercise.type === ExerciseType.PROGRAMMING) {
             exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.shortName;
         } else {
             exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.title;
