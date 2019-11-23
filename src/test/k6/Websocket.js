@@ -16,8 +16,8 @@ export let options = {
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 
-const courseId = 1;
-const exerciseId = 241;
+const courseId = 30;
+const exerciseId = 1253;
 
 export default function() {
     const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
@@ -27,8 +27,7 @@ export default function() {
     sleep(delay);
 
     group('Artemis Programming Exercise Participation Websocket Stresstest', function() {
-        // The user is randomly selected
-        const userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
+        const userId = __VU;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
