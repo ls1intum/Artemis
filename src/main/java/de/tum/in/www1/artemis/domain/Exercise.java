@@ -490,29 +490,32 @@ public abstract class Exercise implements Serializable {
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     @Nullable
-    public Result findLatestRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
-        Result latestResult = null;
+        Submission latestSubmission = null;
         // we get the results over the submissions
         if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
             return null;
         }
-        var results = participation.getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).collect(Collectors.toSet());
-        for (Result result : results) {
+        for (var submission : participation.getSubmissions()) {
+            var result = submission.getResult();
+            if (result == null) {
+                continue;
+            }
             // NOTE: for the dashboard we only use rated results with completion date
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             if (result.getCompletionDate() != null && result.isRated() == Boolean.TRUE && isAssessmentOver) {
                 // take the first found result that fulfills the above requirements
-                if (latestResult == null) {
-                    latestResult = result;
+                if (latestSubmission == null) {
+                    latestSubmission = submission;
                 }
                 // take newer results and thus disregard older ones
-                else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
-                    latestResult = result;
+                else if (latestSubmission.getResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestSubmission = submission;
                 }
             }
         }
-        return latestResult;
+        return latestSubmission;
     }
 
     /**
@@ -585,17 +588,19 @@ public abstract class Exercise implements Serializable {
             Set<Submission> submissions = participation.getSubmissions();
 
             // only transmit the relevant result
+            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
             Submission submission = (submissions == null || submissions.isEmpty()) ? null : findAppropriateSubmissionByResults(submissions);
-            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation, false);
+            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
 
-            Set<Result> results = result != null ? Set.of(result) : Set.of();
+            Set<Result> results = Set.of();
 
-            if (result != null) {
+            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getResult() != null) {
+                results = Set.of(latestSubmissionWithRatedResult.getResult());
                 // remove inner participation from result
-                result.setParticipation(null);
+                latestSubmissionWithRatedResult.getResult().setParticipation(null);
                 // filter sensitive information about the assessor if the current user is a student
                 if (isStudent) {
-                    result.filterSensitiveInformation();
+                    latestSubmissionWithRatedResult.getResult().filterSensitiveInformation();
                 }
             }
 
