@@ -24,6 +24,9 @@
                 "successMessage": "Cleanup was successful. All build plans have been deleted. Students can resume their participation.",
                 "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished."
             },
+            "reset": {
+                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participations, existing results, student repositories and student build plans will be deleted."
+            },
             "detail": {
                 "title": "Programming Exercise"
             },
