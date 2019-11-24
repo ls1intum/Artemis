@@ -390,7 +390,7 @@ public class ProgrammingSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
         studentParticipation.setExercise(programmingExercise);
-        programmingSubmissionService.hideDetails(programmingSubmission);
+        programmingSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(programmingSubmission);
     }
 }

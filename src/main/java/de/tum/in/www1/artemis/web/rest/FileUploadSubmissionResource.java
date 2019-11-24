@@ -90,7 +90,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        fileUploadSubmissionService.hideDetails(submission);
+        submission.hideDetails(authCheckService);
         return ResponseEntity.ok(submission);
     }
 
@@ -113,7 +113,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        fileUploadSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -177,7 +177,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
                     .getSubmissionWithoutManualResult(fileUploadExercise, FileUploadSubmission.class).map(FileUploadSubmission.class::cast);
-            if (!optionalFileUploadSubmission.isPresent()) {
+            if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();
             }
             fileUploadSubmission = optionalFileUploadSubmission.get();
@@ -186,7 +186,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        fileUploadSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

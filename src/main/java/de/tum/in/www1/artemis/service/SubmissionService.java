@@ -73,40 +73,13 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
     }
 
     /**
-     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
-     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
-     * database without explicitly saving them.
-     * @param submission that we want to hide sensitive information for
-     */
-    public void hideDetails(Submission submission) {
-        // do not send old submissions or old results to the client
-        if (submission.getParticipation() != null) {
-            submission.getParticipation().setSubmissions(null);
-            submission.getParticipation().setResults(null);
-
-            Exercise exercise = submission.getParticipation().getExercise();
-            if (exercise != null) {
-                // make sure that sensitive information is not sent to the client for students
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                    exercise.filterSensitiveInformation();
-                    submission.setResult(null);
-                }
-                // remove information about the student from the submission for tutors to ensure a double-blind assessment
-                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                    ((StudentParticipation) submission.getParticipation()).filterSensitiveInformation();
-                }
-            }
-        }
-    }
-
-    /**
      * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
      * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
      *
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
-    public Result setNewResult(Submission submission) {
+    Result setNewResult(Submission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
@@ -152,7 +125,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
         submission.setResult(null);
 
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(exercise.getId(), username);
-        if (!optionalParticipation.isPresent()) {
+        if (optionalParticipation.isEmpty()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + exercise.getId());
         }
         StudentParticipation participation = optionalParticipation.get();

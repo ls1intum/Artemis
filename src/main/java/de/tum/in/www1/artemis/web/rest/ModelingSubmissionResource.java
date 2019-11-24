@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
@@ -74,7 +73,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        modelingSubmissionService.hideDetails(modelingSubmission);
+        modelingSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -87,7 +86,6 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
      * @param modelingSubmission the modelingSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission, or with status 400 (Bad Request) if the modelingSubmission is not valid, or
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -100,7 +98,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        modelingSubmissionService.hideDetails(modelingSubmission);
+        modelingSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -159,7 +157,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         // Make sure the exercise is connected to the participation in the json response
 
         studentParticipation.setExercise(modelingExercise);
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        modelingSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -191,7 +189,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         }
         else {
             Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getSubmissionWithoutManualResult(exercise, ModelingSubmission.class);
-            if (!optionalModelingSubmission.isPresent()) {
+            if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }
             modelingSubmission = optionalModelingSubmission.get();
@@ -200,7 +198,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        modelingSubmissionService.hideDetails(modelingSubmission);
+        modelingSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(modelingSubmission);
     }
 

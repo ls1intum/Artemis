@@ -25,9 +25,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -70,14 +68,10 @@ public class ProgrammingSubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SubmissionService submissionService;
-
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
-            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
+            GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, SubmissionService submissionService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.groupNotificationService = groupNotificationService;
@@ -89,7 +83,6 @@ public class ProgrammingSubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.submissionService = submissionService;
     }
 
     /**
@@ -588,9 +581,5 @@ public class ProgrammingSubmissionService {
             return Optional.empty();
         }
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
-    }
-
-    public void hideDetails(ProgrammingSubmission submission) {
-        submissionService.hideDetails(submission);
     }
 }

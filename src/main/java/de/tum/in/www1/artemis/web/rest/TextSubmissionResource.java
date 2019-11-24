@@ -93,7 +93,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        textSubmissionService.hideDetails(textSubmission);
+        textSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -166,7 +166,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        textSubmissionService.hideDetails(textSubmission);
+        textSubmission.hideDetails(authCheckService);
         return ResponseEntity.ok(textSubmission);
     }
 }
