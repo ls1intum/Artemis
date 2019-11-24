@@ -64,7 +64,7 @@ public class TextSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 0);
+        student = database.addUsers(2, 2, 0).get(0);
         database.addCourseWithOneTextExerciseDueDateReached();
         textExerciseBeforeDueDate = (TextExercise) database.addCourseWithOneTextExercise().getExercises().iterator().next();
         textExerciseAfterDueDate = (TextExercise) exerciseRepo.findAll().get(0);
@@ -234,12 +234,12 @@ public class TextSubmissionIntegrationTest {
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getParticipationForTextExerciseWithoutAssessment_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
         assertThat(submissionWithoutAssessment).as("submission without assessment was found").isNotNull();
