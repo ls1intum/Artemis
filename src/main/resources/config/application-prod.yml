@@ -131,11 +131,10 @@ info:
     guided-tour:
         courseShortName: 'artemistutorial'
         tours:
-            -   cancel_tour: ''
-            -   code_editor_tour: 'tutorial'
-            -   completed_tour: ''
-            -   course_overview_tour: ''
-            -   course_exercise_overview_tour: 'tutorial'
-            -   modeling_tour: 'UML Class Diagram'
-            -   programming_exercise_fail_tour: 'tutorial'
-            -   programming_exercise_success_tour: 'tutorial'
+            - cancel_tour: ''
+            - code_editor_tour: 'tutorial'
+            - course_overview_tour: ''
+            - course_exercise_overview_tour: 'tutorial'
+            - modeling_tour: 'UML Class Diagram'
+            - programming_exercise_fail_tour: 'tutorial'
+            - programming_exercise_success_tour: 'tutorial'
