@@ -31,6 +31,7 @@
             "participation": "Participation",
             "createManual": "Create manual result",
             "updateManual": "Update manual result",
+            "viewManual": "View manual result",
             "invalidScore": "Score is required and should be a number between 0 and 100.",
             "resultStringRequired": "Result text is required.",
             "exerciseStillOpen": "Exercise is still open for submissions!",
