@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
@@ -17,7 +16,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 
 @Service
-@Transactional
 public class QuizSubmissionService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -29,17 +27,14 @@ public class QuizSubmissionService {
         this.resultRepository = resultRepository;
     }
 
-    @Transactional(readOnly = true)
     public QuizSubmission findOne(Long id) {
         return quizSubmissionRepository.findById(id).get();
     }
 
-    @Transactional(readOnly = true)
     public List<QuizSubmission> findAll() {
         return quizSubmissionRepository.findAll();
     }
 
-    @Transactional
     public void delete(Long id) {
         quizSubmissionRepository.deleteById(id);
     }
@@ -52,7 +47,6 @@ public class QuizSubmissionService {
      * @param participation  the participation where the result should be saved
      * @return the result entity
      */
-    @Transactional
     public Result submitForPractice(QuizSubmission quizSubmission, QuizExercise quizExercise, Participation participation) {
         // update submission properties
         quizSubmission.setSubmitted(true);
@@ -63,7 +57,9 @@ public class QuizSubmissionService {
         quizSubmission.calculateAndUpdateScores(quizExercise);
 
         // create and save result
-        Result result = new Result().participation(participation).submission(quizSubmission);
+        Result result = new Result().participation(participation);
+        resultRepository.save(result);
+        result.setSubmission(quizSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
@@ -72,12 +68,11 @@ public class QuizSubmissionService {
         // save result
         quizSubmission.setResult(result);
         quizSubmission.setParticipation(participation);
-        result.setSubmission(quizSubmission);
-        resultRepository.save(result);
         quizSubmissionRepository.save(quizSubmission);
+        resultRepository.save(result);
 
         // add result to statistics
-        QuizScheduleService.addResultToStatistic(quizExercise.getId(), result);
+        QuizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
 
         return result;
     }

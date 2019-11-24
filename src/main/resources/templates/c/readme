@@ -1,8 +1,5 @@
 ### Tests
 
-### Solution compiles
-1. [task][Solution Compiles](TestCompile)
-
 #### General Tasks
 1. [task][0 as Input](TestInput_0)
 2. [task][1 as Input](TestInput_1)

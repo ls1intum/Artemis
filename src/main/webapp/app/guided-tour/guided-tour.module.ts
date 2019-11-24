@@ -10,11 +10,4 @@ import { GuidedTourComponent } from './guided-tour.component';
     exports: [GuidedTourComponent],
     entryComponents: [GuidedTourComponent],
 })
-export class GuidedTourModule {
-    public static forRoot(): ModuleWithProviders {
-        return {
-            ngModule: GuidedTourModule,
-            providers: [ErrorHandler, GuidedTourService],
-        };
-    }
-}
+export class GuidedTourModule {}

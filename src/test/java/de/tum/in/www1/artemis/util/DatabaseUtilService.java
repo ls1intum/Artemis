@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
@@ -14,7 +15,6 @@ import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -685,9 +685,8 @@ public class DatabaseUtilService {
     }
 
     public void checkModelsAreEqual(String storedModel, String sentModel) throws Exception {
-        JsonParser parser = new JsonParser();
-        JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
-        JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
+        JsonObject sentModelObject = parseString(sentModel).getAsJsonObject();
+        JsonObject storedModelObject = parseString(storedModel).getAsJsonObject();
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
     }
 
@@ -783,8 +782,8 @@ public class DatabaseUtilService {
 
     @Transactional
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
-        final var lazyExcercise = programmingExerciseRepository.findAll().get(0);
-        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExcercise);
+        final var lazyExercise = programmingExerciseRepository.findAll().get(0);
+        return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise);
     }
 
     @Transactional
@@ -796,5 +795,18 @@ public class DatabaseUtilService {
         exerciseRepo.save(exercise);
 
         return exercise;
+    }
+
+    /**
+     * Generates an example submission for a given model and exercise
+     * @param model given uml model for the example submission
+     * @param exercise exercise for which the example submission is created
+     * @param flagAsExampleSubmission true if the submission is an example submission
+     * @return  created example submission
+     */
+    public ExampleSubmission generateExampleSubmission(String model, Exercise exercise, boolean flagAsExampleSubmission) {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, false);
+        submission.setExampleSubmission(flagAsExampleSubmission);
+        return ModelFactory.generateExampleSubmission(submission, exercise, false);
     }
 }

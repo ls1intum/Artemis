@@ -26,8 +26,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     isSaving: boolean;
-    dueDateError: boolean;
-    assessmentDueDateError: boolean;
     maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -70,8 +68,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             );
         });
         this.isSaving = false;
-        this.dueDateError = false;
-        this.assessmentDueDateError = false;
         this.notificationText = null;
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
@@ -93,14 +89,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Validates if the date is correct
      */
     validateDate() {
-        this.dueDateError = this.modelingExercise.releaseDate && this.modelingExercise.dueDate ? !this.modelingExercise.dueDate.isAfter(this.modelingExercise.releaseDate) : false;
-
-        this.assessmentDueDateError =
-            this.modelingExercise.assessmentDueDate && this.modelingExercise.releaseDate
-                ? !this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.releaseDate)
-                : this.modelingExercise.assessmentDueDate && this.modelingExercise.dueDate
-                ? !this.modelingExercise.assessmentDueDate.isAfter(this.modelingExercise.dueDate)
-                : false;
+        this.exerciseService.validateDate(this.modelingExercise);
     }
 
     /**

@@ -385,15 +385,13 @@ public class ResultResource {
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the results
-     * @param ratedOnly defines if only rated results should be returned
      * @param withAssessors defines if assessors are loaded from the database for the results
      * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean ratedOnly,
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean withSubmissions, @RequestParam(defaultValue = "false") boolean withAssessors) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
@@ -404,11 +402,15 @@ public class ResultResource {
             return forbidden();
         }
 
-        // TODO use rated only in case the given request param is true
-
         List<Result> results = new ArrayList<>();
 
-        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
+        List<StudentParticipation> participations;
+        if (withAssessors) {
+            participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+        }
+        else {
+            participations = participationService.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
+        }
 
         for (StudentParticipation participation : participations) {
             // Filter out participations without Students
@@ -417,35 +419,22 @@ public class ResultResource {
                 continue;
             }
 
-            Result relevantResult;
-            if (ratedOnly) {
-                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation, true);
-            }
-            else {
-                relevantResult = participation.findLatestResultUsingSubmissions();
-            }
-            if (relevantResult == null) {
+            Submission relevantSubmissionWithResult = exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true);
+            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getResult() == null) {
                 continue;
             }
 
-            relevantResult.setSubmissionCount((long) participation.getResults().size());
-            results.add(relevantResult);
+            relevantSubmissionWithResult.getResult().setSubmissionCount(participation.getSubmissions().size());
+            if (withSubmissions) {
+                relevantSubmissionWithResult.getResult().setSubmission(relevantSubmissionWithResult);
+            }
+            results.add(relevantSubmissionWithResult.getResult());
         }
 
         log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
 
         if (withSubmissions) {
-            // TODO adapt this, we already have the submissions above
-            results.forEach(result -> {
-                Hibernate.initialize(result.getSubmission()); // eagerly load the association
-            });
             results = results.stream().filter(result -> result.getSubmission() != null && result.getSubmission().isSubmitted()).collect(Collectors.toList());
-        }
-
-        if (withAssessors) {
-            results.forEach(result -> {
-                Hibernate.initialize(result.getAssessor()); // eagerly load the association
-            });
         }
 
         // remove unnecessary elements in the json response

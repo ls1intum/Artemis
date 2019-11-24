@@ -16,7 +16,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
     // supported exercise type
-    readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT];
+    readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
 
     course: Course;
     participations: StudentParticipation[] = [];
