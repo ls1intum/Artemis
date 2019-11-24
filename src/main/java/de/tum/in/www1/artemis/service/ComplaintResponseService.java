@@ -56,7 +56,6 @@ public class ComplaintResponseService {
         }
 
         Long complaintId = complaintResponse.getComplaint().getId();
-        User reviewer = this.userService.getUser();
 
         // Do not trust user input
         Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(complaintId);
@@ -72,6 +71,7 @@ public class ComplaintResponseService {
 
         Result originalResult = originalComplaint.getResult();
         User assessor = originalResult.getAssessor();
+        User reviewer = this.userService.getUser();
 
         // Only tutors who are not the original assessor of the submission can reply to a complaint
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();

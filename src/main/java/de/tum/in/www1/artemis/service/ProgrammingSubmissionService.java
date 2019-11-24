@@ -18,7 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -546,7 +545,6 @@ public class ProgrammingSubmissionService {
      * @param tutorId    - the id of the tutor we are interested in
      * @return a list of programming submissions
      */
-    @Transactional(readOnly = true)
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
         List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
