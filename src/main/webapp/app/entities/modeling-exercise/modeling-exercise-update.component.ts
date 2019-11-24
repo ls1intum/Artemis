@@ -136,7 +136,10 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
-        result.subscribe((res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!),
+            (res: HttpErrorResponse) => this.onSaveError(),
+        );
     }
 
     private onSaveSuccess(result: ModelingExercise) {

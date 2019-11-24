@@ -101,7 +101,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(),
+        );
     }
 
     /**
