@@ -12,6 +12,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { SortByPipe } from 'app/components/pipes';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
+import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 enum SortOrder {
     ASC = 'asc',
@@ -54,6 +56,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     SortType = SortType;
 
     participations: StudentParticipation[];
+    allParticipations: StudentParticipation[];
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
@@ -106,7 +109,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
                 this.exercise = exerciseResponse.body!;
                 this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe(participationsResponse => {
-                    this.participations = participationsResponse.body!;
+                    this.allParticipations = participationsResponse.body!;
                     this.updateResults();
                     this.isLoading = false;
                 });
@@ -185,8 +188,26 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     callback() {}
 
+    /**
+     * Filter the given results by the provided search words.
+     * Returns results that match any of the provides search words, if searchWords is empty returns all results.
+     *
+     * @param searchWords list of student logins or names.
+     * @param participation StudentParticipation
+     */
+    filterResultByTextSearch = (searchWords: string[], participation: StudentParticipation) => {
+        const searchableFields = [participation.student.login, participation.student.name].filter(Boolean) as string[];
+        // When no search word is inputted, we return all results.
+        if (!searchWords.length) {
+            return true;
+        }
+        // Otherwise we do a fuzzy search on the inputted search words.
+        return searchableFields.some(field => searchWords.some(word => word && field.toLowerCase().includes(word.toLowerCase())));
+    };
+
     updateResults() {
-        this.participations = this.sortByPipe.transform([...this.participations], this.resultCriteria.sortProp.field, this.resultCriteria.sortProp.order === SortOrder.ASC);
+        const participations = this.allParticipations.filter((participation: StudentParticipation) => this.filterResultByTextSearch(this.resultCriteria.textSearch, participation));
+        this.participations = this.sortByPipe.transform(participations, this.resultCriteria.sortProp.field, this.resultCriteria.sortProp.order === SortOrder.DESC);
     }
 
     private invertSort = (order: SortOrder) => {
@@ -218,6 +239,61 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.resultCriteria.sortProp = { field, order };
         this.updateResults();
     }
+
+    /**
+     * Formats the results in the autocomplete overlay.
+     *
+     * @param participation
+     */
+    searchResultFormatter = (participation: StudentParticipation) => {
+        const { login, name } = participation.student;
+        return `${login} (${name})`;
+    };
+
+    searchInputFormatter = () => {
+        return this.resultCriteria.textSearch.join(', ');
+    };
+
+    /**
+     * Splits the provides search words by comma and updates the autocompletion overlay.
+     * Also updates the available results in the UI.
+     *
+     * @param text$ stream of text input.
+     */
+    onSearch = (text$: Observable<string>) => {
+        return text$.pipe(
+            debounceTime(200),
+            distinctUntilChanged(),
+            map(text => {
+                const searchWords = text.split(',').map(word => word.trim());
+                // When the result field is cleared, we translate the resulting empty string to an empty array (otherwise no results would be found).
+                return searchWords.length === 1 && !searchWords[0] ? [] : searchWords;
+            }),
+            // For available results in table.
+            tap(searchWords => {
+                this.resultCriteria.textSearch = searchWords;
+                this.updateResults();
+            }),
+            // For autocomplete.
+            map((searchWords: string[]) => {
+                // We only execute the autocomplete for the last keyword in the provided list.
+                const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
+                // Don't execute autocomplete for less then two inputted characters.
+                if (!lastSearchWord || lastSearchWord.length < 3) {
+                    return false;
+                }
+                return this.participations.filter(participation => {
+                    const searchableFields = [participation.student.login, participation.student.name].filter(Boolean) as string[];
+                    return searchableFields.some(value => value.toLowerCase().includes(lastSearchWord.toLowerCase()) && value.toLowerCase() !== lastSearchWord.toLowerCase());
+                });
+            }),
+        );
+    };
+
+    onAutocompleteSelect = (participation: StudentParticipation) => {
+        this.resultCriteria.textSearch[this.resultCriteria.textSearch.length - 1] = participation.student.login!;
+        this.updateResults();
+    };
 
     getCachedResultsPerPage = () => {
         const cachedValue = localStorage.getItem(resultsPerPageCacheKey);
