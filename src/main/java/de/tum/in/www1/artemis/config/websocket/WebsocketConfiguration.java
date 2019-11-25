@@ -71,8 +71,9 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         DefaultHandshakeHandler handshakeHandler = defaultHandshakeHandler();
+        // NOTE: by setting a WebSocketTransportHandler we disable http poll, http stream and other exotic workarounds and only support real websocket connections.
+        // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
-        // String[] allowedOrigins = Optional.ofNullable(jHipsterProperties.getCors().getAllowedOrigins()).map(origins -> origins.toArray(new String[0])).orElse(new String[0]);
         registry.addEndpoint("/websocket/tracker")
                 // Override this value due to warnings in the logs: o.s.w.s.s.t.h.DefaultSockJsService : Origin check enabled but transport 'jsonp' does not support it.
                 .setAllowedOrigins("*").withSockJS().setTransportHandlers(webSocketTransportHandler).setInterceptors(httpSessionHandshakeInterceptor());
