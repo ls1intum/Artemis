@@ -104,13 +104,14 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
      * Returns the data needed for the editor, which includes the participation, submission with answer if existing and the assessments if the submission was already
      * submitted.
      *
-     * @param participation the participation for which to find the data for the editor
+     * @param participationId the id of the participation for which to find the data for the editor
      * @param exerciseType type of the exercise for which we take the data
      * @param submissionType type of the submission for which we take the data
      * @param newSubmission new instance of concrete submission which can be needed if we don't find submission
      * @return the ResponseEntity with the participation as body
      */
-    protected ResponseEntity<T> getDataForEditor(StudentParticipation participation, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
+    protected ResponseEntity<T> getDataForEditor(long participationId, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
+        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
@@ -139,7 +140,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
 
         Optional<T> optionalSubmission = participation.findLatestSubmissionOfType(submissionType);
         T submission;
-        if (!optionalSubmission.isPresent()) {
+        if (optionalSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             submission = newSubmission;
             submission.setParticipation(participation);
@@ -153,6 +154,15 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         participation.setSubmissions(null);
         participation.setResults(null);
 
+        if (submission.getResult() != null) {
+            // do not send the result to the client if the assessment is not finished
+            if (submission.getResult().getCompletionDate() == null || submission.getResult().getAssessor() == null) {
+                submission.setResult(null);
+            }
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                submission.getResult().setAssessor(null);
+            }
+        }
         return ResponseEntity.ok(submission);
     }
 }

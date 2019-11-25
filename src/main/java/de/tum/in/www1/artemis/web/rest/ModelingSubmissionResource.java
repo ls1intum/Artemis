@@ -271,12 +271,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
-        var responseEntity = getDataForEditor(participation, ModelingExercise.class, ModelingSubmission.class, new ModelingSubmission());
-        if (responseEntity.hasBody() && responseEntity.getBody() != null) {
-            return ResponseEntity.ok(modelingSubmissionService.hideResultDetails(responseEntity.getBody(), participation.getExercise()));
-        }
-        return responseEntity;
+        return getDataForEditor(participationId, ModelingExercise.class, ModelingSubmission.class, new ModelingSubmission());
     }
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
