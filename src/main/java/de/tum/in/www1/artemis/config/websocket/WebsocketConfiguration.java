@@ -55,7 +55,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private ThreadPoolTaskExecutor outboundChannelExecutor;
 
-    private static final int PERIOD = 10 * 1000;
+    private static final int SCHEDULER_PERIOD = 60 * 1000;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
@@ -69,7 +69,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
                         + outboundChannelExecutor.getThreadPoolExecutor().getQueue().remainingCapacity());
             }
 
-        }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
+        }, SCHEDULER_PERIOD, SCHEDULER_PERIOD, TimeUnit.MILLISECONDS);
     }
 
     @PostConstruct
@@ -77,7 +77,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
         webSocketMessageBrokerStats = webSocketMessageBrokerStats();
-        webSocketMessageBrokerStats.setLoggingPeriod(10 * 1000);
+        webSocketMessageBrokerStats.setLoggingPeriod(5 * 1000);
     }
 
     @Autowired
