@@ -6,8 +6,6 @@ import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.mo
  * This constant contains the guided tour configuration and steps for the course overview page
  */
 export const courseOverviewTour: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: '',
     settingsKey: 'course_overview_tour',
     steps: [
         new ImageTourStep({
