@@ -16,8 +16,8 @@ export let options = {
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 
-const courseId = 30;
-const exerciseId = 1253;
+const courseId = 1;
+const exerciseId = 1263;
 
 export default function() {
     const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
@@ -34,9 +34,8 @@ export default function() {
 
         const questions = getQuizQuestions(artemis, courseId, exerciseId);
         const remainingTime = websocketConnectionTime - delay;
-        const iterations = remainingTime / 5;   // ca. every 5 seconds we sen a message using the WS
-        console.log(iterations);
-        for (let i = 0; i < iterations; i++) {
+        const startTime = new Date().getTime();
+        while ((new Date().getTime() - startTime) / 1000 < remainingTime) {
             simulateQuizWork(artemis, exerciseId, questions, 30);
         }
     });
