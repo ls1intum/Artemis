@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -56,8 +55,7 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
      * @param textSubmission the submission to notifyCompass
      * @return the textSubmission entity
      */
-    @Transactional(rollbackFor = Exception.class)
-    public TextSubmission save(TextSubmission textSubmission) {
+    TextSubmission save(TextSubmission textSubmission) {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
 

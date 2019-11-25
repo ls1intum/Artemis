@@ -171,7 +171,6 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * @param submissionType - type of the submission
      * @return a list of submissions of given type for the given exercise id
      */
-    @Transactional(readOnly = true)
     public List<T> getSubmissions(Long exerciseId, boolean submittedOnly, Class<T> submissionType) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         ArrayList<T> submissions = new ArrayList<>();
@@ -201,7 +200,6 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * @param tutorId    - the id of the tutor we are interested in
      * @return a list of Submissions
      */
-    @Transactional(readOnly = true)
     public List<T> getAllSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
         return genericSubmissionRepository.findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(exerciseId, tutorId).stream().map(Optional::get)
                 .collect(Collectors.toList());
@@ -269,7 +267,6 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * @param <L> concrete exercise
      * @return submission of the specified type
      */
-    @Transactional(readOnly = true)
     public <L extends Exercise> Optional<T> getSubmissionWithoutManualResult(L exercise, Class<T> submissionType) {
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
         List<T> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId()).stream()
