@@ -125,6 +125,41 @@ public class TextSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitTextSubmission_afterDueDate_forbidden() throws Exception {
+        request.put("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitTextSubmission_beforeDueDate_allowed() throws Exception {
+        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitTextSubmission_beforeDueDateWithTwoSubmissions_allowed() throws Exception {
+        final var submitPath = "/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions";
+        final var newSubmissionText = "Some other test text";
+        textSubmission = request.putWithResponseBody(submitPath, textSubmission, TextSubmission.class, HttpStatus.OK);
+        textSubmission.setText(newSubmissionText);
+        request.put(submitPath, textSubmission, HttpStatus.OK);
+
+        final var submissionInDb = submissionRepository.findById(textSubmission.getId());
+        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitTextSubmission_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        participationRepository.save(afterDueDateParticipation);
+
+        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void updateTextSubmission() throws Exception {
         var participation = database.addParticipationForExercise(textExerciseBeforeDueDate, "student1");
@@ -244,41 +279,6 @@ public class TextSubmissionIntegrationTest {
 
         assertThat(submissionWithoutAssessment).as("submission without assessment was found").isNotNull();
         checkDetailsHidden(submissionWithoutAssessment, false);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void submitExercise_afterDueDate_forbidden() throws Exception {
-        request.put("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void submitExercise_beforeDueDateWithTwoSubmissions_allowed() throws Exception {
-        final var submitPath = "/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions";
-        final var newSubmissionText = "Some other test text";
-        textSubmission = request.putWithResponseBody(submitPath, textSubmission, TextSubmission.class, HttpStatus.OK);
-        textSubmission.setText(newSubmissionText);
-        request.put(submitPath, textSubmission, HttpStatus.OK);
-
-        final var submissionInDb = submissionRepository.findById(textSubmission.getId());
-        assertThat(submissionInDb.isPresent());
-        assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
-        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
-        participationRepository.save(afterDueDateParticipation);
-
-        request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
     }
 
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {

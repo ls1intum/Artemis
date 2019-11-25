@@ -21,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -182,6 +183,41 @@ public class ModelingSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDate_forbidden() throws Exception {
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        participationService.save(afterDueDateParticipation);
+        request.put("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_beforeDueDate_allowed() throws Exception {
+        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
+        submittedSubmission.setModel(validModel);
+        submittedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
+                HttpStatus.OK);
+
+        final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
+        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb.get().getModel()).isEqualTo(validModel);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
+        participationService.save(afterDueDateParticipation);
+
+        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void injectResultOnSubmissionUpdate() throws Exception {
         User user = database.getUserByLogin("student1");
@@ -224,7 +260,7 @@ public class ModelingSubmissionIntegrationTest {
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
-        ModelingSubmission submission2 = database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
+        database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
         ModelingSubmission submission3 = database.addModelingSubmission(classExercise, generateSubmittedSubmission(), "student3");
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
@@ -410,38 +446,24 @@ public class ModelingSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_afterDueDate_forbidden() throws Exception {
-        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
-        participationService.save(afterDueDateParticipation);
-        request.put("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
+    @WithMockUser(value = "student1")
+    public void getDataForFileUpload_wrongExerciseType() throws Exception {
+        var textCourse = database.addCourseWithOneTextExercise();
+        var textExercise = (TextExercise) textCourse.getExercises().iterator().next();
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+
+        request.get("/api/modeling-editor/" + textSubmission.getParticipation().getId(), HttpStatus.BAD_REQUEST, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
-    }
+    @WithMockUser(value = "student2")
+    public void getDataForFileUpload_wrongStudent() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+        database.updateExerciseDueDate(objectExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-    @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
-        submittedSubmission.setModel(validModel);
-        submittedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
-                HttpStatus.OK);
-
-        final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
-        assertThat(submissionInDb.isPresent());
-        assertThat(submissionInDb.get().getModel()).isEqualTo(validModel);
-    }
-
-    @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
-        afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
-        participationService.save(afterDueDateParticipation);
-
-        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+        request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
