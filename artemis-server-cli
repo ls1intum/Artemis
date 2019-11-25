@@ -69,15 +69,15 @@ cd /opt/artemis/
 
 sudo rm artemis.war.old
 
-sudo systemctl stop artemis
-sudo systemctl stop mysql
+sudo service artemis stop
+sudo service mysql stop
 
 sudo mv artemis.war artemis.war.old
 sudo mv artemis.war.new artemis.war
 sudo chmod +x artemis.war
 
-sudo systemctl start mysql
-sudo systemctl start artemis
+sudo service mysql start
+sudo service artemis start
 COMMAND
 }
 
