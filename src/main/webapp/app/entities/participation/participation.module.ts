@@ -12,10 +12,11 @@ import {
     ParticipationService,
     ParticipationWebsocketService,
 } from './';
-import { SortByModule } from 'app/components/pipes';
+import { SortByModule, SortByPipe } from 'app/components/pipes';
 import { ArtemisExerciseScoresModule } from 'app/scores';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ArtemisParticipationSubmissionModule } from 'app/entities/participation-submission/participation-submission.module';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
@@ -27,11 +28,12 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseActionsModule,
         ArtemisParticipationSubmissionModule,
+        NgxDatatableModule,
     ],
 
     declarations: [ParticipationComponent, ParticipationCleanupBuildPlanDialogComponent, ParticipationCleanupBuildPlanPopupComponent],
     entryComponents: [ParticipationComponent, ParticipationCleanupBuildPlanDialogComponent, ParticipationCleanupBuildPlanPopupComponent],
-    providers: [ParticipationService, ParticipationPopupService],
+    providers: [ParticipationService, ParticipationPopupService, SortByPipe],
 })
 export class ArtemisParticipationModule {
     static forRoot(): ModuleWithProviders {

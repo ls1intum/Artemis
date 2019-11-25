@@ -9,81 +9,158 @@
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
     </div>
+    <div ngbDropdown class="d-inline-block mr-2">
+        <button class="btn btn-outline-primary" id="dropdownBasic1" [innerHTML]="'artemisApp.exercise.resultsPerPage' | translate: { number: resultsPerPage }" ngbDropdownToggle>
+            {{ resultsPerPage }} results per page
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+            <button
+                *ngFor="let pagingValue of PAGING_VALUES"
+                (click)="setResultsPerPage(pagingValue)"
+                [innerHTML]="'artemisApp.exercise.resultsPerPage' | translate: { number: pagingValue }"
+                [style.background-color]="pagingValue === resultsPerPage ? '#3e8acc' : 'transparent'"
+                ngbDropdownItem
+            >
+                <span>{{ pagingValue }} results per page</span>
+            </button>
+        </div>
+    </div>
     <jhi-alert></jhi-alert>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" *ngIf="participations">
-        <table class="table table-striped">
-            <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="id">
-                        <span jhiTranslate="global.field.id">ID</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="repositoryUrl">
-                        <span jhiTranslate="artemisApp.participation.repositoryUrl">Repository Url</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th *ngIf="exercise?.type == PROGRAMMING" jhiSortBy="buildPlanId">
-                        <span jhiTranslate="artemisApp.participation.buildPlanId">Build Plan Id</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th jhiSortBy="initializationState">
-                        <span jhiTranslate="artemisApp.participation.initializationState">Initialization State</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th jhiSortBy="initializationDate">
-                        <span jhiTranslate="artemisApp.participation.initializationDate">Initialization Date</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th jhiSortBy="student.firstName">
-                        <span jhiTranslate="artemisApp.participation.student">Student</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th jhiSortBy="presentationScore" *ngIf="this.presentationScoreEnabled">
-                        <span jhiTranslate="artemisApp.participation.presentationScore">Presentation Score</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let participation of participations | sortBy: predicate:reverse; trackBy: trackId">
-                    <td>
-                        <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a routerLink="/participation/{{ participation.id }}/submissions">{{ participation.id }}</a>
-                        </div>
-                        <ng-template #displayId>
-                            {{ participation.id }}
-                        </ng-template>
-                    </td>
-                    <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                    <td *ngIf="exercise?.type == PROGRAMMING">
-                        <span *ngIf="participation.repositoryUrl != null"><a href="{{ participation.repositoryUrl }}" target="_blank">Repository Link</a></span>
-                    </td>
-                    <td *ngIf="exercise?.type == PROGRAMMING">
-                        <span *ngIf="participation.buildPlanId != null"
-                            ><a href="https://bamboobruegge.in.tum.de/browse/{{ participation.buildPlanId }}" target="_blank">{{ participation.buildPlanId }}</a></span
-                        >
-                    </td>
-                    <td>{{ 'artemisApp.InitializationState.' + participation.initializationState | translate }}</td>
-                    <td>{{ participation.initializationDate | date: 'medium' }}</td>
-                    <td>
-                        <a routerLink="/admin/user-management/{{ participation.student?.login }}/view"
-                            >{{ participation.student?.firstName }} {{ participation.student?.lastName }}</a
-                        >
-                    </td>
-                    <td *ngIf="this.presentationScoreEnabled">
-                        <span>{{ participation.presentationScore ? participation.presentationScore : 0 }}</span>
-                    </td>
-                    <td class="text-right">
+    <div *ngIf="participations && !isLoading; else loadingContainer" class="table-responsive">
+        <ngx-datatable
+            id="resultsTable"
+            class="bootstrap"
+            [limit]="resultsPerPage"
+            [sortType]="SortType.multi"
+            [columnMode]="ColumnMode.force"
+            [headerHeight]="50"
+            [footerHeight]="50"
+            [rowHeight]="'auto'"
+            [rows]="participations"
+            [rowClass]=""
+            [scrollbarH]="true"
+        >
+            <ngx-datatable-column prop="id" [minWidth]="50" [width]="60" [maxWidth]="70">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('id')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
+                            ID
+                        </span>
+                        <fa-icon [icon]="iconForSortPropField('id')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <div *ngIf="exercise.isAtLeastInstructor; else displayId">
+                        <a routerLink="/participation/{{ value }}/submissions">{{ value }}</a>
+                    </div>
+                    <ng-template #displayId>
+                        {{ value }}
+                    </ng-template>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type == PROGRAMMING">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('repositoryUrl')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUrl">
+                            Repository Url
+                        </span>
+                        <fa-icon [icon]="iconForSortPropField('repositoryUrl')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span *ngIf="value != null">
+                        <a href="{{ value }}" target="_blank">Repository Link</a>
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type == PROGRAMMING">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('buildPlanId')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
+                            Build Plan Id
+                        </span>
+                        <fa-icon [icon]="iconForSortPropField('buildPlanId')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span *ngIf="value != null">
+                        <a href="https://bamboobruegge.in.tum.de/browse/{{ value }}" target="_blank">
+                            {{ value }}
+                        </a>
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="initializationState">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('initializationState')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState">
+                            Initialization State
+                        </span>
+                        <fa-icon [icon]="iconForSortPropField('initializationState')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ 'artemisApp.InitializationState.' + value | translate }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="initializationDate" [width]="180">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('initializationDate')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate">
+                            Initialization Date
+                        </span>
+                        <fa-icon [icon]="iconForSortPropField('initializationDate')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value | date: 'medium' }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="student">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('student.firstName')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student">
+                            Student
+                        </span>
+                        <fa-icon [icon]="iconForSortPropField('student.firstName')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <a routerLink="/admin/user-management/{{ value?.login }}/view"> {{ value?.firstName }} {{ value?.lastName }} </a>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="presentationScore" *ngIf="this.presentationScoreEnabled">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('presentationScore')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationScore">
+                            Presentation Score
+                        </span>
+                        <fa-icon [icon]="iconForSortPropField('presentationScore')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>{{ value ? value : 0 }}</span>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <div class="text-right">
                         <div class="btn-group">
                             <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
-                                <!-- TODO: In case the last result is manuel, we should warrn the user that a manual result would be overridden when clicking the button -->
+                                <!-- TODO: In case the last result is manuel, we should warn the user that a manual result would be overridden when clicking the button -->
                                 <jhi-programming-exercise-instructor-trigger-build-button
                                     *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
                                     [exercise]="exercise"
-                                    [participation]="participation"
+                                    [participation]="value"
                                     class="mr-1"
                                 ></jhi-programming-exercise-instructor-trigger-build-button>
                                 <ng-template #triggerLoading>
@@ -93,9 +170,9 @@
                             <button
                                 *ngIf="exercise.isAtLeastInstructor"
                                 jhiDeleteButton
-                                [entityTitle]="participation.student.name"
+                                [entityTitle]="value.student.name"
                                 deleteQuestion="artemisApp.participation.delete.question"
-                                (delete)="deleteParticipation(participation.id, $event)"
+                                (delete)="deleteParticipation(value.id, $event)"
                                 [additionalChecks]="
                                     exercise.type === PROGRAMMING
                                         ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
@@ -106,33 +183,30 @@
                             </button>
                             <button
                                 type="submit"
-                                *ngIf="exercise?.type === PROGRAMMING && participation.buildPlanId != null && exercise.isAtLeastInstructor"
-                                [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'cleanupBuildPlan'] } }]"
+                                *ngIf="exercise?.type === PROGRAMMING && value.buildPlanId != null && exercise.isAtLeastInstructor"
+                                [routerLink]="['/', { outlets: { popup: ['participation', value.id, 'cleanupBuildPlan'] } }]"
                                 class="btn btn-danger btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eraser'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanupBuildPlan">Cleanup build plan</span>
                             </button>
-                            <button
-                                *ngIf="this.presentationScoreEnabled && participation.presentationScore !== 1"
-                                (click)="addPresentation(participation)"
-                                class="btn btn-info btn-sm mr-1"
-                            >
+                            <button *ngIf="this.presentationScoreEnabled && value.presentationScore !== 1" (click)="addPresentation(value)" class="btn btn-info btn-sm mr-1">
                                 <fa-icon [icon]="'file-powerpoint'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                             </button>
-                            <button
-                                *ngIf="this.presentationScoreEnabled && participation.presentationScore == 1"
-                                (click)="removePresentation(participation)"
-                                class="btn btn-danger btn-sm mr-1"
-                            >
+                            <button *ngIf="this.presentationScoreEnabled && value.presentationScore == 1" (click)="removePresentation(value)" class="btn btn-danger btn-sm mr-1">
                                 <fa-icon [icon]="'file-powerpoint'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                             </button>
                         </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                    </div>
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
     </div>
+    <ng-template #loadingContainer>
+        <div class="loading-container d-flex justify-content-center align-items-center">
+            <fa-icon size="lg" icon="circle-notch" [spin]="true"></fa-icon>
+        </div>
+    </ng-template>
 </div>
