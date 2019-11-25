@@ -53,7 +53,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
         webSocketMessageBrokerStats = webSocketMessageBrokerStats();
-        webSocketMessageBrokerStats.setLoggingPeriod(20 * 1000);
+        webSocketMessageBrokerStats.setLoggingPeriod(10 * 1000);
     }
 
     @Autowired
