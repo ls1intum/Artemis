@@ -44,7 +44,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         private $window: WindowRef,
         // tslint:disable-next-line: no-unused-variable
         private csrfService: CSRFService,
-    ) {}
+    ) {
+        this.connection = this.createConnection();
+    }
 
     stompFailureCallback() {
         this.connecting = false;
@@ -172,13 +174,14 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     sendActivity() {
-        if (this.stompClient !== null && this.stompClient.connected) {
-            this.stompClient.send(
-                '/topic/activity', // destination
-                JSON.stringify({ page: this.router.routerState.snapshot.url }), // body
-                {}, // header
-            );
-        }
+        // Note: this is temporarily deactivated for now to reduce server load on websocket connections
+        // if (this.stompClient !== null && this.stompClient.connected) {
+        //     this.stompClient.send(
+        //         '/topic/activity', // destination
+        //         JSON.stringify({ page: this.router.routerState.snapshot.url }), // body
+        //         {}, // header
+        //     );
+        // }
     }
 
     /**
@@ -213,7 +216,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     private createListener<T>(channel: string): Observable<T> {
-        return Observable.create((observer: Observer<T>) => {
+        return new Observable((observer: Observer<T>) => {
             this.listenerObservers[channel] = observer;
         });
     }
@@ -280,8 +283,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
+        this.disconnect();
     }
 }
