@@ -32,19 +32,31 @@
                 <jhi-date-time-picker
                     labelName="{{ 'artemisApp.exercise.releaseDate' | translate }}"
                     [(ngModel)]="textExercise.releaseDate"
+                    (valueChange)="validateDate()"
+                    [error]="false"
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
             <div class="form-group flex-grow-1 ml-3">
-                <jhi-date-time-picker labelName="{{ 'artemisApp.exercise.dueDate' | translate }}" [(ngModel)]="textExercise.dueDate" name="dueDate"></jhi-date-time-picker>
+                <jhi-date-time-picker
+                    name="dueDate"
+                    [error]="textExercise.dueDateError"
+                    labelName="{{ 'artemisApp.exercise.dueDate' | translate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="textExercise.dueDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="textExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | translate }}</span>
             </div>
         </div>
         <div class="form-group">
             <jhi-date-time-picker
-                labelName="{{ 'artemisApp.exercise.assessmentDueDate' | translate }}"
-                [(ngModel)]="textExercise.assessmentDueDate"
                 name="assessmentDueDate"
+                [error]="textExercise.assessmentDueDateError"
+                labelName="{{ 'artemisApp.exercise.assessmentDueDate' | translate }}"
+                (valueChange)="validateDate()"
+                [(ngModel)]="textExercise.assessmentDueDate"
             ></jhi-date-time-picker>
+            <span *ngIf="textExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | translate }}</span>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxScore" for="field_maxScore">Max Score</label>
@@ -153,7 +165,12 @@
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary" (click)="save()">
+        <button
+            type="submit"
+            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError"
+            class="btn btn-primary"
+            (click)="save()"
+        >
             <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>

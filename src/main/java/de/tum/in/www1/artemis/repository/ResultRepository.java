@@ -22,6 +22,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     List<Result> findByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
+    @EntityGraph(attributePaths = "submission")
+    List<Result> findAllByParticipationIdOrderByCompletionDateDesc(Long participationId);
+
     List<Result> findByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
 
     List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);

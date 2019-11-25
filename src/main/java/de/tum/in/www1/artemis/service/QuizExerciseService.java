@@ -11,7 +11,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -110,7 +109,6 @@ public class QuizExerciseService {
      *
      * @return the list of entities
      */
-    @Transactional(readOnly = true)
     public List<QuizExercise> findAll() {
         log.debug("REST request to get all QuizExercises");
         List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
@@ -175,7 +173,6 @@ public class QuizExerciseService {
      * @param courseId the id of the course
      * @return the entity
      */
-    @Transactional(readOnly = true)
     public List<QuizExercise> findByCourseId(Long courseId) {
         log.debug("Request to get all Quiz Exercises in Course : {}", courseId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
@@ -194,13 +191,8 @@ public class QuizExerciseService {
      *
      * @return the list of quiz exercises
      */
-    @Transactional(readOnly = true)
     public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
-        List<QuizExercise> quizExercises = quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
-        for (QuizExercise quizExercise : quizExercises) {
-            quizExercise.getQuizQuestions().size();
-        }
-        return quizExercises;
+        return quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
     }
 
     /**
@@ -208,12 +200,10 @@ public class QuizExerciseService {
      *
      * @param id the id of the entity
      */
-    @Transactional
     public void delete(Long id) {
         log.debug("Request to delete Exercise : {}", id);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(id, false, false);
-
         quizExerciseRepository.deleteById(id);
     }
 
@@ -222,7 +212,6 @@ public class QuizExerciseService {
      *
      * @param quizExercise the changed quizExercise.
      */
-    @Transactional
     public void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
@@ -248,6 +237,7 @@ public class QuizExerciseService {
             result.evaluateSubmission();
 
             // save the updated Result and its Submission
+            quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
         }
     }
@@ -256,7 +246,6 @@ public class QuizExerciseService {
      * Sends a QuizExercise to all subscribed clients
      * @param quizExercise the QuizExercise which will be sent
      */
-    @Transactional(readOnly = true)
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise) {
         try {
             long start = System.currentTimeMillis();

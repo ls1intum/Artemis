@@ -49,6 +49,7 @@ public class QuizSubmissionWebsocketService {
      */
     @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
+        long start = System.currentTimeMillis();
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
@@ -90,5 +91,6 @@ public class QuizSubmissionWebsocketService {
 
         // send updated submission over websocket
         messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", quizSubmission);
+        log.info("Save quiz submission for {} in {} ms in quiz {}", principal.getName(), System.currentTimeMillis() - start, quizExercise.get().getTitle());
     }
 }

@@ -9,6 +9,6 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 export class HtmlForMarkdownPipe implements PipeTransform {
     constructor(private markdownService: ArtemisMarkdown) {}
     transform(markdown: string, extensions: ShowdownExtension[] = []): SafeHtml | null {
-        return this.markdownService.htmlForMarkdown(markdown, extensions);
+        return this.markdownService.safeHtmlForMarkdown(markdown, extensions);
     }
 }

@@ -219,7 +219,7 @@ public class BambooUpdateService {
                 final var triggersString = bambooClient.getTriggerHelper().getTriggerList(planKey, null, null, 99, Pattern.compile(".*"));
                 // Bamboo CLI returns a weird String, which is the reason for this way of parsing it
                 final var oldTriggers = Arrays.stream(triggersString.split("\n")).map(trigger -> trigger.replace("\"", "").split(","))
-                        .filter(trigger -> trigger.length > 2 && NumberUtils.isNumber(trigger[1])).map(trigger -> Long.parseLong(trigger[1])).collect(Collectors.toSet());
+                        .filter(trigger -> trigger.length > 2 && NumberUtils.isCreatable(trigger[1])).map(trigger -> Long.parseLong(trigger[1])).collect(Collectors.toSet());
 
                 // Remove all old triggers
                 for (final var triggerId : oldTriggers) {

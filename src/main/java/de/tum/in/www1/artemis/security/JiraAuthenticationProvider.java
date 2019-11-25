@@ -143,11 +143,11 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             final Set<String> groupStrings = getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"));
             user.setGroups(groupStrings);
             user.setAuthorities(buildAuthoritiesFromGroups(groupStrings));
-            userRepository.save(user);
 
             if (!user.getActivated()) {
                 userService.activateRegistration(user.getActivationKey());
             }
+            userRepository.save(user);
 
             return user;
         }

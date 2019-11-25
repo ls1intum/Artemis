@@ -285,8 +285,9 @@ public class ParticipationService {
     }
 
     /**
-     * Get a participation for the given quiz and username If the quiz hasn't ended, participation is constructed from cached submission If the quiz has ended, we first look in the
-     * database for the participation and construct one if none was found
+     * Get a participation for the given quiz and username.
+     * If the quiz hasn't ended, participation is constructed from cached submission.
+     * If the quiz has ended, we first look in the database for the participation and construct one if none was found
      *
      * @param quizExercise the quiz exercise to attach to the participation
      * @param username     the username of the user that the participation belongs to
