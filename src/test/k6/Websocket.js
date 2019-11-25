@@ -33,6 +33,11 @@ export default function() {
         const artemis = login(currentUsername, currentPassword);
 
         const questions = getQuizQuestions(artemis, courseId, exerciseId);
-        simulateQuizWork(artemis, exerciseId, questions, websocketConnectionTime - delay);
+        const remainingTime = websocketConnectionTime - delay;
+        const iterations = remainingTime / 5;   // ca. every 5 seconds we sen a message using the WS
+        console.log(iterations);
+        for (let i = 0; i < iterations; i++) {
+            simulateQuizWork(artemis, exerciseId, questions, 30);
+        }
     });
 }

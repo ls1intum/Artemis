@@ -1,5 +1,5 @@
 import { PARTICIPATION } from "./endpoints.js";
-import { fail } from 'k6';
+import { fail, sleep } from 'k6';
 import { nextWSSubscriptionId, randomArrayValue } from "../util/utils.js";
 
 export function getQuizQuestions(artemis, courseId, exerciseId) {
@@ -43,13 +43,15 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
         socket.on('message', function (message) {
             if (message.startsWith('MESSAGE\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission')) {
                 console.log(`RECEIVED callback from server for ${__VU}`);
+                sleep(5);
+                socket.close();
             }
         });
 
-        // submit new quiz answer every 5 seconds
-        socket.setInterval(function timeout() {
+        // submit new quiz answer
+        socket.setTimeout(function() {
             submitRandomAnswer();
-        }, 5 * 1000);
+        }, 10 * 1000);
 
         // Stop after timeout
         socket.setTimeout(function() {
