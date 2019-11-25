@@ -89,7 +89,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (authToken) {
             url += '?access_token=' + authToken;
         }
-        const socket = new SockJS(url);
+        const socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
             heartbeat: { outgoing: 25000, incoming: 25000 },
             // Note: at the moment, debug is activated, in the future we might want to deactivate it again

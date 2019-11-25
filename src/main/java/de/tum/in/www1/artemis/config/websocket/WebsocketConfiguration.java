@@ -26,6 +26,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurationSupport;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
+import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
@@ -69,10 +70,12 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        DefaultHandshakeHandler handshakeHandler = defaultHandshakeHandler();
+        WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
         // String[] allowedOrigins = Optional.ofNullable(jHipsterProperties.getCors().getAllowedOrigins()).map(origins -> origins.toArray(new String[0])).orElse(new String[0]);
-        registry.addEndpoint("/websocket/tracker").setHandshakeHandler(defaultHandshakeHandler())
+        registry.addEndpoint("/websocket/tracker")
                 // Override this value due to warnings in the logs: o.s.w.s.s.t.h.DefaultSockJsService : Origin check enabled but transport 'jsonp' does not support it.
-                .setAllowedOrigins("*").withSockJS().setInterceptors(httpSessionHandshakeInterceptor());
+                .setAllowedOrigins("*").withSockJS().setTransportHandlers(webSocketTransportHandler).setInterceptors(httpSessionHandshakeInterceptor());
     }
 
     @NotNull
