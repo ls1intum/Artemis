@@ -3,9 +3,10 @@ import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '
 import { Angulartics2 } from 'angulartics2';
 import { Angulartics2Piwik } from 'angulartics2/piwik';
 
-import { JhiLanguageHelper } from 'app/core';
-import { ProfileService } from '../profiles/profile.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/layouts';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 
 @Component({
     selector: 'jhi-main',
@@ -16,6 +17,7 @@ export class JhiMainComponent implements OnInit {
         private jhiLanguageHelper: JhiLanguageHelper,
         private router: Router,
         private profileService: ProfileService,
+        private sentryErrorHandler: SentryErrorHandler,
         private angulartics: Angulartics2,
         private angularticsPiwik: Angulartics2Piwik,
     ) {
@@ -24,6 +26,7 @@ export class JhiMainComponent implements OnInit {
 
     private async setupAnalytics() {
         this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+            this.sentryErrorHandler.initSentry(profileInfo);
             if (profileInfo && profileInfo.inProduction && window.location.host === 'artemis.ase.in.tum.de') {
                 // only Track in Production Environment
                 this.angularticsPiwik.startTracking();

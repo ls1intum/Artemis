@@ -74,7 +74,7 @@
                     class="form-control markdown-editor__content"
                 ></ace-editor>
                 <!-- Required for resizing; don't remove empty span -->
-                <fa-icon *ngIf="enableResize" icon="grip-lines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
             </div>
         </ng-template>
     </ngb-tab>

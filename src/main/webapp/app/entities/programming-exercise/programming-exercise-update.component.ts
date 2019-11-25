@@ -15,6 +15,7 @@ import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { CreditsCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -22,6 +23,7 @@ import { CreditsCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCom
     styleUrls: ['./programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
+    FeatureToggle = FeatureToggle;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
     readonly C = ProgrammingLanguage.C;

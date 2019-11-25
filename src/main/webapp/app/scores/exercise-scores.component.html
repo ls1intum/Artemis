@@ -95,19 +95,31 @@
             [rowClass]=""
             [scrollbarH]="true"
         >
-            <ngx-datatable-column prop="" [minWidth]="50" [maxWidth]="50">
+            <ngx-datatable-column prop="" [minWidth]="50" [width]="60" [maxWidth]="70">
                 <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
                     {{ rowIndex + 1 }}
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.student.name" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="200">
+            <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="200">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.name')">{{
-                            'artemisApp.exercise.studentName' | translate
-                        }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('participation.student.name')">
+                        <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentName' | translate }}</span>
+                        <fa-icon [icon]="iconForSortPropField('participation.student.name')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <a routerLink="/participation/{{ value.id }}/submissions">
+                        {{ value.student.name }}
+                    </a>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('participation.student.login')">
+                        <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | translate }}</span>
+                        <fa-icon [icon]="iconForSortPropField('participation.student.login')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -115,25 +127,11 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="100">
+            <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="150">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold sortable" (click)="onSort('participation.student.login')">{{
-                            'artemisApp.exercise.studentId' | translate
-                        }}</span>
-                        <fa-icon icon="sort"></fa-icon>
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value }}
-                </ng-template>
-            </ngx-datatable-column>
-
-            <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="150">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold sortable" (click)="onSort('completionDate')">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('completionDate')">
+                        <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
+                        <fa-icon [icon]="iconForSortPropField('completionDate')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -141,11 +139,11 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="" [resizeable]="false" [sortable]="true" [minWidth]="200" [maxWidth]="300">
+            <ngx-datatable-column prop="" [resizeable]="false" [sortable]="true" [minWidth]="200" [width]="300">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" (click)="onSort('score')">{{ 'artemisApp.exercise.result' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('score')">
+                        <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.result' | translate }}</span>
+                        <fa-icon [icon]="iconForSortPropField('score')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -153,11 +151,11 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="100">
+            <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" (click)="onSort('type')">{{ 'artemisApp.exercise.type' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('type')">
+                        <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | translate }}</span>
+                        <fa-icon [icon]="iconForSortPropField('type')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -165,11 +163,11 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="60" [maxWidth]="120">
+            <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="60" [width]="120">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" (click)="onSort('submissionCount')">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('submissionCount')">
+                        <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
+                        <fa-icon [icon]="iconForSortPropField('submissionCount')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -177,11 +175,11 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="durationInMinutes" [resizeable]="false" [sortable]="true" [minWidth]="100" [maxWidth]="150">
+            <ngx-datatable-column prop="durationInMinutes" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" (click)="onSort('durationInMinutes')">{{ 'artemisApp.exercise.duration' | translate }}</span>
-                        <fa-icon icon="sort"></fa-icon>
+                    <span class="datatable-header-cell-wrapper" (click)="onSort('durationInMinutes')">
+                        <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | translate }}</span>
+                        <fa-icon [icon]="iconForSortPropField('durationInMinutes')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min </ng-template>
@@ -190,7 +188,7 @@
             <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="400">
                 <ng-template ngx-datatable-cell-template let-value="value">
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
-                        <fa-icon icon="code-branch" class="mr-1"></fa-icon>Repository
+                        <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>Repository
                     </button>
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(value)">
                         <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>Build plan
@@ -214,7 +212,7 @@
         </ngx-datatable>
     </div>
     <ng-template #loadingContainer>
-        <div class="d-flex justify-content-center mt-3">
+        <div class="loading-container d-flex justify-content-center align-items-center">
             <fa-icon size="lg" icon="circle-notch" [spin]="true"></fa-icon>
         </div>
     </ng-template>

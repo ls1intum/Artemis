@@ -4,6 +4,7 @@ import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ShortAnswerMapping } from '../../entities/short-answer-mapping';
 import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
+import { SafeHtml } from '@angular/platform-browser';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
@@ -457,7 +458,8 @@ export class ShortAnswerQuestionUtil {
 
     /**
      * gets the spot for a specific spotNr
-     * @param spotNr, question
+     * @param spotNr the spot number for which the sport should be retrived
+     * @param question
      */
     getSpot(spotNr: number, question: ShortAnswerQuestion): ShortAnswerSpot {
         return question.spots.filter(spot => spot.spotNr === spotNr)[0];
@@ -472,6 +474,6 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[][]}
      */
     transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): (string | null)[][] {
-        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdown(element).toString()));
+        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdown(element)));
     }
 }

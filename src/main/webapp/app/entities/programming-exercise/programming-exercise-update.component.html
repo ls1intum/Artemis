@@ -230,7 +230,15 @@
                 <button type="button" id="cancel-save" class="btn btn-secondary mr-1" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <jhi-button id="save-entity" [disabled]="editForm.form.invalid" [isLoading]="isSaving" [icon]="'save'" [title]="submitButtonTitle"> </jhi-button>
+                <jhi-button
+                    id="save-entity"
+                    [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                    [disabled]="editForm.form.invalid"
+                    [isLoading]="isSaving"
+                    [icon]="'save'"
+                    [title]="submitButtonTitle"
+                >
+                </jhi-button>
             </div>
         </form>
     </div>

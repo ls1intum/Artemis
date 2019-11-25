@@ -267,7 +267,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     parse(): void {
         if (this.showDefaultPreview) {
-            this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
+            this.previewTextAsHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.markdown);
             this.html.emit(this.previewTextAsHtml);
         }
         if (this.domainCommands && this.domainCommands.length && this.markdown) {

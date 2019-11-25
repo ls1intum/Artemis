@@ -11,6 +11,7 @@ class TestSuite:
     failures: int = 0
     errors: int = 0
     skipped: int = 0
+    successful: int = 0
     time: timedelta = timedelta()
 
 
@@ -28,6 +29,8 @@ class TestSuite:
             self.failures += 1
         elif case.result == Result.SKIPPED:
             self.skipped += 1
+        else:
+            self.successful += 1
 
     def toXml(self):
         suite: Et.Element = Et.Element("testsuite")

@@ -3,7 +3,7 @@
         <h3>{{ quizExercise.title }}</h3>
 
         <button *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm float-right" (click)="recalculate()">
-            <fa-icon icon="sync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | translate }}
+            <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | translate }}
         </button>
 
         <div class="text-center">
@@ -27,7 +27,7 @@
 
             <div class="text-center">
                 <button (click)="switchRated()" type="button" class="btn btn-primary">
-                    <fa-icon icon="sync"></fa-icon>&nbsp;
+                    <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
                     <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
                     <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
                 </button>

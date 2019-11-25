@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from './participation.model';
-import { JhiWebsocketService } from 'app/core';
 import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';
@@ -206,7 +206,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * If there is no observable for the participation a new one will be created.
      *
      * @param participationId Id of Participation of which result to subscribe to
-     * @param exercise Exercise to which the Participation belongs
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
         this.createResultWSConnectionIfNotExisting(participationId);

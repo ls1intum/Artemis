@@ -32,6 +32,7 @@ import { ArtemisComplaintsModule } from 'app/complaints';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { MockComponent } from 'ng-mocks';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -70,8 +71,10 @@ describe('Component Tests', () => {
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: ActivatedRoute, useValue: route },
                     { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                    { provide: DeviceDetectorService },
                 ],
             })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .compileComponents()
                 .then(() => {
                     fixture = TestBed.createComponent(ModelingSubmissionComponent);

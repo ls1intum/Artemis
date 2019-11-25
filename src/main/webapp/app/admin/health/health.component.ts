@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { JhiHealthModalComponent, JhiHealthService } from 'app/admin';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-health',
@@ -10,11 +11,28 @@ import { JhiHealthModalComponent, JhiHealthService } from 'app/admin';
 export class JhiHealthCheckComponent implements OnInit {
     healthData: any;
     updatingHealth: boolean;
+    disconnected = true;
+    onConnected: () => void;
+    onDisconnected: () => void;
 
-    constructor(private modalService: NgbModal, private healthService: JhiHealthService) {}
+    constructor(private modalService: NgbModal, private healthService: JhiHealthService, private trackerService: JhiWebsocketService) {}
 
     ngOnInit() {
         this.refresh();
+
+        // listen to connect / disconnect events
+        this.onConnected = () => {
+            this.disconnected = false;
+        };
+        this.trackerService.bind('connect', () => {
+            this.onConnected();
+        });
+        this.onDisconnected = () => {
+            this.disconnected = true;
+        };
+        this.trackerService.bind('disconnect', () => {
+            this.onDisconnected();
+        });
     }
 
     baseName(name: string) {

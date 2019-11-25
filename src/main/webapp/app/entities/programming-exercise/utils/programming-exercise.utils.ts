@@ -3,12 +3,10 @@
 // In some cases it needs to be checked explicitly wether a result is legacy or not.
 // The date used is the date of the merge: 2019-05-10T22:12:28Z.
 import { Result } from 'app/entities/result';
-import { ProgrammingExercise, programmingExerciseRoute } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import * as moment from 'moment';
-import { Participation, ParticipationType, StudentParticipation } from 'app/entities/participation';
-import { ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { isMoment } from 'moment';
+import { Participation, ParticipationType } from 'app/entities/participation';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
@@ -47,4 +45,24 @@ export const isResultPreliminary = (result: Result, programmingExercise: Program
 
 export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
     return participation && participation.type === ParticipationType.PROGRAMMING;
+};
+
+/**
+ * The deadline has passed if:
+ * - The dueDate is set and the buildAndTestAfterDueDate is not set and the dueDate has passed.
+ * - The dueDate is set and the buildAndTestAfterDueDate is set and the buildAndTestAfterDueDate has passed.
+ *
+ * @param exercise
+ */
+export const hasDeadlinePassed = (exercise: ProgrammingExercise) => {
+    // If there is no due date, the due date can't pass.
+    if (!exercise.dueDate && !exercise.buildAndTestStudentSubmissionsAfterDueDate) {
+        return false;
+    }
+    // The first priority is the buildAndTestAfterDueDate if it is set.
+    let referenceDate = exercise.buildAndTestStudentSubmissionsAfterDueDate || exercise.dueDate!;
+    if (!isMoment(referenceDate)) {
+        referenceDate = moment(referenceDate);
+    }
+    return referenceDate.isBefore(moment());
 };

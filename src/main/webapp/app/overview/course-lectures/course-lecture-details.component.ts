@@ -2,12 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { AuthServerProvider, JhiWebsocketService } from 'app/core';
+import { AuthServerProvider } from 'app/core';
 import { HttpResponse } from '@angular/common/http';
 import { Lecture, LectureService } from 'app/entities/lecture';
 import * as moment from 'moment';
 import { Attachment, AttachmentService } from 'app/entities/attachment';
 import { FileService } from 'app/shared';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-course-lecture-details',

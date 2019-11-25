@@ -25,7 +25,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     // Does a max join on the result table for each participation by result id (the newer the result id, the newer the result). This makes sure that we only receive the latest
     // result for the template and the solution participation if they exist.
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp left join fetch tp.results as tpr left join fetch sp.results as spr where pe.course.id = :#{#courseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) and (spr.id = (select max(id) from sp.results) or spr.id = null)")
-    List<ProgrammingExercise> findByCourseIdWithLatestResultForParticipations(@Param("courseId") Long courseId);
+    List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") Long courseId);
 
     // Override to automatically fetch the templateParticipation and solutionParticipation
     @Override
@@ -51,7 +51,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.submissions" })
+    @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findByIdWithEagerParticipationsAndSubmissions(@Param("exerciseId") Long exerciseId);
 
@@ -66,10 +66,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
     Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
 
-    @Query("select pe from ProgrammingExercise pe where pe.course.instructorGroupName in :groups and (pe.title like %:partialTitle% or pe.course.title like %:partialCourseTitle%)")
+    @Query("select pe from ProgrammingExercise pe where pe.course.instructorGroupName in :groups and pe.shortName is not null and (pe.title like %:partialTitle% or pe.course.title like %:partialCourseTitle%)")
     Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(String partialTitle, String partialCourseTitle, Set<String> groups, Pageable pageable);
 
-    Page<ProgrammingExercise> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
+    Page<ProgrammingExercise> findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(String partialTitle,
+            String partialCourseTitle, Pageable pageable);
 
     @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#exerciseId}")
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(Long exerciseId);

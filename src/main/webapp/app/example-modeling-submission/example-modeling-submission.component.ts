@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService } from '../core';
+import { AccountService } from 'app/core/auth/account.service';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
