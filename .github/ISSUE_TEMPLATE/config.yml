@@ -2,4 +2,4 @@ blank_issues_enabled: false
 contact_links:
   - name: ❓ Support Question
     url: https://artemis.ase.in.tum.de/mailto
-    about: 🛑 Please do not file questions or support requests on the GitHub issues tracker. Please contact the Artemis Team using Email.
+    about: Please do not file questions or support requests on the GitHub issues tracker. Please contact the Artemis Team using Email at artemis.in@tum.de.
