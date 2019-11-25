@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import java.security.Principal;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
@@ -18,6 +21,7 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
@@ -44,8 +48,28 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private WebSocketMessageBrokerStats webSocketMessageBrokerStats;
 
+    // TODO: remove again
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    private ThreadPoolTaskExecutor inboundChannelExecutor;
+
+    private ThreadPoolTaskExecutor outboundChannelExecutor;
+
+    private static final int PERIOD = 10 * 1000;
+
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        // TODO: remove again
+        scheduler.scheduleAtFixedRate(() -> {
+            if (inboundChannelExecutor != null && outboundChannelExecutor != null) {
+                log.info("inboundChannelExecutor: " + inboundChannelExecutor.getThreadPoolExecutor().getKeepAliveTime(TimeUnit.SECONDS) + "s, "
+                        + inboundChannelExecutor.getThreadPoolExecutor().getQueue().size() + ", " + inboundChannelExecutor.getThreadPoolExecutor().getQueue().remainingCapacity()
+                        + "; " + "outboundChannelExecutor: " + outboundChannelExecutor.getThreadPoolExecutor().getKeepAliveTime(TimeUnit.SECONDS) + "s, "
+                        + outboundChannelExecutor.getThreadPoolExecutor().getQueue().size() + ", "
+                        + outboundChannelExecutor.getThreadPoolExecutor().getQueue().remainingCapacity());
+            }
+
+        }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
 
     @PostConstruct
@@ -77,6 +101,24 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         registry.addEndpoint("/websocket/tracker")
                 // Override this value due to warnings in the logs: o.s.w.s.s.t.h.DefaultSockJsService : Origin check enabled but transport 'jsonp' does not support it.
                 .setAllowedOrigins("*").withSockJS().setTransportHandlers(webSocketTransportHandler).setInterceptors(httpSessionHandshakeInterceptor());
+    }
+
+    // TODO: allow to customize these settings via application.yml file
+
+    @Override
+    public ThreadPoolTaskExecutor clientOutboundChannelExecutor() {
+        outboundChannelExecutor = super.clientOutboundChannelExecutor();
+        outboundChannelExecutor.setQueueCapacity(100 * 1000);
+        outboundChannelExecutor.setKeepAliveSeconds(10);
+        return outboundChannelExecutor;
+    }
+
+    @Override
+    public ThreadPoolTaskExecutor clientInboundChannelExecutor() {
+        inboundChannelExecutor = super.clientInboundChannelExecutor();
+        inboundChannelExecutor.setQueueCapacity(100 * 1000);
+        inboundChannelExecutor.setKeepAliveSeconds(10);
+        return inboundChannelExecutor;
     }
 
     @NotNull
