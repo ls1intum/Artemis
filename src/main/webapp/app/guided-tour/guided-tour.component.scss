@@ -17,9 +17,17 @@ $tour-button-text-disabled: #a3a3a3 !default;
 $tour-shadow-color: #4c4c4c !default;
 
 // Mixins
-@mixin tour-button($background-color, $hover-background-color) {
+@mixin tour-button($background-color, $hover-background-color, $position) {
     background-color: $background-color;
     color: $tour-button-text-color;
+
+    $opposite-pos: left;
+    @if $position==right {
+        $opposite-pos: left;
+    }
+    @if $position==left {
+        $opposite-pos: right;
+    }
 
     &:hover {
         background-color: $hover-background-color;
@@ -27,7 +35,7 @@ $tour-shadow-color: #4c4c4c !default;
     }
 
     fa-icon {
-        padding-right: 10px;
+        padding-#{$opposite-pos}: 10px;
     }
 }
 
@@ -327,15 +335,15 @@ jhi-guided-tour {
                     }
 
                     &.back-button {
-                        @include tour-button($tour-back-button-color, $tour-back-button-hover);
+                        @include tour-button($tour-back-button-color, $tour-back-button-hover, left);
                     }
 
                     &.next-button {
-                        @include tour-button($tour-next-button-color, $tour-next-button-hover);
+                        @include tour-button($tour-next-button-color, $tour-next-button-hover, right);
                     }
 
                     &.restart-button {
-                        @include tour-button($tour-restart-button-color, $tour-restart-button-hover);
+                        @include tour-button($tour-restart-button-color, $tour-restart-button-hover, left);
                     }
                 }
             }
