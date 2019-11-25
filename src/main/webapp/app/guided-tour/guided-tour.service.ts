@@ -80,7 +80,7 @@ export class GuidedTourService {
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (this.availableTourForComponent && event instanceof NavigationStart) {
-                this.finishGuidedTour();
+                this.skipTour();
                 this.guidedTourAvailabilitySubject.next(false);
             }
         });
@@ -294,7 +294,8 @@ export class GuidedTourService {
             this.currentTour.completeCallback();
         }
 
-        if (!this.isCurrentTour(completedTour)) {
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        if (!this.isCurrentTour(completedTour) && !nextStep) {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
             this.showCompletedTourStep();
         }
