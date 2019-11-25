@@ -64,7 +64,7 @@ export default function(data) {
         // Initiate websocket connection if connection time is set to value greater than 0
         if (websocketConnectionTime > 0) {
             if (participationId) {
-                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContent, 1);
+                const simulation = new ParticipationSimulation(websocketConnectionTime, data.exerciseId, participationId, buildErrorContent);
                 simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
             }
             sleep(websocketConnectionTime - delay);
