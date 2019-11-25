@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class TextSubmissionService extends SubmissionService<TextSubmission, TextSubmissionRepository> {
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
@@ -41,7 +40,6 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
      * @param principal      the user principal
      * @return the saved text submission
      */
-    @Transactional
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
         if (textSubmission.isExampleSubmission() == Boolean.TRUE) {
             textSubmission = save(textSubmission);
@@ -80,7 +78,6 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    @Transactional(readOnly = true)
     public Optional<TextSubmission> getSubmissionWithoutManualResult(TextExercise textExercise) {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
@@ -106,7 +103,6 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
      * @param textExercise the exercise the submission should belong to
      * @return a locked modeling submission that needs an assessment
      */
-    @Transactional
     public TextSubmission getLockedTextSubmissionWithoutResult(TextExercise textExercise) {
         TextSubmission textSubmission = getSubmissionWithoutManualResult(textExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));

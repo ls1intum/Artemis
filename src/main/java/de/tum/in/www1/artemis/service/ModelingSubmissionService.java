@@ -5,7 +5,6 @@ import java.util.*;
 import org.slf4j.*;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -16,7 +15,6 @@ import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class ModelingSubmissionService extends SubmissionService<ModelingSubmission, ModelingSubmissionRepository> {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
@@ -39,7 +37,6 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @param modelingExercise the corresponding exercise
      * @return the locked modeling submission
      */
-    @Transactional
     public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
@@ -58,7 +55,6 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @param modelingExercise the exercise the submission should belong to
      * @return a locked modeling submission that needs an assessment
      */
-    @Transactional
     public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
@@ -77,7 +73,6 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
      * @return a modeling submission without any result
      */
-    @Transactional
     public Optional<ModelingSubmission> getModelingSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
@@ -109,7 +104,6 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @param username           the name of the corresponding user
      * @return the saved modelingSubmission entity
      */
-    @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
         modelingSubmission = save(modelingSubmission, modelingExercise, username, ModelingSubmission.class);
         if (modelingSubmission.isSubmitted()) {
@@ -155,8 +149,8 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
             automaticResult.setSubmission(modelingSubmission);
             modelingSubmission.setResult(automaticResult);
             modelingSubmission.getParticipation().addResult(automaticResult);
-            modelingSubmission = genericSubmissionRepository.save(modelingSubmission);
             resultRepository.save(automaticResult);
+            modelingSubmission = genericSubmissionRepository.save(modelingSubmission);
 
             compassService.removeAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         }

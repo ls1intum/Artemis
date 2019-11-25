@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -20,7 +19,6 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class FileUploadSubmissionService extends SubmissionService<FileUploadSubmission, FileUploadSubmissionRepository> {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
@@ -45,7 +43,6 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
      * @return the saved file upload submission
      * @throws IOException if file can't be saved
      */
-    @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
             Principal principal) throws IOException {
         fileUploadSubmission = save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
@@ -104,7 +101,6 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
      * @param fileUploadExercise the corresponding exercise
      * @return the locked file upload submission
      */
-    @Transactional
     public FileUploadSubmission getLockedFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
         FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
@@ -121,7 +117,6 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
      * @param fileUploadExercise the exercise the submission should belong to
      * @return a locked file upload submission that needs an assessment
      */
-    @Transactional
     public FileUploadSubmission getLockedFileUploadSubmissionWithoutResult(FileUploadExercise fileUploadExercise) {
         FileUploadSubmission fileUploadSubmission = getSubmissionWithoutManualResult(fileUploadExercise, FileUploadSubmission.class)
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
