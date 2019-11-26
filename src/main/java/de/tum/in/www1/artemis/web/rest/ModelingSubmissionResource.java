@@ -93,9 +93,10 @@ public class ModelingSubmissionResource {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        checkAuthorization(modelingExercise, user);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -115,13 +116,14 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        checkAuthorization(modelingExercise, user);
 
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -183,14 +185,15 @@ public class ModelingSubmissionResource {
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         ModelingExercise modelingExercise = (ModelingExercise) studentParticipation.getExercise();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
             return forbidden();
         }
         modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
 
         studentParticipation.setExercise(modelingExercise);
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -207,7 +210,8 @@ public class ModelingSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
         if (!(exercise instanceof ModelingExercise)) {
@@ -229,7 +233,7 @@ public class ModelingSubmissionResource {
         }
         else {
             Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
-            if (!optionalModelingSubmission.isPresent()) {
+            if (optionalModelingSubmission.isEmpty()) {
                 return notFound();
             }
             modelingSubmission = optionalModelingSubmission.get();
@@ -238,7 +242,7 @@ public class ModelingSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        this.modelingSubmissionService.hideDetails(modelingSubmission);
+        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -255,7 +259,8 @@ public class ModelingSubmissionResource {
     @Transactional
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        checkAuthorization(modelingExercise, user);
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourse().getId());
 
@@ -295,7 +300,8 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        checkAuthorization(modelingExercise, user);
         if (compassService.isSupported(modelingExercise.getDiagramType())) {
             compassService.resetModelsWaitingForAssessment(exerciseId);
         }
@@ -367,9 +373,9 @@ public class ModelingSubmissionResource {
         return ResponseEntity.ok(modelingSubmission);
     }
 
-    private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
+    private void checkAuthorization(ModelingExercise exercise, User user) throws AccessForbiddenException {
         Course course = courseService.findOne(exercise.getCourse().getId());
-        if (!authCheckService.isAtLeastStudentInCourse(course, null)) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
         }
     }

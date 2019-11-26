@@ -100,12 +100,12 @@ public class TextSubmissionResource {
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
-
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
     @NotNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
+    private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
+        User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
         if (responseFailure != null) {
@@ -114,7 +114,7 @@ public class TextSubmissionResource {
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        this.textSubmissionService.hideDetails(textSubmission);
+        this.textSubmissionService.hideDetails(textSubmission, user);
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -168,21 +168,21 @@ public class TextSubmissionResource {
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
         List<TextSubmission> textSubmissions;
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
             textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
         }
 
-        textSubmissions.forEach(textSubmissionService::hideDetails);
+        textSubmissions.forEach(submission -> textSubmissionService.hideDetails(submission, user));
 
         return ResponseEntity.ok().body(textSubmissions);
     }
