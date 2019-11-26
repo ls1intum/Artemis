@@ -8,50 +8,57 @@ public interface TextAssessmentUtilities {
 
     /**
      * Calculates the variance for the cluster of a text submission and returns its score
-     * @param textSubmission
+     * @param textCluster
      * @return {double} variance of the cluster
      */
-    public Optional<Double> determineVariance(TextBlock textBlock);
+    public Optional<Double> calculateVariance(TextCluster textCluster);
 
     /**
      * Calculates the expectation value for the cluster of a text submission and returns its score
-     * @param textBlock
+     * @param textCluster
      * @return {double} expectation of the cluster
      */
-    public Optional<Double> determineExpectation(TextBlock textBlock);
+    public Optional<Double> calculateExpectation(TextCluster textCluster);
 
     /**
      * Calculates the standard deviation for the cluster of a text submission and returns its score
-     * @param textBlock
+     * @param textCluster
      * @return {double} variance of the cluster
      */
-    public Optional<Double> determineStandardDeviation(TextBlock textBlock);
+    public Optional<Double> calculateStandardDeviation(TextCluster textCluster);
 
     /**
      * Calculates the percentage of elements in a cluster which have the same score
-     * @param textBlock text submission for which a cluster is assessed
+     * @param cluster cluster for which the coverage percentage is calculated
      * @return
      */
-    public Optional<Double> determineCoveragePercentage(TextBlock textBlock);
+    public Optional<Double> determineCoveragePercentage(TextCluster cluster);
 
     /**
      * Calculates the percentage of elements in a cluster which are graded
-     * @param textSubmission
+     * @param textBlock
      * @return
      */
     public Optional<Double> determineScoreCoveragePercentage(TextBlock textBlock);
 
     /**
      *
-     * @param textSubmission
+     * @param textCluster
      * @return
      */
-    public Optional<Double> determineAverage(TextBlock textBlock);
+    public Optional<Double> determineAverage(TextCluster textCluster);
+
+    /**
+     *
+     * @param textCluster
+     * @return
+     */
+    public Integer getClusterSize(TextCluster textCluster);
 
     /**
      *
      * @param textBlock
      * @return
      */
-    public Integer determineClusterSize(TextBlock textBlock);
+    public Integer getClusterSize(TextBlock textBlock);
 }

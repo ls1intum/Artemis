@@ -78,26 +78,32 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     @Override
-    public Optional<Double> determineVariance(TextBlock textBlock) {
+    public Optional<Double> calculateVariance(TextCluster textCluster) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Double> determineExpectation(TextBlock textBlock) {
-        final TextCluster cluster = textBlock.getCluster();
-        final double credits = getCreditsOfTextBlock(textBlock).get();
+    public Optional<Double> calculateExpectation(TextCluster cluster) {
+        return Optional.of(cluster.getBlocks().stream()
 
+                // Only take the text blocks which are credited
+                .filter(block -> getCreditsOfTextBlock(block).isPresent())
+
+                // Calculate the expected value of each random variable (the credit score) and its
+                // probability (its coverage percentage over a cluster which is uniformly distributed)
+                .mapToDouble(block -> (double) (1 / cluster.size()) * getCreditsOfTextBlock(block).get())
+
+                // Sum the up to create the expectation value of a cluster in terms of a score
+                .sum());
     }
 
     @Override
-    public Optional<Double> determineStandardDeviation(TextBlock textBlock) {
+    public Optional<Double> calculateStandardDeviation(TextCluster textCluster) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Double> determineCoveragePercentage(TextBlock textBlock) {
-        final TextCluster cluster = textBlock.getCluster();
-
+    public Optional<Double> determineCoveragePercentage(TextCluster cluster) {
         if (cluster != null) {
             final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
 
@@ -129,9 +135,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     @Override
-    public Optional<Double> determineAverage(TextBlock textBlock) {
-        final TextCluster cluster = textBlock.getCluster();
-
+    public Optional<Double> determineAverage(TextCluster cluster) {
         if (cluster != null) {
 
             final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
@@ -150,7 +154,12 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     @Override
-    public Integer determineClusterSize(TextBlock textBlock) {
+    public Integer getClusterSize(TextCluster cluster) {
+        return cluster.size();
+    }
+
+    @Override
+    public Integer getClusterSize(TextBlock textBlock) {
         return textBlock.getCluster().size();
     }
 
