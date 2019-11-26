@@ -3,43 +3,52 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { from, fromEvent, Observable, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/internal/operators';
-
+import { fromEvent, Observable, Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
-import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
+import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
-import { AccountService, User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { filter, take } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Course } from 'app/entities/course/course.model';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
-import { cancelTour } from 'app/guided-tour/tours/general-tour';
+import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
+import { AccountService } from 'app/core/auth/account.service';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
-
-    public maxDots = 10;
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour: GuidedTour | null;
-    private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
-    private guidedTourAvailability = new Subject<boolean>();
-    private isUserInteractionFinished = new Subject<boolean>();
-    private transformSubject = new Subject<number>();
-    private currentTourStepIndex = 0;
-    private onResizeMessage = false;
-    private availableTourForComponent: GuidedTour | null;
-    private transformCount = 0;
 
-    // Variables for the dot navigation
+    private currentTourStepIndex = 0;
+    private availableTourForComponent: GuidedTour | null;
+    private onResizeMessage = false;
+    private modelingResultCorrect = false;
+
+    /** Guided tour service subjects */
+    private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
+    private guidedTourAvailabilitySubject = new Subject<boolean>();
+    private isUserInteractionFinishedSubject = new Subject<boolean>();
+    private transformSubject = new Subject<number>();
+    private checkModelingComponentSubject = new Subject<string | null>();
+    private resetUMLModelSubject = new Subject<boolean>();
+
+    /** Variables for the dot navigation */
+    public maxDots = 10;
+    private transformCount = 0;
     private transformXIntervalNext = -26;
     private transformXIntervalPrev = 26;
+
+    // Guided tour course and exercise mapping
+    public guidedTourMapping: GuidedTourMapping | null;
 
     constructor(
         private http: HttpClient,
@@ -47,6 +56,7 @@ export class GuidedTourService {
         private accountService: AccountService,
         private router: Router,
         private deviceService: DeviceDetectorService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -60,11 +70,18 @@ export class GuidedTourService {
             }
         });
 
+        // Retrieve the guided tour mapping from the profile service
+        this.profileService.getProfileInfo().subscribe(profileInfo => {
+            if (profileInfo && profileInfo.guidedTourMapping) {
+                this.guidedTourMapping = profileInfo.guidedTourMapping;
+            }
+        });
+
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (this.availableTourForComponent && event instanceof NavigationStart) {
-                this.finishGuidedTour();
-                this.guidedTourAvailability.next(false);
+                this.skipTour();
+                this.guidedTourAvailabilitySubject.next(false);
             }
         });
 
@@ -93,6 +110,9 @@ export class GuidedTourService {
             });
     }
 
+    /**
+     * @return defined minimum screen size number
+     */
     private get tourMinimumScreenSize(): number {
         return this.currentTour && this.currentTour.minimumScreenSize ? this.currentTour.minimumScreenSize : 1000;
     }
@@ -110,18 +130,51 @@ export class GuidedTourService {
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
         // The guided tour is currently disabled for mobile devices and tablets
         // TODO optimize guided tour layout for mobile devices and tablets
-        return this.guidedTourAvailability.map(isTourAvailable => isTourAvailable && this.deviceService.isDesktop());
+        return this.guidedTourAvailabilitySubject.map(isTourAvailable => isTourAvailable && this.deviceService.isDesktop());
     }
 
     /**
      * @return Observable(true) if the required user interaction for the guided tour step has been executed, otherwise Observable(false)
      */
     public userInteractionFinishedState(): Observable<boolean> {
-        return this.isUserInteractionFinished.asObservable();
+        return this.isUserInteractionFinishedSubject.asObservable();
     }
 
     /**
-     * Calculates initial translateX value for <ul> so that the right dots are displayed
+     * @return Observable of the current modeling task UML name
+     */
+    public checkModelingComponent(): Observable<string | null> {
+        return this.checkModelingComponentSubject.asObservable();
+    }
+
+    /**
+     * @return Observable of resetUMLModelSubject, which is true if the UML model should be reset
+     */
+    resetUMLModel() {
+        return this.resetUMLModelSubject.asObservable();
+    }
+
+    /**
+     * Updates the modelingResultCorrect variable on whether the implemented UML model is correct and enables
+     * the next step button
+     * @param umlName   name of the UML element for the modeling task
+     * @param result    true if the UML element has been modeled correctly, otherwise false
+     */
+    public updateModelingResult(umlName: string, result: boolean) {
+        if (!this.currentStep || !this.currentStep.modelingTask) {
+            return;
+        }
+        if (result && this.currentStep.modelingTask.umlName === umlName) {
+            this.modelingResultCorrect = result;
+            setTimeout(() => {
+                this.enableNextStepClick();
+                this.checkModelingComponentSubject.next(null);
+            }, 0);
+        }
+    }
+
+    /**
+     * @return Observable of the initial translateX value for <ul> so that the right dots are displayed
      */
     public calculateTransformValue(): Observable<number> {
         return this.transformSubject.asObservable();
@@ -136,6 +189,27 @@ export class GuidedTourService {
             return this.currentTourStepDisplay === this.currentTour.steps.indexOf(tourStep) + 1;
         }
         return false;
+    }
+
+    /**
+     * Determines if the given tour is the current tour
+     * @param guidedTour that is checked
+     */
+    public isCurrentTour(guidedTour: GuidedTour) {
+        if (this.currentTour && this.currentTour.steps) {
+            return this.currentTour.settingsKey === guidedTour.settingsKey;
+        }
+        return false;
+    }
+
+    /**
+     * Check if the provided tour step is the currently active one
+     */
+    public get currentStep(): any | null {
+        if (!this.currentTour || !this.currentTour.steps) {
+            return null;
+        }
+        return this.currentTour.steps[this.currentTourStepIndex];
     }
 
     /**
@@ -215,10 +289,16 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
+
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
         }
-        this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
+
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        if (!this.isCurrentTour(completedTour) && !nextStep) {
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
+            this.showCompletedTourStep();
+        }
     }
 
     /**
@@ -242,15 +322,34 @@ export class GuidedTourService {
      * Show the cancel hint every time a user skips a tour
      */
     private showCancelHint(): void {
+        /** Do not show hint if the user has seen it already */
+        const hasStartedOrFinishedTour = this.checkTourState(cancelTour);
+        if (hasStartedOrFinishedTour) {
+            return;
+        }
+
         clickOnElement('#account-menu[aria-expanded="false"]');
         setTimeout(() => {
             this.currentTour = cloneDeep(cancelTour);
-            // Proceed with tour if it has tour steps and the tour display is allowed for current window size
+            /** Proceed with tour if the tour has tour steps and the tour display is allowed for current window size */
             if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
                 const currentStep = this.currentTour.steps[this.currentTourStepIndex];
                 if (currentStep.action) {
                     currentStep.action();
                 }
+                this.setPreparedTourStep();
+            }
+        });
+    }
+
+    /**
+     * Show the completed tour step every time a user completes a tour
+     */
+    private showCompletedTourStep(): void {
+        setTimeout(() => {
+            this.currentTour = cloneDeep(completedTour);
+            /** Proceed with tour if the tour has tour steps and the tour display is allowed for current window size */
+            if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
                 this.setPreparedTourStep();
             }
         });
@@ -295,7 +394,7 @@ export class GuidedTourService {
             return 0;
         }
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
-        return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
+        return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep - 1 : 0;
     }
 
     /**
@@ -314,71 +413,101 @@ export class GuidedTourService {
      * @param targetNode an HTMLElement of which DOM changes should be observed
      * @param userInteraction the user interaction to complete the tour step
      */
-    public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent): void {
-        this.isUserInteractionFinished.next(false);
+    public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string): void {
+        this.isUserInteractionFinishedSubject.next(false);
+
         if (!this.currentTour) {
             return;
         }
-        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
+
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
 
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            if (nextStep && nextStep.highlightSelector) {
-                if (afterNextStep && afterNextStep.highlightSelector) {
-                    this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
-                } else {
-                    this.waitForElement(nextStep.highlightSelector);
-                }
-            } else {
-                this.enableNextStepClick();
-            }
+            const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+            const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
+            this.handleWaitForSelectorEvent(nextStep, afterNextStep);
         } else {
+            /** At a minimum one of childList, attributes, and characterData must be true, otherwise, a TypeError exception will be thrown. */
+            let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
+
             if (userInteraction === UserInteractionEvent.CLICK) {
-                from(this.observeDomMutations(targetNode, userInteraction))
+                /** The first DOM mutation on the click event listener triggers the enableNextStepClick() call */
+                this.observeMutations(targetNode, options)
                     .pipe(take(1))
-                    .subscribe((mutations: MutationRecord[]) => {
-                        mutations.forEach(() => {
-                            this.enableNextStepClick();
-                        });
+                    .subscribe(() => {
+                        this.enableNextStepClick();
+                        if (currentStep.triggerNextStep) {
+                            this.nextStep();
+                        }
                     });
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                from(this.observeDomMutations(targetNode, userInteraction)).subscribe((mutations: MutationRecord[]) => {
-                    mutations.forEach(() => {
+                /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
+                targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
+                this.observeMutations(targetNode, options)
+                    .pipe(
+                        filter(
+                            (mutation: MutationRecord) =>
+                                mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1),
+                        ),
+                    )
+                    .subscribe((mutation: MutationRecord) => {
                         this.enableNextStepClick();
                     });
-                });
+            } else if (userInteraction === UserInteractionEvent.MODELING) {
+                /** We observe any DOM mutation in the .apollon-editor node and its children
+                 *  If the UML model is correct then enableNextStepClick() will be called
+                 */
+                options = { childList: true, subtree: true };
+                targetNode = document.querySelector('.modeling-editor .apollon-container .apollon-editor svg') as HTMLElement;
+
+                this.modelingResultCorrect = false;
+                this.checkModelingComponentSubject.next(modelingTask);
+
+                this.observeMutations(targetNode, options)
+                    .pipe(debounceTime(100), distinctUntilChanged())
+                    .subscribe(() => {
+                        this.checkModelingComponentSubject.next(modelingTask);
+                        if (this.modelingResultCorrect) {
+                            this.enableNextStepClick();
+                        }
+                    });
             }
         }
     }
 
     /**
-     * Wraps the mutation observer in a promise
-     * @param targetNode an HTMLElement of which DOM changes should be observed
-     * @param userInteraction the user interaction to complete the tour step
+     * Enables the next step click if the highlightSelector of the next step or
+     * the highlightSelector of the after next step are visible
+     * @param nextStep  next tour step
+     * @param afterNextStep the tour step after the next tour step
      */
-    private observeDomMutations(targetNode: HTMLElement, userInteraction: UserInteractionEvent) {
-        return new Promise(resolve => {
-            const observer = new MutationObserver(mutations => {
-                if (userInteraction === UserInteractionEvent.CLICK) {
-                    observer.disconnect();
-                    this.enableNextStepClick();
-                } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
-                    mutations.forEach(mutation => {
-                        if (mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1)) {
-                            observer.disconnect();
-                            this.enableNextStepClick();
-                        }
-                    });
-                }
-            });
-            observer.observe(targetNode, {
-                attributes: true,
-                childList: true,
-                characterData: true,
-                subtree: false,
-            });
-        });
+    private handleWaitForSelectorEvent(nextStep: TourStep | null, afterNextStep: TourStep | null) {
+        if (nextStep && nextStep.highlightSelector) {
+            if (afterNextStep && afterNextStep.highlightSelector) {
+                this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
+            } else {
+                this.waitForElement(nextStep.highlightSelector);
+            }
+        } else {
+            this.enableNextStepClick();
+        }
     }
+
+    /**
+     * Handles the mutation observer for the user interactions
+     * @param target    target node of an HTMLElement of which DOM changes should be observed
+     * @param options   the configuration options for the mutation observer
+     */
+    private observeMutations = (target: any, options: MutationObserverInit) =>
+        new Observable<MutationRecord>(subscribe => {
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    subscribe.next(mutation);
+                });
+            });
+            observer.observe(target, options);
+            return () => observer.disconnect();
+        });
 
     /**
      * Wait for the next step selector to appear in the DOM and continue with the next step
@@ -400,11 +529,7 @@ export class GuidedTourService {
      * Remove the disabled attribute so that the next button is clickable again
      */
     private enableNextStepClick() {
-        this.isUserInteractionFinished.next(true);
-        const nextButton = document.querySelector('.next-button');
-        if (nextButton && nextButton.attributes.getNamedItem('disabled')) {
-            nextButton.attributes.removeNamedItem('disabled');
-        }
+        this.isUserInteractionFinishedSubject.next(true);
     }
 
     /**
@@ -433,6 +558,9 @@ export class GuidedTourService {
             }
             this.setPreparedTourStep();
             this.calculateTranslateValue(currentStep);
+            if (this.currentTourStepIndex === 0 && this.currentTour.resetUMLModel) {
+                this.resetUMLModelSubject.next(true);
+            }
         }
     }
 
@@ -577,6 +705,9 @@ export class GuidedTourService {
         return convertedStep;
     }
 
+    /** If the current tour step cannot be displayed because it has already been successfully completed, then this
+     * extra TourStep should be displayed instead
+     */
     private setStepAlreadyFinishedHint(step: any): TourStep | null {
         if (step.skipStepIfNoSelector) {
             return null;
@@ -623,7 +754,7 @@ export class GuidedTourService {
          */
         setTimeout(() => {
             this.availableTourForComponent = cloneDeep(guidedTour);
-            this.guidedTourAvailability.next(true);
+            this.guidedTourAvailabilitySubject.next(true);
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
             // Only start tour automatically if the user has never seen it before
             if (!hasStartedOrFinishedTour) {
@@ -639,10 +770,13 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour): Exercise | null {
-        if (!guidedTour.exerciseShortName || !course || !course.exercises) {
+        if (!course || !course.exercises || !this.guidedTourMapping) {
             return null;
         }
-        const exerciseForGuidedTour = course.exercises.find(exercise => exercise.shortName === guidedTour.exerciseShortName);
+        if (!this.isGuidedTourAvailableForCourse(course)) {
+            return null;
+        }
+        const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
         if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
             return exerciseForGuidedTour;
@@ -656,7 +790,10 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
-        const courseForTour = courses.find(course => course.shortName === guidedTour.courseShortName);
+        if (!this.guidedTourMapping) {
+            return null;
+        }
+        const courseForTour = courses.find(course => this.isGuidedTourAvailableForCourse(course));
         if (courseForTour) {
             this.enableTour(guidedTour);
             return courseForTour;
@@ -670,9 +807,51 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (exercise.shortName === guidedTour.exerciseShortName) {
+        if (!exercise.course) {
+            return;
+        }
+        if (this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
             this.enableTour(guidedTour);
         }
+    }
+
+    /**
+     * Determine if the current course is a course for a guided tour
+     * @param course    current course
+     * @return true if the current course is a course for a guided tour, otherwise false
+     */
+    public isGuidedTourAvailableForCourse(course: Course): boolean {
+        if (!course || !this.guidedTourMapping) {
+            return false;
+        }
+        return course.shortName === this.guidedTourMapping.courseShortName;
+    }
+
+    /**
+     * Determine if the current exercise is an exercise for a guided tour
+     * @param exercise  current exercise
+     * @param guidedTour of which the availability should be checked
+     * @return true if the current exercise is an exercise for a guided tour, otherwise false
+     */
+    public isGuidedTourAvailableForExercise(exercise: Exercise, guidedTour?: GuidedTour): boolean {
+        if (!exercise || !this.guidedTourMapping) {
+            return false;
+        }
+
+        let exerciseMatches = false;
+        let settingsKey = '';
+        if (guidedTour) {
+            settingsKey = guidedTour.settingsKey;
+        } else {
+            settingsKey = this.currentTour ? this.currentTour.settingsKey : '';
+        }
+
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.shortName;
+        } else {
+            exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.title;
+        }
+        return exerciseMatches;
     }
 
     /**
@@ -681,7 +860,7 @@ export class GuidedTourService {
      * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
      */
     public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
-        if (this.currentTour!.steps.length < this.maxDots) {
+        if (this.currentTour && this.currentTour.steps.length < this.maxDots) {
             return;
         }
 

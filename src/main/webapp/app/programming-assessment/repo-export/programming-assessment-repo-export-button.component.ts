@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export/programming-assessment-repo-export-dialog.component';
 
@@ -22,6 +21,7 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
     ButtonSize = ButtonSize;
 
     @Input() exerciseId: number;
+    @Input() participationIdList: number[];
     @Input() studentIdList: string; // comma separated
     @Input() singleStudentMode = false;
 
@@ -31,6 +31,7 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
         event.stopPropagation();
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.participationIdList = this.participationIdList;
         modalRef.componentInstance.studentIdList = this.studentIdList;
         modalRef.componentInstance.singleStudentMode = this.singleStudentMode;
     }

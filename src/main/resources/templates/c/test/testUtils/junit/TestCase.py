@@ -1,6 +1,7 @@
 from xml.etree import ElementTree as Et
 from datetime import timedelta
 from enum import Enum
+from testUtils.Utils import shortenText
 
 class Result(Enum):
     SKIPPED = "skipped"
@@ -17,12 +18,11 @@ class TestCase:
     time: timedelta = timedelta()
     result: Result = Result.SUCCESS
     message: str = ""
-    messageInner: str = ""
 
     def __init__(self, name: str):
         self.name = name
 
-    def toXml(self, suite: Et.Element):
+    def toXml(self, suite: Et.Element, maxCharsPerOutput=2000):
         case: Et.Element = Et.SubElement(suite, "testcase")
         case.set("name", self.name)
         case.set("time", str(self.time.total_seconds()))
@@ -34,29 +34,29 @@ class TestCase:
 
         if self.stdout:
             stdout: Et.Element = Et.SubElement(case, "system-out")
-            stdout.text = self.stdout
+            stdout.text = shortenText(self.stdout, maxCharsPerOutput) + "\n"
         if self.stderr:
             stderr: Et.Element = Et.SubElement(case, "system-err")
-            stderr.text = self.stderr
+            stderr.text = shortenText(self.stderr, maxCharsPerOutput) + "\n"
 
-    def genErrFailureMessage(self):
-        msg: str = self.messageInner
+    def genErrFailureMessage(self, maxCharsPerOutput=2000):
+        msg: str = self.message
 
-        msg += "\n======================stdout======================\n"
+        msg += "\n"+"stdout".center(50, "=")+"\n"
         if self.stdout:
-            msg += self.stdout + "\n"
+            msg += shortenText(self.stdout, maxCharsPerOutput) + "\n"
         else:
             msg += "No output on stdout found!\n"
 
-        msg += "\n======================stderr======================\n"
+        msg += "\n"+"stderr".center(50, "=")+"\n"
         if self.stderr:
-            msg += self.stderr + "\n"
+            msg += shortenText(self.stderr, maxCharsPerOutput) + "\n"
         else:
             msg += "No output on stderr found!\n"
 
-        msg += "\n======================Tester======================\n"
+        msg += "\n"+"Tester".center(50, "=")+"\n"
         if self.testerOutput:
-            msg += self.testerOutput + "\n"
+            msg += shortenText(self.testerOutput, maxCharsPerOutput * 2) + "\n"
         else:
             msg += "No tester output found!\n"
         return msg

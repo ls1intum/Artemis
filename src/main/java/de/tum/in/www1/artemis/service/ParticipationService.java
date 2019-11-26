@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -60,8 +63,6 @@ public class ParticipationService {
 
     private final QuizSubmissionService quizSubmissionService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final UserService userService;
 
     private final Optional<GitService> gitService;
@@ -81,7 +82,7 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, Optional<GitService> gitService,
+            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
@@ -95,7 +96,6 @@ public class ParticipationService {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintRepository = complaintRepository;
         this.quizSubmissionService = quizSubmissionService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -111,7 +111,7 @@ public class ParticipationService {
      * @param participation the entity to save
      * @return the persisted entity
      */
-    public Participation save(Participation participation) {
+    public Participation save(ParticipationInterface participation) {
         // Note: unfortunately polymorphism does not always work in Hibernate due to reflective method invocation.
         // Therefore we provide a convenience method here that finds out the concrete participation type and delegates the call to the right method
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
@@ -221,8 +221,10 @@ public class ParticipationService {
             programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
+            // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
+            programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
+            // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
             programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
-            // we configure the repository webhook after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
             programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
             programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
             // after saving, we need to make sure the object that is used after the if statement is the right one
@@ -283,8 +285,9 @@ public class ParticipationService {
     }
 
     /**
-     * Get a participation for the given quiz and username If the quiz hasn't ended, participation is constructed from cached submission If the quiz has ended, we first look in the
-     * database for the participation and construct one if none was found
+     * Get a participation for the given quiz and username.
+     * If the quiz hasn't ended, participation is constructed from cached submission.
+     * If the quiz has ended, we first look in the database for the participation and construct one if none was found
      *
      * @param quizExercise the quiz exercise to attach to the participation
      * @param username     the username of the user that the participation belongs to
@@ -376,26 +379,22 @@ public class ParticipationService {
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
      *
-     * @param exercise exercise to which the inactive participation belongs
      * @param participation inactive participation
      * @return resumed participation
      */
-    public ProgrammingExerciseStudentParticipation resumeExercise(Exercise exercise, ProgrammingExerciseStudentParticipation participation) {
-
-        // Reload programming exercise from database so that the template participation is available
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exercise.getId());
-        if (programmingExercise.isEmpty()) {
-            return null;
-        }
+    public ProgrammingExerciseStudentParticipation resumeExercise(ProgrammingExerciseStudentParticipation participation) {
         participation = copyBuildPlan(participation);
         participation = configureBuildPlan(participation);
+        // Note: the repository webhook already exists so we don't need to set it up again
         participation.setInitializationState(INITIALIZED);
+        participation = save(participation);
+        // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
+        // because in notifyPush we only filter out empty commits when the state is already initialized
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
         }
-        save(participation);
-        return participation;
+        return save(participation);
     }
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
@@ -462,11 +461,19 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
                     "Artemis WebHook");
-            return save(participation);
         }
-        else {
-            return participation;
-        }
+        return participation;
+    }
+
+    /**
+     * Perform an empty commit so that the Bamboo build plan definitely runs for the actual student commit
+     *
+     * @param participation the participation of the student
+     * @return the participation of the student
+     */
+    public ProgrammingExerciseStudentParticipation performEmptyCommit(ProgrammingExerciseStudentParticipation participation) {
+        continuousIntegrationService.get().performEmptySetupCommit(participation);
+        return participation;
     }
 
     /**
@@ -539,6 +546,21 @@ public class ParticipationService {
     public StudentParticipation findOneWithEagerResults(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
         Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerResults(participationId);
+        if (participation.isEmpty()) {
+            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
+        }
+        return participation.get();
+    }
+
+    /**
+     * Get one participation by id including all submissions. Throws an EntityNotFoundException if the participation with the given id could not be found.
+     *
+     * @param participationId the id of the entity
+     * @return the participation with all its submissions and results
+     */
+    public Participation findOneWithEagerSubmissions(Long participationId) {
+        log.debug("Request to get Participation : {}", participationId);
+        Optional<Participation> participation = participationRepository.findWithEagerSubmissionsById(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
@@ -636,12 +658,11 @@ public class ParticipationService {
      * Get all programming exercise participations belonging to build plan and initialize there state with eager results.
      *
      * @param buildPlanId the id of build plan
-     * @param state initialization state
      * @return the list of programming exercise participations belonging to build plan
      */
-    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdAndInitializationStateWithEagerResults(String buildPlanId, InitializationState state) {
+    public List<ProgrammingExerciseStudentParticipation> findByBuildPlanIdWithEagerResults(String buildPlanId) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return programmingExerciseStudentParticipationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
+        return programmingExerciseStudentParticipationRepository.findByBuildPlanId(buildPlanId);
     }
 
     /**
@@ -660,18 +681,28 @@ public class ParticipationService {
      * @param exerciseId the id of exercise
      * @return the list of programming exercise participations belonging to exercise
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
     }
 
     /**
-     * Get all programming exercise participations belonging to exercise with eager results.
+     * Get all programming exercise participations belonging to exercise with eager submissions -> result.
      *
      * @param exerciseId the id of exercise
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(Long exerciseId) {
         return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
+    }
+
+    /**
+     * Get all programming exercise participations belonging to exercise with eager submissions -> result --> assessor.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
     }
 
     /**
@@ -692,22 +723,18 @@ public class ParticipationService {
      * @param exerciseId the id of the exercise the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(exerciseId);
+    public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exerciseId);
     }
 
     /**
      * Get all participations belonging to course with relevant results.
      *
      * @param courseId the id of the exercise
-     * @param includeNotRatedResults specify is not rated results are included
-     * @param includeAssessors specify id assessors are included
      * @return list of participations belonging to course
      */
-    @Transactional(readOnly = true)
-    public List<StudentParticipation> findByCourseIdWithRelevantResults(Long courseId, Boolean includeNotRatedResults, Boolean includeAssessors) {
-        List<StudentParticipation> participations = includeAssessors ? studentParticipationRepository.findByCourseIdWithEagerResultsAndAssessors(courseId)
-                : studentParticipationRepository.findByCourseIdWithEagerResults(courseId);
+    public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
+        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
 
         return participations.stream()
 
@@ -715,43 +742,24 @@ public class ParticipationService {
                 // These participations are used e.g. to store template and solution build plans in programming exercises
                 .filter(participation -> participation.getStudent() != null)
 
-                // filter all irrelevant results, i.e. rated = false or before exercise due date
+                // filter all irrelevant results, i.e. rated = false or no completion date or no score
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<Result>();
 
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
                     // this for loop is optimized for performance and thus not very easy to understand ;)
                     for (Result result : participation.getResults()) {
-                        if (!includeNotRatedResults && result.isRated() == Boolean.FALSE) {
-                            // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
-                            // TODO: for compatibility reasons, we include rated == null, in the future we can remove this
+                        // this should not happen because the database call above only retrieves rated results
+                        if (result.isRated() == Boolean.FALSE) {
                             continue;
                         }
                         if (result.getCompletionDate() == null || result.getScore() == null) {
                             // we are only interested in results with completion date and with score
                             continue;
                         }
-                        if (participation.getExercise() instanceof QuizExercise) {
-                            // in quizzes we take all rated results, because we only have one! (independent of later checks)
-                        }
-                        else if (participation.getExercise().getDueDate() != null) {
-                            if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                                    || participation.getExercise() instanceof FileUploadExercise) {
-                                if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
-                                        && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
-                                    // Filter out late results using the submission date, because in this exercise types, the
-                                    // difference between submissionDate and result.completionDate can be significant due to manual assessment
-                                    continue;
-                                }
-                            }
-                            // For all other exercises the result completion date is the same as the submission date
-                            else if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                                // and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
-                                continue;
-                            }
-                        }
                         relevantResults.add(result);
                     }
+                    // we take the last rated result
                     if (!relevantResults.isEmpty()) {
                         // make sure to take the latest result
                         relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
@@ -834,13 +842,8 @@ public class ParticipationService {
             }
         }
 
-        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                || participation.getExercise() instanceof FileUploadExercise) {
-            // For modeling, text and file upload exercises students can send complaints about their assessments and we need to remove
-            // the complaints and the according responses belonging to a participation before deleting the participation itself.
-            complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
-            complaintRepository.deleteByResult_Participation_Id(participationId);
-        }
+        complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
+        complaintRepository.deleteByResult_Participation_Id(participationId);
 
         participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
 
@@ -913,6 +916,16 @@ public class ParticipationService {
      */
     public StudentParticipation findOneWithEagerCourse(Long participationId) {
         return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
+    }
+
+    /**
+     * Get one participation with eager course.
+     *
+     * @param participationId id of the participation
+     * @return participation with eager course
+     */
+    public StudentParticipation findOneWithEagerResultsAndCourse(Long participationId) {
+        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourse(participationId);
     }
 
     /**

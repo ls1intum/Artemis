@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +50,13 @@ public interface ContinuousIntegrationService {
     void configureBuildPlan(ProgrammingExerciseParticipation participation);
 
     /**
+     * An empty commit might be necessary depending on the chosen CI system (e.g. on Bamboo) so that subsequent commits trigger a new build on the build plan
+     *
+     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
+     */
+    void performEmptySetupCommit(ProgrammingExerciseParticipation participation);
+
+    /**
      * triggers a build for the build plan in the given participation
      * 
      * @param participation the participation with the id of the build plan that should be triggered
@@ -71,16 +78,6 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId unique identifier for build plan on CI system
      */
     void deleteBuildPlan(String projectKey, String buildPlanId);
-
-    /**
-     * Will be called when a POST request is sent to the '/results/{buildPlanId}'. Configure this as a build step in the build plan.
-     * <p>
-     * Important: The implementation is responsible for retrieving and saving the result from the CI system.
-     * @param participation for which build has completed
-     * @return build result
-     */
-    @Deprecated
-    Result onBuildCompletedOld(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
@@ -138,20 +135,20 @@ public interface ContinuousIntegrationService {
     List<BuildLogEntry> getLatestBuildLogs(String buildPlanId);
 
     /**
-     * Get the  URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
-     *
-     * @param participation participation for which to get the build plan URL
-     * @return build plan url
-     */
-    URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation);
-
-    /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
      *
      * @param participation participation for which to get the build artifact
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
     ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
+
+    /**
+     * Retrieve the latest build result from the CIS for the given participation if it matches the commitHash of the submission and save it into the database.
+     * @param participation to identify the build artifact with.
+     * @param submission    for commitHash comparison.
+     * @return the saved Result instance if a build result could be retrieved from the CIS.
+     */
+    Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission);
 
     /**
      * Checks if the project with the given projectKey already exists
@@ -186,8 +183,34 @@ public interface ContinuousIntegrationService {
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoName              The lower level identifier of the repository.
+     * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
-    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
+    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy);
+
+    /**
+     * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
+     *
+     * @param projectKey The key of the project to grant permissions to
+     * @param groups The role of the users that should have the permissions
+     * @param permissions The permissions to grant the users
+     */
+    void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions);
+
+    /**
+     * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
+     * This method removes all of these unnecessary and potentially insecure permissions
+     *
+     * @param projectKey The key of the build project which should get "cleaned"
+     */
+    void removeAllDefaultProjectPermissions(String projectKey);
+
+    /**
+     * Checks if the underlying CI server is up and running and gives some additional information about the running
+     * services if available
+     *
+     * @return The health of the CI service containing if it is up and running and any additional data, or the throwing exception otherwise
+     */
+    ConnectorHealth health();
 
     /**
      * Creates a project on the CI server.

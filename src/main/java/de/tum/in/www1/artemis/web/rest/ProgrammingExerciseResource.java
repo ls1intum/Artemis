@@ -14,6 +14,7 @@ import java.security.Principal;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -27,7 +28,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -37,6 +37,8 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -144,6 +146,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to save ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
@@ -191,6 +194,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises/setup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise == null) {
@@ -319,6 +323,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
 
@@ -371,6 +376,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
@@ -434,22 +440,21 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the exercises.
+     * GET /courses/:courseId/exercises : get all the programming exercises.
      *
      * @param courseId of the course for which the exercise should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/programming-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForParticipations(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -523,6 +528,7 @@ public class ProgrammingExerciseResource {
      */
     @DeleteMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", id);
@@ -552,6 +558,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
@@ -578,7 +585,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+     * POST /programming-exercises/:exerciseId/export-repos-by-student-logins/:studentIds : sends all submissions from studentlist as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @param studentIds the studentIds seperated via semicolon to get their submissions
@@ -586,19 +593,29 @@ public class ProgrammingExerciseResource {
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */
-    @PostMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
+    @PostMapping(value = "/programming-exercises/{exerciseId}/export-repos-by-student-logins/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds,
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable Long exerciseId, @PathVariable String studentIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
         if (Optional.ofNullable(programmingExercise).isEmpty()) {
             log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
             return badRequest();
         }
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
+        }
+
+        if (repositoryExportOptions.isExportAllStudents()) {
+            // only instructors are allowed to download all repos
+            if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+                return forbidden();
+            }
+        }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
@@ -619,8 +636,46 @@ public class ProgrammingExerciseResource {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
-        // TODO: in case we do not find a student login, we should inform the user in the client, that this student id did not participate in the exercise
+        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+    }
 
+    /**
+     * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param participationIds the participationIds seperated via semicolon to get their submissions (used for double blind assessment)
+     * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
+     * @return ResponseEntity with status
+     * @throws IOException if submissions can't be zippedRequestBody
+     */
+    @PostMapping(value = "/programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable Long exerciseId, @PathVariable String participationIds,
+            @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise))
+            return forbidden();
+
+        if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
+            repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
+        }
+
+        Set<Long> participationIdSet = new ArrayList<String>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong)
+                .collect(Collectors.toSet());
+
+        // Select the participations that should be exported
+        List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
+                .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation)
+                .collect(Collectors.toList());
+        return provideZipForParticipations(exportedStudentParticipations, exerciseId, repositoryExportOptions);
+    }
+
+    // TODO: Should not throw the IOException but handle it!
+    private ResponseEntity<Resource> provideZipForParticipations(List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations, Long exerciseId,
+            RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
@@ -681,7 +736,7 @@ public class ProgrammingExerciseResource {
             String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
             // Atm we only have one folder that can have structural tests, but this could change.
             testsPath = programmingExercise.hasSequentialTestRuns() ? "structural" + File.separator + testsPath : testsPath;
-            boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
+            boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath, user);
 
             if (didGenerateOracle) {
                 HttpHeaders responseHeaders = new HttpHeaders();

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -32,7 +31,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
         @JsonSubTypes.Type(value = TemplateProgrammingExerciseParticipation.class, name = "template"),
         @JsonSubTypes.Type(value = SolutionProgrammingExerciseParticipation.class, name = "solution"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Participation implements Serializable {
+public abstract class Participation implements Serializable, ParticipationInterface {
 
     private static final long serialVersionUID = 1L;
 
@@ -162,10 +161,9 @@ public abstract class Participation implements Serializable {
         return this;
     }
 
-    public Participation addSubmissions(Submission submission) {
+    public void addSubmissions(Submission submission) {
         this.submissions.add(submission);
         submission.setParticipation(this);
-        return this;
     }
 
     public Participation removeSubmissions(Submission submission) {
@@ -194,21 +192,6 @@ public abstract class Participation implements Serializable {
         }
         List<Result> sortedResults = new ArrayList<>(results);
         sortedResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-        return sortedResults.get(0);
-    }
-
-    /**
-     * Finds the latest result for the participation using the submissions. Checks if the participation has any submissions. If there are no submissions, return null.
-     * Also see #findLatestResult()
-     *
-     * @return the latest result or null
-     */
-    public Result findLatestResultUsingSubmissions() {
-        if (submissions == null || submissions.size() == 0) {
-            return null;
-        }
-        List<Result> sortedResults = getSubmissions().stream().map(Submission::getResult).filter(Objects::nonNull).distinct()
-                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
         return sortedResults.get(0);
     }
 

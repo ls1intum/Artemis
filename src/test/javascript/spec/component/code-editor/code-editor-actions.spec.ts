@@ -16,6 +16,9 @@ import { CodeEditorActionsComponent, CodeEditorConflictStateService, CommitState
 import { CommitState, EditorState } from 'app/code-editor/model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
@@ -34,7 +37,7 @@ describe('CodeEditorActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, FeatureToggleModule],
             declarations: [CodeEditorActionsComponent],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
@@ -43,6 +46,7 @@ describe('CodeEditorActionsComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
@@ -73,26 +77,28 @@ describe('CodeEditorActionsComponent', () => {
     const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false]);
 
-    cartesianProduct(Object.keys(EditorState), Object.keys(CommitState).filter(commitState => commitState !== CommitState.CONFLICT), [true, false]).map(
-        (combination: [EditorState, CommitState, boolean]) => {
-            const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
-            const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
-            return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
-                enableCommitButton ? 'Enable commit button' : 'Disable commit button'
-            } for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
-                const [editorState, commitState, isBuilding] = combination;
-                comp.editorState = editorState;
-                comp.commitState = commitState;
-                comp.isBuilding = isBuilding;
-                fixture.detectChanges();
-                const saveButton = fixture.debugElement.query(By.css('#save_button'));
-                const commitButton = fixture.debugElement.query(By.css('#submit_button'));
+    cartesianProduct(
+        Object.keys(EditorState),
+        Object.keys(CommitState).filter(commitState => commitState !== CommitState.CONFLICT),
+        [true, false],
+    ).map((combination: [EditorState, CommitState, boolean]) => {
+        const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
+        const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
+        return it(`Should ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and ${
+            enableCommitButton ? 'Enable commit button' : 'Disable commit button'
+        } for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'} `, () => {
+            const [editorState, commitState, isBuilding] = combination;
+            comp.editorState = editorState;
+            comp.commitState = commitState;
+            comp.isBuilding = isBuilding;
+            fixture.detectChanges();
+            const saveButton = fixture.debugElement.query(By.css('#save_button'));
+            const commitButton = fixture.debugElement.query(By.css('#submit_button'));
 
-                expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton);
-                expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
-            });
-        },
-    );
+            expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton);
+            expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
+        });
+    });
 
     it('should update ui when saving', () => {
         comp.commitState = CommitState.CLEAN;

@@ -15,6 +15,11 @@
             "headline": "Tutorial cancelled",
             "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on <tt>Continue tutorial</tt> from the account menu."
         },
+        "completed": {
+            "headline": "Congratulations 🎉",
+            "content": "You have successfully completed the tutorial. You can restart the tutorial by clicking on <tt>Restart tutorial</tt>.",
+            "hint": "Please note that any tutorial exercise - if available - will be reset once you restart the tutorial."
+        },
         "clickHint": {
             "text": "Click on the highlighted element to proceed with the tour."
         },
@@ -23,6 +28,9 @@
         },
         "waitHint": {
             "text": "Please wait until the next step is loaded."
+        },
+        "modelingHint": {
+            "text": "Add or edit the UML element to continue with the tour"
         },
         "videoHint": {
             "text": "While watching the video, follow the steps on your computer side-by-side."

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 
@@ -23,19 +26,15 @@ public class QuizStatisticService {
 
     private final ResultRepository resultRepository;
 
-    private final QuizSubmissionRepository quizSubmissionRepository;
-
     private final QuizPointStatisticRepository quizPointStatisticRepository;
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
     public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
+            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
-        this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
     }
@@ -62,7 +61,7 @@ public class QuizStatisticService {
             Result latestUnratedResult = null;
 
             // update all Results of a participation
-            for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
+            for (Result result : resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
 
                 // find latest rated Result
                 if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
@@ -108,11 +107,13 @@ public class QuizStatisticService {
             }
             // save statistics
             quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+            List<QuizQuestionStatistic> quizQuestionStatistics = new ArrayList<>();
             for (QuizQuestion quizQuestion : quiz.getQuizQuestions()) {
                 if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
+                    quizQuestionStatistics.add(quizQuestion.getQuizQuestionStatistic());
                 }
             }
+            quizQuestionStatisticRepository.saveAll(quizQuestionStatistics);
             // notify users via websocket about new results for the statistics.
             // filters out solution-Informations
             quiz.filterForStatisticWebsocket();
@@ -130,7 +131,7 @@ public class QuizStatisticService {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+        for (Result result : resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
             // find the latest Result, which is presented in the Statistics
             if (result.isRated() == newResult.isRated() && result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult)
                     && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
@@ -151,13 +152,7 @@ public class QuizStatisticService {
         // update QuizPointStatistic with the result
         if (result != null) {
             // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
-            QuizSubmission quizSubmission;
-            if (result.getSubmission() instanceof QuizSubmission) {
-                quizSubmission = (QuizSubmission) result.getSubmission();
-            }
-            else {
-                quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
-            }
+            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
             for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
                 // update QuestionStatistics with the result
@@ -178,13 +173,7 @@ public class QuizStatisticService {
         // update QuizPointStatistic with the result
         if (result != null) {
             // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
-            QuizSubmission quizSubmission;
-            if (result.getSubmission() instanceof QuizSubmission) {
-                quizSubmission = (QuizSubmission) result.getSubmission();
-            }
-            else {
-                quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
-            }
+            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             quizExercise.getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
             for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
                 // update QuestionStatistics with the result

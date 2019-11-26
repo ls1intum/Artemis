@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -20,8 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -247,6 +250,25 @@ public class ProgrammingExercise extends Exercise {
         this.projectKey = (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
 
+    /**
+     * Get the latest (potentially) graded submission for a programming exercise.
+     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed, but that e.g. the CI system failed to deliver the build results.
+     *
+     * @param submissions Submissions for the given student.
+     * @return the latest graded submission.
+     */
+    @Nullable
+    @Override
+    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+        return submissions.stream().filter(submission -> {
+            if (submission.getResult() != null) {
+                return submission.getResult().isRated();
+            }
+            return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
+                    || submission.getSubmissionDate().isBefore(this.getDueDate());
+        }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+    }
+
     public ProgrammingLanguage getProgrammingLanguage() {
         return programmingLanguage;
     }
@@ -407,6 +429,14 @@ public class ProgrammingExercise extends Exercise {
         this.testCasesChanged = testCasesChanged;
     }
 
+    @Override
+    public AssessmentType getAssessmentType() {
+        if (super.getAssessmentType() == null) {
+            return AssessmentType.AUTOMATIC;
+        }
+        return super.getAssessmentType();
+    }
+
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
@@ -453,6 +483,7 @@ public class ProgrammingExercise extends Exercise {
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
     public enum ProgrammingExerciseSearchColumn {
+
         ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
         private String mappedColumnName;

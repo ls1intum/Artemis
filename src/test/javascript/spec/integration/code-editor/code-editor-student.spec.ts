@@ -3,7 +3,9 @@ import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
+import { WindowRef } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
@@ -54,6 +56,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../utils/general.utils';
+import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -596,7 +599,12 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
+        const guidedTourMapping = {
+            courseShortName: '',
+            tours: [{ '': '' }],
+        } as GuidedTourMapping;
         spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+        guidedTourService.guidedTourMapping = guidedTourMapping;
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };
         const result = { id: 3, successful: false };

@@ -21,8 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -91,12 +90,14 @@ public class CourseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
             FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService) {
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -116,6 +117,7 @@ public class CourseResource {
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -334,8 +336,8 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Exercise> exercises = exerciseService.findAllForCourse(course, false, user);
 
-        exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise)
-                .collect(Collectors.toList());
+        exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
+                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC))).collect(Collectors.toList());
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
@@ -348,6 +350,7 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
+            // TODO: This could be 1 repository method as the exercise id is provided anyway.
             long numberOfSubmissions = 0L;
             if (exercise instanceof TextExercise) {
                 numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
@@ -357,6 +360,9 @@ public class CourseResource {
             }
             else if (exercise instanceof FileUploadExercise) {
                 numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else if (exercise instanceof ProgrammingExercise) {
+                numberOfSubmissions += programmingExerciseService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
 
             long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
@@ -390,7 +396,7 @@ public class CourseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId)
-                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId) + programmingExerciseService.countSubmissionsToAssessByCourseId(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -530,6 +536,7 @@ public class CourseResource {
         long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
+        numberOfSubmissions += programmingExerciseService.countSubmissionsToAssessByCourseId(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));

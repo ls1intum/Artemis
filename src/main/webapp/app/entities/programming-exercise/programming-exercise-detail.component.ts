@@ -1,16 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
-import { Result, ResultService } from 'app/entities/result';
+import { Result } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -31,7 +31,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
     ) {}
@@ -45,21 +44,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
-            this.programmingExerciseParticipationService
-                .getLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id)
-                .pipe(catchError(() => of(null)))
-                .subscribe((result: Result) => {
-                    this.programmingExercise.solutionParticipation.results = result ? [result] : [];
-                    this.loadingSolutionParticipationResults = false;
-                });
-
-            this.programmingExerciseParticipationService
-                .getLatestResultWithFeedback(this.programmingExercise.templateParticipation.id)
-                .pipe(catchError(() => of(null)))
-                .subscribe((result: Result) => {
-                    this.programmingExercise.templateParticipation.results = result ? [result] : [];
-                    this.loadingTemplateParticipationResults = false;
-                });
+            this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe(results => {
+                this.programmingExercise.solutionParticipation.results = results;
+                this.loadingSolutionParticipationResults = false;
+            });
+            this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id).subscribe(results => {
+                this.programmingExercise.templateParticipation.results = results;
+                this.loadingTemplateParticipationResults = false;
+            });
         });
     }
 
@@ -68,7 +60,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
      * @param participationId of the given participation.
      * @return an empty array if there is no result or an array with the single latest result.
      */
-    private loadLatestResultWithFeedback(participationId: number) {
+    private loadLatestResultWithFeedback(participationId: number): Observable<Result[]> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId).pipe(
             catchError(() => of(null)),
             map((result: Result | null) => {

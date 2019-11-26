@@ -1,5 +1,4 @@
-import { ExerciseType } from 'app/entities/exercise';
-import { PipeTransform, Pipe } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
     name: 'averageBy',

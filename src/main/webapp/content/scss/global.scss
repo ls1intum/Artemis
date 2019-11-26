@@ -147,7 +147,9 @@ Generic styles
     color: white;
     background-color: red;
 }
-
+.invalid-feedback {
+    display: block;
+}
 .pad {
     padding: 10px;
 }
@@ -653,6 +655,10 @@ Course Info Bar
     color: #ffffff;
     flex-direction: column;
     justify-content: center;
+
+    &--ide {
+        min-height: 100px;
+    }
 }
 
 /* ==========================================================================
@@ -705,4 +711,19 @@ ngb-tooltip-window {
 .form-control.ace_editor {
     font-size: 12px;
     line-height: normal;
+}
+
+.connection-status-admin {
+    font-size: 14px;
+    color: green;
+
+    &.disconnected {
+        color: red;
+    }
+
+    i {
+        font-size: 0.8em;
+        vertical-align: 10%;
+        margin-right: 2px;
+    }
 }

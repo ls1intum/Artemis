@@ -65,7 +65,7 @@
                     id="deleteButton"
                     [routerLink]="['/', { outlets: { popup: 'participation/' + participationId + '/submission/' + value + '/delete' } }]"
                 >
-                    <fa-icon icon="times"></fa-icon>
+                    <fa-icon [icon]="'times'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                 </button>
             </ng-template>

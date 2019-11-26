@@ -7,7 +7,7 @@
             class="btn btn-primary float-right jh-create-entity create-text-exercise"
             [routerLink]="['/course', course.id, 'text-exercise', 'new']"
         >
-            <fa-icon icon="plus"></fa-icon>
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.textExercise.home.createLabel">
                 Create Text Exercise
             </span>
@@ -20,14 +20,16 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="problemStatement"><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="problemStatement">
+                        <span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
-                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon icon="sort"></fa-icon>
+                        <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
                 </tr>
@@ -51,7 +53,7 @@
                                 [routerLink]="['/course', textExercise.course.id, 'exercise', textExercise.id, 'dashboard']"
                                 class="btn btn-info btn-sm mr-1"
                             >
-                                <fa-icon icon="eye"></fa-icon>
+                                <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                             </button>
                             <button
@@ -64,7 +66,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </button>
                             <button *ngIf="textExercise.isAtLeastInstructor" type="submit" [routerLink]="['/text-exercise', textExercise.id]" class="btn btn-info btn-sm mr-1">
-                                <fa-icon icon="eye"></fa-icon>
+                                <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
                             <button
@@ -75,7 +77,7 @@
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"
                             >
-                                <fa-icon icon="pencil-alt"></fa-icon>
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
@@ -86,7 +88,7 @@
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                 (delete)="deleteTextExercise(textExercise.id)"
                             >
-                                <fa-icon icon="times"></fa-icon>
+                                <fa-icon [icon]="'times'"></fa-icon>
                             </button>
                         </div>
                     </td>

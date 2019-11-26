@@ -114,7 +114,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() domainCommands: Array<DomainCommand>;
 
     /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
-    @Output() textWithDomainCommandsFound = new EventEmitter<[string, (DomainCommand | null)][]>();
+    @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand | null][]>();
 
     @Output() onPreviewSelect = new EventEmitter();
 
@@ -266,7 +266,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     parse(): void {
         if (this.showDefaultPreview) {
-            this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
+            this.previewTextAsHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.markdown);
             this.html.emit(this.previewTextAsHtml);
         }
         if (this.domainCommands && this.domainCommands.length && this.markdown) {
@@ -275,7 +275,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
             /** create empty array which
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
-            const commandTextsMappedToCommandIdentifiers: [string, (DomainCommand | null)][] = [];
+            const commandTextsMappedToCommandIdentifiers: [string, DomainCommand | null][] = [];
             /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
             let remainingMarkdownText = this.markdown.slice(0);
 
@@ -327,7 +327,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @param text {string} from the parse function
      * @return array of the text with the domainCommand identifier
      */
-    private parseLineForDomainCommand = (text: string): [string, (DomainCommand | null)] => {
+    private parseLineForDomainCommand = (text: string): [string, DomainCommand | null] => {
         for (const domainCommand of this.domainCommands) {
             const possibleOpeningCommandIdentifier = [
                 domainCommand.getOpeningIdentifier(),

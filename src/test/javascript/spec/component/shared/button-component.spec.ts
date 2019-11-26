@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DebugElement } from '@angular/core';
 import { SinonSpy, spy } from 'sinon';
 import * as chai from 'chai';
@@ -9,6 +9,11 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ButtonComponent } from 'app/shared/components';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
+import { MockSyncStorage } from '../../mocks';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,7 +28,12 @@ describe('ButtonComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedComponentModule],
-            providers: [JhiLanguageHelper],
+            providers: [
+                JhiLanguageHelper,
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+            ],
         })
             .compileComponents()
             .then(() => {

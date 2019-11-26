@@ -90,7 +90,12 @@ export class TextExerciseUpdateComponent implements OnInit {
             window.history.back();
         }
     }
-
+    /**
+     * Validates if the date is correct
+     */
+    validateDate() {
+        this.exerciseService.validateDate(this.textExercise);
+    }
     /**
      * Updates the exercise categories
      * @param categories list of exercise categories
@@ -132,7 +137,10 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
-        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body!), (res: HttpErrorResponse) => this.onSaveError(res));
+        result.subscribe(
+            (res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body!),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+        );
     }
 
     private onSaveSuccess(result: TextExercise) {

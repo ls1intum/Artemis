@@ -7,6 +7,8 @@
                 "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
             "resultCount": "{{resultsLength}} Ergebnisse",
+            "resultsPerPage": "{{number}} Ergebnisse pro Seite",
+            "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",

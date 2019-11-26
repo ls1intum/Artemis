@@ -9,13 +9,13 @@ import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exerc
 import { ArtemisStudentQuestionsModule } from 'app/student-questions/';
 
 import {
-    CourseScoreCalculationService,
     CourseExerciseDetailsComponent,
     CourseExerciseRowComponent,
     CourseExercisesComponent,
     CourseLectureDetailsComponent,
     CourseLecturesComponent,
     CourseOverviewComponent,
+    CourseScoreCalculationService,
     CourseStatisticsComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,
@@ -30,6 +30,8 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
+import { ArtemisComplaintsModule } from 'app/complaints';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -47,6 +49,8 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisCourseRegistrationSelector,
         IntellijModule,
+        ArtemisComplaintsModule,
+        FeatureToggleModule,
     ],
     declarations: [
         OverviewComponent,

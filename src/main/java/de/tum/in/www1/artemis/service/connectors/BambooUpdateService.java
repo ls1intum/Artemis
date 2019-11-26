@@ -1,16 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +24,8 @@ import com.appfire.bitbucket.cli.objects.RemoteRepository;
 import com.appfire.common.cli.*;
 import com.appfire.common.cli.objects.RemoteApplicationLink;
 import com.appfire.common.cli.requesthelpers.DefaultRequestHelper;
+
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.exception.BambooException;
 
 @Profile("bamboo")
@@ -79,7 +81,8 @@ public class BambooUpdateService {
         }
 
         @Override
-        public void updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) {
+        public void updatePlanRepository(String bambooProject, String planKey, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository,
+                Optional<List<String>> triggeredBy) {
             try {
                 final BambooClient bambooClient = new BambooClient(createBase());
                 String[] args = new String[] { "--targetServer", BITBUCKET_SERVER_URL.toString(), "-s", BAMBOO_SERVER_URL.toString(), "--user", BAMBOO_USER, "--password",
@@ -103,6 +106,14 @@ public class BambooUpdateService {
                 }
 
                 updateRepository(bambooClient, bambooRemoteRepository, remoteRepository.getSlug(), bitbucketProject, planKey);
+
+                // Overwrite triggers if needed, incl workaround for different repo names
+                if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals("Assignment")) {
+                    triggeredBy = Optional
+                            .of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, "Assignment")).collect(Collectors.toList()));
+                }
+                triggeredBy.ifPresent(repoTriggers -> overwriteTriggers(planKey, bambooClient, repoTriggers));
+
                 log.info("Update plan repository for build plan " + planKey + " was successful");
             }
             catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -120,8 +131,8 @@ public class BambooUpdateService {
             bambooClient.getRepositoryHelper().addRepositoryDetails(bambooRemoteRepository);
 
             parameters.put("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
-            // IMPORTANT: this has to be assignment
-            parameters.put("repositoryName", ASSIGNMENT_REPO_NAME);
+            // IMPORTANT: Don't change the name of the repo! We depend on the naming (assignment, tests) in some other parts of the application
+            parameters.put("repositoryName", bambooRemoteRepository.getName());
             parameters.put("repositoryId", Long.toString(bambooRemoteRepository.getId()));
             parameters.put("confirm", "true");
             parameters.put("save", "Save repository");
@@ -201,6 +212,28 @@ public class BambooUpdateService {
             }
 
             return message;
+        }
+
+        private void overwriteTriggers(final String planKey, final BambooClient bambooClient, final List<String> triggeredBy) {
+            try {
+                final var triggersString = bambooClient.getTriggerHelper().getTriggerList(planKey, null, null, 99, Pattern.compile(".*"));
+                // Bamboo CLI returns a weird String, which is the reason for this way of parsing it
+                final var oldTriggers = Arrays.stream(triggersString.split("\n")).map(trigger -> trigger.replace("\"", "").split(","))
+                        .filter(trigger -> trigger.length > 2 && NumberUtils.isCreatable(trigger[1])).map(trigger -> Long.parseLong(trigger[1])).collect(Collectors.toSet());
+
+                // Remove all old triggers
+                for (final var triggerId : oldTriggers) {
+                    bambooClient.getTriggerHelper().removeTrigger(planKey, null, null, triggerId, null, false);
+                }
+
+                // Add new triggers
+                for (final var repo : triggeredBy) {
+                    bambooClient.getTriggerHelper().addTrigger(planKey, null, "remoteBitbucketServer", null, null, repo, null, null, false);
+                }
+            }
+            catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+                throw new BambooException("Unable to overwrite triggers for " + planKey + "\n" + e.getMessage(), e);
+            }
         }
 
         @Override

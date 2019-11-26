@@ -10,7 +10,7 @@ class Tester:
     suite: TestSuite
     tests: Dict[str, AbstractTest] = dict()
 
-    def __init__(self, name: str = "GBS-Tester-1.2"):
+    def __init__(self, name: str = "GBS-Tester-1.13"):
         self.name = name
         self.suite = TestSuite(name)
 
@@ -29,14 +29,19 @@ class Tester:
             # Reset the tester output cache:
             clearTesterOutputCache()
 
-            printTester("Running test case '{}' with a {} second timeout...".format(name, test.timeoutSec))
+            if test.timeoutSec >= 0:
+                printTester("Running test case '{}' with a {} second timeout...".format(name, test.timeoutSec))
+            else:
+                printTester("Running test case '{}' with no timeout...".format(name))
             test.start(testResults, self.suite)
-            printTester("Finished test case '{}' in {} seconds.".format(name, (test.case.time.total_seconds())))
+            printTester("Finished test case '{}' in {} seconds.".format(name, test.case.time.total_seconds()))
 
             # Store the tester output in the test case:
             test.case.testerOutput = self.name + "\n" + getTesterOutput()
             # Update test results:
             testResults[name] = test.case.result
+        self.__printResult()
+
 
     def addTest(self, test: AbstractTest):
         """
@@ -46,6 +51,15 @@ class Tester:
         if test.name in self.tests:
             raise NameError("Test '{}' already registered. Test names should be unique!".format(test.name))
         self.tests[test.name] = test
+
+    def __printResult(self):
+        print("Result".center(50, "="))
+        print("{} finished {} test cases in {} seconds.".format(self.name, len(self.tests), self.suite.time.total_seconds()))
+        print("SUCCESS: {}".format(self.suite.successful))
+        print("FAILED: {}".format(self.suite.failures))
+        print("ERROR: {}".format(self.suite.errors))
+        print("SKIPPED: {}".format(self.suite.skipped))
+        print("".center(50, "="))
 
     def exportResult(self, outputPath: str):
         """

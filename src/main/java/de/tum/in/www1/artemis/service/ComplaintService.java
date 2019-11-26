@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
+import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_TIME_WEEKS;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -282,8 +283,8 @@ public class ComplaintService {
      */
     private boolean isTimeOfComplaintValid(Result result, Exercise exercise) {
         if (exercise.getAssessmentDueDate() == null || result.getCompletionDate().isAfter(exercise.getAssessmentDueDate())) {
-            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusWeeks(1));
+            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusWeeks(MAX_COMPLAINT_TIME_WEEKS));
         }
-        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusWeeks(1));
+        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusWeeks(MAX_COMPLAINT_TIME_WEEKS));
     }
 }

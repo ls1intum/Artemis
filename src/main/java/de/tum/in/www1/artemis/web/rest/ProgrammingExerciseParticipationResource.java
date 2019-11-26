@@ -109,20 +109,18 @@ public class ProgrammingExerciseParticipationResource {
      * A pending submission is one that does not have a result yet.
      *
      * @param participationId the id of the participation get the latest submission for
+     * @param lastGraded if true will not try to find the latest pending submission, but the latest GRADED pending submission.
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given id and forbidden (403) if the user is not allowed to access the participation.
      */
     @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId) {
+    public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Optional<ProgrammingSubmission> submissionOpt;
         try {
-            submissionOpt = submissionService.getLatestPendingSubmission(participationId);
+            submissionOpt = submissionService.getLatestPendingSubmission(participationId, lastGraded);
         }
         catch (EntityNotFoundException | IllegalArgumentException ex) {
             return notFound();
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
         }
         // Remove participation, is not needed in the response.
         submissionOpt.ifPresent(submission -> submission.setParticipation(null));

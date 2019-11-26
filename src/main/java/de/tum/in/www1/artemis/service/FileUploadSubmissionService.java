@@ -82,10 +82,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
         StudentParticipation participation = optionalParticipation.get();
 
-        if (participation.getInitializationState() == InitializationState.FINISHED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot submit more than once");
-        }
-
         return save(fileUploadSubmission, file, participation, fileUploadExercise);
     }
 
@@ -144,8 +140,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     @Transactional(readOnly = true)
     public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
         Random r = new Random();
-        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithEagerSubmittedSubmissionsWithoutManualResults(fileUploadExercise.getId())
-                .stream().map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId()).stream()
+                .map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -185,6 +181,13 @@ public class FileUploadSubmissionService extends SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException {
+        final var exerciseDueDate = exercise.getDueDate();
+        if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        // check if we already had file associated with this submission
+        fileUploadSubmission.onDelete();
+
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
 
         // update submission properties
@@ -217,9 +220,21 @@ public class FileUploadSubmissionService extends SubmissionService {
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
         final var exerciseId = exercise.getId();
         final var submissionId = submission.getId();
-        final var filename = file.getOriginalFilename().replaceAll("\\s", "");
+        var filename = file.getOriginalFilename();
+        if (filename.contains("\\")) {
+            // this can happen on windows computers, then we want to take the last element of the file path
+            var components = filename.split("\\\\");
+            filename = components[components.length - 1];
+        }
+        // replace all illegal characters with ascii characters \w means A-Za-z0-9 to avoid problems during download later on
+        filename = filename.replaceAll("[^\\w.-]", "");
+        // if the filename is now too short, we prepend "file"
+        // this prevents potential problems when users call their file e.g. ßßß.pdf
+        if (filename.length() < 5) {
+            filename = "file" + filename;
+        }
         final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
-        final var filePath = dirPath + File.separator + filename;
+        final var filePath = dirPath + filename;
         final var savedFile = new java.io.File(filePath);
         final var dir = new java.io.File(dirPath);
 

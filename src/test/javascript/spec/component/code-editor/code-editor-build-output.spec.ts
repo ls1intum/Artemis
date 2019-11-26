@@ -13,7 +13,7 @@ import { CodeEditorBuildLogService, CodeEditorBuildOutputComponent, CodeEditorSe
 import { ArtemisTestModule } from '../../test.module';
 import { Participation, ParticipationWebsocketService } from 'app/entities/participation';
 import { MockCodeEditorBuildLogService, MockCodeEditorSessionService, MockCookieService, MockParticipationWebsocketService, MockResultService, MockSyncStorage } from '../../mocks';
-import { SafeHtmlPipe } from 'app/shared';
+import { ArtemisSharedModule, SafeHtmlPipe } from 'app/shared';
 import { ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { BuildLogEntryArray } from 'app/entities/build-log';
@@ -38,8 +38,8 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule],
-            declarations: [CodeEditorBuildOutputComponent, SafeHtmlPipe],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, ArtemisSharedModule],
+            declarations: [CodeEditorBuildOutputComponent],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
@@ -50,6 +50,7 @@ describe('CodeEditorBuildOutputComponent', () => {
                 { provide: CookieService, useClass: MockCookieService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorBuildOutputComponent);

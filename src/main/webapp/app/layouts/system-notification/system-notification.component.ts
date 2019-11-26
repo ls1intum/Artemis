@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
-import { AccountService, JhiWebsocketService, User } from 'app/core';
 import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
+import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-system-notification',

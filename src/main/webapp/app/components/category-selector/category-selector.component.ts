@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { ExerciseCategory } from 'app/entities/exercise';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
@@ -8,6 +8,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     selector: 'jhi-category-selector',
     templateUrl: './category-selector.component.html',
     styleUrls: ['./category-selector.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class CategorySelectorComponent implements OnChanges {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;

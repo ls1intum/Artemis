@@ -18,10 +18,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.SingleUserNotificationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -42,7 +39,7 @@ public class StudentQuestionAnswerResource {
 
     private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
-    private final CourseService courseService;
+    private final AuthorizationCheckService authorizationCheckService;
 
     private final UserService userService;
 
@@ -51,11 +48,11 @@ public class StudentQuestionAnswerResource {
     SingleUserNotificationService singleUserNotificationService;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
-            SingleUserNotificationService singleUserNotificationService, CourseService courseService, UserService userService) {
+            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserService userService) {
         this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
-        this.courseService = courseService;
+        this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
     }
 
@@ -152,7 +149,7 @@ public class StudentQuestionAnswerResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        Boolean hasCourseTAAccess = courseService.userHasAtLeastTAPermissions(course);
+        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         Boolean isUserAuthor = Objects.equals(user.getId(), studentQuestionAnswer.getAuthor().getId());
         if (hasCourseTAAccess || isUserAuthor) {
             log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());

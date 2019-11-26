@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 
+import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -61,13 +62,13 @@ public interface VersionControlService {
     Boolean repositoryUrlIsValid(URL repositoryUrl);
 
     /**
-     * Get the last commit hash that is included in the given requestBody that notifies about a push.
+     * Get the last commit details that are included in the given requestBody that notifies about a push
      *
      * @param requestBody The request Body received from the VCS.
-     * @return the last commit hash that is included in the given requestBody
+     * @return the last commit details that are included in the given requestBody
      * @throws VersionControlException if the Body could not be parsed
      */
-    String getLastCommitHash(Object requestBody) throws VersionControlException;
+    Commit getLastCommitDetails(Object requestBody) throws VersionControlException;
 
     /**
      * Creates a project on the VCS.
@@ -133,7 +134,14 @@ public interface VersionControlService {
      * @return The repository slug
      * @throws VersionControlException if the URL is invalid and no repository slug could be extracted
      */
-    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle
-    // this in the future
+    // TODO: we need this functionality in ParticipationService, but it is really really Bitbucket specific, so we should find a better way to handle this in the future
     String getRepositorySlugFromUrl(URL repositoryUrl) throws VersionControlException;
+
+    /**
+     * Checks if the underlying VCS server is up and running and gives some additional information about the running
+     * services if available
+     *
+     * @return The health of the VCS service containing if it is up and running and any additional data, or the throwing exception otherwise
+     */
+    ConnectorHealth health();
 }

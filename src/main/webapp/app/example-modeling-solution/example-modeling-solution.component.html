@@ -12,7 +12,7 @@
 
     <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor">
         <button (click)="saveExampleSolution()" class="btn btn-primary px-5">
-            <fa-icon icon="save"></fa-icon>
+            <fa-icon [icon]="'save'"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.saveExampleSolution">Save example solution</span>
         </button>
     </div>
