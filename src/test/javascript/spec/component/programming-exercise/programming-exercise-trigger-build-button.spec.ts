@@ -3,7 +3,9 @@ import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import * as moment from 'moment';
 import { TranslateModule } from '@ngx-translate/core';
-import { AccountService, JhiLanguageHelper, WindowRef } from 'app/core';
+import { WindowRef } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { SinonStub, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
@@ -33,6 +35,7 @@ describe('TriggerBuildButtonSpec', () => {
     let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
 
     let triggerBuildStub: SinonStub;
+    let triggerFailedBuildStub: SinonStub;
 
     const exercise = { id: 20 } as Exercise;
     const student = { id: 99 };
@@ -70,6 +73,7 @@ describe('TriggerBuildButtonSpec', () => {
                 getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
 
                 triggerBuildStub = stub(submissionService, 'triggerBuild').returns(of());
+                triggerFailedBuildStub = stub(submissionService, 'triggerFailedBuild').returns(of());
             });
     });
 
@@ -115,7 +119,8 @@ describe('TriggerBuildButtonSpec', () => {
 
         // Click the button to start a build.
         triggerButton.click();
-        expect(triggerBuildStub).to.have.been.calledOnce;
+        expect(triggerFailedBuildStub).to.have.been.calledOnce;
+        expect(triggerBuildStub).to.not.have.been.calledOnce;
 
         // After some time the created submission comes through the websocket, button is disabled until the build is done.
         getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: comp.participation.id });

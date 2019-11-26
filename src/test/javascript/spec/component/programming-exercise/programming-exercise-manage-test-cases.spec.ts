@@ -13,6 +13,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as chai from 'chai';
 import {
     EditableField,
+    ProgrammingExercise,
     ProgrammingExerciseManageTestCasesComponent,
     ProgrammingExerciseService,
     ProgrammingExerciseTestCaseService,
@@ -28,6 +29,10 @@ import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programmi
 import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
 import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../mocks/mock-programming-exercise-websocket.service';
+import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,6 +52,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
     let notifyTestCasesSpy: SinonSpy;
     let testCasesChangedStub: SinonStub;
     let getExerciseTestCaseStateStub: SinonStub;
+    let loadExerciseStub: SinonStub;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
@@ -65,6 +71,9 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const testCasesNoUpdated = '#test-case-status-no-updated';
 
     const exerciseId = 1;
+    const exercise = {
+        id: exerciseId,
+    } as ProgrammingExercise;
     const testCases1 = [
         { id: 1, testName: 'testBubbleSort', active: true, weight: 1, afterDueDate: false },
         { id: 2, testName: 'testMergeSort', active: true, weight: 1, afterDueDate: true },
@@ -121,10 +130,12 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
+                { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
             .compileComponents()
@@ -146,6 +157,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
                 testCasesChangedStub = stub(programmingExerciseWebsocketService, 'getTestCaseState');
                 getExerciseTestCaseStateStub = stub(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
+                loadExerciseStub = stub(programmingExerciseService, 'find');
 
                 routeSubject = new Subject();
                 // @ts-ignore
@@ -155,6 +167,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
                 testCasesChangedSubject = new Subject<boolean>();
                 testCasesChangedStub.returns(testCasesChangedSubject);
                 getExerciseTestCaseStateStub.returns(getExerciseTestCaseStateSubject);
+                loadExerciseStub.returns(of({ body: exercise }));
             });
     }));
 

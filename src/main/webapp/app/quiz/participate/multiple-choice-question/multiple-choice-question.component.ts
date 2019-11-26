@@ -4,6 +4,7 @@ import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-questi
 import { AnswerOption } from '../../../entities/answer-option';
 import { Result } from 'app/entities/result';
 import { QuizExercise } from 'app/entities/quiz-exercise';
+import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -45,22 +46,22 @@ export class MultipleChoiceQuestionComponent {
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
-    rendered?: MultipleChoiceQuestion;
+    renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     watchCollection(): void {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
-        this.rendered = new MultipleChoiceQuestion();
-        this.rendered.text = artemisMarkdown.htmlForMarkdownUntrusted(this.question.text);
-        this.rendered.hint = artemisMarkdown.htmlForMarkdownUntrusted(this.question.hint);
-        this.rendered.explanation = artemisMarkdown.htmlForMarkdownUntrusted(this.question.explanation);
-        this.rendered.answerOptions = this.question.answerOptions!.map(answerOption => {
-            const renderedAnswerOption = new AnswerOption();
-            renderedAnswerOption.text = artemisMarkdown.htmlForMarkdownUntrusted(answerOption.text);
-            renderedAnswerOption.hint = artemisMarkdown.htmlForMarkdownUntrusted(answerOption.hint);
-            renderedAnswerOption.explanation = artemisMarkdown.htmlForMarkdownUntrusted(answerOption.explanation);
+        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
+        this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.question.text);
+        this.renderedQuestion.hint = artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
+        this.renderedQuestion.explanation = artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
+        this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map(answerOption => {
+            const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
+            renderedAnswerOption.text = artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
+            renderedAnswerOption.hint = artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);
+            renderedAnswerOption.explanation = artemisMarkdown.safeHtmlForMarkdown(answerOption.explanation);
             return renderedAnswerOption;
         });
     }

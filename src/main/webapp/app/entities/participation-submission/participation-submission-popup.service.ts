@@ -24,7 +24,7 @@ export class ParticipationSubmissionPopupService {
     }
 
     participationModalRef(component: Component, participationId: number, submissionId: number): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participationId = participationId;
         modalRef.componentInstance.submissionId = submissionId;
         modalRef.result.then(

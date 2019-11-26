@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLConnection;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
@@ -234,7 +231,7 @@ public class FileResource {
         log.debug("REST request to get file : {}", filename);
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
-        if (!optionalSubmission.isPresent()) {
+        if (optionalSubmission.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {

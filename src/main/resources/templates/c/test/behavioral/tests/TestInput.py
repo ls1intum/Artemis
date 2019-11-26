@@ -11,18 +11,21 @@ class TestInput(AbstractTest):
     pWrap: Optional[PWrap]
     # The location of the makefile:
     makefileLocation: str
+    # The name of the executable that should get executed:
+    executable: str
     # How many threads should be created:
     count: int
 
-    def __init__(self, makefileLocation: str, count: int, requirements: List[str] = list(), name: str = "TestInput"):
-        super(TestInput, self).__init__(name, requirements, timeoutSec=20)
+    def __init__(self, makefileLocation: str, count: int, requirements: List[str] = list(), name: str = "TestInput", executable: str = "main.out"):
+        super(TestInput, self).__init__(name, requirements, timeoutSec=30)
         self.makefileLocation = makefileLocation
         self.count = count
+        self.executable: str = executable
         self.pWrap = None
 
     def _run(self):
         # Start the program:
-        self.pWrap = self._createPWrap([join(".", self.makefileLocation, "main")])
+        self.pWrap = self._createPWrap([join(".", self.makefileLocation, self.executable)])
         self._startPWrap(self.pWrap)
 
         # Wait to make sure the child processes has started:
@@ -77,7 +80,7 @@ class TestInput(AbstractTest):
         printTester("Waiting for the programm to terminate...")
         if(not self.pWrap.waitUntilTerminationReading(3)):
             printTester("Programm did not terminate - killing it!")
-            pWrap.kill()
+            self.pWrap.kill()
 
         if not self.pWrap.hasTerminated():
             self._failWith("Programm did not terminate at the end.")

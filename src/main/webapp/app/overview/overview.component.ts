@@ -3,10 +3,9 @@ import { Course, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { compareCourseShortName } from 'app/guided-tour/guided-tour.utils';
 import { CourseScoreCalculationService } from 'app/overview';
 
 @Component({
@@ -17,9 +16,8 @@ import { CourseScoreCalculationService } from 'app/overview';
 export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
-    public guidedTourCourse: Course | null;
 
-    readonly compareCourseShortName = compareCourseShortName;
+    courseForGuidedTour: Course | null;
 
     constructor(
         private courseService: CourseService,
@@ -35,7 +33,7 @@ export class OverviewComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);
-                this.guidedTourCourse = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
+                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour);
             },
             (response: string) => this.onError(response),
         );

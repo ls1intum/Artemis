@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
-import { catchError, filter, flatMap, map, switchMap, tap, debounceTime } from 'rxjs/operators';
+import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { merge, Observable, of, Subscription } from 'rxjs';
 import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
@@ -195,7 +195,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     updateMarkdown(): void {
         this.injectableContentForMarkdownCallbacks = [];
-        this.renderedMarkdown = this.markdownService.htmlForMarkdown(this.problemStatement, this.markdownExtensions);
+        this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);
         // Wait a tick for the template to render before injecting the content.
         setTimeout(() => this.injectableContentForMarkdownCallbacks.forEach(callback => callback()), 0);
     }

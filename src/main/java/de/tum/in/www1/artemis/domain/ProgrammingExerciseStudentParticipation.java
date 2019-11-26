@@ -88,11 +88,6 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     }
 
     @Override
-    public void addSubmissions(ProgrammingSubmission programmingSubmission) {
-        this.getSubmissions().add(programmingSubmission);
-    }
-
-    @Override
     public String toString() {
         return "Participation{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "'" + ", initializationState='"
                 + getInitializationState() + "'" + ", initializationDate='" + getInitializationDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";

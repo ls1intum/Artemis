@@ -159,16 +159,18 @@
             class="start-exercise"
             jhi-exercise-action-button
             buttonIcon="play-circle"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
             (click)="startExercise()"
         ></button>
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -185,6 +187,7 @@
             jhi-exercise-action-button
             buttonIcon="download"
             class="clone-repository"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -198,6 +201,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"

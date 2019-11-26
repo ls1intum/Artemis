@@ -4,8 +4,6 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const programmingExerciseFail: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: 'tutorial',
     settingsKey: 'programming_exercise_fail_tour',
     steps: [
         new TextTourStep({
@@ -18,7 +16,7 @@ export const programmingExerciseFail: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .text-danger.test-status--linked',
-            eventListenerSelector: 'body',
+            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 5,
@@ -45,8 +43,6 @@ export const programmingExerciseFail: GuidedTour = {
 };
 
 export const programmingExerciseSuccess: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: 'tutorial',
     settingsKey: 'programming_exercise_success_tour',
     steps: [
         new TextTourStep({

@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService, User } from '../core';
+import { User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
@@ -24,6 +24,9 @@ import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-das
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { AccountService } from 'app/core/auth/account.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -54,7 +57,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
-    unassessedSubmission: Submission;
+    unassessedSubmission: Submission | null;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -72,6 +75,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     readonly ExerciseType_TEXT = ExerciseType.TEXT;
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
     readonly ExerciseType_FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
 
     stats = {
         toReview: {
@@ -104,6 +108,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private artemisMarkdown: ArtemisMarkdown,
         private router: Router,
         private complaintService: ComplaintService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
     ) {}
 
     ngOnInit(): void {
@@ -112,31 +117,31 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.loadAll();
 
-        this.accountService.identity().then(user => (this.tutor = user));
+        this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
     loadAll() {
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
-                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+                this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
                         const textExercise = this.exercise as TextExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(textExercise.sampleSolution);
+                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.sampleSolution);
                         break;
                     case ExerciseType.MODELING:
                         this.modelingExercise = this.exercise as ModelingExercise;
                         if (this.modelingExercise.sampleSolutionModel) {
-                            this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+                            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
                             this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:
                         const fileUploadExercise = this.exercise as FileUploadExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(fileUploadExercise.sampleSolution);
+                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.sampleSolution);
                         break;
                 }
 
@@ -169,12 +174,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (response: string) => this.onError(response),
         );
 
-        this.complaintService
-            .getComplaintsForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
-        this.complaintService
-            .getMoreFeedbackRequestsForTutor(this.exerciseId)
-            .subscribe((res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]), (error: HttpErrorResponse) => this.onError(error.message));
+        this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
+            (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+            (error: HttpErrorResponse) => this.onError(error.message),
+        );
+        this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
+            (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
+            (error: HttpErrorResponse) => this.onError(error.message),
+        );
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
@@ -209,6 +216,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
      */
     private getSubmissions(): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
+        // TODO: This could be one generic endpoint.
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
                 submissionsObservable = this.textSubmissionService.getTextSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
@@ -218,6 +226,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
             case ExerciseType.FILE_UPLOAD:
                 submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
+                break;
+            case ExerciseType.PROGRAMMING:
+                submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExercise(this.exerciseId, { assessedByTutor: true });
                 break;
         }
 
@@ -267,6 +278,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
             case ExerciseType.FILE_UPLOAD:
                 submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseWithoutAssessment(this.exerciseId);
                 break;
+            case ExerciseType.PROGRAMMING:
+                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                break;
         }
 
         submissionObservable.subscribe(
@@ -277,6 +291,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
+                    this.unassessedSubmission = null;
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
@@ -350,6 +365,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
         }
         this.router.navigate([route]);
+    }
+
+    asProgrammingExercise(exercise: Exercise) {
+        return exercise as ProgrammingExercise;
     }
 
     back() {

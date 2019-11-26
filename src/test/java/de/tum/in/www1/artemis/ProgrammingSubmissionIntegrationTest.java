@@ -113,7 +113,7 @@ public class ProgrammingSubmissionIntegrationTest {
     void triggerBuildInstructor() throws Exception {
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
-        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-instructor-build", null, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(1);
@@ -127,13 +127,19 @@ public class ProgrammingSubmissionIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void triggerBuildInstructor_tutorForbidden() throws Exception {
-        request.postWithoutLocation("/api/programming-submissions/" + 1L + "/trigger-instructor-build", null, HttpStatus.FORBIDDEN, new HttpHeaders());
+        String login = "student1";
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.FORBIDDEN,
+                new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void triggerBuildInstructor_studentForbidden() throws Exception {
-        request.postWithoutLocation("/api/programming-submissions/" + 1L + "/trigger-instructor-build", null, HttpStatus.FORBIDDEN, new HttpHeaders());
+        String login = "student1";
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.FORBIDDEN,
+                new HttpHeaders());
     }
 
     @Test
@@ -151,7 +157,7 @@ public class ProgrammingSubmissionIntegrationTest {
         exerciseRepository.save(exercise);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
-        await().until(() -> submissionRepository.count() == 4);
+        await().until(() -> submissionRepository.count() == 3);
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
 

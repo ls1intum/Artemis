@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRoute } from '../../mocks';
-import { ResultComponent } from 'app/entities/result';
+import { MockActivatedRoute, MockSyncStorage } from '../../mocks';
+import { ArtemisResultModule, ResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseService, ExerciseType } from 'app/entities/exercise';
@@ -26,6 +26,10 @@ import { AssessmentInstructionsComponent } from 'app/assessment-instructions';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +47,16 @@ describe('TutorExerciseDashboardComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, RouterModule, TranslateModule.forRoot()],
+            imports: [
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                ArtemisSharedComponentModule,
+                ArtemisProgrammingAssessmentModule,
+                ArtemisProgrammingExerciseInstructionsRenderModule,
+                ArtemisResultModule,
+                RouterModule,
+                TranslateModule.forRoot(),
+            ],
             declarations: [
                 TutorExerciseDashboardComponent,
                 MockComponent(TutorLeaderboardComponent),
@@ -51,7 +64,6 @@ describe('TutorExerciseDashboardComponent', () => {
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(ModelingEditorComponent),
-                MockComponent(ResultComponent),
                 MockComponent(AssessmentInstructionsComponent),
             ],
             providers: [
@@ -59,6 +71,8 @@ describe('TutorExerciseDashboardComponent', () => {
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 {
                     provide: ExerciseService,
                     useValue: {
@@ -77,6 +91,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);

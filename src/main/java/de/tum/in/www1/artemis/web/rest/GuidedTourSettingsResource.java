@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
@@ -42,7 +41,6 @@ public class GuidedTourSettingsResource {
      */
     @PutMapping("/guided-tour-settings")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
     public ResponseEntity<Set<GuidedTourSetting>> updateGuidedTourSettings(@RequestBody Set<GuidedTourSetting> guidedTourSettings) {
         log.debug("REST request to update GuidedTourSetting : {}", guidedTourSettings);
         User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);

@@ -126,13 +126,13 @@ public class Result implements Serializable {
      */
     @Transient
     @JsonProperty
-    private Long submissionCount;
+    private Integer submissionCount;
 
-    public Long getSubmissionCount() {
+    public Integer getSubmissionCount() {
         return submissionCount;
     }
 
-    public void setSubmissionCount(Long submissionCount) {
+    public void setSubmissionCount(Integer submissionCount) {
         this.submissionCount = submissionCount;
     }
 

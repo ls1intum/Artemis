@@ -48,6 +48,5 @@ The **Continuous Integration Adapter** includes abstract interface definitions. 
 + onBuildCompleted(buildPlan)
 + getBuildStatus(buildPlan)
 + getBuildDetails(buildPlan)
-+ getBuildPlanWebUrl(buildPlan)
 + ...
 ```

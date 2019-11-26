@@ -10,7 +10,7 @@ import {
 } from './';
 import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
-import { ArtemisResultModule, ResultDetailComponent } from 'app/entities/result';
+import { ArtemisResultModule } from 'app/entities/result';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisMarkdownEditorModule, ArtemisResultModule],

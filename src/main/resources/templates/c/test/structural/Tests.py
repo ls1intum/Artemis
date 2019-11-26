@@ -1,5 +1,4 @@
 from testUtils.Tester import Tester
-from tests.EmptyTest import EmptyTest
 from sys import argv
 
 def main():

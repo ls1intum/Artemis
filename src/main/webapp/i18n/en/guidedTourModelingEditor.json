@@ -1,0 +1,32 @@
+{
+    "tour": {
+        "modelingExercise": {
+            "editorArea": {
+                "headline": "Modeling Exercise",
+                "content": "On this page you solve a modeling exercise. We will guide you how to do that."
+            },
+            "addEditUmlElement": {
+                "headline": "Add and edit UML elements",
+                "content": "To add a UML element, drag and drop one of the UML elements into the editor area.",
+                "hint": "You can edit the UML element by double-clicking it."
+            },
+            "createAssociation": {
+                "headline": "Create and edit associations",
+                "content": "Select the source class to see four blue circles. Click and hold on one of those and drag it to another blue circle to create a relationship.",
+                "hint": "You can change the relationship type by double-clicking it."
+            },
+            "executeTasks": {
+                "headline": "Modeling exercise.",
+                "content": "Solve the exercise down below and proceed to the next step.",
+                "personClass": "Create the UML class <tt>Person</tt> with the attribute <tt>name: String</tt>",
+                "studentClass": "Create the UML class <tt>Student</tt> with the attribute <tt>major: String</tt> and method <tt>visitLecture()</tt>.",
+                "association": "Make sure that <tt>Student</tt> is a subclass of <tt>Person</tt>."
+            },
+            "submit": {
+                "headline": "Submit your solution",
+                "content": "You can submit your solution here and then wait for your feedback.",
+                "hint": "You can submit multiple times until the exercise deadline. Your last submission will count towards your score."
+            }
+        }
+    }
+}

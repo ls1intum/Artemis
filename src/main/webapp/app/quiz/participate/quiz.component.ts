@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { JhiWebsocketService } from 'app/core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
@@ -26,6 +25,9 @@ import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-te
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { DeviceDetectorService } from 'ngx-device-detector';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-quiz',
@@ -38,6 +40,8 @@ export class QuizComponent implements OnInit, OnDestroy {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
     mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
@@ -58,7 +62,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     isSubmitting = false;
     isSaving = false;
-    lastSavedTimeText = 'never';
+    lastSavedTimeText = '';
     justSaved = false;
     waitingForQuizStart = false;
 
@@ -110,6 +114,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private quizSubmissionService: QuizSubmissionService,
         private translateService: TranslateService,
+        private deviceService: DeviceDetectorService,
     ) {
         smoothscroll.polyfill();
     }
@@ -959,5 +964,12 @@ export class QuizComponent implements OnInit, OnDestroy {
         document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
         });
+    }
+
+    /**
+     * Determines if the current device is a mobile device
+     */
+    isMobile(): boolean {
+        return this.deviceService.isMobile();
     }
 }

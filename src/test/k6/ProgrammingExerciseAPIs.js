@@ -7,7 +7,8 @@ import { twoSuccessfulErrorContent, allSuccessfulContent, buildErrorContent } fr
 export const options = {
     maxRedirects: 0,
     iterations: __ENV.ITERATIONS,
-    vus: __ENV.ITERATIONS
+    vus: __ENV.ITERATIONS,
+    setupTimeout: '60s'
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;

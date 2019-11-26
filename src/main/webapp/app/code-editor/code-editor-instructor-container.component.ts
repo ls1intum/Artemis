@@ -25,7 +25,7 @@ import {
     CodeEditorSessionService,
 } from 'app/code-editor';
 import { UpdatingResultComponent } from 'app/entities/result';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { ExerciseType } from 'app/entities/exercise';
 import { ButtonSize } from 'app/shared/components';
 
 enum REPOSITORY {
@@ -279,7 +279,10 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
-            .subscribe(() => {}, err => this.onError(err));
+            .subscribe(
+                () => {},
+                err => this.onError(err),
+            );
     }
 
     /**
@@ -299,6 +302,9 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 catchError(() => throwError('participationCouldNotBeDeleted')),
                 tap(() => this.createAssignmentParticipation()),
             )
-            .subscribe(() => {}, err => this.onError(err));
+            .subscribe(
+                () => {},
+                err => this.onError(err),
+            );
     }
 }

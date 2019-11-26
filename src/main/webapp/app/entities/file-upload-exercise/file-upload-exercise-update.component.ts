@@ -86,7 +86,12 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             this.subscribeToSaveResponse(this.fileUploadExerciseService.create(this.fileUploadExercise));
         }
     }
-
+    /**
+     * Validates if the date is correct
+     */
+    validateDate() {
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercies categories
@@ -96,7 +101,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(),
+        );
     }
 
     /**

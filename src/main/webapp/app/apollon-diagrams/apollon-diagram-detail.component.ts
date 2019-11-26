@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { ActivatedRoute } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
@@ -115,7 +115,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        this.apollonDiagramService.update(updatedDiagram).subscribe(() => this.setAutoSaveTimer(), () => this.jhiAlertService.error('artemisApp.apollonDiagram.update.error'));
+        this.apollonDiagramService.update(updatedDiagram).subscribe(
+            () => this.setAutoSaveTimer(),
+            () => this.jhiAlertService.error('artemisApp.apollonDiagram.update.error'),
+        );
     }
 
     /**

@@ -21,25 +21,25 @@
             </div>
 
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ml-2 button-resize">
-                <fa-icon icon="save"></fa-icon>
+                <fa-icon [icon]="'save'"></fa-icon>
                 <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
                 <span *ngIf="!isNewSubmission" jhiTranslate="artemisApp.modelingExercise.updateExampleSubmission">Update modeling submission</span>
             </button>
         </div>
 
         <button *ngIf="assessmentMode" (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
-            <fa-icon icon="save"></fa-icon>
+            <fa-icon [icon]="'save'"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment">Save example assessment</span>
         </button>
 
         <div class="mt-2 mb-3" *ngIf="exampleSubmission && !isNewSubmission">
             <button class="btn btn-secondary button-resize" *ngIf="!assessmentMode" (click)="showAssessment()">
-                <fa-icon icon="chalkboard-teacher"></fa-icon>
+                <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment">Show assessment</span>
             </button>
 
             <button class="btn btn-secondary button-resize" *ngIf="assessmentMode" (click)="showSubmission()">
-                <fa-icon icon="code-branch"></fa-icon>
+                <fa-icon [icon]="'code-branch'"></fa-icon>
                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission">Show submission</span>
             </button>
         </div>
@@ -47,7 +47,7 @@
 
     <div class="col-12 text-right mb-2" *ngIf="readOnly">
         <button (click)="readAndUnderstood()" class="btn btn-success">
-            <fa-icon icon="save"></fa-icon>
+            <fa-icon [icon]="'save'"></fa-icon>
             <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood">I have viewed and understood the example</span>
         </button>
     </div>
@@ -89,7 +89,7 @@
                     {{ 'artemisApp.exampleSubmission.assessmentExplanation' | translate }}
                     <sup>
                         <small>
-                            <fa-icon icon="info-circle" title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | translate }}" style="color:#ffc107;"></fa-icon>
+                            <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.exampleSubmission.assessmentExplanationInfo' | translate }}" style="color:#ffc107;"></fa-icon>
                         </small>
                     </sup>
                 </h3>

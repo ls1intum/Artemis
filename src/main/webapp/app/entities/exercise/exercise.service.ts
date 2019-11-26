@@ -9,7 +9,7 @@ import { Exercise, ExerciseCategory } from './exercise.model';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
@@ -23,12 +23,29 @@ export class ExerciseService {
 
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
-        return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
-        return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).map((res: EntityResponseType) => this.convertDateFromServer(res));
+        return this.http
+            .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+    }
+    /**
+     * Validates if the date is correct
+     */
+    validateDate(exercise: Exercise) {
+        exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
+
+        exercise.assessmentDueDateError =
+            exercise.assessmentDueDate && exercise.releaseDate
+                ? !exercise.assessmentDueDate.isAfter(exercise.releaseDate)
+                : exercise.assessmentDueDate && exercise.dueDate
+                ? !exercise.assessmentDueDate.isAfter(exercise.dueDate)
+                : false;
     }
 
     find(exerciseId: number): Observable<EntityResponseType> {

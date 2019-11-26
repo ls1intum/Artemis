@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -7,16 +7,15 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from 'app/entities/result';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import * as moment from 'moment';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
-import { ComplaintType } from 'app/entities/complaint';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { filter } from 'rxjs/operators';
+import { ButtonType } from 'app/shared/components';
+import { omit } from 'lodash';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -29,24 +28,16 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     fileUploadExercise: FileUploadExercise;
     participation: StudentParticipation;
     result: Result;
-    isActive: boolean;
     submissionFile: File | null;
-
-    ComplaintType = ComplaintType;
-    showComplaintForm = false;
-    showRequestMoreFeedbackForm = false;
-    // indicates if there is a complaint for the result of the submission
-    hasComplaint: boolean;
-    // indicates if there is a more feedback request for the result of the submission
-    hasRequestMoreFeedback: boolean;
-    // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
-    numberOfAllowedComplaints: number;
-    // indicates if the result is older than one week. if it is, the complain button is disabled
-    isTimeOfComplaintValid: boolean;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
+    isSaving: boolean;
 
     acceptedFileExtensions: string;
+
+    isLate: boolean; // indicates if the submission is late
+
+    readonly ButtonType = ButtonType;
 
     private submissionConfirmationText: string;
 
@@ -54,7 +45,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private route: ActivatedRoute,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
-        private complaintService: ComplaintService,
         private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private location: Location,
@@ -80,41 +70,35 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     submission.participation.results = [submission.result];
                 }
                 this.participation = <StudentParticipation>submission.participation;
+
+                // reconnect participation <--> submission
+                this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
+
                 this.submission = submission;
                 this.result = submission.result;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+
+                // checks if the student started the exercise after the due date
+                this.isLate =
+                    this.fileUploadExercise &&
+                    !!this.fileUploadExercise.dueDate &&
+                    !!this.participation.initializationDate &&
+                    moment(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
+
                 this.acceptedFileExtensions = this.fileUploadExercise.filePattern
                     .split(',')
                     .map(extension => `.${extension}`)
                     .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || moment().isAfter(this.fileUploadExercise.assessmentDueDate);
 
-                if (this.fileUploadExercise.course) {
-                    this.complaintService.getNumberOfAllowedComplaintsInCourse(this.fileUploadExercise.course.id).subscribe((allowedComplaints: number) => {
-                        this.numberOfAllowedComplaints = allowedComplaints;
-                    });
-                }
                 if (this.submission.submitted) {
                     this.setSubmittedFile();
                 }
                 if (this.submission.submitted && this.result && this.result.completionDate) {
-                    this.isTimeOfComplaintValid = this.resultService.isTimeOfComplaintValid(this.result, this.fileUploadExercise);
                     this.fileUploadAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
                     });
-                    this.complaintService
-                        .findByResultId(this.result.id)
-                        .pipe(filter(res => !!res.body))
-                        .subscribe(res => {
-                            if (res.body!.complaintType === ComplaintType.MORE_FEEDBACK) {
-                                this.hasRequestMoreFeedback = true;
-                            } else {
-                                this.hasComplaint = true;
-                            }
-                        });
                 }
-                this.isActive =
-                    this.fileUploadExercise.dueDate === undefined || this.fileUploadExercise.dueDate === null || new Date() <= moment(this.fileUploadExercise.dueDate).toDate();
             },
             (error: HttpErrorResponse) => this.onError(error),
         );
@@ -123,34 +107,39 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Uploads a submission file and submits File Upload Exercise
      */
     public submitExercise() {
-        const confirmSubmit = window.confirm(this.submissionConfirmationText);
-
-        if (confirmSubmit) {
-            const file = this.submissionFile;
-            if (!this.submission || !file) {
-                return;
-            }
-            this.submission!.submitted = true;
-            this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
-                response => {
-                    this.submission = response.body!;
-                    this.result = this.submission.result;
-                    this.setSubmittedFile();
-                    if (this.isActive) {
-                        this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
-                    } else {
-                        this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
-                    }
-                },
-                err => {
-                    this.submission!.submitted = false;
-                    this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
-                    this.fileInput.nativeElement.value = '';
-                    this.submissionFile = null;
-                    this.submission!.filePath = null;
-                },
-            );
+        if (this.isSaving) {
+            // don't execute the function if it is already currently executing
+            return;
         }
+
+        const file = this.submissionFile;
+        if (!this.submission || !file) {
+            return;
+        }
+        this.submission!.submitted = true;
+        this.isSaving = true;
+        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
+            response => {
+                this.submission = response.body!;
+                this.result = this.submission.result;
+                this.setSubmittedFile();
+                if (this.isActive) {
+                    this.jhiAlertService.success('artemisApp.fileUploadExercise.submitSuccessful');
+                } else {
+                    this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
+                }
+            },
+            () => {
+                this.submission!.submitted = false;
+                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                this.fileInput.nativeElement.value = '';
+                this.submissionFile = null;
+                this.submission!.filePath = null;
+            },
+            () => {
+                this.isSaving = false;
+            },
+        );
     }
 
     /**
@@ -165,7 +154,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             if (!allowedFileExtensions.some(extension => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile['name'] });
+                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
                 this.submissionFile = submissionFile;
             }
@@ -177,6 +166,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     private setSubmittedFile() {
+        // clear submitted file so that it is not displayed in the input (this might be confusing)
+        this.submissionFile = null;
         const filePath = this.submission!.filePath!.split('/');
         this.submittedFileName = filePath[filePath.length - 1];
         const fileName = this.submittedFileName.split('.');
@@ -195,25 +186,34 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     /**
-     * Hides more feedback form and shows complaint form
-     */
-    toggleComplaintForm() {
-        this.showRequestMoreFeedbackForm = false;
-        this.showComplaintForm = !this.showComplaintForm;
-    }
-
-    /**
-     * Hides complaint form and shows more feedback form
-     */
-    toggleRequestMoreFeedbackForm() {
-        this.showComplaintForm = false;
-        this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;
-    }
-
-    /**
      * Returns false if user selected a file, but didn't submit the exercise, true otherwise.
      */
     canDeactivate(): boolean {
         return !(this.submission && !this.submission.submitted && this.submissionFile);
+    }
+
+    /**
+     * The exercise is still active if it's due date hasn't passed yet.
+     */
+    get isActive(): boolean {
+        return this.fileUploadExercise && (!this.fileUploadExercise.dueDate || moment(this.fileUploadExercise.dueDate).isSameOrAfter(moment()));
+    }
+
+    get submitButtonTooltip(): string {
+        if (!this.submissionFile) {
+            return 'artemisApp.fileUploadSubmission.selectFile';
+        }
+
+        if (!this.isLate) {
+            if (this.isActive && !this.fileUploadExercise.dueDate) {
+                return 'entity.action.submitNoDeadlineTooltip';
+            } else if (this.isActive) {
+                return 'entity.action.submitTooltip';
+            } else {
+                return 'entity.action.deadlineMissedTooltip';
+            }
+        }
+
+        return 'entity.action.submitDeadlineMissedTooltip';
     }
 }

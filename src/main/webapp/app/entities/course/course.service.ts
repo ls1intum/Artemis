@@ -12,11 +12,12 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
-import { AccountService, User } from 'app/core';
+import { User } from 'app/core';
 import { NotificationService } from 'app/entities/notification';
 import { LectureService } from 'app/entities/lecture/lecture.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -35,12 +36,16 @@ export class CourseService {
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
-        return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .post<Course>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
-        return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .put<Course>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(courseId: number): Observable<EntityResponseType> {
@@ -97,14 +102,16 @@ export class CourseService {
 
     // the body is null, because the server can identify the user anyway
     registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
-                if (res.body != null) {
-                    this.accountService.syncGroups(res.body);
-                }
-                return res;
-            }),
-        );
+        return this.http
+            .post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' })
+            .pipe(
+                map((res: HttpResponse<User>) => {
+                    if (res.body != null) {
+                        this.accountService.syncGroups(res.body);
+                    }
+                    return res;
+                }),
+            );
     }
 
     query(): Observable<EntityArrayResponseType> {

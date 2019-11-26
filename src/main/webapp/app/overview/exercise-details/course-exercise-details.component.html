@@ -49,6 +49,7 @@
                 <jhi-programming-exercise-student-trigger-build-button
                     [exercise]="exercise"
                     [participation]="exercise.studentParticipations[0]"
+                    [triggerLastGraded]="true"
                 ></jhi-programming-exercise-student-trigger-build-button>
             </ng-container>
         </div>
@@ -160,8 +161,16 @@
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.noResults' | translate }}</h3>
                 </div>
             </div>
+            <!-- RESULTS END -->
+            <jhi-complaint-interactions
+                *ngIf="exercise.type === PROGRAMMING && studentParticipation && currentResult && currentResult.assessmentType === AssessmentType.MANUAL"
+                class="mb-2 mt-2 ml-3"
+                [exercise]="exercise"
+                [participation]="studentParticipation"
+                [result]="currentResult"
+            >
+            </jhi-complaint-interactions>
         </div>
-        <!-- RESULTS END -->
         <div class="col-sm-12 col-md-4 col-lg-4" jhiIdeFilter [showInIDE]="false">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
