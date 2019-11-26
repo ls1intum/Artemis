@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import javax.annotation.PostConstruct;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -25,8 +29,14 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 
+import com.offbytwo.jenkins.JenkinsServer;
+import com.offbytwo.jenkins.model.FolderJob;
+import com.offbytwo.jenkins.model.JobWithDetails;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.service.connectors.CIPermission;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -36,6 +46,12 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
+    @Value("${artemis.jenkins.user}")
+    private String username;
+
+    @Value("${artemis.jenkins.password}")
+    private String password;
+
     @Value("${artemis.jenkins.url}")
     private URL JENKINS_SERVER_URL;
 
@@ -43,9 +59,16 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
+    private JenkinsServer jenkinsServer;
+
     public JenkinsService(JenkinsBuildPlanCreatorFactory buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
         this.buildPlanCreatorFactory = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
+    }
+
+    @PostConstruct
+    public void init() throws URISyntaxException {
+        this.jenkinsServer = new JenkinsServer(JENKINS_SERVER_URL.toURI(), username, password);
     }
 
     @Override
@@ -57,8 +80,17 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
+    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
+        // Not needed for Jenkins
+    }
+
+    @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
-        return null;
+        final var jobXml = jobXml(sourceProjectKey, sourcePlanName);
+        final var cleanTargetName = getCleanPlanName(targetPlanName);
+        saveJobXml(jobXml, targetProjectKey, getCleanPlanName(cleanTargetName));
+
+        return cleanTargetName;
     }
 
     @Override
@@ -98,11 +130,6 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Result onBuildCompletedOld(ProgrammingExerciseParticipation participation) {
-        return null;
-    }
-
-    @Override
     public String getPlanKey(Object requestBody) throws Exception {
         return null;
     }
@@ -129,17 +156,17 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
+    public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
+        return Optional.empty();
+    }
+
+    @Override
     public List<Feedback> getLatestBuildResultDetails(Result result) {
         return null;
     }
 
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId) {
-        return null;
-    }
-
-    @Override
-    public URL getBuildPlanWebUrl(ProgrammingExerciseParticipation participation) {
         return null;
     }
 
@@ -164,6 +191,26 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
+    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName,
+            Optional<List<String>> triggeredBy) {
+    }
+
+    @Override
+    public void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
+        // TODO after decision on how to handle users on Jenkins has been made
+    }
+
+    @Override
+    public void removeAllDefaultProjectPermissions(String projectKey) {
+        // TODO after decision on how to handle users on Jenkins has been made
+    }
+
+    @Override
+    public ConnectorHealth health() {
+        return null;
+    }
+
+    @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         final var resourcePath = Path.of("build", "jenkins", "exerciseConfig.xml");
         final var projectConfig = XmlFileUtils.readXmlFile(resourcePath);
@@ -172,8 +219,51 @@ public class JenkinsService implements ContinuousIntegrationService {
         postXml(projectConfig, String.class, HttpStatus.OK, errorMessage, Endpoint.NEW_FOLDER, Map.of("name", programmingExercise.getProjectKey()));
     }
 
-    @Override
-    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) {
+    private FolderJob folder(String folderName) {
+        try {
+            final var folder = jenkinsServer.getFolderJob(jenkinsServer.getJob(folderName));
+            if (!folder.isPresent()) {
+                throw new JenkinsException("Folder " + folderName + " does not exist!");
+            }
+            return folder.get();
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException(e.getMessage(), e);
+        }
+    }
+
+    private JobWithDetails job(String projectKey, String jobName) {
+        final var folder = folder(projectKey);
+        try {
+            return jenkinsServer.getJob(folder, jobName);
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException(e.getMessage(), e);
+        }
+    }
+
+    private Document jobXml(String projectKey, String jobName) {
+        try {
+            final var xmlString = jenkinsServer.getJobXml(folder(projectKey), jobName);
+            return XmlFileUtils.readFromString(xmlString);
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException(e.getMessage(), e);
+        }
+    }
+
+    private void saveJobXml(Document jobXml, String projectKey, String planName) {
+        final var folder = folder(projectKey);
+        try {
+            jenkinsServer.createJob(folder, planName, writeXmlToString(jobXml));
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException(e.getMessage(), e);
+        }
     }
 
     private Document getPlanConfig(String projectKey, String planKey) {
@@ -256,6 +346,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     private enum Endpoint {
+
         NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
         DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
         TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build");
@@ -278,5 +369,9 @@ public class JenkinsService implements ContinuousIntegrationService {
 
             return UriComponentsBuilder.fromHttpUrl(baseUrl).pathSegment(pathSegments.toArray(new String[0]));
         }
+    }
+
+    private String getCleanPlanName(String name) {
+        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 }

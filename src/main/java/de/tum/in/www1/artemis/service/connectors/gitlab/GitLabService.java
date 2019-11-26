@@ -23,12 +23,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 
 @Profile("gitlab")
@@ -199,7 +197,7 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public String getLastCommitHash(Object requestBody) throws VersionControlException {
+    public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
         return null;
     }
 
@@ -315,6 +313,11 @@ public class GitLabService implements VersionControlService {
         throw new GitLabException("Repository URL is not a git URL! Can't get slug for " + repositoryUrl.toString());
     }
 
+    @Override
+    public ConnectorHealth health() {
+        return null;
+    }
+
     private <T> T performExchange(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
         return performExchange(errorMessage, List.of(expectedStatus), tryToDo);
     }
@@ -388,6 +391,7 @@ public class GitLabService implements VersionControlService {
     }
 
     private enum Endpoints {
+
         ADD_USER("projects", "<projectId>", "members"), USERS("users"), EDIT_EXERCISE_PERMISSION("projects", "<projectId>", "members", "<memberId>"),
         PROTECTED_BRANCHES("projects", "<projectId>", "protected_branches"), PROTECTED_BRANCH("projects", "<projectId>", "protected_branches", "<branchName>"),
         GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"), COMMITS("projects", "<projectId>", "repository", "commits"),
@@ -415,6 +419,7 @@ public class GitLabService implements VersionControlService {
     }
 
     private enum AccessLevel {
+
         GUEST(10), REPORTER(20), DEVELOPER(30), MAINTAINER(40), OWNER(50);
 
         private int levelCode;

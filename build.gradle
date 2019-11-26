@@ -161,7 +161,7 @@ repositories {
 }
 
 dependencies {
-
+    implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.5.1.201910021850-r"

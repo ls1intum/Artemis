@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
