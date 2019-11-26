@@ -137,11 +137,13 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
 
         socket.setTimeout(function() {
             submitChange(participationSimulation.content);
+            console.log('USED WS for sending file data for ' + __VU)
         }, 10 * 1000);
 
         // Commit changes
         socket.setTimeout(function() {
             artemis.post(COMMIT(participationSimulation.participationId));
+            console.log('COMMITTED changes for ' + __VU);
         }, 15 * 1000);
 
         // Wait for new result
