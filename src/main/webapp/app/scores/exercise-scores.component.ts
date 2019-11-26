@@ -126,7 +126,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     updateResultFilter(newValue: FilterProp) {
-        this.resultCriteria.filterProp = newValue;
+        this.isLoading = true;
+        setTimeout(() => {
+            this.resultCriteria.filterProp = newValue;
+            this.isLoading = false;
+        });
     }
 
     filterResultByProp = (result: Result) => {

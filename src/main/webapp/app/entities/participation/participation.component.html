@@ -55,7 +55,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type == PROGRAMMING">
+                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type == PROGRAMMING" [minWidth]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUrl')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUrl">
@@ -71,7 +71,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type == PROGRAMMING">
+                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type == PROGRAMMING" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
@@ -89,7 +89,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="initializationState">
+                <ngx-datatable-column prop="initializationState" [minWidth]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('initializationState')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState">
@@ -117,7 +117,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="student">
+                <ngx-datatable-column prop="student" [minWidth]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.firstName')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student">
@@ -131,7 +131,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="presentationScore" *ngIf="this.presentationScoreEnabled">
+                <ngx-datatable-column prop="presentationScore" *ngIf="this.presentationScoreEnabled" [minWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('presentationScore')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationScore">
@@ -145,7 +145,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="">
+                <ngx-datatable-column prop="" [minWidth]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="text-right">
                             <div class="btn-group">
