@@ -806,13 +806,15 @@ export class GuidedTourService {
      * @param exercise which can contain the needed exercise for the tour
      * @param guidedTour that should be enabled
      */
-    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour): Exercise | null {
         if (!exercise.course) {
-            return;
+            return null;
         }
         if (this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
             this.enableTour(guidedTour);
+            return exercise;
         }
+        return null;
     }
 
     /**

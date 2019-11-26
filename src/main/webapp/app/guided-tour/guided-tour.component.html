@@ -11,7 +11,6 @@
         [class.page-tour-step]="!currentTourStep.highlightSelector"
         [class.startFade]="startFade"
         [class.video-tour]="isVideoTourStep()"
-        [class.image-tour]="isImageTourStep()"
         [style.top.px]="topPosition"
         [style.left.px]="leftPosition"
         [style.width.px]="calculatedTourStepWidth"
@@ -143,7 +142,7 @@
                     (click)="guidedTourService.nextStep()"
                 >
                     <span jhiTranslate="tour.navigation.next"></span>
-                    <fa-icon [icon]="'chevron-right'"></fa-icon>
+                    <fa-icon icon="chevron-right"></fa-icon>
                 </button>
                 <button
                     *ngIf="
