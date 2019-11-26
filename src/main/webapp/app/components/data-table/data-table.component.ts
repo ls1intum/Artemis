@@ -174,7 +174,7 @@ export class DataTableComponent implements OnInit, OnChanges {
             filter((entity: BaseEntity) => this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields)),
             filter(this.customFilter),
         )(this.allEntities);
-        this.entities = this.sortByPipe.transform(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.DESC);
+        this.entities = this.sortByPipe.transform(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
     }
 
     /**
