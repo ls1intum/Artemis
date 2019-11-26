@@ -6,7 +6,6 @@ import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
 import { get } from 'lodash';
 import { BaseEntity } from 'app/shared';
-import * as pluralize from 'pluralize';
 
 enum SortOrder {
     ASC = 'asc',
@@ -117,15 +116,6 @@ export class DataTableComponent implements OnInit, OnChanges {
                 onSort: this.onSort,
             },
         };
-    }
-
-    /**
-     * Outputs a string stating how many entities exist, e.g. "24 results"
-     *
-     * @param count How many entities exist
-     */
-    formatEntityCount(count: number) {
-        return pluralize(this.resultName, count, true);
     }
 
     /**
