@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
 import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
-import { get } from 'lodash';
+import { get, isNumber } from 'lodash';
 import { BaseEntity } from 'app/shared';
 import * as pluralize from 'pluralize';
 
@@ -29,6 +29,8 @@ type SortProp = {
     order: SortOrder;
 };
 
+type PagingValue = number | 'all';
+
 const entityToString = (entity: BaseEntity) => entity.id.toString();
 
 @Component({
@@ -46,6 +48,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() resultName = 'result';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;
+    @Input() showAllEntitiesTranslation: string;
     @Input() searchPlaceholderTranslation: string;
     @Input() searchFields: string[] = [];
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
@@ -53,7 +56,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() customFilterKey: any = {};
     @Input() customFilter: (entity: BaseEntity) => boolean = () => true;
 
-    PAGING_VALUES = [10, 20, 50, 100, 200, 500, 1000, 2000];
+    PAGING_VALUES: PagingValue[] = [10, 20, 50, 100, 200, 500, 1000, 'all'];
     DEFAULT_PAGING_VALUE = 50;
 
     entities: BaseEntity[];
@@ -62,7 +65,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         sortProp: SortProp;
     };
 
-    entitiesPerPage: number;
+    pagingValue: PagingValue;
     isRendering: boolean;
 
     constructor(private sortByPipe: SortByPipe) {
@@ -79,7 +82,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
-        this.entitiesPerPage = this.getCachedEntitiesPerPage();
+        this.pagingValue = this.getCachedEntitiesPerPage();
     }
 
     /**
@@ -102,7 +105,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     get context() {
         return {
             settings: {
-                limit: this.entitiesPerPage,
+                limit: this.pageLimit,
                 sortType: SortType.multi,
                 columnMode: ColumnMode.force,
                 headerHeight: 50,
@@ -120,20 +123,40 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Outputs a string stating how many entities exist, e.g. "24 results"
-     *
-     * @param count How many entities exist
-     */
-    formatEntityCount(count: number) {
-        return pluralize(this.resultName, count, true);
-    }
-
-    /**
      * The component is preparing if the data is loading (managed by the parent component)
      * or rendering (managed by this component).
      */
     get isPreparing() {
         return this.isLoading || this.isRendering;
+    }
+
+    /**
+     * Number of entities displayed per page. Can be undefined to show all entities without pagination.
+     */
+    get pageLimit() {
+        return isNumber(this.pagingValue) ? this.pagingValue : undefined;
+    }
+
+    /**
+     * Returns e.g. "10 results per page" or "all results"
+     *
+     * @param quantifier Number of entities per page or 'all'
+     */
+    perPageText(quantifier: PagingValue) {
+        if (isNumber(quantifier)) {
+            return `${pluralize(this.resultName, quantifier, true)} per page`;
+        } else {
+            return `${quantifier} ${pluralize(this.resultName)}`;
+        }
+    }
+
+    /**
+     * Returns the translation based on whether a limited number of entities is displayed or all
+     *
+     * @param quantifier Number of entities per page or 'all'
+     */
+    perPageTranslation(quantifier: PagingValue) {
+        return isNumber(quantifier) ? this.entitiesPerPageTranslation : this.showAllEntitiesTranslation;
     }
 
     /**
@@ -148,7 +171,13 @@ export class DataTableComponent implements OnInit, OnChanges {
      */
     private getCachedEntitiesPerPage = () => {
         const cachedValue = localStorage.getItem(this.perPageCacheKey);
-        return cachedValue ? parseInt(cachedValue, 10) : this.DEFAULT_PAGING_VALUE;
+        if (cachedValue) {
+            const parsedValue = parseInt(cachedValue, 10) || cachedValue;
+            if (this.PAGING_VALUES.includes(parsedValue as any)) {
+                return parsedValue as PagingValue;
+            }
+        }
+        return this.DEFAULT_PAGING_VALUE;
     };
 
     /**
@@ -160,7 +189,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     setEntitiesPerPage = (paging: number) => {
         this.isRendering = true;
         setTimeout(() => {
-            this.entitiesPerPage = paging;
+            this.pagingValue = paging;
             this.isRendering = false;
         }, 500);
         localStorage.setItem(this.perPageCacheKey, paging.toString());

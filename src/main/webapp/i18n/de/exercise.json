@@ -8,6 +8,7 @@
             },
             "resultCount": "{{resultsLength}} Ergebnisse",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
+            "showAllResults": "Zeige alle Ergebnisse",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",

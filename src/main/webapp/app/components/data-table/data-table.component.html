@@ -1,17 +1,17 @@
 <div>
     <div ngbDropdown class="d-inline-block mr-2">
-        <button class="btn btn-outline-primary" id="dropdownBasic1" [innerHTML]="entitiesPerPageTranslation | translate: { number: entitiesPerPage }" ngbDropdownToggle>
-            {{ formatEntityCount(entitiesPerPage) }} per page
+        <button class="btn btn-outline-primary" id="dropdownBasic1" [innerHTML]="perPageTranslation(pagingValue) | translate: { number: pagingValue }" ngbDropdownToggle>
+            {{ perPageText(pagingValue) }}
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
             <button
-                *ngFor="let pagingValue of PAGING_VALUES"
-                (click)="setEntitiesPerPage(pagingValue)"
-                [innerHTML]="entitiesPerPageTranslation | translate: { number: pagingValue }"
-                [style.background-color]="pagingValue === entitiesPerPage ? '#3e8acc' : 'transparent'"
+                *ngFor="let pagingOption of PAGING_VALUES"
+                (click)="setEntitiesPerPage(pagingOption)"
+                [innerHTML]="perPageTranslation(pagingOption) | translate: { number: pagingOption }"
+                [style.background-color]="pagingOption === pagingValue ? '#3e8acc' : 'transparent'"
                 ngbDropdownItem
             >
-                <span>{{ formatEntityCount(pagingValue) }} per page</span>
+                <span>{{ perPageText(pagingOption) }}</span>
             </button>
         </div>
     </div>
