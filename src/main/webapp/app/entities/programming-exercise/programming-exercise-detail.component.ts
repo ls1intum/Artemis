@@ -41,7 +41,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
-            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
             this.programmingExercise = programmingExercise;
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
