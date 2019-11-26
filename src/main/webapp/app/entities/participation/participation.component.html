@@ -55,7 +55,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type == PROGRAMMING" [minWidth]="120">
+                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type === PROGRAMMING" [minWidth]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUrl')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUrl">
@@ -71,7 +71,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type == PROGRAMMING" [minWidth]="100">
+                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type === PROGRAMMING" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
@@ -190,7 +190,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                                 </button>
                                 <button
-                                    *ngIf="this.presentationScoreEnabled && value.presentationScore == 1"
+                                    *ngIf="this.presentationScoreEnabled && value.presentationScore === 1"
                                     (click)="removePresentation(value)"
                                     class="btn btn-danger btn-sm mr-1"
                                 >
