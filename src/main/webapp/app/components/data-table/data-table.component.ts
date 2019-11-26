@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ContentChild, TemplateRef } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ContentChild, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
@@ -35,6 +35,7 @@ const entityToString = (entity: BaseEntity) => entity.id.toString();
     selector: 'jhi-data-table',
     templateUrl: './data-table.component.html',
     styleUrls: ['data-table.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class DataTableComponent implements OnInit, OnChanges {
     @ContentChild(TemplateRef, { read: TemplateRef, static: false })

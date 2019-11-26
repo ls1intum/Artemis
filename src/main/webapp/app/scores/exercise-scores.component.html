@@ -74,7 +74,7 @@
                 [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
-                <ngx-datatable-column prop="" [minWidth]="50" [width]="60" [maxWidth]="70">
+                <ngx-datatable-column prop="" [minWidth]="50" [width]="60">
                     <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
                         {{ rowIndex + 1 }}
                     </ng-template>
@@ -106,7 +106,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="150">
+                <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="130" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('completionDate')">
                             <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
@@ -142,7 +142,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="60" [width]="120">
+                <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="110" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionCount')">
                             <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
@@ -164,7 +164,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="400">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="400" [width]="400">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>Repository
