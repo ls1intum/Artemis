@@ -107,6 +107,8 @@ public class FileUploadSubmissionIntegrationTest {
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
         checkDetailsHidden(returnedSubmission, true);
+        var submissionInDb = fileUploadSubmissionRepository.findById(returnedSubmission.getId()).get();
+        assertThat(submissionInDb).isEqualToIgnoringGivenFields(returnedSubmission, "result", "participation", "fileService", "submissionDate");
     }
 
     @Test

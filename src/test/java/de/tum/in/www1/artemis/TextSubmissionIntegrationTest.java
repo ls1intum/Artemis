@@ -91,6 +91,8 @@ public class TextSubmissionIntegrationTest {
         assertThat(returnedSubmission).as("submission is not null").isNotNull();
         assertThat(returnedSubmission).as("correct text submission was found").isEqualToComparingOnlyGivenFields(submission, "text", "language", "submitted");
         checkDetailsHidden(returnedSubmission, true);
+        var textSubmissionInDb = submissionRepository.findById(returnedSubmission.getId()).get();
+        assertThat(textSubmissionInDb).isEqualToIgnoringGivenFields(returnedSubmission, "result", "participation", "submissionDate", "blocks");
     }
 
     @Test
@@ -148,6 +150,8 @@ public class TextSubmissionIntegrationTest {
         final var submissionInDb = submissionRepository.findById(textSubmission.getId());
         assertThat(submissionInDb.isPresent());
         assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
+        var textSubmissionInDb = submissionRepository.findById(textSubmission.getId()).get();
+        assertThat(textSubmissionInDb).isEqualToIgnoringGivenFields(textSubmission, "result", "participation", "submissionDate", "blocks");
     }
 
     @Test
@@ -171,6 +175,8 @@ public class TextSubmissionIntegrationTest {
         assertThat(returnedSubmission).as("correct text submission was found").isEqualToComparingOnlyGivenFields(textSubmission, "text", "language", "submitted");
         assertThat(returnedSubmission.getParticipation()).isEqualTo(participation);
         checkDetailsHidden(returnedSubmission, true);
+        var textSubmissionInDb = submissionRepository.findById(returnedSubmission.getId()).get();
+        assertThat(textSubmissionInDb).isEqualToIgnoringGivenFields(returnedSubmission, "result", "participation", "submissionDate", "blocks");
     }
 
     @Test
@@ -184,6 +190,9 @@ public class TextSubmissionIntegrationTest {
         checkSubmission(textSubmissions.get(0), textSubmission);
 
         checkDetailsHidden(textSubmissions.get(0), false);
+
+        var textSubmissionInDb = submissionRepository.findById(textSubmission.getId()).get();
+        assertThat(textSubmissionInDb).isEqualToIgnoringGivenFields(textSubmission, "participation", "submissionDate", "blocks");
     }
 
     @Test
