@@ -108,7 +108,7 @@
     </hudson.plugins.postbuildtask.PostbuildTask>
     <de.tum.in.www1.jenkins.notifications.SendTestResultsNotificationPostBuildTask plugin="test-notifications">
         <credentialsId>#jenkinsNotificationToken</credentialsId>
-        <notificationUrl>#artemisUrl</notificationUrl>
+        <notificationUrl>#notificationsUrl</notificationUrl>
     </de.tum.in.www1.jenkins.notifications.SendTestResultsNotificationPostBuildTask>
 </publishers>
 <buildWrappers>

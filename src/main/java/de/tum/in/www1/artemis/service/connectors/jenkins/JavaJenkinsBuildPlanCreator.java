@@ -4,6 +4,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,17 +32,36 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_PUSH_TOKEN = "#secretPushToken";
 
+    private static final String REPLACE_ARTEMIS_NOTIFICATION_URL = "#notificationsUrl";
+
+    private static final String REPLACE_NOTIFICATIONS_TOKEN = "#jenkinsNotificationToken";
+
+    private String artemisNotificationUrl;
+
     @Value("${artemis.jenkins.secret-push-token}")
     private String pushToken;
 
     @Value("${artemis.jenkins.git-credentials}")
     private String gitCredentialsKey;
 
+    @Value("${server.url}")
+    private String ARTEMIS_BASE_URL;
+
+    // TODO rename to generic property
+    @Value("${artemis.bamboo.authentication-token}")
+    private String CI_AUTHENTICATION_TOKEN;
+
+    @PostConstruct
+    public void init() {
+        this.artemisNotificationUrl = ARTEMIS_BASE_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
+    }
+
     @Override
     public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) {
         final var resourcePath = Path.of("build", "jenkins", "java", "config.xml");
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
-                gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken);
+                gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
+                artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, CI_AUTHENTICATION_TOKEN);
 
         return XmlFileUtils.readXmlFile(resourcePath, replacements);
     }
