@@ -292,14 +292,8 @@ public class BambooService implements ContinuousIntegrationService {
         return feedbackItems;
     }
 
-    /**
-     * Get the build logs of the latest Bamboo build for the given build plan.
-     *
-     * @param buildPlanId to get the latest build logs.
-     * @return list of build log entries.
-     */
     @Override
-    public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId) {
+    public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
         return retrieveLatestBuildLogs(buildPlanId);
     }
 
