@@ -65,7 +65,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="value != null">
+                        <span *ngIf="value !== null">
                             <a href="{{ value }}" target="_blank">Repository Link</a>
                         </span>
                     </ng-template>
@@ -81,7 +81,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="value != null">
+                        <span *ngIf="value !== null">
                             <a href="https://bamboobruegge.in.tum.de/browse/{{ value }}" target="_blank">
                                 {{ value }}
                             </a>
@@ -178,7 +178,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="exercise?.type === PROGRAMMING && value.buildPlanId != null && exercise.isAtLeastInstructor"
+                                    *ngIf="exercise?.type === PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
                                     [routerLink]="['/', { outlets: { popup: ['participation', value.id, 'cleanupBuildPlan'] } }]"
                                     class="btn btn-danger btn-sm mr-1"
                                 >
