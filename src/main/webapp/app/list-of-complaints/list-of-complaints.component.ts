@@ -50,7 +50,10 @@ export class ListOfComplaintsComponent implements OnInit {
             this.tutorId = Number(queryParams['tutorId']);
         });
         this.route.data.subscribe(data => (this.complaintType = data.complaintType));
+        this.loadComplaints();
+    }
 
+    loadComplaints() {
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
 
         if (this.tutorId) {
@@ -106,8 +109,12 @@ export class ListOfComplaintsComponent implements OnInit {
             modalRef.componentInstance.participationId = studentParticipation.id;
             modalRef.componentInstance.result = complaint.result;
             modalRef.result.then(
-                () => {},
-                () => {},
+                () => {
+                    this.loadComplaints();
+                },
+                () => {
+                    this.loadComplaints();
+                },
             );
             return;
         }
