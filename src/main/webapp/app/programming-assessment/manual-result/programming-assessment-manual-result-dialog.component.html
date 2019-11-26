@@ -2,12 +2,14 @@
     <div class="modal-header">
         <h4 class="modal-title">
             <span *ngIf="!result.id" jhiTranslate="artemisApp.result.createManual">Create manual result </span>
-            <span *ngIf="result.id && !complaint" jhiTranslate="artemisApp.tutorExerciseDashboard.evaluateComplaint">Evaluate complaint </span>
+            <span *ngIf="result.id && !complaint" jhiTranslate="artemisApp.result.updateManual">Update manual result</span>
             <span *ngIf="result.id && complaint && complaint.complaintType === ComplaintType.COMPLAINT && isAssessor" jhiTranslate="artemisApp.result.viewManual"
                 >View manual result</span
             >
-            <span *ngIf="result.id && complaint && (complaint.complaintType !== ComplaintType.MORE_FEEDBACK || !isAssessor)" jhiTranslate="artemisApp.result.updateManual"
-                >Update manual result
+            <span
+                *ngIf="result.id && complaint && (complaint.complaintType !== ComplaintType.MORE_FEEDBACK || !isAssessor)"
+                jhiTranslate="artemisApp.tutorExerciseDashboard.evaluateComplaint"
+                >Evaluate complaint
             </span>
             ({{ participation?.exercise?.title }})
         </h4>
