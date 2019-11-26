@@ -220,7 +220,19 @@ public class FileUploadSubmissionService extends SubmissionService {
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
         final var exerciseId = exercise.getId();
         final var submissionId = submission.getId();
-        final var filename = file.getOriginalFilename().replaceAll("\\s", "");
+        var filename = file.getOriginalFilename();
+        if (filename.contains("\\")) {
+            // this can happen on windows computers, then we want to take the last element of the file path
+            var components = filename.split("\\\\");
+            filename = components[components.length - 1];
+        }
+        // replace all illegal characters with ascii characters \w means A-Za-z0-9 to avoid problems during download later on
+        filename = filename.replaceAll("[^\\w.-]", "");
+        // if the filename is now too short, we prepend "file"
+        // this prevents potential problems when users call their file e.g. ßßß.pdf
+        if (filename.length() < 5) {
+            filename = "file" + filename;
+        }
         final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
         final var filePath = dirPath + filename;
         final var savedFile = new java.io.File(filePath);

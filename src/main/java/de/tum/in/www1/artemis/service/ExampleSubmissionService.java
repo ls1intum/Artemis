@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -22,10 +23,14 @@ public class ExampleSubmissionService {
 
     private final ResultRepository resultRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            ExerciseRepository exerciseRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     public Optional<ExampleSubmission> get(long id) {
@@ -39,7 +44,6 @@ public class ExampleSubmissionService {
      * @param exampleSubmission the example submission to save
      * @return the exampleSubmission entity
      */
-    @Transactional(rollbackFor = Exception.class)
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
         Submission submission = exampleSubmission.getSubmission();
         if (submission != null) {
@@ -59,7 +63,6 @@ public class ExampleSubmissionService {
      * @param exampleSubmissionId the id of the example submission we want to retrieve
      * @return list of feedback for an example submission
      */
-    @Transactional
     public List<Feedback> getFeedbackForExampleSubmission(Long exampleSubmissionId) {
         ExampleSubmission exampleSubmission = this.exampleSubmissionRepository.getOne(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
@@ -110,8 +113,19 @@ public class ExampleSubmissionService {
                 tutorParticipation.getTrainedExampleSubmissions().remove(exampleSubmission);
             }
 
-            resultRepository.delete(exampleSubmission.getSubmission().getResult());
-            submissionRepository.delete(exampleSubmission.getSubmission());
+            Long exerciseId = exampleSubmission.getExercise().getId();
+            Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findById(exerciseId);
+
+            // Remove the reference to the exercise when the example submission is deleted
+            exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
+
+            if (exampleSubmission.getSubmission() != null) {
+                if (exampleSubmission.getSubmission().getResult() != null) {
+                    resultRepository.delete(exampleSubmission.getSubmission().getResult());
+                }
+                submissionRepository.delete(exampleSubmission.getSubmission());
+            }
+
             exampleSubmissionRepository.delete(exampleSubmission);
         }
     }

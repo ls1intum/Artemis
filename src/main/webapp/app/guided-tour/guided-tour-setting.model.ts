@@ -14,3 +14,13 @@ export class GuidedTourSetting {
         this.guidedTourState = guidedTourState ? guidedTourState : GuidedTourState.STARTED;
     }
 }
+
+/**
+ * Guided tour mapping model which handles the mapping of tutorial to course and exercise
+ */
+export class GuidedTourMapping {
+    courseShortName: string;
+    tours: {
+        [key: string]: string;
+    };
+}

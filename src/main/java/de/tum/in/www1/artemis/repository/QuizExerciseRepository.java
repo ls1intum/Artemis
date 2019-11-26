@@ -19,6 +19,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
 
     List<QuizExercise> findByCourseId(Long courseId);
 
+    @EntityGraph(attributePaths = { "quizQuestions" })
     List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
 
     @EntityGraph(attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic" })

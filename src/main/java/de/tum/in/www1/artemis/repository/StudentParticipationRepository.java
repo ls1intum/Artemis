@@ -27,8 +27,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     long countByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.exercise.course.id = :courseId")
-    List<StudentParticipation> findByCourseIdWithEagerResults(@Param("courseId") Long courseId);
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results r where participation.exercise.course.id = :#{#courseId} and (r.rated is null or r.rated = true)")
+    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
 
     @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results r LEFT JOIN FETCH r.assessor WHERE participation.exercise.course.id = :courseId")
     List<StudentParticipation> findByCourseIdWithEagerResultsAndAssessors(@Param("courseId") Long courseId);
@@ -42,6 +42,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
+
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join r.assessor where participation.exercise.id = :#{#exerciseId}")
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all participations for an exercise with each latest result (determined by id).

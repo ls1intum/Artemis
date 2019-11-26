@@ -193,7 +193,7 @@ describe('GuidedTourComponent', () => {
 
         it('should skip the tour with the escape key', () => {
             const skipTour = spyOn(guidedTourService, 'skipTour');
-            spyOn<any>(guidedTourComponent, 'isCancelTour').and.returnValue(false);
+            spyOn<any>(guidedTourService, 'isCurrentTour').and.returnValue(false);
             const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
 
             guidedTourComponent.handleKeyboardEvent(eventMock);
@@ -211,7 +211,7 @@ describe('GuidedTourComponent', () => {
         it('should not skip but finish the cancel tour with the escape key', () => {
             const skipTour = spyOn(guidedTourService, 'skipTour');
             const finishTour = spyOn(guidedTourService, 'finishGuidedTour');
-            spyOn<any>(guidedTourComponent, 'isCancelTour').and.returnValue(true);
+            spyOn<any>(guidedTourService, 'isCurrentTour').and.returnValue(true);
             const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
 
             guidedTourComponent.handleKeyboardEvent(eventMock);

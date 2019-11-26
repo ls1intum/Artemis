@@ -39,9 +39,9 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
             this.textExercise = textExerciseResponse.body!;
 
-            this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.textExercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
-            this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.textExercise.sampleSolution);
+            this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
+            this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
+            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.sampleSolution);
         });
     }
     previousState() {
