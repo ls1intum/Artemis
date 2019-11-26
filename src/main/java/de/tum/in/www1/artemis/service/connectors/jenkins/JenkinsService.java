@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -81,7 +80,12 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
         planKey = exercise.getProjectKey() + "-" + planKey;
 
-        postXml(jobConfig, String.class, HttpStatus.OK, "", Endpoint.NEW_PLAN, Map.of("name", planKey), exercise.getProjectKey());
+        try {
+            jenkinsServer.createJob(folder(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig));
+        }
+        catch (IOException e) {
+            throw new JenkinsException("Unable to create new build plan :" + planKey);
+        }
     }
 
     @Override
@@ -127,14 +131,22 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
 
-        final var errorMessage = "Unable to trigger build " + planKey;
-        post(Endpoint.TRIGGER_BUILD, HttpStatus.OK, errorMessage, String.class, projectKey, planKey);
+        try {
+            job(projectKey, planKey).build();
+        }
+        catch (IOException e) {
+            throw new JenkinsException("Error triggering build: " + planKey, e);
+        }
     }
 
     @Override
     public void deleteProject(String projectKey) {
-        final var errorMessage = "Error while trying to delete folder in Jenkins for " + projectKey;
-        post(Endpoint.DELETE_FOLDER, HttpStatus.FOUND, errorMessage, String.class, projectKey);
+        try {
+            jenkinsServer.deleteJob(projectKey);
+        }
+        catch (IOException e) {
+            throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
+        }
     }
 
     @Override
@@ -143,9 +155,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             jenkinsServer.deleteJob(folder(projectKey), buildPlanId);
         }
         catch (IOException e) {
-            final var errorMessage = "Error while trying to delete job in Jenkins: " + buildPlanId;
-            log.error(errorMessage, e);
-            throw new JenkinsException(errorMessage, e);
+            throw new JenkinsException("Error while trying to delete job in Jenkins: " + buildPlanId, e);
         }
     }
 
@@ -175,7 +185,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public Boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
         try {
-            getPlanConfig(projectKey, buildPlanId);
+            jobXml(projectKey, buildPlanId);
             return true;
         }
         catch (Exception emAll) {
@@ -283,11 +293,12 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
-        final var resourcePath = Path.of("build", "jenkins", "exerciseConfig.xml");
-        final var projectConfig = XmlFileUtils.readXmlFile(resourcePath);
-        final var errorMessage = "Error creating folder for exercise " + programmingExercise;
-
-        postXml(projectConfig, String.class, HttpStatus.OK, errorMessage, Endpoint.NEW_FOLDER, Map.of("name", programmingExercise.getProjectKey()));
+        try {
+            jenkinsServer.createFolder(programmingExercise.getProjectKey());
+        }
+        catch (IOException e) {
+            throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
+        }
     }
 
     private FolderJob folder(String folderName) {
@@ -337,19 +348,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
-    private Document getPlanConfig(String projectKey, String planKey) {
-        final var builder = Endpoint.PLAN_CONFIG.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey);
-        try {
-            final var configString = restTemplate.getForObject(builder.build(true).toString(), String.class);
-            return XmlFileUtils.readFromString(configString);
-        }
-        catch (HttpClientErrorException e) {
-            final var errorMessage = "Unable to fetch job config for " + planKey;
-            log.error(errorMessage);
-            throw new JenkinsException(errorMessage, e);
-        }
-    }
-
     private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
         final var builder = endpoint.buildEndpoint(JENKINS_SERVER_URL.toString(), args);
         try {
@@ -364,11 +362,6 @@ public class JenkinsService implements ContinuousIntegrationService {
             log.error(messageInCaseOfError);
             throw new VersionControlException(messageInCaseOfError, e);
         }
-    }
-
-    private <T> T postXml(Document doc, Class<T> responseType, HttpStatus allowedStatus, String messagInCaseOfError, Endpoint endpoint, Map<String, Object> queryParams,
-            Object... args) {
-        return postXml(doc, responseType, List.of(allowedStatus), messagInCaseOfError, endpoint, queryParams, args);
     }
 
     private <T> T postXml(Document doc, Class<T> responseType, HttpStatus allowedStatus, String messagInCaseOfError, Endpoint endpoint, Object... args) {
