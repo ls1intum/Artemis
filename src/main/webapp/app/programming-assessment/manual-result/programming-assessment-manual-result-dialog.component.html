@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isLoading; else loadingContainer">
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isLoading; else loadingContainer">
     <div class="modal-header">
         <h4 class="modal-title">
             <span *ngIf="!result.id" jhiTranslate="artemisApp.result.createManual">Create manual result </span>
