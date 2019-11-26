@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -147,7 +148,7 @@ public class BambooService implements ContinuousIntegrationService {
             planKey,
             ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
-            versionControlService.get().getRepositoryName(repositoryUrl),
+            repositoryUrl.toString(),
             Optional.empty()
         );
         enablePlan(planProject, planKey);
@@ -380,8 +381,13 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy) throws BambooException {
-        continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName, triggeredBy);
+    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, Optional<List<String>> triggeredBy) throws BambooException {
+        try {
+            final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repositoryName, triggeredBy);
+        } catch (MalformedURLException e) {
+            throw new BambooException(e.getMessage(), e);
+        }
     }
 
     /**

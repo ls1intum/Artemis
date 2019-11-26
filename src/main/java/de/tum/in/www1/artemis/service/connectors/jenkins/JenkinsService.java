@@ -101,20 +101,11 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-
-        final var config = getPlanConfig(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
-        final var urlElements = config.getElementsByTagName("url");
-        if (urlElements.getLength() != 2) {
-            throw new IllegalArgumentException("Configuration of build plans currently only supports a model with two repositories, ASSIGNMENT and TESTS");
-        }
-        urlElements.item(1).getFirstChild().setNodeValue(participation.getRepositoryUrl());
-
-        final var errorMessage = "Error trying to configure build plan in Jenkins " + participation.getBuildPlanId();
-        postXml(config, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planKey);
+        updatePlanRepository(projectKey, planKey, null /* not important */, null /* not important */, participation.getRepositoryUrl(), Optional.empty());
         enablePlan(projectKey, planKey);
     }
 
-    // TODO this was a bad design choice. We should only have one configureBuildPlan method i.mo
+    // TODO this was a bad design choice. We should only have one configureBuildPlan method i.m.o
     @Override
     public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, Optional<List<String>> triggeredBy) {
         final var config = jobXml(projectKey, planName);

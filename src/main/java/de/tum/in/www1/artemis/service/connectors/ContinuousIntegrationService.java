@@ -183,10 +183,10 @@ public interface ContinuousIntegrationService {
      * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
-     * @param repoName              The lower level identifier of the repository.
+     * @param repoUrl              The lower level identifier of the repository.
      * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
-    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy);
+    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, Optional<List<String>> triggeredBy);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
