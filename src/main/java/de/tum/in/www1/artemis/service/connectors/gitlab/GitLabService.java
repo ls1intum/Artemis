@@ -7,6 +7,11 @@ import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
 
+import org.gitlab4j.api.GitLabApi;
+import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.Group;
+import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,11 +49,16 @@ public class GitLabService implements VersionControlService {
     @Value("${artemis.lti.user-prefix-u4i}")
     private String USER_PREFIX_U4I = "";
 
+    @Value("${artemis.gitlab.secret}")
+    private String GITLAB_PRIVATE_TOKEN;
+
     private String BASE_API;
 
     private final RestTemplate restTemplate;
 
     private final UserService userService;
+
+    private GitLabApi gitlab;
 
     public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService) {
         this.restTemplate = restTemplate;
@@ -58,6 +68,7 @@ public class GitLabService implements VersionControlService {
     @PostConstruct
     public void init() {
         this.BASE_API = GITLAB_SERVER_URL + "/api/v4";
+        this.gitlab = new GitLabApi(GITLAB_SERVER_URL.toString(), GITLAB_PRIVATE_TOKEN);
     }
 
     @Override
@@ -216,7 +227,14 @@ public class GitLabService implements VersionControlService {
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws VersionControlException {
         final var exercisePath = programmingExercise.getProjectKey();
         final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
-        createGroup(exerciseName, exercisePath);
+
+        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        try {
+            gitlab.getGroupApi().addGroup(group);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to create new group for course " + exerciseName, e);
+        }
     }
 
     private Optional<Long> groupExists(String path) {
@@ -233,30 +251,21 @@ public class GitLabService implements VersionControlService {
         return Optional.empty();
     }
 
-    private long createGroup(String groupName, String path) {
-        final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API);
-        final var body = Map.<String, Object>of("name", groupName, "path", path, "visibility", "private");
-
-        final var errorString = "Unable to create new group for course " + groupName;
-        final var createdGroup = performExchange(errorString, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
-
-        return createdGroup.get("id").asLong();
-    }
-
     @Override
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
-        final var exerciseGroupId = groupExists(projectKey).get();
-        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API);
-        final var body = Map.of("name", repoName.toLowerCase(), "namespace_id", exerciseGroupId, "builds_access_level", "disabled", "visibility", "private");
+        try {
 
-        final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class);
-        if (response.getStatusCode() == HttpStatus.BAD_REQUEST && response.getBody().get("message").get("name").get(0).asText().equals("has already been taken")) {
-            log.info("Repository {} (parent {}) already exists, reusing it...", repoName, projectKey);
-            return;
+            final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
+            final var project = new Project().withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
+                    .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
+            gitlab.getProjectApi().createProject(project);
         }
-
-        if (response.getStatusCode() != HttpStatus.CREATED) {
-            throw new GitLabException("Error creating new repository " + repoName);
+        catch (GitLabApiException e) {
+            if (e.getValidationErrors().containsKey("path") && e.getValidationErrors().get("path").contains("has already been taken")) {
+                log.info("Repository {} (parent {}) already exists, reusing it...", repoName, projectKey);
+                return;
+            }
+            throw new GitLabException("Error creating new repository " + repoName, e);
         }
     }
 
