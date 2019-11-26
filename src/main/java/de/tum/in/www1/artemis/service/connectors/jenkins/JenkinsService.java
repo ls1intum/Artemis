@@ -230,12 +230,19 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
+        try {
+            folder(projectKey);
+        }
+        catch (Exception emAll) {
+            return emAll.getMessage();
+        }
+
         return null;
     }
 
     @Override
-    public boolean isBuildPlanEnabled(String planId) {
-        return false;
+    public boolean isBuildPlanEnabled(String projectKey, String planId) {
+        return job(projectKey, planId).isBuildable();
     }
 
     @Override

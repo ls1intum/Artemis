@@ -217,7 +217,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public boolean isBuildPlanEnabled(final String planId) {
+    public boolean isBuildPlanEnabled(final String projectKey, final String planId) {
         final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         final var entity = new HttpEntity<>(null, headers);

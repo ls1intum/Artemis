@@ -167,7 +167,7 @@ public interface ContinuousIntegrationService {
      * @param planId The ID of the build plan
      * @return True, if the plan is enabled, false otherwise
      */
-    boolean isBuildPlanEnabled(final String planId);
+    boolean isBuildPlanEnabled(final String projectKey, final String planId);
 
     /**
      * Enables the given build plan.
