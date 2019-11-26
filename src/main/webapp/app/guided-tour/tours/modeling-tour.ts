@@ -4,8 +4,6 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 export const modelingTour: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: 'UML Class Diagram',
     settingsKey: 'modeling_tour',
     resetUMLModel: true,
     steps: [
@@ -60,10 +58,6 @@ export const modelingTour: GuidedTour = {
             orientation: Orientation.LEFT,
             userInteractionEvent: UserInteractionEvent.CLICK,
             triggerNextStep: true,
-        }),
-        new TextTourStep({
-            headlineTranslateKey: 'tour.modelingExercise.finishedTasks.headline',
-            contentTranslateKey: 'tour.modelingExercise.finishedTasks.content',
         }),
     ],
 };

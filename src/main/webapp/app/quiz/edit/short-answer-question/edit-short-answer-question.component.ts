@@ -12,11 +12,11 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
-import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
-import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
-import { ShortAnswerMapping } from '../../../entities/short-answer-mapping';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
+import { ShortAnswerSpot } from 'app/entities/short-answer-spot';
+import { ShortAnswerSolution } from 'app/entities/short-answer-solution';
+import { ShortAnswerMapping } from 'app/entities/short-answer-mapping';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -24,6 +24,8 @@ import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-questi
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import { SafeHtmlPipe } from 'app/shared';
+import { SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',

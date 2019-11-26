@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -246,6 +248,25 @@ public class ProgrammingExercise extends Exercise {
             return;
         }
         this.projectKey = (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+    }
+
+    /**
+     * Get the latest (potentially) graded submission for a programming exercise.
+     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed, but that e.g. the CI system failed to deliver the build results.
+     *
+     * @param submissions Submissions for the given student.
+     * @return the latest graded submission.
+     */
+    @Nullable
+    @Override
+    protected Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
+        return submissions.stream().filter(submission -> {
+            if (submission.getResult() != null) {
+                return submission.getResult().isRated();
+            }
+            return this.getDueDate() == null || submission.getType().equals(SubmissionType.INSTRUCTOR) || submission.getType().equals(SubmissionType.TEST)
+                    || submission.getSubmissionDate().isBefore(this.getDueDate());
+        }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
     }
 
     public ProgrammingLanguage getProgrammingLanguage() {
