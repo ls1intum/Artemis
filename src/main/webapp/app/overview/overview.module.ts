@@ -9,13 +9,13 @@ import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exerc
 import { ArtemisStudentQuestionsModule } from 'app/student-questions/';
 
 import {
-    CourseScoreCalculationService,
     CourseExerciseDetailsComponent,
     CourseExerciseRowComponent,
     CourseExercisesComponent,
     CourseLectureDetailsComponent,
     CourseLecturesComponent,
     CourseOverviewComponent,
+    CourseScoreCalculationService,
     CourseStatisticsComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,

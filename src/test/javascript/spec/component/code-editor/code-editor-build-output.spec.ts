@@ -50,6 +50,7 @@ describe('CodeEditorBuildOutputComponent', () => {
                 { provide: CookieService, useClass: MockCookieService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorBuildOutputComponent);

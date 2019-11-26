@@ -118,7 +118,6 @@ export const courseExerciseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseExerciseOverview.reviewResult.content',
             highlightPadding: 10,
             orientation: Orientation.TOP,
-            userInteractionEvent: UserInteractionEvent.CLICK,
         }),
     ],
 };

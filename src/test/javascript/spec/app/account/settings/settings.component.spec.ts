@@ -2,7 +2,8 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { AccountService, Principal } from 'app/core';
+import { Principal } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { SettingsComponent } from 'app/account/settings/settings.component';
 import { JhiTrackerService } from 'app/core/tracker/tracker.service';
 import { MockTrackerService } from '../../../helpers/mock-tracker.service';

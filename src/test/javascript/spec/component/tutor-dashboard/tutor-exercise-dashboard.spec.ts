@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
@@ -52,7 +52,6 @@ describe('TutorExerciseDashboardComponent', () => {
                 ArtemisTestModule,
                 ArtemisSharedModule,
                 ArtemisSharedComponentModule,
-                ArtemisSharedComponentModule,
                 ArtemisProgrammingAssessmentModule,
                 ArtemisProgrammingExerciseInstructionsRenderModule,
                 ArtemisResultModule,
@@ -94,6 +93,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 { provide: DeviceDetectorService },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);

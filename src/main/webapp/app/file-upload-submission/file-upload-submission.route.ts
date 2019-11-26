@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
-import { PendingChangesGuard } from 'app/shared';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 export const fileUploadSubmissionRoute: Routes = [
     {

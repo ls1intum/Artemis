@@ -8,7 +8,7 @@ from os import path, makedirs
 from io import TextIOWrapper
 from testUtils.junit.TestSuite import TestSuite
 from testUtils.junit.TestCase import TestCase, Result
-from testUtils.Utils import printTester,PWrap
+from testUtils.Utils import printTester, PWrap
 from testUtils.TestFailedError import TestFailedError
 
 # Timeout handler based on: https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
@@ -29,7 +29,7 @@ class AbstractTest(ABC):
     case: Optional[TestCase] = None
     suite: Optional[TestSuite] = None
 
-    def __init__(self, name: str, requirements: List[str] = list(), timeoutSec: int = -1):
+    def __init__(self, name: str, requirements: List[str] = None, timeoutSec: int = -1):
         """
         name: str
             An unique test case name.
@@ -44,7 +44,7 @@ class AbstractTest(ABC):
 
         self.name = name
         self.timeoutSec = timeoutSec
-        self.requirements = requirements
+        self.requirements = list() if requirements is None else requirements
 
     def start(self, testResults: Dict[str, Result], suite: TestSuite):
         """
@@ -70,6 +70,7 @@ class AbstractTest(ABC):
             self.case.stdout = ""
             self.case.stderr = ""
             self.case.time = timedelta()
+            self.suite.addCase(self.case)
             return
 
         startTime: datetime = datetime.now()
@@ -166,18 +167,23 @@ class AbstractTest(ABC):
         else:
             self.__markAsFailed("timeout")
 
-    def _loadFullStdout(self):
+    def __loadFileContent(self, filePath: str):
         """
-        Returns the stout output of the executable.
+        Returns the content of a file specified by filePath as string.
         """
-
-        filePath: str = self._getStdoutFilePath()
         if path.exists(filePath) and path.isfile(filePath):
             file: TextIOWrapper = open(filePath, "r")
             content: str = file.read()
             file.close()
             return content
         return ""
+
+    def _loadFullStdout(self):
+        """
+        Returns the stout output of the executable.
+        """
+        filePath: str = self._getStdoutFilePath()
+        return self.__loadFileContent(filePath)
 
     def _loadFullStderr(self):
         """
@@ -185,12 +191,7 @@ class AbstractTest(ABC):
         """
 
         filePath: str = self._getStderrFilePath()
-        if path.exists(filePath) and path.isfile(filePath):
-            file: TextIOWrapper = open(filePath, "r")
-            content: str = file.read()
-            file.close()
-            return content
-        return ""
+        return self.__loadFileContent(filePath)
 
     def _initOutputDirectory(self):
         """

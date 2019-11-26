@@ -1,7 +1,7 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTourModelingTask, associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 export const modelingTour: GuidedTour = {
     settingsKey: 'modeling_tour',
@@ -58,10 +58,6 @@ export const modelingTour: GuidedTour = {
             orientation: Orientation.LEFT,
             userInteractionEvent: UserInteractionEvent.CLICK,
             triggerNextStep: true,
-        }),
-        new TextTourStep({
-            headlineTranslateKey: 'tour.modelingExercise.finishedTasks.headline',
-            contentTranslateKey: 'tour.modelingExercise.finishedTasks.content',
         }),
     ],
 };

@@ -3,11 +3,14 @@ import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { of, throwError } from 'rxjs';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { IAccountService, IAuthServerProvider, IWebsocketService, LoginService } from '../../../../main/webapp/app/core';
 import { MockRouter } from '../mocks/mock-router.service';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { MockAuthServerProviderService } from '../mocks/mock-auth-server-provider.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
+import { IAccountService } from 'app/core/auth/account.service';
+import { IWebsocketService } from 'app/core/websocket/websocket.service';
+import { LoginService } from 'app/core/login/login.service';
+import { IAuthServerProvider } from 'app/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;

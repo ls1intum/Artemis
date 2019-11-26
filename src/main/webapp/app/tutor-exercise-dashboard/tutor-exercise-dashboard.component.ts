@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { AccountService, User } from '../core';
+import { User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
@@ -28,6 +28,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorExerciseDashboardTour } from 'app/guided-tour/tours/tutor-dashboard-tour';
+import { AccountService } from 'app/core/auth/account.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -121,31 +122,31 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
         this.loadAll();
 
-        this.accountService.identity().then(user => (this.tutor = user));
+        this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
     loadAll() {
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body!;
-                this.formattedGradingInstructions = this.artemisMarkdown.htmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.exercise.problemStatement);
+                this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
                         const textExercise = this.exercise as TextExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(textExercise.sampleSolution);
+                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.sampleSolution);
                         break;
                     case ExerciseType.MODELING:
                         this.modelingExercise = this.exercise as ModelingExercise;
                         if (this.modelingExercise.sampleSolutionModel) {
-                            this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+                            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
                             this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:
                         const fileUploadExercise = this.exercise as FileUploadExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.htmlForMarkdown(fileUploadExercise.sampleSolution);
+                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.sampleSolution);
                         break;
                 }
 

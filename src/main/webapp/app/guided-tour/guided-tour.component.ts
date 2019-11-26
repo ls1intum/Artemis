@@ -3,8 +3,9 @@ import { fromEvent, Subscription } from 'rxjs';
 
 import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -40,6 +41,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     readonly OverlayPosition = OverlayPosition;
     readonly UserInteractionEvent = UserInteractionEvent;
+    readonly cancelTour = cancelTour;
+    readonly completedTour = completedTour;
 
     constructor(public guidedTourService: GuidedTourService, public accountService: AccountService) {}
 
@@ -72,9 +75,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
             case 'Escape': {
-                if (this.currentTourStep && !this.isCancelTour()) {
+                if (this.currentTourStep && !this.guidedTourService.isCurrentTour(cancelTour)) {
                     this.guidedTourService.skipTour();
-                } else if (this.currentTourStep && (this.isCancelTour() || this.guidedTourService.isOnLastStep)) {
+                } else if (this.currentTourStep && (this.guidedTourService.isCurrentTour(cancelTour) || this.guidedTourService.isOnLastStep)) {
                     // The escape key event finishes the tour when the user is seeing the cancel tour step or last tour step
                     this.guidedTourService.finishGuidedTour();
                 }
@@ -233,18 +236,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    /**
-     * Returns true if the current tour step is an instance of VideoTourStep, otherwise false
-     */
     public isVideoTourStep(): boolean {
         return this.currentTourStep instanceof VideoTourStep;
-    }
-
-    /**
-     * Returns true if the current tour step is an instance of ImageTourStep, otherwise false
-     */
-    public isImageTourStep(): boolean {
-        return this.currentTourStep instanceof ImageTourStep;
     }
 
     /**
@@ -258,16 +251,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.guidedTourService.nextStep();
         }
         // When the user clicks on the backdrop or tour step while seeing the cancel tour step, the cancel tour will be finished automatically
-        if (this.isCancelTour()) {
+        if (this.guidedTourService.isCurrentTour(cancelTour)) {
             this.guidedTourService.finishGuidedTour();
         }
-    }
-
-    /**
-     * Determines if the cancel tour is currently displayed
-     */
-    private isCancelTour() {
-        return this.currentTourStep ? this.currentTourStep.headlineTranslateKey === 'tour.cancel.headline' : false;
     }
 
     /**
@@ -356,9 +342,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const positionAdjustment = this.isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = this.isTop()
-                ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15
-                : window.scrollY + this.selectedElementRect.top + this.tourStep.nativeElement.getBoundingClientRect().height + positionAdjustment;
+            topPosition = this.isTop() ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15 : this.selectedElementRect.top + positionAdjustment;
         }
         return topPosition;
     }
@@ -397,7 +381,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     break;
                 }
                 case OverlayPosition.LEFT: {
-                    style = { 'top.px': selectedElementTop, 'left.px': 0, 'height.px': selectedElementHeight, 'width.px': selectedElementLeft };
+                    style = {
+                        'top.px': selectedElementTop,
+                        'left.px': selectedElementLeft < 0 ? selectedElementLeft : 0,
+                        'height.px': selectedElementHeight,
+                        'width.px': selectedElementLeft > 0 ? selectedElementLeft : 0,
+                    };
                     break;
                 }
                 case OverlayPosition.RIGHT: {

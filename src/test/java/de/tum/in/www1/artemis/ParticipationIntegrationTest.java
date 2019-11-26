@@ -144,6 +144,50 @@ public class ParticipationIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteSubmissionWithoutResult() throws Exception {
+        Submission submissionWithoutResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult, "student1");
+        Long participationId = submissionWithoutResult.getParticipation().getId();
+
+        // Participation should now exist.
+        assertThat(participationRepo.existsById(participationId)).isTrue();
+
+        // There should be a submission and no result assigned to the participation.
+        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(1);
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
+
+        request.delete("/api/participations/" + participationId, HttpStatus.OK);
+        Optional<StudentParticipation> participation = participationRepo.findById(participationId);
+        // Participation should now be gone.
+        assertThat(participation.isPresent()).isFalse();
+        // Make sure that the submission is deleted.
+        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteResultWithoutSubmission() throws Exception {
+        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
+        database.addResultToParticipation(studentParticipation);
+        Long participationId = studentParticipation.getId();
+
+        // Participation should now exist.
+        assertThat(participationRepo.existsById(participationId)).isTrue();
+
+        // There should be a submission and no result assigned to the participation.
+        assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
+
+        request.delete("/api/participations/" + participationId, HttpStatus.OK);
+        Optional<StudentParticipation> participation = participationRepo.findById(participationId);
+        // Participation should now be gone.
+        assertThat(participation.isPresent()).isFalse();
+        // Make sure that the result is deleted.
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void deleteParticipation_forbidden_student() throws Exception {
         request.delete("/api/participations/" + 1, HttpStatus.FORBIDDEN);

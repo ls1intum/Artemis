@@ -11,7 +11,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { InitializationState } from 'app/entities/participation';
-import { ABSOLUTE_SCORE, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE, CourseScoreCalculationService } from 'app/overview';
+import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/overview';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';

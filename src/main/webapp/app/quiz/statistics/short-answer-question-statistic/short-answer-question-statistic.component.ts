@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AccountService, JhiWebsocketService } from '../../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-question-util.service';
@@ -14,6 +13,8 @@ import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { ShortAnswerSolution } from 'app/entities/short-answer-solution';
+import { AccountService } from 'app/core/auth/account.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -146,7 +147,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
-            this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
+            this.questionTextRendered = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
             this.generateShortAnswerStructure();
             this.generateLettersForSolutions();
 

@@ -4,20 +4,20 @@ import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { debounceTime, take, distinctUntilChanged } from 'rxjs/internal/operators';
-
+import { filter } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
-import { AccountService, User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { filter } from 'rxjs/operators';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Course } from 'app/entities/course';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Course } from 'app/entities/course/course.model';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
-import { cancelTour } from 'app/guided-tour/tours/general-tour';
+import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
+import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
@@ -80,7 +80,7 @@ export class GuidedTourService {
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (this.availableTourForComponent && event instanceof NavigationStart) {
-                this.finishGuidedTour();
+                this.skipTour();
                 this.guidedTourAvailabilitySubject.next(false);
             }
         });
@@ -108,10 +108,6 @@ export class GuidedTourService {
                     }
                 }
             });
-    }
-
-    private setGuidedTourCourseExerciseMapping(guidedTourMapping: GuidedTourMapping) {
-        this.guidedTourMapping = guidedTourMapping;
     }
 
     /**
@@ -191,6 +187,17 @@ export class GuidedTourService {
     public isCurrentStep(tourStep: TourStep): boolean {
         if (this.currentTour && this.currentTour.steps) {
             return this.currentTourStepDisplay === this.currentTour.steps.indexOf(tourStep) + 1;
+        }
+        return false;
+    }
+
+    /**
+     * Determines if the given tour is the current tour
+     * @param guidedTour that is checked
+     */
+    public isCurrentTour(guidedTour: GuidedTour) {
+        if (this.currentTour && this.currentTour.steps) {
+            return this.currentTour.settingsKey === guidedTour.settingsKey;
         }
         return false;
     }
@@ -282,10 +289,16 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
+
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
         }
-        this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
+
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        if (!this.isCurrentTour(completedTour) && !nextStep) {
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
+            this.showCompletedTourStep();
+        }
     }
 
     /**
@@ -324,6 +337,19 @@ export class GuidedTourService {
                 if (currentStep.action) {
                     currentStep.action();
                 }
+                this.setPreparedTourStep();
+            }
+        });
+    }
+
+    /**
+     * Show the completed tour step every time a user completes a tour
+     */
+    private showCompletedTourStep(): void {
+        setTimeout(() => {
+            this.currentTour = cloneDeep(completedTour);
+            /** Proceed with tour if the tour has tour steps and the tour display is allowed for current window size */
+            if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
                 this.setPreparedTourStep();
             }
         });
@@ -747,9 +773,11 @@ export class GuidedTourService {
         if (!course || !course.exercises || !this.guidedTourMapping) {
             return null;
         }
-
+        if (!this.isGuidedTourAvailableForCourse(course)) {
+            return null;
+        }
         const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
-        if (this.isGuidedTourAvailableForCourse(course) && exerciseForGuidedTour) {
+        if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
             return exerciseForGuidedTour;
         }
@@ -778,12 +806,13 @@ export class GuidedTourService {
      * @param exercise which can contain the needed exercise for the tour
      * @param guidedTour that should be enabled
      */
-    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour): Exercise | null {
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
+        if (!exercise.course) {
+            return;
+        }
         if (this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
             this.enableTour(guidedTour);
-            return exercise;
         }
-        return null;
     }
 
     /**
@@ -810,7 +839,12 @@ export class GuidedTourService {
         }
 
         let exerciseMatches = false;
-        const settingsKey = guidedTour ? guidedTour.settingsKey : this.currentTour ? this.currentTour.settingsKey : '';
+        let settingsKey = '';
+        if (guidedTour) {
+            settingsKey = guidedTour.settingsKey;
+        } else {
+            settingsKey = this.currentTour ? this.currentTour.settingsKey : '';
+        }
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
             exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.shortName;

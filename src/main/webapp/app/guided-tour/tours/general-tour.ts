@@ -18,3 +18,14 @@ export const cancelTour: GuidedTour = {
         }),
     ],
 };
+
+export const completedTour: GuidedTour = {
+    settingsKey: 'completed_tour',
+    steps: [
+        new TextTourStep({
+            headlineTranslateKey: 'tour.completed.headline',
+            contentTranslateKey: 'tour.completed.content',
+            hintTranslateKey: 'tour.completed.hint',
+        }),
+    ],
+};

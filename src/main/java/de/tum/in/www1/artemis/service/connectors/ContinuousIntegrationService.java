@@ -181,8 +181,26 @@ public interface ContinuousIntegrationService {
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
      * @param repoName              The lower level identifier of the repository.
+     * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
-    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName);
+    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy);
+
+    /**
+     * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
+     *
+     * @param projectKey The key of the project to grant permissions to
+     * @param groups The role of the users that should have the permissions
+     * @param permissions The permissions to grant the users
+     */
+    void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions);
+
+    /**
+     * Some CI systems give projects default permissions (e.g. read in Bamboo for logged in and anonymous users)
+     * This method removes all of these unnecessary and potentially insecure permissions
+     *
+     * @param projectKey The key of the build project which should get "cleaned"
+     */
+    void removeAllDefaultProjectPermissions(String projectKey);
 
     /**
      * Checks if the underlying CI server is up and running and gives some additional information about the running

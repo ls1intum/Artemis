@@ -23,7 +23,7 @@ import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
@@ -103,12 +103,13 @@ describe('GuidedTourService', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
                 providers: [
-                    GuidedTourService,
                     { provide: DeviceDetectorService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                 ],
-            });
+            })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+                .compileComponents();
 
             service = TestBed.get(GuidedTourService);
             httpMock = TestBed.get(HttpTestingController);
@@ -161,6 +162,7 @@ describe('GuidedTourService', () => {
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
                 .compileComponents()
                 .then(() => {
@@ -313,9 +315,9 @@ describe('GuidedTourService', () => {
 
             it('should start the tour for the matching exercise short name', () => {
                 // disable tour for exercises without courses
-                // guidedTourService.currentTour = null;
-                // guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
-                // expect(guidedTourService.currentTour).to.be.null;
+                guidedTourService.currentTour = null;
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
 
                 // disable tour for not matching course and exercise identifiers
                 exercise2.course = course2;
