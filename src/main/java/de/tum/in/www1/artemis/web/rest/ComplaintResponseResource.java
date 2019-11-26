@@ -90,24 +90,7 @@ public class ComplaintResponseResource {
         log.debug("REST request to get ComplaintResponse : {}", id);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findById(id);
 
-        if (!complaintResponse.isPresent()) {
-            throw new EntityNotFoundException("ComplaintResponse with " + id + " was not found!");
-        }
-
-        // All tutors and higher can see this, and also the students who first open the complaint
-        canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
-        StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.get().getComplaint().getResult().getParticipation();
-        Exercise exercise = studentParticipation.getExercise();
-
-        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            complaintResponse.get().getComplaint().setStudent(null);
-        }
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            complaintResponse.get().setReviewer(null);
-        }
-
-        return ResponseUtil.wrapOrNotFound(complaintResponse);
+        return handleComplaintResponse(id, principal, complaintResponse);
     }
 
     /**
@@ -123,6 +106,10 @@ public class ComplaintResponseResource {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
 
+        return handleComplaintResponse(complaintId, principal, complaintResponse);
+    }
+
+    private ResponseEntity<ComplaintResponse> handleComplaintResponse(@PathVariable Long complaintId, Principal principal, Optional<ComplaintResponse> complaintResponse) {
         if (complaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }
