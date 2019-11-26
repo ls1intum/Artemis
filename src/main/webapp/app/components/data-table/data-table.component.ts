@@ -240,12 +240,20 @@ export class DataTableComponent implements OnInit, OnChanges {
      * Performs a case-insensitive search of "word" inside of "text".
      * If "word" consists of multiple segments separated by a space, each one of them must appear in "text".
      * This relaxation has the benefit that searching for "Max Mustermann" will still find "Max Gregor Mustermann".
+     * Additionally, the wildcard symbol "*" is supported.
      *
      * @param text string that is searched for param "word"
      */
     private foundIn = (text: string) => (word: string) => {
         const segments = word.toLowerCase().split(' ');
-        return text && word && segments.every(segment => text.toLowerCase().includes(segment));
+        return (
+            text &&
+            word &&
+            segments.every(segment => {
+                const regex = segment.replace(/\*/g, '.*');
+                return new RegExp(regex).test(text.toLowerCase());
+            })
+        );
     };
 
     /**
