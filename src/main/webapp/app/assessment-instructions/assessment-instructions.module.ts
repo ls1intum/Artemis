@@ -8,7 +8,7 @@ import { ArtemisSharedModule } from 'app/shared';
 
 @NgModule({
     declarations: [AssessmentInstructionsComponent, ExpandableParagraphComponent, ExpandableSampleSolutionComponent],
-    exports: [AssessmentInstructionsComponent],
+    exports: [AssessmentInstructionsComponent, ExpandableSampleSolutionComponent],
     imports: [NgbModule, ArtemisSharedModule, ArtemisModelingEditorModule],
 })
 export class AssessmentInstructionsModule {}
