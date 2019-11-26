@@ -13,3 +13,8 @@
 .loading-container {
     height: 40vh;
 }
+
+ngb-typeahead-window.dropdown-menu.show {
+    max-height: calc(100vh - 380px);
+    overflow-y: auto;
+}
