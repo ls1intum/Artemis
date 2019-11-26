@@ -86,7 +86,12 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             this.subscribeToSaveResponse(this.fileUploadExerciseService.create(this.fileUploadExercise));
         }
     }
-
+    /**
+     * Validates if the date is correct
+     */
+    validateDate() {
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercies categories

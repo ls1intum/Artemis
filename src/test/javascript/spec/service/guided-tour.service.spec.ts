@@ -20,10 +20,10 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
-import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
+import { ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
-import { AccountService } from 'app/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
@@ -35,8 +35,6 @@ const expect = chai.expect;
 
 describe('GuidedTourService', () => {
     const tour: GuidedTour = {
-        courseShortName: '',
-        exerciseShortName: '',
         settingsKey: 'tour',
         steps: [
             new TextTourStep({
@@ -53,8 +51,6 @@ describe('GuidedTourService', () => {
     };
 
     const tourWithUserInteraction: GuidedTour = {
-        courseShortName: '',
-        exerciseShortName: '',
         settingsKey: 'tour_user_interaction',
         steps: [
             new TextTourStep({
@@ -72,9 +68,7 @@ describe('GuidedTourService', () => {
     };
 
     const tourWithCourseAndExercise: GuidedTour = {
-        courseShortName: 'tutorial',
-        exerciseShortName: 'git',
-        settingsKey: 'tour_with_course_and_exericse',
+        settingsKey: 'tour_with_course_and_exercise',
         steps: [
             new TextTourStep({
                 headlineTranslateKey: '',
@@ -89,12 +83,10 @@ describe('GuidedTourService', () => {
     };
 
     const tourWithModelingTask: GuidedTour = {
-        courseShortName: '',
-        exerciseShortName: '',
         settingsKey: 'tour_modeling_task',
         preventBackdropFromAdvancing: true,
         steps: [
-            new TextTourStep({
+            new ModelingTaskTourStep({
                 headlineTranslateKey: '',
                 contentTranslateKey: '',
                 modelingTask: new GuidedTourModelingTask(personUML.name, ''),
@@ -110,8 +102,14 @@ describe('GuidedTourService', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule],
-                providers: [GuidedTourService, { provide: DeviceDetectorService }],
-            });
+                providers: [
+                    { provide: DeviceDetectorService },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                ],
+            })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+                .compileComponents();
 
             service = TestBed.get(GuidedTourService);
             httpMock = TestBed.get(HttpTestingController);
@@ -164,6 +162,7 @@ describe('GuidedTourService', () => {
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             })
+                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .overrideTemplate(NavbarComponent, '<div class="random-selector"></div>')
                 .compileComponents()
                 .then(() => {
@@ -262,6 +261,11 @@ describe('GuidedTourService', () => {
         });
 
         describe('Tour for a certain course and exercise', () => {
+            const guidedTourMapping = {
+                courseShortName: 'tutorial',
+                tours: { tour_with_course_and_exercise: 'git' },
+            } as GuidedTourMapping;
+
             const exercise1 = {
                 id: 1,
                 shortName: 'git',
@@ -272,6 +276,12 @@ describe('GuidedTourService', () => {
                 id: 1,
                 shortName: 'test',
                 type: ExerciseType.PROGRAMMING,
+            } as Exercise;
+
+            const exercise3 = {
+                id: 1,
+                shortName: 'git',
+                type: ExerciseType.MODELING,
             } as Exercise;
 
             const course1 = {
@@ -286,6 +296,7 @@ describe('GuidedTourService', () => {
             } as Course;
 
             beforeEach(async () => {
+                guidedTourService.guidedTourMapping = guidedTourMapping;
                 prepareGuidedTour(tourWithCourseAndExercise);
             });
 
@@ -297,32 +308,61 @@ describe('GuidedTourService', () => {
                 guidedTourService.currentTour = null;
 
                 courses = [course2];
-                // tour not available for not matching titles
+                // disable tour for not matching titles
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.be.null;
             });
 
             it('should start the tour for the matching exercise short name', () => {
-                let courses = [course1];
-                // enable tour for matching course title
-                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                // disable tour for exercises without courses
                 guidedTourService.currentTour = null;
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
 
-                courses = [course2];
-                // tour not available for not matching titles
+                // disable tour for not matching course and exercise identifiers
+                exercise2.course = course2;
+                guidedTourService.currentTour = null;
                 guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.be.null;
+
+                // disable tour for not matching course identifier
+                exercise3.course = course2;
+                guidedTourService.currentTour = null;
+                guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+
+                // enable tour for matching course and exercise identifiers
+                exercise1.course = course1;
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
             });
 
             it('should start the tour for the matching course / exercise short name', () => {
-                // enable tour for matching course / exercise short name
-                let currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise) as Exercise;
-                expect(currentExercise.shortName).to.equal(tourWithCourseAndExercise.exerciseShortName);
+                guidedTourService.currentTour = null;
 
-                // tour not available for not matching course / exercise short name
-                currentExercise = guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise) as Exercise;
-                expect(currentExercise).to.be.null;
+                // enable tour for matching course / exercise short name
+                guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+
+                course1.exercises.forEach(exercise => {
+                    exercise.course = course1;
+                    if (exercise === exercise1) {
+                        expect(guidedTourService.isGuidedTourAvailableForExercise(exercise)).to.be.true;
+                    } else {
+                        expect(guidedTourService.isGuidedTourAvailableForExercise(exercise)).to.be.false;
+                    }
+                });
+
+                // disable tour for not matching course without exercise
+                guidedTourService.currentTour = null;
+                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
+
+                // disable tour for not matching course but matching exercise identifier
+                guidedTourService.currentTour = null;
+                course2.exercises = [exercise3];
+                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
+                expect(guidedTourService.currentTour).to.be.null;
             });
         });
 

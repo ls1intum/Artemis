@@ -14,7 +14,14 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'admin',
                     loadChildren: () => import('./admin/admin.module').then(m => m.ArtemisAdminModule),
                 },
-                { path: 'code-editor', loadChildren: () => import('./code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule) },
+                {
+                    path: 'code-editor',
+                    loadChildren: () => import('./code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule),
+                },
+                {
+                    path: 'account',
+                    loadChildren: () => import('./account/account.module').then(m => m.ArtemisAccountModule),
+                },
             ],
             { useHash: true, enableTracing: false },
         ),

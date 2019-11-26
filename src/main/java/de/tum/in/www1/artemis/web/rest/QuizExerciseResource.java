@@ -394,14 +394,13 @@ public class QuizExerciseResource {
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
         // update QuizExercise
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         quizExercise.reconnectJSONIgnoreAttributes();
-
-        // needed in case the instructor adds a new solution to the question, the quizExercise has to be
-        // saved again so that no PersistencyExceptions can appear
-        quizExercise = quizExerciseService.save(quizExercise);
 
         // adjust existing results if an answer or and question was deleted and recalculate them
         quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
+
+        quizExercise = quizExerciseService.save(quizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // update Statistics

@@ -26,10 +26,6 @@
                 "headline": "Reiche deine Lösung ein",
                 "content": "Du kannst deine Lösung hier einreichen und dann auf deine Bewertung warten.",
                 "hint": "Du kannst mehrmals bis zur Deadline abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe."
-            },
-            "finishedTasks": {
-                "headline": "Herzlichen Glückwunsch",
-                "content": "Herzlichen Glückwunsch! Du hast deine erste Modelierungsaufgabe erfolgreich abgeschlossen."
             }
         }
     }

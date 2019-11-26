@@ -12,8 +12,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IntelliJState } from 'app/intellij/intellij';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
@@ -24,6 +22,9 @@ import { MockComponent } from 'ng-mocks';
 import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-test.service';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { FeatureToggleService } from 'app/feature-toggle';
+import { MockFeatureToggleService } from '../../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,16 +48,17 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, IntellijModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, IntellijModule, ArtemisSharedModule, FeatureToggleModule],
             declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent)],
             providers: [
                 { provide: IdeBuildAndTestService, useClass: MockIdeBuildAndTestService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent] } })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseStudentIdeActionsComponent);

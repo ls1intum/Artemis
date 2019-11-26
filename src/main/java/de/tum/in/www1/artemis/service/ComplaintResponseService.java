@@ -86,10 +86,13 @@ public class ComplaintResponseService {
         }
 
         originalComplaint.setAccepted(complaintResponse.getComplaint().isAccepted());
-        complaintRepository.save(originalComplaint);
+        originalComplaint = complaintRepository.save(originalComplaint);
 
         complaintResponse.setSubmittedTime(ZonedDateTime.now());
         complaintResponse.setReviewer(reviewer);
+        // make sure the original complaint from the database is connected to the complaint response as we take it out later one and
+        // potential changes on the client side (e.g. remove student id) should not be saved
+        complaintResponse.setComplaint(originalComplaint);
         return complaintResponseRepository.save(complaintResponse);
     }
 }

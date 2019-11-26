@@ -113,6 +113,7 @@ describe('LectureAttachmentsComponent', () => {
                 },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);

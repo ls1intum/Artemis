@@ -1,11 +1,9 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const cancelTour: GuidedTour = {
-    courseShortName: '',
-    exerciseShortName: '',
     settingsKey: 'cancel_tour',
     steps: [
         new TextTourStep({
@@ -17,6 +15,17 @@ export const cancelTour: GuidedTour = {
             closeAction: () => {
                 clickOnElement('#account-menu[aria-expanded="true"]');
             },
+        }),
+    ],
+};
+
+export const completedTour: GuidedTour = {
+    settingsKey: 'completed_tour',
+    steps: [
+        new TextTourStep({
+            headlineTranslateKey: 'tour.completed.headline',
+            contentTranslateKey: 'tour.completed.content',
+            hintTranslateKey: 'tour.completed.hint',
         }),
     ],
 };

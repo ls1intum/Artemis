@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
+import { JhiLanguageService } from 'ng-jhipster';
+import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { JhiLanguageService } from 'ng-jhipster';
-import { SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-import { JhiWebsocketService, User } from 'app/core';
-import { Course } from 'app/entities/course';
+import { User } from 'app/core/user/user.model';
+import { Course } from 'app/entities/course/course.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { FeatureToggleService } from 'app/feature-toggle';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -36,6 +38,7 @@ export class AccountService implements IAccountService {
         private sessionStorage: SessionStorageService,
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
+        private featureToggleService: FeatureToggleService,
     ) {}
 
     get userIdentity() {
@@ -47,6 +50,13 @@ export class AccountService implements IAccountService {
         this.authenticated = !!user;
         // Alert subscribers about user updates, that is when the user logs in or logs out (null).
         this.authenticationState.next(user);
+
+        // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
+        if (user) {
+            this.featureToggleService.subscribeFeatureToggleUpdates();
+        } else {
+            this.featureToggleService.unsubscribeFeatureToggleUpdates();
+        }
     }
 
     fetch(): Observable<HttpResponse<User>> {
@@ -124,8 +134,8 @@ export class AccountService implements IAccountService {
                 map((response: HttpResponse<User>) => {
                     const user = response.body!;
                     if (user) {
-                        this.userIdentity = user;
                         this.websocketService.connect();
+                        this.userIdentity = user;
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting

@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -140,6 +142,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
@@ -167,11 +170,13 @@ public class ProgrammingSubmissionResource {
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
+     * @param lastGraded if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or after the deadline by the INSTRUCTOR.
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
     @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId) {
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Participation participation = programmingExerciseParticipationService.findParticipation(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
@@ -180,12 +185,14 @@ public class ProgrammingSubmissionResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
-        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId);
+        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded);
         if (submission.isEmpty()) {
             return badRequest();
         }
 
         // If there is a result on the CIS for the submission, there must have been a communication issue between the CIS and Artemis. In this case we can just save the result.
+        // TODO: If the submission is not the latest but the latest graded submission, this does not work if there have been commits since. To make it work we would have to find
+        // the correct build for the given commit hash.
         Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
         if (result.isPresent()) {
             resultService.notifyUserAboutNewResult(result.get(), participationId);
@@ -198,6 +205,11 @@ public class ProgrammingSubmissionResource {
             // This resets the pending submission timer in the client.
             programmingSubmissionService.notifyUserAboutSubmission(submission.get());
             return ResponseEntity.ok().build();
+        }
+        if (lastGraded) {
+            // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit (=different
+            // commit hash than submission).
+            return notFound();
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
         programmingSubmissionService.triggerBuildAndNotifyUser(submission.get());
@@ -213,6 +225,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         try {
             programmingSubmissionService.triggerInstructorBuildForExercise(exerciseId);
@@ -235,6 +248,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
             return badRequest();
