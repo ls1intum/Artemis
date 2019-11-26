@@ -38,7 +38,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     respondToComplaint(acceptComplaint: boolean): void {
         if (!this.complaintResponse.responseText || this.complaintResponse.responseText.length <= 0) {
-            this.jhiAlertService.warning('artemisApp.complaintResponse.noText');
+            this.jhiAlertService.error('artemisApp.complaintResponse.noText');
             return;
         }
         if (!this.isAllowedToRespond) {
