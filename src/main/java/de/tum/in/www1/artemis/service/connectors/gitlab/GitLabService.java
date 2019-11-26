@@ -88,8 +88,19 @@ public class GitLabService implements VersionControlService {
         final var builder = Endpoints.ADD_USER.buildEndpoint(BASE_API, repositoryId);
         final var body = Map.of("user_id", userId, "access_level", AccessLevel.DEVELOPER.levelCode);
 
-        final var errorMessage = "Error while trying to add user to repository: " + username + " to repo " + repositoryUrl;
-        performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
+        try {
+            restTemplate.postForEntity(builder.build(true).toUri(), body, String.class);
+        }
+        catch (HttpClientErrorException e) {
+            if (e.getResponseBodyAsString().contains("should be greater than or equal to Owner inherited membership")) {
+                // this is fine, the user already has the sufficient permissions in the parent folder, usually the case for admins or instructors
+                log.warn("User (" + username + ") has already sufficient permissions for " + repositoryUrl.toString());
+            }
+            else {
+                final var errorMessage = "Error while trying to add user to repository: " + username + " to repo " + repositoryUrl;
+                defaultExceptionHandling(errorMessage, e);
+            }
+        }
     }
 
     private void protectBranch(String branch, URL repositoryUrl) {
@@ -339,7 +350,8 @@ public class GitLabService implements VersionControlService {
         throw new GitLabException("Unable to perform request.\n" + errorMessage);
     }
 
-    private void defaultExceptionHandling(String message, Throwable exception) {
+    private void defaultExceptionHandling(String message, HttpClientErrorException exception) {
+        message = message + "; response was: " + exception.getResponseBodyAsString();
         log.error(message);
         throw new GitLabException(message, exception);
     }

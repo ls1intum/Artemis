@@ -91,9 +91,10 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
-        final var jobXml = jobXml(sourceProjectKey, sourcePlanName);
         final var cleanTargetName = getCleanPlanName(targetPlanName);
+        final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
+        final var jobXml = jobXml(sourceProjectKey, sourcePlanKey);
         saveJobXml(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
@@ -262,7 +263,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void enablePlan(String projectKey, String planKey) {
-        post(Endpoint.ENABLE, HttpStatus.OK, "Unable to enable plan " + planKey, String.class, projectKey, planKey);
+        post(Endpoint.ENABLE, HttpStatus.FOUND, "Unable to enable plan " + planKey, String.class, projectKey, planKey);
     }
 
     @Override
