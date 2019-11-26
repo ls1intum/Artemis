@@ -260,7 +260,7 @@ public class GitLabService implements VersionControlService {
         final var errorMessage = "Error fetching ID for repository " + repositoryUrl;
         final var response = performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
 
-        return response.get("id").asLong();
+        return response.get(0).get("id").asLong();
     }
 
     @Override

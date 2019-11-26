@@ -79,6 +79,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
         final var configBuilder = buildPlanCreatorFactory.builderFor(exercise.getProgrammingLanguage());
         final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
+        planKey = exercise.getProjectKey() + "-" + planKey;
 
         postXml(jobConfig, String.class, HttpStatus.OK, "", Endpoint.NEW_PLAN, Map.of("name", planKey), exercise.getProjectKey());
     }
@@ -92,9 +93,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName) {
         final var jobXml = jobXml(sourceProjectKey, sourcePlanName);
         final var cleanTargetName = getCleanPlanName(targetPlanName);
-        saveJobXml(jobXml, targetProjectKey, getCleanPlanName(cleanTargetName));
+        final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
+        saveJobXml(jobXml, targetProjectKey, targetPlanKey);
 
-        return cleanTargetName;
+        return targetPlanKey;
     }
 
     @Override
@@ -131,13 +133,19 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void deleteProject(String projectKey) {
         final var errorMessage = "Error while trying to delete folder in Jenkins for " + projectKey;
-        post(Endpoint.DELETE_FOLDER, HttpStatus.OK, errorMessage, String.class, projectKey);
+        post(Endpoint.DELETE_FOLDER, HttpStatus.FOUND, errorMessage, String.class, projectKey);
     }
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
-        final var errorMessage = "Error while trying to delete job in Jenkins: " + buildPlanId;
-        post(Endpoint.DELETE_JOB, HttpStatus.OK, errorMessage, String.class, projectKey, buildPlanId);
+        try {
+            jenkinsServer.deleteJob(folder(projectKey), buildPlanId);
+        }
+        catch (IOException e) {
+            final var errorMessage = "Error while trying to delete job in Jenkins: " + buildPlanId;
+            log.error(errorMessage, e);
+            throw new JenkinsException(errorMessage, e);
+        }
     }
 
     @Override
