@@ -44,6 +44,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.load(programmingExercise.id);
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
 
