@@ -14,7 +14,6 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 @Component({
     selector: 'jhi-participation',
     templateUrl: './participation.component.html',
-    styleUrls: ['participation.component.scss'],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison

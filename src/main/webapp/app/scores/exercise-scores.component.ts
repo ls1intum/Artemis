@@ -13,12 +13,9 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
-import { Observable, of, zip } from 'rxjs';
+import { take, tap } from 'rxjs/operators';
+import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
-import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
-import { SortByPipe } from 'app/components/pipes';
-import { compose, filter } from 'lodash/fp';
 
 enum FilterProp {
     ALL = 'all',
@@ -28,61 +25,29 @@ enum FilterProp {
     AUTOMATIC = 'automatic',
 }
 
-enum SortOrder {
-    ASC = 'asc',
-    DESC = 'desc',
-}
-
-enum SortIcon {
-    NONE = 'sort',
-    ASC = 'sort-up',
-    DESC = 'sort-down',
-}
-
-const SortOrderIcon = {
-    [SortOrder.ASC]: SortIcon.ASC,
-    [SortOrder.DESC]: SortIcon.DESC,
-};
-
-type SortProp = {
-    field: string;
-    order: SortOrder;
-};
-
-const resultsPerPageCacheKey = 'exercise-scores-results-per-age';
-
 @Component({
     selector: 'jhi-exercise-scores',
     templateUrl: './exercise-scores.component.html',
-    styleUrls: ['exercise-scores.component.scss'],
     providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     FilterProp = FilterProp;
+
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
-    PAGING_VALUES = [10, 20, 50, 100, 200, 500, 1000, 2000];
-    DEFAULT_PAGING_VALUE = 50;
-
-    ColumnMode = ColumnMode;
-    SortType = SortType;
 
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
     reverse: boolean;
     results: Result[];
-    allResults: Result[];
     eventSubscriber: Subscription;
     newManualResultAllowed: boolean;
-    resultsPerPage: number;
 
     resultCriteria: {
         filterProp: FilterProp;
-        textSearch: string[];
-        sortProp: SortProp;
     };
 
     isLoading: boolean;
@@ -98,19 +63,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
-        private sortByPipe: SortByPipe,
     ) {
         this.resultCriteria = {
             filterProp: FilterProp.ALL,
-            textSearch: [],
-            sortProp: { field: 'id', order: SortOrder.ASC },
         };
         this.results = [];
-        this.allResults = [];
     }
 
     ngOnInit() {
-        this.resultsPerPage = this.getCachedResultsPerPage();
         this.paramSub = this.route.params.subscribe(params => {
             this.isLoading = true;
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
@@ -153,8 +113,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                             result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
                         );
                     });
-                    this.allResults = tempResults;
-                    this.updateResults();
+                    this.results = tempResults;
                     // Nest submission into participation so that it is available for the result component
                     this.results = this.results.map(result => {
                         if (result.participation && result.submission) {
@@ -166,8 +125,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             );
     }
 
-    filterResultByProp = (filterProp: FilterProp, result: Result) => {
-        switch (filterProp) {
+    updateResultFilter(newValue: FilterProp) {
+        this.resultCriteria.filterProp = newValue;
+    }
+
+    filterResultByProp = (result: Result) => {
+        switch (this.resultCriteria.filterProp) {
             case FilterProp.SUCCESSFUL:
                 return result.successful;
             case FilterProp.UNSUCCESSFUL:
@@ -181,38 +144,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         }
     };
 
-    /**
-     * Filter the given results by the provided search words.
-     * Returns results that match any of the provides search words, if searchWords is empty returns all results.
-     *
-     * @param searchWords list of student logins or names.
-     * @param result Result[]
-     */
-    filterResultByTextSearch = (searchWords: string[], result: Result) => {
-        const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
-            Boolean,
-        ) as string[];
-        // When no search word is inputted, we return all results.
-        if (!searchWords.length) {
-            return true;
-        }
-        // Otherwise we do a fuzzy search on the inputted search words.
-        return searchableFields.some(field => searchWords.some(word => word && field.toLowerCase().includes(word.toLowerCase())));
-    };
-
-    /**
-     * Updates the UI with all available filter/sort settings.
-     * First performs the filtering, then sorts the remaining results.
-     */
-    updateResults() {
-        const filteredResults = compose(
-            filter((result: Result) => this.filterResultByTextSearch(this.resultCriteria.textSearch, result)),
-            filter((result: Result) => this.filterResultByProp(this.resultCriteria.filterProp, result)),
-        )(this.allResults);
-        // TODO: It would be nice to do this with a normal sortBy/orderBy.
-        this.results = this.sortByPipe.transform(filteredResults, this.resultCriteria.sortProp.field, this.resultCriteria.sortProp.order === SortOrder.DESC);
-    }
-
     durationInMinutes(completionDate: Moment, initializationDate: Moment) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
@@ -224,11 +155,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     goToRepository(result: Result) {
         window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
-    }
-
-    updateResultFilter(newValue: FilterProp) {
-        this.resultCriteria.filterProp = newValue;
-        this.updateResults();
     }
 
     exportNames() {
@@ -288,36 +214,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         }
     }
 
-    private invertSort = (order: SortOrder) => {
-        return order === SortOrder.ASC ? SortOrder.DESC : SortOrder.ASC;
-    };
-
-    /**
-     * Returns the Font Awesome icon name for a column header's sorting icon
-     * based on the currently active sortProp field and order.
-     *
-     * @param field Result field
-     */
-    iconForSortPropField(field: string) {
-        if (this.resultCriteria.sortProp.field !== field) {
-            return SortIcon.NONE;
-        }
-        return SortOrderIcon[this.resultCriteria.sortProp.order];
-    }
-
-    /**
-     * Sets the selected sort field, then updates the available results in the UI.
-     * Toggles the order direction (asc, desc) when the field has not changed.
-     *
-     * @param field Result field
-     */
-    onSort(field: string) {
-        const sameField = this.resultCriteria.sortProp && this.resultCriteria.sortProp.field === field;
-        const order = sameField ? this.invertSort(this.resultCriteria.sortProp.order) : SortOrder.ASC;
-        this.resultCriteria.sortProp = { field, order };
-        this.updateResults();
-    }
-
     /**
      * Formats the results in the autocomplete overlay.
      *
@@ -329,65 +225,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return `${login} (${name})`;
     };
 
-    searchInputFormatter = () => {
-        return this.resultCriteria.textSearch.join(', ');
-    };
-
     /**
-     * Splits the provides search words by comma and updates the autocompletion overlay.
-     * Also updates the available results in the UI.
+     * Converts a result object to a string that can be searched for. This is
+     * used by the autocomplete select inside the data table.
      *
-     * @param text$ stream of text input.
+     * @param result
      */
-    onSearch = (text$: Observable<string>) => {
-        return text$.pipe(
-            debounceTime(200),
-            distinctUntilChanged(),
-            map(text => {
-                const searchWords = text.split(',').map(word => word.trim());
-                // When the result field is cleared, we translate the resulting empty string to an empty array (otherwise no results would be found).
-                return searchWords.length === 1 && !searchWords[0] ? [] : searchWords;
-            }),
-            // For available results in table.
-            tap(searchWords => {
-                this.resultCriteria.textSearch = searchWords;
-                this.updateResults();
-            }),
-            // For autocomplete.
-            map((searchWords: string[]) => {
-                // We only execute the autocomplete for the last keyword in the provided list.
-                const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
-                // Don't execute autocomplete for less then two inputted characters.
-                if (!lastSearchWord || lastSearchWord.length < 3) {
-                    return false;
-                }
-                return this.results.filter(result => {
-                    const searchableFields = [(result.participation as StudentParticipation).student.login, (result.participation as StudentParticipation).student.name].filter(
-                        Boolean,
-                    ) as string[];
-                    return searchableFields.some(value => value.toLowerCase().includes(lastSearchWord.toLowerCase()) && value.toLowerCase() !== lastSearchWord.toLowerCase());
-                });
-            }),
-        );
-    };
-
-    onAutocompleteSelect = (result: Result) => {
-        this.resultCriteria.textSearch[this.resultCriteria.textSearch.length - 1] = (result.participation as StudentParticipation).student.login!;
-        this.updateResults();
-    };
-
-    getCachedResultsPerPage = () => {
-        const cachedValue = localStorage.getItem(resultsPerPageCacheKey);
-        return cachedValue ? parseInt(cachedValue, 10) : this.DEFAULT_PAGING_VALUE;
-    };
-
-    setResultsPerPage = (paging: number) => {
-        this.isLoading = true;
-        setTimeout(() => {
-            this.resultsPerPage = paging;
-            this.isLoading = false;
-        }, 500);
-        localStorage.setItem(resultsPerPageCacheKey, paging.toString());
+    searchTextFromResult = (result: Result): string => {
+        return (result.participation as StudentParticipation).student.login || '';
     };
 
     refresh() {

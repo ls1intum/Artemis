@@ -12,6 +12,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ExerciseScoresPopupService } from 'app/scores';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/components/data-table/data-table.module';
 
 const ENTITY_STATES = [
     {
@@ -35,6 +36,7 @@ const ENTITY_STATES = [
         SortByModule,
         FormDateTimePickerModule,
         NgxDatatableModule,
+        ArtemisDataTableModule,
         ArtemisProgrammingAssessmentModule,
     ],
     declarations: [ExerciseScoresComponent],
