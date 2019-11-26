@@ -11,6 +11,8 @@ import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -26,6 +28,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
+    gradingInstructions: SafeHtml | null;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -33,10 +36,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
+            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
             this.programmingExercise = programmingExercise;
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
