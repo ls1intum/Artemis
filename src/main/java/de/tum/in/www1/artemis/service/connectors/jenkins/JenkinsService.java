@@ -99,6 +99,9 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var planKey = participation.getBuildPlanId();
+
         final var config = getPlanConfig(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
         final var urlElements = config.getElementsByTagName("url");
         if (urlElements.getLength() != 2) {
@@ -107,9 +110,22 @@ public class JenkinsService implements ContinuousIntegrationService {
         urlElements.item(1).getFirstChild().setNodeValue(participation.getRepositoryUrl());
 
         final var errorMessage = "Error trying to configure build plan in Jenkins " + participation.getBuildPlanId();
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        final var planKey = participation.getBuildPlanId();
         postXml(config, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planKey);
+        enablePlan(projectKey, planKey);
+    }
+
+    // TODO this was a bad design choice. We should only have one configureBuildPlan method i.mo
+    @Override
+    public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, Optional<List<String>> triggeredBy) {
+        final var config = jobXml(projectKey, planName);
+        final var urlElements = config.getElementsByTagName("url");
+        if (urlElements.getLength() != 2) {
+            throw new IllegalArgumentException("Configuration of build plans currently only supports a model with two repositories, ASSIGNMENT and TESTS");
+        }
+        urlElements.item(1).getFirstChild().setNodeValue(vcsRepositoryUrl);
+
+        final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
+        postXml(config, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
     }
 
     @Override
@@ -246,13 +262,8 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String enablePlan(String planKey) {
-        return null;
-    }
-
-    @Override
-    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName,
-            Optional<List<String>> triggeredBy) {
+    public void enablePlan(String projectKey, String planKey) {
+        post(Endpoint.ENABLE, HttpStatus.OK, "Unable to enable plan " + planKey, String.class, projectKey, planKey);
     }
 
     @Override
@@ -409,7 +420,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
         DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
-        TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build");
+        TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"), ENABLE("job", "<projectKey>", "job", "<planKey>", "enable");
 
         private List<String> pathSegments;
 

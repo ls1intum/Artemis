@@ -173,9 +173,8 @@ public interface ContinuousIntegrationService {
      * Enables the given build plan.
      *
      * @param planKey to identify the plan in the CI service.
-     * @return the message indicating the result of the enabling operation.
      */
-    String enablePlan(String planKey);
+    void enablePlan(String projectKey, String planKey);
 
     /**
      * Updates the configured repository for a given plan to the given Bamboo Server repository.

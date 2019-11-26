@@ -150,7 +150,7 @@ public class BambooService implements ContinuousIntegrationService {
             versionControlService.get().getRepositoryName(repositoryUrl),
             Optional.empty()
         );
-        enablePlan(planKey);
+        enablePlan(planProject, planKey);
     }
 
     @Override
@@ -367,13 +367,12 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String enablePlan(String planKey) throws BambooException {
+    public void enablePlan(String projectKey, String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + planKey);
             //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
             String message = createBambooClient().getPlanHelper().enablePlan(planKey, true);
             log.info("Enable build plan " + planKey + " was successful. " + message);
-            return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while enabling the build plan", e);

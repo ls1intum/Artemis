@@ -933,8 +933,8 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
         giveCIProjectPermissions(newExercise);
-        continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
-        continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTemplateRepositoryName(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,

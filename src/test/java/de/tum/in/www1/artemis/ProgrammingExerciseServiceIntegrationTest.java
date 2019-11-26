@@ -181,7 +181,6 @@ public class ProgrammingExerciseServiceIntegrationTest {
                 .thenReturn(toBeImported.getTemplateBuildPlanId());
         when(bambooService.copyBuildPlan(anyString(), matches(BuildPlanType.SOLUTION.getName()), anyString(), anyString(), matches(BuildPlanType.SOLUTION.getName())))
                 .thenReturn(toBeImported.getSolutionBuildPlanId());
-        when(bambooService.enablePlan(anyString())).thenReturn("");
         doCallRealMethod().when(bitbucketService).getCloneRepositoryUrl(anyString(), anyString());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
