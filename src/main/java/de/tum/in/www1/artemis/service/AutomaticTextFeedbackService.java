@@ -103,7 +103,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     @Override
-    public Optional<Double> determineCoveragePercentage(TextCluster cluster) {
+    public Optional<Double> calculateCoveragePercentage(TextCluster cluster) {
         if (cluster != null) {
             final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
 
@@ -116,7 +116,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     @Override
-    public Optional<Double> determineScoreCoveragePercentage(TextBlock textBlock) {
+    public Optional<Double> calculateScoreCoveragePercentage(TextBlock textBlock) {
         final TextCluster cluster = textBlock.getCluster();
 
         if (cluster != null) {
@@ -135,7 +135,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     @Override
-    public Optional<Double> determineAverage(TextCluster cluster) {
+    public Optional<Double> calculateAverage(TextCluster cluster) {
         if (cluster != null) {
 
             final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
@@ -186,7 +186,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
 
         final Map<String, Feedback> feedback = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
         if (feedback != null) {
-            return Optional.of(feedback.values().parallelStream().mapToDouble(f -> f.getCredits()).sum());
+            return Optional.of(feedback.get(block.getId()).getCredits());
         }
         return Optional.empty();
     }

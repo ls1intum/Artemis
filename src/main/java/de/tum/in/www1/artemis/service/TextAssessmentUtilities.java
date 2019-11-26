@@ -32,21 +32,21 @@ public interface TextAssessmentUtilities {
      * @param cluster cluster for which the coverage percentage is calculated
      * @return
      */
-    public Optional<Double> determineCoveragePercentage(TextCluster cluster);
+    public Optional<Double> calculateCoveragePercentage(TextCluster cluster);
 
     /**
      * Calculates the percentage of elements in a cluster which are graded
      * @param textBlock
      * @return
      */
-    public Optional<Double> determineScoreCoveragePercentage(TextBlock textBlock);
+    public Optional<Double> calculateScoreCoveragePercentage(TextBlock textBlock);
 
     /**
      *
      * @param textCluster
      * @return
      */
-    public Optional<Double> determineAverage(TextCluster textCluster);
+    public Optional<Double> calculateAverage(TextCluster textCluster);
 
     /**
      *
