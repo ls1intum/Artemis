@@ -20,11 +20,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.FileUploadSubmission;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
@@ -109,6 +107,8 @@ public class FileUploadSubmissionIntegrationTest {
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
         checkDetailsHidden(returnedSubmission, true);
+        var submissionInDb = fileUploadSubmissionRepository.findById(returnedSubmission.getId()).get();
+        assertThat(submissionInDb).isEqualToIgnoringGivenFields(returnedSubmission, "result", "participation", "fileService", "submissionDate");
     }
 
     @Test
@@ -147,7 +147,7 @@ public class FileUploadSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "student1")
-    public void setSubmittedFileUploadSubmission_incorrectFileType() throws Exception {
+    public void submitFileUploadSubmission_incorrectFileType() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.txt", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
@@ -155,8 +155,43 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitFileUploadSubmission_afterDueDate_forbidden() throws Exception {
+        participation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        participationRepository.save(participation);
+        request.postWithMultipartFile("/api/exercises/" + afterDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
+                validFile, FileUploadSubmission.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitFileUploadSubmission_beforeDueDate_allowed() throws Exception {
+        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
+                FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitFileUploadSubmission_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
+        request.postWithMultipartFile("/api/exercises/" + afterDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
+                validFile, FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitFileUploadSubmission_beforeDueDateSecondSubmission_allowed() throws Exception {
+        var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
+        submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission,
+                "submission", file, FileUploadSubmission.class, HttpStatus.OK);
+
+        final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
+        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getAllSubmissionsOfExercise() throws Exception {
+    public void getAllSubmissionsOfExercise_studentHidden() throws Exception {
         FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
         FileUploadSubmission submission2 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student2");
 
@@ -164,6 +199,7 @@ public class FileUploadSubmissionIntegrationTest {
                 FileUploadSubmission.class);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
+        assertThat(submissions.stream().allMatch(submission -> ((StudentParticipation) submission.getParticipation()).getStudent() == null)).isTrue();
     }
 
     @Test
@@ -181,11 +217,12 @@ public class FileUploadSubmissionIntegrationTest {
                 FileUploadSubmission.class, params);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission);
+        assertThat(submissions.stream().allMatch(sub -> ((StudentParticipation) sub.getParticipation()).getStudent() == null)).isTrue();
     }
 
     @Test
     @WithMockUser(value = "student1")
-    public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
+    public void getAllSubmissionsOfExercise_asStudent() throws Exception {
         database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
 
         request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
@@ -237,6 +274,12 @@ public class FileUploadSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "student1")
+    public void getSubmissionWithoutAssessment_asStudent() throws Exception {
+        request.get("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.FORBIDDEN, FileUploadSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
     public void getFileUploadSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
         database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
         database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -258,41 +301,30 @@ public class FileUploadSubmissionIntegrationTest {
         assertThat(submission.getResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
+        assertThat(submission.getParticipation().getResults()).as("No results are send to the student").isEmpty();
+        assertThat(submission.getParticipation().getSubmissions()).as("No submissions are send to the student").isEmpty();
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_afterDueDate_forbidden() throws Exception {
-        participation.setInitializationDate(ZonedDateTime.now().minusDays(2));
-        participationRepository.save(participation);
-        request.postWithMultipartFile("/api/exercises/" + afterDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
-                validFile, FileUploadSubmission.class, HttpStatus.FORBIDDEN);
+    @WithMockUser(value = "student1")
+    public void getDataForFileUpload_wrongExerciseType() throws Exception {
+        var textCourse = database.addCourseWithOneTextExercise();
+        var textExercise = (TextExercise) textCourse.getExercises().iterator().next();
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+
+        request.get("/api/participations/" + textSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.OK);
-    }
+    @WithMockUser(value = "student2")
+    public void getDataForFileUpload_wrongStudent() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
+        database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-    @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
-        request.postWithMultipartFile("/api/exercises/" + afterDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
-                validFile, FileUploadSubmission.class, HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(value = "student3", roles = "USER")
-    public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
-        var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
-        submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission,
-                "submission", file, FileUploadSubmission.class, HttpStatus.OK);
-
-        final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
-        assertThat(submissionInDb.isPresent());
-        assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
+        request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.FORBIDDEN, FileUploadSubmission.class);
     }
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {

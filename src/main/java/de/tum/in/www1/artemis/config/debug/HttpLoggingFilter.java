@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.config.debug;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -17,22 +17,35 @@ public class HttpLoggingFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(HttpLoggingFilter.class);
 
     @SuppressWarnings("unused")
-    private volatile int activeRequests;
+    private volatile long activeRequests;
 
-    private static final AtomicIntegerFieldUpdater<HttpLoggingFilter> activeRequestsUpdater = AtomicIntegerFieldUpdater.newUpdater(HttpLoggingFilter.class, "activeRequests");
+    private volatile long allRequests;
+
+    private static final AtomicLongFieldUpdater<HttpLoggingFilter> activeRequestsUpdater = AtomicLongFieldUpdater.newUpdater(HttpLoggingFilter.class, "activeRequests");
+
+    private static final AtomicLongFieldUpdater<HttpLoggingFilter> allRequestsUpdater = AtomicLongFieldUpdater.newUpdater(HttpLoggingFilter.class, "allRequests");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        int activeRequests = activeRequestsUpdater.incrementAndGet(this);
-        logger.info("Request started. Active requests: {}", activeRequests);
+        long activeRequests = activeRequestsUpdater.incrementAndGet(this);
+        allRequestsUpdater.incrementAndGet(this);
+        logger.debug("Request started. Active requests: {}", activeRequests);
         try {
             chain.doFilter(request, response);
         }
         finally {
             if (!request.isAsyncStarted()) {
                 activeRequests = activeRequestsUpdater.decrementAndGet(this);
-                logger.info("Request finished. Active requests: {}", activeRequests);
+                logger.debug("Request finished. Active requests: {}", activeRequests);
             }
         }
+    }
+
+    public long getActiveRequests() {
+        return activeRequests;
+    }
+
+    public long getAllRequests() {
+        return allRequests;
     }
 }

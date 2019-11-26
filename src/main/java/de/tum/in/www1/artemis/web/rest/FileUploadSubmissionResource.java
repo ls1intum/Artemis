@@ -200,11 +200,6 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
     @GetMapping("/participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
-        var responseEntity = getDataForEditor(participation, FileUploadExercise.class, FileUploadSubmission.class, new FileUploadSubmission());
-        if (responseEntity.hasBody() && responseEntity.getBody() != null) {
-            return ResponseEntity.ok(fileUploadSubmissionService.hideResultDetails(responseEntity.getBody(), participation.getExercise()));
-        }
-        return responseEntity;
+        return getDataForEditor(participationId, FileUploadExercise.class, FileUploadSubmission.class, new FileUploadSubmission());
     }
 }
