@@ -13,6 +13,8 @@ import { ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -58,7 +60,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
             });
         });
     }
-
+    load(id: number) {
+        this.programmingExerciseService.find(id).subscribe((programmingExerciseResponse: HttpResponse<ProgrammingExercise>) => {
+            this.programmingExercise = programmingExerciseResponse.body!;
+            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
+        });
+    }
     /**
      * Load the latest result for the given participation. Will return [result] if there is a result, [] if not.
      * @param participationId of the given participation.
