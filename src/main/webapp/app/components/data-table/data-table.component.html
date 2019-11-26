@@ -6,7 +6,7 @@
                 *ngFor="let pagingValue of PAGING_VALUES"
                 (click)="setEntitiesPerPage(pagingValue)"
                 [innerHTML]="entitiesPerPageTranslation | translate: { number: pagingValue }"
-                [style.background-color]="pagingValue === entitiesPerPage ? '#3e8acc' : 'transparent'"
+                [class.selected]="pagingValue === entitiesPerPage"
                 ngbDropdownItem
             ></button>
         </div>
