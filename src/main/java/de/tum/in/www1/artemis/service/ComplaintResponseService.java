@@ -86,10 +86,6 @@ public class ComplaintResponseService {
         }
 
         originalComplaint.setAccepted(complaintResponse.getComplaint().isAccepted());
-
-        // make sure the original result and assessor are connected to the complaint
-        originalResult.setAssessor(assessor);
-        originalComplaint.setResult(originalResult);
         originalComplaint = complaintRepository.save(originalComplaint);
 
         complaintResponse.setSubmittedTime(ZonedDateTime.now());
