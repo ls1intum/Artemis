@@ -157,7 +157,7 @@ Collapsable styling
     }
     .instructions-wrapper__content {
         height: auto !important;
-        overflow: auto;
+        overflow: hidden;
 
         .editable-instruction-container__save,
         .editable-instruction-container__editor {
