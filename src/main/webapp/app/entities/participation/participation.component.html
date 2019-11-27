@@ -56,7 +56,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type == PROGRAMMING" [minWidth]="120">
+                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type === PROGRAMMING" [minWidth]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUrl')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUrl">
@@ -66,13 +66,13 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="value != null">
+                        <span *ngIf="value !== null">
                             <a href="{{ value }}" target="_blank">Repository Link</a>
                         </span>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type == PROGRAMMING" [minWidth]="100">
+                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type === PROGRAMMING" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
@@ -82,8 +82,8 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="value != null">
-                            <a href="https://bamboobruegge.in.tum.de/browse/{{ value }}" target="_blank">
+                        <span *ngIf="value !== null">
+                            <a href="https://bamboobruegge.in.tum.de/browse/{{ value }}" target="_blank" rel="noopener noreferrer">
                                 {{ value }}
                             </a>
                         </span>
@@ -179,7 +179,7 @@
                                 </button>
                                 <button
                                     type="submit"
-                                    *ngIf="exercise?.type === PROGRAMMING && value.buildPlanId != null && exercise.isAtLeastInstructor"
+                                    *ngIf="exercise?.type === PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
                                     [routerLink]="['/', { outlets: { popup: ['participation', value.id, 'cleanupBuildPlan'] } }]"
                                     class="btn btn-danger btn-sm mr-1"
                                 >
@@ -191,7 +191,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                                 </button>
                                 <button
-                                    *ngIf="this.presentationScoreEnabled && value.presentationScore == 1"
+                                    *ngIf="this.presentationScoreEnabled && value.presentationScore === 1"
                                     (click)="removePresentation(value)"
                                     class="btn btn-danger btn-sm mr-1"
                                 >

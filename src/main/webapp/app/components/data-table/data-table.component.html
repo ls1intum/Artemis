@@ -1,21 +1,22 @@
 <div>
-    <div ngbDropdown class="d-inline-block mr-2">
-        <button class="btn btn-outline-primary" id="dropdownBasic1" [innerHTML]="perPageTranslation(pagingValue) | translate: { number: pagingValue }" ngbDropdownToggle>
-            {{ perPageText(pagingValue) }}
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+    <div class="d-flex mb-2">
+        <div ngbDropdown class="d-inline-block mr-2">
             <button
-                *ngFor="let pagingOption of PAGING_VALUES"
-                (click)="setEntitiesPerPage(pagingOption)"
-                [innerHTML]="perPageTranslation(pagingOption) | translate: { number: pagingOption }"
-                [style.background-color]="pagingOption === pagingValue ? '#3e8acc' : 'transparent'"
-                ngbDropdownItem
-            >
-                <span>{{ perPageText(pagingOption) }}</span>
-            </button>
+                class="btn btn-outline-primary"
+                id="dropdownBasic1"
+                [innerHTML]="perPageTranslation(pagingValue) | translate: { number: pagingValue }"
+                ngbDropdownToggle
+            ></button>
+            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                <button
+                    *ngFor="let pagingOption of PAGING_VALUES"
+                    (click)="setEntitiesPerPage(pagingOption)"
+                    [innerHTML]="perPageTranslation(pagingOption) | translate: { number: pagingOption }"
+                    [class.selected]="pagingOption === pagingValue"
+                    ngbDropdownItem
+                ></button>
+            </div>
         </div>
-    </div>
-    <div class="d-flex mt-3">
         <input
             id="typeahead-basic"
             type="text"

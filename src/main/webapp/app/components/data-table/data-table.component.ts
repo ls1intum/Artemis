@@ -6,7 +6,6 @@ import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
 import { get, isNumber } from 'lodash';
 import { BaseEntity } from 'app/shared';
-import * as pluralize from 'pluralize';
 
 enum SortOrder {
     ASC = 'asc',
@@ -56,7 +55,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() customFilterKey: any = {};
     @Input() customFilter: (entity: BaseEntity) => boolean = () => true;
 
-    PAGING_VALUES: PagingValue[] = [10, 20, 50, 100, 200, 500, 1000, 'all'];
+    readonly PAGING_VALUES: PagingValue[] = [10, 20, 50, 100, 200, 500, 1000, 'all'];
     DEFAULT_PAGING_VALUE = 50;
 
     entities: BaseEntity[];
@@ -135,19 +134,6 @@ export class DataTableComponent implements OnInit, OnChanges {
      */
     get pageLimit() {
         return isNumber(this.pagingValue) ? this.pagingValue : undefined;
-    }
-
-    /**
-     * Returns e.g. "10 results per page" or "all results"
-     *
-     * @param quantifier Number of entities per page or 'all'
-     */
-    perPageText(quantifier: PagingValue) {
-        if (isNumber(quantifier)) {
-            return `${pluralize(this.resultName, quantifier, true)} per page`;
-        } else {
-            return `${quantifier} ${pluralize(this.resultName)}`;
-        }
     }
 
     /**

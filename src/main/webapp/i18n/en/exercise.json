@@ -9,7 +9,7 @@
             "resultCount": "{{resultsLength}} results",
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
-            "searchForStudents": "Search for Students by login or name (comma separated)",
+            "searchForStudents": "Search for students by login or name (comma separated)",
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",

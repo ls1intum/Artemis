@@ -1,3 +1,5 @@
+@import '../../../content/scss/_artemis-variables';
+
 @import '~@swimlane/ngx-datatable/index.css';
 @import '~@swimlane/ngx-datatable/themes/bootstrap.scss';
 @import '~@swimlane/ngx-datatable/assets/icons.css';
@@ -17,4 +19,8 @@
 ngb-typeahead-window.dropdown-menu.show {
     max-height: calc(100vh - 380px);
     overflow-y: auto;
+}
+
+.dropdown-item.selected {
+    background-color: $primary;
 }
