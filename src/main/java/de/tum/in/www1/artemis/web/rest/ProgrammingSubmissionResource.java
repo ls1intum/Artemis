@@ -368,8 +368,8 @@ public class ProgrammingSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a programming submission without assessment");
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        final ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
         }
@@ -382,11 +382,11 @@ public class ProgrammingSubmissionResource {
 
         // TODO: Handle lock limit.
 
-        Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
+        final Optional<ProgrammingSubmission> programmingSubmissionOpt = programmingSubmissionService.getRandomProgrammingSubmissionWithoutManualResult(programmingExercise);
         if (programmingSubmissionOpt.isEmpty()) {
             return notFound();
         }
-        ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
+        final ProgrammingSubmission programmingSubmission = programmingSubmissionOpt.get();
 
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();

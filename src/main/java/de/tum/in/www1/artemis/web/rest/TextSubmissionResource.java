@@ -105,9 +105,9 @@ public class TextSubmissionResource {
 
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        final TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        final ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
         if (responseFailure != null) {
             return responseFailure;
         }
@@ -167,14 +167,14 @@ public class TextSubmissionResource {
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        Exercise exercise = exerciseService.findOne(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<TextSubmission> textSubmissions;
+        final List<TextSubmission> textSubmissions;
         if (assessedByTutor) {
             textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
