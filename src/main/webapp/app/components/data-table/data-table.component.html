@@ -1,17 +1,22 @@
 <div>
-    <div ngbDropdown class="d-inline-block mr-2">
-        <button class="btn btn-outline-primary" id="dropdownBasic1" [innerHTML]="entitiesPerPageTranslation | translate: { number: entitiesPerPage }" ngbDropdownToggle></button>
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+    <div class="d-flex mb-2">
+        <div ngbDropdown class="d-inline-block mr-2">
             <button
-                *ngFor="let pagingValue of PAGING_VALUES"
-                (click)="setEntitiesPerPage(pagingValue)"
-                [innerHTML]="entitiesPerPageTranslation | translate: { number: pagingValue }"
-                [class.selected]="pagingValue === entitiesPerPage"
-                ngbDropdownItem
+                class="btn btn-outline-primary"
+                id="dropdownBasic1"
+                [innerHTML]="entitiesPerPageTranslation | translate: { number: entitiesPerPage }"
+                ngbDropdownToggle
             ></button>
+            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                <button
+                    *ngFor="let pagingValue of PAGING_VALUES"
+                    (click)="setEntitiesPerPage(pagingValue)"
+                    [innerHTML]="entitiesPerPageTranslation | translate: { number: pagingValue }"
+                    [class.selected]="pagingValue === entitiesPerPage"
+                    ngbDropdownItem
+                ></button>
+            </div>
         </div>
-    </div>
-    <div class="d-flex mt-3">
         <input
             id="typeahead-basic"
             type="text"
