@@ -61,6 +61,10 @@ Code-Editor Layout Styles
             flex-flow: row nowrap;
             width: 500px;
 
+            .instructions-wrapper__content {
+                overflow: hidden;
+            }
+
             > *:last-child {
                 flex: 1 1 auto;
                 width: 90%;
@@ -172,6 +176,10 @@ Collapsable styling
     }
 
     .card-title span {
+        display: none !important;
+    }
+
+    .editable-instruction-container__status {
         display: none !important;
     }
 }
