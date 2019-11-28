@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
@@ -11,22 +12,18 @@ import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.Group;
 import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.ProjectHook;
 import org.gitlab4j.api.models.Visibility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -86,98 +83,83 @@ public class GitLabService implements VersionControlService {
     }
 
     private void createUser(User user) {
-        final var body = Map.of("email", user.getEmail(), "password", user.getPassword(), "username", user.getLogin(), "name", user.getName(), "can_create_group", false);
-        final var builder = Endpoints.USERS.buildEndpoint(BASE_API);
-
-        final var errorMessage = "Unable to create new user in GitLab " + user.getLogin();
-        performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
+        final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
+                .withCanCreateProject(false);
+        try {
+            gitlab.getUserApi().createUser(gitlabUser, user.getPassword(), false);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);
+        }
     }
 
     private void addMemberToProject(URL repositoryUrl, String username) {
-        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var userId = getUserId(username);
-        final var builder = Endpoints.ADD_USER.buildEndpoint(BASE_API, repositoryId);
-        final var body = Map.of("user_id", userId, "access_level", AccessLevel.DEVELOPER.levelCode);
 
         try {
-            restTemplate.postForEntity(builder.build(true).toUri(), body, String.class);
+            gitlab.getProjectApi().addMember(repositoryId, userId, org.gitlab4j.api.models.AccessLevel.DEVELOPER);
         }
-        catch (HttpClientErrorException e) {
-            if (e.getResponseBodyAsString().contains("should be greater than or equal to Owner inherited membership")) {
-                // this is fine, the user already has the sufficient permissions in the parent folder, usually the case for admins or instructors
-                log.warn("User (" + username + ") has already sufficient permissions for " + repositoryUrl.toString());
-            }
-            else {
-                final var errorMessage = "Error while trying to add user to repository: " + username + " to repo " + repositoryUrl;
-                defaultExceptionHandling(errorMessage, e);
-            }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Error while trying to add user to repository: " + username + " to repo " + repositoryUrl, e);
         }
     }
 
     private void protectBranch(String branch, URL repositoryUrl) {
-        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
-        final var builder = Endpoints.PROTECTED_BRANCHES.buildEndpoint(BASE_API, repositoryId);
-        final var body = Map.of("name", branch, "push_access_level", AccessLevel.DEVELOPER.levelCode);
-
-        final var errorMesage = "Unable to protect branch " + branch + " for repository " + repositoryUrl;
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         // we have to first unprotect the branch in order to set the correct access level
         unprotectBranch(repositoryId, branch);
-        performExchange(errorMesage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+
+        try {
+            gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, org.gitlab4j.api.models.AccessLevel.DEVELOPER, org.gitlab4j.api.models.AccessLevel.DEVELOPER);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryUrl, e);
+        }
     }
 
     private void unprotectBranch(String repositoryId, String branch) {
-        final var builder = Endpoints.PROTECTED_BRANCH.buildEndpoint(BASE_API, repositoryId, branch);
-
-        final var errorMessage = "Could not unprotect branch " + branch + " for repository " + repositoryId;
-        performExchange(errorMessage, List.of(HttpStatus.NO_CONTENT, HttpStatus.NOT_FOUND),
-                () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+        try {
+            gitlab.getRepositoryApi().unprotectBranch(repositoryId, branch);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryId, e);
+        }
     }
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
-        if (!webhooksExists(repositoryId, notificationUrl)) {
-            final var builder = Endpoints.ADD_WEBHOOK.buildEndpoint(BASE_API, repositoryId);
-            final var body = Map.of("url", notificationUrl, "push_events", true, "enable_ssl_verification", false);
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 
-            final var errorMessage = "Unable to add webhook for " + repositoryUrl;
-            performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, JsonNode.class));
+        try {
+            gitlab.getProjectApi().addHook(repositoryId, notificationUrl, hook, false, "artemisPushSecret");
         }
-    }
-
-    private boolean webhooksExists(String repositoryId, String notificationUrl) {
-        final var builder = Endpoints.GET_WEBHOOKS.buildEndpoint(BASE_API, repositoryId);
-
-        final var errorMessage = "Unable to get webhooks for " + repositoryId;
-        final var response = performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
-
-        for (final var hook : response) {
-            if (hook.get("url").asText().equals(notificationUrl))
-                return true;
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to add webhook for " + repositoryUrl, e);
         }
-
-        return false;
     }
 
     @Override
     public void deleteProject(String projectKey) {
-        final var optionalGroup = groupExists(projectKey);
-        if (optionalGroup.isPresent()) {
-            final var builder = Endpoints.DELETE_GROUP.buildEndpoint(BASE_API, optionalGroup.get());
-
-            final var errorMessage = "Unable to delete group in GitLab: " + projectKey;
-            performExchange(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+        try {
+            gitlab.getGroupApi().deleteGroup(projectKey);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to delete group in GitLab: " + projectKey, e);
         }
     }
 
     @Override
     public void deleteRepository(URL repositoryUrl) {
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var repositoryName = getRepositorySlugFromUrl(repositoryUrl);
-        final var repositoryId = getRepositoryId(repositoryUrl);
-        final var builder = Endpoints.DELETE_PROJECT.buildEndpoint(BASE_API, repositoryId);
-
-        final var errorMessage = "Error trying to delete repository on GitLab: " + repositoryName;
-        performExchange(errorMessage, HttpStatus.ACCEPTED, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.DELETE, null, String.class));
+        try {
+            gitlab.getProjectApi().deleteProject(repositoryId);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Error trying to delete repository on GitLab: " + repositoryName, e);
+        }
     }
 
     @Override
@@ -203,12 +185,9 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public Boolean repositoryUrlIsValid(URL repositoryUrl) {
-        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
-        final var builder = Endpoints.GET_PROJECT.buildEndpoint(BASE_API, repositoryId);
-
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         try {
-            final var errorMessage = "Can't get repository under the ID " + repositoryId;
-            performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
+            gitlab.getProjectApi().getProject(repositoryId);
         }
         catch (Exception emAll) {
             log.warn("Invalid repository URL " + repositoryUrl);
@@ -237,24 +216,9 @@ public class GitLabService implements VersionControlService {
         }
     }
 
-    private Optional<Long> groupExists(String path) {
-        final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", path);
-
-        final var errorString = "Unable to fetch groups matching " + path;
-        final var foundGroups = performExchange(errorString, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
-
-        for (final var group : foundGroups) {
-            if (group.get("path").asText().equals(path))
-                return Optional.of(group.get("id").asLong());
-        }
-
-        return Optional.empty();
-    }
-
     @Override
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
         try {
-
             final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
             final var project = new Project().withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
                     .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
@@ -274,23 +238,14 @@ public class GitLabService implements VersionControlService {
         return getRepositorySlugFromUrl(repositoryUrl);
     }
 
-    private long getRepositoryId(URL repositoryUrl) {
-        final var builder = Endpoints.PROJECTS.buildEndpoint(BASE_API).queryParam("search", getRepositorySlugFromUrl(repositoryUrl));
-
-        final var errorMessage = "Error fetching ID for repository " + repositoryUrl;
-        final var response = performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
-
-        return response.get(0).get("id").asLong();
-    }
-
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
-        final var builder = Endpoints.GROUPS.buildEndpoint(BASE_API).queryParam("search", projectKey);
-
-        final var errorMessage = "Error trying to search for project " + projectKey;
-        final var response = performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.getForEntity(builder.build(true).toUri(), JsonNode.class));
-
-        return !response.isEmpty();
+        try {
+            return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Error trying to search for project " + projectName, e);
+        }
     }
 
     @Override
@@ -302,25 +257,33 @@ public class GitLabService implements VersionControlService {
         final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
 
         final var errorMessage = "Couldn't fork repository: " + sourceProjectKey + " to " + targetProjectKey;
-        performExchange(errorMessage, HttpStatus.CREATED, () -> restTemplate.postForEntity(builder.build(true).toUri(), body, String.class));
+        try {
+            final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, String.class);
+            if (response.getStatusCode() != HttpStatus.CREATED) {
+                throw new GitLabException(errorMessage + "; response (" + response.getStatusCode() + ") was: " + response.getBody());
+            }
+        }
+        catch (HttpClientErrorException e) {
+            defaultExceptionHandling(errorMessage, e);
+        }
 
         return new GitLabRepositoryUrl(targetProjectKey, targetRepoSlug);
     }
 
     @Override
     public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) {
-        setRepositoryPermission(repositoryUrl, username, AccessLevel.GUEST);
+        setRepositoryPermission(repositoryUrl, username, org.gitlab4j.api.models.AccessLevel.GUEST);
     }
 
-    private void setRepositoryPermission(URL repositoryUrl, String username, AccessLevel accessLevel) {
+    private void setRepositoryPermission(URL repositoryUrl, String username, org.gitlab4j.api.models.AccessLevel accessLevel) {
         final var userId = getUserId(username);
-        final var repositoryId = getPathIdFromRepositoryURL(repositoryUrl);
-        final var builder = Endpoints.EDIT_EXERCISE_PERMISSION.buildEndpoint(BASE_API, repositoryId, userId);
-        final var body = Map.of("access_level", accessLevel.levelCode);
-
-        final var errorMessage = "Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel;
-        performExchange(errorMessage, HttpStatus.OK, () -> restTemplate.exchange(builder.build(true).toUri(), HttpMethod.PUT, new HttpEntity<>(body), JsonNode.class));
-
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        try {
+            gitlab.getProjectApi().updateMember(repositoryId, userId, accessLevel);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel, e);
+        }
     }
 
     @Override
@@ -338,77 +301,35 @@ public class GitLabService implements VersionControlService {
         return null;
     }
 
-    private <T> T performExchange(String errorMessage, HttpStatus expectedStatus, Supplier<ResponseEntity<T>> tryToDo) {
-        return performExchange(errorMessage, List.of(expectedStatus), tryToDo);
-    }
-
-    private <T> T performExchange(String errorMessage, List<HttpStatus> allowedStatuses, Supplier<ResponseEntity<T>> tryToDo) {
-        try {
-            final var response = tryToDo.get();
-            if (!allowedStatuses.contains(response.getStatusCode())) {
-                defaultExceptionHandling(errorMessage);
-            }
-
-            return response.getBody();
-        }
-        catch (HttpClientErrorException e) {
-            defaultExceptionHandling(errorMessage, e);
-        }
-
-        // In theory unreachable, because we always throw an exception in the default handling
-        throw new GitLabException("Unable to perform request.\n" + errorMessage);
-    }
-
     private void defaultExceptionHandling(String message, HttpClientErrorException exception) {
         message = message + "; response was: " + exception.getResponseBodyAsString();
         log.error(message);
         throw new GitLabException(message, exception);
     }
 
-    private void defaultExceptionHandling(String message) {
-        log.error(message);
-        throw new GitLabException(message);
-    }
-
-    private long getUserId(String username) {
-        final var optionalUser = searchUser(username);
-
-        if (optionalUser.isEmpty()) {
-            final var errorString = "Unable to get ID for user " + username;
-            log.error(errorString);
-            throw new GitLabException(errorString);
+    private int getUserId(String username) {
+        try {
+            return gitlab.getUserApi().getUser(username).getId();
         }
-
-        return optionalUser.get();
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to get ID for user " + username, e);
+        }
     }
 
     private boolean userExists(String username) {
-        return searchUser(username).isPresent();
+        try {
+            return gitlab.getUserApi().getUser(username) != null;
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to fetch user ID for " + username, e);
+        }
     }
 
-    private Optional<Long> searchUser(String username) {
-        final var builder = Endpoints.USERS.buildEndpoint(BASE_API).queryParam("username", username);
-
-        final var response = restTemplate.getForEntity(builder.toUriString(), JsonNode.class, new HashMap<>());
-
-        if (response.getStatusCode() != HttpStatus.OK) {
-            final var erroString = "Unable to fetch user ID for " + username;
-            log.error(erroString);
-            throw new GitLabException(erroString);
-        }
-
-        if (response.getBody() == null || response.getBody().size() == 0) {
-            return Optional.empty();
-        }
-
-        return Optional.of(response.getBody().get(0).get("id").asLong());
-    }
-
-    private String getPathIdFromRepositoryURL(URL repository) {
+    private String getPathIDFromRepositoryURL(URL repository) {
         final var namespaces = repository.toString().split("/");
         final var last = namespaces.length - 1;
 
-        return namespaces[last - 1] + "%2F" + namespaces[last].replace(".git", "");
+        return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
     }
 
     private enum Endpoints {
@@ -436,21 +357,6 @@ public class GitLabService implements VersionControlService {
             }
 
             return UriComponentsBuilder.fromHttpUrl(baseUrl).pathSegment(pathSegments.toArray(new String[0]));
-        }
-    }
-
-    private enum AccessLevel {
-
-        GUEST(10), REPORTER(20), DEVELOPER(30), MAINTAINER(40), OWNER(50);
-
-        private int levelCode;
-
-        AccessLevel(int levelCode) {
-            this.levelCode = levelCode;
-        }
-
-        public int getLevelCode() {
-            return levelCode;
         }
     }
 
