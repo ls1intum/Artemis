@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
@@ -7,6 +9,7 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.xml.transform.TransformerException;
@@ -227,11 +230,14 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.setSuccessful(report.getSuccessful() == testSum);
         result.setResultString(report.getSuccessful() + " of " + testSum + " passed");
         result.setCompletionDate(report.getRunDate());
-        final var score = ((1.0 * report.getSuccessful()) / testSum) * 100;
-        result.setScore((long) score);
+        result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation(participation);
 
         return result;
+    }
+
+    private double calculateResultScore(TestResults report, int testSum) {
+        return ((1.0 * report.getSuccessful()) / testSum) * 100;
     }
 
     /**
@@ -254,7 +260,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // TODO
+
         return BuildStatus.INACTIVE;
     }
 
@@ -271,7 +277,66 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public Optional<Result> retrieveLatestBuildResult(ProgrammingExerciseParticipation participation, ProgrammingSubmission submission) {
+        final var report = fetchLatestBuildResultFromJenkins(participation);
+
+        // The retrieved build result must match the commitHash of the provided submission.
+        if (report.getCommits().stream().map(Commit::getHash).noneMatch(hash -> hash.equals(submission.getCommitHash()))) {
+            return Optional.empty();
+        }
+
+        final var result = new Result();
+        final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
+        result.setRatedIfNotExceeded(report.getRunDate(), submission);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setResultString(report.getSuccessful() + " of " + testSum + " passed");
+        result.setCompletionDate(report.getRunDate());
+        result.setScore((long) calculateResultScore(report, testSum));
+        result.setParticipation((Participation) participation);
+        result.setSubmission(submission);
+        addFeedbackToResult(result, report);
+
         return Optional.empty();
+    }
+
+    private void addFeedbackToResult(Result result, TestResults report) {
+        // No feedback for build errors
+        if (report.getResults() == null) {
+            result.setHasFeedback(false);
+            return;
+        }
+
+        final var feedbacks = report.getResults().stream().flatMap(testsuite -> testsuite.getTestCases().stream()).map(testCase -> {
+            final var feedback = new Feedback();
+            feedback.setPositive(testCase.getErrors() == null && testCase.getFailures() == null);
+            feedback.setText(testCase.getName());
+            String errorMessage = null;
+            // If we have errors or failures, they will always be of length == 1 since JUnit (and the format itself)
+            // should generally only report he first failure in a test case
+            if (testCase.getErrors() != null) {
+                errorMessage = testCase.getErrors().get(0).getMessage();
+            }
+            else if (testCase.getFailures() != null) {
+                errorMessage = testCase.getFailures().get(0).getMessage();
+            }
+            // The assertion message can be longer than the allowed char limit, so we shorten it here if needed.
+            if (errorMessage != null && errorMessage.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+                errorMessage = errorMessage.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+            }
+            feedback.setDetailText(errorMessage);
+
+            return feedback;
+        }).collect(Collectors.toList());
+
+        result.setHasFeedback(true);
+        result.addFeedbacks(feedbacks);
+    }
+
+    private TestResults fetchLatestBuildResultFromJenkins(ProgrammingExerciseParticipation participation) {
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var planKey = participation.getBuildPlanId();
+        final var url = Endpoint.TEST_RESULTS.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey).build(true);
+
+        return restTemplate.getForObject(url.toUri(), TestResults.class);
     }
 
     @Override
@@ -489,7 +554,8 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
         DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
-        TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"), ENABLE("job", "<projectKey>", "job", "<planKey>", "enable");
+        TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"), ENABLE("job", "<projectKey>", "job", "<planKey>", "enable"),
+        TEST_RESULTS("job", "<projectKey>", "job", "<planKey>", "lastBuild", "testResults", "api", "json");
 
         private List<String> pathSegments;
 
