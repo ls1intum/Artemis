@@ -42,4 +42,5 @@ artemis:
         embedding-url: http://localhost:8000/embed
         embedding-chunk-size: 50
         clustering-url: http://localhost:8000/cluster
+        segmentation-url: http://localhost:8080/segment
         secret: null
