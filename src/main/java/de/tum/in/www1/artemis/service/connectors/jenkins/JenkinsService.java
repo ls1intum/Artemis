@@ -232,6 +232,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.setCompletionDate(report.getRunDate());
         result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation(participation);
+        addFeedbackToResult(result, report);
 
         return result;
     }
@@ -341,6 +342,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public List<Feedback> getLatestBuildResultDetails(Result result) {
+        // TODO since this is unused as of now
         return null;
     }
 
@@ -392,6 +394,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
+        // TODO
         return null;
     }
 
