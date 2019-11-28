@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.model.GitLabPushNotification;
 
 @Profile("gitlab")
 @Service
@@ -205,7 +206,18 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
-        return null;
+        final var details = GitLabPushNotification.convert(requestBody);
+        final var commit = new Commit();
+        // We will notify for every commit, so we can just use the first commit in the notification list
+        final var gitLabCommit = details.getCommits().get(0);
+        commit.setMessage(gitLabCommit.getMessage());
+        commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
+        commit.setAuthorName(gitLabCommit.getAuthor().getName());
+        final var ref = details.getRef().split("/");
+        commit.setBranch(ref[ref.length - 1]);
+        commit.setCommitHash(gitLabCommit.getHash());
+
+        return commit;
     }
 
     @Override
