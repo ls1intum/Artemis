@@ -101,7 +101,13 @@ public class GitLabService implements VersionControlService {
             gitlab.getProjectApi().addMember(repositoryId, userId, org.gitlab4j.api.models.AccessLevel.DEVELOPER);
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Error while trying to add user to repository: " + username + " to repo " + repositoryUrl, e);
+            if (e.getValidationErrors().containsKey("access_level")
+                    && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to Owner inherited membership"))) {
+                log.warn("Member already has the requested permissions! Permission stays the same");
+            }
+            else {
+                throw new GitLabException("Error while trying to add user to repository: " + username + " to repo " + repositoryUrl, e);
+            }
         }
     }
 
