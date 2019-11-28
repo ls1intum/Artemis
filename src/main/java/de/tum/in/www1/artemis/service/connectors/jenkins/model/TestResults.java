@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.model;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 public class TestResults {
 
     private int successful;
@@ -20,6 +23,10 @@ public class TestResults {
     private List<Testsuite> results;
 
     private ZonedDateTime runDate;
+
+    public static TestResults convert(Object someResult) {
+        return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResults.class);
+    }
 
     public int getSuccessful() {
         return successful;

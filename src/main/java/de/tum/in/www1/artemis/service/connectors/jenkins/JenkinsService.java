@@ -175,7 +175,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws Exception {
-        final var result = new ObjectMapper().convertValue(requestBody, TestResults.class);
+        final var result = TestResults.convert(requestBody);
         final var nameParams = result.getFullName().split(" ");
         if (nameParams.length != 4) {
             throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
@@ -186,7 +186,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
-        final var report = new ObjectMapper().convertValue(requestBody, TestResults.class);
+        final var report = TestResults.convert(requestBody);
         final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
                 .filter(submission -> {
                     final var commitHash = getCommitHash(report, submission.getType());
