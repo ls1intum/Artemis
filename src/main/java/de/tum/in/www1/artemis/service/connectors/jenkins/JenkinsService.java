@@ -14,6 +14,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -36,10 +37,15 @@ import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.model.Commit;
 import de.tum.in.www1.artemis.service.connectors.jenkins.model.TestResults;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -62,11 +68,15 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final RestTemplate restTemplate;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private JenkinsServer jenkinsServer;
 
-    public JenkinsService(JenkinsBuildPlanCreatorFactory buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
+    public JenkinsService(JenkinsBuildPlanCreatorFactory buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildPlanCreatorFactory = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     @PostConstruct
@@ -82,6 +92,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         try {
             jenkinsServer.createJob(folder(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig));
+            job(exercise.getProjectKey(), planKey).build();
         }
         catch (IOException e) {
             throw new JenkinsException("Unable to create new build plan :" + planKey);
@@ -172,14 +183,79 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
-        // TODO
-        return null;
+        final var report = new ObjectMapper().convertValue(requestBody, TestResults.class);
+        final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
+                .filter(submission -> {
+                    final var commitHash = getCommitHash(report, submission.getType());
+                    return commitHash.isPresent() && submission.getCommitHash().equals(commitHash.get());
+                }).findFirst();
+        final var result = createResultFromBuildResult(report, (Participation) participation);
+        final ProgrammingSubmission submission;
+        submission = latestPendingSubmission.orElseGet(() -> createFallbackSubmission(participation, report));
+        result.setSubmission(submission);
+        result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
+        // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
+        // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
+        return result;
+    }
+
+    @NotNull
+    private ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, TestResults report) {
+        ProgrammingSubmission submission;
+        // There can be two reasons for the case that there is no programmingSubmission:
+        // 1) Manual build triggered from Jenkins.
+        // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
+        // we can still get the commit hash from the payload of the Jenkins REST Call and "reverse engineer" the programming submission object to be consistent
+        final var commitHash = getCommitHash(report, SubmissionType.MANUAL);
+        log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
+                participation.getId(), participation.getBuildPlanId());
+        submission = new ProgrammingSubmission();
+        submission.setParticipation((Participation) participation);
+        submission.setSubmitted(true);
+        submission.setType(SubmissionType.OTHER);
+        submission.setCommitHash(commitHash.get());
+        submission.setSubmissionDate(report.getRunDate());
+        // Save to avoid TransientPropertyValueException.
+        programmingSubmissionRepository.save(submission);
+        return submission;
+    }
+
+    private Result createResultFromBuildResult(TestResults report, Participation participation) {
+        final var result = new Result();
+        final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setSuccessful(report.getSuccessful() == testSum);
+        result.setResultString(report.getSuccessful() + " of " + testSum + " passed");
+        result.setCompletionDate(report.getRunDate());
+        final var score = ((1.0 * report.getSuccessful()) / testSum) * 100;
+        result.setScore((long) score);
+        result.setParticipation(participation);
+
+        return result;
+    }
+
+    /**
+     * Get the commit hash from the build map, the commit hash will be different for submission types or null.
+     *
+     * @param submissionType describes why the build was started.
+     * @return if the commit hash for the given submission type was found, otherwise null.
+     */
+    private Optional<String> getCommitHash(TestResults report, SubmissionType submissionType) {
+        final var assignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
+        final var testSubmission = submissionType == SubmissionType.TEST;
+        final var testSlugSuffix = RepositoryType.TESTS.getName();
+
+        // It's either an assignment submission, so then we return the hash of the assignment (*-exercise, *-studentId),
+        // or the hash of the test repository for test repo changes (*-tests)
+        return report.getCommits().stream().filter(
+                commit -> (assignmentSubmission && !commit.getRepositorySlug().endsWith(testSlugSuffix)) || (testSubmission && commit.getRepositorySlug().endsWith(testSlugSuffix)))
+                .map(Commit::getHash).findFirst();
     }
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         // TODO
-        return null;
+        return BuildStatus.INACTIVE;
     }
 
     @Override
