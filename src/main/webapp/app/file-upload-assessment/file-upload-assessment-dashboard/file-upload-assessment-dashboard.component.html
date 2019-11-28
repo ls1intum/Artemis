@@ -19,7 +19,7 @@
                     <th jhiSortBy="duration">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.firstName" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                    <th jhiSortBy="student.firstName" *ngIf="exercise.isAtLeastInstructor">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.student">Student</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="assessor.firstName">
@@ -54,9 +54,7 @@
                         }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
                     </td>
-                    <td *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                        {{ submission.participation.student.firstName }} {{ submission.participation.student.lastName }}
-                    </td>
+                    <td *ngIf="exercise.isAtLeastInstructor">{{ submission.participation.student?.firstName }} {{ submission.participation.student?.lastName }}</td>
                     <td>
                         <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
                     </td>
