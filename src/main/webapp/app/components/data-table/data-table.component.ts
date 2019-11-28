@@ -87,9 +87,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param changes List of Inputs that were changed
      */
     ngOnChanges(changes: SimpleChanges) {
-        const triggerUpdateList = ['allEntities', 'customFilterKey'];
-
-        if (Object.keys(changes).filter(input => triggerUpdateList.includes(input))) {
+        if (changes.allEntities || changes.customFilterKey) {
             this.updateEntities();
         }
     }
