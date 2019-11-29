@@ -168,18 +168,37 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
         this.router.navigateByUrl(`/overview/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
     }
 
+    /**
+     * Edit the given exercise in IntelliJ as an instructor. This will trigger the import of the exercise
+     * (if it is not already imported) and opens the created project afterwards.
+     *
+     * @param exerciseJson The exercise to be imported as a JSON string
+     */
     editExercise(exerciseJson: string): void {
         this.window.nativeWindow.intellij.editExercise(exerciseJson);
     }
 
+    /**
+     * Builds the selected repository and runs all tests locally in the IDE. This will not send or commit any files
+     * to the remote repositories.
+     */
     buildAndTestInstructorRepository(): void {
         this.window.nativeWindow.intellij.buildAndTestInstructorRepository();
     }
 
+    /**
+     * Selects an instructor repository in IntelliJ. The selected repository will be used for all future actions
+     * that reference an instructor repo s.a. submitting the code.
+     *
+     * @param repository
+     */
     selectInstructorRepository(repository: REPOSITORY): void {
         this.window.nativeWindow.intellij.selectInstructorRepository(repository);
     }
 
+    /**
+     * Submits the selected repository in IntelliJ by adding and committing all changes and pushing them to the remote.
+     */
     submitInstructorRepository(): void {
         this.window.nativeWindow.intellij.submitInstructorRepository();
     }
