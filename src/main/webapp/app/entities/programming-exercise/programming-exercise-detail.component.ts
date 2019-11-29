@@ -13,7 +13,6 @@ import { ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { HttpResponse } from '@angular/common/http';
 
 @Component({
