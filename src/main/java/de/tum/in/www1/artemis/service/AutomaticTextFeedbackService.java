@@ -82,6 +82,11 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         return Optional.empty();
     }
 
+    /**
+     * Calculates the expected value in a text cluster
+     * @param cluster Text cluster for which the expected value is calculated
+     * @return
+     */
     @Override
     public Optional<Double> calculateExpectation(TextCluster cluster) {
         return Optional.of(cluster.getBlocks().stream()
@@ -97,11 +102,21 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
                 .sum());
     }
 
+    /**
+     * Calculates the standard deviation of a text cluster
+     * @param textCluster cluster for which the standard deviation is calculated
+     * @return {Optional<Double>}
+     */
     @Override
     public Optional<Double> calculateStandardDeviation(TextCluster textCluster) {
         return Optional.empty();
     }
 
+    /**
+     * Calculates the coverage percentage of how  many text blocks in a cluster are present
+     * @param cluster cluster for which the coverage percentage is calculated
+     * @return
+     */
     @Override
     public Optional<Double> calculateCoveragePercentage(TextCluster cluster) {
         if (cluster != null) {
@@ -115,6 +130,11 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         return Optional.empty();
     }
 
+    /**
+     * Calculates the coverage percentage of a cluster with the same score as a given text block
+     * @param textBlock text block for which its clusters score coverage percentage is determined
+     * @return {Optional<Double>} Optional which contains the percentage between [0.0-1.0] or empty if text block is not in a cluster
+     */
     @Override
     public Optional<Double> calculateScoreCoveragePercentage(TextBlock textBlock) {
         final TextCluster cluster = textBlock.getCluster();
@@ -134,6 +154,11 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         return Optional.empty();
     }
 
+    /**
+     * Calculates the average score of a text cluster
+     * @param cluster text cluster for which the average score should be computed
+     * @return {Optional<Double>} Optional which contains the average scores or empty if there are none
+     */
     @Override
     public Optional<Double> calculateAverage(TextCluster cluster) {
         if (cluster != null) {
@@ -153,11 +178,21 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         return Optional.empty();
     }
 
+    /**
+     * Getter for the cluster size of a text cluster
+     * @param cluster cluster for which the size should be returned
+     * @return {Integer} size of the cluster
+     */
     @Override
     public Integer getClusterSize(TextCluster cluster) {
         return cluster.size();
     }
 
+    /**
+     * Returns the size of the cluster of a text block
+     * @param textBlock textBlock for which the cluster size should be determined
+     * @return {Integer} size of the text cluster
+     */
     @Override
     public Integer getClusterSize(TextBlock textBlock) {
         return textBlock.getCluster().size();
@@ -165,8 +200,8 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
 
     /**
      * Casts the resultString of a Result to its double representation
-     * @param resultString
-     * @return
+     * @param resultString String representatino of the representation
+     * @return {Double} Double representation of the result
      */
     public double castResultString(String resultString) {
         if (resultString.contains(" ")) {
