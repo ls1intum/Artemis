@@ -80,7 +80,7 @@ export class GuidedTourService {
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (this.availableTourForComponent && event instanceof NavigationStart) {
-                this.finishGuidedTour(false);
+                this.skipTour(false);
                 this.guidedTourAvailabilitySubject.next(false);
             }
             if (this.currentTour) {
@@ -288,12 +288,10 @@ export class GuidedTourService {
      * and calling the reset tour method to remove current tour elements
      *
      */
-    public finishGuidedTour(showCompletedTourStep?: boolean) {
+    public finishGuidedTour(showCompletedTourStep = true) {
         if (!this.currentTour || this.isCurrentTour(completedTour)) {
             return;
         }
-
-        const showCompletedStep = showCompletedTourStep !== undefined ? showCompletedTourStep : true;
 
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
@@ -302,7 +300,7 @@ export class GuidedTourService {
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (!nextStep) {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
-            if (showCompletedStep) {
+            if (showCompletedTourStep) {
                 this.showCompletedTourStep();
             }
         } else {
@@ -313,14 +311,14 @@ export class GuidedTourService {
     /**
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
      */
-    public skipTour(): void {
+    public skipTour(showFinishStep = true): void {
         if (this.currentTour) {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
         }
         if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
-            this.finishGuidedTour();
+            this.finishGuidedTour(showFinishStep);
         } else {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
             this.showCancelHint();
