@@ -83,6 +83,7 @@ export class GuidedTourService {
                 this.skipTour(false, false);
                 this.guidedTourAvailabilitySubject.next(false);
             }
+            // resets the cancel or complete tour step when the user navigates to another page
             if (this.currentTour) {
                 this.resetTour();
             }
@@ -287,6 +288,7 @@ export class GuidedTourService {
      * Trigger callback method if there is one and finish the current guided tour by updating the guided tour settings in the database
      * and calling the reset tour method to remove current tour elements
      *
+     * @param showCompletedTourStep defines whether the completed tour step should be displayed, the default value is true
      */
     public finishGuidedTour(showCompletedTourStep = true) {
         if (!this.currentTour) {
@@ -314,6 +316,9 @@ export class GuidedTourService {
 
     /**
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
+     *
+     * @param showCancelHint defines whether the cancel hint should be displayed, the default value is true
+     * @param showFinishStep defines whether the completed tour step should be displayed, the default value is true
      */
     public skipTour(showCancelHint = true, showFinishStep = true): void {
         if (this.currentTour) {
@@ -332,7 +337,7 @@ export class GuidedTourService {
     }
 
     /**
-     * Show the cancel hint every time a user skips a tour
+     * Show the cancel hint the first time a user skips a tour
      */
     private showCancelHint(): void {
         /** Do not show hint if the user has seen it already */
