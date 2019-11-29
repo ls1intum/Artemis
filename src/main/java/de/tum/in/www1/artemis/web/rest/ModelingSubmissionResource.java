@@ -141,13 +141,19 @@ public class ModelingSubmissionResource {
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    //TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
+        if (assessedByTutor) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
         if (assessedByTutor) {
@@ -347,7 +353,7 @@ public class ModelingSubmissionResource {
 
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
         ModelingSubmission modelingSubmission;
-        if (!optionalModelingSubmission.isPresent()) {
+        if (optionalModelingSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
             modelingSubmission.setParticipation(participation);
