@@ -109,7 +109,7 @@ public class ComplaintResponseResource {
         return handleComplaintResponse(complaintId, principal, complaintResponse);
     }
 
-    private ResponseEntity<ComplaintResponse> handleComplaintResponse(@PathVariable Long complaintId, Principal principal, Optional<ComplaintResponse> complaintResponse) {
+    private ResponseEntity<ComplaintResponse> handleComplaintResponse(Long complaintId, Principal principal, Optional<ComplaintResponse> complaintResponse) {
         if (complaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }
