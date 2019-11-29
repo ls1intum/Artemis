@@ -80,8 +80,12 @@ export class GuidedTourService {
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (this.availableTourForComponent && event instanceof NavigationStart) {
-                this.skipTour();
+                this.skipTour(false, false);
                 this.guidedTourAvailabilitySubject.next(false);
+            }
+            // resets the cancel or complete tour step when the user navigates to another page
+            if (this.currentTour) {
+                this.resetTour();
             }
         });
 
@@ -284,10 +288,15 @@ export class GuidedTourService {
      * Trigger callback method if there is one and finish the current guided tour by updating the guided tour settings in the database
      * and calling the reset tour method to remove current tour elements
      *
+     * @param showCompletedTourStep defines whether the completed tour step should be displayed, the default value is true
      */
-    public finishGuidedTour() {
+    public finishGuidedTour(showCompletedTourStep = true) {
         if (!this.currentTour) {
             return;
+        }
+
+        if (this.isCurrentTour(completedTour)) {
+            this.resetTour();
         }
 
         if (this.currentTour.completeCallback) {
@@ -295,31 +304,40 @@ export class GuidedTourService {
         }
 
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        if (!this.isCurrentTour(completedTour) && !nextStep) {
+        if (!nextStep) {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
-            this.showCompletedTourStep();
+            if (showCompletedTourStep) {
+                this.showCompletedTourStep();
+            }
+        } else {
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
         }
     }
 
     /**
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
+     *
+     * @param showCancelHint defines whether the cancel hint should be displayed, the default value is true
+     * @param showFinishStep defines whether the completed tour step should be displayed, the default value is true
      */
-    public skipTour(): void {
+    public skipTour(showCancelHint = true, showFinishStep = true): void {
         if (this.currentTour) {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
         }
         if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
-            this.finishGuidedTour();
+            this.finishGuidedTour(showFinishStep);
         } else {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
-            this.showCancelHint();
+            if (showCancelHint) {
+                this.showCancelHint();
+            }
         }
     }
 
     /**
-     * Show the cancel hint every time a user skips a tour
+     * Show the cancel hint the first time a user skips a tour
      */
     private showCancelHint(): void {
         /** Do not show hint if the user has seen it already */
@@ -402,6 +420,9 @@ export class GuidedTourService {
      * and remove overlay
      */
     public resetTour(): void {
+        if (this.isCurrentTour(cancelTour)) {
+            this.updateGuidedTourSettings(cancelTour.settingsKey, 1, GuidedTourState.FINISHED);
+        }
         document.body.classList.remove('tour-open');
         this.currentTourStepIndex = 0;
         this.currentTour = null;
