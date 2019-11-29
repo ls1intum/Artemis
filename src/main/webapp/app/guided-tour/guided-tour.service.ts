@@ -289,8 +289,12 @@ export class GuidedTourService {
      *
      */
     public finishGuidedTour(showCompletedTourStep = true) {
-        if (!this.currentTour || this.isCurrentTour(completedTour)) {
+        if (!this.currentTour) {
             return;
+        }
+
+        if (this.isCurrentTour(completedTour)) {
+            this.resetTour();
         }
 
         if (this.currentTour.completeCallback) {
