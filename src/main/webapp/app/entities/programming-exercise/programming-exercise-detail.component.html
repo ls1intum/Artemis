@@ -161,10 +161,6 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-                <dd class="editor-outline-background">
-                    <span [innerHTML]="gradingInstructions"></span>
-                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
                     <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
@@ -196,6 +192,10 @@
                         [exercise]="programmingExercise"
                         [participation]="programmingExercise.templateParticipation"
                     ></jhi-programming-exercise-instructions>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+                <dd class="editor-outline-background">
+                    <span [innerHTML]="gradingInstructions"></span>
                 </dd>
             </dl>
 

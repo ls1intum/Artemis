@@ -21,7 +21,6 @@ export class ExpandableProblemStatementComponent implements OnInit {
         this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
     }
     asProgrammingExercise(exercise: Exercise) {
-        // TODO avoid copy paste
         return exercise as ProgrammingExercise;
     }
 }
