@@ -101,7 +101,7 @@ public class ProgrammingAssessmentIntegrationTest {
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
 
         // Check that result and submission are properly connected
-        var submissionFromDb = programmingSubmissionService.findOneWithEagerResultAndFeedback(programmingSubmission.getId());
+        var submissionFromDb = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());
         var resultFromDb = resultRepository.findWithEagerSubmissionAndFeedbackById(programmingAssessment.getId()).get();
         assertThat(submissionFromDb.getResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission()).isEqualTo(updatedResult.getSubmission());
