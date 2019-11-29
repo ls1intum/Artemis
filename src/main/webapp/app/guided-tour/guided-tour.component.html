@@ -28,7 +28,9 @@
                     *ngIf="guidedTourService.currentTour"
                     class="close"
                     (click)="
-                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour) ? guidedTourService.resetTour() : guidedTourService.skipTour()
+                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour)
+                            ? guidedTourService.resetTour()
+                            : guidedTourService.skipTour(true, false)
                     "
                 ></div>
             </div>
@@ -110,7 +112,7 @@
                     [disabled]="guidedTourService.isOnFirstStep"
                     (click)="guidedTourService.backStep()"
                 >
-                    <fa-icon icon="'chevron-left'"></fa-icon>
+                    <fa-icon icon="chevron-left"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <button

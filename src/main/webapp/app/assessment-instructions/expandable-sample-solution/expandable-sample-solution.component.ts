@@ -24,7 +24,7 @@ export class ExpandableSampleSolutionComponent implements OnInit {
                 this.sampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
             if (this.exercise.sampleSolutionExplanation) {
-                this.formattedSampleSolutionExplanation = this.artemisMarkdown.htmlForMarkdown(this.exercise.sampleSolutionExplanation);
+                this.formattedSampleSolutionExplanation = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.sampleSolutionExplanation);
             }
         }
     }

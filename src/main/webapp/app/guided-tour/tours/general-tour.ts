@@ -4,8 +4,6 @@ import { Orientation } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const cancelTour: GuidedTour = {
-    courseShortName: '',
-    exerciseShortName: '',
     settingsKey: 'cancel_tour',
     steps: [
         new TextTourStep({
@@ -22,8 +20,6 @@ export const cancelTour: GuidedTour = {
 };
 
 export const completedTour: GuidedTour = {
-    courseShortName: '',
-    exerciseShortName: '',
     settingsKey: 'completed_tour',
     steps: [
         new TextTourStep({

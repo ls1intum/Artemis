@@ -16,8 +16,7 @@
                 "invalidNeedScore": "Each Feedback item must have a score."
             },
             "messages": {
-                "lock": "You do now have the lock on this submission. Only you can assess this file. Please assess this file before opening other submissions.",
-                "confirmSubmission": "Are you sure you want to submit this assessment? You will not be able to change it afterwards."
+                "lock": "You do now have the lock on this submission. Only you can assess this file. Please assess this file before opening other submissions."
             }
         }
     }

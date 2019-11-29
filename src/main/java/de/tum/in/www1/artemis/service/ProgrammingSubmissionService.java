@@ -600,7 +600,7 @@ public class ProgrammingSubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 
-    public void hideDetails(ProgrammingSubmission submission) {
-        submissionService.hideDetails(submission);
+    public void hideDetails(ProgrammingSubmission submission, User user) {
+        submissionService.hideDetails(submission, user);
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
@@ -14,7 +15,6 @@ import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -703,9 +703,8 @@ public class DatabaseUtilService {
     }
 
     public void checkModelsAreEqual(String storedModel, String sentModel) throws Exception {
-        JsonParser parser = new JsonParser();
-        JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
-        JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
+        JsonObject sentModelObject = parseString(sentModel).getAsJsonObject();
+        JsonObject storedModelObject = parseString(storedModel).getAsJsonObject();
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
     }
 

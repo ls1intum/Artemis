@@ -94,9 +94,9 @@ export class DragAndDropQuestionComponent implements OnChanges {
     watchCollection() {
         // update html for text, hint and explanation for the question
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        this.renderedQuestion.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-        this.renderedQuestion.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
+        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
     }
 
     /**
