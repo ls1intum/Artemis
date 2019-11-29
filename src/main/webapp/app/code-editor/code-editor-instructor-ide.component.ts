@@ -75,6 +75,10 @@ export class CodeEditorInstructorIdeComponent extends CodeEditorInstructorBaseCo
         this.router.navigateByUrl(`/code-editor/ide/${this.exercise.id}/admin/test`);
     }
 
+    /**
+     * Submits the code of the selected repository and tells IntelliJ to listen to any new test results for the selected repo.
+     * Submitting means committing all changes and pushing them to the remote.
+     */
     submit(): void {
         this.javaBridge.submitInstructorRepository();
         if (this.selectedRepository !== REPOSITORY.TEST) {
@@ -83,6 +87,9 @@ export class CodeEditorInstructorIdeComponent extends CodeEditorInstructorBaseCo
         }
     }
 
+    /**
+     * Tells IntelliJ to build and test the selected repository locally instead of committing and pushing the code to the remote
+     */
     buildLocally(): void {
         this.javaBridge.buildAndTestInstructorRepository();
         this.intellijState.building = true;
