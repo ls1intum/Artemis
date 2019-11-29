@@ -1215,15 +1215,4 @@ public class ProgrammingExerciseService {
     public long countSubmissionsToAssessByCourseId(Long courseId) {
         return programmingExerciseRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
     }
-
-    /**
-     * Get one programming exercise by id.
-     *
-     * @param id the id of the entity
-     * @return the entity
-     */
-    public ProgrammingExercise findOne(Long id) {
-        log.debug("Request to get Programming Exercise : {}", id);
-        return programmingExerciseRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + id + "\" does not exist"));
-    }
 }

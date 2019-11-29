@@ -22,16 +22,13 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "programmingAssessment";
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
     private final ProgrammingAssessmentService programmingAssessmentService;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingAssessmentService programmingAssessmentService, ProgrammingSubmissionService programmingSubmissionService) {
+    public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ProgrammingAssessmentService programmingAssessmentService,
+            ProgrammingSubmissionService programmingSubmissionService) {
         super(authCheckService, userService);
-        this.programmingExerciseService = programmingExerciseService;
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
     }
@@ -49,10 +46,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody ProgrammingAssessmentUpdate assessmentUpdate, @PathVariable Long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        ProgrammingSubmission programmingSubmission = programmingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        Participation participation = programmingSubmission.getParticipation();
-        long exerciseId = participation.getExercise().getId();
-        ProgrammingExercise programmingExercise = programmingExerciseService.findOne(exerciseId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionService.findByIdWithEagerExerciseAndResultAndFeedback(submissionId);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
             return forbidden();

@@ -589,14 +589,14 @@ public class ProgrammingSubmissionService {
     }
 
     /**
-     * Get the programming submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and the assessor of the
      * result. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    public ProgrammingSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return programmingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+    public ProgrammingSubmission findByIdWithEagerExerciseAndResultAndFeedback(Long submissionId) {
+        return programmingSubmissionRepository.findByIdWithEagerExerciseAndResultAndFeedback(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 
