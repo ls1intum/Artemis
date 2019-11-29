@@ -44,7 +44,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         private $window: WindowRef,
         // tslint:disable-next-line: no-unused-variable
         private csrfService: CSRFService,
-    ) {}
+    ) {
+        this.connection = this.createConnection();
+    }
 
     stompFailureCallback() {
         this.connecting = false;
@@ -53,21 +55,30 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             listener();
         });
         if (this.shouldReconnect) {
-            // NOTE: after 5 failed attempts in row, increase the timeout to 5 seconds,
-            // after 10 failed attempts in row, increase the timeout to 10 seconds
-            // after 20 failed attempts in row, increase the timeout to 20 seconds
-            // after 30 failed attempts in row, increase the timeout to 60 seconds
+            // wait 5 seconds before reconnecting in case the connection does not work or the client is disconnected
+            // after  2 failed attempts in row, increase the timeout to 10 seconds,
+            // after  4 failed attempts in row, increase the timeout to 20 seconds
+            // after  8 failed attempts in row, increase the timeout to 60 seconds
+            // after 12 failed attempts in row, increase the timeout to 120 seconds
+            // after 16 failed attempts in row, increase the timeout to 300 seconds
+            // after 20 failed attempts in row, increase the timeout to 600 seconds
             let waitUntilReconnectAttempt;
-            if (this.consecutiveFailedAttempts > 30) {
+            if (this.consecutiveFailedAttempts > 20) {
+                // NOTE: normally a user would reload here anyway
+                waitUntilReconnectAttempt = 600;
+            } else if (this.consecutiveFailedAttempts > 16) {
+                // NOTE: normally a user would reload here anyway
+                waitUntilReconnectAttempt = 300;
+            } else if (this.consecutiveFailedAttempts > 12) {
+                waitUntilReconnectAttempt = 120;
+            } else if (this.consecutiveFailedAttempts > 8) {
                 waitUntilReconnectAttempt = 60;
-            } else if (this.consecutiveFailedAttempts > 20) {
+            } else if (this.consecutiveFailedAttempts > 4) {
                 waitUntilReconnectAttempt = 20;
-            } else if (this.consecutiveFailedAttempts > 10) {
+            } else if (this.consecutiveFailedAttempts > 2) {
                 waitUntilReconnectAttempt = 10;
-            } else if (this.consecutiveFailedAttempts > 5) {
-                waitUntilReconnectAttempt = 5;
             } else {
-                waitUntilReconnectAttempt = 1;
+                waitUntilReconnectAttempt = 5;
             }
             setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);
             // console.log('Websocket: Try to reconnect in ' + waitUntilReconnectAttempt + ' seconds...');
@@ -89,7 +100,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (authToken) {
             url += '?access_token=' + authToken;
         }
-        const socket = new SockJS(url);
+        // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
+        // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
+        const socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
             heartbeat: { outgoing: 25000, incoming: 25000 },
             // Note: at the moment, debug is activated, in the future we might want to deactivate it again
@@ -161,13 +174,14 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     sendActivity() {
-        if (this.stompClient !== null && this.stompClient.connected) {
-            this.stompClient.send(
-                '/topic/activity', // destination
-                JSON.stringify({ page: this.router.routerState.snapshot.url }), // body
-                {}, // header
-            );
-        }
+        // Note: this is temporarily deactivated for now to reduce server load on websocket connections
+        // if (this.stompClient !== null && this.stompClient.connected) {
+        //     this.stompClient.send(
+        //         '/topic/activity', // destination
+        //         JSON.stringify({ page: this.router.routerState.snapshot.url }), // body
+        //         {}, // header
+        //     );
+        // }
     }
 
     /**
@@ -202,7 +216,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     private createListener<T>(channel: string): Observable<T> {
-        return Observable.create((observer: Observer<T>) => {
+        return new Observable((observer: Observer<T>) => {
             this.listenerObservers[channel] = observer;
         });
     }
@@ -269,8 +283,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
+        this.disconnect();
     }
 }

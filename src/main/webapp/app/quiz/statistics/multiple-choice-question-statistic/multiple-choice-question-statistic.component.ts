@@ -133,8 +133,8 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
             // render Markdown-text
-            this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-            this.answerTextRendered = this.question.answerOptions!.map(answer => this.artemisMarkdown.htmlForMarkdown(answer.text));
+            this.questionTextRendered = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
+            this.answerTextRendered = this.question.answerOptions!.map(answer => this.artemisMarkdown.safeHtmlForMarkdown(answer.text));
             this.loadLayout();
         }
         this.loadData();
