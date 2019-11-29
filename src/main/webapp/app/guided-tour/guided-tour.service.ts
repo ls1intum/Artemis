@@ -80,8 +80,11 @@ export class GuidedTourService {
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (this.availableTourForComponent && event instanceof NavigationStart) {
-                this.skipTour();
+                this.finishGuidedTour(false);
                 this.guidedTourAvailabilitySubject.next(false);
+            }
+            if (this.currentTour) {
+                this.resetTour();
             }
         });
 
@@ -285,19 +288,25 @@ export class GuidedTourService {
      * and calling the reset tour method to remove current tour elements
      *
      */
-    public finishGuidedTour() {
-        if (!this.currentTour) {
+    public finishGuidedTour(showCompletedTourStep?: boolean) {
+        if (!this.currentTour || this.isCurrentTour(completedTour)) {
             return;
         }
+
+        const showCompletedStep = showCompletedTourStep !== undefined ? showCompletedTourStep : true;
 
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
         }
 
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        if (!this.isCurrentTour(completedTour) && !nextStep) {
+        if (!nextStep) {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
-            this.showCompletedTourStep();
+            if (showCompletedStep) {
+                this.showCompletedTourStep();
+            }
+        } else {
+            this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
         }
     }
 
@@ -402,6 +411,9 @@ export class GuidedTourService {
      * and remove overlay
      */
     public resetTour(): void {
+        if (this.isCurrentTour(cancelTour)) {
+            this.updateGuidedTourSettings(cancelTour.settingsKey, 1, GuidedTourState.FINISHED);
+        }
         document.body.classList.remove('tour-open');
         this.currentTourStepIndex = 0;
         this.currentTour = null;
