@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.service.connectors.TextEmbeddingService;
+import de.tum.in.www1.artemis.service.connectors.TextSegmentationService;
 import de.tum.in.www1.artemis.service.connectors.TextSimilarityClusteringService;
 
 @Service
@@ -45,12 +46,14 @@ public class TextClusteringService {
 
     private final TextAssessmentQueueService textAssessmentQueueService;
 
+    private final TextSegmentationService textSegmentationService;
+
     @Value("${artemis.automatic-text.embedding-chunk-size}")
     private int embeddingChunkSize;
 
     public TextClusteringService(TextBlockService textBlockService, TextSubmissionService textSubmissionService, TextClusterRepository textClusterRepository,
             TextBlockRepository textBlockRepository, TextSimilarityClusteringService textSimilarityClusteringService, TextEmbeddingService textEmbeddingService,
-            TextAssessmentQueueService textAssessmentQueueService) {
+            TextAssessmentQueueService textAssessmentQueueService, TextSegmentationService textSegmentationService) {
         this.textBlockService = textBlockService;
         this.textSubmissionService = textSubmissionService;
         this.textClusterRepository = textClusterRepository;
@@ -58,6 +61,7 @@ public class TextClusteringService {
         this.textSimilarityClusteringService = textSimilarityClusteringService;
         this.textEmbeddingService = textEmbeddingService;
         this.textAssessmentQueueService = textAssessmentQueueService;
+        this.textSegmentationService = textSegmentationService;
     }
 
     private List<TextEmbedding> computeEmbeddings(List<TextBlock> blocks) {
@@ -92,7 +96,15 @@ public class TextClusteringService {
         log.debug("Start Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
 
         // Find all submissions for Exercise and Split them into Blocks
-        Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(getTextBlocks(exercise.getId())).stream().collect(toMap(TextBlock::getId, block -> block));
+        // Invoke segmentation for Submissions
+        final Map<String, TextBlock> textBlockMap;
+        try {
+            textBlockMap = textBlockRepository.saveAll(getTextBlocks(exercise.getId())).stream().collect(toMap(TextBlock::getId, block -> block));
+        }
+        catch (NetworkingError networkingError) {
+            networkingError.printStackTrace();
+            return;
+        }
         List<TextEmbedding> embeddings = computeEmbeddings(new ArrayList<>(textBlockMap.values()));
 
         // Invoke clustering for Text Blocks
@@ -133,21 +145,35 @@ public class TextClusteringService {
      *
      * @param exerciseId id of relevant TextExercise
      * @return List of TextBlocks from *all* submissions for the specified TextExercise.
+     * @throws NetworkingError if textSegmentationService call in not successful
      */
     @NotNull
     @Transactional(readOnly = true)
-    List<TextBlock> getTextBlocks(Long exerciseId) {
-        List<TextBlock> set = new ArrayList<>();
-        for (TextSubmission textSubmission : textSubmissionService.getSubmissions(exerciseId, true, TextSubmission.class)) {
-            if (textSubmission.getLanguage() != Language.ENGLISH) {
-                // We only support english languages so far, to prevent corruption of the clustering
-                continue;
-            }
-            final List<TextBlock> blocks = textBlockService.splitSubmissionIntoBlocks(textSubmission);
-            textSubmission.setBlocks(blocks);
-            set.addAll(blocks);
+    List<TextBlock> getTextBlocks(Long exerciseId) throws NetworkingError {
+        List<TextSubmission> textSubmissions = textSubmissionService.getSubmissions(exerciseId, true, TextSubmission.class);
+
+        // We only support english languages so far, to prevent corruption of the clustering
+        textSubmissions.removeIf(textSubmission -> textSubmission.getLanguage() != Language.ENGLISH);
+
+        // textSegmentationService only works if more than 10 submissions are available
+        // else textBlockService is used
+        if (textSubmissions.size() >= 10) {
+
+            return textSegmentationService.segmentSubmissions(textSubmissions);
+
         }
-        return set;
+        else {
+
+            List<TextBlock> set = new ArrayList<>();
+
+            for (TextSubmission textSubmission : textSubmissions) {
+                final List<TextBlock> blocks = textBlockService.splitSubmissionIntoBlocks(textSubmission);
+                textSubmission.setBlocks(blocks);
+                set.addAll(blocks);
+
+            }
+            return set;
+        }
     }
 
 }

@@ -8,7 +8,6 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -342,8 +341,7 @@ public class QuizScheduleService {
         }
     }
 
-    @Async
-    void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
+    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
         messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
