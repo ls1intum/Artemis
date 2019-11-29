@@ -212,6 +212,10 @@ describe('GuidedTourComponent', () => {
             spyOn<any>(guidedTourService, 'isCurrentTour').and.returnValue(true);
             const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
 
+            while (!guidedTourService.isOnLastStep) {
+                guidedTourService.nextStep();
+            }
+
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(skipTour.calls.count()).to.equal(0);
             expect(finishTour.calls.count()).to.equal(1);
