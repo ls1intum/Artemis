@@ -76,7 +76,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
             case 'Escape': {
                 if (this.currentTourStep && !this.guidedTourService.isCurrentTour(cancelTour) && !this.guidedTourService.isCurrentTour(completedTour)) {
-                    this.guidedTourService.skipTour(false);
+                    this.guidedTourService.skipTour(true, false);
                 } else if (this.currentTourStep && this.guidedTourService.isOnLastStep) {
                     // The escape key event finishes the tour when the user is seeing the cancel tour step or last tour step
                     this.guidedTourService.finishGuidedTour(false);

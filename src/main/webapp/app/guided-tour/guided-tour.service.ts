@@ -80,7 +80,7 @@ export class GuidedTourService {
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             if (this.availableTourForComponent && event instanceof NavigationStart) {
-                this.skipTour(false);
+                this.skipTour(false, false);
                 this.guidedTourAvailabilitySubject.next(false);
             }
             if (this.currentTour) {
@@ -311,7 +311,7 @@ export class GuidedTourService {
     /**
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
      */
-    public skipTour(showFinishStep = true): void {
+    public skipTour(showCancelHint = true, showFinishStep = true): void {
         if (this.currentTour) {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
@@ -321,7 +321,9 @@ export class GuidedTourService {
             this.finishGuidedTour(showFinishStep);
         } else {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
-            this.showCancelHint();
+            if (showCancelHint) {
+                this.showCancelHint();
+            }
         }
     }
 
