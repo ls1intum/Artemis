@@ -108,14 +108,8 @@ export class ListOfComplaintsComponent implements OnInit {
             const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.participationId = studentParticipation.id;
             modalRef.componentInstance.result = complaint.result;
-            modalRef.result.then(
-                () => {
-                    this.loadComplaints();
-                },
-                () => {
-                    this.loadComplaints();
-                },
-            );
+            modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
+            modalRef.result.then(() => this.loadComplaints());
             return;
         }
         this.router.navigate([route!]);

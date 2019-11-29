@@ -375,14 +375,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = result.participation!.id;
         modalRef.componentInstance.result = result;
-        modalRef.result.then(
-            () => {
-                this.loadAll();
-            },
-            () => {
-                this.loadAll();
-            },
-        );
+        modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
+        modalRef.result.then(() => this.loadAll());
         return;
     }
 
