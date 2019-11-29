@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -55,9 +57,14 @@ public class ResultService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ComplaintRepository complaintRepository;
+
     public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
-            ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService) {
+            ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
+            ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -68,6 +75,8 @@ public class ResultService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.feedbackRepository = feedbackRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -328,6 +337,16 @@ public class ResultService {
             }
         }
         return savedResult;
+    }
+
+    /**
+     * Deletes result with corresponding complaint and complaint response
+     * @param resultId the id of the result
+     */
+    public void deleteResultWithComplaint(long resultId) {
+        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+        complaintRepository.deleteByResult_Id(resultId);
+        resultRepository.deleteById(resultId);
     }
 
     /**
