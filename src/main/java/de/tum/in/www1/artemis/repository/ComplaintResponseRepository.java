@@ -35,5 +35,5 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * Delete all complaint responses that belong to the given result
      * @param resultId the Id of the result where the complaint response should be deleted
      */
-    void deleteByComplaint_Result_Id(Long resultId);
+    void deleteByComplaint_Result_Id(long resultId);
 }

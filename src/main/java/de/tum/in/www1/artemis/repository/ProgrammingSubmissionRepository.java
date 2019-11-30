@@ -46,7 +46,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     ProgrammingSubmission findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     @Query("select distinct submission from ProgrammingSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<ProgrammingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
+    Optional<ProgrammingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") long submissionId);
 
     Optional<ProgrammingSubmission> findByResultId(long resultId);
 }

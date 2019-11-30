@@ -85,7 +85,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * Delete all complaints that belong to the given result
      * @param resultId the Id of the result where the complaints should be deleted
      */
-    void deleteByResult_Id(Long resultId);
+    void deleteByResult_Id(long resultId);
 
     /**
      * Given a user id, retrieve all complaints related to assessments made by that assessor

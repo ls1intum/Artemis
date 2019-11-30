@@ -86,7 +86,7 @@ public class ComplaintResponseResource {
      */
     @GetMapping("/complaint-responses/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> getComplaintResponse(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<ComplaintResponse> getComplaintResponse(@PathVariable long id, Principal principal) {
         log.debug("REST request to get ComplaintResponse : {}", id);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findById(id);
 
@@ -102,14 +102,14 @@ public class ComplaintResponseResource {
      */
     @GetMapping("/complaint-responses/complaint/{complaintId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable Long complaintId, Principal principal) {
+    public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
 
         return handleComplaintResponse(complaintId, principal, complaintResponse);
     }
 
-    private ResponseEntity<ComplaintResponse> handleComplaintResponse(Long complaintId, Principal principal, Optional<ComplaintResponse> complaintResponse) {
+    private ResponseEntity<ComplaintResponse> handleComplaintResponse(long complaintId, Principal principal, Optional<ComplaintResponse> complaintResponse) {
         if (complaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }

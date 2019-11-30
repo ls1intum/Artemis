@@ -595,7 +595,7 @@ public class ProgrammingSubmissionService {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    public ProgrammingSubmission findByIdWithEagerResultAndFeedback(Long submissionId) {
+    public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
         return programmingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
