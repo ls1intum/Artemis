@@ -89,18 +89,25 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
 
         final List<TextBlock> allAssessedBlocks = textCluster.getBlocks().stream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
 
+        // If not enough text blocks in a cluster are assessed, return an empty optional
         if (allAssessedBlocks.size() < VARIANCE_THRESHOLD) {
             return Optional.empty();
         }
 
+        // Expected value of a cluster
         final double expectedValue = calculateExpectation(textCluster).get();
 
-        return Optional.of(allAssessedBlocks.stream().mapToDouble(block -> {
-            if (getCreditsOfTextBlock(block).isPresent() && calculateScoreCoveragePercentage(block).isPresent()) {
-                return (getCreditsOfTextBlock(block).get() - expectedValue) * calculateScoreCoveragePercentage(block).get();
-            }
-            return 0.0;
-        }).reduce(0.0, Double::sum));
+        return Optional.of(allAssessedBlocks.stream()
+
+                // Calculate the variance of each random variable
+                .mapToDouble(block -> {
+                    if (getCreditsOfTextBlock(block).isPresent() && calculateScoreCoveragePercentage(block).isPresent()) {
+                        return (getCreditsOfTextBlock(block).get() - expectedValue) * calculateScoreCoveragePercentage(block).get();
+                    }
+                    return 0.0;
+                })
+                // Sum them up to get the final value
+                .reduce(0.0, Double::sum));
     }
 
     /**
@@ -130,7 +137,10 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
      */
     @Override
     public Optional<Double> calculateStandardDeviation(TextCluster textCluster) {
-        return Optional.empty();
+
+        final double variance = calculateVariance(textCluster).get();
+
+        return Optional.of(Math.sqrt(variance));
     }
 
     /**
@@ -166,7 +176,13 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
 
             final double textBlockCredits = getCreditsOfTextBlock(textBlock).get();
 
-            final List<TextBlock> blocksWithSameCredit = cluster.getBlocks().parallelStream().filter(block -> (getCreditsOfTextBlock(block).get() == textBlockCredits))
+            final List<TextBlock> blocksWithSameCredit = cluster.getBlocks()
+
+                    .parallelStream()
+
+                    // Get all text blocks which have the same score as the current text block
+                    .filter(block -> (getCreditsOfTextBlock(block).get() == textBlockCredits))
+
                     .collect(toList());
 
             return Optional.of(((double) blocksWithSameCredit.size()) / ((double) allBlocksInCluster.size()));
