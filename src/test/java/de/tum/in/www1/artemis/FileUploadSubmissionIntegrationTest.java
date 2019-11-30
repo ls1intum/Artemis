@@ -82,7 +82,7 @@ public class FileUploadSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(3, 1, 0);
+        database.addUsers(3, 1, 1);
         database.addCourseWithTwoFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
         afterDueDateFileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(1);
@@ -218,6 +218,34 @@ public class FileUploadSubmissionIntegrationTest {
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission);
         assertThat(submissions.stream().allMatch(sub -> ((StudentParticipation) sub.getParticipation()).getStudent() == null)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cannotSeeStudentDetailsInSubmissionListAsTutor() throws Exception {
+        FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
+
+        List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true", HttpStatus.OK,
+                FileUploadSubmission.class);
+
+        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
+        final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
+        assertThat(participation1.getStudent()).as("contains no student details").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void canSeeStudentDetailsInSubmissionListAsInstructor() throws Exception {
+        FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
+
+        List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true", HttpStatus.OK,
+                FileUploadSubmission.class);
+
+        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
+        final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
+        assertThat(participation1.getStudent()).as("contains student details").isNotNull();
     }
 
     @Test

@@ -170,7 +170,7 @@ public abstract class Submission implements Serializable {
      *
      * @param authCheckService authorization check service to check what details can be hidden
      */
-    public void hideDetails(AuthorizationCheckService authCheckService) {
+    public void hideDetails(AuthorizationCheckService authCheckService, User user) {
         // do not send old submissions or old results to the client
         if (getParticipation() != null) {
             getParticipation().setSubmissions(null);
@@ -179,12 +179,12 @@ public abstract class Submission implements Serializable {
             Exercise exercise = getParticipation().getExercise();
             if (exercise != null) {
                 // make sure that sensitive information is not sent to the client for students
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
                     setResult(null);
                 }
                 // remove information about the student from the submission for tutors to ensure a double-blind assessment
-                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                     ((StudentParticipation) getParticipation()).filterSensitiveInformation();
                 }
             }

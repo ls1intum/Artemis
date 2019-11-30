@@ -79,21 +79,21 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
-
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
     @NotNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidityForStudent(textExercise);
+    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, TextSubmission textSubmission) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        final TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        final ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidityForStudent(textExercise);
         if (responseFailure != null) {
             return responseFailure;
         }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        textSubmission.hideDetails(authCheckService);
+        textSubmission.hideDetails(authCheckService, user);
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -111,14 +111,13 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        Exercise exercise = exerciseService.findOne(exerciseId);
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<TextSubmission> textSubmissions;
-        User user = userService.getUserWithGroupsAndAuthorities();
+        final List<TextSubmission> textSubmissions;
         if (assessedByTutor) {
             textSubmissions = textSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
@@ -126,7 +125,8 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
             textSubmissions = textSubmissionService.getSubmissions(exerciseId, submittedOnly, TextSubmission.class);
         }
 
-        return ResponseEntity.ok().body(clearStudentInformation(textSubmissions, exercise, user));
+        textSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+        return ResponseEntity.ok().body(textSubmissions);
     }
 
     /**
@@ -141,7 +141,8 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
 
         var exerciseValid = this.checkExerciseValidityForTutor(exercise, TextExercise.class);
         if (exerciseValid != null) {
@@ -166,7 +167,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        textSubmission.hideDetails(authCheckService);
+        textSubmission.hideDetails(authCheckService, user);
         return ResponseEntity.ok(textSubmission);
     }
 }

@@ -59,6 +59,10 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
+            return forbidden();
+        }
 
         // Check if the course hasn't been changed
         final var validityExceptionResponse = this.checkExerciseValidityForStudent(exercise);
@@ -90,7 +94,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        submission.hideDetails(authCheckService);
+        submission.hideDetails(authCheckService, user);
         return ResponseEntity.ok(submission);
     }
 
@@ -107,13 +111,14 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
         fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmission.hideDetails(authCheckService);
+        fileUploadSubmission.hideDetails(authCheckService, user);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -131,14 +136,14 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<FileUploadSubmission> fileUploadSubmissions;
-        User user = userService.getUserWithGroupsAndAuthorities();
+        final List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
             fileUploadSubmissions = fileUploadSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
@@ -146,7 +151,9 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             fileUploadSubmissions = fileUploadSubmissionService.getSubmissions(exerciseId, submittedOnly, FileUploadSubmission.class);
         }
 
-        return ResponseEntity.ok().body(clearStudentInformation(fileUploadSubmissions, exercise, user));
+        fileUploadSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+
+        return ResponseEntity.ok().body(fileUploadSubmissions);
     }
 
     /**
@@ -161,7 +168,8 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
-        Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
+        final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
         var exerciseValidity = this.checkExerciseValidityForTutor(fileUploadExercise, FileUploadExercise.class);
         if (exerciseValidity != null) {
             return exerciseValidity;
@@ -170,7 +178,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         // Check if the limit of simultaneously locked submissions has been reached
         fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
 
-        FileUploadSubmission fileUploadSubmission;
+        final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
             fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
         }
@@ -184,9 +192,9 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         }
 
         // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        final StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmission.hideDetails(authCheckService);
+        fileUploadSubmission.hideDetails(authCheckService, user);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

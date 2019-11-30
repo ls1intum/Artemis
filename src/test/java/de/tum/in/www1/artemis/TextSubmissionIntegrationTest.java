@@ -64,7 +64,7 @@ public class TextSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        student = database.addUsers(2, 2, 0).get(0);
+        student = database.addUsers(2, 2, 1).get(0);
         database.addCourseWithOneTextExerciseDueDateReached();
         textExerciseBeforeDueDate = (TextExercise) database.addCourseWithOneTextExercise().getExercises().iterator().next();
         textExerciseAfterDueDate = (TextExercise) exerciseRepo.findAll().get(0);
@@ -181,7 +181,7 @@ public class TextSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getAllTextSubmissions_studentHidden() throws Exception {
+    public void getAllTextSubmissions_studentHiddenForTutor() throws Exception {
         textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
 
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
@@ -233,6 +233,18 @@ public class TextSubmissionIntegrationTest {
         checkSubmission(textSubmissions.get(0), textSubmission);
 
         checkDetailsHidden(textSubmissions.get(0), false);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllTextSubmissions_studentVisibleForInstructor() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
+
+        assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
+        assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNotNull();
     }
 
     @Test
