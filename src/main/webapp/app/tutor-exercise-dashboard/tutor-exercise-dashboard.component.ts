@@ -18,8 +18,8 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint/complaint.model';
 import { Submission } from 'app/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
@@ -287,22 +287,24 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
         }
 
-        submissionObservable.subscribe(
-            (submission: Submission) => {
+        submissionObservable
+            .pipe(
+                catchError((error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        // there are no unassessed submission, nothing we have to worry about
+                        this.unassessedSubmission = null;
+                    } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                        this.submissionLockLimitReached = true;
+                    } else {
+                        this.onError(error.message);
+                    }
+                    return throwError('');
+                }),
+            )
+            .subscribe((submission: Submission) => {
                 this.unassessedSubmission = submission;
                 this.submissionLockLimitReached = false;
-            },
-            (error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    // there are no unassessed submission, nothing we have to worry about
-                    this.unassessedSubmission = null;
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.submissionLockLimitReached = true;
-                } else {
-                    this.onError(error.message);
-                }
-            },
-        );
+            });
     }
 
     readInstruction() {
