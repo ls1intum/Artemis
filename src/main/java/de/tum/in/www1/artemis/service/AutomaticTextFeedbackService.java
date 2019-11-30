@@ -87,7 +87,13 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     @Override
     public Optional<Double> calculateVariance(TextCluster textCluster) {
 
-        final List<TextBlock> allAssessedBlocks = textCluster.getBlocks().stream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+        final List<TextBlock> allAssessedBlocks = textCluster.getBlocks()
+
+                .stream()
+                // Only get text blocks which are assessed
+                .filter(block -> getCreditsOfTextBlock(block).isPresent())
+
+                .collect(toList());
 
         // If not enough text blocks in a cluster are assessed, return an empty optional
         if (allAssessedBlocks.size() < VARIANCE_THRESHOLD) {
@@ -213,6 +219,37 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         }
 
         return Optional.empty();
+    }
+
+    public OptionalDouble getMaxScore(TextCluster cluster) {
+
+        final List<TextBlock> allAssessedBlocks = cluster.getBlocks().parallelStream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+
+        if (allAssessedBlocks.size() > 0) {
+            return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).reduce(Math::max);
+        }
+
+        return OptionalDouble.empty();
+    }
+
+    public Optional<Double> getMedianScore(TextCluster cluster) {
+
+        final List<TextBlock> allAssessedBlocks = cluster.getBlocks().parallelStream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+
+        if (allAssessedBlocks.size() > 0) {
+            return getCreditsOfTextBlock(allAssessedBlocks.get((allAssessedBlocks.size() / 2)));
+        }
+        return Optional.empty();
+    }
+
+    public OptionalDouble getMinimumScore(TextCluster cluster) {
+
+        final List<TextBlock> allAssessedBlocks = cluster.getBlocks().parallelStream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+
+        if (allAssessedBlocks.size() > 0) {
+            return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).reduce(Math::min);
+        }
+        return OptionalDouble.empty();
     }
 
     /**
