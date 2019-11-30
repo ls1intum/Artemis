@@ -1,6 +1,6 @@
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -44,7 +44,8 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
         }),
-        new TextTourStep({
+        // disabled
+        new UserInterActionTourStep({
             highlightSelector: '#account-menu',
             headlineTranslateKey: 'tour.courseOverview.accountMenuClick.headline',
             contentTranslateKey: 'tour.courseOverview.accountMenuClick.content',
@@ -73,7 +74,7 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.TOPLEFT,
         }),
         // disabled
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: '.card.guided-tour',
             clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.courseOverview.courseClick.headline',

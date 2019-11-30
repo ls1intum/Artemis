@@ -1,5 +1,5 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
@@ -13,7 +13,7 @@ export const codeEditorTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.RIGHT,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: '.list-group-item.file-item:not(.node-selected)',
             clickEventListenerSelector: '.ace_text-layer',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.exerciseFile.headline',
@@ -22,7 +22,7 @@ export const codeEditorTour: GuidedTour = {
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: '.editor-center',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.aceEditor.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.aceEditor.content',
@@ -30,7 +30,7 @@ export const codeEditorTour: GuidedTour = {
             orientation: Orientation.RIGHT,
             userInteractionEvent: UserInteractionEvent.ACE_EDITOR,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: '#save_button',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.saveChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.saveChanges.content',
@@ -39,7 +39,7 @@ export const codeEditorTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.CLICK,
             triggerNextStep: true,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: '#submit_button',
             clickEventListenerSelector: 'jhi-result',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.submitChanges.headline',
@@ -50,7 +50,7 @@ export const codeEditorTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.CLICK,
             triggerNextStep: true,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: 'jhi-updating-result',
             headlineTranslateKey: 'tour.programmingExercise.buildLoading.headline',
             contentTranslateKey: 'tour.programmingExercise.buildLoading.content',
@@ -68,7 +68,7 @@ export const codeEditorTour: GuidedTour = {
             orientation: Orientation.BOTTOMRIGHT,
             skipStepIfNoSelector: true,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: 'jhi-updating-result .text-danger .result',
             clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',

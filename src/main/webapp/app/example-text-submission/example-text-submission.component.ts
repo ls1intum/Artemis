@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { WindowRef } from '../core';
-import { ExampleSubmission } from 'app/entities/example-submission';
+import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
@@ -21,6 +21,9 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService } from 'app/core/auth/account.service';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { tutorAssessExampleSubmissionTour, tutorReviewExampleSubmissionTour } from 'app/guided-tour/tours/tutor-dashboard-tour';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -67,6 +70,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private location: Location,
         private artemisMarkdown: ArtemisMarkdown,
         private $window: WindowRef,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -168,6 +172,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 target.style.minHeight = event.rect.height + 'px';
                 $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
             });
+
+        this.subscribeForAssessmentReset();
     }
 
     loadAll() {
@@ -187,7 +193,12 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
             if (this.toComplete) {
+                this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessExampleSubmissionTour);
                 return;
+            }
+
+            if (this.readOnly) {
+                this.guidedTourService.enableTourForExercise(this.exercise, tutorReviewExampleSubmissionTour);
             }
 
             this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
@@ -238,6 +249,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     private createNewExampleTextSubmission() {
+        console.log('new');
         const newSubmission = this.textSubmission;
         newSubmission.exampleSubmission = true;
 
@@ -339,6 +351,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
+
+        if (this.guidedTourService.currentTour) {
+            this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
+        }
     }
 
     public saveAssessments(): void {
@@ -405,5 +421,18 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, undefined);
+    }
+
+    /**
+     * Subscribes to the guided tour service
+     */
+    private subscribeForAssessmentReset() {
+        this.guidedTourService
+            .resetAssessment()
+            .pipe(filter(e => e === true))
+            .subscribe(() => {
+                this.assessments = [];
+                this.totalScore = 0;
+            });
     }
 }

@@ -128,3 +128,5 @@ info:
             - programming_exercise_success_tour: 'test'
             - tutor_course_dashboard_tour: 'Patterns in Software Engineering'
             - tutor_exercise_dashboard_tour: 'Patterns in Software Engineering'
+            - tutor_review_submission_tour: 'Patterns in Software Engineering'
+            - tutor_assess_submission_tour: 'Patterns in Software Engineering'

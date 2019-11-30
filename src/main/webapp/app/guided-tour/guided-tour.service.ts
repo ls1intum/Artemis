@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationStart, Router, RoutesRecognized } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
+import { filter, tap, take } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, pairwise } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
-import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { AssessmentTaskTourStep, ModelingTaskTourStep, TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
@@ -19,6 +19,7 @@ import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { AssessmentObject } from 'app/guided-tour/guided-tour-task.model';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -32,6 +33,7 @@ export class GuidedTourService {
     private availableTourForComponent: GuidedTour | null;
     private onResizeMessage = false;
     private modelingResultCorrect = false;
+    private assessmentObject = new AssessmentObject(0, 0);
 
     /** Guided tour service subjects */
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
@@ -40,6 +42,7 @@ export class GuidedTourService {
     private transformSubject = new Subject<number>();
     private checkModelingComponentSubject = new Subject<string | null>();
     private resetUMLModelSubject = new Subject<boolean>();
+    private resetAssessmentSubject = new Subject<boolean>();
 
     /** Variables for the dot navigation */
     public maxDots = 10;
@@ -86,6 +89,10 @@ export class GuidedTourService {
             // resets the cancel or complete tour step when the user navigates to another page
             if (this.currentTour) {
                 this.resetTour();
+            }
+
+            if (event instanceof RoutesRecognized) {
+                console.log('previous url', event.urlAfterRedirects);
             }
         });
 
@@ -154,8 +161,15 @@ export class GuidedTourService {
     /**
      * @return Observable of resetUMLModelSubject, which is true if the UML model should be reset
      */
-    resetUMLModel() {
+    public resetUMLModel(): Observable<boolean> {
         return this.resetUMLModelSubject.asObservable();
+    }
+
+    /**
+     * @return Observable of resetAssessmentSubject, which is true if the UML model should be reset
+     */
+    public resetAssessment(): Observable<boolean> {
+        return this.resetAssessmentSubject.asObservable();
     }
 
     /**
@@ -175,6 +189,28 @@ export class GuidedTourService {
                 this.checkModelingComponentSubject.next(null);
             }, 0);
         }
+    }
+
+    public updateAssessmentResult(assessments: number, totalScore: number) {
+        if (!this.currentStep || !this.currentStep.assessmentTask) {
+            return;
+        }
+        this.assessmentObject.assessments = assessments;
+        this.assessmentObject.totalScore = totalScore;
+
+        if (this.isAssessmentCorrect()) {
+            this.enableNextStepClick();
+        }
+    }
+
+    private isAssessmentCorrect(): boolean {
+        const numberOfAssessmentsCorrect = this.assessmentObject.assessments === this.currentStep.assessmentTask.assessmentObject.assessments;
+        const totalScoreCorrect = this.assessmentObject.totalScore === this.currentStep.assessmentTask.assessmentObject.totalScore;
+
+        if (this.currentStep.assessmentTask.assessmentObject.totalScore === 0) {
+            return numberOfAssessmentsCorrect;
+        }
+        return numberOfAssessmentsCorrect && totalScoreCorrect;
     }
 
     /**
@@ -435,16 +471,16 @@ export class GuidedTourService {
      * @param userInteraction the user interaction to complete the tour step
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string): void {
-        this.isUserInteractionFinishedSubject.next(false);
+        this.disableNextStepClick();
 
         if (!this.currentTour) {
             return;
         }
 
-        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex] as any;
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1] as any;
 
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-            const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
             const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
             this.handleWaitForSelectorEvent(nextStep, afterNextStep);
         } else {
@@ -452,15 +488,37 @@ export class GuidedTourService {
             let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
 
             if (userInteraction === UserInteractionEvent.CLICK) {
-                /** The first DOM mutation on the click event listener triggers the enableNextStepClick() call */
-                this.observeMutations(targetNode, options)
-                    .pipe(take(1))
-                    .subscribe(() => {
+                /** This can be used if a checkbox has to be clicked that displays a certain element for the next tour step */
+                if (currentStep.checkForNextSelector) {
+                    if (nextStep.highlightSelector && document.querySelector(nextStep.highlightSelector)) {
                         this.enableNextStepClick();
-                        if (currentStep.triggerNextStep) {
-                            this.nextStep();
+                    }
+                    /** The DOM mutation on the click event listener triggers the enableNextStepClick() call */
+                    this.observeMutations(targetNode, options).subscribe(() => {
+                        if (currentStep.checkForNextSelector && nextStep.highlightSelector && document.querySelector(nextStep.highlightSelector) === null) {
+                            this.disableNextStepClick();
+                        } else {
+                            this.enableNextStepClick();
+                            if (currentStep.triggerNextStep) {
+                                this.nextStep();
+                            }
                         }
                     });
+                } else {
+                    /** The DOM mutation on the click event listener triggers the enableNextStepClick() call */
+                    this.observeMutations(targetNode, options)
+                        .pipe(take(1))
+                        .subscribe(() => {
+                            this.enableNextStepClick();
+                            if (currentStep.triggerNextStep) {
+                                this.nextStep();
+                            }
+                        });
+                }
+            } else if (userInteraction === UserInteractionEvent.ASSESS_SUBMISSION) {
+                if (this.isAssessmentCorrect()) {
+                    this.enableNextStepClick();
+                }
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
                 /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
                 targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
@@ -486,11 +544,11 @@ export class GuidedTourService {
 
                 this.observeMutations(targetNode, options)
                     .pipe(debounceTime(100), distinctUntilChanged())
+                    .pipe(tap(() => this.checkModelingComponentSubject.next(modelingTask)))
+                    .pipe(filter(() => this.modelingResultCorrect))
+                    .pipe(take(1))
                     .subscribe(() => {
-                        this.checkModelingComponentSubject.next(modelingTask);
-                        if (this.modelingResultCorrect) {
-                            this.enableNextStepClick();
-                        }
+                        this.enableNextStepClick();
                     });
             }
         }
@@ -527,7 +585,9 @@ export class GuidedTourService {
                 });
             });
             observer.observe(target, options);
-            return () => observer.disconnect();
+            return () => {
+                observer.disconnect();
+            };
         });
 
     /**
@@ -553,6 +613,10 @@ export class GuidedTourService {
         this.isUserInteractionFinishedSubject.next(true);
     }
 
+    private disableNextStepClick() {
+        this.isUserInteractionFinishedSubject.next(false);
+    }
+
     /**
      * Start guided tour for given guided tour
      */
@@ -567,6 +631,16 @@ export class GuidedTourService {
         this.currentTour.steps = this.getFilteredTourSteps();
         this.currentTourStepIndex = this.getLastSeenTourStepIndex();
 
+        // Reset interactive tour steps
+        if (this.currentTourStepIndex === 0 && this.currentTour.steps.find(element => element instanceof ModelingTaskTourStep)) {
+            this.resetUMLModelSubject.next(true);
+            setTimeout(() => {}, 1000);
+        } else if (this.currentTourStepIndex === 0 && this.currentTour.steps.find(element => element instanceof AssessmentTaskTourStep)) {
+            this.resetAssessmentSubject.next(true);
+            this.assessmentObject = new AssessmentObject(0, 0);
+            setTimeout(() => {}, 1000);
+        }
+
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
             if (!this.currentTour.steps[this.currentTourStepIndex]) {
@@ -579,9 +653,6 @@ export class GuidedTourService {
             }
             this.setPreparedTourStep();
             this.calculateTranslateValue(currentStep);
-            if (this.currentTourStepIndex === 0 && this.currentTour.resetUMLModel) {
-                this.resetUMLModelSubject.next(true);
-            }
         }
     }
 

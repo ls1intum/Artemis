@@ -26,25 +26,13 @@
             "instructionsButton": {
                 "headline": "Confirm",
                 "content": "Click on this button and confirm only after you have read and understood the instructions."
-            },
-            "studentSubmissions": {
-                "headline": "Student submissions",
-                "content": "In this table you can see the current student submissions."
-            },
-            "startAssessment": {
-                "headline": "Start Assessment",
-                "content": "If you want to assess this submission, then just click on <tt>start new assessment</tt>.",
-                "hint": "If you start an assessment, then this submission will be locked by you, so that other tutors cannot access it, while you are working on the assessment. In this tutorial we have therefore disabled the assessment button."
             }
         },
-        "assessment": {
-            "modelingExercise": {
-                "headline": "Assessing modeling exercise submissions",
-                "content": "You can assess the different parts of the model by clicking on them as shown in the animation below. Once you have reviewed every part of the model, you can submit your assessment."
-            },
+        "exampleAssessment": {
             "textExercise": {
                 "headline": "Assessing text exercise submissions",
-                "content": "You can highlight the text block you want to assess and click the <tt>assess</tt> button to add the score and feedback as shown in the animation below. Once you are done with the review, you can submit your assessment ."
+                "content": "You can highlight the text block you want to assess and click the <tt>Assess</tt> button to add the score and feedback as shown in the animation below. Once you are done with the review, you can submit your assessment .",
+                "task": "Select a text block and an <tt>Assess</tt> button will appear"
             }
         }
     }

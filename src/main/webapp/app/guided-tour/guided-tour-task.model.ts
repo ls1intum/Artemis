@@ -30,3 +30,27 @@ export const studentUML = {
 export const associationUML = {
     name: 'Association',
 };
+
+/**
+ * This class is used to define modeling tasks for the guided tutorial and assess the created UML model in the editor
+ */
+export class GuidedTourAssessmentTask {
+    /** Translate key of the task description */
+    taskTranslateKey: string;
+    assessmentObject: AssessmentObject;
+
+    constructor(taskTranslateKey: string, assessmentsObject: AssessmentObject) {
+        this.taskTranslateKey = taskTranslateKey;
+        this.assessmentObject = assessmentsObject;
+    }
+}
+
+export class AssessmentObject {
+    assessments: number;
+    totalScore: number;
+
+    constructor(assessments: number, totalScore: number) {
+        this.assessments = assessments;
+        this.totalScore = totalScore;
+    }
+}

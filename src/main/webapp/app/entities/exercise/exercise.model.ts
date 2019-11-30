@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared';
 import { Course } from '../course';
 import { Moment } from 'moment';
-import { ExampleSubmission } from '../example-submission';
+import { ExampleSubmission } from '../example-submission/example-submission.model';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';

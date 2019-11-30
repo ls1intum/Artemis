@@ -37,14 +37,15 @@
                 "hint": "Wenn du die Bewertung startest, dann wird diese Abgabe von dir gesperrt. So wird sichergestellt, dass andere Tutoren nicht mehr auf diese Abgabe zugreifen können, während du an der Bewertung arbeitest. In diesem Tutorial haben wir deshalb diese Bewertungsfunktion deaktiviert."
             }
         },
-        "assessment": {
+        "exampleAssessment": {
             "modelingExercise": {
                 "headline": "Modelingsaufgaben bewerten",
                 "content": "Du kannst die verschiedenen Teilelemente der Modelierung bewerten, indem du auf sie klickst. Die unten aufgeführte Animation zeigt, wie das funktioniert. Wenn du mit der Bewertung fertig bist, kannst du die Bewertung einreichen."
             },
             "textExercise": {
                 "headline": "Textaufgaben bewerten",
-                "content": "Du kannst den Textblock, den du bewerten willst, per Doppelklick markieren und auf <tt>bewerten</tt> klicken, um Punktzahl und Feedback hinzuzufügen. Die unten aufgeführte Animation zeigt, wie das funktioniert. Wenn du mit der Bewertung fertig bist, kannst du die Bewertung einreichen."
+                "content": "Du kannst den Textblock, den du bewerten willst, per Doppelklick markieren und auf <tt>bewerten</tt> klicken, um Punktzahl und Feedback hinzuzufügen. Die unten aufgeführte Animation zeigt, wie das funktioniert. Wenn du mit der Bewertung fertig bist, kannst du die Bewertung einreichen.",
+                "task": "Select a text block and an <tt>Assess</tt> button will appear"
             }
         }
     }

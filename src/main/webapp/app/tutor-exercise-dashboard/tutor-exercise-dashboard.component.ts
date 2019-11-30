@@ -9,7 +9,7 @@ import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TextSubmissionService } from 'app/entities/text-submission';
-import { ExampleSubmission } from 'app/entities/example-submission';
+import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
@@ -150,6 +150,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                         break;
                 }
 
+                // TODO add restart
                 this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorExerciseDashboardTour);
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;

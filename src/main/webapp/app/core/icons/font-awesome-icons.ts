@@ -269,4 +269,5 @@ export const fontAwesomeIcons = [
     faVideo,
     faClipboardList,
     faToggleOn,
+    faEdit,
 ];

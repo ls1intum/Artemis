@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import interact from 'interactjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -143,11 +144,12 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * Subscribes to the guided tour service
      */
     private subscribeForUMLModelReset() {
-        this.guidedTourService.resetUMLModel().subscribe(reset => {
-            if (reset) {
+        this.guidedTourService
+            .resetUMLModel()
+            .pipe(filter(e => e === true))
+            .subscribe(() => {
                 this.resetUMLModelForGuidedTour(this.umlModel);
-            }
-        });
+            });
     }
 
     /**
