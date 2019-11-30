@@ -169,6 +169,7 @@ public abstract class Submission implements Serializable {
      * database without explicitly saving them.
      *
      * @param authCheckService authorization check service to check what details can be hidden
+     * @param user current user
      */
     public void hideDetails(AuthorizationCheckService authCheckService, User user) {
         // do not send old submissions or old results to the client
