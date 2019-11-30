@@ -246,7 +246,11 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
 
         final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
-        if (allAssessedBlocks.size() > 0) {
+        final double[] textBlockArray = allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).toArray();
+
+        Arrays.sort(textBlockArray);
+
+        if (textBlockArray.length > 0) {
             return getCreditsOfTextBlock(allAssessedBlocks.get((allAssessedBlocks.size() / 2)));
         }
         return Optional.empty();
