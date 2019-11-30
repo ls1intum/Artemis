@@ -238,7 +238,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Gets the medium score of a text textCluster
+     * Gets the median score of a text textCluster
      * @param textCluster
      * @return
      */
@@ -251,7 +251,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         Arrays.sort(textBlockArray);
 
         if (textBlockArray.length > 0) {
-            return getCreditsOfTextBlock(allAssessedBlocks.get((allAssessedBlocks.size() / 2)));
+            return Optional.of(textBlockArray[textBlockArray.length / 2]);
         }
         return Optional.empty();
     }
