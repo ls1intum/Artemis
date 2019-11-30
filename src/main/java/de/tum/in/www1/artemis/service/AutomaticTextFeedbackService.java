@@ -22,6 +22,8 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
 
     private static final double DISTANCE_THRESHOLD = 1;
 
+    private static final int VARIANCE_THRESHOLD = 5;
+
     private final TextBlockRepository textBlockRepository;
 
     public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository) {
@@ -77,9 +79,25 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         result.setFeedbacks(suggestedFeedback);
     }
 
+    /**
+     * Calculates the variance of a given text cluster if the number of assessed text block in the cluster exceeds the variance thresehold
+     * @param textCluster
+     * @return
+     */
     @Override
     public Optional<Double> calculateVariance(TextCluster textCluster) {
-        return Optional.empty();
+
+        final List<TextBlock> allAssessedBlocks = textCluster.getBlocks().stream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+
+        if (allAssessedBlocks.size() < VARIANCE_THRESHOLD) {
+            return Optional.empty();
+        }
+
+        final double expectedValue = calculateExpectation(textCluster).get();
+
+        return Optional.of(allAssessedBlocks.stream().mapToDouble(block -> {
+            return (getCreditsOfTextBlock(block).get() - expectedValue) * calculateScoreCoveragePercentage(block).get();
+        }).reduce(0.0, (currentVariance, nextBlock) -> currentVariance + nextBlock));
     }
 
     /**
