@@ -96,8 +96,11 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         final double expectedValue = calculateExpectation(textCluster).get();
 
         return Optional.of(allAssessedBlocks.stream().mapToDouble(block -> {
-            return (getCreditsOfTextBlock(block).get() - expectedValue) * calculateScoreCoveragePercentage(block).get();
-        }).reduce(0.0, (currentVariance, nextBlock) -> currentVariance + nextBlock));
+            if (getCreditsOfTextBlock(block).isPresent() && calculateScoreCoveragePercentage(block).isPresent()) {
+                return (getCreditsOfTextBlock(block).get() - expectedValue) * calculateScoreCoveragePercentage(block).get();
+            }
+            return 0.0;
+        }).reduce(0.0, Double::sum));
     }
 
     /**
