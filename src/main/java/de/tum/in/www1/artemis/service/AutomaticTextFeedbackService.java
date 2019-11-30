@@ -136,7 +136,7 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
      * Calculates the standard deviation of a text textCluster
      *
      * @param textCluster textCluster for which the standard deviation is calculated
-     * @return {Optional<Double>}
+     * @return {Optional<Double>} standard deviation of a text cluster
      */
     @Override
     public Optional<Double> calculateStandardDeviation(TextCluster textCluster) {
@@ -258,7 +258,6 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
 
     /**
      * Gets the minimum score of a text textCluster
-     *
      * @param textCluster
      * @return
      */
@@ -290,19 +289,6 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     @Override
     public Integer getClusterSize(TextBlock textBlock) {
         return textBlock.getCluster().size();
-    }
-
-    /**
-     * Casts the resultString of a Result to its double representation
-     * @param resultString String representatino of the representation
-     * @return {Double} Double representation of the result
-     */
-    public double castResultString(String resultString) {
-        if (resultString.contains(" ")) {
-            resultString = resultString.substring(0, resultString.indexOf(" "));
-            return Double.parseDouble(resultString);
-        }
-        return -1.0;
     }
 
     /**
