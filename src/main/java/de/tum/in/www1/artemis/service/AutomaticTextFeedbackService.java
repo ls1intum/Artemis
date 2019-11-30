@@ -32,8 +32,8 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Suggest Feedback for a Submission based on its cluster.
-     * For each TextBlock of the submission, this method finds already existing Feedback elements in the same cluster and chooses the one with the minimum distance.
+     * Suggest Feedback for a Submission based on its textCluster.
+     * For each TextBlock of the submission, this method finds already existing Feedback elements in the same textCluster and chooses the one with the minimum distance.
      * Otherwise, an empty Feedback Element is created for simplicity.
      * Feedbacks are stored inline with the provided Result object.
      *
@@ -46,26 +46,26 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         textSubmission.setBlocks(blocks);
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
-            final TextCluster cluster = block.getCluster();
+            final TextCluster textCluster = block.getCluster();
             Feedback newFeedback = new Feedback().reference(block.getId());
 
-            // if TextBlock is part of a cluster, we try to find an existing Feedback Element
-            if (cluster != null) {
+            // if TextBlock is part of a textCluster, we try to find an existing Feedback Element
+            if (textCluster != null) {
                 // Find all Feedbacks for other Blocks in Cluster.
-                final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
-                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
+                final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
+                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(textCluster);
 
                 if (feedbackForTextExerciseInCluster.size() != 0) {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
 
-                            // Filter all other blocks in the cluster for those with Feedback
-                            .filter(element -> feedbackForTextExerciseInCluster.keySet().contains(element.getId()))
+                            // Filter all other blocks in the textCluster for those with Feedback
+                            .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
 
                             // Find the closest block
-                            .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
+                            .min(comparing(element -> textCluster.distanceBetweenBlocks(block, element)));
 
                     if (mostSimilarBlockInClusterWithFeedback.isPresent()
-                            && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
+                            && textCluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
                         final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
                         return newFeedback.credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText()).type(FeedbackType.AUTOMATIC);
 
@@ -80,27 +80,22 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Calculates the variance of a given text cluster if the number of assessed text block in the cluster exceeds the variance thresehold
+     * Calculates the variance of a given text textCluster if the number of assessed text block in the textCluster exceeds the variance thresehold
+     *
      * @param textCluster
      * @return
      */
     @Override
     public Optional<Double> calculateVariance(TextCluster textCluster) {
 
-        final List<TextBlock> allAssessedBlocks = textCluster.getBlocks()
+        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
-                .stream()
-                // Only get text blocks which are assessed
-                .filter(block -> getCreditsOfTextBlock(block).isPresent())
-
-                .collect(toList());
-
-        // If not enough text blocks in a cluster are assessed, return an empty optional
+        // If not enough text blocks in a textCluster are assessed, return an empty optional
         if (allAssessedBlocks.size() < VARIANCE_THRESHOLD) {
             return Optional.empty();
         }
 
-        // Expected value of a cluster
+        // Expected value of a textCluster
         final double expectedValue = calculateExpectation(textCluster).get();
 
         return Optional.of(allAssessedBlocks.stream()
@@ -117,28 +112,30 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Calculates the expected value in a text cluster
-     * @param cluster Text cluster for which the expected value is calculated
+     * Calculates the expected value in a text textCluster
+     *
+     * @param textCluster Text textCluster for which the expected value is calculated
      * @return
      */
     @Override
-    public Optional<Double> calculateExpectation(TextCluster cluster) {
-        return Optional.of(cluster.getBlocks().stream()
+    public Optional<Double> calculateExpectation(TextCluster textCluster) {
+        return Optional.of(textCluster.getBlocks().stream()
 
                 // Only take the text blocks which are credited
                 .filter(block -> getCreditsOfTextBlock(block).isPresent())
 
                 // Calculate the expected value of each random variable (the credit score) and its
-                // probability (its coverage percentage over a cluster which is uniformly distributed)
-                .mapToDouble(block -> (double) (1 / cluster.size()) * getCreditsOfTextBlock(block).get())
+                // probability (its coverage percentage over a textCluster which is uniformly distributed)
+                .mapToDouble(block -> (double) (1 / textCluster.size()) * getCreditsOfTextBlock(block).get())
 
-                // Sum the up to create the expectation value of a cluster in terms of a score
+                // Sum the up to create the expectation value of a textCluster in terms of a score
                 .sum());
     }
 
     /**
-     * Calculates the standard deviation of a text cluster
-     * @param textCluster cluster for which the standard deviation is calculated
+     * Calculates the standard deviation of a text textCluster
+     *
+     * @param textCluster textCluster for which the standard deviation is calculated
      * @return {Optional<Double>}
      */
     @Override
@@ -150,14 +147,15 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Calculates the coverage percentage of how  many text blocks in a cluster are present
-     * @param cluster cluster for which the coverage percentage is calculated
+     * Calculates the coverage percentage of how  many text blocks in a textCluster are present
+     *
+     * @param textCluster textCluster for which the coverage percentage is calculated
      * @return
      */
     @Override
-    public Optional<Double> calculateCoveragePercentage(TextCluster cluster) {
-        if (cluster != null) {
-            final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
+    public Optional<Double> calculateCoveragePercentage(TextCluster textCluster) {
+        if (textCluster != null) {
+            final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
 
             final double creditedBlocks = (double) allBlocksInCluster.stream().filter(block -> (getCreditsOfTextBlock(block).isPresent())).count();
 
@@ -168,21 +166,22 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Calculates the coverage percentage of a cluster with the same score as a given text block
-     * @param textBlock text block for which its clusters score coverage percentage is determined
-     * @return {Optional<Double>} Optional which contains the percentage between [0.0-1.0] or empty if text block is not in a cluster
+     * Calculates the coverage percentage of a textCluster with the same score as a given text block
+     *
+     * @param textBlock text block for which its textClusters score coverage percentage is determined
+     * @return {Optional<Double>} Optional which contains the percentage between [0.0-1.0] or empty if text block is not in a textCluster
      */
     @Override
     public Optional<Double> calculateScoreCoveragePercentage(TextBlock textBlock) {
-        final TextCluster cluster = textBlock.getCluster();
+        final TextCluster textCluster = textBlock.getCluster();
 
-        if (cluster != null) {
+        if (textCluster != null) {
 
-            final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
+            final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
 
             final double textBlockCredits = getCreditsOfTextBlock(textBlock).get();
 
-            final List<TextBlock> blocksWithSameCredit = cluster.getBlocks()
+            final List<TextBlock> blocksWithSameCredit = textCluster.getBlocks()
 
                     .parallelStream()
 
@@ -198,15 +197,16 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Calculates the average score of a text cluster
-     * @param cluster text cluster for which the average score should be computed
+     * Calculates the average score of a text textCluster
+     *
+     * @param textCluster text textCluster for which the average score should be computed
      * @return {Optional<Double>} Optional which contains the average scores or empty if there are none
      */
     @Override
-    public Optional<Double> calculateAverage(TextCluster cluster) {
-        if (cluster != null) {
+    public Optional<Double> calculateAverage(TextCluster textCluster) {
+        if (textCluster != null) {
 
-            final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
+            final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
 
             final Double scoringSum = allBlocksInCluster.stream().mapToDouble(block -> {
                 if (getCreditsOfTextBlock((block)).isPresent()) {
@@ -221,9 +221,14 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         return Optional.empty();
     }
 
-    public OptionalDouble getMaxScore(TextCluster cluster) {
+    /**
+     * Gets the max score of a text textCluster
+     * @param textCluster
+     * @return
+     */
+    public OptionalDouble getMaxScore(TextCluster textCluster) {
 
-        final List<TextBlock> allAssessedBlocks = cluster.getBlocks().parallelStream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
         if (allAssessedBlocks.size() > 0) {
             return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).reduce(Math::max);
@@ -232,9 +237,14 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         return OptionalDouble.empty();
     }
 
-    public Optional<Double> getMedianScore(TextCluster cluster) {
+    /**
+     * Gets the medium score of a text textCluster
+     * @param textCluster
+     * @return
+     */
+    public Optional<Double> getMedianScore(TextCluster textCluster) {
 
-        final List<TextBlock> allAssessedBlocks = cluster.getBlocks().parallelStream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
         if (allAssessedBlocks.size() > 0) {
             return getCreditsOfTextBlock(allAssessedBlocks.get((allAssessedBlocks.size() / 2)));
@@ -242,9 +252,15 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
         return Optional.empty();
     }
 
-    public OptionalDouble getMinimumScore(TextCluster cluster) {
+    /**
+     * Gets the minimum score of a text textCluster
+     *
+     * @param textCluster
+     * @return
+     */
+    public OptionalDouble getMinimumScore(TextCluster textCluster) {
 
-        final List<TextBlock> allAssessedBlocks = cluster.getBlocks().parallelStream().filter(block -> getCreditsOfTextBlock(block).isPresent()).collect(toList());
+        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
         if (allAssessedBlocks.size() > 0) {
             return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).reduce(Math::min);
@@ -253,19 +269,19 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
     }
 
     /**
-     * Getter for the cluster size of a text cluster
-     * @param cluster cluster for which the size should be returned
-     * @return {Integer} size of the cluster
+     * Getter for the textCluster size of a text textCluster
+     * @param textCluster textCluster for which the size should be returned
+     * @return {Integer} size of the textCluster
      */
     @Override
-    public Integer getClusterSize(TextCluster cluster) {
-        return cluster.size();
+    public Integer getClusterSize(TextCluster textCluster) {
+        return textCluster.size();
     }
 
     /**
-     * Returns the size of the cluster of a text block
-     * @param textBlock textBlock for which the cluster size should be determined
-     * @return {Integer} size of the text cluster
+     * Returns the size of the textCluster of a text block
+     * @param textBlock textBlock for which the textCluster size should be determined
+     * @return {Integer} size of the text textCluster
      */
     @Override
     public Integer getClusterSize(TextBlock textBlock) {
@@ -291,12 +307,27 @@ public class AutomaticTextFeedbackService implements TextAssessmentUtilities {
      * @return {Optional<Double>} credits of the text block as Double Object in an Optional Wrapper
      */
     public Optional<Double> getCreditsOfTextBlock(TextBlock block) {
-        final TextCluster cluster = block.getCluster();
+        final TextCluster textCluster = block.getCluster();
 
-        final Map<String, Feedback> feedback = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
+        final Map<String, Feedback> feedback = feedbackService.getFeedbackForTextExerciseInCluster(textCluster);
         if (feedback != null) {
             return Optional.of(feedback.get(block.getId()).getCredits());
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns all assessed block in a text textCluster as a List
+     * @param textCluster textCluster for which all assessed blocks should be returned
+     * @return {List<Textblock>} all assessed text blocks
+     */
+    public List<TextBlock> getAssessedBlocks(TextCluster textCluster) {
+        return textCluster.getBlocks()
+
+                .stream()
+                // Only get text blocks which are assessed
+                .filter(block -> getCreditsOfTextBlock(block).isPresent())
+
+                .collect(toList());
     }
 }
