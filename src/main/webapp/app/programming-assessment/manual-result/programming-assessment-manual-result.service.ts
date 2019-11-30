@@ -35,11 +35,13 @@ export class ProgrammingAssessmentManualResultService {
     }
 
     /**
-     * Send request to update the assessment after the complaint
-     * @param feedbacks list of feedback items
-     * @param complaintResponse response to the complaint
-     * @param result updated result
+     * Send the request to update the assessment after the complaint (only done once per complaint). The result score, string
+     * and feedbacks will be updated. Original result will be stored as a string on complaint.
+     * @param feedbacks list of feedback items (the score is not evaluated from them, as we pass score directly from the result)
+     * @param complaintResponse contains main information about the complaint response (time, responseText, reviewer)
+     * @param result updated result (only score and resultString is updated)
      * @param submissionId the id of the submission
+     * @return updated result with updated feedbacks and score
      */
     updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, result: Result, submissionId: number): Observable<Result> {
         const url = `${SERVER_API_URL}api/programming-submissions/${submissionId}/assessment-after-complaint`;
