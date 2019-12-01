@@ -1,4 +1,5 @@
 import { EventEmitter } from '@angular/core';
+import { Observable } from 'rxjs';
 
 /**
  * Defines the type of the action handled by delete dialog
@@ -13,6 +14,7 @@ export enum ActionType {
  * Data that will be passed to the delete dialog component
  */
 export class DeleteDialogData {
+    dialogError: Observable<string>;
     // title of the entity we want to delete
     entityTitle: string;
 

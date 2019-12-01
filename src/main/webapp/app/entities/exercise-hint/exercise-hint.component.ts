@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
@@ -17,7 +17,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     exerciseId: number;
     exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;
-    closeDialogTrigger: boolean;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     paramSub: Subscription;
 
@@ -44,6 +46,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             this.paramSub.unsubscribe();
         }
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -86,9 +89,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 }

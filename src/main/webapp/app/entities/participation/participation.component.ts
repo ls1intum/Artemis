@@ -11,7 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/utils/global.utils';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-participation',
@@ -35,7 +35,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
 
-    closeDialogTrigger: boolean;
+    // These two variables are used to emit errors to the delete dialog
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private route: ActivatedRoute,
@@ -56,6 +58,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     loadAll() {
@@ -130,9 +133,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     name: 'participationListModification',
                     content: 'Deleted an participation',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 
@@ -147,9 +150,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     name: 'participationListModification',
                     content: 'Cleanup the build plan of an participation',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
     callback() {}

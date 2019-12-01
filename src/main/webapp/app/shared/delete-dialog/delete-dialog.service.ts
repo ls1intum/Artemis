@@ -25,16 +25,7 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
         this.modalRef.componentInstance.delete = deleteDialogData.delete;
+        this.modalRef.componentInstance.dialogError = deleteDialogData.dialogError;
         return from(this.modalRef.result).pipe(finalize(() => (this.modalRef = null)));
-    }
-
-    /**
-     * Closes the delete dialog
-     */
-    closeDialog(): void {
-        if (this.modalRef && this.modalRef.componentInstance) {
-            this.modalRef.componentInstance.clear();
-            this.modalRef = null;
-        }
     }
 }

@@ -24,7 +24,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     FeatureToggle = FeatureToggle;
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    closeDialogTrigger: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -75,9 +74,9 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 
@@ -87,8 +86,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      */
     resetProgrammingExercise(programmingExerciseId: number) {
         this.exerciseService.reset(programmingExerciseId).subscribe(
-            () => (this.closeDialogTrigger = !this.closeDialogTrigger),
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            () => this.dialogErrorSource.complete(),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 

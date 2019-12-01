@@ -9,6 +9,7 @@ import { onError } from 'app/utils/global.utils';
 import { User } from 'app/core';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-user-management',
@@ -27,7 +28,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate: string;
     previousPage: number;
     reverse: boolean;
-    closeDialogTrigger: boolean;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private userService: UserService,
@@ -63,6 +66,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.routeData.unsubscribe();
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -163,9 +167,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                     name: 'userListModification',
                     content: 'Deleted a user',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 

@@ -17,7 +17,6 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
-    closeDialogTrigger: boolean;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -70,9 +69,9 @@ export class TextExerciseComponent extends ExerciseComponent {
                     name: 'textExerciseListModification',
                     content: 'Deleted an textExercise',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 

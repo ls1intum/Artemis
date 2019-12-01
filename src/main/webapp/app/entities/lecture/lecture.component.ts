@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
@@ -19,7 +19,10 @@ export class LectureComponent implements OnInit, OnDestroy {
     currentAccount: any;
     eventSubscriber: Subscription;
     courseId: number;
-    closeDialogTrigger: boolean;
+
+    // These two variables are used to emit errors to the delete dialog
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         protected lectureService: LectureService,
@@ -55,6 +58,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     trackId(index: number, item: Lecture) {
@@ -76,9 +80,9 @@ export class LectureComponent implements OnInit, OnDestroy {
                     name: 'lectureListModification',
                     content: 'Deleted an lecture',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 }

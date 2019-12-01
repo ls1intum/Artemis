@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
@@ -13,24 +13,25 @@ import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
 })
-export class ProgrammingExerciseDetailComponent implements OnInit {
+export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
     readonly ParticipationType = ParticipationType;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     programmingExercise: ProgrammingExercise;
-    closeDialogTrigger: boolean;
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -59,6 +60,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 this.loadingTemplateParticipationResults = false;
             });
         });
+    }
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -118,9 +123,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 } else {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 }
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 }

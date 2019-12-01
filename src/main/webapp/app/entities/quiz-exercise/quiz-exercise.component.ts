@@ -18,7 +18,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     readonly ActionType = ActionType;
-    closeDialogTrigger: boolean;
 
     QuizStatus = {
         HIDDEN: 'Hidden',
@@ -196,9 +195,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
     }
 
@@ -213,9 +212,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
     }
 

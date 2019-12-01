@@ -62,7 +62,7 @@
                                     deleteQuestion="artemisApp.lecture.delete.question"
                                     deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
                                     (delete)="deleteLecture(lecture.id)"
-                                    [closeDialogTrigger]="closeDialogTrigger"
+                                    [dialogError]="dialogError$"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>

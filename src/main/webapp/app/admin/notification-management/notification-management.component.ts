@@ -12,6 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
 import { onError } from 'app/utils/global.utils';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-notification-mgmt',
@@ -30,7 +31,10 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     predicate: string;
     previousPage: number;
     reverse: boolean;
-    closeDialogTrigger: boolean;
+
+    // These two variables are used to emit errors to the delete dialog
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private userService: UserService,
@@ -67,6 +71,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.routeData.unsubscribe();
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -87,9 +92,9 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
                     name: 'notificationListModification',
                     content: 'Deleted a system notification',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 

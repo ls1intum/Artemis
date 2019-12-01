@@ -17,7 +17,6 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[] = [];
-    closeDialogTrigger: boolean;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -71,9 +70,9 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted an fileUploadExercise',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 

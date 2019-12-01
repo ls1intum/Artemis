@@ -12,6 +12,7 @@ import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
+import { Observable } from 'rxjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,6 +46,7 @@ describe('DeleteDialogComponent', () => {
         comp.entityTitle = 'title';
         comp.deleteQuestion = 'artemisApp.exercise.delete.question';
         comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
+        comp.dialogError = new Observable<string>();
         fixture.detectChanges();
 
         const closeButton = fixture.debugElement.query(By.css('.close'));
@@ -67,6 +69,7 @@ describe('DeleteDialogComponent', () => {
         comp.entityTitle = 'title';
         comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
         comp.confirmEntityName = '';
+        comp.dialogError = new Observable<string>();
         fixture.detectChanges();
         let submitButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(submitButton.nativeElement.disabled).to.be.true;

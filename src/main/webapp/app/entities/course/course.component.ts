@@ -6,6 +6,7 @@ import { Course } from './course.model';
 import { CourseService } from './course.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/utils/global.utils';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-course',
@@ -19,7 +20,10 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     courses: Course[];
     eventSubscriber: Subscription;
-    closeDialogTrigger: boolean;
+
+    // These two variables are used to emit errors to the delete dialog
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
@@ -45,6 +49,7 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     trackId(index: number, item: Course) {
@@ -66,9 +71,9 @@ export class CourseComponent implements OnInit, OnDestroy {
                     name: 'courseListModification',
                     content: 'Deleted an course',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 

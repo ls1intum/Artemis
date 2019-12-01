@@ -215,7 +215,7 @@
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.reset.question"
                                     (delete)="resetProgrammingExercise(programmingExercise.id)"
-                                    [closeDialogTrigger]="closeDialogTrigger"
+                                    [dialogError]="dialogError$"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     class="mb-1"
                                 >
@@ -227,7 +227,7 @@
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
                                     (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
-                                    [closeDialogTrigger]="closeDialogTrigger"
+                                    [dialogError]="dialogError$"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',

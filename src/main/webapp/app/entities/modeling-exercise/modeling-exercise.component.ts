@@ -18,7 +18,6 @@ import { onError } from 'app/utils/global.utils';
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
-    closeDialogTrigger: boolean;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -70,9 +69,9 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                     name: 'modelingExerciseListModification',
                     content: 'Deleted an modelingExercise',
                 });
-                this.closeDialogTrigger = !this.closeDialogTrigger;
+                this.dialogErrorSource.complete();
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 
