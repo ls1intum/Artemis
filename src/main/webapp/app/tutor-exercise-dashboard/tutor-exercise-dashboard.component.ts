@@ -288,24 +288,22 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
         }
 
-        submissionObservable
-            .pipe(
-                catchError((error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        // there are no unassessed submission, nothing we have to worry about
-                        this.unassessedSubmission = null;
-                    } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.submissionLockLimitReached = true;
-                    } else {
-                        this.onError(error.message);
-                    }
-                    return throwError('');
-                }),
-            )
-            .subscribe((submission: Submission) => {
+        submissionObservable.subscribe(
+            (submission: Submission) => {
                 this.unassessedSubmission = submission;
                 this.submissionLockLimitReached = false;
-            });
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    this.unassessedSubmission = null;
+                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.submissionLockLimitReached = true;
+                } else {
+                    this.onError(error.message);
+                }
+            },
+        );
     }
 
     readInstruction() {

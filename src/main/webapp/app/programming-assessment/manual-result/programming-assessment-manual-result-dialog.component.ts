@@ -23,10 +23,13 @@ import { ComplaintResponse } from 'app/entities/complaint-response/complaint-res
     templateUrl: './programming-assessment-manual-result-dialog.component.html',
 })
 export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
-    SCORE_PATTERN = SCORE_PATTERN;
+    readonly SCORE_PATTERN = SCORE_PATTERN;
+    readonly ComplaintType = ComplaintType;
+
     @Input() participationId: number;
     @Input() result: Result;
     @Output() onResultModified = new EventEmitter<Result>();
+
     participation: StudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
@@ -35,7 +38,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     userId: number;
     isAssessor: boolean;
     complaint: Complaint;
-    readonly ComplaintType = ComplaintType;
+    resultModified: boolean;
 
     constructor(
         private participationService: ParticipationService,
@@ -111,6 +114,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     clear() {
+        if (this.resultModified) {
+            this.onResultModified.emit(this.result);
+        }
         this.activeModal.dismiss('cancel');
     }
 
@@ -179,7 +185,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         this.manualResultService.updateAfterComplaint(this.feedbacks, complaintResponse, this.result, this.result!.submission!.id).subscribe(
             (result: Result) => {
                 this.result = result;
-                this.onResultModified.emit(result);
+                this.resultModified = true;
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
