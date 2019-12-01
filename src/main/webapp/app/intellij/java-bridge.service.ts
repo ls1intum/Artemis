@@ -57,6 +57,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * "Imports" a project/exercise by cloning th repository on the local machine of the user and opening the new project.
      *
      * @param repository The full URL of the repository of a programming exercise
+     * @param exerciseJson The exercise formatted as JSON string for which the repository should get cloned.
      */
     clone(repository: string, exerciseJson: string) {
         this.window.nativeWindow.intellij.clone(repository, exerciseJson);
@@ -93,6 +94,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
+     * @param The ExerciseView which is currently open in IntelliJ (instructor vs. student)
      */
     onExerciseOpened(opened: number, view: string): void {
         const inInstructorView = view === ExerciseView.INSTRUCTOR;
@@ -190,7 +192,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * Selects an instructor repository in IntelliJ. The selected repository will be used for all future actions
      * that reference an instructor repo s.a. submitting the code.
      *
-     * @param repository
+     * @param repository The repository to be selected for all future interactions
      */
     selectInstructorRepository(repository: REPOSITORY): void {
         this.window.nativeWindow.intellij.selectInstructorRepository(repository);

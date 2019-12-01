@@ -46,7 +46,7 @@ export class IdeBuildAndTestService {
      * Listens on any new builds for the user's participation on the websocket and forwards incoming results to the IDE
      *
      * @param exercise The exercise for which build results should get forwarded
-     * @param participation The (optional) ID of the participation to subscribe to. The default is the first student participation
+     * @param participation The (optional) participation to subscribe to. The default is the first student participation
      */
     listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise, participation: Participation | null = null): Observable<void> {
         const participationId = participation ? participation.id : exercise.studentParticipations[0].id;

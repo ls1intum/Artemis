@@ -105,7 +105,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
-    editInIDE(programmingExercise: ProgrammingExercise) {
+    editIntIntelliJ(programmingExercise: ProgrammingExercise) {
         this.javaBridge.editExercise(stringifyCricular(programmingExercise));
     }
 

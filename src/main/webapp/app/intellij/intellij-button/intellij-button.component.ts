@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
@@ -14,8 +13,6 @@ export class IntellijButtonComponent {
     @Input() smallButton = false;
     @Input() disabled = false;
     @Input() featureToggle = FeatureToggle; // Disable by feature toggle.
-
-    javaBridge: JavaBridgeService;
 
     constructor() {}
 

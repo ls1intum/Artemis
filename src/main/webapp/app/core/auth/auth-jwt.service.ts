@@ -66,15 +66,10 @@ export class AuthServerProvider implements IAuthServerProvider {
     }
 
     storeAuthenticationToken(jwt: string, rememberMe: string) {
-        try {
-            if (rememberMe) {
-                this.localStorage.store('authenticationToken', jwt);
-            } else {
-                this.sessionStorage.store('authenticationToken', jwt);
-            }
-        } catch (e) {
-            // @ts-ignore
-            window.intellij.log(e);
+        if (rememberMe) {
+            this.localStorage.store('authenticationToken', jwt);
+        } else {
+            this.sessionStorage.store('authenticationToken', jwt);
         }
     }
 
