@@ -11,6 +11,7 @@ import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -107,7 +108,7 @@ export class ListOfComplaintsComponent implements OnInit {
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
             const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.participationId = studentParticipation.id;
-            modalRef.componentInstance.result = complaint.result;
+            modalRef.componentInstance.result = cloneDeep(complaint.result);
             modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
             modalRef.result.then(() => this.loadComplaints());
             return;

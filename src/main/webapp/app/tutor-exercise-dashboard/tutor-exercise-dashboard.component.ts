@@ -30,6 +30,7 @@ import { Result } from 'app/entities/result/result.model';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
+import { cloneDeep } from 'lodash';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -376,7 +377,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     private openManualResultDialog(result: Result) {
         const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participationId = result.participation!.id;
-        modalRef.componentInstance.result = result;
+        modalRef.componentInstance.result = cloneDeep(result);
         modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
         modalRef.result.then(() => this.loadAll());
         return;
