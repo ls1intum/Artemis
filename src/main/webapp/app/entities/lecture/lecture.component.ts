@@ -20,7 +20,6 @@ export class LectureComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     courseId: number;
 
-    // These two variables are used to emit errors to the delete dialog
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

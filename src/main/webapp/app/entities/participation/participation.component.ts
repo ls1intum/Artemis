@@ -35,7 +35,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
 
-    // These two variables are used to emit errors to the delete dialog
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

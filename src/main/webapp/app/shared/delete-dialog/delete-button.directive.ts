@@ -11,8 +11,8 @@ export class DeleteButtonDirective implements OnInit {
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
-    @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
     @Input() dialogError: Observable<string>;
+    @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
 
     deleteTextSpan: HTMLElement;
 

@@ -11,11 +11,11 @@ import { JhiAlertService } from 'ng-jhipster';
     templateUrl: './delete-dialog.component.html',
 })
 export class DeleteDialogComponent implements OnInit, OnDestroy {
-    submitDisabled: boolean;
     readonly actionTypes = ActionType;
+    private dialogErrorSubscription: Subscription;
     dialogError: Observable<string>;
-    dialogErrorSubscription: Subscription;
     @Output() delete: EventEmitter<{ [key: string]: boolean }>;
+    submitDisabled: boolean;
     confirmEntityName: string;
     entityTitle: string;
     deleteQuestion: string;

@@ -32,7 +32,6 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     previousPage: number;
     reverse: boolean;
 
-    // These two variables are used to emit errors to the delete dialog
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
