@@ -23,6 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
@@ -181,15 +182,32 @@ public class TextSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getAllTextSubmissions_studentHiddenForTutor() throws Exception {
+    public void getAllSubmissionsOfExercise_asTutor() throws Exception {
+        database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        request.getList("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getAllSubmissionsOfExercise_asInstructor() throws Exception {
+        TextSubmission submission1 = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        TextSubmission submission2 = ModelFactory.generateTextSubmission("sample", Language.ENGLISH, false);
+        submission2 = database.addTextSubmission(textExerciseBeforeDueDate, submission2, "student2");
+
+        List<TextSubmission> submissions = request.getList("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
+
+        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getAllTextSubmissions() throws Exception {
         textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
 
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         checkSubmission(textSubmissions.get(0), textSubmission);
-
-        checkDetailsHidden(textSubmissions.get(0), false);
 
         var textSubmissionInDb = submissionRepository.findById(textSubmission.getId()).get();
         assertThat(textSubmissionInDb).isEqualToIgnoringGivenFields(textSubmission, "participation", "submissionDate", "blocks");
@@ -216,7 +234,7 @@ public class TextSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void getAllTextSubmissions_submittedOnly() throws Exception {
         textSubmission = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("d", Language.ENGLISH, false);
@@ -231,8 +249,6 @@ public class TextSubmissionIntegrationTest {
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         checkSubmission(textSubmissions.get(0), textSubmission);
-
-        checkDetailsHidden(textSubmissions.get(0), false);
     }
 
     @Test

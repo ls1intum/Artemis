@@ -81,7 +81,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(3, 1, 0);
+        database.addUsers(3, 1, 1);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
@@ -237,7 +237,14 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getAllSubmissionsOfExercise() throws Exception {
+    public void getAllSubmissionsOfExercise_asTutor() throws Exception {
+        database.addModelingSubmission(classExercise, submittedSubmission, "student1");
+        request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getAllSubmissionsOfExercise_asInstructor() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         ModelingSubmission submission2 = database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
 
@@ -247,8 +254,21 @@ public class ModelingSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1")
-    public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getAllSubmissionsOfExerciseAsTutor_assessedByTutor() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
+        database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
+        submission = database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
+
+        List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK,
+                ModelingSubmission.class);
+
+        assertThat(submissions).as("contains both submissions").contains(submission);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getAllSubmissionsOfExercise_asStudent() throws Exception {
         database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
 
@@ -257,7 +277,7 @@ public class ModelingSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
@@ -285,7 +305,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "student1")
-    public void getModelSubmissionAsStudent() throws Exception {
+    public void getModelSubmission_ssStudent_forbidden() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
 

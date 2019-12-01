@@ -28,18 +28,18 @@
 -->
 
     <!-- Configure the Sentry appender, overriding the logging threshold to the WARN level -->
-    <appender name="Sentry" class="io.sentry.logback.SentryAppender">
+    <!-- <appender name="Sentry" class="io.sentry.logback.SentryAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>WARN</level>
         </filter>
     </appender>
-
+-->
     <!-- Enable the Console and Sentry appenders, Console is provided as an example
  of a non-Sentry logger that is set to a different logging threshold -->
-    <root>
+  <!--  <root>
         <appender-ref ref="Sentry" />
     </root>
-
+-->
     <logger name="de.tum.in.www1.artemis" level="#logback.loglevel#"/>
     <logger name="io.github.jhipster" level="#logback.loglevel#"/>
 
