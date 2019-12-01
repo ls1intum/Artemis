@@ -83,9 +83,10 @@ public class TextSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextSubmissions_studentHiddenForTutor() throws Exception {
-        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExerciseAfterDueDate, textSubmission, "student1", "tutor1");
 
-        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
+        List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.OK,
+                TextSubmission.class);
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
