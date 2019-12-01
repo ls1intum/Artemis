@@ -169,7 +169,7 @@ public class TextAssessmentUtilityService {
     }
 
     /**
-     * Gets the median score of a text textCluster
+     * Gets the median score of a textCluster
      * @param textCluster
      * @return
      */
@@ -248,6 +248,39 @@ public class TextAssessmentUtilityService {
                 .filter(block -> getCreditsOfTextBlock(block).isPresent())
 
                 .collect(toList());
+    }
+
+    /**
+     *
+     * @param textBlock
+     * @return
+     */
+    public static OptionalDouble calculateScore(TextBlock textBlock) {
+        final TextCluster textCluster = textBlock.getCluster();
+
+        final List<TextBlock> assessedBlocks = getAssessedBlocks(textCluster);
+
+        if (getCreditsOfTextBlock(textBlock).isPresent() || assessedBlocks.size() < 1) {
+            return OptionalDouble.empty();
+        }
+
+        // Get the total distance between the text block which is automatically assessed and every other assessed block in the cluster
+        final double totalWeight = assessedBlocks.stream()
+
+                // Get the distance between the original text block and each assessed block
+                .mapToDouble(blockIterator -> (1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))))
+                // Sum the up to get the total distance
+                .reduce(Double::sum)
+                // Return as double
+                .getAsDouble();
+
+        return OptionalDouble.of(assessedBlocks.stream()
+
+                // Calculate the impact each assessed block should have on the final score, by determining the percental closeness of it compared to the other assessed blocks
+                .mapToDouble(
+                        blockIterator -> ((1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))) / totalWeight) * getCreditsOfTextBlock(blockIterator).get())
+
+                .sum());
     }
 
 }
