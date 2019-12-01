@@ -56,7 +56,10 @@ export class DeleteButtonDirective implements OnInit {
             delete: this.delete,
             dialogError: this.dialogError,
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe();
+        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe(
+            () => {},
+            () => {},
+        );
     }
 
     @HostListener('click')

@@ -10,9 +10,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { compareExerciseShortName } from 'app/guided-tour/guided-tour.utils';
 import { CourseScoreCalculationService } from 'app/overview';
 import { isIntelliJ } from 'app/intellij/intellij';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -43,7 +43,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     public weeklyExercisesGrouped: object;
     public upcomingExercises: Exercise[] = [];
     public exerciseCountMap: Map<string, number>;
-    public guidedTourExercise: Exercise | null;
 
     readonly ASC = ExerciseSortingOrder.DUE_DATE_ASC;
     readonly DESC = ExerciseSortingOrder.DUE_DATE_DESC;
@@ -51,8 +50,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sortingOrder: ExerciseSortingOrder;
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
-
-    readonly compareExerciseShortName = compareExerciseShortName;
+    exerciseForGuidedTour: Exercise | null;
 
     constructor(
         private courseService: CourseService,
@@ -63,6 +61,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private route: ActivatedRoute,
         private guidedTourService: GuidedTourService,
+        private programmingSubmissionService: ProgrammingSubmissionService,
     ) {}
 
     ngOnInit() {
@@ -88,8 +87,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
                 this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
+                this.programmingSubmissionService.initializeCacheForStudent(this.course!.exercises, true);
             });
         }
+        this.programmingSubmissionService.initializeCacheForStudent(this.course!.exercises, true);
 
         this.applyFiltersAndOrder();
 
@@ -97,7 +98,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.applyFiltersAndOrder();
         });
 
-        this.guidedTourExercise = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
+        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
     }
 
     ngOnDestroy(): void {

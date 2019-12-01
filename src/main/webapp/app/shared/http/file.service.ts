@@ -21,14 +21,18 @@ export class FileService {
      * @param downloadUrl url that is stored in the attachment model
      */
     downloadAttachment(downloadUrl: string) {
-        const fileName = downloadUrl.split('/').slice(-1)[0];
+        const downloadUrlComponents = downloadUrl.split('/');
+        // take the last element
+        const fileName = downloadUrlComponents.pop()!;
+        const restOfUrl = downloadUrlComponents.join('/');
+        const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(fileName);
         const newWindow = window.open('about:blank');
         this.http
             .get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })
             .toPromise()
             .then(
                 (result: HttpResponse<String>) => {
-                    newWindow!.location.href = `${downloadUrl}?access_token=${result.body}`;
+                    newWindow!.location.href = `${normalizedDownloadUrl}?access_token=${result.body}`;
                 },
                 () => {
                     newWindow!.close();

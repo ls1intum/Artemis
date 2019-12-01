@@ -13,12 +13,6 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-logging:
-    level:
-        ROOT: INFO
-        de.tum.in.www1.artemis: INFO
-        io.github.jhipster: INFO
-
 management:
     metrics:
         export:
@@ -131,3 +125,16 @@ jhipster:
             queue-size: 512
     audit-events:
         retention-period: 120 # Number of days before audit events are deleted.
+
+# Properties to be exposed on the /info management endpoint
+info:
+    guided-tour:
+        courseShortName: 'artemistutorial'
+        tours:
+            - cancel_tour: ''
+            - code_editor_tour: 'tutorial'
+            - course_overview_tour: ''
+            - course_exercise_overview_tour: 'tutorial'
+            - modeling_tour: 'UML Class Diagram'
+            - programming_exercise_fail_tour: 'tutorial'
+            - programming_exercise_success_tour: 'tutorial'

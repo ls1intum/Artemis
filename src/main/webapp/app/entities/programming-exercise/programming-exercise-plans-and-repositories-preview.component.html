@@ -10,6 +10,7 @@
                     <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.repositories">Repositories: </span>
                 </div>
                 <hr class="pt-0 pb-0 mt-1 mb-1" />
+                <!-- TODO the following constants should retrieved from the server and not hardcoded here -->
                 <ul>
                     <li>
                         <code class="text-white badge badge-primary label-preview"
@@ -40,13 +41,13 @@
             <ul>
                 <li>
                     <code class="text-white badge badge-primary label-preview"
-                        >{{ programmingExercise.course?.shortName }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code
+                        >{{ programmingExercise.course?.shortName.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code
                     >
                     <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip"></jhi-help-icon>
                 </li>
                 <li>
                     <code class="text-white badge badge-primary label-preview"
-                        >{{ programmingExercise.course?.shortName }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
+                        >{{ programmingExercise.course?.shortName.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
                     >
                     <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip"></jhi-help-icon>
                 </li>

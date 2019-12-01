@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
@@ -114,7 +114,23 @@ export class ArtemisMarkdown {
      * @param {ShowdownExtension[]} extensions to use for markdown parsing
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
      */
-    htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []) {
+    safeHtmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []): SafeHtml {
+        if (markdownText == null || markdownText === '') {
+            return '';
+        }
+        const convertedString = this.htmlForMarkdown(markdownText, extensions);
+        return this.sanitizer.bypassSecurityTrustHtml(convertedString);
+    }
+
+    /**
+     * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
+     * Note: If possible, please use safeHtmlForMarkdown
+     *
+     * @param {string} markdownText the original markdown text
+     * @param {ShowdownExtension[]} extensions to use for markdown parsing
+     * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
+     */
+    htmlForMarkdown(markdownText: string | null, extensions: showdown.ShowdownExtension[] = []): string {
         if (markdownText == null || markdownText === '') {
             return '';
         }
@@ -130,8 +146,7 @@ export class ArtemisMarkdown {
             extensions: [...extensions, showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
-        const sanitized = DOMPurify.sanitize(html);
-        return this.sanitizer.bypassSecurityTrustHtml(sanitized);
+        return DOMPurify.sanitize(html);
     }
 
     /**
@@ -140,7 +155,7 @@ export class ArtemisMarkdown {
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
-    htmlForGuidedTourMarkdown(markdownText: string | null) {
+    htmlForGuidedTourMarkdown(markdownText: string | null): SafeHtml {
         if (markdownText == null || markdownText === '') {
             return '';
         }
@@ -159,7 +174,6 @@ export class ArtemisMarkdown {
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
         });
-        const markdown = converter.makeMarkdown(htmlText);
-        return markdown;
+        return converter.makeMarkdown(htmlText);
     }
 }

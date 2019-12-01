@@ -147,7 +147,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
-            this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
+            this.questionTextRendered = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
             this.generateShortAnswerStructure();
             this.generateLettersForSolutions();
 

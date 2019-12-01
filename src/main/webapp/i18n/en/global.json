@@ -100,6 +100,7 @@
             "language": "Language",
             "guidedTutorial": "Guided tutorial",
             "startTutorial": "Start tutorial",
+            "restartTutorial": "Restart tutorial",
             "continueTutorial": "Continue tutorial",
             "noNotifications": "No notifications available",
             "showAllNotifications": "Show all notifications"

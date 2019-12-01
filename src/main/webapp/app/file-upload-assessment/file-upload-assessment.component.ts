@@ -304,28 +304,24 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             );
     }
     onSubmitAssessment() {
-        const confirmationMessage = this.translateService.instant('artemisApp.fileUploadAssessment.messages.confirmSubmission');
-        const confirm = window.confirm(confirmationMessage);
-        if (confirm) {
-            this.validateAssessment();
-            if (!this.assessmentsAreValid) {
-                this.jhiAlertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
-                return;
-            }
-            this.isLoading = true;
-            this.fileUploadAssessmentsService
-                .saveAssessment(this.assessments, this.submission.id, true)
-                .pipe(finalize(() => (this.isLoading = false)))
-                .subscribe(
-                    result => {
-                        this.result = result;
-                        this.updateParticipationWithResult();
-                        this.jhiAlertService.clear();
-                        this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
-                    },
-                    (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
-                );
+        this.validateAssessment();
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('artemisApp.fileUploadAssessment.error.invalidAssessments');
+            return;
         }
+        this.isLoading = true;
+        this.fileUploadAssessmentsService
+            .saveAssessment(this.assessments, this.submission.id, true)
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe(
+                result => {
+                    this.result = result;
+                    this.updateParticipationWithResult();
+                    this.jhiAlertService.clear();
+                    this.jhiAlertService.success('artemisApp.assessment.messages.submitSuccessful');
+                },
+                (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            );
     }
 
     /**
