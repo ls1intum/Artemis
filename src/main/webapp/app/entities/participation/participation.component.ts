@@ -132,7 +132,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     name: 'participationListModification',
                     content: 'Deleted an participation',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -149,7 +149,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     name: 'participationListModification',
                     content: 'Cleanup the build plan of an participation',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

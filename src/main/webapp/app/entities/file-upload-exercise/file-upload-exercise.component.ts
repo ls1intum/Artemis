@@ -70,7 +70,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted an fileUploadExercise',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

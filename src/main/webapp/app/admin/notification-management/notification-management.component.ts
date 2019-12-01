@@ -91,7 +91,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
                     name: 'notificationListModification',
                     content: 'Deleted a system notification',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

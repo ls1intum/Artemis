@@ -89,7 +89,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

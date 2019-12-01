@@ -118,7 +118,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.attachmentService.delete(attachment.id).subscribe(
             () => {
                 this.attachments = this.attachments.filter(el => el.id !== attachment.id);
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

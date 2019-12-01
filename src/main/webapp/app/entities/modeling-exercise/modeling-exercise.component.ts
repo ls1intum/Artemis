@@ -69,7 +69,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                     name: 'modelingExerciseListModification',
                     content: 'Deleted an modelingExercise',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

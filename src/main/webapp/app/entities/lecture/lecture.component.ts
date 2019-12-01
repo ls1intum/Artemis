@@ -79,7 +79,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     name: 'lectureListModification',
                     content: 'Deleted an lecture',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

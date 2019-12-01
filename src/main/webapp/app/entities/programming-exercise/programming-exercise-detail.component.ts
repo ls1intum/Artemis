@@ -123,7 +123,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 } else {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 }
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

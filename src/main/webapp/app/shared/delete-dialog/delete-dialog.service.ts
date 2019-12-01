@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { from, Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, tap } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Injectable({ providedIn: 'root' })
@@ -26,6 +26,6 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
         this.modalRef.componentInstance.delete = deleteDialogData.delete;
         this.modalRef.componentInstance.dialogError = deleteDialogData.dialogError;
-        return from(this.modalRef.result).pipe(finalize(() => (this.modalRef = null)));
+        return from(this.modalRef.result).pipe(tap(() => (this.modalRef = null)));
     }
 }

@@ -70,7 +70,7 @@ export class CourseComponent implements OnInit, OnDestroy {
                     name: 'courseListModification',
                     content: 'Deleted an course',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

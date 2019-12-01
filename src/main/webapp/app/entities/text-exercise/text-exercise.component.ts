@@ -69,7 +69,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                     name: 'textExerciseListModification',
                     content: 'Deleted an textExercise',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

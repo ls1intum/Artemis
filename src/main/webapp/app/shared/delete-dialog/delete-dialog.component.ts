@@ -3,7 +3,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
@@ -30,9 +29,13 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
-        this.dialogErrorSubscription = this.dialogError.pipe(finalize(() => this.clear())).subscribe((errorMessage: string) => {
-            this.submitDisabled = false;
-            this.jhiAlertService.error(errorMessage);
+        this.dialogErrorSubscription = this.dialogError.subscribe((errorMessage: string) => {
+            if (errorMessage === '') {
+                this.clear();
+            } else {
+                this.submitDisabled = false;
+                this.jhiAlertService.error(errorMessage);
+            }
         });
         if (this.additionalChecks) {
             this.additionalChecksValues = mapValues(this.additionalChecks, () => false);

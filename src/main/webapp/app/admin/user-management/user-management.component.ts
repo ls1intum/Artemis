@@ -167,7 +167,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                     name: 'userListModification',
                     content: 'Deleted a user',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );

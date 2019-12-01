@@ -74,7 +74,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
@@ -86,7 +86,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      */
     resetProgrammingExercise(programmingExerciseId: number) {
         this.exerciseService.reset(programmingExerciseId).subscribe(
-            () => this.dialogErrorSource.complete(),
+            () => this.dialogErrorSource.next(''),
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }

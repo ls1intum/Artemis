@@ -116,7 +116,7 @@ describe('DeleteDialogComponent', () => {
         // external component completed delete method successfully
         const clearStub = stub(comp, 'clear');
         clearStub.returns();
-        dialogErrorSource.complete();
+        dialogErrorSource.next('');
         expect(clearStub.calledOnce).to.be.true;
 
         fixture.destroy();

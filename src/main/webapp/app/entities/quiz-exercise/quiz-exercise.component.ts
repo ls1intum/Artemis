@@ -11,6 +11,7 @@ import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -195,7 +196,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
@@ -212,7 +213,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
-                this.dialogErrorSource.complete();
+                this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
