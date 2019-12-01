@@ -162,6 +162,7 @@
                             <jhi-ide-button
                                 *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
                                 [buttonLabel]="'entity.action.editInIntelliJ' | translate"
+                                [buttonLoading]="intelliJState.cloning"
                                 [smallButton]="false"
                                 (click)="editIntIntelliJ(programmingExercise)"
                             >

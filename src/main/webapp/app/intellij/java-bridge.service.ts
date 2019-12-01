@@ -177,6 +177,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * @param exerciseJson The exercise to be imported as a JSON string
      */
     editExercise(exerciseJson: string): void {
+        this.setIDEStateParameter({ cloning: true });
         this.window.nativeWindow.intellij.editExercise(exerciseJson);
     }
 

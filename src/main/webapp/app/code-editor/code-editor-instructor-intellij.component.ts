@@ -12,11 +12,11 @@ import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service'
 import { IntelliJState } from 'app/intellij/intellij';
 
 @Component({
-    selector: 'jhi-code-editor-instructor-ide',
-    templateUrl: './code-editor-instructor-ide.component.html',
+    selector: 'jhi-code-editor-instructor-intellij',
+    templateUrl: './code-editor-instructor-intellij.component.html',
     styles: ['.instructions-intellij { height: 500px }'],
 })
-export class CodeEditorInstructorIdeComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
+export class CodeEditorInstructorIntellijComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
     intellijState: IntelliJState;
 
     constructor(
