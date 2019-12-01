@@ -57,13 +57,13 @@ public class TextSubmission extends Submission implements Serializable {
         return this;
     }
 
-    public TextSubmission addBlocks(TextBlock textBlock) {
+    public TextSubmission addBlock(TextBlock textBlock) {
         this.blocks.add(textBlock);
         textBlock.setSubmission(this);
         return this;
     }
 
-    public TextSubmission removeBlocks(TextBlock textBlock) {
+    public TextSubmission removeBlock(TextBlock textBlock) {
         this.blocks.remove(textBlock);
         textBlock.setSubmission(null);
         return this;
