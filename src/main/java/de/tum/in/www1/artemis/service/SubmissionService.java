@@ -124,7 +124,8 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         submission.setResult(null);
 
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(exercise.getId(), username);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAndResultsAnyState(exercise.getId(),
+                username);
         if (optionalParticipation.isEmpty()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + exercise.getId());
         }
