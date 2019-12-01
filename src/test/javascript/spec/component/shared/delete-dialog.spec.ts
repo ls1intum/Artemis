@@ -1,10 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { DebugElement } from '@angular/core';
+import { DebugElement, EventEmitter } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { JhiAlertComponent, JhiAlertErrorComponent } from 'app/shared';
+import { JhiAlertComponent } from 'app/shared';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -12,7 +12,8 @@ import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { stub } from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,6 +38,7 @@ describe('DeleteDialogComponent', () => {
                 ngbActiveModal = TestBed.get(NgbActiveModal);
             });
     });
+
     it('Dialog is correctly initialized', fakeAsync(() => {
         let inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).to.not.exist;
@@ -86,5 +88,38 @@ describe('DeleteDialogComponent', () => {
         fixture.detectChanges();
         submitButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(submitButton.nativeElement.disabled).to.be.false;
+    }));
+
+    it('Error dialog events are correctly handled', fakeAsync(() => {
+        comp.entityTitle = 'title';
+        comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
+        comp.confirmEntityName = 'title';
+        const dialogErrorSource = new Subject<string>();
+        comp.dialogError = dialogErrorSource.asObservable();
+        comp.delete = new EventEmitter<{ [p: string]: boolean }>();
+        fixture.detectChanges();
+        let deleteButton = debugElement.query(By.css('.btn.btn-danger'));
+        expect(deleteButton.nativeElement.disabled).to.be.false;
+
+        // external component delete method was executed
+        comp.confirmDelete();
+        fixture.detectChanges();
+        deleteButton = debugElement.query(By.css('.btn.btn-danger'));
+        expect(deleteButton.nativeElement.disabled).to.be.true;
+
+        // external component emits error to the dialog
+        dialogErrorSource.next('example error');
+        fixture.detectChanges();
+        deleteButton = debugElement.query(By.css('.btn.btn-danger'));
+        expect(deleteButton.nativeElement.disabled).to.be.false;
+
+        // external component completed delete method successfully
+        const clearStub = stub(comp, 'clear');
+        clearStub.returns();
+        dialogErrorSource.complete();
+        expect(clearStub.calledOnce).to.be.true;
+
+        fixture.destroy();
+        flush();
     }));
 });

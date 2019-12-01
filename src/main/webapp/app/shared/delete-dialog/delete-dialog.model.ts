@@ -14,7 +14,7 @@ export enum ActionType {
  * Data that will be passed to the delete dialog component
  */
 export class DeleteDialogData {
-    // error emitted from the component delete method, that will be handled by the dialog
+    // error message emitted from the component delete method, that will be handled by the dialog
     dialogError: Observable<string>;
 
     // title of the entity we want to delete

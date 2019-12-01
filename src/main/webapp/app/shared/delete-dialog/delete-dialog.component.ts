@@ -27,7 +27,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     // used by *ngFor in the template
     objectKeys = Object.keys;
 
-    constructor(public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
+    constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
         this.dialogErrorSubscription = this.dialogError.pipe(finalize(() => this.clear())).subscribe((errorMessage: string) => {
@@ -46,14 +46,14 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     /**
      * Closes the dialog
      */
-    clear() {
+    clear(): void {
         this.activeModal.dismiss();
     }
 
     /**
      * Emits delete event and passes additional checks from the dialog
      */
-    confirmDelete() {
+    confirmDelete(): void {
         this.submitDisabled = true;
         this.delete.emit(this.additionalChecksValues);
     }
