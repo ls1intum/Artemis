@@ -40,7 +40,9 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.dialogErrorSubscription.unsubscribe();
+        if (this.dialogErrorSubscription) {
+            this.dialogErrorSubscription.unsubscribe();
+        }
     }
 
     /**
