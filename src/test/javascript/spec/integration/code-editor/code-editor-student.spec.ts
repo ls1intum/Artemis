@@ -601,7 +601,7 @@ describe('CodeEditorStudentIntegration', () => {
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
         const guidedTourMapping = {
             courseShortName: '',
-            tours: [{ '': '' }],
+            tours: { '': '' },
         } as GuidedTourMapping;
         spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;

@@ -5,9 +5,13 @@
                 "headline": "Overview",
                 "content": "Here you can see an overview of your assessments, complaints and feedback requests."
             },
+            "showFinished": {
+                "headline": "Show Finished Exercises",
+                "content": "In order to see all exercises, just tick the checkbox <tt>Show finished exercises</tt>."
+            },
             "exerciseTable": {
                 "headline": "Exercise Table",
-                "content": "This table displays all exercises of this course, which are not finished yet. In order to see finished exercises, just tick the checkbox <tt>Show finished exercises</tt> displayed right above this table."
+                "content": "This table displays all exercises of this course."
             },
             "gradingProcess": {
                 "headline": "Grading Process",
@@ -15,24 +19,63 @@
             },
             "exerciseDashboardButton": {
                 "headline": "Exercise Dashboard",
-                "content": "Now let's head over to the exercise dashboard to view the exercise details and student submissions."
+                "content": "Let's head over to the exercise dashboard to view the exercise details and student submissions."
             }
         },
         "tutorExerciseDashboard": {
             "instructions": {
                 "headline": "Instructions",
-                "content": "This section contains the <tt>problem statement</tt>, <tt>example solution</tt> and <tt>grading instruction</tt> of the exercise. Please read through them carefully and then proceed to the next step."
+                "content": "This section contains the <tt>Problem statement</tt>, <tt>Example solution</tt> and <tt>Grading instructions</tt> of the exercise. Please read through them carefully and then proceed to the next step."
             },
             "instructionsButton": {
-                "headline": "Confirm",
+                "headline": "Confirm instructions",
                 "content": "Click on this button and confirm only after you have read and understood the instructions."
+            },
+            "reviewExampleSubmission": {
+                "headline": "Review Example Submission",
+                "content": "Click here to see how a submission could look like."
+            },
+            "assessExampleSubmission": {
+                "headline": "Assess Example Submission",
+                "content": "Click here to work on your first assessment."
+            },
+            "submissionsAndComplaints": {
+                "headline": "Student submission",
+                "content": "The student submissions will be displayed here."
+            }
+        },
+        "exampleReview": {
+            "reviewSubmission": {
+                "headline": "Review Example Submission",
+                "content": "This is an example submission where three text blocks are already marked for assessment."
+            },
+            "reviewAssessment": {
+                "headline": "Review Example Assessment",
+                "content": "This is an example assessment of the submission. Each text block is is graded with one score."
+            },
+            "confirm": {
+                "headline": "Confirm",
+                "content": "Confirm if you have read and understood the example."
             }
         },
         "exampleAssessment": {
-            "textExercise": {
-                "headline": "Assessing text exercise submissions",
-                "content": "You can highlight the text block you want to assess and click the <tt>Assess</tt> button to add the score and feedback as shown in the animation below. Once you are done with the review, you can submit your assessment .",
-                "task": "Select a text block and an <tt>Assess</tt> button will appear"
+            "addAssessment": {
+                "headline": "Assess Example Submission",
+                "content": "Now you can start assessing this text exercise.",
+                "task": "Mark the text of the three patterns and click on the <tt>Assess</tt> button."
+            },
+            "addScore": {
+                "headline": "Add Score",
+                "content": "Here you can add a score and additional feedback for each assessment element.",
+                "task": "Add one score for each pattern."
+            },
+            "submit": {
+                "headline": "Submit Assessment",
+                "content": "Now you can submit your assessment"
+            },
+            "back": {
+                "headline": "Complete Assessment Tour",
+                "content": "Navigate back to the exercise dashboard to complete your tour."
             }
         }
     }

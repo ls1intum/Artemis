@@ -5,6 +5,10 @@
                 "headline": "Übersicht",
                 "content": "Hier siehst du eine Übersicht deiner Bewertungen und eingehenden Beschwerden und Feedbackanfragen."
             },
+            "showFinished": {
+                "headline": "Show Finished Exercises",
+                "content": "In order to see all exercises, just tick the checkbox <tt>Show finished exercises</tt>."
+            },
             "exerciseTable": {
                 "headline": "Übungentablle",
                 "content": "Diese Tabelle zeigt alle aktiven Übungen dieses Kurses an. Um die beendeten Übungen anzuzeigen musst du nur die Checkbox <tt>Beendete Übungen anzeigen</tt> klicken, welche direkt über dieser Tabelle abgebildet ist."
@@ -20,32 +24,58 @@
         },
         "tutorExerciseDashboard": {
             "instructions": {
-                "headline": "Instruktionen",
-                "content": "Dieser Bereich enthält die  <tt>Aufgabenstellung</tt>, <tt>Beispiellösung</tt> und <tt>Bewertungskriterien</tt> dieser Übung. Bitte lies dir diese genau durch und fahre dann mit dem nächsten Schritt fort."
+                "headline": "Instructions",
+                "content": "This section contains the <tt>Problem statement</tt>, <tt>Example solution</tt> and <tt>Grading instruction</tt> of the exercise. Please read through them carefully and then proceed to the next step."
             },
             "instructionsButton": {
-                "headline": "Bestätigung",
-                "content": "Wenn du die Instruktionen gelesen und verstanden hast, dann klicke auf diese Taste und bestätige dies hiermit."
+                "headline": "Confirm instructions",
+                "content": "Click on this button and confirm only after you have read and understood the instructions."
             },
-            "studentSubmissions": {
-                "headline": "Studentenabgaben",
-                "content": "In dieser Tabelle werden die Abgaben der Studenten angezeigt."
+            "reviewExampleSubmission": {
+                "headline": "Review Example Submission",
+                "content": "Click here to see how a submission could look like."
             },
-            "startAssessment": {
-                "headline": "Neue Bewertung starten",
-                "content": "Wenn du diese Abgabe bewerten möchtest, dann klicke einfach auf <tt>Neue Bewertung starten</tt>.",
-                "hint": "Wenn du die Bewertung startest, dann wird diese Abgabe von dir gesperrt. So wird sichergestellt, dass andere Tutoren nicht mehr auf diese Abgabe zugreifen können, während du an der Bewertung arbeitest. In diesem Tutorial haben wir deshalb diese Bewertungsfunktion deaktiviert."
+            "assessExampleSubmission": {
+                "headline": "Assess Example Submission",
+                "content": "Click here to work on your first assessment."
+            },
+            "submissionsAndComplaints": {
+                "headline": "Student submission",
+                "content": "The student submissions will be displayed here."
+            }
+        },
+        "exampleReview": {
+            "reviewSubmission": {
+                "headline": "Review Example Submission",
+                "content": "Here you can see an example submission."
+            },
+            "reviewAssessment": {
+                "headline": "Review Example Assessment",
+                "content": "This is an example assessment of the submission."
+            },
+            "confirm": {
+                "headline": "Confirm",
+                "content": "Let's confirm and head over to the example assessment."
             }
         },
         "exampleAssessment": {
-            "modelingExercise": {
-                "headline": "Modelingsaufgaben bewerten",
-                "content": "Du kannst die verschiedenen Teilelemente der Modelierung bewerten, indem du auf sie klickst. Die unten aufgeführte Animation zeigt, wie das funktioniert. Wenn du mit der Bewertung fertig bist, kannst du die Bewertung einreichen."
+            "addAssessment": {
+                "headline": "Assess Example Submission",
+                "content": "Start assessing this text exercise.",
+                "task": "Mark each pattern and add an assessment by clicking on the <tt>Assess</tt> button."
             },
-            "textExercise": {
-                "headline": "Textaufgaben bewerten",
-                "content": "Du kannst den Textblock, den du bewerten willst, per Doppelklick markieren und auf <tt>bewerten</tt> klicken, um Punktzahl und Feedback hinzuzufügen. Die unten aufgeführte Animation zeigt, wie das funktioniert. Wenn du mit der Bewertung fertig bist, kannst du die Bewertung einreichen.",
-                "task": "Select a text block and an <tt>Assess</tt> button will appear"
+            "addScore": {
+                "headline": "Add Score",
+                "content": "Here you can add a score and additional feedback for each assessment element.",
+                "task": "Add a score for each pattern."
+            },
+            "submit": {
+                "headline": "Submit Assessment",
+                "content": "Now you can submit your assessment"
+            },
+            "back": {
+                "headline": "Complete Assessment Tour",
+                "content": "Navigate back to the exercise dashboard to complete your tour."
             }
         }
     }

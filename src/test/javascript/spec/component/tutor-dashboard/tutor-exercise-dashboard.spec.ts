@@ -31,6 +31,8 @@ import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/p
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,6 +41,7 @@ describe('TutorExerciseDashboardComponent', () => {
     let comp: TutorExerciseDashboardComponent;
     let fixture: ComponentFixture<TutorExerciseDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;
+    let guidedTourService: GuidedTourService;
 
     let modelingSubmissionStub: SinonStub;
 
@@ -99,6 +102,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
                 comp = fixture.componentInstance;
                 modelingSubmissionService = TestBed.get(ModelingSubmissionService);
+                guidedTourService = TestBed.get(GuidedTourService);
 
                 comp.exerciseId = exercise.id;
 
@@ -111,8 +115,14 @@ describe('TutorExerciseDashboardComponent', () => {
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
-        modelingSubmissionStub.returns(of(submission));
+        const guidedTourMapping = {
+            courseShortName: '',
+            tours: { '': '' },
+        } as GuidedTourMapping;
+        spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+        guidedTourService.guidedTourMapping = guidedTourMapping;
 
+        modelingSubmissionStub.returns(of(submission));
         comp.loadAll();
 
         expect(modelingSubmissionStub).to.have.been.calledOnceWithExactly(exercise.id);
@@ -121,6 +131,13 @@ describe('TutorExerciseDashboardComponent', () => {
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
+        const guidedTourMapping = {
+            courseShortName: '',
+            tours: { '': '' },
+        } as GuidedTourMapping;
+        const spy = spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+        guidedTourService.guidedTourMapping = guidedTourMapping;
+
         modelingSubmissionStub.returns(throwError(lockLimitErrorResponse));
 
         comp.loadAll();

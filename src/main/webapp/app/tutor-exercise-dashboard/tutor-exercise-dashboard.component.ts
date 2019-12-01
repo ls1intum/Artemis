@@ -27,8 +27,9 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { tutorExerciseDashboardTour } from 'app/guided-tour/tours/tutor-dashboard-tour';
+import { tutorExerciseDashboardTour, tutorReviewExampleSubmissionTour, tutorAssessExampleSubmissionTour } from 'app/guided-tour/tours/tutor-dashboard-tour';
 import { AccountService } from 'app/core/auth/account.service';
+import { GuidedTourState } from 'app/guided-tour/guided-tour.constants';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -150,8 +151,20 @@ export class TutorExerciseDashboardComponent implements OnInit {
                         break;
                 }
 
-                // TODO add restart
                 this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorExerciseDashboardTour);
+                const reviewTourDone =
+                    !this.guidedTourService.checkTourState(tutorAssessExampleSubmissionTour) &&
+                    this.guidedTourService.checkTourState(tutorReviewExampleSubmissionTour, GuidedTourState.FINISHED) &&
+                    this.guidedTourService.checkTourState(tutorExerciseDashboardTour, GuidedTourState.STARTED);
+                const assessTourDone =
+                    this.guidedTourService.checkTourState(tutorAssessExampleSubmissionTour, GuidedTourState.FINISHED) &&
+                    !this.guidedTourService.checkTourState(tutorExerciseDashboardTour, GuidedTourState.FINISHED);
+                if (reviewTourDone || assessTourDone) {
+                    setTimeout(() => {
+                        this.guidedTourService.startTour(tutorExerciseDashboardTour);
+                    }, 1000);
+                }
+
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {

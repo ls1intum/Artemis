@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NavigationStart, Router, RoutesRecognized } from '@angular/router';
+import { NavigationStart, NavigationEnd, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, tap, take } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged, pairwise } from 'rxjs/internal/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
@@ -34,6 +34,7 @@ export class GuidedTourService {
     private onResizeMessage = false;
     private modelingResultCorrect = false;
     private assessmentObject = new AssessmentObject(0, 0);
+    private previousUrl: string;
 
     /** Guided tour service subjects */
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
@@ -81,18 +82,14 @@ export class GuidedTourService {
         });
 
         // Reset guided tour availability on router navigation
-        this.router.events.subscribe(event => {
-            if (this.availableTourForComponent && event instanceof NavigationStart) {
+        this.router.events.pipe(filter(e => e instanceof NavigationStart)).subscribe(event => {
+            if (this.availableTourForComponent) {
                 this.skipTour(false, false);
                 this.guidedTourAvailabilitySubject.next(false);
             }
             // resets the cancel or complete tour step when the user navigates to another page
             if (this.currentTour) {
                 this.resetTour();
-            }
-
-            if (event instanceof RoutesRecognized) {
-                console.log('previous url', event.urlAfterRedirects);
             }
         });
 
@@ -620,16 +617,17 @@ export class GuidedTourService {
     /**
      * Start guided tour for given guided tour
      */
-    public startTour(): void {
+    public startTour(tour?: GuidedTour): void {
         if (!this.availableTourForComponent) {
             return;
         }
         // Keep current tour null until start tour is triggered, else it could be somehow accessed through nextStep() calls
+        this.availableTourForComponent = tour ? tour : this.availableTourForComponent;
         this.currentTour = this.availableTourForComponent;
 
         // Filter tour steps according to permissions
         this.currentTour.steps = this.getFilteredTourSteps();
-        this.currentTourStepIndex = this.getLastSeenTourStepIndex();
+        this.currentTourStepIndex = tour ? this.getLastSeenTourStepIndex() + 1 : this.getLastSeenTourStepIndex();
 
         // Reset interactive tour steps
         if (this.currentTourStepIndex === 0 && this.currentTour.steps.find(element => element instanceof ModelingTaskTourStep)) {
@@ -638,6 +636,7 @@ export class GuidedTourService {
         } else if (this.currentTourStepIndex === 0 && this.currentTour.steps.find(element => element instanceof AssessmentTaskTourStep)) {
             this.resetAssessmentSubject.next(true);
             this.assessmentObject = new AssessmentObject(0, 0);
+            // TODO remove tutor participation in example submissions
             setTimeout(() => {}, 1000);
         }
 
