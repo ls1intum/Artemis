@@ -19,6 +19,7 @@
                 <button
                     type="submit"
                     *ngIf="programmingExercise.isAtLeastInstructor"
+                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/archive' } }]"
                     replaceUrl="true"
                     queryParamsHandling="merge"
@@ -30,6 +31,7 @@
                 <button
                     type="submit"
                     *ngIf="programmingExercise.isAtLeastInstructor"
+                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                     [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/cleanup' } }]"
                     replaceUrl="true"
                     queryParamsHandling="merge"
