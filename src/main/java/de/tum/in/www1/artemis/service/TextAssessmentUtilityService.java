@@ -251,7 +251,7 @@ public class TextAssessmentUtilityService {
     }
 
     /**
-     *
+     * Calculates a suggested feedback score for a textblock based on its surrounding neighbors in a Text cluster
      * @param textBlock
      * @return
      */
@@ -274,13 +274,26 @@ public class TextAssessmentUtilityService {
                 // Return as double
                 .getAsDouble();
 
-        return OptionalDouble.of(assessedBlocks.stream()
+        final double weightedScore = assessedBlocks.stream()
 
-                // Calculate the impact each assessed block should have on the final score, by determining the percental closeness of it compared to the other assessed blocks
+                // Calculate the impact each assessed block should have on the final score, by determining the percental closeness of its weight compared to the other assessed
+                // blocks
                 .mapToDouble(
                         blockIterator -> ((1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))) / totalWeight) * getCreditsOfTextBlock(blockIterator).get())
 
-                .sum());
+                .sum();
+
+        // Get upper range threshold for wether the score matches the expectation
+        final OptionalDouble upperRange = OptionalDouble.of(calculateExpectation(textCluster).get() + calculateStandardDeviation(textCluster, 5).get());
+
+        // Get lower range threshold for wether the score matches the expectation
+        final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).get() - calculateStandardDeviation(textCluster, 5).get());
+
+        // Return weighted score in OptionalDouble wrapper if it does, else return empty OptionalDouble
+        if (weightedScore < upperRange.getAsDouble() && weightedScore > lowerRange.getAsDouble()) {
+            return OptionalDouble.of(weightedScore);
+        }
+        return OptionalDouble.empty();
     }
 
 }
