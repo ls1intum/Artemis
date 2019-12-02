@@ -15,8 +15,4 @@ export class ExpandableProblemStatementComponent {
 
     readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
     constructor() {}
-
-    asProgrammingExercise(exercise: Exercise) {
-        return exercise as ProgrammingExercise;
-    }
 }

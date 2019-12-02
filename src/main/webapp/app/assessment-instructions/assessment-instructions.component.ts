@@ -27,7 +27,9 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
      * Assigns formatted problem statement and formatted grading criteria on component initialization
      */
     ngOnInit() {
-        this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+        if (this.exercise.type !== ExerciseType.PROGRAMMING) {
+            this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+        }
         this.formattedGradingCriteria = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
         if (this.exercise.type === ExerciseType.FILE_UPLOAD || this.exercise.type === ExerciseType.TEXT) {
             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown((this.exercise as FileUploadExercise).sampleSolution);
