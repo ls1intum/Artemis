@@ -75,6 +75,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
      * @param exercise that we want to check
      * @param exerciseType type of the exercise
      * @param submissionService concrete submission service that is used to check lock limit
+     * @param <S> concrete submission repository class
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
     public <S extends GenericSubmissionRepository<T>> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType,
