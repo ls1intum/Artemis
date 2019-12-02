@@ -9,17 +9,13 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
     templateUrl: './expandable-problem-statement.component.html',
     styleUrls: ['../assessment-instructions.scss'],
 })
-export class ExpandableProblemStatementComponent implements OnInit {
+export class ExpandableProblemStatementComponent {
     @Input() exercise: ProgrammingExercise;
     @Input() isCollapsed = false;
 
-    formattedProblemStatement: SafeHtml | null;
     readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor() {}
 
-    ngOnInit() {
-        this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
-    }
     asProgrammingExercise(exercise: Exercise) {
         return exercise as ProgrammingExercise;
     }
