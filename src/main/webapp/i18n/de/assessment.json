@@ -38,6 +38,7 @@
                     "score": "Punkte",
                     "duration": "Dauer",
                     "assessmentType": "Bewertungsart",
+                    "student": "Student",
                     "assessor": "Prüfer/in",
                     "action": "Aktion"
                 },

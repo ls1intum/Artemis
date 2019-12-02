@@ -51,9 +51,5 @@ export const programmingExerciseSuccess: GuidedTour = {
             contentTranslateKey: 'tour.programmingExercise.reviewResult.content',
             orientation: Orientation.TOP,
         }),
-        new TextTourStep({
-            headlineTranslateKey: 'tour.programmingExercise.exerciseSuccess.headline',
-            contentTranslateKey: 'tour.programmingExercise.exerciseSuccess.content',
-        }),
     ],
 };
