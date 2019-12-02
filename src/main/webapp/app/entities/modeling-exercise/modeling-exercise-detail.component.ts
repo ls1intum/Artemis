@@ -14,8 +14,6 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
     templateUrl: './modeling-exercise-detail.component.html',
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
-    @Input() exercise: ModelingExercise;
-
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
