@@ -14,7 +14,7 @@ import { IntelliJState } from 'app/intellij/intellij';
 @Component({
     selector: 'jhi-code-editor-instructor-intellij',
     templateUrl: './code-editor-instructor-intellij.component.html',
-    styles: ['.instructions-intellij { height: 1000px }'],
+    styles: ['.instructions-intellij { height: 700px }'],
 })
 export class CodeEditorInstructorIntellijComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
     intellijState: IntelliJState;
