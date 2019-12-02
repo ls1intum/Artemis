@@ -3,9 +3,9 @@
     <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
 </h5>
 <div [ngbCollapse]="isCollapsed">
-    <p *ngIf="exercise.type !== ExerciseType_MODELING; else modelingInstructions" [innerHTML]="exercise.problemStatement | htmlForMarkdown"></p>
+    <p *ngIf="exercise.type !== ExerciseType_MODELING; else modelingInstructions" [innerHTML]="sampleSolution | htmlForMarkdown"></p>
     <ng-template #modelingInstructions>
-        <jhi-modeling-editor *ngIf="sampleSolution" [readOnly]="true" [diagramType]="exercise.diagramType" [umlModel]="sampleSolution"></jhi-modeling-editor>
+        <jhi-modeling-editor *ngIf="sampleSolution" [readOnly]="true" [diagramType]="diagramType" [umlModel]="modelingSampleSolution"></jhi-modeling-editor>
         <p class="markdown-preview" [innerHTML]="formattedSampleSolutionExplanation"></p>
     </ng-template>
 </div>

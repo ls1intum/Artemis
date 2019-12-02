@@ -2,8 +2,9 @@ import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { UMLModel } from '@ls1intum/apollon';
-import { ExerciseType } from 'app/entities/exercise';
+import { UMLModel, UMLDiagramType } from '@ls1intum/apollon';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 
 @Component({
     selector: 'jhi-expandable-sample-solution',
@@ -11,23 +12,33 @@ import { ExerciseType } from 'app/entities/exercise';
     styleUrls: ['../assessment-instructions.scss'],
 })
 export class ExpandableSampleSolutionComponent implements OnInit {
-    @Input() exercise: ModelingExercise;
+    @Input() exercise: Exercise;
     @Input() isCollapsed = false;
 
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
     formattedSampleSolutionExplanation: SafeHtml | null;
-    sampleSolution: UMLModel;
+    modelingSampleSolution: UMLModel;
+    sampleSolution: string;
+    diagramType: UMLDiagramType;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnInit() {
-        if (this.exercise) {
-            if (this.exercise.sampleSolutionModel) {
-                this.sampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
-            }
-            if (this.exercise.sampleSolutionExplanation) {
-                this.formattedSampleSolutionExplanation = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.sampleSolutionExplanation);
-            }
+        if (this.exercise.type === this.ExerciseType_MODELING) {
+            this.exercise = this.assignModelingExercise(this.exercise as ModelingExercise);
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD || this.exercise.type === ExerciseType.TEXT) {
+            this.sampleSolution = (this.exercise as FileUploadExercise).sampleSolution;
         }
+    }
+
+    assignModelingExercise(modelingExercise: ModelingExercise): Exercise {
+        if (modelingExercise.sampleSolutionModel) {
+            this.modelingSampleSolution = JSON.parse(modelingExercise.sampleSolutionModel);
+        }
+        if (modelingExercise.sampleSolutionExplanation) {
+            this.formattedSampleSolutionExplanation = this.artemisMarkdown.safeHtmlForMarkdown(modelingExercise.sampleSolutionExplanation);
+        }
+        this.diagramType = modelingExercise.diagramType;
+        return modelingExercise;
     }
 }
