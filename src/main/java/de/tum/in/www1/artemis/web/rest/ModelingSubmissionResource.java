@@ -65,7 +65,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ return 201 CREATED with location header instead of ModelingSubmission
     // TODO MJ merge with update
-    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
@@ -90,7 +90,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
@@ -119,7 +119,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
-    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -152,7 +152,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
      */
     @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
@@ -179,7 +179,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
         final Exercise exercise = exerciseService.findOne(exerciseId);
@@ -219,7 +219,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
+    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable long exerciseId) {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
@@ -260,7 +260,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
      */
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
+    public ResponseEntity<String> resetOptimalModels(@PathVariable long exerciseId) {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
@@ -278,7 +278,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
      */
     @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
+    public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable long participationId) {
         return getDataForEditor(participationId, ModelingExercise.class, ModelingSubmission.class, new ModelingSubmission());
     }
 

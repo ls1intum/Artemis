@@ -37,7 +37,7 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @param modelingExercise the corresponding exercise
      * @return the locked modeling submission
      */
-    public ModelingSubmission getLockedModelingSubmission(Long submissionId, ModelingExercise modelingExercise) {
+    public ModelingSubmission getLockedModelingSubmission(long submissionId, ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getResult() == null || modelingSubmission.getResult().getAssessor() == null) {

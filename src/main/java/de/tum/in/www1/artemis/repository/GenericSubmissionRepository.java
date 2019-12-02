@@ -22,14 +22,14 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      * @return the submission with its feedback and assessor
      */
     @Query("select distinct submission from #{#entityName} submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id=?1")
-    Optional<T> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
+    Optional<T> findByIdWithEagerResultAndFeedback(@Param("submissionId") long submissionId);
 
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its assessor
      */
     @Query("select distinct submission from #{#entityName} submission left join fetch submission.result r left join fetch r.assessor where submission.id=?1")
-    Optional<T> findByIdWithEagerResultAndAssessor(@Param("submissionId") Long submissionId);
+    Optional<T> findByIdWithEagerResultAndAssessor(@Param("submissionId") long submissionId);
 
     /**
      * Load the submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of
@@ -39,7 +39,7 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      * @return the submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
     @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
-    Optional<T> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
+    Optional<T> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(long submissionId);
 
     /**
      * Load all the submissions in this exercise associated to the tutor
@@ -47,5 +47,5 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      * @param tutorId id of the tutor
      * @return list of optional submissions
      */
-    List<Optional<T>> findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(Long exerciseId, Long tutorId);
+    List<Optional<T>> findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(long exerciseId, long tutorId);
 }

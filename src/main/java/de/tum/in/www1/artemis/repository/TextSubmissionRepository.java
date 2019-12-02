@@ -19,5 +19,5 @@ public interface TextSubmissionRepository extends GenericSubmissionRepository<Te
      * @return List of Text Submissions
      */
     @EntityGraph(attributePaths = { "blocks", "result", "participation" })
-    List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(Long exerciseId);
+    List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(long exerciseId);
 }

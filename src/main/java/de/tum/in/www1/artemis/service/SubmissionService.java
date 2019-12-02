@@ -194,7 +194,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    public T findOneWithEagerResultAndFeedback(Long submissionId) {
+    public T findOneWithEagerResultAndFeedback(long submissionId) {
         return genericSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
@@ -205,7 +205,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    public T findOne(Long submissionId) {
+    public T findOne(long submissionId) {
         return genericSubmissionRepository.findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
@@ -216,7 +216,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    T findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
+    T findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(long submissionId) {
         return genericSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
@@ -243,14 +243,13 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
     }
 
     /**
-     * Gets randomly any unassessed submission of specified type without manual result
+     * Returns a random submission that is not manually assessed or an empty optional if there is none
      * @param exercise exercise to which the submission belongs
      * @param submissionType concrete type of the submission
      * @param <L> concrete exercise
      * @return submission of the specified type
      */
     public <L extends Exercise> Optional<T> getSubmissionWithoutManualResult(L exercise, Class<T> submissionType) {
-        // otherwise return a random submission that is not manually assessed or an empty optional if there is none
         List<T> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId()).stream()
                 .map(studentParticipation -> studentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());

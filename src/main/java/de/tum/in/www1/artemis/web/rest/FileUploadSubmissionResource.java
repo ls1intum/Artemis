@@ -106,7 +106,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
      */
     @GetMapping("/file-upload-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable long submissionId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
@@ -133,7 +133,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
      */
     @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
         final Exercise exercise = exerciseService.findOne(exerciseId);
@@ -165,7 +165,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
      */
     @GetMapping(value = "/exercises/{exerciseId}/file-upload-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
@@ -203,7 +203,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
      */
     @GetMapping("/participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
+    public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable long participationId) {
         return getDataForEditor(participationId, FileUploadExercise.class, FileUploadSubmission.class, new FileUploadSubmission());
     }
 }

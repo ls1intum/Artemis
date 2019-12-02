@@ -53,7 +53,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      */
     @PostMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
+    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save TextSubmission : {}", textSubmission);
         if (textSubmission.getId() != null) {
             throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
@@ -74,7 +74,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
+    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update TextSubmission : {}", textSubmission);
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
@@ -83,7 +83,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     }
 
     @NotNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, TextSubmission textSubmission) {
+    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable long exerciseId, Principal principal, TextSubmission textSubmission) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
         final ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidityForStudent(textExercise);
@@ -109,7 +109,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
-    public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
         final Exercise exercise = exerciseService.findOne(exerciseId);
@@ -146,7 +146,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         final Exercise exercise = exerciseService.findOne(exerciseId);
