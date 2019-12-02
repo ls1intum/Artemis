@@ -289,7 +289,7 @@ public class TextAssessmentUtilityService {
         // Get lower range threshold for wether the score matches the expectation
         final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).get() - calculateStandardDeviation(textCluster, 5).get());
 
-        // Return weighted score in OptionalDouble wrapper if it does, else return empty OptionalDouble
+        // Verify if weighted score lies in range interval
         if (weightedScore < upperRange.getAsDouble() && weightedScore > lowerRange.getAsDouble()) {
             return OptionalDouble.of(weightedScore);
         }
