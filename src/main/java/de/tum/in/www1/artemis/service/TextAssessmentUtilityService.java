@@ -296,4 +296,21 @@ public class TextAssessmentUtilityService {
         return OptionalDouble.empty();
     }
 
+    /**
+     * Calculates the confidence score of each textBlock which is to be assessed based on Christian Ziegners Master's thesis
+     * @param textBlock textBlock for which each confidence score is determined
+     * @return Confidence score in a DoubleOptional wrapper or empty if it is non-existent
+     */
+    public OptionalDouble calculateConfidence(TextBlock textBlock) {
+
+        try {
+            final OptionalDouble confidencePercentage = OptionalDouble
+                    .of(calculateScoreCoveragePercentage(textBlock).get() / calculateCoveragePercentage(textBlock.getCluster()).get());
+            return confidencePercentage;
+        }
+        catch (NoSuchElementException exception) {
+            return OptionalDouble.empty();
+        }
+    }
+
 }

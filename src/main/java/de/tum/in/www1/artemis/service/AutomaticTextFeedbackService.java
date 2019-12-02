@@ -81,5 +81,4 @@ public class AutomaticTextFeedbackService {
 
         result.setFeedbacks(suggestedFeedback);
     }
-
 }
