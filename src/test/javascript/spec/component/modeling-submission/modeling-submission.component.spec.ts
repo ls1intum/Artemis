@@ -27,7 +27,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import { ArtemisResultModule, Result } from 'app/entities/result';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ModelingEditorComponent } from 'app/modeling-editor';
-import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import * as moment from 'moment';
 import * as sinon from 'sinon';

@@ -1,8 +1,0 @@
-<h5 class="expandable-header" (click)="isCollapsed = !isCollapsed">
-    {{ 'assessmentInstructions.problemStatement' | translate }}
-    <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
-</h5>
-<div [ngbCollapse]="isCollapsed">
-    <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
-    <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="exercise.templateParticipation"></jhi-programming-exercise-instructions>
-</div>

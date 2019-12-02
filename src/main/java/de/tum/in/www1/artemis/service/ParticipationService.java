@@ -583,21 +583,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id including all results and submissions.
-     *
-     * @param participationId the id of the participation
-     * @return the participation with all its results
-     */
-    public StudentParticipation findOneWithEagerResultsAndSubmissionsAndAssessor(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
-        }
-        return participation.get();
-    }
-
-    /**
      * Get one participation (in any state) by its student and exercise.
      *
      * @param exerciseId the project key of the exercise
@@ -610,18 +595,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get one finished participation by its student and exercise.
-     *
-     * @param exerciseId the project key of the exercise
-     * @param username   the username of the student
-     * @return the participation of the given student and exercise in state finished
-     */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAndFinished(Long exerciseId, String username) {
-        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return studentParticipationRepository.findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState.FINISHED, exerciseId, username);
-    }
-
-    /**
      * Get one participation (in any state) by its student and exercise with eager submissions.
      *
      * @param exerciseId the project key of the exercise
@@ -631,27 +604,6 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
         return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exerciseId, username);
-    }
-
-    /**
-     * Get all participations for the given student including all results
-     *
-     * @param userId the id of the user for which the participations should be found
-     * @return the list of participations of the given student including all results for all possible exercises
-     */
-    public List<StudentParticipation> findWithResultsByStudentId(Long userId) {
-        return studentParticipationRepository.findByStudentIdWithEagerResults(userId);
-    }
-
-    /**
-     * Get all participations for the given student including all results for the given exercises
-     *
-     * @param userId the id of the user for which the participations should be found
-     * @param exercises the exercises for which participations should be found
-     * @return the list of participations of the given student including all results
-     */
-    public List<StudentParticipation> findWithResultsByStudentId(Long userId, Set<Exercise> exercises) {
-        return exercises.isEmpty() ? new LinkedList<>() : studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
     }
 
     /**
