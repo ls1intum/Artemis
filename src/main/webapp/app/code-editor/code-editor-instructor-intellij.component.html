@@ -16,6 +16,18 @@
 <ng-container *ngIf="exercise">
     <div class="h-100">
         <div class="d-flex align-items-center justify-content-end mb-1">
+            <jhi-updating-result
+                *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
+                [exercise]="exercise"
+                [participation]="selectedParticipation"
+                [showUngradedResults]="true"
+                [showTestNames]="true"
+                [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
+                [short]="true"
+                class="mr-2"
+            ></jhi-updating-result>
+        </div>
+        <div class="d-flex align-items-center justify-content-end mr-2 mb-3">
             <jhi-programming-exercise-instructor-exercise-status
                 class="mr-2"
                 [exercise]="exercise"
@@ -52,19 +64,7 @@
                         Test Repository
                     </button>
                 </div>
-                <jhi-updating-result
-                    *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
-                    [exercise]="exercise"
-                    [participation]="selectedParticipation"
-                    [showUngradedResults]="true"
-                    [showTestNames]="true"
-                    [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
-                    [short]="true"
-                    class="mr-2"
-                ></jhi-updating-result>
             </div>
-        </div>
-        <div class="d-flex align-items-center justify-content-end mr-2 mb-3">
             <jhi-programming-exercise-student-trigger-build-button
                 class="mr-3"
                 *ngIf="selectedRepository !== REPOSITORY.TEST"
