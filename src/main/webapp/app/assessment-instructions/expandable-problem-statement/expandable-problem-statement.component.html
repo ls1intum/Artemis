@@ -3,12 +3,8 @@
     <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
 </h5>
 <div [ngbCollapse]="isCollapsed">
-    <p *ngIf="exercise.type !== ExerciseType_PROGRAMMING; else programmingInstructions" [innerHTML]="exercise.problemStatement | htmlForMarkdown"></p>
     <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
     <ng-template #programmingInstructions>
-        <jhi-programming-exercise-instructions
-            [exercise]="asProgrammingExercise(exercise)"
-            [participation]="asProgrammingExercise(exercise).templateParticipation"
-        ></jhi-programming-exercise-instructions>
+        <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="exercise.templateParticipation"></jhi-programming-exercise-instructions>
     </ng-template>
 </div>

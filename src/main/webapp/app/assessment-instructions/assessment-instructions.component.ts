@@ -15,9 +15,11 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     @Input() collapsed = false;
 
     readonly ExerciseType_MODELING = ExerciseType.MODELING;
+    readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
 
     formattedGradingCriteria: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
+    formattedProblemStatement: SafeHtml | null;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -25,6 +27,7 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
      * Assigns formatted problem statement and formatted grading criteria on component initialization
      */
     ngOnInit() {
+        this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
         this.formattedGradingCriteria = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
         if (this.exercise.type === ExerciseType.FILE_UPLOAD || this.exercise.type === ExerciseType.TEXT) {
             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown((this.exercise as FileUploadExercise).sampleSolution);

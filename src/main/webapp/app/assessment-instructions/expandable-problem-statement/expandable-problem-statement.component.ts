@@ -10,7 +10,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
     styleUrls: ['../assessment-instructions.scss'],
 })
 export class ExpandableProblemStatementComponent {
-    @Input() exercise: Exercise;
+    @Input() exercise: ProgrammingExercise;
     @Input() isCollapsed = false;
 
     readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
