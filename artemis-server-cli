@@ -59,7 +59,7 @@ function deploy {
     user_confirmation "About to start a deployment of WAR File $2 on remote server $1"
     
     # Upload WAR
-    scp -v $2 $1:~/artemis.war.new
+    scp $2 $1:~/artemis.war.new
 
     # Trigger Commands to replace and restart Artemis Application
     ssh $1 << COMMAND
