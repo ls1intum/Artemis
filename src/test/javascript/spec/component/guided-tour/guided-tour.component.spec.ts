@@ -44,8 +44,6 @@ describe('GuidedTourComponent', () => {
     });
 
     const courseOverviewTour: GuidedTour = {
-        courseShortName: '',
-        exerciseShortName: '',
         settingsKey: 'course_overview_tour',
         steps: [
             tourStep,
@@ -213,6 +211,10 @@ describe('GuidedTourComponent', () => {
             const finishTour = spyOn(guidedTourService, 'finishGuidedTour');
             spyOn<any>(guidedTourService, 'isCurrentTour').and.returnValue(true);
             const eventMock = new KeyboardEvent('keydown', { code: 'Escape' });
+
+            while (!guidedTourService.isOnLastStep) {
+                guidedTourService.nextStep();
+            }
 
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(skipTour.calls.count()).to.equal(0);
