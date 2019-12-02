@@ -92,25 +92,6 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
     }
 
     /**
-     * Hides the result details for given submission
-     * @param submission that we want to hide details for
-     * @param exercise to which the submission belongs to
-     * @return submission with result details hidden
-     */
-    public T hideResultDetails(T submission, Exercise exercise) {
-        // do not send the result to the client if the assessment is not finished
-        if (submission.getResult() != null && (submission.getResult().getCompletionDate() == null || submission.getResult().getAssessor() == null)) {
-            submission.setResult(null);
-        }
-
-        // do not send the assessor information to students
-        if (submission.getResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            submission.getResult().setAssessor(null);
-        }
-        return submission;
-    }
-
-    /**
      * Saves the given submission and creates the result if necessary. This method used for creating and updating submissions. Rolls back if inserting fails - occurs for concurrent calls.
      *
      * @param submission the submission that should be saved

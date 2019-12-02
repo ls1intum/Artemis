@@ -78,7 +78,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
      * @param <S> concrete submission repository class
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    public <S extends GenericSubmissionRepository<T>> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType,
+    <S extends GenericSubmissionRepository<T>> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType,
             SubmissionService<T, S> submissionService) {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -100,7 +100,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
     /**
      * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
      */
-    protected List<T> clearStudentInformation(List<T> submissions, Exercise exercise, User user) {
+    List<T> clearStudentInformation(List<T> submissions, Exercise exercise, User user) {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
         }
@@ -117,7 +117,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
      * @param newSubmission new instance of concrete submission which can be needed if we don't find submission
      * @return the ResponseEntity with the participation as body
      */
-    protected ResponseEntity<T> getDataForEditor(long participationId, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
+    ResponseEntity<T> getDataForEditor(long participationId, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()
