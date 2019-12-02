@@ -19,6 +19,7 @@ import { AssessmentType } from 'app/entities/assessment-type';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
 import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
+import { FeatureToggle } from 'app/feature-toggle';
 
 enum FilterProp {
     ALL = 'all',
@@ -63,6 +64,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly FeatureToggle = FeatureToggle;
     PAGING_VALUES = [10, 20, 50, 100, 200, 500, 1000, 2000];
     DEFAULT_PAGING_VALUE = 50;
 
