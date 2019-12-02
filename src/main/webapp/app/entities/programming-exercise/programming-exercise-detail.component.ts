@@ -59,6 +59,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
             });
         });
     }
+
     /**
      * Load the latest result for the given participation. Will return [result] if there is a result, [] if not.
      * @param participationId of the given participation.
