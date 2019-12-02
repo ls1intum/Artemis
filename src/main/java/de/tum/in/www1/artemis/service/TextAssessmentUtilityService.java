@@ -264,36 +264,41 @@ public class TextAssessmentUtilityService {
             return OptionalDouble.empty();
         }
 
-        // Get the total distance between the text block which is automatically assessed and every other assessed block in the cluster
-        final double totalWeight = assessedBlocks.stream()
+        try {
+            // Get the total distance between the text block which is automatically assessed and every other assessed block in the cluster
+            final double totalWeight = assessedBlocks.stream()
 
-                // Get the distance between the original text block and each assessed block
-                .mapToDouble(blockIterator -> (1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))))
-                // Sum the up to get the total distance
-                .reduce(Double::sum)
-                // Return as double
-                .getAsDouble();
+                    // Get the distance between the original text block and each assessed block
+                    .mapToDouble(blockIterator -> (1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))))
+                    // Sum the up to get the total distance
+                    .reduce(Double::sum)
+                    // Return as double
+                    .getAsDouble();
 
-        final double weightedScore = assessedBlocks.stream()
+            final double weightedScore = assessedBlocks.stream()
 
-                // Calculate the impact each assessed block should have on the final score, by determining the percental closeness of its weight compared to the other assessed
-                // blocks
-                .mapToDouble(
-                        blockIterator -> ((1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))) / totalWeight) * getCreditsOfTextBlock(blockIterator).get())
+                    // Calculate the impact each assessed block should have on the final score, by determining the percental closeness of its weight compared to the other assessed
+                    // blocks
+                    .mapToDouble(blockIterator -> ((1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))) / totalWeight)
+                            * getCreditsOfTextBlock(blockIterator).get())
 
-                .sum();
+                    .sum();
 
-        // Get upper range threshold for wether the score matches the expectation
-        final OptionalDouble upperRange = OptionalDouble.of(calculateExpectation(textCluster).get() + calculateStandardDeviation(textCluster, 5).get());
+            // Get upper range threshold for wether the score matches the expectation
+            final OptionalDouble upperRange = OptionalDouble.of(calculateExpectation(textCluster).get() + calculateStandardDeviation(textCluster, 5).get());
 
-        // Get lower range threshold for wether the score matches the expectation
-        final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).get() - calculateStandardDeviation(textCluster, 5).get());
+            // Get lower range threshold for wether the score matches the expectation
+            final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).get() - calculateStandardDeviation(textCluster, 5).get());
 
-        // Verify if weighted score lies in range interval
-        if (weightedScore < upperRange.getAsDouble() && weightedScore > lowerRange.getAsDouble()) {
-            return OptionalDouble.of(weightedScore);
+            // Verify if weighted score lies in range interval
+            if (weightedScore < upperRange.getAsDouble() && weightedScore > lowerRange.getAsDouble()) {
+                return OptionalDouble.of(weightedScore);
+            }
+            return OptionalDouble.empty();
         }
-        return OptionalDouble.empty();
+        catch (NoSuchElementException exception) {
+            return OptionalDouble.empty();
+        }
     }
 
     /**
@@ -304,6 +309,7 @@ public class TextAssessmentUtilityService {
     public OptionalDouble calculateConfidence(TextBlock textBlock) {
 
         try {
+            // Divide number of text blocks with the same credits by the total number of assessed text blocks in a cluster
             final OptionalDouble confidencePercentage = OptionalDouble
                     .of(calculateScoreCoveragePercentage(textBlock).get() / calculateCoveragePercentage(textBlock.getCluster()).get());
             return confidencePercentage;

@@ -75,7 +75,6 @@ public class AutomaticTextFeedbackService {
                     }
                 }
             }
-
             return newFeedback.credits(0d).type(FeedbackType.MANUAL);
         }).collect(toList());
 
