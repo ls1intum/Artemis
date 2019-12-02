@@ -22,29 +22,36 @@ public class TextAssessmentUtilityService {
      * @param textCluster
      * @return
      */
-    public static Optional<Double> calculateVariance(TextCluster textCluster, int thresholdSize) {
+    public static OptionalDouble calculateVariance(TextCluster textCluster, int thresholdSize) {
 
         final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
         // If not enough text blocks in a textCluster are assessed, return an empty optional
         if (allAssessedBlocks.size() < thresholdSize) {
-            return Optional.empty();
+            return OptionalDouble.empty();
         }
 
-        // Expected value of a textCluster
-        final double expectedValue = calculateExpectation(textCluster).get();
+        try {
+            // Expected value of a textCluster
+            final double expectedValue = calculateExpectation(textCluster).getAsDouble();
 
-        return Optional.of(allAssessedBlocks.stream()
+            return OptionalDouble.of(allAssessedBlocks.stream()
 
-                // Calculate the variance of each random variable
-                .mapToDouble(block -> {
-                    if (getCreditsOfTextBlock(block).isPresent() && calculateScoreCoveragePercentage(block).isPresent()) {
-                        return (getCreditsOfTextBlock(block).get() - expectedValue) * calculateScoreCoveragePercentage(block).get();
-                    }
-                    return 0.0;
-                })
-                // Sum them up to get the final value
-                .reduce(0.0, Double::sum));
+                    // Calculate the variance of each random variable
+                    .mapToDouble(block -> {
+                        if (getCreditsOfTextBlock(block).isPresent() && calculateScoreCoveragePercentage(block).isPresent()) {
+                            return (getCreditsOfTextBlock(block).getAsDouble() - expectedValue) * calculateScoreCoveragePercentage(block).getAsDouble();
+                        }
+                        return 0.0;
+                    })
+                    // Sum them up to get the final value
+                    .reduce(0.0, Double::sum));
+
+        }
+        catch (NoSuchElementException exception) {
+            return OptionalDouble.empty();
+        }
+
     }
 
     /**
@@ -53,18 +60,25 @@ public class TextAssessmentUtilityService {
      * @param textCluster Text textCluster for which the expected value is calculated
      * @return
      */
-    public static Optional<Double> calculateExpectation(TextCluster textCluster) {
-        return Optional.of(textCluster.getBlocks().stream()
+    public static OptionalDouble calculateExpectation(TextCluster textCluster) {
 
-                // Only take the text blocks which are credited
-                .filter(block -> getCreditsOfTextBlock(block).isPresent())
+        try {
+            return OptionalDouble.of(textCluster.getBlocks().stream()
 
-                // Calculate the expected value of each random variable (the credit score) and its
-                // probability (its coverage percentage over a textCluster which is uniformly distributed)
-                .mapToDouble(block -> (double) (1 / textCluster.size()) * getCreditsOfTextBlock(block).get())
+                    // Only take the text blocks which are credited
+                    .filter(block -> getCreditsOfTextBlock(block).isPresent())
 
-                // Sum the up to create the expectation value of a textCluster in terms of a score
-                .sum());
+                    // Calculate the expected value of each random variable (the credit score) and its
+                    // probability (its coverage percentage over a textCluster which is uniformly distributed)
+                    .mapToDouble(block -> (double) (1 / textCluster.size()) * getCreditsOfTextBlock(block).getAsDouble())
+
+                    // Sum the up to create the expectation value of a textCluster in terms of a score
+                    .sum());
+        }
+        catch (NoSuchElementException expcetion) {
+            return OptionalDouble.empty();
+        }
+
     }
 
     /**
@@ -73,11 +87,18 @@ public class TextAssessmentUtilityService {
      * @param textCluster textCluster for which the standard deviation is calculated
      * @return {Optional<Double>} standard deviation of a text cluster
      */
-    public static Optional<Double> calculateStandardDeviation(TextCluster textCluster, int thresholdSize) {
+    public static OptionalDouble calculateStandardDeviation(TextCluster textCluster, int thresholdSize) {
 
-        final double variance = calculateVariance(textCluster, thresholdSize).get();
+        try {
+            final double variance = calculateVariance(textCluster, thresholdSize).getAsDouble();
 
-        return Optional.of(Math.sqrt(variance));
+            return OptionalDouble.of(Math.sqrt(variance));
+
+        }
+        catch (NoSuchElementException exception) {
+            return OptionalDouble.empty();
+        }
+
     }
 
     /**
@@ -104,28 +125,32 @@ public class TextAssessmentUtilityService {
      * @param textBlock text block for which its textClusters score coverage percentage is determined
      * @return {Optional<Double>} Optional which contains the percentage between [0.0-1.0] or empty if text block is not in a textCluster
      */
-    public static Optional<Double> calculateScoreCoveragePercentage(TextBlock textBlock) {
+    public static OptionalDouble calculateScoreCoveragePercentage(TextBlock textBlock) {
         final TextCluster textCluster = textBlock.getCluster();
 
         if (textCluster != null) {
 
             final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
 
-            final double textBlockCredits = getCreditsOfTextBlock(textBlock).get();
+            final double textBlockCredits = getCreditsOfTextBlock(textBlock).getAsDouble();
 
             final List<TextBlock> blocksWithSameCredit = textCluster.getBlocks()
 
                     .parallelStream()
 
                     // Get all text blocks which have the same score as the current text block
-                    .filter(block -> (getCreditsOfTextBlock(block).get() == textBlockCredits))
+                    .filter(block -> (getCreditsOfTextBlock(block).getAsDouble() == textBlockCredits))
 
                     .collect(toList());
-
-            return Optional.of(((double) blocksWithSameCredit.size()) / ((double) allBlocksInCluster.size()));
+            try {
+                return OptionalDouble.of(((double) blocksWithSameCredit.size()) / ((double) allBlocksInCluster.size()));
+            }
+            catch (NoSuchElementException exceptionn) {
+                return OptionalDouble.empty();
+            }
         }
 
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 
     /**
@@ -141,7 +166,7 @@ public class TextAssessmentUtilityService {
 
             final Double scoringSum = allBlocksInCluster.stream().mapToDouble(block -> {
                 if (getCreditsOfTextBlock((block)).isPresent()) {
-                    return getCreditsOfTextBlock(block).get();
+                    return getCreditsOfTextBlock(block).getAsDouble();
                 }
                 return 0.0;
             }).sum();
@@ -162,7 +187,7 @@ public class TextAssessmentUtilityService {
         final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
         if (allAssessedBlocks.size() > 0) {
-            return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).reduce(Math::max);
+            return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).getAsDouble()).reduce(Math::max);
         }
 
         return OptionalDouble.empty();
@@ -173,18 +198,24 @@ public class TextAssessmentUtilityService {
      * @param textCluster
      * @return
      */
-    public static Optional<Double> getMedianScore(TextCluster textCluster) {
+    public static OptionalDouble getMedianScore(TextCluster textCluster) {
 
         final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
 
-        final double[] textBlockArray = allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).toArray();
+        try {
+            final double[] textBlockArray = allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).getAsDouble()).toArray();
 
-        Arrays.sort(textBlockArray);
+            Arrays.sort(textBlockArray);
 
-        if (textBlockArray.length > 0) {
-            return Optional.of(textBlockArray[textBlockArray.length / 2]);
+            if (textBlockArray.length > 0) {
+                return OptionalDouble.of(textBlockArray[textBlockArray.length / 2]);
+            }
         }
-        return Optional.empty();
+        catch (NoSuchElementException exception) {
+            return OptionalDouble.empty();
+        }
+
+        return OptionalDouble.empty();
     }
 
     /**
@@ -195,10 +226,15 @@ public class TextAssessmentUtilityService {
     public static OptionalDouble getMinimumScore(TextCluster textCluster) {
 
         final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
-
-        if (allAssessedBlocks.size() > 0) {
-            return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).get()).reduce(Math::min);
+        try {
+            if (allAssessedBlocks.size() > 0) {
+                return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).getAsDouble()).reduce(Math::min);
+            }
         }
+        catch (NoSuchElementException exception) {
+            return OptionalDouble.empty();
+        }
+
         return OptionalDouble.empty();
     }
 
@@ -225,14 +261,14 @@ public class TextAssessmentUtilityService {
      * @param block {TextBlock} text block for which the credits are returned
      * @return {Optional<Double>} credits of the text block as Double Object in an Optional Wrapper
      */
-    public static Optional<Double> getCreditsOfTextBlock(TextBlock block) {
+    public static OptionalDouble getCreditsOfTextBlock(TextBlock block) {
         final TextCluster textCluster = block.getCluster();
 
         final Map<String, Feedback> feedback = feedbackService.getFeedbackForTextExerciseInCluster(textCluster);
         if (feedback != null) {
-            return Optional.of(feedback.get(block.getId()).getCredits());
+            return OptionalDouble.of(feedback.get(block.getId()).getCredits());
         }
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 
     /**
@@ -280,15 +316,15 @@ public class TextAssessmentUtilityService {
                     // Calculate the impact each assessed block should have on the final score, by determining the percental closeness of its weight compared to the other assessed
                     // blocks
                     .mapToDouble(blockIterator -> ((1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))) / totalWeight)
-                            * getCreditsOfTextBlock(blockIterator).get())
+                            * getCreditsOfTextBlock(blockIterator).getAsDouble())
 
                     .sum();
 
             // Get upper range threshold for wether the score matches the expectation
-            final OptionalDouble upperRange = OptionalDouble.of(calculateExpectation(textCluster).get() + calculateStandardDeviation(textCluster, 5).get());
+            final OptionalDouble upperRange = OptionalDouble.of(calculateExpectation(textCluster).getAsDouble() + calculateStandardDeviation(textCluster, 5).getAsDouble());
 
             // Get lower range threshold for wether the score matches the expectation
-            final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).get() - calculateStandardDeviation(textCluster, 5).get());
+            final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).getAsDouble() - calculateStandardDeviation(textCluster, 5).getAsDouble());
 
             // Verify if weighted score lies in range interval
             if (weightedScore < upperRange.getAsDouble() && weightedScore > lowerRange.getAsDouble()) {
@@ -311,7 +347,7 @@ public class TextAssessmentUtilityService {
         try {
             // Divide number of text blocks with the same credits by the total number of assessed text blocks in a cluster
             final OptionalDouble confidencePercentage = OptionalDouble
-                    .of(calculateScoreCoveragePercentage(textBlock).get() / calculateCoveragePercentage(textBlock.getCluster()).get());
+                    .of(calculateScoreCoveragePercentage(textBlock).getAsDouble() / calculateCoveragePercentage(textBlock.getCluster()).get());
             return confidencePercentage;
         }
         catch (NoSuchElementException exception) {
