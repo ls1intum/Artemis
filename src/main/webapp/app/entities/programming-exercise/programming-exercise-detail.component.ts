@@ -13,7 +13,6 @@ import { ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -43,7 +42,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            this.load(programmingExercise.id);
+            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
 
@@ -58,12 +57,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 this.programmingExercise.templateParticipation.results = results;
                 this.loadingTemplateParticipationResults = false;
             });
-        });
-    }
-    load(id: number) {
-        this.programmingExerciseService.find(id).subscribe((programmingExerciseResponse: HttpResponse<ProgrammingExercise>) => {
-            this.programmingExercise = programmingExerciseResponse.body!;
-            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
         });
     }
     /**
