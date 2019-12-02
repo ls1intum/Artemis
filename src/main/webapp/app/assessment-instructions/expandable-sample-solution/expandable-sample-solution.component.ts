@@ -3,6 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-expandable-sample-solution',
@@ -13,6 +14,7 @@ export class ExpandableSampleSolutionComponent implements OnInit {
     @Input() exercise: ModelingExercise;
     @Input() isCollapsed = false;
 
+    readonly ExerciseType_MODELING = ExerciseType.MODELING;
     formattedSampleSolutionExplanation: SafeHtml | null;
     sampleSolution: UMLModel;
 
