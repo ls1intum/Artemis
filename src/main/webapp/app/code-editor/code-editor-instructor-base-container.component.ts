@@ -254,7 +254,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
-            .subscribe(() => {}, err => this.onError(err));
+            .subscribe(
+                () => {},
+                err => this.onError(err),
+            );
     }
 
     /**
@@ -274,6 +277,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                 catchError(() => throwError('participationCouldNotBeDeleted')),
                 tap(() => this.createAssignmentParticipation()),
             )
-            .subscribe(() => {}, err => this.onError(err));
+            .subscribe(
+                () => {},
+                err => this.onError(err),
+            );
     }
 }
