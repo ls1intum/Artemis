@@ -55,7 +55,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         }
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(exercise.getCourse().getId());
+        final Course course = courseService.findOne(exercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest()
                     .headers(
@@ -165,4 +165,5 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         }
         return ResponseEntity.ok(submission);
     }
+
 }

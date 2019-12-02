@@ -341,8 +341,8 @@ public class CourseResource {
                         return emptyTutorParticipation;
                     });
 
-            long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            final long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+            final long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
@@ -448,11 +448,10 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfParticipations = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
-
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
-            long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
-            long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
+            final long numberOfParticipations = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+            final long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
+            final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfParticipations);
             exercise.setNumberOfAssessments(numberOfAssessments);
@@ -486,21 +485,21 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
-        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+        final long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
                 ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
-                ComplaintType.MORE_FEEDBACK);
+        final long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));

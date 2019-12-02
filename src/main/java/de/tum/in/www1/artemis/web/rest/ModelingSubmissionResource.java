@@ -184,9 +184,9 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         log.debug("REST request to get a modeling submission without assessment");
         final Exercise exercise = exerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
-        var exerciseValidity = this.checkExerciseValidityForTutor(exercise, ModelingExercise.class);
-        if (exerciseValidity != null) {
-            return exerciseValidity;
+        final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, ModelingExercise.class);
+        if (exerciseInvalid != null) {
+            return exerciseInvalid;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

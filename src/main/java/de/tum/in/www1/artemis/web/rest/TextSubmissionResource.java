@@ -152,9 +152,9 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         final Exercise exercise = exerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
 
-        var exerciseValid = this.checkExerciseValidityForTutor(exercise, TextExercise.class);
-        if (exerciseValid != null) {
-            return exerciseValid;
+        final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, TextExercise.class);
+        if (exerciseInvalid != null) {
+            return exerciseInvalid;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached

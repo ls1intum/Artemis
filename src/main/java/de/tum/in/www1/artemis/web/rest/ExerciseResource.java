@@ -170,25 +170,25 @@ public class ExerciseResource {
      * @return a object node with the stats
      */
     private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
-        Long exerciseId = exercise.getId();
+        final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        Long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+        final Long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        final Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        final Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
-        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        final Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
-        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        final Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+        final List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 
         return stats;
@@ -211,10 +211,10 @@ public class ExerciseResource {
         }
 
         StatsForInstructorDashboardDTO stats = populateCommonStatistics(exercise);
-        long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        final long numberOfOpenComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 
-        long numberOfOpenMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        final long numberOfOpenMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfOpenMoreFeedbackRequests);
 
         return ResponseEntity.ok(stats);

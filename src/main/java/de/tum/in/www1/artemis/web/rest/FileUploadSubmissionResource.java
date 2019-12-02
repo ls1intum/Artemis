@@ -110,8 +110,8 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
-        var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
-        User user = userService.getUserWithGroupsAndAuthorities();
+        final var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
+        final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
@@ -170,9 +170,9 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
-        var exerciseValidity = this.checkExerciseValidityForTutor(fileUploadExercise, FileUploadExercise.class);
-        if (exerciseValidity != null) {
-            return exerciseValidity;
+        final var exerciseInvalid = this.checkExerciseValidityForTutor(fileUploadExercise, FileUploadExercise.class);
+        if (exerciseInvalid != null) {
+            return exerciseInvalid;
         }
 
         // Check if the limit of simultaneously locked submissions has been reached
