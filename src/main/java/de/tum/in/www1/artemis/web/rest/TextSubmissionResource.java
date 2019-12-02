@@ -150,15 +150,11 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         final Exercise exercise = exerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
 
-        final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, TextExercise.class);
+        final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, TextExercise.class, textSubmissionService);
         if (exerciseInvalid != null) {
             return exerciseInvalid;
         }
-
-        // Check if the limit of simultaneously locked submissions has been reached
-        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
         TextSubmission textSubmission;
         if (lockSubmission) {
@@ -175,7 +171,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        textSubmission.hideDetails(authCheckService, user);
+        textSubmission.hideDetails(authCheckService, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(textSubmission);
     }
 }

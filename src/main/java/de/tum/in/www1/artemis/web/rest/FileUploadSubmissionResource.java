@@ -169,14 +169,10 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-        final var exerciseInvalid = this.checkExerciseValidityForTutor(fileUploadExercise, FileUploadExercise.class);
+        final var exerciseInvalid = this.checkExerciseValidityForTutor(fileUploadExercise, FileUploadExercise.class, fileUploadSubmissionService);
         if (exerciseInvalid != null) {
             return exerciseInvalid;
         }
-
-        // Check if the limit of simultaneously locked submissions has been reached
-        fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
 
         final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
@@ -194,7 +190,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmission.hideDetails(authCheckService, user);
+        fileUploadSubmission.hideDetails(authCheckService, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

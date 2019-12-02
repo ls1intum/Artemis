@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -70,12 +71,14 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
     }
 
     /**
-     * Check if exercise is valid and the user (tutor) can access it
+     * Check if exercise is valid, the user (tutor) can access it and the user didn't reach the limit of submission locks
      * @param exercise that we want to check
      * @param exerciseType type of the exercise
+     * @param submissionService concrete submission service that is used to check lock limit
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    public ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType) {
+    public <S extends GenericSubmissionRepository<T>> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType,
+            SubmissionService<T, S> submissionService) {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -87,6 +90,9 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
             return notFound();
         }
+
+        // Check if the limit of simultaneously locked submissions has been reached
+        submissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
         return null;
     }
 

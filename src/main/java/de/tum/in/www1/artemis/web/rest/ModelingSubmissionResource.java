@@ -183,14 +183,10 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
         final Exercise exercise = exerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-        final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, ModelingExercise.class);
+        final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, ModelingExercise.class, modelingSubmissionService);
         if (exerciseInvalid != null) {
             return exerciseInvalid;
         }
-
-        // Check if the limit of simultaneously locked submissions has been reached
-        modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
@@ -208,7 +204,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        modelingSubmission.hideDetails(authCheckService, user);
+        modelingSubmission.hideDetails(authCheckService, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(modelingSubmission);
     }
 
