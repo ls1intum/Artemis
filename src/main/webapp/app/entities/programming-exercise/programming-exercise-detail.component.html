@@ -203,13 +203,13 @@
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
             <span class="mr-1">
-                <button type="button" (click)="squashTemplateCommits()" class="btn btn-secondary">
+                <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="squashTemplateCommits()" class="btn btn-secondary">
                     <span jhiTranslate="artemisApp.programmingExercise.squashTemplateCommits">Squash Template Commits</span>
                 </button>
                 <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.squashTemplateCommitsWarning' | translate }}"></fa-icon>
             </span>
             <span *ngIf="programmingExercise.programmingLanguage == JAVA" class="mr-1">
-                <button type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
+                <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
                     <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                 </button>
                 <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | translate }}"></fa-icon>
