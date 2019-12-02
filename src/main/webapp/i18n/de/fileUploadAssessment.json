@@ -8,7 +8,7 @@
             "assessInstruction": "Bitte klicke auf \"Neues Feedback hinzufügen\".",
             "deleteAssessment": "Bewertung {{ index }} löschen ?",
             "dashboard": {
-                "heading": "Tutor Dashboard zur Bewertung von Datei Upload Aufgabe \"{{exerciseTitle}}\""
+                "heading": "Einreichungen und Bewertungen der Datei Upload Aufgabe \"{{exerciseTitle}}\""
             },
             "messages": {
                 "lock": "Diese Datei Abgabe kann jetzt exklusiv nur noch von dir bewertet werden. Bitte bewerte diese Datei Abgabe bevor du eine neue öffnest."

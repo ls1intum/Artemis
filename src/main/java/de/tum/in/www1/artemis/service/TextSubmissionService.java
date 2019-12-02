@@ -210,16 +210,12 @@ public class TextSubmissionService extends SubmissionService {
         for (StudentParticipation participation : participations) {
             Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
 
-            if (!optionalTextSubmission.isPresent()) {
+            if (optionalTextSubmission.isEmpty()) {
                 continue;
             }
 
             if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
                 continue;
-            }
-
-            if (optionalTextSubmission.get().getResult() != null) {
-                optionalTextSubmission.get().getResult().getAssessor().setGroups(null);
             }
 
             textSubmissions.add(optionalTextSubmission.get());
