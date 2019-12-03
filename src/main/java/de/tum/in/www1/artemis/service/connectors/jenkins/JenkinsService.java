@@ -94,7 +94,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         planKey = exercise.getProjectKey() + "-" + planKey;
 
         try {
-            jenkinsServer.createJob(folder(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig));
+            jenkinsServer.createJob(folder(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), true);
             job(exercise.getProjectKey(), planKey).build();
         }
         catch (IOException e) {
@@ -156,7 +156,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            jenkinsServer.deleteJob(projectKey);
+            jenkinsServer.deleteJob(projectKey, true);
         }
         catch (IOException e) {
             throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
@@ -166,7 +166,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
         try {
-            jenkinsServer.deleteJob(folder(projectKey), buildPlanId);
+            jenkinsServer.deleteJob(folder(projectKey), buildPlanId, true);
         }
         catch (IOException e) {
             throw new JenkinsException("Error while trying to delete job in Jenkins: " + buildPlanId, e);
@@ -438,7 +438,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         try {
-            jenkinsServer.createFolder(programmingExercise.getProjectKey());
+            jenkinsServer.createFolder(programmingExercise.getProjectKey(), true);
         }
         catch (IOException e) {
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
@@ -484,7 +484,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     private void saveJobXml(Document jobXml, String projectKey, String planName) {
         final var folder = folder(projectKey);
         try {
-            jenkinsServer.createJob(folder, planName, writeXmlToString(jobXml));
+            jenkinsServer.createJob(folder, planName, writeXmlToString(jobXml), true);
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);

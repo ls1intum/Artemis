@@ -22,6 +22,8 @@ public interface VersionControlService {
      */
     void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
 
+    void addWebHookToCISystem(URL repositoryUrl, String notificationUrl, String webHookName);
+
     /**
      * Deletes the project for the given project key
      *

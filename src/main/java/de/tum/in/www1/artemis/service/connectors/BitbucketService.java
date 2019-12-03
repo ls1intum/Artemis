@@ -156,6 +156,11 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
+    public void addWebHookToCISystem(URL repositoryUrl, String notificationUrl, String webHookName) {
+        // Not needed for Bitbucket
+    }
+
+    @Override
     public void deleteProject(String projectKey) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey;
         log.info("Delete bitbucket project " + projectKey);
