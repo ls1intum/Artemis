@@ -37,32 +37,55 @@ const entityToString = (entity: BaseEntity) => entity.id.toString();
     encapsulation: ViewEncapsulation.None,
 })
 export class DataTableComponent implements OnInit, OnChanges {
+    /**
+     * @prop templateRef Ref to the content child of this component (which is ngx-datatable)
+     */
     @ContentChild(TemplateRef, { read: TemplateRef, static: false })
     templateRef: TemplateRef<any>;
 
+    /**
+     * @prop isLoading Loading state of the data that is fetched by the ancestral component
+     * @prop entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
+     * @prop allEntities List of all entities that should be displayed in the table (one entity per row)
+     * @prop entitiesPerPageTranslation Translation string that has the variable { number } in it (e.g. 'artemisApp.exercise.resultsPerPage')
+     * @prop searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
+     * @prop searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
+     * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
+     * @function searchResultFormatter Function that takes an entity and returns the text for the autocomplete suggestion result row
+     * @function customFilter Function that takes an entity and returns true or false depending on whether this entity should be shown (combine with customFilterKey)
+     * @prop customFilterKey Filter state of an ancestral component which triggers a table re-rendering if it changes
+     */
     @Input() isLoading = false;
     @Input() entityType = 'entity';
-    @Input() resultName = 'result';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;
     @Input() searchPlaceholderTranslation: string;
     @Input() searchFields: string[] = [];
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
-    @Input() customFilterKey: any = {};
     @Input() customFilter: (entity: BaseEntity) => boolean = () => true;
+    @Input() customFilterKey: any = {};
 
+    /**
+     * @prop PAGING_VALUES Possible values for the number of entities shown per page of the table
+     * @prop DEFAULT_PAGING_VALUE Default number of entities shown per page if the user has no value set for this yet in local storage
+     */
     readonly PAGING_VALUES = [10, 20, 50, 100, 200, 500, 1000, 2000];
-    DEFAULT_PAGING_VALUE = 50;
+    readonly DEFAULT_PAGING_VALUE = 50;
 
+    /**
+     * @prop isRendering Rendering state of the table (used for conditional display of the loading indicator)
+     * @prop entities (Sorted) List of entities that are shown in the table (is a subset of allEntities after filters were applied)
+     * @prop entitiesPerPage Current number of entities displayed per page (can be changed and saved to local storage by the user)
+     * @prop entityCriteria Contains a list of search terms
+     */
+    isRendering: boolean;
     entities: BaseEntity[];
+    entitiesPerPage: number;
     entityCriteria: {
         textSearch: string[];
         sortProp: SortProp;
     };
-
-    entitiesPerPage: number;
-    isRendering: boolean;
 
     constructor(private sortByPipe: SortByPipe) {
         this.entities = [];
