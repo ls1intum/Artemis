@@ -13,6 +13,8 @@ import { ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { FeatureToggle } from 'app/feature-toggle';
+
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -21,6 +23,7 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 })
 export class ProgrammingExerciseDetailComponent implements OnInit {
     ParticipationType = ParticipationType;
+    readonly FeatureToggle = FeatureToggle;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
