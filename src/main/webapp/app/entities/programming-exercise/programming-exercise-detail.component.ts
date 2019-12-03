@@ -15,7 +15,6 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { FeatureToggle } from 'app/feature-toggle';
 
-
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
