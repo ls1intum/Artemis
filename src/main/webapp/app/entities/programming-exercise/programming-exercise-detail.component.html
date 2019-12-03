@@ -195,6 +195,10 @@
                         [participation]="programmingExercise.templateParticipation"
                     ></jhi-programming-exercise-instructions>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+                <dd class="editor-outline-background">
+                    <span [innerHTML]="gradingInstructions"></span>
+                </dd>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info mr-1">

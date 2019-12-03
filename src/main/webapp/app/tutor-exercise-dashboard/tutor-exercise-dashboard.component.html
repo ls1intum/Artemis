@@ -58,7 +58,7 @@
         </div>
     </div>
 
-    <div class="markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED || exercise.type === ExerciseType_TEXT">
+    <div class="markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
         <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
             <h4>{{ 'artemisApp.tutorExerciseDashboard.problemStatement' | translate }}</h4>
 
@@ -394,8 +394,7 @@
                 </div>
             </ng-container>
         </div>
-        <jhi-assessment-instructions class="max-vh-100" style="max-height: 100vh" *ngIf="exercise.type === ExerciseType_MODELING" [exercise]="exercise" [collapsed]="true">
-        </jhi-assessment-instructions>
+        <jhi-assessment-instructions class="max-vh-100" style="max-height: 100vh" [exercise]="exercise" [collapsed]="true"> </jhi-assessment-instructions>
     </div>
 
     <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
