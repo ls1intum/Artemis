@@ -166,7 +166,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min</ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="400" [width]="400">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="450" [width]="450">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>Repository
