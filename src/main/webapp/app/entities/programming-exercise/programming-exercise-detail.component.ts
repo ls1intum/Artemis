@@ -13,6 +13,8 @@ import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
@@ -31,6 +33,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
+    gradingInstructions: SafeHtml | null;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -42,11 +45,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private artemisMarkdown: 
+         ,
     ) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
 
