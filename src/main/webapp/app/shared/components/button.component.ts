@@ -28,6 +28,7 @@ export enum ButtonSize {
         <button
             [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
             ngbTooltip="{{ tooltip | translate }}"
+            container="body"
             (click)="onClick.emit($event)"
             [jhiFeatureToggle]="featureToggle"
             [overwriteDisabled]="disabled || isLoading"
