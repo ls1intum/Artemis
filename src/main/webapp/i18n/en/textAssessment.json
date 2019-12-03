@@ -37,7 +37,7 @@
                 "assess": "Assess"
             },
             "dashboard": {
-                "heading": "Tutor Assessment dashboard for text exercise \"{{exerciseTitle}}\""
+                "heading": "Submissions and assessments of text exercise \"{{exerciseTitle}}\""
             },
             "notFound": "We haven't found any new text submission without an assessment, please go back.",
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",

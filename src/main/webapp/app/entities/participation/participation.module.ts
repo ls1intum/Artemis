@@ -7,6 +7,7 @@ import { SortByModule } from 'app/components/pipes';
 import { ArtemisExerciseScoresModule } from 'app/scores';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { ArtemisParticipationSubmissionModule } from 'app/entities/participation-submission/participation-submission.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [...participationRoute];
 
@@ -18,6 +19,7 @@ const ENTITY_STATES = [...participationRoute];
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseActionsModule,
         ArtemisParticipationSubmissionModule,
+        FeatureToggleModule,
     ],
 
     declarations: [ParticipationComponent],

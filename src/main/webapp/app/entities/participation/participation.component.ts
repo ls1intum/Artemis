@@ -12,6 +12,7 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-participation',
@@ -23,6 +24,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
     readonly ActionType = ActionType;
+    readonly FeatureToggle = FeatureToggle;
 
     participations: StudentParticipation[];
     eventSubscriber: Subscription;

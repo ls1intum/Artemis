@@ -169,3 +169,4 @@ repos-download/
 .bash_history
 .v8flags.*.json
 /.cache-loader
+/src/main/generated

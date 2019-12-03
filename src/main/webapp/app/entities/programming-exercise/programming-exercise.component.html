@@ -160,6 +160,7 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
                                     routerLink="/code-editor/{{ programmingExercise.id }}/admin/{{ programmingExercise.templateParticipation.id }}"
@@ -169,6 +170,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                                 </button>
                                 <button
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     routerLink="programming-exercise/{{ programmingExercise.id }}/manage-test-cases"
@@ -210,6 +212,7 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Reset"
                                     [entityTitle]="programmingExercise.title"
@@ -223,6 +226,7 @@
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     jhiDeleteButton
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
