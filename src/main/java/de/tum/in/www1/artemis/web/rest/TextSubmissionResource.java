@@ -164,13 +164,18 @@ public class TextSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise exercise = textExerciseService.findOne(exerciseId);
+        if (assessedByTutor) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -182,7 +187,20 @@ public class TextSubmissionResource {
             textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
         }
 
-        textSubmissions.forEach(submission -> textSubmissionService.hideDetails(submission, user));
+        // tutors should not see information about the student of a submission
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            textSubmissions.forEach(submission -> textSubmissionService.hideDetails(submission, user));
+        }
+
+        // remove unnecessary data from the REST response
+        textSubmissions.forEach(submission -> {
+            if (submission.getResult() != null && submission.getResult().getAssessor() != null) {
+                submission.getResult().getAssessor().setGroups(null);
+            }
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
 
         return ResponseEntity.ok().body(textSubmissions);
     }

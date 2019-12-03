@@ -119,7 +119,7 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmissionsOfExercise() throws Exception {
         FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
         FileUploadSubmission submission2 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student2");
@@ -133,9 +133,9 @@ public class FileUploadSubmissionIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void cannotSeeStudentDetailsInSubmissionListAsTutor() throws Exception {
-        FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
+        FileUploadSubmission submission1 = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
 
-        List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true", HttpStatus.OK,
+        List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true", HttpStatus.OK,
                 FileUploadSubmission.class);
 
         assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
@@ -167,7 +167,7 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
         database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student2");

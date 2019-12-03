@@ -141,32 +141,45 @@ public class ModelingSubmissionResource {
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
-
         if (assessedByTutor) {
-            List<ModelingSubmission> submissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
-            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise, user));
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
-        return ResponseEntity.ok(clearStudentInformation(submissions, exercise, user));
-    }
+        final List<ModelingSubmission> modelingSubmissions;
+        if (assessedByTutor) {
+            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
+        }
 
-    /**
-     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
-     */
-    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise, User user) {
+        // tutors should not see information about the student of a submission
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
+            modelingSubmissions.forEach(submission -> modelingSubmissionService.hideDetails(submission, user));
         }
-        return submissions;
+
+        // remove unnecessary data from the REST response
+        modelingSubmissions.forEach(submission -> {
+            if (submission.getResult() != null && submission.getResult().getAssessor() != null) {
+                submission.getResult().getAssessor().setGroups(null);
+            }
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
+
+        return ResponseEntity.ok().body(modelingSubmissions);
     }
 
     /**
@@ -347,7 +360,7 @@ public class ModelingSubmissionResource {
 
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
         ModelingSubmission modelingSubmission;
-        if (!optionalModelingSubmission.isPresent()) {
+        if (optionalModelingSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
             modelingSubmission.setParticipation(participation);

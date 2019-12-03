@@ -699,6 +699,7 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping(value = "/programming-exercises/{id}/generate-tests", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable Long id) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
