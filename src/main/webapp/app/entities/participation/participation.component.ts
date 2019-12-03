@@ -20,18 +20,14 @@ import { FeatureToggle } from 'app/feature-toggle';
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
+    readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
 
-    participations: StudentParticipation[];
+    participations: StudentParticipation[] = [];
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
-    predicate: string;
-    reverse: boolean;
     newManualResultAllowed: boolean;
 
     hasLoadedPendingSubmissions = false;
@@ -40,6 +36,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    isLoading: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
@@ -47,10 +45,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-    ) {
-        this.reverse = true;
-        this.predicate = 'id';
-    }
+    ) {}
 
     ngOnInit() {
         this.loadAll();
@@ -64,13 +59,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     loadAll() {
         this.paramSub = this.route.params.subscribe(params => {
+            this.isLoading = true;
             this.hasLoadedPendingSubmissions = false;
             this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
                 this.exercise = exerciseResponse.body!;
                 this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe(participationsResponse => {
                     this.participations = participationsResponse.body!;
+                    this.isLoading = false;
                 });
-                if (this.exercise.type === this.PROGRAMMING) {
+                if (this.exercise.type === ExerciseType.PROGRAMMING) {
                     this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
@@ -139,7 +136,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
-
     /**
      * Cleans programming exercise participation
      * @param programmingExerciseParticipation the id of the participation that we want to delete
@@ -156,5 +152,24 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
-    callback() {}
+
+    /**
+     * Formats the results in the autocomplete overlay.
+     *
+     * @param participation
+     */
+    searchResultFormatter = (participation: StudentParticipation) => {
+        const { login, name } = participation.student;
+        return `${login} (${name})`;
+    };
+
+    /**
+     * Converts a participation object to a string that can be searched for. This is
+     * used by the autocomplete select inside the data table.
+     *
+     * @param participation Student participation
+     */
+    searchTextFromParticipation = (participation: StudentParticipation): string => {
+        return participation.student.login || '';
+    };
 }
