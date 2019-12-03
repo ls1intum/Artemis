@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -184,10 +186,20 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+        if (file.isEmpty()) {
+            throw new IOException("Failed to store empty file" + file.getName());
+        }
+        var originalHash = DigestUtils.md5Hex(file.getInputStream());
         // check if we already had file associated with this submission
         fileUploadSubmission.onDelete();
 
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+
+        // We need to ensure that the stored file is the same as was passed to us in the request
+        var newHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
+        if (!originalHash.equals(newHash)) {
+            throw new IOException("The file " + file.getName() + "could not be stored. Please, upload the file again");
+        }
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
