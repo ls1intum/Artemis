@@ -135,8 +135,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error(error.message);
     }
 
-    callback() {}
-
     /**
      * Formats the results in the autocomplete overlay.
      *
