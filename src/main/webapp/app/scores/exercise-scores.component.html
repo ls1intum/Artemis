@@ -179,6 +179,7 @@
                             routerLink="/code-editor/{{ value.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="exercise.type === PROGRAMMING && value.participation.exercise.allowOnlineEditor"
+                            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
                             <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                         </button>

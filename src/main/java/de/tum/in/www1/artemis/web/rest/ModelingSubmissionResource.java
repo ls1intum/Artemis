@@ -156,23 +156,30 @@ public class ModelingSubmissionResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        final List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {
-            List<ModelingSubmission> submissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
-            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise, user));
+            modelingSubmissions = modelingSubmissionService.getAllModelingSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
         }
 
-        List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
-        return ResponseEntity.ok(clearStudentInformation(submissions, exercise, user));
-    }
-
-    /**
-     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
-     */
-    private List<ModelingSubmission> clearStudentInformation(List<ModelingSubmission> submissions, Exercise exercise, User user) {
+        // tutors should not see information about the student of a submission
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
+            modelingSubmissions.forEach(submission -> modelingSubmissionService.hideDetails(submission, user));
         }
-        return submissions;
+
+        // remove unnecessary data from the REST response
+        modelingSubmissions.forEach(submission -> {
+            if (submission.getResult() != null && submission.getResult().getAssessor() != null) {
+                submission.getResult().getAssessor().setGroups(null);
+            }
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
+
+        return ResponseEntity.ok().body(modelingSubmissions);
     }
 
     /**

@@ -16,6 +16,7 @@ import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { FeatureToggle } from 'app/feature-toggle';
 
 enum FilterProp {
     ALL = 'all',
@@ -37,6 +38,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly FeatureToggle = FeatureToggle;
 
     course: Course;
     exercise: Exercise;

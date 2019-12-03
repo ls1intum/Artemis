@@ -164,6 +164,8 @@
                                 </ng-container>
                                 <button
                                     *ngIf="exercise.isAtLeastInstructor"
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [skipFeatureToggle]="exercise.type !== PROGRAMMING"
                                     jhiDeleteButton
                                     [entityTitle]="value.student.name"
                                     deleteQuestion="artemisApp.participation.delete.question"
@@ -179,6 +181,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="exercise?.type === PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     [routerLink]="['/', { outlets: { popup: ['participation', value.id, 'cleanupBuildPlan'] } }]"
                                     class="btn btn-danger btn-sm mr-1"
                                 >

@@ -8,7 +8,7 @@
             "conflictsResolved": "All conflicts have been processed."
         },
         "dashboard": {
-            "heading": "Assessment dashboard for modeling exercise  \"{{ title }}\"",
+            "heading": "Submissions and assessments of modeling exercise  \"{{ title }}\"",
             "actions": {
                 "open": "Assess model"
             }

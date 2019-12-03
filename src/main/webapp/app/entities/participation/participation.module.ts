@@ -18,6 +18,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programmin
 import { ArtemisParticipationSubmissionModule } from 'app/entities/participation-submission/participation-submission.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/components/data-table/data-table.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
@@ -31,6 +32,7 @@ const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
         ArtemisParticipationSubmissionModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
+        FeatureToggleModule,
     ],
 
     declarations: [ParticipationComponent, ParticipationCleanupBuildPlanDialogComponent, ParticipationCleanupBuildPlanPopupComponent],
