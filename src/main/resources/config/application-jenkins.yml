@@ -1,0 +1,8 @@
+artemis:
+    jenkins:
+        url: http://localhost:8080
+        user: artemis
+        password: ArTEMiS_pw2017
+        secret-push-token: AQAAABAAAAAw7DIAdi2VraxH/orQkSpHPJfuPvN6dxx2RZy0WDxUBltQ18DiOdfiA7rmH87P/6Cwjv9otUoDMmDiYSMXF/vdvA==
+        git-credentials: 6576d184-6a2b-4450-b3c4-919694c8a211
+        notification-token: edfc672d-3ef2-4637-a4db-fc3700c29b5d

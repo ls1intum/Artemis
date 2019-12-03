@@ -38,18 +38,18 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private String artemisNotificationUrl;
 
-    @Value("${artemis.jenkins.secret-push-token}")
+    @Value("${jenkins.secret-push-token}")
     private String pushToken;
 
-    @Value("${artemis.jenkins.git-credentials}")
+    @Value("${jenkins.git-credentials}")
     private String gitCredentialsKey;
 
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
     // TODO rename to generic property
-    @Value("${artemis.bamboo.authentication-token}")
-    private String CI_AUTHENTICATION_TOKEN;
+    @Value("${jenkins.notification-token}")
+    private String NOTIFICATION_TOKEN;
 
     @PostConstruct
     public void init() {
@@ -61,7 +61,7 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         final var resourcePath = Path.of("build", "jenkins", "java", "config.xml");
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
-                artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, CI_AUTHENTICATION_TOKEN);
+                artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, NOTIFICATION_TOKEN);
 
         return XmlFileUtils.readXmlFile(resourcePath, replacements);
     }

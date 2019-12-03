@@ -1,0 +1,5 @@
+artemis:
+    gitlab:
+        url: http://localhost
+        secret: ev56RmYtTDys-bmdbUaz
+        ci-token: 3417de454d20b3819511ed6302c880d1
