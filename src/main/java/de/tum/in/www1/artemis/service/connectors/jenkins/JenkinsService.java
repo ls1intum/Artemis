@@ -95,7 +95,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
         try {
             jenkinsServer.createJob(folder(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), true);
-            job(exercise.getProjectKey(), planKey).build();
+            job(exercise.getProjectKey(), planKey).build(true);
         }
         catch (IOException e) {
             throw new JenkinsException("Unable to create new build plan :" + planKey);
