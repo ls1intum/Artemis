@@ -70,15 +70,15 @@ export class DataTableComponent implements OnInit, OnChanges {
             textSearch: [],
             sortProp: { field: 'id', order: SortOrder.ASC },
         };
+    }
+
+    ngOnInit() {
+        this.entitiesPerPage = this.getCachedEntitiesPerPage();
 
         // explicitly bind these callbacks to their current context
         // so that they can be used from child components
         this.onSort = this.onSort.bind(this);
         this.iconForSortPropField = this.iconForSortPropField.bind(this);
-    }
-
-    ngOnInit() {
-        this.entitiesPerPage = this.getCachedEntitiesPerPage();
     }
 
     /**
