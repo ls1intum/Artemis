@@ -467,7 +467,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "student1")
-    public void getDataForFileUpload_wrongExerciseType() throws Exception {
+    public void getModelSubmissionForModelingEditor_wrongExerciseType() throws Exception {
         var textCourse = database.addCourseWithOneTextExercise();
         var textExercise = (TextExercise) textCourse.getExercises().iterator().next();
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
@@ -478,7 +478,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "student2")
-    public void getDataForFileUpload_wrongStudent() throws Exception {
+    public void getModelSubmissionForModelingEditor_wrongStudent() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
         database.updateExerciseDueDate(objectExercise.getId(), ZonedDateTime.now().minusHours(1));
