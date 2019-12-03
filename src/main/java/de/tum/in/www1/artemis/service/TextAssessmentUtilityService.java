@@ -19,8 +19,9 @@ public class TextAssessmentUtilityService {
     /**
      * Calculates the variance of a given text textCluster if the number of assessed text block in the textCluster exceeds the variance thresehold
      *
-     * @param textCluster
-     * @return
+     * @param textCluster textCluster for which a variance is calculated
+     * @param thresholdSize threshold for how many text blocks in a cluster are needed in order to allow a variance calculation
+     * @return OptionalDouble containing the variance of a textCluster
      */
     public static OptionalDouble calculateVariance(TextCluster textCluster, int thresholdSize) {
 
@@ -58,7 +59,7 @@ public class TextAssessmentUtilityService {
      * Calculates the expected value in a text textCluster
      *
      * @param textCluster Text textCluster for which the expected value is calculated
-     * @return
+     * @return OptionalDouble containing the expected value of a text cluster
      */
     public static OptionalDouble calculateExpectation(TextCluster textCluster) {
 
@@ -85,6 +86,7 @@ public class TextAssessmentUtilityService {
      * Calculates the standard deviation of a text textCluster
      *
      * @param textCluster textCluster for which the standard deviation is calculated
+     * @param thresholdSize thresholdsize which is passed to calculateVariance()
      * @return {Optional<Double>} standard deviation of a text cluster
      */
     public static OptionalDouble calculateStandardDeviation(TextCluster textCluster, int thresholdSize) {
@@ -105,18 +107,18 @@ public class TextAssessmentUtilityService {
      * Calculates the coverage percentage of how  many text blocks in a textCluster are present
      *
      * @param textCluster textCluster for which the coverage percentage is calculated
-     * @return
+     * @return OptionalDouble containing the percentage of blocks which are assessed
      */
-    public static Optional<Double> calculateCoveragePercentage(TextCluster textCluster) {
+    public static OptionalDouble calculateCoveragePercentage(TextCluster textCluster) {
         if (textCluster != null) {
             final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
 
             final double creditedBlocks = (double) allBlocksInCluster.stream().filter(block -> (getCreditsOfTextBlock(block).isPresent())).count();
 
-            return Optional.of(creditedBlocks / (double) allBlocksInCluster.size());
+            return OptionalDouble.of(creditedBlocks / (double) allBlocksInCluster.size());
         }
 
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 
     /**
@@ -164,7 +166,7 @@ public class TextAssessmentUtilityService {
 
             final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
 
-            final Double scoringSum = allBlocksInCluster.stream().mapToDouble(block -> {
+            final double scoringSum = allBlocksInCluster.stream().mapToDouble(block -> {
                 if (getCreditsOfTextBlock((block)).isPresent()) {
                     return getCreditsOfTextBlock(block).getAsDouble();
                 }
@@ -179,8 +181,8 @@ public class TextAssessmentUtilityService {
 
     /**
      * Gets the max score of a text textCluster
-     * @param textCluster
-     * @return
+     * @param textCluster textCluster for which the max is calculated
+     * @return OptionalDouble containing the median score if present or empty
      */
     public static OptionalDouble getMaxScore(TextCluster textCluster) {
 
@@ -195,8 +197,8 @@ public class TextAssessmentUtilityService {
 
     /**
      * Gets the median score of a textCluster
-     * @param textCluster
-     * @return
+     * @param textCluster textCluster for which the median is calculated
+     * @return OptionalDouble containing the median score if present or empty
      */
     public static OptionalDouble getMedianScore(TextCluster textCluster) {
 
@@ -220,8 +222,8 @@ public class TextAssessmentUtilityService {
 
     /**
      * Gets the minimum score of a text textCluster
-     * @param textCluster
-     * @return
+     * @param textCluster textCluster for which the minimum is calculated
+     * @return OptionalDouble containing the minimum score if present or empty
      */
     public static OptionalDouble getMinimumScore(TextCluster textCluster) {
 
@@ -288,8 +290,8 @@ public class TextAssessmentUtilityService {
 
     /**
      * Calculates a suggested feedback score for a textblock based on its surrounding neighbors in a Text cluster
-     * @param textBlock
-     * @return
+     * @param textBlock textBlock for which the score is calculated
+     * @return OptionalDouble containing the score of a textblock or empty, if none present
      */
     public static OptionalDouble calculateScore(TextBlock textBlock) {
         final TextCluster textCluster = textBlock.getCluster();
@@ -346,9 +348,7 @@ public class TextAssessmentUtilityService {
 
         try {
             // Divide number of text blocks with the same credits by the total number of assessed text blocks in a cluster
-            final OptionalDouble confidencePercentage = OptionalDouble
-                    .of(calculateScoreCoveragePercentage(textBlock).getAsDouble() / calculateCoveragePercentage(textBlock.getCluster()).get());
-            return confidencePercentage;
+            return OptionalDouble.of(calculateScoreCoveragePercentage(textBlock).getAsDouble() / calculateCoveragePercentage(textBlock.getCluster()).getAsDouble());
         }
         catch (NoSuchElementException exception) {
             return OptionalDouble.empty();
