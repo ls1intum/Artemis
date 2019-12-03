@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
-import { from, Observable } from 'rxjs';
-import { finalize, tap } from 'rxjs/operators';
+import { from } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Injectable({ providedIn: 'root' })
@@ -13,10 +12,10 @@ export class DeleteDialogService {
     constructor(private modalService: NgbModal, public jhiAlertService: JhiAlertService) {}
 
     /**
-     * Opens delete dialog and returns a result after dialog is closed
+     * Opens delete dialog
      * @param deleteDialogData data that is used in dialog
      */
-    openDeleteDialog(deleteDialogData: DeleteDialogData): Observable<any> {
+    openDeleteDialog(deleteDialogData: DeleteDialogData): void {
         this.jhiAlertService.clear();
         this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
@@ -26,6 +25,9 @@ export class DeleteDialogService {
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
         this.modalRef.componentInstance.delete = deleteDialogData.delete;
         this.modalRef.componentInstance.dialogError = deleteDialogData.dialogError;
-        return from(this.modalRef.result).pipe(tap(() => (this.modalRef = null)));
+        from(this.modalRef.result).subscribe(
+            () => (this.modalRef = null),
+            () => {},
+        );
     }
 }

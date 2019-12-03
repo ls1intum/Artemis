@@ -31,6 +31,7 @@
         <button
             type="submit"
             class="btn btn-danger"
+            [style.cursor]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle) || submitDisabled ? 'not-allowed' : 'pointer'"
             [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle) || submitDisabled"
             [ngSwitch]="actionType"
         >
