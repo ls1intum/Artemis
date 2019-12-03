@@ -257,7 +257,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                 }
                 return this.entities.filter(entity => {
                     const fieldValues = this.entityFieldValues(entity, this.searchFields);
-                    return fieldValues.some(fieldValue => this.foundIn(fieldValue)(lastSearchWord) && fieldValue.toLowerCase() !== lastSearchWord.toLowerCase());
+                    return fieldValues.some(fieldValue => this.foundIn(fieldValue)(lastSearchWord));
                 });
             }),
         );
