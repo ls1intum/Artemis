@@ -51,7 +51,7 @@ public class ResultResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.bamboo.authentication-token}")
+    @Value("${artemis.ci.authentication-token}")
     private String CI_AUTHENTICATION_TOKEN = "";
 
     private final ResultRepository resultRepository;
