@@ -10,6 +10,7 @@ import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-participation',
@@ -20,6 +21,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly FeatureToggle = FeatureToggle;
 
     participations: StudentParticipation[];
     eventSubscriber: Subscription;
