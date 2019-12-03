@@ -45,8 +45,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private artemisMarkdown: 
-         ,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit() {
