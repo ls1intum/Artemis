@@ -128,6 +128,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 } else {
                     this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
                 }
+                this.isSaving = false;
             },
             () => {
                 this.submission!.submitted = false;
@@ -135,8 +136,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = null;
                 this.submission!.filePath = null;
-            },
-            () => {
                 this.isSaving = false;
             },
         );
