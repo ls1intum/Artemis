@@ -239,7 +239,9 @@ public class TextAssessmentResource extends AssessmentResource {
         computeBlocks(result, textExercise);
 
         TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        textSubmission.getBlocks().sort(compareByStartIndexReversed);
+        final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+        textBlocks.sort(compareByStartIndexReversed);
+        textSubmission.setBlocks(textBlocks);
 
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
