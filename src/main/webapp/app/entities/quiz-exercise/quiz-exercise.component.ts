@@ -10,12 +10,16 @@ import * as moment from 'moment';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html',
 })
 export class QuizExerciseComponent extends ExerciseComponent {
+    readonly ActionType = ActionType;
+
     QuizStatus = {
         HIDDEN: 'Hidden',
         VISIBLE: 'Visible',
@@ -28,8 +32,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     constructor(
         private quizExerciseService: QuizExerciseService,
-        private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
+        private jhiAlertService: JhiAlertService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -186,16 +190,32 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId id of the quiz exercise that will be deleted
      */
     deleteQuizExercise(quizExerciseId: number) {
-        this.quizExerciseService.delete(quizExerciseId).subscribe(
+        return this.quizExerciseService.delete(quizExerciseId).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
+                this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+        );
+    }
+
+    /**
+     * Resets quiz exercise
+     * @param quizExerciseId id of the quiz exercise that will be deleted
+     */
+    resetQuizExercise(quizExerciseId: number) {
+        this.quizExerciseService.reset(quizExerciseId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'quizExerciseListModification',
+                    content: 'Reset an quizExercise',
+                });
+                this.dialogErrorSource.next('');
             },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
         );
     }
 

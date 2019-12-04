@@ -16,8 +16,16 @@
             "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
             "delete": {
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
+                "studentRepos": "Alle Studenten Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Übung zuerst zu archivieren!",
                 "studentReposBuildPlans": "Alle Studenten Repositories und Studenten Build Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Übung zuerst zu archivieren!",
                 "baseReposBuildPlans": "Alle Template-, Lösungs- und Testrepositories sowie Build Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Repositories und Build Pläne erst zu sichern!"
+            },
+            "cleanup": {
+                "successMessage": "Die Bereinigung war erfolgreich. Alle Build Pläne wurden gelöscht. Die Studenten können ihre Teilnahme wieder aufnehmen.",
+                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
+            },
+            "reset": {
+                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studenten Repositories und Studenten Build Pläne gelöscht werden."
             },
             "detail": {
                 "title": "Programmieraufgabe"

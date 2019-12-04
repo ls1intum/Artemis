@@ -1,6 +1,8 @@
-import { DeleteDialogData, DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
+import { Observable } from 'rxjs';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
@@ -8,6 +10,8 @@ export class DeleteButtonDirective implements OnInit {
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
     @Input() additionalChecks?: { [key: string]: string };
+    @Input() actionType: ActionType = ActionType.Delete;
+    @Input() dialogError: Observable<string>;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
 
     deleteTextSpan: HTMLElement;
@@ -30,12 +34,12 @@ export class DeleteButtonDirective implements OnInit {
         this.deleteTextSpan = this.renderer.createElement('span');
         this.renderer.addClass(this.deleteTextSpan, 'd-none');
         this.renderer.addClass(this.deleteTextSpan, 'd-md-inline');
-        this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.delete'));
+        this.setTextContent();
         this.renderer.appendChild(this.el.nativeElement, this.deleteTextSpan);
 
         // update the span title on each language change
         this.translateService.onLangChange.subscribe(() => {
-            this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant('entity.action.delete'));
+            this.setTextContent();
         });
     }
 
@@ -48,14 +52,19 @@ export class DeleteButtonDirective implements OnInit {
             deleteQuestion: this.deleteQuestion,
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
+            actionType: this.actionType,
+            delete: this.delete,
+            dialogError: this.dialogError,
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData).subscribe((additionalChecksValues: { [key: string]: boolean }) => {
-            this.delete.emit(additionalChecksValues);
-        });
+        this.deleteDialogService.openDeleteDialog(deleteDialogData);
     }
 
     @HostListener('click')
     onClick() {
         this.openDeleteDialog();
+    }
+
+    private setTextContent() {
+        this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant(`entity.action.${this.actionType}`));
     }
 }
