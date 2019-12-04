@@ -110,6 +110,15 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmission_emptyFileContent() throws Exception {
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
+        var file = new MockMultipartFile("file", "file.png", "application/json", (byte[]) null);
+        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void setSubmittedFileUploadSubmission_incorrectFileType() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
