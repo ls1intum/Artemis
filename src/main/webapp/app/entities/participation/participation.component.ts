@@ -23,16 +23,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly FeatureToggle = FeatureToggle;
 
-    participations: StudentParticipation[];
+    participations: StudentParticipation[] = [];
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
-    predicate: string;
-    reverse: boolean;
     newManualResultAllowed: boolean;
 
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
+
+    isLoading: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -41,10 +41,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-    ) {
-        this.reverse = true;
-        this.predicate = 'id';
-    }
+    ) {}
 
     ngOnInit() {
         this.loadAll();
@@ -57,11 +54,13 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     loadAll() {
         this.paramSub = this.route.params.subscribe(params => {
+            this.isLoading = true;
             this.hasLoadedPendingSubmissions = false;
             this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
                 this.exercise = exerciseResponse.body!;
                 this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe(participationsResponse => {
                     this.participations = participationsResponse.body!;
+                    this.isLoading = false;
                 });
                 if (this.exercise.type === this.PROGRAMMING) {
                     this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
@@ -136,5 +135,23 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error(error.message);
     }
 
-    callback() {}
+    /**
+     * Formats the results in the autocomplete overlay.
+     *
+     * @param participation
+     */
+    searchResultFormatter = (participation: StudentParticipation) => {
+        const { login, name } = participation.student;
+        return `${login} (${name})`;
+    };
+
+    /**
+     * Converts a participation object to a string that can be searched for. This is
+     * used by the autocomplete select inside the data table.
+     *
+     * @param participation Student participation
+     */
+    searchTextFromParticipation = (participation: StudentParticipation): string => {
+        return participation.student.login || '';
+    };
 }

@@ -18,7 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -546,7 +545,6 @@ public class ProgrammingSubmissionService {
      * @param tutorId    - the id of the tutor we are interested in
      * @return a list of programming submissions
      */
-    @Transactional(readOnly = true)
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
         List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
@@ -588,6 +586,18 @@ public class ProgrammingSubmissionService {
             return Optional.empty();
         }
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+    }
+
+    /**
+     * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the programming submission with the given id
+     */
+    public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
+        return programmingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 
     public void hideDetails(ProgrammingSubmission submission, User user) {
