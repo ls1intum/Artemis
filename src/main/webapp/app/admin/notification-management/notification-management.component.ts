@@ -11,6 +11,8 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
+import { onError } from 'app/utils/global.utils';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-notification-mgmt',
@@ -29,6 +31,9 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     predicate: string;
     previousPage: number;
     reverse: boolean;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private userService: UserService,
@@ -65,6 +70,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.routeData.unsubscribe();
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -79,12 +85,16 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      * @param notificationId the id of the notification that we want to delete
      */
     deleteNotification(notificationId: number) {
-        this.systemNotificationService.delete(notificationId).subscribe(() => {
-            this.eventManager.broadcast({
-                name: 'notificationListModification',
-                content: 'Deleted a system notification',
-            });
-        });
+        this.systemNotificationService.delete(notificationId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'notificationListModification',
+                    content: 'Deleted a system notification',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
 
     /**
@@ -99,7 +109,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
             })
             .subscribe(
                 (res: HttpResponse<SystemNotification[]>) => this.onSuccess(res.body!, res.headers),
-                (res: HttpErrorResponse) => this.onError(res),
+                (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
 
@@ -159,9 +169,5 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         this.links = this.parseLinks.parse(headers.get('link')!);
         this.totalItems = headers.get('X-Total-Count')!;
         this.notifications = data;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.alertService.error(error.error, error.message, undefined);
     }
 }

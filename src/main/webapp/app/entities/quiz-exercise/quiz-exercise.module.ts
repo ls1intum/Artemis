@@ -2,16 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from '../../shared';
-import {
-    QuizExerciseComponent,
-    QuizExerciseDetailComponent,
-    quizExercisePopupRoute,
-    QuizExercisePopupService,
-    QuizExerciseResetDialogComponent,
-    QuizExerciseResetPopupComponent,
-    quizExerciseRoute,
-    QuizExerciseService,
-} from './';
+import { QuizExerciseComponent, QuizExerciseDetailComponent, QuizExercisePopupService, quizExerciseRoute, QuizExerciseService } from './';
 import { SortByModule } from 'app/components/pipes';
 import { ArtemisQuizEditModule } from 'app/quiz/edit';
 import { ArtemisQuizReEvaluateModule } from 'app/quiz/re-evaluate';
@@ -20,7 +11,7 @@ import { ArtemisCategorySelectorModule } from 'app/components/category-selector/
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
-const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
+const ENTITY_STATES = [...quizExerciseRoute];
 
 @NgModule({
     imports: [
@@ -34,8 +25,8 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
         ArtemisDifficultyPickerModule,
     ],
     exports: [QuizExerciseComponent],
-    declarations: [QuizExerciseComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
-    entryComponents: [QuizExerciseComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
+    declarations: [QuizExerciseComponent, QuizExerciseDetailComponent],
+    entryComponents: [QuizExerciseComponent, QuizExerciseDetailComponent],
     providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard],
 })
 export class ArtemisQuizExerciseModule {}

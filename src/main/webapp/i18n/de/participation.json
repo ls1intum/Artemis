@@ -13,7 +13,7 @@
                 "question": "Soll die Teilnahme von <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?"
             },
             "cleanupBuildPlan": {
-                "question": "Soll der Build Plan der Teilnahme von {{ student }} wirklich gelöscht werden?"
+                "question": "Soll der Build Plan der Teilnahme von <strong>{{ title }}</strong> wirklich gelöscht werden?"
             },
             "addPresentation": {
                 "label": "Füge Präsentation hinzu",
