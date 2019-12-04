@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture';
 import { ActivatedRoute } from '@angular/router';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-lecture',
@@ -19,10 +20,13 @@ export class LectureComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     courseId: number;
 
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
     constructor(
         protected lectureService: LectureService,
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,
     ) {}
@@ -38,7 +42,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 (res: Lecture[]) => {
                     this.lectures = res;
                 },
-                (res: HttpErrorResponse) => this.onError(res.message),
+                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
     }
 
@@ -53,6 +57,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     trackId(index: number, item: Lecture) {
@@ -74,12 +79,9 @@ export class LectureComponent implements OnInit, OnDestroy {
                     name: 'lectureListModification',
                     content: 'Deleted an lecture',
                 });
+                this.dialogErrorSource.next('');
             },
-            error => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
-    }
-
-    protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, undefined);
     }
 }
