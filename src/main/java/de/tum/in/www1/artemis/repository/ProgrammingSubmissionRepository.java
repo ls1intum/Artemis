@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
@@ -45,6 +44,9 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(attributePaths = "result")
     @Query("select distinct s from Submission s where s.id = :#{#submissionId}")
     ProgrammingSubmission findByIdWithEagerResult(@Param("submissionId") Long submissionId);
+
+    @Query("select distinct submission from ProgrammingSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    Optional<ProgrammingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") long submissionId);
 
     Optional<ProgrammingSubmission> findByResultId(long resultId);
 }
