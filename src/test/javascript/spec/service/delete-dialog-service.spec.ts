@@ -40,9 +40,7 @@ describe('Delete Dialog Service', () => {
             delete: new EventEmitter<any>(),
         };
         const modalSpy = sinon.spy(modalService, 'open');
-        service.openDeleteDialog(data).subscribe(() => {
-            expect(service.modalRef).to.be.null;
-        });
+        service.openDeleteDialog(data);
         expect(modalSpy.callCount).to.be.equal(1);
         let call = modalSpy.getCall(0);
         let args = call.args;
