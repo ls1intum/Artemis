@@ -93,7 +93,8 @@ public final class Constants {
 
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
 
-    public static final int MAX_COMPLAINT_TIME_WEEKS = 3;
+    // NOTE: this has to be the same as in complaint.constants.ts on the client
+    public static final int MAX_COMPLAINT_TIME_WEEKS = 1;
 
     // Currently 10s.
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
