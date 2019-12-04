@@ -8,6 +8,4 @@ export * from './programming-exercise.component';
 export * from './programming-exercise-update.component';
 export * from './test-cases/programming-exercise-manage-test-cases.component';
 export * from './programming-exercise.route';
-export * from './programming-exercise-archive-dialog.component';
-export * from './programming-exercise-cleanup-dialog.component';
 export * from './programming-exercise-import.component';

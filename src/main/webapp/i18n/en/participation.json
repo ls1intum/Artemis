@@ -13,7 +13,7 @@
                 "question": "Are you sure you want to delete the participation of <strong>{{ title }}</strong>?"
             },
             "cleanupBuildPlan": {
-                "question": "Are you sure you want to delete the build plan of the participation of {{ student }}?"
+                "question": "Are you sure you want to delete the build plan of the participation of <strong>{{ title }}</strong>?"
             },
             "addPresentation": {
                 "label": "Add presentation",

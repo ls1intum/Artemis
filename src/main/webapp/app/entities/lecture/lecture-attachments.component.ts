@@ -1,11 +1,12 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture';
 import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as moment from 'moment';
 import { FileService } from 'app/shared';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -25,7 +26,7 @@ import { FileService } from 'app/shared';
         `,
     ],
 })
-export class LectureAttachmentsComponent implements OnInit {
+export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     lecture: Lecture;
     attachments: Attachment[] = [];
@@ -36,6 +37,9 @@ export class LectureAttachmentsComponent implements OnInit {
     isDownloadingAttachmentLink: string | null;
     notificationText: string | null;
     erroredFile: File | null;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         protected activatedRoute: ActivatedRoute,
@@ -53,6 +57,10 @@ export class LectureAttachmentsComponent implements OnInit {
                 this.attachments = attachmentsResponse.body!;
             });
         });
+    }
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.unsubscribe();
     }
 
     previousState() {
@@ -107,9 +115,13 @@ export class LectureAttachmentsComponent implements OnInit {
     }
 
     deleteAttachment(attachment: Attachment) {
-        this.attachmentService.delete(attachment.id).subscribe(() => {
-            this.attachments = this.attachments.filter(el => el.id !== attachment.id);
-        });
+        this.attachmentService.delete(attachment.id).subscribe(
+            () => {
+                this.attachments = this.attachments.filter(el => el.id !== attachment.id);
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
 
     cancel() {
