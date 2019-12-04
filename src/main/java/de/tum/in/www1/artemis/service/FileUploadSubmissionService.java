@@ -189,15 +189,15 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (file.isEmpty()) {
             throw new IOException("Failed to store empty file" + file.getName());
         }
-        var originalHash = DigestUtils.md5Hex(file.getInputStream());
+        var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         // check if we already had file associated with this submission
         fileUploadSubmission.onDelete();
 
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
 
-        // We need to ensure that the stored file is the same as was passed to us in the request
-        var newHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
-        if (!originalHash.equals(newHash)) {
+        // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
+        var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
+        if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored. Please, upload the file again");
         }
 
