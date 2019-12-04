@@ -198,7 +198,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
         var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
         if (!multipartFileHash.equals(storedFileHash)) {
-            throw new IOException("The file " + file.getName() + "could not be stored. Please, upload the file again");
+            throw new IOException("The file " + file.getName() + "could not be stored");
         }
 
         // update submission properties
