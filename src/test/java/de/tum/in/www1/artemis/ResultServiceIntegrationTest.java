@@ -203,11 +203,23 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "student1", roles = "INSTRUCTOR")
     public void programmingExerciseManualResultNew_noManualReviewsAllowed_forbidden() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        final var result = ModelFactory.generateResult(true, 1);
+        result.setParticipation(programmingExerciseStudentParticipation);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setSubmission(programmingSubmission);
+
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
+    public void programmingExerciseManualResultNew_noManualReviewsWithoutSubmission_badRequest() throws Exception {
         final var result = ModelFactory.generateResult(true, 1);
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
@@ -285,6 +297,8 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void updateManualProgrammingExerciseResult() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -303,6 +317,7 @@ public class ResultServiceIntegrationTest {
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
         result = resultRepository.save(result);
+        result.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
         result.setFeedbacks(feedbacks.subList(0, 1));

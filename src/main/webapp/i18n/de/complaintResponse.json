@@ -6,7 +6,8 @@
             "updateAssessment": "Bewertung aktualisieren",
             "updateAssessmentTooltip": "Antwort senden and Bewertung aktualisieren",
             "rejectComplaint": "Beschwerde zurückweisen",
-            "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen"
+            "rejectComplaintTooltip": "Antwort senden und Beschwerde zurückweisen",
+            "noText": "Bitt gib eine Antwort auf die Beschwerde ein"
         },
         "moreFeedbackResponse": {
             "title": "Antwort auf die Anfrage",
