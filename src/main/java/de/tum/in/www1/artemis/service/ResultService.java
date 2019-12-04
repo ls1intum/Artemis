@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -340,9 +341,11 @@ public class ResultService {
     }
 
     /**
+     * NOTE: As we use delete methods with underscores, we need a transacational context here!
      * Deletes result with corresponding complaint and complaint response
      * @param resultId the id of the result
      */
+    @Transactional // ok
     public void deleteResultWithComplaint(long resultId) {
         complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
         complaintRepository.deleteByResult_Id(resultId);
