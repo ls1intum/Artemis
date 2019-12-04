@@ -35,7 +35,9 @@ export class AssessmentInstructionsComponent {
             case ExerciseType.MODELING:
                 const modelingExercise = exercise as ModelingExercise;
                 sampleSolutionMarkdown = modelingExercise.sampleSolutionExplanation;
-                this.sampleSolutionModel = JSON.parse(modelingExercise.sampleSolutionModel);
+                if (modelingExercise.sampleSolutionModel) {
+                    this.sampleSolutionModel = JSON.parse(modelingExercise.sampleSolutionModel);
+                }
                 this.sampleSolutionDiagramType = modelingExercise.diagramType;
                 break;
             case ExerciseType.TEXT:
