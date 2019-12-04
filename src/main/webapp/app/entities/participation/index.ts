@@ -5,7 +5,6 @@ export * from './template-programming-exercise-participation.model';
 export * from './solution-programming-exercise-participation.model';
 export * from './participation-popup.service';
 export * from './participation.service';
-export * from './participation-cleanup-build-plan-dialog.component';
 export * from './participation.component';
 export * from './participation.route';
 export * from './participation-websocket.service';

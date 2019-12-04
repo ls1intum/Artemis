@@ -5,7 +5,7 @@
         </h2>
         <jhi-programming-exercise-instructor-submission-state
             class="ml-auto"
-            *ngIf="exercise?.isAtLeastInstructor && exercise?.type === PROGRAMMING"
+            *ngIf="exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING"
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
     </div>
@@ -54,7 +54,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type === PROGRAMMING" [minWidth]="120">
+                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUrl')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUrl">
@@ -70,7 +70,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type === PROGRAMMING" [minWidth]="100">
+                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
@@ -148,7 +148,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="text-right">
                             <div class="btn-group">
-                                <ng-container *ngIf="exercise?.type === PROGRAMMING && exercise.isAtLeastInstructor">
+                                <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <!-- TODO: In case the last result is manuel, we should warn the user that a manual result would be overridden when clicking the button -->
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
@@ -164,13 +164,14 @@
                                 <button
                                     *ngIf="exercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                                    [skipFeatureToggle]="exercise.type !== PROGRAMMING"
+                                    [skipFeatureToggle]="exercise.type !== ExerciseType.PROGRAMMING"
                                     jhiDeleteButton
                                     [entityTitle]="value.student.name"
                                     deleteQuestion="artemisApp.participation.delete.question"
                                     (delete)="deleteParticipation(value.id, $event)"
+                                    [dialogError]="dialogError$"
                                     [additionalChecks]="
-                                        exercise.type === PROGRAMMING
+                                        exercise.type === ExerciseType.PROGRAMMING
                                             ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
                                             : null
                                     "
@@ -178,14 +179,16 @@
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>
                                 <button
-                                    type="submit"
-                                    *ngIf="exercise?.type === PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
+                                    *ngIf="exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                                    [routerLink]="['/', { outlets: { popup: ['participation', value.id, 'cleanupBuildPlan'] } }]"
-                                    class="btn btn-danger btn-sm mr-1"
+                                    jhiDeleteButton
+                                    [actionType]="ActionType.Cleanup"
+                                    deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
+                                    (delete)="cleanupProgrammingExerciseParticipation(value)"
+                                    [dialogError]="dialogError$"
+                                    [entityTitle]="value.student.name"
                                 >
                                     <fa-icon [icon]="'eraser'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanupBuildPlan">Cleanup build plan</span>
                                 </button>
                                 <button *ngIf="this.presentationScoreEnabled && value.presentationScore !== 1" (click)="addPresentation(value)" class="btn btn-info btn-sm mr-1">
                                     <fa-icon [icon]="'file-powerpoint'"></fa-icon>
