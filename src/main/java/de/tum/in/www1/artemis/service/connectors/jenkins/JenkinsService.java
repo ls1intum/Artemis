@@ -235,11 +235,11 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(report.getSuccessful() == testSum);
-        result.setResultString(report.getSuccessful() + " of " + testSum + " passed");
         result.setCompletionDate(report.getRunDate());
         result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation(participation);
         addFeedbackToResult(result, report);
+        result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "Build Error");
 
         return result;
     }
@@ -296,19 +296,19 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
         result.setRatedIfNotExceeded(report.getRunDate(), submission);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setResultString(report.getSuccessful() + " of " + testSum + " passed");
         result.setCompletionDate(report.getRunDate());
         result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation((Participation) participation);
         result.setSubmission(submission);
         addFeedbackToResult(result, report);
+        result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "Build Error");
 
         return Optional.empty();
     }
 
     private void addFeedbackToResult(Result result, TestResults report) {
         // No feedback for build errors
-        if (report.getResults() == null) {
+        if (report.getResults() == null || report.getResults().isEmpty()) {
             result.setHasFeedback(false);
             return;
         }
