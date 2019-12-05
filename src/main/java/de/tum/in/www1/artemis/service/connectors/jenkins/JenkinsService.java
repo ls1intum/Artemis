@@ -50,6 +50,7 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.model.Commit;
 import de.tum.in.www1.artemis.service.connectors.jenkins.model.TestResults;
+import de.tum.in.www1.artemis.service.util.UrlUtils;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
@@ -439,7 +440,16 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return null;
+        try {
+            final var isRunning = jenkinsServer.isRunning();
+            if (!isRunning) {
+                return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
+            }
+            return new ConnectorHealth(true, Map.of("url", JENKINS_SERVER_URL));
+        }
+        catch (Exception emAll) {
+            return new ConnectorHealth(emAll);
+        }
     }
 
     @Override
@@ -574,16 +584,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
 
         public UriComponentsBuilder buildEndpoint(String baseUrl, Object... args) {
-            for (int i = 0, segmentCtr = 0; i < pathSegments.size(); i++) {
-                if (pathSegments.get(i).matches("<.*>")) {
-                    if (segmentCtr == args.length) {
-                        throw new IllegalArgumentException("Unable to build endpoint. Too few arguments!");
-                    }
-                    pathSegments.set(i, String.valueOf(args[segmentCtr++]));
-                }
-            }
-
-            return UriComponentsBuilder.fromHttpUrl(baseUrl).pathSegment(pathSegments.toArray(new String[0]));
+            return UrlUtils.buildEndpoint(baseUrl, pathSegments, args);
         }
     }
 

@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.model.GitLabPushNotification;
+import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
 @Service
@@ -378,16 +379,7 @@ public class GitLabService implements VersionControlService {
         }
 
         public UriComponentsBuilder buildEndpoint(String baseUrl, Object... args) {
-            for (int i = 0, segmentCtr = 0; i < pathSegments.size(); i++) {
-                if (pathSegments.get(i).matches("<.*>")) {
-                    if (segmentCtr == args.length) {
-                        throw new IllegalArgumentException("Unable to build endpoint. Too few arguments!");
-                    }
-                    pathSegments.set(i, String.valueOf(args[segmentCtr++]));
-                }
-            }
-
-            return UriComponentsBuilder.fromHttpUrl(baseUrl).pathSegment(pathSegments.toArray(new String[0]));
+            return UrlUtils.buildEndpoint(baseUrl, pathSegments, args);
         }
     }
 
