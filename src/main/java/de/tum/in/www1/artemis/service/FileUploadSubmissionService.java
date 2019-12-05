@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -73,10 +74,11 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param principal            the user principal
      * @return the saved file upload submission
      * @throws IOException if file can't be saved
+     * @throws EmptyFileException if file is empty
      */
     @Transactional
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
-            Principal principal) throws IOException {
+            Principal principal) throws IOException, EmptyFileException {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(fileUploadExercise.getId(), principal.getName());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + fileUploadExercise.getId());
@@ -178,25 +180,25 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param exercise             the exercise the submission belongs to
      * @return the fileUploadSubmission entity that was saved to the database
      * @throws IOException if file can't be saved
+     * @throws EmptyFileException if file is empty
      */
-    @Transactional(rollbackFor = Exception.class)
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
-            throws IOException {
+            throws IOException, EmptyFileException {
         final var exerciseDueDate = exercise.getDueDate();
         if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         if (file.isEmpty()) {
-            throw new IOException("Failed to store empty file" + file.getName());
+            throw new EmptyFileException(file.getOriginalFilename());
         }
-        var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         // check if we already had file associated with this submission
         fileUploadSubmission.onDelete();
 
+        final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
+        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }

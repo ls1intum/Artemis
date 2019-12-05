@@ -18,8 +18,10 @@
         "quizAlreadyVisible": "The quiz is already visible.",
         "quizAlreadyStarted": "The quiz has already been started.",
         "quizNotEndedYet": "The quiz has not ended yet.",
-        "quizAlreadyOpenForPractice": "The quiz is alreay open for practice.",
+        "quizAlreadyOpenForPractice": "The quiz is already open for practice.",
         "unknownAction": "This action cannot be performed.",
-        "groupNotFound": "The group you entered was not found."
+        "groupNotFound": "The group you entered was not found.",
+        "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
+        "emptyFile": "The uploaded file {{ fileName }} is empty. Please upload another file"
     }
 }

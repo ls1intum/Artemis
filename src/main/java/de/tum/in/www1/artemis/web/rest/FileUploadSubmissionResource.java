@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -110,8 +111,14 @@ public class FileUploadSubmissionResource {
             submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, principal);
         }
         catch (IOException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "fileUploadSubmissionCantStore",
-                    "The uploaded file could not be saved on the server")).build();
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "cantSaveFile", "The uploaded file could not be saved on the server"))
+                    .build();
+        }
+
+        catch (EmptyFileException e) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "emptyFile", "The uploaded file is empty"))
+                    .build();
         }
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
