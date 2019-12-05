@@ -194,9 +194,6 @@ public class TextSubmissionResource {
 
         // remove unnecessary data from the REST response
         textSubmissions.forEach(submission -> {
-            if (submission.getResult() != null && submission.getResult().getAssessor() != null) {
-                submission.getResult().getAssessor().setGroups(null);
-            }
             if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
                 submission.getParticipation().setExercise(null);
             }
