@@ -165,6 +165,7 @@ public interface ContinuousIntegrationService {
      * Checks if a given build plan is deactivated, or enabled
      *
      * @param planId The ID of the build plan
+     * @param projectKey The key of the project for which to check the build plan
      * @return True, if the plan is enabled, false otherwise
      */
     boolean isBuildPlanEnabled(final String projectKey, final String planId);
@@ -172,6 +173,7 @@ public interface ContinuousIntegrationService {
     /**
      * Enables the given build plan.
      *
+     * @param projectKey The key of the project for which to enable the plan
      * @param planKey to identify the plan in the CI service.
      */
     void enablePlan(String projectKey, String planKey);

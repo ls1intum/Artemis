@@ -26,10 +26,24 @@ public class XmlFileUtils {
         return parseDocument(xmlString);
     }
 
+    /**
+     * Reads an XMl file from the resources for a given relative path
+     *
+     * @param path The path in the resources under which the XML file is stored
+     * @return The parsed XML file
+     */
     public static Document readXmlFile(Path path) {
         return readXmlFile(path, null);
     }
 
+    /**
+     * Reads an XMl file from the resources for a given relative path. Also replaces all Strings in the given file
+     * based on the map parameter. Meaning key in the map -> replaced by mapped value
+     *
+     * @param path The path in the resources under which the XML file is stored
+     * @param variablesToReplace A map containing key, that should get replaced by their mapped values
+     * @return The parsed XML file with the replaced values
+     */
     public static Document readXmlFile(Path path, @Nullable Map<String, String> variablesToReplace) {
         final var configXmlFile = new File(XmlFileUtils.class.getClassLoader().getResource(path.toString()).getFile());
         try {
