@@ -28,7 +28,9 @@
                     *ngIf="guidedTourService.currentTour"
                     class="close"
                     (click)="
-                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour) ? guidedTourService.resetTour() : guidedTourService.skipTour()
+                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour)
+                            ? guidedTourService.resetTour()
+                            : guidedTourService.skipTour(true, false)
                     "
                 ></div>
             </div>

@@ -37,7 +37,7 @@
                 "assess": "Bewerten"
             },
             "dashboard": {
-                "heading": "Tutor Dashboard zur Bewertung von Textaufgabe \"{{exerciseTitle}}\""
+                "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\""
             },
             "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",

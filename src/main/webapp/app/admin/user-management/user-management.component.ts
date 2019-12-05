@@ -1,15 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
+import { onError } from 'app/utils/global.utils';
 import { User } from 'app/core';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-user-management',
@@ -29,6 +29,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     previousPage: number;
     reverse: boolean;
 
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
     constructor(
         private userService: UserService,
         private alertService: JhiAlertService,
@@ -37,7 +40,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: JhiEventManager,
-        private modalService: NgbModal,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -64,6 +66,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.routeData.unsubscribe();
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -105,7 +108,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             })
             .subscribe(
                 (res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers),
-                (res: HttpErrorResponse) => this.onError(res),
+                (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
 
@@ -158,21 +161,21 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.userService.delete(login).subscribe(() => {
-            this.eventManager.broadcast({
-                name: 'userListModification',
-                content: 'Deleted a user',
-            });
-        });
+        this.userService.delete(login).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'userListModification',
+                    content: 'Deleted a user',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
 
     private onSuccess(data: User[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link')!);
         this.totalItems = headers.get('X-Total-Count')!;
         this.users = data;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.alertService.error(error.error, error.message, undefined);
     }
 }

@@ -8,6 +8,7 @@ import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { onError } from 'app/utils/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -45,7 +46,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
     }
 
@@ -69,17 +70,14 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     name: 'fileUploadExerciseListModification',
                     content: 'Deleted an fileUploadExercise',
                 });
+                this.dialogErrorSource.next('');
             },
-            error => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 
     protected getChangeEventName(): string {
         return 'fileUploadExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     callback() {}

@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -44,7 +45,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.modelingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -63,23 +64,19 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      */
     deleteModelingExercise(modelingExerciseId: number) {
         this.modelingExerciseService.delete(modelingExerciseId).subscribe(
-            response => {
+            () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
                     content: 'Deleted an modelingExercise',
                 });
+                this.dialogErrorSource.next('');
             },
-            error => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 
     protected getChangeEventName(): string {
         return 'modelingExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
-        console.log('Error: ' + error);
     }
 
     /**

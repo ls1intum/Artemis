@@ -18,7 +18,7 @@
         "students": "Studenten",
         "cleanup": {
             "title": "Aufräumen",
-            "question": "Sollen wirklich ALLE Studierenden Build Pläne für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            "question": "Sollen wirklich ALLE Studierenden Build Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
         },
         "archive": {
             "title": "Archivieren",

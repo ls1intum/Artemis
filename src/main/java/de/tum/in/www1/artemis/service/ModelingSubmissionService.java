@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class ModelingSubmissionService extends SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
@@ -169,6 +168,7 @@ public class ModelingSubmissionService extends SubmissionService {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
+        // TODO: properly load the submissions with all required data from the database without using @Transactional
         return results.stream().map(result -> {
             Submission submission = result.getSubmission();
             ModelingSubmission modelingSubmission = new ModelingSubmission();
