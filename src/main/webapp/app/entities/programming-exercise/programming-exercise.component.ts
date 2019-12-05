@@ -26,10 +26,9 @@ import { stringifyCricular } from 'app/shared/util/utils';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
+    readonly isIDE = isIntelliJ;
     FeatureToggle = FeatureToggle;
     intelliJState: IntelliJState;
-    readonly isIDE = isIntelliJ;
-    readonly ActionType = ActionType;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
