@@ -360,14 +360,20 @@ public class ProgrammingExerciseService {
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "Artemis Tests WebHook");
 
         // Depending on the activated VCS/CI systems, the VCS system pushes commit notifications to the CI, or the CI pulls
-        versionControlService.get().addWebHookToCISystem(exerciseRepoUrl, "http://localhost:8080/project/" + projectKey + "/" + templateParticipation.getBuildPlanId(),
-                "Artemis Exercise WebHook");
-        versionControlService.get().addWebHookToCISystem(solutionRepoUrl, "http://localhost:8080/project/" + projectKey + "/" + solutionParticipation.getBuildPlanId(),
-                "Artemis Solution WebHook");
-        versionControlService.get().addWebHookToCISystem(testsRepoUrl, "http://localhost:8080/project/" + projectKey + "/" + solutionParticipation.getBuildPlanId(),
-                "Artemis Tests WebHook");
+        addOptionalNotificationsIfNecessary(projectKey, templateParticipation, solutionParticipation, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         return programmingExercise;
+    }
+
+    private void addOptionalNotificationsIfNecessary(String projectKey, TemplateProgrammingExerciseParticipation templateParticipation,
+            SolutionProgrammingExerciseParticipation solutionParticipation, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
+        final var templatePlanNotificationUrl = continuousIntegrationService.get().getWebhookUrl(projectKey, templateParticipation.getBuildPlanId());
+        final var solutionPlanNotificationUrl = continuousIntegrationService.get().getWebhookUrl(projectKey, solutionParticipation.getBuildPlanId());
+        if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
+            versionControlService.get().addWebHookToCISystem(exerciseRepoUrl, templatePlanNotificationUrl.get(), "Artemis Exercise WebHook");
+            versionControlService.get().addWebHookToCISystem(solutionRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Solution WebHook");
+            versionControlService.get().addWebHookToCISystem(testsRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Tests WebHook");
+        }
     }
 
     /**

@@ -129,12 +129,14 @@ public class JenkinsService implements ContinuousIntegrationService {
     // TODO this was a bad design choice. We should only have one configureBuildPlan method i.m.o
     @Override
     public void updatePlanRepository(String projectKey, String planName, String repoNameInCI, String vcsProject, String vcsRepositoryUrl, Optional<List<String>> triggeredBy) {
+        // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
+        final var repoUrl = vcsRepositoryUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final var config = jobXml(projectKey, planName);
         final var urlElements = config.getElementsByTagName("url");
         if (urlElements.getLength() != 2) {
             throw new IllegalArgumentException("Configuration of build plans currently only supports a model with two repositories, ASSIGNMENT and TESTS");
         }
-        urlElements.item(1).getFirstChild().setNodeValue(vcsRepositoryUrl);
+        urlElements.item(1).getFirstChild().setNodeValue(repoUrl);
 
         final var errorMessage = "Error trying to configure build plan in Jenkins " + planName;
         postXml(config, String.class, HttpStatus.OK, errorMessage, Endpoint.PLAN_CONFIG, projectKey, planName);
@@ -146,7 +148,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var planKey = participation.getBuildPlanId();
 
         try {
-            job(projectKey, planKey).build();
+            job(projectKey, planKey).build(true);
         }
         catch (IOException e) {
             throw new JenkinsException("Error triggering build: " + planKey, e);
@@ -200,6 +202,11 @@ public class JenkinsService implements ContinuousIntegrationService {
         // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
         // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
         return result;
+    }
+
+    @Override
+    public Optional<String> getWebhookUrl(String projectKey, String buildPlanId) {
+        return Optional.of(JENKINS_SERVER_URL + "/project/" + projectKey + "/" + buildPlanId);
     }
 
     @NotNull

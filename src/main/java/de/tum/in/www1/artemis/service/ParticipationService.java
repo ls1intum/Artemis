@@ -461,6 +461,9 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
                     "Artemis WebHook");
+            // Optional webhook from the VCS to the CI (needed for some systems suche as GitLab + Jenkins)
+            final var ciHookUrl = continuousIntegrationService.get().getWebhookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+            ciHookUrl.ifPresent(s -> versionControlService.get().addWebHookToCISystem(participation.getRepositoryUrlAsUrl(), s, "Artemis trigger to CI"));
         }
         return participation;
     }

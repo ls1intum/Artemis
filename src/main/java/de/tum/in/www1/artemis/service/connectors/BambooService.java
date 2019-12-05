@@ -502,6 +502,11 @@ public class BambooService implements ContinuousIntegrationService {
         return health;
     }
 
+    @Override
+    public Optional<String> getWebhookUrl(String projectKey, String buildPlanId) {
+        return Optional.empty();
+    }
+
     /**
      * Check if the build result received is the initial build of the plan.
      *
