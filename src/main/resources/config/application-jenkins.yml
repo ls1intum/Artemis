@@ -1,8 +1,10 @@
 artemis:
     jenkins:
-        url: http://localhost:8080
+        url: <Jenkins URL>
         user: artemis
-        password: ArTEMiS_pw2017
-        secret-push-token: AQAAABAAAAAw7DIAdi2VraxH/orQkSpHPJfuPvN6dxx2RZy0WDxUBltQ18DiOdfiA7rmH87P/6Cwjv9otUoDMmDiYSMXF/vdvA==
-        git-credentials: 6576d184-6a2b-4450-b3c4-919694c8a211
-        notification-token: edfc672d-3ef2-4637-a4db-fc3700c29b5d
+        password: <Artemis Password>
+        secret-push-token: <token hash>         # Hash of the ci-token, equivalent e.g. to the ci-token in the gitlab.yml
+        git-credentials: <credentials key>      # Key of the saved credentials for the Git service
+        notification-token: <credentials key>   # Key of the credentials for the Artemis notification token
+
+# IMPORTANT: you can find all values for the credential keys and the push token in the config.xml of the example Job
