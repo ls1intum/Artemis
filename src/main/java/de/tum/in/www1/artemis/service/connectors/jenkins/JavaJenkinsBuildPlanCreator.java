@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,10 +59,17 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Override
     public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) {
         final var resourcePath = Path.of("build", "jenkins", "java", "config.xml");
+        // @formatter:off
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
                 artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, NOTIFICATION_TOKEN);
+        // @formatter:on
 
         return XmlFileUtils.readXmlFile(resourcePath, replacements);
+    }
+
+    @Override
+    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) {
+        throw new NotImplementedException("Sequential Jenkins builds not yet supported for Java!");
     }
 }

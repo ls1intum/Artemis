@@ -67,7 +67,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Value("${artemis.jenkins.url}")
     private URL JENKINS_SERVER_URL;
 
-    private final JenkinsBuildPlanCreatorFactory buildPlanCreatorFactory;
+    private final JenkinsBuildPlanCreator buildPlanCreatorFactory;
 
     private final RestTemplate restTemplate;
 
@@ -75,7 +75,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private JenkinsServer jenkinsServer;
 
-    public JenkinsService(JenkinsBuildPlanCreatorFactory buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
+    public JenkinsService(JenkinsBuildPlanCreator buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
             ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.buildPlanCreatorFactory = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;

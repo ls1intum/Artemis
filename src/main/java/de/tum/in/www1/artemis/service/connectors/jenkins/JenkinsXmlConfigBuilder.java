@@ -7,4 +7,6 @@ import org.w3c.dom.Document;
 public interface JenkinsXmlConfigBuilder {
 
     Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL);
+
+    Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential);
 }
