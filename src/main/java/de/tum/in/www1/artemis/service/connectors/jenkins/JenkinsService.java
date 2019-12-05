@@ -34,6 +34,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
@@ -269,8 +270,21 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        final var isQueued = job(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId()).isInQueue();
+        if (isQueued) {
+            return BuildStatus.QUEUED;
+        }
+        final var projectKey = participation.getProgrammingExercise().getProjectKey();
+        final var planKey = participation.getBuildPlanId();
+        final var url = Endpoint.LAST_BUILD.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey).build(true).toString();
+        try {
+            final var jobStatus = restTemplate.getForObject(url, JsonNode.class);
 
-        return BuildStatus.INACTIVE;
+            return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
+        }
+        catch (HttpClientErrorException e) {
+            throw new JenkinsException("Error while trying to fetch build status from Jenkins for " + planKey, e);
+        }
     }
 
     @Override
@@ -402,7 +416,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public ResponseEntity retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        // TODO
+        // TODO, not necessary for the core functionality
         return null;
     }
 
@@ -575,7 +589,8 @@ public class JenkinsService implements ContinuousIntegrationService {
         NEW_PLAN("job", "<projectKey>", "createItem"), NEW_FOLDER("createItem"), DELETE_FOLDER("job", "<projectKey>", "doDelete"),
         DELETE_JOB("job", "<projectKey>", "job", "<planName>", "doDelete"), PLAN_CONFIG("job", "<projectKey>", "job", "<planKey>", "config.xml"),
         TRIGGER_BUILD("job", "<projectKey>", "job", "<planKey>", "build"), ENABLE("job", "<projectKey>", "job", "<planKey>", "enable"),
-        TEST_RESULTS("job", "<projectKey>", "job", "<planKey>", "lastBuild", "testResults", "api", "json");
+        TEST_RESULTS("job", "<projectKey>", "job", "<planKey>", "lastBuild", "testResults", "api", "json"),
+        LAST_BUILD("job", "<projectKey>", "job", "<planKey>", "lastBuild", "api", "json");
 
         private List<String> pathSegments;
 
