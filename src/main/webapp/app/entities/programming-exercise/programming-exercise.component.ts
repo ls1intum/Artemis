@@ -8,6 +8,9 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseService } from 'app/entities/exercise';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { onError } from 'app/utils/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
@@ -22,13 +25,16 @@ import { stringifyCricular } from 'app/shared/util/utils';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
+    readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
     intelliJState: IntelliJState;
     readonly isIDE = isIntelliJ;
+    readonly ActionType = ActionType;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
+        private exerciseService: ExerciseService,
         private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
@@ -60,7 +66,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -71,26 +77,34 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     /**
      * Deletes programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event passed from delete dialog to represent if checkboxes were checked
+     * @param $event contains additional checks for deleting exercise
      */
     deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+        return this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
                 });
+                this.dialogErrorSource.next('');
             },
-            error => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    /**
+     * Resets programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     */
+    resetProgrammingExercise(programmingExerciseId: number) {
+        this.exerciseService.reset(programmingExerciseId).subscribe(
+            () => this.dialogErrorSource.next(''),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     callback() {}

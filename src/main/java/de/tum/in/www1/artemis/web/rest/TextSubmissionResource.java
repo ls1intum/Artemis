@@ -168,15 +168,14 @@ public class TextSubmissionResource {
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise exercise = textExerciseService.findOne(exerciseId);
         if (assessedByTutor) {
-            if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
-        else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+        else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -192,6 +191,13 @@ public class TextSubmissionResource {
         if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             textSubmissions.forEach(submission -> textSubmissionService.hideDetails(submission, user));
         }
+
+        // remove unnecessary data from the REST response
+        textSubmissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
 
         return ResponseEntity.ok().body(textSubmissions);
     }

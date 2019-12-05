@@ -65,6 +65,7 @@
                                 [entityTitle]="user.login"
                                 deleteQuestion="userManagement.delete.question"
                                 (delete)="deleteUser(user.login)"
+                                [dialogError]="dialogError$"
                                 [disabled]="currentAccount.login === user.login"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>

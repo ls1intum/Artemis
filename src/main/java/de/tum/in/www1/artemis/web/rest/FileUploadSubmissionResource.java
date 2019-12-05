@@ -19,8 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -39,8 +37,6 @@ public class FileUploadSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
     private final CourseService courseService;
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
@@ -55,20 +51,15 @@ public class FileUploadSubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final ResultRepository resultRepository;
-
-    public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
-            FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
-            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository) {
+    public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
+            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
-        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.courseService = courseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -162,13 +153,19 @@ public class FileUploadSubmissionResource {
      */
     @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
         final Exercise exercise = exerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        if (assessedByTutor) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -180,7 +177,17 @@ public class FileUploadSubmissionResource {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
         }
 
-        fileUploadSubmissions.forEach(submission -> fileUploadSubmissionService.hideDetails(submission, user));
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            fileUploadSubmissions.forEach(submission -> fileUploadSubmissionService.hideDetails(submission, user));
+        }
+
+        // remove unnecessary data from the REST response
+        fileUploadSubmissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
 
         return ResponseEntity.ok().body(fileUploadSubmissions);
     }

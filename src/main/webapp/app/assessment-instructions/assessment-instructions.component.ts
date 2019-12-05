@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import interact from 'interactjs';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -13,8 +14,12 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() collapsed = false;
 
-    formattedProblemStatement: SafeHtml | null;
+    readonly ExerciseType_MODELING = ExerciseType.MODELING;
+    readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
+
     formattedGradingCriteria: SafeHtml | null;
+    formattedSampleSolution: SafeHtml | null;
+    formattedProblemStatement: SafeHtml | null;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -22,8 +27,13 @@ export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
      * Assigns formatted problem statement and formatted grading criteria on component initialization
      */
     ngOnInit() {
-        this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+        if (this.exercise.type !== ExerciseType.PROGRAMMING) {
+            this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+        }
         this.formattedGradingCriteria = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
+        if (this.exercise.type === ExerciseType.FILE_UPLOAD || this.exercise.type === ExerciseType.TEXT) {
+            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown((this.exercise as FileUploadExercise).sampleSolution);
+        }
     }
 
     /**

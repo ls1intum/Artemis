@@ -98,6 +98,15 @@ public class ModelFactory {
         return textSubmission;
     }
 
+    public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted) {
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setSubmitted(submitted);
+        if (submitted) {
+            programmingSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return programmingSubmission;
+    }
+
     public static FileUploadSubmission generateFileUploadSubmission(boolean submitted) {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
         fileUploadSubmission.setSubmitted(submitted);

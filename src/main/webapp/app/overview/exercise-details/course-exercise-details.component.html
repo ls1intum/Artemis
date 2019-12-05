@@ -58,10 +58,10 @@
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
                 <div class="btn btn-outline-primary" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/dashboard">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.information' | translate }}
+                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.scores' | translate }}
                 </div>
                 <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{ exerciseRouterLink }}">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.assessments' | translate }}
+                    {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | translate }}
                 </div>
                 <div class="btn btn-outline-primary" *ngIf="exercise.type === MODELING" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/statistics">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics' | translate }}
@@ -70,7 +70,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-12 col-md-10 col-lg-8">
+        <div class="col-sm-12 col-md-10 col-lg-8 mb-4">
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
