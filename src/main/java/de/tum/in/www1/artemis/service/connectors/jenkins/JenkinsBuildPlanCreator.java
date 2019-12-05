@@ -15,6 +15,13 @@ public class JenkinsBuildPlanCreator {
         this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
     }
 
+    /**
+     * Gives a Jenkins plan builder, that is able to build plan configurations for the specified programming language
+     *
+     * @param programmingLanguage The programming language for which a build plan should get created
+     * @return The configuration builder for the specified language
+     * @see JavaJenkinsBuildPlanCreator
+     */
     public JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         switch (programmingLanguage) {
         case JAVA:
