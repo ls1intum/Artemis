@@ -1,4 +1,6 @@
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { BuildLogErrors } from 'app/code-editor';
 
 export interface IntelliJState {
     opened: number;
@@ -29,6 +31,22 @@ export interface OrionTestResultBridge {
     onBuildStarted(problemStatement: string): void;
     onBuildFinished(): void;
     onBuildFailed(buildLogsJsonString: string): void;
+    onTestResult(success: boolean, message: string): void;
+}
+
+export interface JavaUpcallBridgeFacade {
+    login(username: string, password: string): void;
+    log(message: string): void;
+    editExercise(exercise: ProgrammingExercise): void;
+    workOnExercise(repositoryUrl: string, exercise: ProgrammingExercise): void;
+    submitChanges(): void;
+
+    selectRepository(repository: REPOSITORY): void;
+    buildAndTestLocally(): void;
+
+    onBuildStarted(problemStatement: string): void;
+    onBuildFinished(): void;
+    onBuildFailed(buildErrors: BuildLogErrors): void;
     onTestResult(success: boolean, message: string): void;
 }
 

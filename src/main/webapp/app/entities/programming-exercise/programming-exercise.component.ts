@@ -120,7 +120,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     editIntIntelliJ(programmingExercise: ProgrammingExercise) {
-        this.javaBridge.editExercise(stringifyCircular(programmingExercise));
+        this.javaBridge.editExercise(programmingExercise);
     }
 
     openIntelliJEditor(exercise: ProgrammingExercise) {

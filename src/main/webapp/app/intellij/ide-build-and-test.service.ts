@@ -91,7 +91,7 @@ export class IdeBuildAndTestService {
                 map(logs => new BuildLogEntryArray(...logs)),
                 tap((logs: BuildLogEntryArray) => {
                     const logErrors = logs.extractErrors();
-                    this.javaBridge.onBuildFailed(JSON.stringify(logErrors));
+                    this.javaBridge.onBuildFailed(logErrors);
                     this.buildFinished.next();
                 }),
             )

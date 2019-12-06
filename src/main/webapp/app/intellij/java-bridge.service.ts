@@ -1,9 +1,12 @@
 import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ExerciseView, IntelliJState, JavaDowncallBridge, OrionCoreBridge, OrionInstructorBridge, OrionTestResultBridge } from 'app/intellij/intellij';
+import { ExerciseView, IntelliJState, JavaDowncallBridge, JavaUpcallBridgeFacade } from 'app/intellij/intellij';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { stringifyCircular } from 'app/shared/util/utils';
+import { BuildLogErrors } from 'app/code-editor';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -21,7 +24,7 @@ import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-ba
 @Injectable({
     providedIn: 'root',
 })
-export class JavaBridgeService implements JavaDowncallBridge, OrionCoreBridge, OrionTestResultBridge, OrionInstructorBridge {
+export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFacade {
     private intellijState: IntelliJState;
     private intellijStateSubject: BehaviorSubject<IntelliJState>;
 
@@ -57,10 +60,10 @@ export class JavaBridgeService implements JavaDowncallBridge, OrionCoreBridge, O
      * "Imports" a project/exercise by cloning th repository on the local machine of the user and opening the new project.
      *
      * @param repository The full URL of the repository of a programming exercise
-     * @param exerciseJson The exercise formatted as JSON string for which the repository should get cloned.
+     * @param exercise The exercise for which the repository should get cloned.
      */
-    workOnExercise(repository: string, exerciseJson: string) {
-        this.window.nativeWindow.orionCoreBridge.workOnExercise(repository, exerciseJson);
+    workOnExercise(repository: string, exercise: ProgrammingExercise) {
+        this.window.nativeWindow.orionCoreBridge.workOnExercise(repository, stringifyCircular(exercise));
     }
 
     /**
@@ -119,10 +122,10 @@ export class JavaBridgeService implements JavaDowncallBridge, OrionCoreBridge, O
     /**
      * Notify the IDE that a build failed. Alternative to onBuildFinished
      *
-     * @param message The message containing all compile errors for the current build
+     * @param buildErrors All compile errors for the current build
      */
-    onBuildFailed(message: string) {
-        this.window.nativeWindow.orionTestResultsBridge.onBuildFailed(message);
+    onBuildFailed(buildErrors: BuildLogErrors) {
+        this.window.nativeWindow.orionTestResultsBridge.onBuildFailed(JSON.stringify(buildErrors));
     }
 
     /**
@@ -174,11 +177,11 @@ export class JavaBridgeService implements JavaDowncallBridge, OrionCoreBridge, O
      * Edit the given exercise in IntelliJ as an instructor. This will trigger the import of the exercise
      * (if it is not already imported) and opens the created project afterwards.
      *
-     * @param exerciseJson The exercise to be imported as a JSON string
+     * @param exercise The exercise to be imported
      */
-    editExercise(exerciseJson: string): void {
+    editExercise(exercise: ProgrammingExercise): void {
         this.setIDEStateParameter({ cloning: true });
-        this.window.nativeWindow.orionCoreBridge.editExercise(exerciseJson);
+        this.window.nativeWindow.orionCoreBridge.editExercise(stringifyCircular(exercise));
     }
 
     /**
