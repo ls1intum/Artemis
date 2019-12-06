@@ -51,7 +51,7 @@ export class IdeBuildAndTestService {
      */
     listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise, participation: Participation | null = null): Observable<void> {
         const participationId = participation ? participation.id : exercise.studentParticipations[0].id;
-        this.javaBridge.onBuildStarted();
+        this.javaBridge.onBuildStarted(exercise.problemStatement);
 
         // Listen for the new result on the websocket
         if (this.resultSubsription) {

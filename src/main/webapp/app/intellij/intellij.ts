@@ -12,6 +12,26 @@ export enum ExerciseView {
     INSTRUCTOR = 'INSTRUCTOR',
 }
 
+export interface OrionCoreBridge {
+    login(username: string, password: string): void;
+    log(message: string): void;
+    editExercise(exerciseJson: string): void;
+    workOnExercise(repository: string, exerciseJson: string): void;
+    submitChanges(): void;
+}
+
+export interface OrionInstructorBridge {
+    selectRepository(repository: REPOSITORY): void;
+    buildAndTestLocally(): void;
+}
+
+export interface OrionTestResultBridge {
+    onBuildStarted(problemStatement: string): void;
+    onBuildFinished(): void;
+    onBuildFailed(buildLogsJsonString: string): void;
+    onTestResult(success: boolean, message: string): void;
+}
+
 export interface JavaDowncallBridge {
     onExerciseOpened(opened: number, view: string): void;
     isCloning(cloning: boolean): void;
@@ -19,23 +39,10 @@ export interface JavaDowncallBridge {
     startedBuildInIntelliJ(courseId: number, exerciseId: number): void;
 }
 
-export interface JavaUpcallBridge {
-    login(username: string, password: string): void;
-    clone(repository: string, exerciseJson: string): void;
-    submit(): void;
-    log(message: string): void;
-    onBuildStarted(): void;
-    onBuildFinished(): void;
-    onBuildFailed(message: string): void;
-    onTestResult(success: boolean, message: string): void;
-    editExercise(exerciseJson: string): void;
-    selectInstructorRepository(repository: REPOSITORY): void;
-    submitInstructorRepository(): void;
-    buildAndTestInstructorRepository(): void;
-}
-
 export interface Window {
-    intellij: JavaUpcallBridge;
+    orionCoreBridge: OrionCoreBridge;
+    orionTestResultsBridge: OrionTestResultBridge;
+    orionInstructorBridge: OrionInstructorBridge;
     javaDowncallBridge: JavaDowncallBridge;
 }
 

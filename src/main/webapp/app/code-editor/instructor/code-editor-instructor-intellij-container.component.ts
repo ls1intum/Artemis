@@ -57,7 +57,7 @@ export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorIn
 
     protected applyDomainChange(domainType: any, domainValue: any) {
         super.applyDomainChange(domainType, domainValue);
-        this.javaBridge.selectInstructorRepository(this.selectedRepository);
+        this.javaBridge.selectRepository(this.selectedRepository);
     }
 
     selectSolutionParticipation() {
@@ -81,7 +81,7 @@ export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorIn
      * Submitting means committing all changes and pushing them to the remote.
      */
     submit(): void {
-        this.javaBridge.submitInstructorRepository();
+        this.javaBridge.submitChanges();
         if (this.selectedRepository !== REPOSITORY.TEST) {
             this.intellijState.building = true;
             this.intellijBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);
@@ -92,7 +92,7 @@ export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorIn
      * Tells IntelliJ to build and test the selected repository locally instead of committing and pushing the code to the remote
      */
     buildLocally(): void {
-        this.javaBridge.buildAndTestInstructorRepository();
+        this.javaBridge.buildAndTestLocally();
         this.intellijState.building = true;
     }
 }

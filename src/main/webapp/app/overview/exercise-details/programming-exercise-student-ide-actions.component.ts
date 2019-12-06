@@ -121,14 +121,14 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     importIntoIntelliJ() {
         const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
-        this.javaBridge.clone(repo, stringifyCircular(this.exercise));
+        this.javaBridge.workOnExercise(repo, stringifyCricular(this.exercise));
     }
 
     /**
      * Submits the changes made in the IDE by staging everything, committing the changes and pushing them to master.
      */
     submitChanges() {
-        this.javaBridge.submit();
+        this.javaBridge.submitChanges();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
     }
 
