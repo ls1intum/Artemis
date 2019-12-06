@@ -15,6 +15,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation/partic
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
+import { OrionVersionValidator } from 'app/intellij/outdated-plugin-warning/orion-version-validator.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -40,6 +41,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private profileService: ProfileService,
         private participationWebsocketService: ParticipationWebsocketService,
+        private orionVersionValidator: OrionVersionValidator,
         public guidedTourService: GuidedTourService,
     ) {
         this.version = VERSION ? VERSION : '';
@@ -54,6 +56,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.inProduction = profileInfo.inProduction;
             }
         });
+        this.orionVersionValidator.validateOrionVersion();
 
         this.subscribeForGuidedTourAvailability();
 

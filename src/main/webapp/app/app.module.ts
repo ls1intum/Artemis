@@ -50,6 +50,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { QuizExerciseExportComponent } from 'app/entities/quiz-exercise/quiz-exercise-export.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { OrionOutdatedComponent } from 'app/intellij/outdated-plugin-warning/orion-outdated.component';
 
 @NgModule({
     imports: [
@@ -98,6 +99,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
         JhiMainComponent,
         NavbarComponent,
         ErrorComponent,
+        OrionOutdatedComponent,
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
