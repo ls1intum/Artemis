@@ -126,11 +126,5 @@ info:
             - programming_exercise_fail_tour: 'test'
             - programming_exercise_success_tour: 'test'
     orion-versions:
-        from:
-            major: 0
-            minor: 3
-            patch: 0
-        to:
-            major: 1
-            minor: 0
-            patch: 0
+        from: 0.3.0
+        to: 1.0.0

@@ -5,6 +5,12 @@ import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { ProfileInfo } from 'app/layouts';
+import { compare } from 'compare-versions';
+
+export type AllowedOrionVersionRange = {
+    from: string;
+    to: string;
+};
 
 @Injectable({
     providedIn: 'root',
@@ -20,18 +26,16 @@ export class OrionVersionValidator {
                 .find((spec: string) => spec.includes('IntelliJ'))
                 .split(':');
             if (orionVersionArray.length === 2) {
-                const [major, minor, patch] = orionVersionArray[1].split('.').map((val: string) => +val);
+                const usedVersion = orionVersionArray[1];
                 this.profileService
                     .getProfileInfo()
                     .pipe(
                         filter(Boolean),
                         tap((info: ProfileInfo) => {
                             const min = info.allowedOrionVersions.from;
-                            // Assuming we will never have something like 1324.5436.9485 as a version number. Even then, we just have to adapt this
-                            const minVersionNumerical = min.major * 1_000_000 + min.minor * 1_000 + min.patch;
-                            const currentVersionNumerical = major * 1_000_000 + minor * 1_000 + patch;
-                            if (currentVersionNumerical < minVersionNumerical) {
-                                this.router.navigateByUrl(`/orionOutdated?versionString=${major}.${minor}.${patch}`);
+                            const max = info.allowedOrionVersions.to;
+                            if (!(compare(usedVersion, min, '>=') && compare(usedVersion, max, '<='))) {
+                                this.router.navigateByUrl(`/orionOutdated?versionString=${usedVersion}`);
                             }
                         }),
                     )
