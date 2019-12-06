@@ -191,8 +191,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (file.isEmpty()) {
             throw new EmptyFileException(file.getOriginalFilename());
         }
-        // check if we already had file associated with this submission
-        fileUploadSubmission.onDelete();
 
         final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
@@ -202,6 +200,9 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }
+
+        // check if we already had file associated with this submission
+        fileUploadSubmission.onDelete();
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
