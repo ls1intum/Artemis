@@ -118,8 +118,8 @@
                 "noResults": "You have no results yet",
                 "instructorActions": {
                     "title": "Instructor actions:",
-                    "information": "Information",
-                    "assessments": "Assessments",
+                    "scores": "Scores",
+                    "submissions": "Submissions",
                     "statistics": "Statistics"
                 },
                 "notParticipated": "Not participated",

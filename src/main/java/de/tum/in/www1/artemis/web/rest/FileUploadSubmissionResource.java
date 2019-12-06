@@ -133,13 +133,19 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
      */
     @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
         final Exercise exercise = exerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        if (assessedByTutor) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 

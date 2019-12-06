@@ -165,7 +165,8 @@ public abstract class Submission implements Serializable {
 
     /**
      * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
-     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * submission to the client.
+     * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
      * database without explicitly saving them.
      *
      * @param authCheckService authorization check service to check what details can be hidden

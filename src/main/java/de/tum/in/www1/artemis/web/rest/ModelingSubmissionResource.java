@@ -133,13 +133,14 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
+        final List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {
-            List<ModelingSubmission> submissions = modelingSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
-            return ResponseEntity.ok().body(clearStudentInformation(submissions, exercise, user));
+            modelingSubmissions = modelingSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
+            return ResponseEntity.ok().body(clearStudentInformation(modelingSubmissions, exercise, user));
         }
 
-        List<ModelingSubmission> submissions = modelingSubmissionService.getSubmissions(exerciseId, submittedOnly, ModelingSubmission.class);
-        return ResponseEntity.ok(clearStudentInformation(submissions, exercise, user));
+        modelingSubmissions = modelingSubmissionService.getSubmissions(exerciseId, submittedOnly, ModelingSubmission.class);
+        return ResponseEntity.ok(clearStudentInformation(modelingSubmissions, exercise, user));
     }
 
     /**

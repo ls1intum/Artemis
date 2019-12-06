@@ -8,6 +8,7 @@ import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { onError } from 'app/utils/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -44,7 +45,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 });
                 this.emitExerciseCount(this.textExercises.length);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -63,22 +64,19 @@ export class TextExerciseComponent extends ExerciseComponent {
      */
     deleteTextExercise(textExerciseId: number) {
         this.textExerciseService.delete(textExerciseId).subscribe(
-            response => {
+            () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
                     content: 'Deleted an textExercise',
                 });
+                this.dialogErrorSource.next('');
             },
-            error => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 
     protected getChangeEventName(): string {
         return 'textExerciseListModification';
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

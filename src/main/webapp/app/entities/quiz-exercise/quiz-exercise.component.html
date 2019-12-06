@@ -183,14 +183,16 @@
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
-                                    type="submit"
-                                    [routerLink]="['/', { outlets: { popup: 'quiz-exercise/' + quizExercise.id + '/reset' } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
-                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                    jhiDeleteButton
+                                    [entityTitle]="quizExercise.title"
+                                    [actionType]="ActionType.Reset"
+                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    (delete)="resetQuizExercise(quizExercise.id)"
+                                    [dialogError]="dialogError$"
+                                    deleteQuestion="artemisApp.quizExercise.reset.question"
+                                    class="mb-1"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
                                 </button>
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
@@ -199,6 +201,7 @@
                                     deleteQuestion="artemisApp.quizExercise.delete.question"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     (delete)="deleteQuizExercise(quizExercise.id)"
+                                    [dialogError]="dialogError$"
                                     id="delete-quiz-{{ quizExercise.id }}"
                                     class="mb-1"
                                 >

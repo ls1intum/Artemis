@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -36,8 +39,6 @@ public class ResultService {
     private final Logger log = LoggerFactory.getLogger(ResultService.class);
 
     private final UserService userService;
-
-    private final ParticipationService participationService;
 
     private final ResultRepository resultRepository;
 
@@ -57,12 +58,15 @@ public class ResultService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper,
-            ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository,
-            WebsocketMessagingService websocketMessagingService) {
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final ComplaintRepository complaintRepository;
+
+    public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
+            SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
+            ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
+            ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository) {
         this.userService = userService;
-        this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
@@ -72,6 +76,8 @@ public class ResultService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.feedbackRepository = feedbackRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -332,6 +338,18 @@ public class ResultService {
             }
         }
         return savedResult;
+    }
+
+    /**
+     * NOTE: As we use delete methods with underscores, we need a transacational context here!
+     * Deletes result with corresponding complaint and complaint response
+     * @param resultId the id of the result
+     */
+    @Transactional // ok
+    public void deleteResultWithComplaint(long resultId) {
+        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+        complaintRepository.deleteByResult_Id(resultId);
+        resultRepository.deleteById(resultId);
     }
 
     /**

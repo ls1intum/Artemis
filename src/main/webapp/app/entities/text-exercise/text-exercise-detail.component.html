@@ -40,6 +40,8 @@
         <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
         <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
         <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution"></dd>
+        <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+        <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
     </dl>
 
     <button type="submit" (click)="previousState()" class="btn btn-info">

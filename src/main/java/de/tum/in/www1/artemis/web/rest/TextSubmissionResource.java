@@ -115,11 +115,11 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         final Exercise exercise = exerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (assessedByTutor) {
-            if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         }
-        else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+        else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         final List<TextSubmission> textSubmissions;
@@ -134,6 +134,14 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             textSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
         }
+
+        // remove unnecessary data from the REST response
+        textSubmissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
+
         return ResponseEntity.ok().body(textSubmissions);
     }
 

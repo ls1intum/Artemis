@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLModel, UMLDiagramType } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-expandable-sample-solution',
@@ -15,17 +15,16 @@ export class ExpandableSampleSolutionComponent implements OnInit {
 
     formattedSampleSolutionExplanation: SafeHtml | null;
     sampleSolution: UMLModel;
+    diagramType: UMLDiagramType;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnInit() {
-        if (this.exercise) {
-            if (this.exercise.sampleSolutionModel) {
-                this.sampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
-            }
-            if (this.exercise.sampleSolutionExplanation) {
-                this.formattedSampleSolutionExplanation = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.sampleSolutionExplanation);
-            }
+        if (this.exercise.sampleSolutionModel) {
+            this.sampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
+        }
+        if (this.exercise.sampleSolutionExplanation) {
+            this.formattedSampleSolutionExplanation = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.sampleSolutionExplanation);
         }
     }
 }

@@ -12,6 +12,7 @@
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnis Text ist erforderlich.",
         "scoreNull": "Fehler! Eine Bewertung is erforderlich.",
+        "submissionMissing": "Fehler! Die Abgabe ist nicht mehr mit dem Ergebnis verknüpft. Deine Änderungen wurden abgelehnt.",
         "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnise mit 100% kann erfolgreich sein.",
         "feedbackTextOrDetailTextNull": "Fehler! Wenn Feedback vorhanden ist, müssen der Feedback Text und die Feedback Details ausgefüllt werden.",
         "quizAlreadyVisible": "Das Quiz ist bereits sichtbar.",

@@ -12,8 +12,6 @@ import { ProgrammingExerciseDetailComponent } from './programming-exercise-detai
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
-import { ProgrammingExerciseArchivePopupComponent } from 'app/entities/programming-exercise/programming-exercise-archive-dialog.component';
-import { ProgrammingExerciseCleanupPopupComponent } from 'app/entities/programming-exercise/programming-exercise-cleanup-dialog.component';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 
 @Injectable({ providedIn: 'root' })
@@ -96,26 +94,6 @@ export const programmingExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [CanDeactivateGuard],
-    },
-    {
-        path: 'exercise/:id/archive',
-        component: ProgrammingExerciseArchivePopupComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'exercise/:id/cleanup',
-        component: ProgrammingExerciseCleanupPopupComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];
 

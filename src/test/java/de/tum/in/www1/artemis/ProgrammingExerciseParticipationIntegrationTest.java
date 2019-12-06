@@ -236,12 +236,6 @@ public class ProgrammingExerciseParticipationIntegrationTest {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestSubmissionsForExercise_tutorForbidden() throws Exception {
-        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
-    }
-
     private void addStudentParticipation() {
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addResultToParticipation(programmingExerciseParticipation);
