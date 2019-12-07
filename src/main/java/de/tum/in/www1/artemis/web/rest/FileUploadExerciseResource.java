@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.FILE_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +74,12 @@ public class FileUploadExerciseResource {
         if (fileUploadExercise.getId() != null) {
             throw new BadRequestAlertException("A new fileUploadExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
+
+        // Check if file pattern matches regex
+        Matcher filePatternMatcher = FILE_PATTERN.matcher(fileUploadExercise.getFilePattern());
+        if (!filePatternMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The specified file patterns are invalid", "filePatternInvalid")).body(null);
+        }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
@@ -116,6 +124,11 @@ public class FileUploadExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
+        }
+        // Check if file pattern matches regex
+        Matcher filePatternMatcher = FILE_PATTERN.matcher(fileUploadExercise.getFilePattern());
+        if (!filePatternMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The specified file patterns are invalid", "filePatternInvalid")).body(null);
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         if (notificationText != null) {
