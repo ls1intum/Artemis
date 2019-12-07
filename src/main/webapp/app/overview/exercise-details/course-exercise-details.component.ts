@@ -88,7 +88,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
         // TODO: we should refactor this because we are sending multiple requests to the server. It would be better to create a new REST call for exercise details including:
         // * the exercise (without the course, no template / solution participations)
-        // * all submissions (with their result) of the user (to be displayed in the result history
+        // * all submissions (with their result) of the user (to be displayed in the result history)
         // * the student questions
         // * the hints
         // --> The retrieved data then needs to be passed correctly into the sub components
