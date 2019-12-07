@@ -190,8 +190,8 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getAllSubmissionsOfExercise_studentHidden() throws Exception {
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getAllSubmissionsOfExercise() throws Exception {
         FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
         FileUploadSubmission submission2 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student2");
 
@@ -199,7 +199,6 @@ public class FileUploadSubmissionIntegrationTest {
                 FileUploadSubmission.class);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
-        assertThat(submissions.stream().allMatch(submission -> ((StudentParticipation) submission.getParticipation()).getStudent() == null)).isTrue();
     }
 
     @Test

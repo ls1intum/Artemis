@@ -157,7 +157,17 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
             fileUploadSubmissions = fileUploadSubmissionService.getSubmissions(exerciseId, submittedOnly, FileUploadSubmission.class);
         }
 
-        fileUploadSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            fileUploadSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+        }
+
+        // remove unnecessary data from the REST response
+        fileUploadSubmissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
 
         return ResponseEntity.ok().body(fileUploadSubmissions);
     }

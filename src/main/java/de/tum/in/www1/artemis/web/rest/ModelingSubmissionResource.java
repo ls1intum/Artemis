@@ -136,11 +136,24 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         final List<ModelingSubmission> modelingSubmissions;
         if (assessedByTutor) {
             modelingSubmissions = modelingSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
-            return ResponseEntity.ok().body(clearStudentInformation(modelingSubmissions, exercise, user));
+        }
+        else {
+            modelingSubmissions = modelingSubmissionService.getSubmissions(exerciseId, submittedOnly, ModelingSubmission.class);
         }
 
-        modelingSubmissions = modelingSubmissionService.getSubmissions(exerciseId, submittedOnly, ModelingSubmission.class);
-        return ResponseEntity.ok(clearStudentInformation(modelingSubmissions, exercise, user));
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            modelingSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+        }
+
+        // remove unnecessary data from the REST response
+        modelingSubmissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
+
+        return ResponseEntity.ok().body(modelingSubmissions);
     }
 
     /**
