@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -95,16 +94,6 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
         // Check if the limit of simultaneously locked submissions has been reached
         submissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
         return null;
-    }
-
-    /**
-     * Remove information about the student from the submissions for tutors to ensure a double-blind assessment
-     */
-    List<T> clearStudentInformation(List<T> submissions, Exercise exercise, User user) {
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            submissions.forEach(submission -> ((StudentParticipation) submission.getParticipation()).setStudent(null));
-        }
-        return submissions;
     }
 
     /**
