@@ -5,7 +5,7 @@ import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockActivatedRoute, MockSyncStorage } from '../../mocks';
-import { ArtemisResultModule, ResultComponent } from 'app/entities/result';
+import { ArtemisResultModule } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseService, ExerciseType } from 'app/entities/exercise';
@@ -22,7 +22,8 @@ import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
-import { AssessmentInstructionsComponent } from 'app/assessment-instructions';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -64,6 +65,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(ModelingEditorComponent),
+                MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(AssessmentInstructionsComponent),
             ],
             providers: [

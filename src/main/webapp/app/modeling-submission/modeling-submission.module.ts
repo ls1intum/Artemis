@@ -6,7 +6,7 @@ import { modelingSubmissionRoute } from './modeling-submission.route';
 import { ArtemisResultModule } from '../entities/result';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor';
-import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { MomentModule } from 'ngx-moment';

@@ -84,8 +84,7 @@ public class TextAssessmentIntegrationTest {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
 
-        StudentParticipation participationWithoutAssessment = request.get("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId(),
-                HttpStatus.OK, StudentParticipation.class);
+        StudentParticipation participationWithoutAssessment = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.OK, StudentParticipation.class);
 
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
         assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
