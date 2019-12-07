@@ -191,9 +191,6 @@ public class FileUploadSubmissionResource {
 
         // remove unnecessary data from the REST response
         fileUploadSubmissions.forEach(submission -> {
-            if (submission.getResult() != null && submission.getResult().getAssessor() != null) {
-                submission.getResult().getAssessor().setGroups(null);
-            }
             if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
                 submission.getParticipation().setExercise(null);
             }

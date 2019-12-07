@@ -7,7 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -194,9 +195,6 @@ public class TextSubmissionResource {
 
         // remove unnecessary data from the REST response
         textSubmissions.forEach(submission -> {
-            if (submission.getResult() != null && submission.getResult().getAssessor() != null) {
-                submission.getResult().getAssessor().setGroups(null);
-            }
             if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
                 submission.getParticipation().setExercise(null);
             }
