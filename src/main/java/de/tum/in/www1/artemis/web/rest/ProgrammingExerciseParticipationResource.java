@@ -58,7 +58,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
                 .findStudentParticipationWithLatestResultAndFeedbacks(participationId);
-        if (!participation.isPresent()) {
+        if (participation.isEmpty()) {
             return notFound();
         }
         if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
