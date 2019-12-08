@@ -729,9 +729,9 @@ public class ParticipationService {
      *
      * @param participation that will be set to inactive
      */
-    @Transactional
     public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getBuildPlanId() != null) { // ignore participations without build plan id
+        // ignore participations without build plan id
+        if (participation.getBuildPlanId() != null) {
             continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             participation.setInitializationState(INACTIVE);
             participation.setBuildPlanId(null);
@@ -745,9 +745,9 @@ public class ParticipationService {
      *
      * @param participation to be stopped
      */
-    @Transactional
     public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getRepositoryUrl() != null) {      // ignore participations without repository URL
+        // ignore participations without repository URL
+        if (participation.getRepositoryUrl() != null) {
             versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
             participation.setRepositoryUrl(null);
             participation.setInitializationState(InitializationState.FINISHED);
