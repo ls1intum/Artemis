@@ -89,13 +89,13 @@
                 </div>
                 <div class="form-group">
                     <div>
-                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
-                    <fa-icon
-                        [icon]="'question-circle'"
-                        class="text-secondary"
-                        placement="top"
-                        ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"
-                    ></fa-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
+                        <fa-icon
+                            [icon]="'question-circle'"
+                            class="text-secondary"
+                            placement="top"
+                            ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"
+                        ></fa-icon>
                     </div>
                     <input
                         required
@@ -113,7 +113,7 @@
                             <div [jhiTranslate]="'artemisApp.fileUploadExercise.fileExtensionPattern' + '.' + e.key"></div>
                         </div>
                     </ng-container>
-                      </div>
+                </div>
                 <jhi-presentation-score-checkbox [exercise]="fileUploadExercise"></jhi-presentation-score-checkbox>
                 <div class="form-group" id="field_problemStatement">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
