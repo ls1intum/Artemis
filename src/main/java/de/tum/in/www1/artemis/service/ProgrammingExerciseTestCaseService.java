@@ -134,7 +134,6 @@ public class ProgrammingExerciseTestCaseService {
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
         if (testCasesToSave.size() > 0) {
-            // TODO: This fails with a TransientObject exception in our tests (because the result is not saved?)
             testCaseRepository.saveAll(testCasesToSave);
             return true;
         }
