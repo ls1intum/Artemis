@@ -140,7 +140,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 }
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = null;
-                this.submission!.filePath = null;
                 this.isSaving = false;
             },
         );
