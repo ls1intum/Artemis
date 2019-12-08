@@ -9,7 +9,6 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -180,8 +179,6 @@ public class ResultService {
                 extractTestCasesFromResult(programmingExercise, result);
             }
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            Submission submission = result.getSubmission();
-            result.setSubmission(submission);
             result = resultRepository.save(result);
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 
@@ -306,15 +303,11 @@ public class ResultService {
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (savedResult.isExampleResult() == Boolean.FALSE || savedResult.isExampleResult() == null) {
 
-            websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
-
-            if (!Hibernate.isInitialized(savedResult.getParticipation().getExercise())) {
-                Hibernate.initialize(savedResult.getParticipation().getExercise());
-            }
-
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
             }
+
+            websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
         }
         return savedResult;
     }
