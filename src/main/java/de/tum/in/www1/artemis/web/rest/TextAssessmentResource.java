@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,15 +35,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextBlockService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -66,8 +57,6 @@ public class TextAssessmentResource extends AssessmentResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final ParticipationService participationService;
-
     private final ResultService resultService;
 
     private final TextAssessmentService textAssessmentService;
@@ -82,17 +71,16 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ResultRepository resultRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService messagingService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
-    public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
-            TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService,
-            TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService,
-            SimpMessageSendingOperations messagingTemplate, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
+    public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
+            TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
+            ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService,
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(authCheckService, userService);
 
-        this.participationService = participationService;
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -101,7 +89,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
-        this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
 
@@ -115,7 +103,6 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
@@ -141,7 +128,6 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
@@ -150,7 +136,8 @@ public class TextAssessmentResource extends AssessmentResource {
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
-            messagingTemplate.convertAndSend("/topic/participation/" + studentParticipation.getId() + "/newResults", result);
+            // TODO: we should send a result object here that includes the feedback (this might already be the case)
+            messagingService.broadcastNewResult(studentParticipation, result);
         }
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {

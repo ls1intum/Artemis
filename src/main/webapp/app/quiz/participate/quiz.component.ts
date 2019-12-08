@@ -157,8 +157,9 @@ export class QuizComponent implements OnInit, OnDestroy {
             clearTimeout(timeout);
         });
 
+        // at the moment, this is always enabled
         // disable automatic websocket reconnect
-        this.jhiWebsocketService.disableReconnect();
+        // this.jhiWebsocketService.disableReconnect();
 
         if (this.submissionChannel) {
             this.jhiWebsocketService.unsubscribe('/user' + this.submissionChannel);
@@ -719,8 +720,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         if (this.result) {
             this.showingResult = true;
 
+            // at the moment, this is always enabled
             // disable automatic websocket reconnect
-            this.jhiWebsocketService.disableReconnect();
+            // this.jhiWebsocketService.disableReconnect();
 
             // assign user score (limit decimal places to 2)
             this.userScore = this.submission.scoreInPoints ? Math.round(this.submission.scoreInPoints * 100) / 100 : 0;
