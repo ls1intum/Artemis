@@ -58,7 +58,7 @@ public class QuizSubmissionService {
 
         // create and save result
         Result result = new Result().participation(participation);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         result.setSubmission(quizSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -69,7 +69,7 @@ public class QuizSubmissionService {
         quizSubmission.setResult(result);
         quizSubmission.setParticipation(participation);
         quizSubmissionRepository.save(quizSubmission);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
 
         // add result to statistics
         QuizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);

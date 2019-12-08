@@ -50,8 +50,7 @@ public class FileUploadAssessmentService extends AssessmentService {
         result.setRatedIfNotExceeded(fileUploadExercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
         result.evaluateFeedback(fileUploadExercise.getMaxScore());
-        resultRepository.save(result);
-        return result;
+        return resultRepository.save(result);
     }
 
     public List<Feedback> getAssessmentsForResult(Result result) {

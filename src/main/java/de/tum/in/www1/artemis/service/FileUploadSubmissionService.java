@@ -163,7 +163,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (submission.getParticipation() != null) {
             submission.getParticipation().addResult(result);
         }
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         fileUploadSubmissionRepository.save(submission);
         return result;
     }
@@ -262,7 +262,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 

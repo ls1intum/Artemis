@@ -247,27 +247,6 @@ public class ResultService {
     }
 
     /**
-     * Notify a user via websocket
-     *
-     * @param participation participation used for notification
-     * @param result result used for notification
-     */
-    public void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
-        if (result != null) {
-            // notify user via websocket
-            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
-
-            // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
-            // if (participation.isLti()) {
-            // }
-            // handles new results and sends them to LTI consumers
-            if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
-            }
-        }
-    }
-
-    /**
      * Update a manual result of a programming exercise.
      * Makes sure that the feedback items are persisted correctly, taking care of the OrderingColumn attribute of result.feedbacks.
      * See https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection and inline doc for reference.
@@ -327,7 +306,7 @@ public class ResultService {
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (savedResult.isExampleResult() == Boolean.FALSE || savedResult.isExampleResult() == null) {
 
-            messagingTemplate.convertAndSend("/topic/participation/" + savedResult.getParticipation().getId() + "/newResults", savedResult);
+            websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
 
             if (!Hibernate.isInitialized(savedResult.getParticipation().getExercise())) {
                 Hibernate.initialize(savedResult.getParticipation().getExercise());
@@ -445,10 +424,6 @@ public class ResultService {
         }
 
         return objectMapper.writeValueAsString(resultCopy);
-    }
-
-    public boolean existsByExerciseId(Long exerciseId) {
-        return resultRepository.existsByParticipation_ExerciseId(exerciseId);
     }
 
     public void notifyUserAboutNewResult(Result result, Long participationId) {

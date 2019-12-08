@@ -262,7 +262,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 
@@ -308,7 +308,7 @@ public class ModelingSubmissionService extends SubmissionService {
         if (submission.getParticipation() != null) {
             submission.getParticipation().addResult(result);
         }
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         modelingSubmissionRepository.save(submission);
         return result;
     }

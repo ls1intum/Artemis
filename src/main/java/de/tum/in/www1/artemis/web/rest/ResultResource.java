@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +66,7 @@ public class ResultResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService messagingService;
 
     private final LtiService ltiService;
 
@@ -75,7 +74,7 @@ public class ResultResource {
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate, ProgrammingSubmissionService programmingSubmissionService) {
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -83,7 +82,7 @@ public class ResultResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.programmingSubmissionService = programmingSubmissionService;
     }
@@ -231,7 +230,7 @@ public class ResultResource {
             log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
                     result.get().getParticipation());
             // notify user via websocket
-            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
+            messagingService.broadcastNewResult((Participation) participation, result.get());
 
             // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
             // if (participation.isLti()) {

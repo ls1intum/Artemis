@@ -45,8 +45,7 @@ abstract class AssessmentService {
         double totalScore = calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
-        resultRepository.save(result);
-        return result;
+        return resultRepository.save(result);
     }
 
     /**

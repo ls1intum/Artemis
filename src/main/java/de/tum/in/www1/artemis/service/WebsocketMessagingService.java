@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
+
 /**
  * This service sends out websocket messages.
  */
@@ -17,5 +20,11 @@ public class WebsocketMessagingService {
 
     public void sendMessage(String topic, Object message) {
         messagingTemplate.convertAndSend(topic, message);
+    }
+
+    public void broadcastNewResult(Participation participation, Result result) {
+        // remove some unnecessary properties to reduce the data sent to the client
+        result.setParticipation(null);
+        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
     }
 }
