@@ -99,7 +99,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
         } else {
             // we do not have a participation, so we need to load it with the exercise
-            this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.handleNewExercise(exerciseResponse.body!);
             });
         }

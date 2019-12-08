@@ -72,9 +72,9 @@ export class ExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
     }
 
-    findResultsForExercise(exerciseId: number): Observable<EntityResponseType> {
+    getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/results`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
