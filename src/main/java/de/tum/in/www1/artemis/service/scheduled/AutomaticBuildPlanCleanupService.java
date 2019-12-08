@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.Result;
@@ -44,7 +43,6 @@ public class AutomaticBuildPlanCleanupService {
      */
     // TODO: remove transactional here
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
-    @Transactional
     public void cleanupBuildPlans() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
