@@ -54,7 +54,7 @@ public final class Constants {
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 
-    public static final String FILE_PATTERN_REGEX = "(doc|DOC|docx|DOCX|dotx|DOTX|xml|XML|pdf|PDF|wps|WPS|wpd|WPD|wp|WP|wp4|WP4|wp5|WP5|wp6|WP6|wp7|WP7|qxd|QXD|ps|PS|pub|PUB|tex|TEX|vsd|VSD|bmp|BMP|jpg|JPG|jpeg|JPEG|pjpeg|PJEPG|gif|GIF|pgn|PGN|txt|TXT|rtf|RTF|wav|WAV|mp3|MP3|html|HTML|odt|ODT|xls|XLS|xlsx|XLSX|wks|WKS|xlr|XLR|csv|CSV|ppt|PPT|pps|PPS|ppsx|PPXS)$";
+    public static final String FILE_PATTERN_REGEX = "(doc|DOC|docx|DOCX|dotx|DOTX|xml|XML|pdf|PDF|wps|WPS|wpd|WPD|wp|WP|wp4|WP4|wp5|WP5|wp6|WP6|wp7|WP7|qxd|QXD|ps|PS|pub|PUB|tex|TEX|vsd|VSD|bmp|BMP|jpg|JPG|jpeg|JPEG|pjpeg|PJEPG|gif|GIF|pgn|PGN|png|PNG|txt|TXT|rtf|RTF|wav|WAV|mp3|MP3|html|HTML|odt|ODT|xls|XLS|xlsx|XLSX|wks|WKS|xlr|XLR|csv|CSV|ppt|PPT|pps|PPS|ppsx|PPXS)$";
 
     public static final Pattern FILE_PATTERN = Pattern.compile(FILE_PATTERN_REGEX);
 
