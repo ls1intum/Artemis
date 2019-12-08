@@ -29,6 +29,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
+    @EntityGraph(attributePaths = "results")
+    Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLogin(Long exerciseId, String username);
+
     @EntityGraph(attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
