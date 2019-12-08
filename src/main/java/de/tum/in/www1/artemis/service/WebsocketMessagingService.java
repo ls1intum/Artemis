@@ -24,7 +24,10 @@ public class WebsocketMessagingService {
 
     public void broadcastNewResult(Participation participation, Result result) {
         // remove some unnecessary properties to reduce the data sent to the client
+        var resultParticipation = result.getParticipation();
         result.setParticipation(null);
         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
+        // recover the participation because we might want to use it again after this method
+        result.setParticipation(resultParticipation);
     }
 }
