@@ -74,7 +74,8 @@ public class FileUploadExerciseIntegrationTest {
         String filePattern = "Example file pattern";
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(filePattern);
-        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
+                HttpStatus.BAD_REQUEST);
 
         assertThat(receivedFileUploadExercise).isNull();
     }
