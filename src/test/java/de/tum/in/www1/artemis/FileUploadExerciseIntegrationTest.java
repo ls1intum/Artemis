@@ -58,7 +58,7 @@ public class FileUploadExerciseIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createFileUploadExercise() throws Exception {
-        String filePattern = "Example file pattern";
+        String filePattern = "pdf";
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(filePattern);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class);
@@ -66,6 +66,17 @@ public class FileUploadExerciseIntegrationTest {
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
         assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(filePattern);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createFileUploadExerciseWithInvalidFilePattern() throws Exception {
+        String filePattern = "Example file pattern";
+        FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
+        fileUploadExercise.setFilePattern(filePattern);
+        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(receivedFileUploadExercise).isNull();
     }
 
     @Test
