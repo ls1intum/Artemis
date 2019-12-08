@@ -290,6 +290,8 @@ public abstract class QuizQuestion implements Serializable {
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
 
+    public abstract QuizQuestion copyQuestionId();
+
     /**
      * undo all changes which are not allowed
      *

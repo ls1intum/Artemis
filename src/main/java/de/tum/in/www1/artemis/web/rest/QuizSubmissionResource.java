@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,7 +111,7 @@ public class QuizSubmissionResource {
         quizExercise.setQuizPointStatistic(null);
         quizExercise.setCourse(null);
 
-        if (Hibernate.isInitialized(participation.getResults()) && participation.getResults().size() == 0) {
+        if (participation.getResults().size() == 0) {
             participation.addResult(result);
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/exercise/" + quizExercise.getId() + "/participation", participation);
         }
