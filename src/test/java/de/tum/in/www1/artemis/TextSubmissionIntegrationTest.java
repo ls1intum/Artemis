@@ -124,7 +124,7 @@ public class TextSubmissionIntegrationTest {
         textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmissionWithResultAndAssessor(textExerciseAfterDueDate, textSubmission, "student1", "tutor1");
 
-        Exercise returnedExercise = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/results", HttpStatus.OK, Exercise.class);
+        Exercise returnedExercise = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/details", HttpStatus.OK, Exercise.class);
 
         assertThat(returnedExercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
     }

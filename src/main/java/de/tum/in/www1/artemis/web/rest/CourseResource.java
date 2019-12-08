@@ -596,7 +596,6 @@ public class CourseResource {
      */
     @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get categories of Course : {}", courseId);

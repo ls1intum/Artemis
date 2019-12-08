@@ -41,7 +41,6 @@ public class AutomaticBuildPlanCleanupService {
     /**
      *  Cleans up all build plans
      */
-    // TODO: remove transactional here
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     public void cleanupBuildPlans() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
