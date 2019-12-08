@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -293,7 +294,6 @@ public class ParticipationService {
      * @param username     the username of the user that the participation belongs to
      * @return the found or created participation with a result
      */
-
     public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database
@@ -315,7 +315,7 @@ public class ParticipationService {
 
             if (result != null) {
                 participation.addResult(result);
-                if (result.getSubmission() == null) {
+                if (!Hibernate.isInitialized(result.getSubmission())) {
                     Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
                     result.setSubmission(submission);
                 }
@@ -592,6 +592,18 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
         return studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+    }
+
+    /**
+     * Get one participation (in any state) by its student and exercise with all its results.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param username   the username of the student
+     * @return the participation of the given student and exercise in any state
+     */
+    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(Long exerciseId, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
+        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLogin(exerciseId, username);
     }
 
     /**

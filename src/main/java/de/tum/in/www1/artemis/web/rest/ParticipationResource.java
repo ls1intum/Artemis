@@ -21,7 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -461,9 +460,8 @@ public class ParticipationResource {
      * @param principal The principal in form of the user's identity
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
+    @GetMapping(value = "/exercises/{exerciseId}/participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -476,18 +474,13 @@ public class ParticipationResource {
         if (exercise instanceof QuizExercise) {
             response = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         }
-        else if (exercise instanceof ModelingExercise) {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        else {
+            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, principal.getName());
             if (optionalParticipation.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
             }
             Participation participation = optionalParticipation.get();
-            participation.getResults().size(); // eagerly load the association
             response = new MappingJacksonValue(participation);
-        }
-        else {
-            Optional<StudentParticipation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            response = participation.isEmpty() ? null : new MappingJacksonValue(participation.get());
         }
         if (response == null) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
