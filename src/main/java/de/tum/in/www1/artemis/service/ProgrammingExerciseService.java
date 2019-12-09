@@ -47,6 +47,7 @@ import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
@@ -1204,8 +1205,8 @@ public class ProgrammingExerciseService {
      * @param exerciseId the exercise we are interested in
      * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
      */
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return programmingExerciseRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    public long countSubmissions(Long exerciseId) {
+        return programmingExerciseRepository.countSubmissions(exerciseId);
     }
 
     /**

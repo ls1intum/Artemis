@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -361,8 +362,8 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
+    public long countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
     }
 
     /**

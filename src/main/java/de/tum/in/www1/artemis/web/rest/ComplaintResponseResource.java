@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;

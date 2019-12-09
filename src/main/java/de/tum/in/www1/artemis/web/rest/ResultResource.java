@@ -5,19 +5,16 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -25,7 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -290,99 +287,17 @@ public class ResultResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results for "id" participation.
+     * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
-     * @param courseId        only included for API consistency, not actually used
-     * @param exerciseId      only included for API consistency, not actually used
-     * @param participationId the id of the participation for which to retrieve the results
-     * @param showAllResults defines if all results should be shown
-     * @param ratedOnly defines if only rated results should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, @PathVariable Long participationId,
-            @RequestParam(defaultValue = "true") boolean showAllResults, @RequestParam(defaultValue = "false") boolean ratedOnly) {
-        log.debug("REST request to get Results for Participation : {}", participationId);
-
-        List<Result> results = new ArrayList<>();
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
-
-        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
-        if (participation.getExercise() == null) {
-            Exercise exercise = exerciseService.findOne(exerciseId);
-            participation.setExercise(exercise);
-        }
-
-        if (!Hibernate.isInitialized(participation.getExercise())) {
-            participation.setExercise((Exercise) Hibernate.unproxy(participation.getExercise()));
-        }
-        if (participation.getStudent() == null && participation.getExercise() != null) {
-            if (!Hibernate.isInitialized(participation.getExercise().getCourse())) {
-                participation.getExercise().setCourse((Course) Hibernate.unproxy(participation.getExercise().getCourse()));
-            }
-            // If the student is null, then participation is a template/solution participation -> check for instructor role
-            if (!authCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
-                return forbidden();
-            }
-        }
-        else {
-            if (!authCheckService.isOwnerOfParticipation(participation)) {
-                Course course = participation.getExercise().getCourse();
-                if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-                    return forbidden();
-                }
-            }
-        }
-
-        // if exercise is quiz => only give out results if quiz is over
-        if (participation.getExercise() instanceof QuizExercise) {
-            QuizExercise quizExercise = (QuizExercise) participation.getExercise();
-            if (quizExercise.shouldFilterForStudents()) {
-                // return empty list
-                return ResponseEntity.ok().body(results);
-            }
-        }
-        if (showAllResults) {
-            if (ratedOnly) {
-                results = resultRepository.findByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true);
-            }
-            else {
-                results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
-            }
-        }
-        else {
-            if (ratedOnly) {
-                results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).map(Arrays::asList).orElse(new ArrayList<>());
-            }
-            else {
-                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).map(Arrays::asList).orElse(new ArrayList<>());
-            }
-
-        }
-        // remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setExercise(null);
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
-        });
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
-     * GET /courses/:courseId/exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
-     *
-     * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the results
      * @param withAssessors defines if assessors are loaded from the database for the results
      * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
+    @GetMapping(value = "exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withSubmissions, @RequestParam(defaultValue = "false") boolean withAssessors) {
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withSubmissions,
+            @RequestParam(defaultValue = "false") boolean withAssessors) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
@@ -490,7 +405,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);

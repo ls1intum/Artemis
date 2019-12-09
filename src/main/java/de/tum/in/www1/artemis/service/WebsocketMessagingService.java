@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.service;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 
 /**
  * This service sends out websocket messages.
@@ -37,12 +37,12 @@ public class WebsocketMessagingService {
      */
     public void broadcastNewResult(Participation participation, Result result) {
         // remove unnecessary properties to reduce the data sent to the client (we should not send the exercise and its potentially huge problem statement)
-        var resultParticipation = result.getParticipation();
-        result.setParticipation(null);
+        var originalParticipation = result.getParticipation();
+        result.setParticipation(originalParticipation.copyParticipationId());
 
         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
 
         // recover the participation because we might want to use it again after this method
-        result.setParticipation(resultParticipation);
+        result.setParticipation(originalParticipation);
     }
 }

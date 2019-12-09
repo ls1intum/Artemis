@@ -5,10 +5,10 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;

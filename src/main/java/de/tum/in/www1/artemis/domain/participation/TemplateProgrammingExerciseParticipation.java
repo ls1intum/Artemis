@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -8,6 +8,9 @@ import javax.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
@@ -99,5 +102,12 @@ public class TemplateProgrammingExerciseParticipation extends Participation impl
     @Override
     public String toString() {
         return "Participation{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
+    }
+
+    @Override
+    public Participation copyParticipationId() {
+        var participation = new TemplateProgrammingExerciseParticipation();
+        participation.setId(getId());
+        return participation;
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;

@@ -39,7 +39,6 @@ import { AssessmentInstructionsModule } from 'app/assessment-instructions/assess
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 
-
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
 @NgModule({

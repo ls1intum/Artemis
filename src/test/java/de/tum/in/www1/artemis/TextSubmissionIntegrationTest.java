@@ -22,6 +22,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
@@ -124,7 +125,7 @@ public class TextSubmissionIntegrationTest {
         textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmissionWithResultAndAssessor(textExerciseAfterDueDate, textSubmission, "student1", "tutor1");
 
-        Exercise returnedExercise = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/results", HttpStatus.OK, Exercise.class);
+        Exercise returnedExercise = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/details", HttpStatus.OK, Exercise.class);
 
         assertThat(returnedExercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
     }

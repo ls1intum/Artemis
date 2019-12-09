@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -28,6 +28,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
 
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
+
+    @EntityGraph(attributePaths = "results")
+    Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     @EntityGraph(attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
