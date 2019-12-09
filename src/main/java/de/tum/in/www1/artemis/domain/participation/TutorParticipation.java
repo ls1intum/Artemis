@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.participation;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -12,6 +12,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 
 /**

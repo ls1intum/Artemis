@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -214,9 +215,6 @@ public class ParticipationService {
 
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
-            // if (exercise.getCourse().isOnlineCourse()) {
-            // participation.setLti(true);
-            // } //TODO use lti in the future
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
