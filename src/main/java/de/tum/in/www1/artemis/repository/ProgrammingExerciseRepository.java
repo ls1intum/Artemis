@@ -88,14 +88,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     * Also submissions can be created after the due date (e.g. by instructor builds)
+     * We therefore have to check for all distinct participations that have at least one submission.
      *
      * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
-     *         exercise due date at all
+     * @return the number of submissions belonging to the exercise id
      */
-    @Query("SELECT COUNT (DISTINCT participation) FROM ProgrammingExerciseStudentParticipation participation WHERE participation.exercise.id = :#{#exerciseId} AND (participation.exercise.dueDate IS NULL OR EXISTS (SELECT submission FROM ProgrammingSubmission submission WHERE submission.participation.id = participation.id AND submission.submissionDate IS NOT NULL AND submission.submitted = TRUE AND submission.submissionDate < participation.exercise.dueDate))")
-    long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
+    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p left join p.submissions WHERE p.exercise.id = :#{#exerciseId}")
+    long countSubmissions(@Param("exerciseId") Long exerciseId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.

@@ -198,10 +198,10 @@ public class ExerciseResource {
         // TODO: This could just be one repository method as the exercise id is provided anyway.
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
                 + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + programmingExerciseService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + programmingExerciseService.countSubmissions(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        Long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
         Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
