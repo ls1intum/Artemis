@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -213,9 +215,6 @@ public class ParticipationService {
 
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
-            // if (exercise.getCourse().isOnlineCourse()) {
-            // participation.setLti(true);
-            // } //TODO use lti in the future
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
@@ -293,7 +292,6 @@ public class ParticipationService {
      * @param username     the username of the user that the participation belongs to
      * @return the found or created participation with a result
      */
-
     public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database
@@ -315,7 +313,7 @@ public class ParticipationService {
 
             if (result != null) {
                 participation.addResult(result);
-                if (result.getSubmission() == null) {
+                if (!Hibernate.isInitialized(result.getSubmission())) {
                     Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
                     result.setSubmission(submission);
                 }
@@ -583,21 +581,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id including all results and submissions.
-     *
-     * @param participationId the id of the participation
-     * @return the participation with all its results
-     */
-    public StudentParticipation findOneWithEagerResultsAndSubmissionsAndAssessor(Long participationId) {
-        log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(participationId);
-        if (participation.isEmpty()) {
-            throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
-        }
-        return participation.get();
-    }
-
-    /**
      * Get one participation (in any state) by its student and exercise.
      *
      * @param exerciseId the project key of the exercise
@@ -610,15 +593,15 @@ public class ParticipationService {
     }
 
     /**
-     * Get one finished participation by its student and exercise.
+     * Get one participation (in any state) by its student and exercise with all its results.
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
-     * @return the participation of the given student and exercise in state finished
+     * @return the participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAndFinished(Long exerciseId, String username) {
+    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return studentParticipationRepository.findByInitializationStateAndExerciseIdAndStudentLogin(InitializationState.FINISHED, exerciseId, username);
+        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLogin(exerciseId, username);
     }
 
     /**
@@ -631,27 +614,6 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
         return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exerciseId, username);
-    }
-
-    /**
-     * Get all participations for the given student including all results
-     *
-     * @param userId the id of the user for which the participations should be found
-     * @return the list of participations of the given student including all results for all possible exercises
-     */
-    public List<StudentParticipation> findWithResultsByStudentId(Long userId) {
-        return studentParticipationRepository.findByStudentIdWithEagerResults(userId);
-    }
-
-    /**
-     * Get all participations for the given student including all results for the given exercises
-     *
-     * @param userId the id of the user for which the participations should be found
-     * @param exercises the exercises for which participations should be found
-     * @return the list of participations of the given student including all results
-     */
-    public List<StudentParticipation> findWithResultsByStudentId(Long userId, Set<Exercise> exercises) {
-        return exercises.isEmpty() ? new LinkedList<>() : studentParticipationRepository.findByStudentIdWithEagerResults(userId, exercises);
     }
 
     /**
@@ -777,9 +739,9 @@ public class ParticipationService {
      *
      * @param participation that will be set to inactive
      */
-    @Transactional
     public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getBuildPlanId() != null) { // ignore participations without build plan id
+        // ignore participations without build plan id
+        if (participation.getBuildPlanId() != null) {
             continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             participation.setInitializationState(INACTIVE);
             participation.setBuildPlanId(null);
@@ -793,9 +755,9 @@ public class ParticipationService {
      *
      * @param participation to be stopped
      */
-    @Transactional
     public void cleanupRepository(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getRepositoryUrl() != null) {      // ignore participations without repository URL
+        // ignore participations without repository URL
+        if (participation.getRepositoryUrl() != null) {
             versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
             participation.setRepositoryUrl(null);
             participation.setInitializationState(InitializationState.FINISHED);

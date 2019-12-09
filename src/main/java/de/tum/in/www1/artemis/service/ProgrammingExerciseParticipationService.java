@@ -5,13 +5,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.hibernate.Hibernate;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -145,7 +147,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Check if the user can access a given participation.
+     * Check if the user can access a given participation by accessing the exercise and course connected to this participation
      * The method will treat the participation types differently:
      * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) and the courses instructor/tas.
      * - Template/SolutionParticipations should only be accessible by the courses instructor/tas.
@@ -166,20 +168,28 @@ public class ProgrammingExerciseParticipationService {
         return false;
     }
 
-    public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation) {
+    private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        return participation.getStudent().getLogin().equals(user.getLogin()) || authCheckService.isAtLeastTeachingAssistantInCourse(participation.getExercise().getCourse(), user);
+        return participation.getStudent().getLogin().equals(user.getLogin()) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 
-    public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation) {
+    private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        // TODO: getProgrammingExercise() can be null which leads to a null pointer exception, we should handle this case and retrieve the exercise from the database
+        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
+        // To prevent null pointer exceptions, we therefore retrieve it again as concrete solution programming exercise participation
+        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
+            participation = findSolutionParticipation(participation.getId()).get();
+        }
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
-    public boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation) {
+    private boolean canAccessParticipation(@NotNull TemplateProgrammingExerciseParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        // TODO: getProgrammingExercise() can be null which leads to a null pointer exception, we should handle this case and retrieve the exercise from the database
+        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
+        // To prevent null pointer exceptions, we therefore retrieve it again as concrete template programming exercise participation
+        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
+            participation = findTemplateParticipation(participation.getId()).get();
+        }
         return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 

@@ -136,7 +136,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 );
             } else {
                 const submissionId = Number(submissionValue);
-                this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(
+                this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).subscribe(
                     participation => this.receiveParticipation(participation),
                     (error: HttpErrorResponse) => this.onError(error.message),
                 );

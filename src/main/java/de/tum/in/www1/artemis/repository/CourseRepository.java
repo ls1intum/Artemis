@@ -32,6 +32,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course left join fetch course.exercises where course.id = :#{#courseId}")
     Course findOneWithEagerExercises(@Param("courseId") Long courseId);
 
-    @Query("select distinct course from Course course where course.startDate <= current_timestamp and course.endDate >= current_timestamp and course.onlineCourse = 0 and course.registrationEnabled = 1")
+    @Query("select distinct course from Course course where course.startDate <= current_timestamp and course.endDate >= current_timestamp and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveAndNotOnlineAndEnabled();
 }

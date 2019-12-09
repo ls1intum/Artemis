@@ -28,8 +28,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and exists (select l from LtiOutcomeUrl l where e = l.exercise and l.user.login = :#{#login})")
     List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
 
-    @Query("select e from Exercise e where e.course.id = :#{#courseId}")
-    List<Exercise> findAllByCourseId(@Param("courseId") Long courseId);
+    @Query("select e from Exercise e left join fetch e.categories where e.course.id = :#{#courseId}")
+    List<Exercise> findAllByCourseIdWithEagerCategories(@Param("courseId") Long courseId);
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.studentParticipations where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
