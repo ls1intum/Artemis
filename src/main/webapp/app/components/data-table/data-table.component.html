@@ -1,0 +1,32 @@
+<div>
+    <div class="d-flex mb-2">
+        <div ngbDropdown class="d-inline-block mr-2">
+            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                {{ entitiesPerPageTranslation | translate: { number: entitiesPerPage } }}
+            </button>
+            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                <button *ngFor="let pagingValue of PAGING_VALUES" (click)="setEntitiesPerPage(pagingValue)" [class.selected]="pagingValue === entitiesPerPage" ngbDropdownItem>
+                    {{ entitiesPerPageTranslation | translate: { number: pagingValue } }}
+                </button>
+            </div>
+        </div>
+        <input
+            id="typeahead-basic"
+            type="text"
+            class="form-control"
+            (selectItem)="onAutocompleteSelect($event.item)"
+            [placeholder]="searchPlaceholderTranslation | translate"
+            [ngbTypeahead]="onSearch"
+            [resultFormatter]="searchResultFormatter"
+            [inputFormatter]="searchInputFormatter"
+        />
+    </div>
+    <div *ngIf="entities && !isPreparing; else loadingContainer" class="table-responsive">
+        <ng-container *ngTemplateOutlet="templateRef; context: context"></ng-container>
+    </div>
+    <ng-template #loadingContainer>
+        <div class="loading-container d-flex justify-content-center align-items-center">
+            <fa-icon size="lg" icon="circle-notch" [spin]="true"></fa-icon>
+        </div>
+    </ng-template>
+</div>

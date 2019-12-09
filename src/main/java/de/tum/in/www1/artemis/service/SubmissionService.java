@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -40,12 +41,14 @@ public class SubmissionService {
 
     /**
      * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
-     * submission to the client. IMPORTANT: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * submission to the client.
+     * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
      * database without explicitly saving them.
      *
      * @param submission Submission to be modified.
+     * @param user the currently logged in user which is used for hiding specific submission details based on instructor and teaching assistant rights
      */
-    public void hideDetails(Submission submission) {
+    public void hideDetails(Submission submission, User user) {
         // do not send old submissions or old results to the client
         if (submission.getParticipation() != null) {
             submission.getParticipation().setSubmissions(null);
@@ -54,14 +57,14 @@ public class SubmissionService {
             Exercise exercise = submission.getParticipation().getExercise();
             if (exercise != null) {
                 // make sure that sensitive information is not sent to the client for students
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
                     submission.setResult(null);
                 }
                 // remove information about the student from the submission for tutors to ensure a double-blind assessment
-                if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                     StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-                    studentParticipation.setStudent(null);
+                    studentParticipation.filterSensitiveInformation();
                 }
             }
         }

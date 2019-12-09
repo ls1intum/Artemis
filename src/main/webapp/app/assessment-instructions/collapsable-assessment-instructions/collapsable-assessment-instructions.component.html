@@ -8,15 +8,7 @@
             </h3>
             <fa-icon [icon]="'chevron-right'"></fa-icon>
         </div>
-        <div class="card-body markdown-preview">
-            <h3>{{ exercise.title }}</h3>
-            <br />
-            <jhi-expandable-paragraph header="{{ 'assessmentInstructions.problemStatement' | translate }}" [text]="formattedProblemStatement"></jhi-expandable-paragraph>
-            <br />
-            <jhi-expandable-sample-solution [exercise]="exercise"></jhi-expandable-sample-solution>
-            <br />
-            <jhi-expandable-paragraph header="{{ 'assessmentInstructions.gradingCriteria' | translate }}" [text]="formattedGradingCriteria"></jhi-expandable-paragraph>
-        </div>
+        <jhi-assessment-instructions class="card-body markdown-preview" [exercise]="exercise"></jhi-assessment-instructions>
     </div>
 </div>
 <ng-template #collapsedInstructions>

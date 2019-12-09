@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -9,8 +11,6 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
-
-import org.apache.commons.codec.digest.DigestUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -60,10 +60,13 @@ public class TextBlock implements Serializable {
         this.id = id;
     }
 
+    /**
+     * Identical with src/main/webapp/app/entities/text-block/text-block.model.ts
+     */
     public void computeId() {
         final long submissionId = submission != null ? submission.getId() : 0;
         final String idString = submissionId + ";" + startIndex + "-" + endIndex + ";" + text;
-        id = DigestUtils.sha1Hex(idString);
+        id = sha1Hex(idString);
     }
 
     public int getStartIndex() {

@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { Course, CourseService } from 'app/entities/course';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
@@ -15,6 +16,10 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     predicate: string;
     reverse: boolean;
+
+    // These two variables are used to emit errors to the delete dialog
+    protected dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     protected constructor(
         private courseService: CourseService,
@@ -35,6 +40,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     protected load(): void {

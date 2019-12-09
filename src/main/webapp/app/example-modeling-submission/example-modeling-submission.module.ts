@@ -13,7 +13,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { exampleModelingSubmissionRoute } from 'app/example-modeling-submission/example-modeling-submission.route';
 import { ExampleModelingSubmissionComponent } from 'app/example-modeling-submission/example-modeling-submission.component';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor/modeling-editor.module';
-import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 
 const ENTITY_STATES = [...exampleModelingSubmissionRoute];

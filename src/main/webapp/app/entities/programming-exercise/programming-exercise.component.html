@@ -160,6 +160,7 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
                                     routerLink="/code-editor/{{ programmingExercise.id }}/admin/{{ programmingExercise.templateParticipation.id }}"
@@ -169,6 +170,7 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                                 </button>
                                 <button
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     routerLink="programming-exercise/{{ programmingExercise.id }}/manage-test-cases"
@@ -209,22 +211,27 @@
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
-                                    type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
-                                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/reset' } }]"
-                                    replaceUrl="true"
-                                    queryParamsHandling="merge"
-                                    class="btn btn-danger btn-sm mr-1 mb-1"
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    jhiDeleteButton
+                                    [actionType]="ActionType.Reset"
+                                    [entityTitle]="programmingExercise.title"
+                                    deleteQuestion="artemisApp.programmingExercise.reset.question"
+                                    (delete)="resetProgrammingExercise(programmingExercise.id)"
+                                    [dialogError]="dialogError$"
+                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    class="mb-1"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
+                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     jhiDeleteButton
                                     [entityTitle]="programmingExercise.title"
                                     deleteQuestion="artemisApp.programmingExercise.delete.question"
                                     (delete)="deleteProgrammingExercise(programmingExercise.id, $event)"
+                                    [dialogError]="dialogError$"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                     [additionalChecks]="{
                                         deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',

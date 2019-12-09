@@ -1,30 +1,15 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
+import { AfterViewInit, Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import interact from 'interactjs';
 
 @Component({
-    selector: 'jhi-assessment-instructions',
-    templateUrl: './assessment-instructions.component.html',
-    styleUrls: ['./assessment-instructions.scss'],
+    selector: 'jhi-collapsable-assessment-instructions',
+    templateUrl: './collapsable-assessment-instructions.component.html',
+    styleUrls: ['./collapsable-assessment-instructions.scss'],
 })
-export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
+export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
     @Input() exercise: Exercise;
     @Input() collapsed = false;
-
-    formattedProblemStatement: SafeHtml | null;
-    formattedGradingCriteria: SafeHtml | null;
-
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
-
-    /**
-     * Assigns formatted problem statement and formatted grading criteria on component initialization
-     */
-    ngOnInit() {
-        this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
-        this.formattedGradingCriteria = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
-    }
 
     /**
      * Configures interact to make instructions expandable

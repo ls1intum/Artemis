@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -44,14 +45,17 @@ public class QuizSubmissionResource {
 
     private final ParticipationService participationService;
 
+    private final WebsocketMessagingService messagingService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, WebsocketMessagingService messagingService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
     }
 
     /**
@@ -113,7 +117,7 @@ public class QuizSubmissionResource {
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/exercise/" + quizExercise.getId() + "/participation", participation);
         }
         else {
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);

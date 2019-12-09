@@ -4,8 +4,6 @@ import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.c
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const codeEditorTour: GuidedTour = {
-    courseShortName: 'artemistutorial',
-    exerciseShortName: 'tutorial',
     settingsKey: 'code_editor_tour',
     steps: [
         new TextTourStep({
@@ -39,6 +37,7 @@ export const codeEditorTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            triggerNextStep: true,
         }),
         new TextTourStep({
             highlightSelector: '#submit_button',
@@ -49,6 +48,7 @@ export const codeEditorTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
+            triggerNextStep: true,
         }),
         new TextTourStep({
             highlightSelector: 'jhi-updating-result',

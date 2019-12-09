@@ -5,9 +5,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -77,8 +76,9 @@ public class ProgrammingExerciseTestCaseService {
         for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
             Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream()
                     .filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.getId())).findFirst();
-            if (!matchingTestCaseOpt.isPresent())
+            if (matchingTestCaseOpt.isEmpty()) {
                 continue;
+            }
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
             matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
@@ -134,7 +134,6 @@ public class ProgrammingExerciseTestCaseService {
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
         if (testCasesToSave.size() > 0) {
-            // TODO: This fails with a TransientObject exception in our tests (because the result is not saved?)
             testCaseRepository.saveAll(testCasesToSave);
             return true;
         }

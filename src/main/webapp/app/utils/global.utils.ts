@@ -1,3 +1,6 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { JhiAlertService } from 'ng-jhipster';
+
 /**
  * Prepares a string for insertion into a regex.
  * Example: [test].*[/test] -> \[test\].*\[\/test\]
@@ -86,4 +89,13 @@ export const buildUrlWithParams = (url: string, params: string[]): string => {
         }
     }
     return urlWithParams;
+};
+
+/**
+ * Use alert service to show the error message from the error response
+ * @param jhiAlertService the service used to show the exception messages to the user
+ * @param error returned from the request
+ */
+export const onError = (jhiAlertService: JhiAlertService, error: HttpErrorResponse) => {
+    jhiAlertService.error(error.message);
 };

@@ -1,7 +1,7 @@
 import * as $ from 'jquery';
 import * as moment from 'moment';
 
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -32,6 +32,7 @@ import { AccountService } from 'app/core/auth/account.service';
     providers: [TextAssessmentsService, WindowRef],
     templateUrl: './text-assessment.component.html',
     styleUrls: ['./text-assessment.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string;
@@ -135,7 +136,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 );
             } else {
                 const submissionId = Number(submissionValue);
-                this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(
+                this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).subscribe(
                     participation => this.receiveParticipation(participation),
                     (error: HttpErrorResponse) => this.onError(error.message),
                 );

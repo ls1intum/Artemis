@@ -3,10 +3,6 @@ import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
-    ProgrammingExerciseArchiveDialogComponent,
-    ProgrammingExerciseArchivePopupComponent,
-    ProgrammingExerciseCleanupDialogComponent,
-    ProgrammingExerciseCleanupPopupComponent,
     ProgrammingExerciseComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
@@ -41,6 +37,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
@@ -68,6 +65,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArtemisComplaintsModule,
         AssessmentInstructionsModule,
         FeatureToggleModule,
+        ArtemisProgrammingAssessmentModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -75,10 +73,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseDialogComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseArchiveDialogComponent,
-        ProgrammingExerciseArchivePopupComponent,
-        ProgrammingExerciseCleanupDialogComponent,
-        ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseImportComponent,
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         // Form components
@@ -90,10 +84,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDialogComponent,
         ProgrammingExerciseUpdateComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseArchiveDialogComponent,
-        ProgrammingExerciseArchivePopupComponent,
-        ProgrammingExerciseCleanupDialogComponent,
-        ProgrammingExerciseCleanupPopupComponent,
         ProgrammingExerciseImportComponent,
     ],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],

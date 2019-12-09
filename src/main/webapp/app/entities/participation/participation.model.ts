@@ -35,6 +35,7 @@ export abstract class Participation implements BaseEntity {
     public presentationScore: number;
     public results: Result[];
     public submissions: Submission[];
+    public exercise?: Exercise;
     public type: ParticipationType;
 
     constructor(type: ParticipationType) {
