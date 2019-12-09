@@ -195,6 +195,10 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+        // We need to set id for newly created submissions
+        if (fileUploadSubmission.getId() == null) {
+            fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        }
         final var localPath = saveFileForSubmission(file, fileUploadSubmission, exercise);
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request

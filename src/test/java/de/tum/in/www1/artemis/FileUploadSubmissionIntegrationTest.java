@@ -103,14 +103,12 @@ public class FileUploadSubmissionIntegrationTest {
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmission() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
-        submission.setId(1L);
         FileUploadSubmission returnedSubmission = performInitialSubmission(fileUploadExercise.getId(), submission);
         String actualFilePath = FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), returnedSubmission.getId()).concat("file.png");
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
-        var localPath = fileService.actualPathForPublicPath(publicFilePath);
-        var fileBytes = Files.readAllBytes(Path.of(localPath));
+        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
     }
