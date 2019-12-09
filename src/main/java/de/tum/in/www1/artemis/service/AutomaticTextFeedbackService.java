@@ -22,8 +22,6 @@ public class AutomaticTextFeedbackService {
 
     private static final double DISTANCE_THRESHOLD = 1;
 
-    private static final int VARIANCE_THRESHOLD = 5;
-
     private final TextBlockRepository textBlockRepository;
 
     private final TextAssessmentUtilityService textAssessmentUtilityService;
