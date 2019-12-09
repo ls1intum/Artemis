@@ -44,6 +44,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     reverse: boolean;
     results: Result[];
+    filteredResultsSize: number;
     eventSubscriber: Subscription;
     newManualResultAllowed: boolean;
 
@@ -67,6 +68,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             filterProp: FilterProp.ALL,
         };
         this.results = [];
+        this.filteredResultsSize = 0;
     }
 
     ngOnInit() {
@@ -145,6 +147,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             default:
                 return true;
         }
+    };
+
+    /**
+     * Update the number of filtered results
+     *
+     * @param filteredResultsSize Total number of results after filters have been applied
+     */
+    handleResultsSizeChange = (filteredResultsSize: number) => {
+        this.filteredResultsSize = filteredResultsSize;
     };
 
     durationInMinutes(completionDate: Moment, initializationDate: Moment) {

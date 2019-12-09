@@ -25,6 +25,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
 
     participations: StudentParticipation[] = [];
+    filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
@@ -152,6 +153,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
+
+    /**
+     * Update the number of filtered participations
+     *
+     * @param filteredParticipationsSize Total number of participations after filters have been applied
+     */
+    handleParticipationsSizeChange = (filteredParticipationsSize: number) => {
+        this.filteredParticipationsSize = filteredParticipationsSize;
+    };
 
     /**
      * Formats the results in the autocomplete overlay.

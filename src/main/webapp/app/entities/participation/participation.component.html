@@ -1,7 +1,7 @@
 <div>
     <div class="d-flex">
         <h2>
-            <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+            <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
         </h2>
         <jhi-programming-exercise-instructor-submission-state
             class="ml-auto"
@@ -21,6 +21,7 @@
         [searchFields]="['student.login', 'student.name']"
         [searchTextFromEntity]="searchTextFromParticipation"
         [searchResultFormatter]="searchResultFormatter"
+        (entitiesSizeChange)="handleParticipationsSizeChange($event)"
     >
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
