@@ -7,9 +7,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -48,23 +45,10 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final JHipsterProperties jHipsterProperties;
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
-    private HttpLoggingFilter httpLoggingFilter;
-
-    private static final int PERIOD = 5 * 1000;
-
     public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
 
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
-
-        scheduler.scheduleAtFixedRate(() -> {
-            if (httpLoggingFilter != null) {
-                log.info("active requests: " + httpLoggingFilter.getActiveRequests() + ", all requests: " + httpLoggingFilter.getAllRequests());
-            }
-
-        }, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -76,7 +60,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_PRODUCTION))) {
             initCachingHttpHeadersFilter(servletContext, disps);
         }
-        addLoggingFilter(servletContext, disps);
+        // addLoggingFilter(servletContext, disps);
         log.info("Web application fully configured");
     }
 
@@ -150,7 +134,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
         log.debug("Registering Logging Filter");
-        httpLoggingFilter = new HttpLoggingFilter();
+        HttpLoggingFilter httpLoggingFilter = new HttpLoggingFilter();
         FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("httpLoggingFilter", httpLoggingFilter);
         loggingFilter.addMappingForUrlPatterns(disps, true, "/*");
         loggingFilter.setAsyncSupported(true);
