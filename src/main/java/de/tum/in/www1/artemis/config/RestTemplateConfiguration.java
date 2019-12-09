@@ -44,7 +44,7 @@ public class RestTemplateConfiguration {
         }
         interceptors.add(jenkinsInterceptor);
         restTemplate.setInterceptors(interceptors);
-        ;
+
         return restTemplate;
     }
 

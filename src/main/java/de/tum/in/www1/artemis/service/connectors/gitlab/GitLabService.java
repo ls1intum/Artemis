@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
+import static org.gitlab4j.api.models.AccessLevel.DEVELOPER;
+import static org.gitlab4j.api.models.AccessLevel.GUEST;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -10,10 +13,7 @@ import javax.annotation.PostConstruct;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
-import org.gitlab4j.api.models.Group;
-import org.gitlab4j.api.models.Project;
-import org.gitlab4j.api.models.ProjectHook;
-import org.gitlab4j.api.models.Visibility;
+import org.gitlab4j.api.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +41,8 @@ import de.tum.in.www1.artemis.service.util.UrlUtils;
 public class GitLabService implements VersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabService.class);
+
+    private static final String GITLAB_API_BASE = "/api/v4";
 
     @Value("${artemis.gitlab.url}")
     private URL GITLAB_SERVER_URL;
@@ -72,7 +74,7 @@ public class GitLabService implements VersionControlService {
 
     @PostConstruct
     public void init() {
-        this.BASE_API = GITLAB_SERVER_URL + "/api/v4";
+        this.BASE_API = GITLAB_SERVER_URL + GITLAB_API_BASE;
         this.gitlab = new GitLabApi(GITLAB_SERVER_URL.toString(), GITLAB_PRIVATE_TOKEN);
     }
 
@@ -106,7 +108,7 @@ public class GitLabService implements VersionControlService {
         final var userId = getUserId(username);
 
         try {
-            gitlab.getProjectApi().addMember(repositoryId, userId, org.gitlab4j.api.models.AccessLevel.DEVELOPER);
+            gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
         }
         catch (GitLabApiException e) {
             if (e.getValidationErrors().containsKey("access_level")
@@ -125,7 +127,7 @@ public class GitLabService implements VersionControlService {
         unprotectBranch(repositoryId, branch);
 
         try {
-            gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, org.gitlab4j.api.models.AccessLevel.DEVELOPER, org.gitlab4j.api.models.AccessLevel.DEVELOPER);
+            gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryUrl, e);
@@ -291,10 +293,10 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) {
-        setRepositoryPermission(repositoryUrl, username, org.gitlab4j.api.models.AccessLevel.GUEST);
+        setRepositoryPermission(repositoryUrl, username, GUEST);
     }
 
-    private void setRepositoryPermission(URL repositoryUrl, String username, org.gitlab4j.api.models.AccessLevel accessLevel) {
+    private void setRepositoryPermission(URL repositoryUrl, String username, AccessLevel accessLevel) {
         final var userId = getUserId(username);
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         try {

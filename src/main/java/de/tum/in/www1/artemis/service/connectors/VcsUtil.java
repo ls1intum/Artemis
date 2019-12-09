@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 
-import de.tum.in.www1.artemis.exception.BitbucketException;
-
 public class VcsUtil {
 
     /**
@@ -11,7 +9,6 @@ public class VcsUtil {
      *
      * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
      * @return The repository slug
-     * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
      */
     public static String getRepositorySlugFromUrl(URL repositoryUrl) {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
