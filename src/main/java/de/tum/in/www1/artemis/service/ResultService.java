@@ -9,7 +9,6 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -22,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -180,8 +180,6 @@ public class ResultService {
                 extractTestCasesFromResult(programmingExercise, result);
             }
             result = testCaseService.updateResultFromTestCases(result, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
-            Submission submission = result.getSubmission();
-            result.setSubmission(submission);
             result = resultRepository.save(result);
             // workaround to prevent that result.submission suddenly turns into a proxy and cannot be used any more later after returning this method
 
@@ -247,27 +245,6 @@ public class ResultService {
     }
 
     /**
-     * Notify a user via websocket
-     *
-     * @param participation participation used for notification
-     * @param result result used for notification
-     */
-    public void notifyUser(ProgrammingExerciseParticipation participation, Result result) {
-        if (result != null) {
-            // notify user via websocket
-            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
-
-            // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
-            // if (participation.isLti()) {
-            // }
-            // handles new results and sends them to LTI consumers
-            if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
-            }
-        }
-    }
-
-    /**
      * Update a manual result of a programming exercise.
      * Makes sure that the feedback items are persisted correctly, taking care of the OrderingColumn attribute of result.feedbacks.
      * See https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection and inline doc for reference.
@@ -327,15 +304,11 @@ public class ResultService {
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (savedResult.isExampleResult() == Boolean.FALSE || savedResult.isExampleResult() == null) {
 
-            messagingTemplate.convertAndSend("/topic/participation/" + savedResult.getParticipation().getId() + "/newResults", savedResult);
-
-            if (!Hibernate.isInitialized(savedResult.getParticipation().getExercise())) {
-                Hibernate.initialize(savedResult.getParticipation().getExercise());
-            }
-
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
                 ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) savedResult.getParticipation());
             }
+
+            websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
         }
         return savedResult;
     }
@@ -389,8 +362,8 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
+    public long countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
     }
 
     /**
@@ -445,10 +418,6 @@ public class ResultService {
         }
 
         return objectMapper.writeValueAsString(resultCopy);
-    }
-
-    public boolean existsByExerciseId(Long exerciseId) {
-        return resultRepository.existsByParticipation_ExerciseId(exerciseId);
     }
 
     public void notifyUserAboutNewResult(Result result, Long participationId) {

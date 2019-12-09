@@ -157,8 +157,9 @@ export class QuizComponent implements OnInit, OnDestroy {
             clearTimeout(timeout);
         });
 
+        // at the moment, this is always enabled
         // disable automatic websocket reconnect
-        this.jhiWebsocketService.disableReconnect();
+        // this.jhiWebsocketService.disableReconnect();
 
         if (this.submissionChannel) {
             this.jhiWebsocketService.unsubscribe('/user' + this.submissionChannel);
@@ -208,7 +209,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.subscribeToWebsocketChannels();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.findParticipation(1, this.quizId).subscribe(
+        this.participationService.findParticipation(this.quizId).subscribe(
             (response: HttpResponse<StudentParticipation>) => {
                 this.applyParticipationFull(response.body!);
             },
@@ -326,7 +327,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                         this.applyParticipationFull(changedParticipation);
                     } else {
                         // update quizExercise and results / submission
-                        this.applyParticipationAfterStart(changedParticipation);
+                        this.applyParticipationAfterQuizEnd(changedParticipation);
                     }
                 }
             });
@@ -637,7 +638,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     /*
      * This method only handles the update of the quiz after the quiz has ended
      */
-    applyParticipationAfterStart(participation: StudentParticipation) {
+    applyParticipationAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
         if (participation.results.length && participation.results[0].resultString && quizExercise.ended) {
             // quiz has ended and results are available
@@ -719,8 +720,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         if (this.result) {
             this.showingResult = true;
 
+            // at the moment, this is always enabled
             // disable automatic websocket reconnect
-            this.jhiWebsocketService.disableReconnect();
+            // this.jhiWebsocketService.disableReconnect();
 
             // assign user score (limit decimal places to 2)
             this.userScore = this.submission.scoreInPoints ? Math.round(this.submission.scoreInPoints * 100) / 100 : 0;

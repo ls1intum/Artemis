@@ -53,6 +53,11 @@
             ></jhi-modeling-assessment>
             <button class="btn btn-success" (click)="onKeepYours()" jhiTranslate="modelingAssessmentEditor.button.keepYours">keep yours</button>
         </div>
-        <jhi-assessment-instructions id="assessmentInstructions" *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
+        <jhi-collapsable-assessment-instructions
+            id="assessmentInstructions"
+            *ngIf="modelingExercise"
+            [exercise]="modelingExercise"
+            [collapsed]="true"
+        ></jhi-collapsable-assessment-instructions>
     </div>
 </div>

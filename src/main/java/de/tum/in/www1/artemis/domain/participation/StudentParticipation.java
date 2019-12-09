@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.participation;
 
 import java.util.Optional;
 
@@ -8,6 +8,7 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -19,9 +20,6 @@ public class StudentParticipation extends Participation {
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
-
-    // @Column(name = "lti")
-    // private Boolean lti; //TODO: use this in the future
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -39,19 +37,6 @@ public class StudentParticipation extends Participation {
     public void setPresentationScore(Integer presentationScore) {
         this.presentationScore = presentationScore;
     }
-
-    // public Boolean isLti() {
-    // return lti;
-    // }
-    //
-    // public Participation lti(Boolean lti) {
-    // this.lti = lti;
-    // return this;
-    // }
-    //
-    // public void setLti(Boolean lti) {
-    // this.lti = lti;
-    // }
 
     public User getStudent() {
         return student;
@@ -136,5 +121,12 @@ public class StudentParticipation extends Participation {
     @Override
     public String toString() {
         return "StudentParticipation{" + "presentationScore=" + presentationScore + ", student=" + student + '}';
+    }
+
+    @Override
+    public Participation copyParticipationId() {
+        var participation = new StudentParticipation();
+        participation.setId(getId());
+        return participation;
     }
 }

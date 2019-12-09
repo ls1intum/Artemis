@@ -1,21 +1,21 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
-@DiscriminatorValue(value = "PESP")
-public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
-
-    private static final long serialVersionUID = 1L;
+@DiscriminatorValue(value = "SPEP")
+public class SolutionProgrammingExerciseParticipation extends Participation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")
     @JsonView(QuizView.Before.class)
@@ -24,6 +24,10 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @Column(name = "build_plan_id")
     @JsonView(QuizView.Before.class)
     private String buildPlanId;
+
+    @OneToOne(mappedBy = "solutionParticipation")
+    @JsonIgnoreProperties("solutionParticipation")
+    private ProgrammingExercise programmingExercise;
 
     public String getRepositoryUrl() {
         return repositoryUrl;
@@ -71,25 +75,39 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @Override
     @JsonIgnore
-    // TODO: this is a helper method to avoid casts in other classes that want to access the underlying exercise
+    public Exercise getExercise() {
+        return getProgrammingExercise();
+    }
+
+    @Override
+    public void setExercise(Exercise exercise) {
+        if (exercise == null) {
+            setProgrammingExercise(null);
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            setProgrammingExercise((ProgrammingExercise) exercise);
+        }
+    }
+
+    @Override
     public ProgrammingExercise getProgrammingExercise() {
-        Exercise exercise = getExercise();
-        if (exercise instanceof ProgrammingExercise) { // this should always be the case except exercise is null
-            return (ProgrammingExercise) exercise;
-        }
-        else {
-            return null;
-        }
+        return programmingExercise;
     }
 
     @Override
     public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
-        setExercise(programmingExercise);
+        this.programmingExercise = programmingExercise;
     }
 
     @Override
     public String toString() {
-        return "Participation{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "'" + ", initializationState='"
-                + getInitializationState() + "'" + ", initializationDate='" + getInitializationDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
+        return "Participation{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "}";
+    }
+
+    @Override
+    public Participation copyParticipationId() {
+        var participation = new SolutionProgrammingExerciseParticipation();
+        participation.setId(getId());
+        return participation;
     }
 }

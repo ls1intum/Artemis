@@ -21,7 +21,6 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;

@@ -14,6 +14,7 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 public class ExerciseTest {
 

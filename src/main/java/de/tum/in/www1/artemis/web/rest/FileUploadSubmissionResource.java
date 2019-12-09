@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;

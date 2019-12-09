@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.TextBlockService.compareByStartIndexReversed;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -13,11 +14,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
@@ -43,8 +57,6 @@ public class TextAssessmentResource extends AssessmentResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final ParticipationService participationService;
-
     private final ResultService resultService;
 
     private final TextAssessmentService textAssessmentService;
@@ -59,17 +71,16 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ResultRepository resultRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService messagingService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
-    public TextAssessmentResource(AuthorizationCheckService authCheckService, ParticipationService participationService, ResultService resultService,
-            TextAssessmentService textAssessmentService, TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService,
-            TextSubmissionRepository textSubmissionRepository, ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService,
-            SimpMessageSendingOperations messagingTemplate, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
+    public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
+            TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
+            ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService,
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(authCheckService, userService);
 
-        this.participationService = participationService;
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -78,7 +89,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
-        this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
 
@@ -92,7 +103,6 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
@@ -118,7 +128,6 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
@@ -127,7 +136,8 @@ public class TextAssessmentResource extends AssessmentResource {
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
-            messagingTemplate.convertAndSend("/topic/participation/" + studentParticipation.getId() + "/newResults", result);
+            // TODO: we should send a result object here that includes the feedback (this might already be the case)
+            messagingService.broadcastNewResult(studentParticipation, result);
         }
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
@@ -214,16 +224,12 @@ public class TextAssessmentResource extends AssessmentResource {
 
         final TextExercise textExercise = (TextExercise) exercise;
 
-        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
-            automaticTextFeedbackService.get().suggestFeedback(result);
-        }
-        else {
-            textBlockService.prepopulateFeedbackBlocks(result);
-        }
+        computeBlocks(result, textExercise);
 
-        Comparator<TextBlock> byStartIndexReversed = (TextBlock first, TextBlock second) -> Integer.compare(second.getStartIndex(), first.getStartIndex());
         TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        textSubmission.getBlocks().sort(byStartIndexReversed);
+        final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+        textBlocks.sort(compareByStartIndexReversed);
+        textSubmission.setBlocks(textBlocks);
 
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user) && result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation) {
             ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
@@ -232,68 +238,76 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    private void computeBlocks(Result result, TextExercise textExercise) {
+        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
+            automaticTextFeedbackService.get().suggestFeedback(result);
+        }
+        else {
+            textBlockService.prepopulateFeedbackBlocks(result);
+        }
+    }
+
     /**
      * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
      *
-     * @param exerciseId   the id of the exercise we want the submission
      * @param submissionId the id of the submission we want
      * @return a Participation of the tutor in the submission
      */
-    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}")
+    @GetMapping("/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        log.debug("REST request to get data for tutors text assessment exercise: {}, submission: {}", exerciseId, submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
+    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId) {
+        log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
-        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
-        if (textSubmission.isEmpty()) {
+        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessorAndBlocks(submissionId);
+        if (optionalTextSubmission.isEmpty()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
                     .body(null);
         }
 
-        Participation participation = textSubmission.get().getParticipation();
-        participation = participationService.findOneWithEagerResultsAndSubmissionsAndAssessor(participation.getId());
-        List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionId);
+        final TextSubmission textSubmission = optionalTextSubmission.get();
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        final Participation participation = textSubmission.getParticipation();
+        final TextExercise exercise = (TextExercise) participation.getExercise();
+        checkAuthorization(exercise, user);
+        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        if (!participation.getResults().isEmpty()) {
-
-            // TODO: this does not work if we have multiple submissions / results for the same participation
-            // this happens some and then, I guess because students press the save/submit button simultaneously multiple times, we actually have about 100 cases in the database
-            if (participation.findLatestSubmission().isPresent()) {
-                Result latestResult = participation.findLatestSubmission().get().getResult();
-                User assessor = latestResult.getAssessor();
-
-                if (authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-                    // skip this case as, because instructors are allowed to override assessments
-                }
-                // Another tutor started assessing this submission and hasn't finished yet
-                else if (assessor != null && !assessor.getLogin().equals(user.getLogin()) && latestResult.getCompletionDate() == null) {
-                    throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
-                }
+        Result result = textSubmission.getResult();
+        if (result != null) {
+            final User assessor = result.getAssessor();
+            if (!isAtLeastInstructorForExercise && assessor != null && !assessor.getLogin().equals(user.getLogin()) && result.getCompletionDate() == null) {
+                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
             }
-        }
 
-        if (participation.getResults().isEmpty()) {
-            Result result = new Result();
+        }
+        else {
+            result = new Result();
             result.setParticipation(participation);
-            result.setSubmission(textSubmission.get());
+            result.setSubmission(textSubmission);
             resultService.createNewManualResult(result, false);
-            participation.addResult(result);
         }
 
-        for (Result result : participation.getResults()) {
-            List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-            result.setFeedbacks(assessments);
-            ((TextSubmission) result.getSubmission()).setBlocks(textBlocks);
+        // Set Submissions and Results of Participation to include requested only
+        participation.setSubmissions(Set.of(textSubmission));
+        participation.setResults(Set.of(result));
+
+        // Remove Result from Submission, as it is send in participation.results[0]
+        textSubmission.setResult(null);
+
+        final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+        result.setFeedbacks(assessments);
+
+        if (exercise.isAutomaticAssessmentEnabled() && (textSubmission.getBlocks() == null || textSubmission.getBlocks().isEmpty())) {
+            computeBlocks(result, exercise);
+
+            textSubmission.getBlocks().sort(compareByStartIndexReversed);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user) && participation instanceof StudentParticipation) {
-            ((StudentParticipation) participation).filterSensitiveInformation();
+        if (!isAtLeastInstructorForExercise && participation instanceof StudentParticipation) {
+            final StudentParticipation studentParticipation = (StudentParticipation) participation;
+            studentParticipation.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(participation);
