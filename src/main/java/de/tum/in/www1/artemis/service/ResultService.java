@@ -362,8 +362,8 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    public long countNumberOfAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(exerciseId, true);
+    public long countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
     }
 
     /**
