@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ContentChild, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ContentChild, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
@@ -65,6 +65,11 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
     @Input() customFilter: (entity: BaseEntity) => boolean = () => true;
     @Input() customFilterKey: any = {};
+
+    /**
+     * @property entitiesSizeChange Emits an event when the number of entities displayed changes (e.g. by filtering)
+     */
+    @Output() entitiesSizeChange = new EventEmitter<number>();
 
     /**
      * @property PAGING_VALUES Possible values for the number of entities shown per page of the table
@@ -187,6 +192,7 @@ export class DataTableComponent implements OnInit, OnChanges {
             filter(this.customFilter),
         )(this.allEntities);
         this.entities = this.sortByPipe.transform(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
+        this.entitiesSizeChange.emit(this.entities.length);
     }
 
     /**
