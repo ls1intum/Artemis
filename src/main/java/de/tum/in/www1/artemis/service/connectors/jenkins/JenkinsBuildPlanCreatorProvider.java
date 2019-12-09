@@ -7,11 +7,11 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 @Profile("jenkins")
 @Component
-public class JenkinsBuildPlanCreator {
+public class JenkinsBuildPlanCreatorProvider {
 
     private final JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator;
 
-    public JenkinsBuildPlanCreator(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator) {
+    public JenkinsBuildPlanCreatorProvider(JavaJenkinsBuildPlanCreator javaJenkinsBuildPlanCreator) {
         this.javaJenkinsBuildPlanCreator = javaJenkinsBuildPlanCreator;
     }
 

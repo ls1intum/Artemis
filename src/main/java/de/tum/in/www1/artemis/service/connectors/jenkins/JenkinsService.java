@@ -70,7 +70,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Value("${artemis.jenkins.url}")
     private URL JENKINS_SERVER_URL;
 
-    private final JenkinsBuildPlanCreator buildPlanCreatorFactory;
+    private final JenkinsBuildPlanCreatorProvider buildPlanCreatorProvider;
 
     private final RestTemplate restTemplate;
 
@@ -78,9 +78,9 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private JenkinsServer jenkinsServer;
 
-    public JenkinsService(JenkinsBuildPlanCreator buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
+    public JenkinsService(JenkinsBuildPlanCreatorProvider buildPlanCreatorFactory, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
             ProgrammingSubmissionRepository programmingSubmissionRepository) {
-        this.buildPlanCreatorFactory = buildPlanCreatorFactory;
+        this.buildPlanCreatorProvider = buildPlanCreatorFactory;
         this.restTemplate = restTemplate;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
@@ -92,7 +92,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
-        final var configBuilder = buildPlanCreatorFactory.builderFor(exercise.getProgrammingLanguage());
+        final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
         final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
         planKey = exercise.getProjectKey() + "-" + planKey;
 
