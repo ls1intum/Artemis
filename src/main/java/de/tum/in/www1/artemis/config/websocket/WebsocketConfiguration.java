@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -29,6 +30,7 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
+import org.xnio.Options;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
@@ -66,6 +68,13 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     protected void configureWebSocketTransport(WebSocketTransportRegistration registration) {
         // limit these values to prevent problems with slow clients
         registration.setSendTimeLimit(5 * 1000).setSendBufferSizeLimit(128 * 1024);
+    }
+
+    @Bean
+    public UndertowServletWebServerFactory undertowServletWebServerFactory() {
+        final var factory = new UndertowServletWebServerFactory();
+        factory.addBuilderCustomizers(builder -> builder.setSocketOption(Options.WRITE_TIMEOUT, 60 * 1000));
+        return factory;
     }
 
     @Autowired

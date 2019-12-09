@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.participation;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -11,6 +11,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -245,4 +248,12 @@ public abstract class Participation implements Serializable, ParticipationInterf
         return "Participation{" + "id=" + id + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results=" + results
                 + ", submissions=" + submissions + '}';
     }
+
+    /**
+     * NOTE: do not use this in a transactional context and do not save the returned object to the database
+     * This method is useful when we want to cut off attributes while sending entities to the client and we are only interested in the id of the object
+     * We use polymorphism here, so subclasses should implement / override this method to create the correct object type
+     * @return an empty participation just including the id of the object
+     */
+    public abstract Participation copyParticipationId();
 }

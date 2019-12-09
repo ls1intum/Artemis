@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -326,26 +328,32 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/results : sends all results for a exercise and the logged in user
+     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/exercises/{exerciseId}/results")
+    @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getResultsForCurrentUser(@PathVariable Long exerciseId) {
+        // TODO: refactor this and load
+        // * the exercise (without the course, no template / solution participations)
+        // * all submissions (with their result) of the user (to be displayed in the result history)
+        // * the student questions
+        // * the hints
+        // also see exercise.service.ts and course-exercise-details.component.ts
         long start = System.currentTimeMillis();
-        User student = userService.getUserWithGroupsAndAuthorities();
-        log.debug(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        log.debug(user.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it
-        if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
+        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
         }
 
         if (exercise != null) {
-            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), student.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
 
             exercise.setStudentParticipations(new HashSet<>());
 
@@ -362,7 +370,7 @@ public class ExerciseResource {
             // TODO: we should also check that the submissions do not contain sensitive data
 
             // remove sensitive information for students
-            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
             if (isStudent) {
                 exercise.filterSensitiveInformation();
             }
