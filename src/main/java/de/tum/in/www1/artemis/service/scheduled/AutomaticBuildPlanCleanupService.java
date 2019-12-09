@@ -14,8 +14,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import io.github.jhipster.config.JHipsterConstants;

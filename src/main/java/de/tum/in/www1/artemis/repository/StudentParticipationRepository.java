@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 /**
  * Spring Data JPA repository for the Participation entity.

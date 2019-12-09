@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
@@ -397,7 +398,6 @@ public class LtiService {
      */
     public void onNewBuildResult(ProgrammingExerciseStudentParticipation participation) {
 
-        // TODO investigate this call for manual results. Could it be the case that the exercise is not initialized (Hibernate) here?
         // Get the LTI outcome URL
         ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
@@ -412,8 +412,6 @@ public class LtiService {
             }
 
             try {
-                // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
-                // TODO remove workaround since IMSPOXRequest is fixed
                 log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
                         ltiOutcomeUrl.getSourcedId());
                 HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
