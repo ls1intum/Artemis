@@ -9,7 +9,7 @@
             "conflictsResolved": "Alle Konflikte wurden bearbeitet."
         },
         "dashboard": {
-            "heading": "Tutor Dashboard zur Bewertung der Modellierungsaufgabe \"{{ title }}\"",
+            "heading": "Einreichungen und Bewertungen der Modellierungsaufgabe \"{{ title }}\"",
             "actions": {
                 "open": "Modell bewerten"
             }

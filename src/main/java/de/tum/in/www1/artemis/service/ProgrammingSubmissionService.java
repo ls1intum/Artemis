@@ -590,7 +590,7 @@ public class ProgrammingSubmissionService {
         return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
     }
 
-    public void hideDetails(ProgrammingSubmission submission) {
-        submissionService.hideDetails(submission);
+    public void hideDetails(ProgrammingSubmission submission, User user) {
+        submissionService.hideDetails(submission, user);
     }
 }

@@ -118,8 +118,8 @@
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Tutoraktionen:",
-                    "information": "Informationen",
-                    "assessments": "Bewertungen",
+                    "scores": "Bewertungen",
+                    "submissions": "Einreichungen",
                     "statistics": "Statistiken"
                 },
                 "notParticipated": "Nicht teilgenommen",

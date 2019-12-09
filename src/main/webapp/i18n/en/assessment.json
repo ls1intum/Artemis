@@ -38,6 +38,7 @@
                     "score": "Score",
                     "duration": "Duration",
                     "assessmentType": "Assessment Type",
+                    "student": "Student",
                     "assessor": "Reviewer",
                     "action": "Action"
                 },
