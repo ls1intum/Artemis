@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("/api")
-public class FileUploadSubmissionResource extends GenericSubmissionResource<FileUploadSubmission, FileUploadExercise> {
+public class FileUploadSubmissionResource extends GenericSubmissionResource<FileUploadSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 

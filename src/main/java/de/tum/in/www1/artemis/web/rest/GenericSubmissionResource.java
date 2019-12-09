@@ -11,14 +11,13 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.GenericSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * Generic Resource for Text, Modeling and File Upload Submission REST Controllers
  */
-public abstract class GenericSubmissionResource<T extends Submission, E extends Exercise> {
+public abstract class GenericSubmissionResource<T extends Submission> {
 
     @Value("${jhipster.clientApp.name}")
     protected String applicationName;
@@ -49,7 +48,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
      * @param exercise that we want to check
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    ResponseEntity<T> checkExerciseValidityForStudent(E exercise) {
+    ResponseEntity<T> checkExerciseValidityForStudent(Exercise exercise) {
         if (exercise == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
@@ -75,11 +74,9 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
      * @param exercise that we want to check
      * @param exerciseType type of the exercise
      * @param submissionService concrete submission service that is used to check lock limit
-     * @param <S> concrete submission repository class
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    <S extends GenericSubmissionRepository<T>> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType,
-            SubmissionService<T, S> submissionService) {
+    <E extends Exercise> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType, SubmissionService submissionService) {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -107,7 +104,7 @@ public abstract class GenericSubmissionResource<T extends Submission, E extends 
      * @param newSubmission new instance of concrete submission which can be needed if we don't find submission
      * @return the ResponseEntity with the participation as body
      */
-    ResponseEntity<T> getDataForEditor(long participationId, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
+    <E extends Exercise> ResponseEntity<T> getDataForEditor(long participationId, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()

@@ -30,7 +30,7 @@ import io.swagger.annotations.*;
  */
 @RestController
 @RequestMapping("/api")
-public class ModelingSubmissionResource extends GenericSubmissionResource<ModelingSubmission, ModelingExercise> {
+public class ModelingSubmissionResource extends GenericSubmissionResource<ModelingSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 

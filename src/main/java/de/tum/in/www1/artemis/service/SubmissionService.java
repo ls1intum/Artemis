@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -103,7 +102,6 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * @param submissionType type of the submission
      * @return the saved concrete submission entity
      */
-    @Transactional(rollbackFor = Exception.class)
     public T save(T submission, Exercise exercise, String username, Class<T> submissionType) {
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         submission.setResult(null);
@@ -230,7 +228,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      *
      * @param submission the submission to lock
      */
-    <L extends Exercise> Result lockSubmission(T submission) {
+    Result lockSubmission(T submission) {
         Result result = submission.getResult();
         if (result == null) {
             result = setNewResult(submission);
@@ -249,10 +247,9 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
      * Returns a random submission that is not manually assessed or an empty optional if there is none
      * @param exercise exercise to which the submission belongs
      * @param submissionType concrete type of the submission
-     * @param <L> concrete exercise
      * @return submission of the specified type
      */
-    public <L extends Exercise> Optional<T> getSubmissionWithoutManualResult(L exercise, Class<T> submissionType) {
+    public Optional<T> getSubmissionWithoutManualResult(Exercise exercise, Class<T> submissionType) {
         List<T> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId()).stream()
                 .map(studentParticipation -> studentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());

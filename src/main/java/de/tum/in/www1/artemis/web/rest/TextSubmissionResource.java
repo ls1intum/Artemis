@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @RestController
 @RequestMapping("/api")
-public class TextSubmissionResource extends GenericSubmissionResource<TextSubmission, TextExercise> {
+public class TextSubmissionResource extends GenericSubmissionResource<TextSubmission> {
 
     private static final String ENTITY_NAME = "textSubmission";
 
