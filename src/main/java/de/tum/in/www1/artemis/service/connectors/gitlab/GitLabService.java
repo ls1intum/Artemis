@@ -25,7 +25,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -180,22 +183,6 @@ public class GitLabService implements VersionControlService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error trying to delete repository on GitLab: " + repositoryName, e);
-        }
-    }
-
-    @Override
-    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
-        final var exercise = participation.getProgrammingExercise();
-        final var courseKey = exercise.getCourse().getId();
-        final var exerciseKey = exercise.getProjectKey();
-        final var slug = getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl());
-
-        try {
-            return new URL(String.format("%s/%s/%s/%s", GITLAB_SERVER_URL, courseKey, exerciseKey, slug));
-        }
-        catch (MalformedURLException e) {
-            log.error(e.getMessage());
-            throw new GitLabException("Repository WEB URL cannot be built with", e);
         }
     }
 

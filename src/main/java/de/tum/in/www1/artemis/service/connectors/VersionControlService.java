@@ -5,7 +5,6 @@ import java.net.URL;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
@@ -37,14 +36,6 @@ public interface VersionControlService {
      * @param repositoryUrl of the repository that should be deleted
      */
     void deleteRepository(URL repositoryUrl);
-
-    /**
-     * Generates the web url for the repository that belongs to the given participation
-     *
-     * @param participation a participation of a programming exercise
-     * @return the URL of the repository of the participation
-     */
-    URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the clone URL used for cloning

@@ -25,8 +25,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -178,18 +180,6 @@ public class BitbucketService implements VersionControlService {
     @Override
     public void deleteRepository(URL repositoryUrl) {
         deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
-    }
-
-    @Override
-    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
-        try {
-            return new URL(BITBUCKET_SERVER_URL + "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrlAsUrl()) + "/repos/"
-                    + getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl()) + "/browse");
-        }
-        catch (MalformedURLException e) {
-            log.error("Couldn't construct repository web URL");
-        }
-        return BITBUCKET_SERVER_URL;
     }
 
     @Override
