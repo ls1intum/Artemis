@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
 import javax.annotation.PostConstruct;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

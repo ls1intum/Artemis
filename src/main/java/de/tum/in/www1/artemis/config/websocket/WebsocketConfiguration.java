@@ -2,16 +2,14 @@ package de.tum.in.www1.artemis.config.websocket;
 
 import java.security.Principal;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -28,9 +26,11 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurationSupport;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
+import org.xnio.Options;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
@@ -48,28 +48,12 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private WebSocketMessageBrokerStats webSocketMessageBrokerStats;
 
-    // TODO: remove again
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
     private ThreadPoolTaskExecutor inboundChannelExecutor;
 
     private ThreadPoolTaskExecutor outboundChannelExecutor;
 
-    private static final int SCHEDULER_PERIOD = 60 * 1000;
-
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        // TODO: remove again
-        scheduler.scheduleAtFixedRate(() -> {
-            if (inboundChannelExecutor != null && outboundChannelExecutor != null) {
-                log.info("inboundChannelExecutor: " + inboundChannelExecutor.getThreadPoolExecutor().getKeepAliveTime(TimeUnit.SECONDS) + "s, "
-                        + inboundChannelExecutor.getThreadPoolExecutor().getQueue().size() + ", " + inboundChannelExecutor.getThreadPoolExecutor().getQueue().remainingCapacity()
-                        + "; " + "outboundChannelExecutor: " + outboundChannelExecutor.getThreadPoolExecutor().getKeepAliveTime(TimeUnit.SECONDS) + "s, "
-                        + outboundChannelExecutor.getThreadPoolExecutor().getQueue().size() + ", "
-                        + outboundChannelExecutor.getThreadPoolExecutor().getQueue().remainingCapacity());
-            }
-
-        }, SCHEDULER_PERIOD, SCHEDULER_PERIOD, TimeUnit.MILLISECONDS);
     }
 
     @PostConstruct
@@ -78,6 +62,19 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
         webSocketMessageBrokerStats = webSocketMessageBrokerStats();
         webSocketMessageBrokerStats.setLoggingPeriod(5 * 1000);
+    }
+
+    @Override
+    protected void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        // limit these values to prevent problems with slow clients
+        registration.setSendTimeLimit(5 * 1000).setSendBufferSizeLimit(128 * 1024);
+    }
+
+    @Bean
+    public UndertowServletWebServerFactory undertowServletWebServerFactory() {
+        final var factory = new UndertowServletWebServerFactory();
+        factory.addBuilderCustomizers(builder -> builder.setSocketOption(Options.WRITE_TIMEOUT, 60 * 1000));
+        return factory;
     }
 
     @Autowired
@@ -98,9 +95,8 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         // NOTE: by setting a WebSocketTransportHandler we disable http poll, http stream and other exotic workarounds and only support real websocket connections.
         // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
-        registry.addEndpoint("/websocket/tracker")
-                // Override this value due to warnings in the logs: o.s.w.s.s.t.h.DefaultSockJsService : Origin check enabled but transport 'jsonp' does not support it.
-                .setAllowedOrigins("*").withSockJS().setTransportHandlers(webSocketTransportHandler).setInterceptors(httpSessionHandshakeInterceptor());
+        registry.addEndpoint("/websocket/tracker").setAllowedOrigins("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
+                .setInterceptors(httpSessionHandshakeInterceptor());
     }
 
     // TODO: allow to customize these settings via application.yml file
@@ -108,16 +104,22 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     @Override
     public ThreadPoolTaskExecutor clientOutboundChannelExecutor() {
         outboundChannelExecutor = super.clientOutboundChannelExecutor();
-        outboundChannelExecutor.setQueueCapacity(100 * 1000);
+        // outboundChannelExecutor.setQueueCapacity(100 * 1000);
+        // a higher pool size can help when problems with slow clients occur
+        outboundChannelExecutor.setCorePoolSize(Runtime.getRuntime().availableProcessors() * 4);
+        // outboundChannelExecutor.setMaxPoolSize(Runtime.getRuntime().availableProcessors() * 8);
         outboundChannelExecutor.setKeepAliveSeconds(10);
+        outboundChannelExecutor.setAllowCoreThreadTimeOut(true);
         return outboundChannelExecutor;
     }
 
     @Override
     public ThreadPoolTaskExecutor clientInboundChannelExecutor() {
         inboundChannelExecutor = super.clientInboundChannelExecutor();
-        inboundChannelExecutor.setQueueCapacity(100 * 1000);
+        // inboundChannelExecutor.setQueueCapacity(100 * 1000);
+        // outboundChannelExecutor.setMaxPoolSize(Runtime.getRuntime().availableProcessors() * 8);
         inboundChannelExecutor.setKeepAliveSeconds(10);
+        inboundChannelExecutor.setAllowCoreThreadTimeOut(true);
         return inboundChannelExecutor;
     }
 

@@ -6,8 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,7 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    public static String USERS_CACHE = "users";
+    String USERS_CACHE = "users";
 
     Optional<User> findOneByActivationKey(String activationKey);
 
@@ -40,23 +38,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select distinct user from User user left join fetch user.groups left join fetch user.authorities left join fetch user.guidedTourSettings where user.login = :#{#login}")
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(@Param("login") String login);
 
-    @Query("select distinct user from User user left join fetch user.authorities where user.id = :#{#userId}")
-    Optional<User> findOneWithAuthoritiesById(@Param("userId") Long userId);
-
     @Query("select distinct user from User user left join fetch user.groups where user.login = :#{#login}")
     Optional<User> findOneWithGroupsByLogin(@Param("login") String login);
 
     @Query("select distinct user from User user left join fetch user.authorities where user.login = :#{#login}")
     @Cacheable(cacheNames = USERS_CACHE)
     Optional<User> findOneWithAuthoritiesByLogin(@Param("login") String login);
-
-    Page<User> findAllByLoginNot(Pageable pageable, String login);
-
-    @Query("select result.participation.student.id from Result result where result.submission.id = :#{#submissionId}")
-    Long findUserIdBySubmissionId(@Param("submissionId") Long submissionId);
-
-    @Query("select result.participation.student from Result result where result.id = :#{#resultId}")
-    User findUserByResultId(@Param("resultId") Long resultId);
 
     Long countByGroupsIsContaining(Set<String> groups);
 
