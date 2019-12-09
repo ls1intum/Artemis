@@ -28,7 +28,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
 
-    filePatternRegex = /(doc|DOC|docx|DOCX|dotx|DOTX|xml|XML|pdf|PDF|wps|WPS|wpd|WPD|wp|WP|wp4|WP4|wp5|WP5|wp6|WP6|wp7|WP7|qxd|QXD|ps|PS|pub|PUB|tex|TEX|vsd|VSD|bmp|BMP|jpg|JPG|jpeg|JPEG|pjpeg|PJEPG|gif|GIF|pgn|PGN|png|PNG|txt|TXT|rtf|RTF|wav|WAV|mp3|MP3|html|HTML|odt|ODT|xls|XLS|xlsx|XLSX|wks|WKS|xlr|XLR|csv|CSV|ppt|PPT|pps|PPS|ppsx|PPXS)$/;
+    filePatternRegex = /(doc|DOC|docx|DOCX|dotx|DOTX|xml|XML|pdf|PDF|wps|WPS|wpd|WPD|wp|WP|wp4|WP4|wp5|WP5|wp6|WP6|wp7|WP7|qxd|QXD|ps|PS|pub|PUB|tex|TEX|vsd|VSD|bmp|BMP|jpg|JPG|jpeg|JPEG|pjpeg|PJEPG|gif|GIF|pgn|PGN|png|PNG|txt|TXT|rtf|RTF|wav|WAV|mp3|MP3|html|HTML|odt|ODT|xls|XLS|xlsx|XLSX|wks|WKS|xlr|XLR|csv|CSV|ppt|PPT|pps|PPS|ppsx|PPXS|zip|ZIP|tar|TAR|war|WAR|rar|RAR|text|TEXT)$/;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,

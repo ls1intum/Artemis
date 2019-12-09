@@ -74,7 +74,6 @@ public class FileUploadExerciseResource {
         if (fileUploadExercise.getId() != null) {
             throw new BadRequestAlertException("A new fileUploadExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-
         // Check if file pattern matches regex
         Matcher filePatternMatcher = FILE_PATTERN.matcher(fileUploadExercise.getFilePattern());
         if (!filePatternMatcher.matches()) {
