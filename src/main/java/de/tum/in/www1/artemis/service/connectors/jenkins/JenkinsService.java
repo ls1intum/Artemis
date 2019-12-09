@@ -46,7 +46,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -530,14 +529,14 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             final var response = restTemplate.postForEntity(builder.build(true).toString(), null, responseType);
             if (response.getStatusCode() != allowedStatus) {
-                throw new VersionControlException(
+                throw new JenkinsException(
                         messageInCaseOfError + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
             }
             return response.getBody();
         }
         catch (HttpClientErrorException e) {
             log.error(messageInCaseOfError);
-            throw new VersionControlException(messageInCaseOfError, e);
+            throw new JenkinsException(messageInCaseOfError, e);
         }
     }
 
@@ -558,7 +557,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             final var response = restTemplate.exchange(builder.build(true).toString(), HttpMethod.POST, entity, responseType);
             if (!allowedStatuses.contains(response.getStatusCode())) {
-                throw new VersionControlException(
+                throw new JenkinsException(
                         messagInCaseOfError + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
             }
 
@@ -566,7 +565,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
         catch (HttpClientErrorException e) {
             log.error(messagInCaseOfError);
-            throw new VersionControlException(messagInCaseOfError, e);
+            throw new JenkinsException(messagInCaseOfError, e);
         }
     }
 
@@ -582,7 +581,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         catch (TransformerException e) {
             final var errorMessage = "Unable to parse XML document to String! " + doc;
             log.error(errorMessage);
-            throw new VersionControlException(errorMessage, e);
+            throw new JenkinsException(errorMessage, e);
         }
     }
 
