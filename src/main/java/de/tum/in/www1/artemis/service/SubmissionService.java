@@ -27,11 +27,11 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-public abstract class SubmissionService<T extends Submission, E extends GenericSubmissionRepository<T>> {
+public abstract class SubmissionService<T extends Submission> {
 
     private final UserService userService;
 
-    final E genericSubmissionRepository;
+    protected final GenericSubmissionRepository<T> genericSubmissionRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -49,7 +49,7 @@ public abstract class SubmissionService<T extends Submission, E extends GenericS
 
     public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             ParticipationService participationService, SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository,
-            E genericSubmissionRepository, ResultService resultService) {
+            GenericSubmissionRepository<T> genericSubmissionRepository, ResultService resultService) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;

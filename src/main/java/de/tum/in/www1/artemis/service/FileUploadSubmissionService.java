@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-public class FileUploadSubmissionService extends SubmissionService<FileUploadSubmission, FileUploadSubmissionRepository> {
+public class FileUploadSubmissionService extends SubmissionService<FileUploadSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionService.class);
 

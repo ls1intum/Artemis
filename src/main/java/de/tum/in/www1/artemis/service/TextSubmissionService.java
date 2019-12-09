@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-public class TextSubmissionService extends SubmissionService<TextSubmission, TextSubmissionRepository> {
+public class TextSubmissionService extends SubmissionService<TextSubmission> {
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
@@ -91,7 +91,7 @@ public class TextSubmissionService extends SubmissionService<TextSubmission, Tex
      *
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
-        return genericSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
+        return ((TextSubmissionRepository) genericSubmissionRepository).findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
                 .filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get()).collect(Collectors.toList());
     }
 

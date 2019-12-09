@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-public class ModelingSubmissionService extends SubmissionService<ModelingSubmission, ModelingSubmissionRepository> {
+public class ModelingSubmissionService extends SubmissionService<ModelingSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
