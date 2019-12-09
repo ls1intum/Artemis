@@ -7,6 +7,6 @@
     [class.btn-sm]="smallButton"
 >
     <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="'circle-notch'"></fa-icon>
-    <img *ngIf="!buttonLoading" class="ide-icon" src="../../../content/images/intellij_logo.png" />
+    <span *ngIf="!buttonLoading" class="intellij-logo"></span>
     <span>{{ buttonLabel }}</span>
 </button>
