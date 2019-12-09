@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -49,12 +51,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet)
-            throws IOException, InterruptedException, IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws InterruptedException, IllegalAccessException, GitAPIException {
         Participation participation = participationService.findParticipation(participationId);
         // Error case 1: The participation is not from a programming exercise.
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
+        }
         // Error case 2: The user does not have permissions to push into the repository.
         boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
         if (!hasPermissions) {
@@ -71,16 +73,18 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     URL getRepositoryUrl(Long participationId) throws IllegalArgumentException {
         Participation participation = participationService.findParticipation(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
+        }
         return ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
     }
 
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
         Participation participation = participationService.findParticipation(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
+        }
         return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
     }
 

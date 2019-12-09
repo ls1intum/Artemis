@@ -7,7 +7,7 @@ import { SortByModule } from 'app/components/pipes';
 import { FileUploadAssessmentComponent } from './file-upload-assessment.component';
 import { ArtemisTextAssessmentModule } from 'app/text-assessment';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
-import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { FileUploadAssessmentDashboardComponent } from 'app/file-upload-assessment/file-upload-assessment-dashboard/file-upload-assessment-dashboard.component';
 
 const ENTITY_STATES = [...fileUploadAssessmentRoutes];

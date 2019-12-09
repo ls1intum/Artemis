@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,11 +16,13 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -44,14 +45,17 @@ public class QuizSubmissionResource {
 
     private final ParticipationService participationService;
 
+    private final WebsocketMessagingService messagingService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, WebsocketMessagingService messagingService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
     }
 
     /**
@@ -108,12 +112,12 @@ public class QuizSubmissionResource {
         quizExercise.setQuizPointStatistic(null);
         quizExercise.setCourse(null);
 
-        if (Hibernate.isInitialized(participation.getResults()) && participation.getResults().size() == 0) {
+        if (participation.getResults().size() == 0) {
             participation.addResult(result);
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/exercise/" + quizExercise.getId() + "/participation", participation);
         }
         else {
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);

@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -163,7 +164,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (submission.getParticipation() != null) {
             submission.getParticipation().addResult(result);
         }
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         fileUploadSubmissionRepository.save(submission);
         return result;
     }
@@ -262,7 +263,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 

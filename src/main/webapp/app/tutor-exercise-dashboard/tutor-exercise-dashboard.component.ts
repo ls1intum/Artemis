@@ -40,6 +40,7 @@ export interface ExampleSubmissionQueryParams {
 @Component({
     selector: 'jhi-courses',
     templateUrl: './tutor-exercise-dashboard.component.html',
+    styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [JhiAlertService, CourseService],
 })
 export class TutorExerciseDashboardComponent implements OnInit {
@@ -76,10 +77,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
 
-    readonly ExerciseType_TEXT = ExerciseType.TEXT;
-    readonly ExerciseType_MODELING = ExerciseType.MODELING;
-    readonly ExerciseType_FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly ExerciseType = ExerciseType;
 
     stats = {
         toReview: {

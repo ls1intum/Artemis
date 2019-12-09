@@ -94,8 +94,7 @@ public class TextAssessmentService extends AssessmentService {
         result.setHasFeedback(false);
         result.determineAssessmentType();
 
-        resultRepository.save(result);
-        return result;
+        return resultRepository.save(result);
     }
 
     public List<Feedback> getAssessmentsForResult(Result result) {
