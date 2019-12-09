@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
+import { UMLModel } from '@ls1intum/apollon';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
@@ -17,8 +18,10 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
-    problemStatement: SafeHtml | null;
-    gradingInstructions: SafeHtml | null;
+    problemStatement: SafeHtml;
+    gradingInstructions: SafeHtml;
+    sampleSolution: SafeHtml;
+    sampleSolutionUML: UMLModel;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -39,6 +42,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.modelingExercise = modelingExerciseResponse.body!;
             this.problemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.problemStatement);
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.gradingInstructions);
+            this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+            this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
         });
     }
 

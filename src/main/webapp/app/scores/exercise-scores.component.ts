@@ -3,7 +3,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { areManualResultsAllowed, Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
@@ -16,6 +15,7 @@ import { ProgrammingSubmissionService } from 'app/programming-submission';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { FeatureToggle } from 'app/feature-toggle';
 
 enum FilterProp {
     ALL = 'all',
@@ -37,6 +37,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly FeatureToggle = FeatureToggle;
 
     course: Course;
     exercise: Exercise;
@@ -61,8 +62,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private participationService: ParticipationService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-        private sourceTreeService: SourceTreeService,
-        private modalService: NgbModal,
     ) {
         this.resultCriteria = {
             filterProp: FilterProp.ALL,
@@ -97,7 +96,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     getResults() {
         return this.resultService
-            .getResultsForExercise(this.exercise.course!.id, this.exercise.id, {
+            .getResultsForExercise(this.exercise.id, {
                 ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
                 withAssessors: this.exercise.type === ExerciseType.MODELING,
@@ -248,6 +247,4 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramSub.unsubscribe();
     }
-
-    callback() {}
 }

@@ -19,8 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -39,8 +38,6 @@ public class FileUploadSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
     private final CourseService courseService;
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
@@ -55,20 +52,15 @@ public class FileUploadSubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final ResultRepository resultRepository;
-
-    public FileUploadSubmissionResource(FileUploadSubmissionRepository fileUploadSubmissionRepository, CourseService courseService,
-            FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService,
-            UserService userService, ExerciseService exerciseService, ParticipationService participationService, ResultRepository resultRepository) {
+    public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
+            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
-        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.courseService = courseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -88,7 +80,8 @@ public class FileUploadSubmissionResource {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
 
         final var exercise = fileUploadExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastStudentForExercise(exercise)) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             return forbidden();
         }
 
@@ -122,7 +115,7 @@ public class FileUploadSubmissionResource {
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        this.fileUploadSubmissionService.hideDetails(submission);
+        this.fileUploadSubmissionService.hideDetails(submission, user);
         return ResponseEntity.ok(submission);
     }
 
@@ -139,13 +132,14 @@ public class FileUploadSubmissionResource {
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
         fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -160,23 +154,41 @@ public class FileUploadSubmissionResource {
      */
     @GetMapping("/exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (assessedByTutor) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<FileUploadSubmission> fileUploadSubmissions;
+        final List<FileUploadSubmission> fileUploadSubmissions;
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             fileUploadSubmissions = fileUploadSubmissionService.getAllFileUploadSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
             fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exerciseId, submittedOnly);
         }
+
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            fileUploadSubmissions.forEach(submission -> fileUploadSubmissionService.hideDetails(submission, user));
+        }
+
+        // remove unnecessary data from the REST response
+        fileUploadSubmissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
 
         return ResponseEntity.ok().body(fileUploadSubmissions);
     }
@@ -193,8 +205,9 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
-        Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+        final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
@@ -209,23 +222,23 @@ public class FileUploadSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourse().getId());
 
-        FileUploadSubmission fileUploadSubmission;
+        final FileUploadSubmission fileUploadSubmission;
         if (lockSubmission) {
             fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise);
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
                     .getFileUploadSubmissionWithoutManualResult((FileUploadExercise) fileUploadExercise);
-            if (!optionalFileUploadSubmission.isPresent()) {
+            if (optionalFileUploadSubmission.isEmpty()) {
                 return notFound();
             }
             fileUploadSubmission = optionalFileUploadSubmission.get();
         }
 
         // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        final StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission);
+        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

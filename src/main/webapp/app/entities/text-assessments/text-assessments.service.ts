@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result';
 import { StudentParticipation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
@@ -51,8 +52,11 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    public getFeedbackDataForExerciseSubmission(exerciseId: number, submissionId: number): Observable<StudentParticipation> {
-        return this.http.get<StudentParticipation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
+    public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
+        return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`).pipe(
+            // Wire up Result and Submission
+            tap((sp: StudentParticipation) => (sp.submissions[0].result = sp.results[0])),
+        );
     }
 
     public getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.*;
@@ -71,14 +72,82 @@ public class QuizExerciseService {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
         // fix references in all drag and drop and short answer questions (step 1/2)
-        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            if (quizQuestion instanceof MultipleChoiceQuestion) {
+                var multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
+                var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic();
+                if (quizQuestionStatistic == null) {
+                    quizQuestionStatistic = new MultipleChoiceQuestionStatistic();
+                    multipleChoiceQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                }
+
+                for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
+                    quizQuestionStatistic.addAnswerOption(answerOption);
+                }
+
+                // if an answerOption was removed then remove the associated AnswerCounters implicitly
+                Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
+                for (AnswerCounter answerCounter : quizQuestionStatistic.getAnswerCounters()) {
+                    if (answerCounter.getId() != null) {
+                        if (!(multipleChoiceQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
+                            answerCounter.setAnswer(null);
+                            answerCounterToDelete.add(answerCounter);
+                        }
+                    }
+                }
+                quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion) {
+                var dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                var quizQuestionStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
+                if (quizQuestionStatistic == null) {
+                    quizQuestionStatistic = new DragAndDropQuestionStatistic();
+                    dragAndDropQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                }
+
+                for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
+                    quizQuestionStatistic.addDropLocation(dropLocation);
+                }
+
+                // if a dropLocation was removed then remove the associated AnswerCounters implicitly
+                Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
+                for (DropLocationCounter dropLocationCounter : quizQuestionStatistic.getDropLocationCounters()) {
+                    if (dropLocationCounter.getId() != null) {
+                        if (!(dragAndDropQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
+                            dropLocationCounter.setDropLocation(null);
+                            dropLocationCounterToDelete.add(dropLocationCounter);
+                        }
+                    }
+                }
+                quizQuestionStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
+
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndices(dragAndDropQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion) {
-                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                var shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                var quizQuestionStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
+                if (quizQuestionStatistic == null) {
+                    quizQuestionStatistic = new ShortAnswerQuestionStatistic();
+                    shortAnswerQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                }
+
+                for (var spot : shortAnswerQuestion.getSpots()) {
+                    quizQuestionStatistic.addSpot(spot);
+                }
+
+                // if a spot was removed then remove the associated spotCounters implicitly
+                Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
+                for (ShortAnswerSpotCounter spotCounter : quizQuestionStatistic.getShortAnswerSpotCounters()) {
+                    if (spotCounter.getId() != null) {
+                        if (!(shortAnswerQuestion.getSpots().contains(spotCounter.getSpot()))) {
+                            spotCounter.setSpot(null);
+                            spotCounterToDelete.add(spotCounter);
+                        }
+                    }
+                }
+                quizQuestionStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
+
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
             }

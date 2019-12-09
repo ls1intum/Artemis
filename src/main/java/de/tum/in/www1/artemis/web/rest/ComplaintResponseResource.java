@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
@@ -86,28 +86,11 @@ public class ComplaintResponseResource {
      */
     @GetMapping("/complaint-responses/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> getComplaintResponse(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<ComplaintResponse> getComplaintResponse(@PathVariable long id, Principal principal) {
         log.debug("REST request to get ComplaintResponse : {}", id);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findById(id);
 
-        if (!complaintResponse.isPresent()) {
-            throw new EntityNotFoundException("ComplaintResponse with " + id + " was not found!");
-        }
-
-        // All tutors and higher can see this, and also the students who first open the complaint
-        canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
-        StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.get().getComplaint().getResult().getParticipation();
-        Exercise exercise = studentParticipation.getExercise();
-
-        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            complaintResponse.get().getComplaint().setStudent(null);
-        }
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            complaintResponse.get().setReviewer(null);
-        }
-
-        return ResponseUtil.wrapOrNotFound(complaintResponse);
+        return handleComplaintResponse(id, principal, complaintResponse);
     }
 
     /**
@@ -119,10 +102,14 @@ public class ComplaintResponseResource {
      */
     @GetMapping("/complaint-responses/complaint/{complaintId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable Long complaintId, Principal principal) {
+    public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
 
+        return handleComplaintResponse(complaintId, principal, complaintResponse);
+    }
+
+    private ResponseEntity<ComplaintResponse> handleComplaintResponse(long complaintId, Principal principal, Optional<ComplaintResponse> complaintResponse) {
         if (complaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }

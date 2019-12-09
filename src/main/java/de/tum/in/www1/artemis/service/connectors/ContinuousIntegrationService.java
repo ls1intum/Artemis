@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
 /**
  * Abstract service for managing entities related to continuous integration.

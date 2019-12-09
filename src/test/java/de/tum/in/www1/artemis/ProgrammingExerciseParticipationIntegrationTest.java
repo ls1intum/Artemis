@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -233,12 +234,6 @@ public class ProgrammingExerciseParticipationIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getLatestSubmissionsForExercise_studentForbidden() throws Exception {
-        request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestSubmissionsForExercise_tutorForbidden() throws Exception {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
     }
 

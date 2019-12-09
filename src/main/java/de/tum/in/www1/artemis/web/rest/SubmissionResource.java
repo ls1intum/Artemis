@@ -12,15 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -41,23 +38,20 @@ public class SubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private SubmissionRepository submissionRepository;
+    private final SubmissionRepository submissionRepository;
 
-    private ResultRepository resultRepository;
+    private final ResultService resultService;
 
-    private CourseService courseService;
+    private final ParticipationService participationService;
 
-    private ParticipationService participationService;
+    private final AuthorizationCheckService authCheckService;
 
-    private AuthorizationCheckService authCheckService;
+    private final UserService userService;
 
-    private UserService userService;
-
-    public SubmissionResource(SubmissionRepository submissionRepository, ResultRepository resultRepository, CourseService courseService, ParticipationService participationService,
+    public SubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
             AuthorizationCheckService authCheckService, UserService userService) {
         this.submissionRepository = submissionRepository;
-        this.resultRepository = resultRepository;
-        this.courseService = courseService;
+        this.resultService = resultService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.userService = userService;
@@ -136,15 +130,16 @@ public class SubmissionResource {
 
         Optional<Submission> submission = submissionRepository.findById(id);
 
-        if (!submission.isPresent()) {
+        if (submission.isEmpty()) {
             log.error("Submission with id: " + id + " cannot be deleted");
             return ResponseEntity.notFound().build();
         }
 
         checkAccessPermissionAtInstructor(submission.get());
 
-        if (submission.get().getResult() != null) {
-            resultRepository.delete(submission.get().getResult());
+        Result result = submission.get().getResult();
+        if (result != null) {
+            resultService.deleteResultWithComplaint(result.getId());
         }
         submissionRepository.deleteById(id);
 

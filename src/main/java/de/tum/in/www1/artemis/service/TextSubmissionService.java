@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -24,7 +25,6 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class TextSubmissionService extends SubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -182,6 +182,7 @@ public class TextSubmissionService extends SubmissionService {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
+        // TODO: properly load the submissions with all required data from the database without using @Transactional
         return results.stream().map(result -> {
             Submission submission = result.getSubmission();
             TextSubmission textSubmission = new TextSubmission();
@@ -211,16 +212,12 @@ public class TextSubmissionService extends SubmissionService {
         for (StudentParticipation participation : participations) {
             Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
 
-            if (!optionalTextSubmission.isPresent()) {
+            if (optionalTextSubmission.isEmpty()) {
                 continue;
             }
 
             if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
                 continue;
-            }
-
-            if (optionalTextSubmission.get().getResult() != null) {
-                optionalTextSubmission.get().getResult().getAssessor().setGroups(null);
             }
 
             textSubmissions.add(optionalTextSubmission.get());

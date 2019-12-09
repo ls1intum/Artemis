@@ -22,8 +22,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
-import de.tum.in.www1.artemis.domain.StudentParticipation;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -82,7 +82,7 @@ public class FileUploadSubmissionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(3, 1, 0);
+        database.addUsers(3, 1, 1);
         database.addCourseWithTwoFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
         afterDueDateFileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(1);
@@ -119,7 +119,7 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmissionsOfExercise() throws Exception {
         FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
         FileUploadSubmission submission2 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student2");
@@ -131,6 +131,34 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cannotSeeStudentDetailsInSubmissionListAsTutor() throws Exception {
+        FileUploadSubmission submission1 = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
+
+        List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true", HttpStatus.OK,
+                FileUploadSubmission.class);
+
+        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
+        final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
+        assertThat(participation1.getStudent()).as("contains no student details").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void canSeeStudentDetailsInSubmissionListAsInstructor() throws Exception {
+        FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
+
+        List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true", HttpStatus.OK,
+                FileUploadSubmission.class);
+
+        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
+        final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
+        assertThat(participation1.getStudent()).as("contains student details").isNotNull();
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
         database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
@@ -139,7 +167,7 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student1");
         database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student2");

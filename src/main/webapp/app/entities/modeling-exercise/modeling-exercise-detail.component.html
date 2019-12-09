@@ -38,6 +38,13 @@
         <dd class="editor-outline-background">
             <span [innerHTML]="problemStatement"></span>
         </dd>
+        <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
+        <dd class="editor-outline-background">
+            <jhi-modeling-editor *ngIf="sampleSolutionUML" [readOnly]="true" [diagramType]="modelingExercise.diagramType" [umlModel]="sampleSolutionUML!"> </jhi-modeling-editor>
+        </dd>
+        <dd class="editor-outline-background">
+            <span [innerHTML]="sampleSolution"></span>
+        </dd>
         <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
         <dd class="editor-outline-background">
             <span [innerHTML]="gradingInstructions"></span>

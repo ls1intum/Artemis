@@ -7,7 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -100,21 +102,21 @@ public class TextSubmissionResource {
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
-
         return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
     @NotNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
+    private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        final TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        final ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
         if (responseFailure != null) {
             return responseFailure;
         }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        this.textSubmissionService.hideDetails(textSubmission);
+        this.textSubmissionService.hideDetails(textSubmission, user);
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -164,18 +166,23 @@ public class TextSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        Exercise exercise = exerciseService.findOne(exerciseId);
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise exercise = textExerciseService.findOne(exerciseId);
+        if (assessedByTutor) {
+            if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<TextSubmission> textSubmissions;
+        final List<TextSubmission> textSubmissions;
         if (assessedByTutor) {
-            User user = userService.getUserWithGroupsAndAuthorities();
             textSubmissions = textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId());
         }
         else {
@@ -183,13 +190,16 @@ public class TextSubmissionResource {
         }
 
         // tutors should not see information about the student of a submission
-        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            textSubmissions.forEach(textSubmission -> {
-                if (textSubmission.getParticipation() != null && textSubmission.getParticipation() instanceof StudentParticipation) {
-                    ((StudentParticipation) textSubmission.getParticipation()).filterSensitiveInformation();
-                }
-            });
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            textSubmissions.forEach(submission -> textSubmissionService.hideDetails(submission, user));
         }
+
+        // remove unnecessary data from the REST response
+        textSubmissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
 
         return ResponseEntity.ok().body(textSubmissions);
     }

@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -215,6 +216,10 @@ public class ComplaintService {
             else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
                 exerciseWithOnlyTitle = new FileUploadExercise();
             }
+
+            else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
+                exerciseWithOnlyTitle = new ProgrammingExercise();
+            }
             exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
             exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
 
@@ -232,6 +237,9 @@ public class ComplaintService {
             }
             else if (originalSubmission instanceof FileUploadSubmission) {
                 submissionWithOnlyId = new FileUploadSubmission();
+            }
+            else if (originalSubmission instanceof ProgrammingSubmission) {
+                submissionWithOnlyId = new ProgrammingSubmission();
             }
             else {
                 return;
@@ -254,7 +262,7 @@ public class ComplaintService {
     private List<Complaint> buildComplaintsListForAssessor(Optional<List<Complaint>> databaseComplaints, Principal principal, boolean assessorSameAsCaller) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
-        if (!databaseComplaints.isPresent()) {
+        if (databaseComplaints.isEmpty()) {
             return responseComplaints;
         }
 

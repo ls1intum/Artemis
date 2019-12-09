@@ -54,7 +54,6 @@
     <jhi-data-table
         [isLoading]="isLoading"
         entityType="result"
-        resultName="result"
         [allEntities]="results"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
@@ -92,9 +91,14 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/participation/{{ value.id }}/submissions">
+                        <span *ngIf="exercise.isAtLeastInstructor">
+                            <a routerLink="/participation/{{ value.id }}/submissions">
+                                {{ value.student.name }}
+                            </a>
+                        </span>
+                        <span *ngIf="!exercise.isAtLeastInstructor">
                             {{ value.student.name }}
-                        </a>
+                        </span>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -168,7 +172,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min</ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="400" [width]="400">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="450" [width]="450">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>Repository
@@ -180,6 +184,7 @@
                             routerLink="/code-editor/{{ value.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="exercise.type === PROGRAMMING && value.participation.exercise.allowOnlineEditor"
+                            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
                             <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                         </button>
@@ -187,7 +192,7 @@
                             *ngIf="newManualResultAllowed"
                             [participationId]="value.participation.id"
                             [latestResult]="value"
-                            (onResultCreated)="refresh()"
+                            (onResultModified)="refresh()"
                             class="mr-1"
                         ></jhi-programming-assessment-manual-result>
                     </ng-template>

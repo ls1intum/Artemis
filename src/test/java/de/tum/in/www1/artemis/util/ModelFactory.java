@@ -10,6 +10,8 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 public class ModelFactory {
 
@@ -96,6 +98,15 @@ public class ModelFactory {
             textSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
         }
         return textSubmission;
+    }
+
+    public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted) {
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setSubmitted(submitted);
+        if (submitted) {
+            programmingSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return programmingSubmission;
     }
 
     public static FileUploadSubmission generateFileUploadSubmission(boolean submitted) {

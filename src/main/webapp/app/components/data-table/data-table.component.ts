@@ -39,12 +39,27 @@ const entityToString = (entity: BaseEntity) => entity.id.toString();
     encapsulation: ViewEncapsulation.None,
 })
 export class DataTableComponent implements OnInit, OnChanges {
+    /**
+     * @property templateRef Ref to the content child of this component (which is ngx-datatable)
+     */
     @ContentChild(TemplateRef, { read: TemplateRef, static: false })
     templateRef: TemplateRef<any>;
 
+    /**
+     * @property isLoading Loading state of the data that is fetched by the ancestral component
+     * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
+     * @property allEntities List of all entities that should be displayed in the table (one entity per row)
+     * @property entitiesPerPageTranslation Translation string that has the variable { number } in it (e.g. 'artemisApp.exercise.resultsPerPage')
+     * @property showAllEntitiesTranslation Translation string if all entities should be displayed (e.g. 'artemisApp.exercise.showAll')
+     * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
+     * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
+     * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
+     * @function searchResultFormatter Function that takes an entity and returns the text for the autocomplete suggestion result row
+     * @function customFilter Function that takes an entity and returns true or false depending on whether this entity should be shown (combine with customFilterKey)
+     * @property customFilterKey Filter state of an ancestral component which triggers a table re-rendering if it changes
+     */
     @Input() isLoading = false;
     @Input() entityType = 'entity';
-    @Input() resultName = 'result';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;
     @Input() showAllEntitiesTranslation: string;
@@ -52,20 +67,29 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchFields: string[] = [];
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
-    @Input() customFilterKey: any = {};
     @Input() customFilter: (entity: BaseEntity) => boolean = () => true;
+    @Input() customFilterKey: any = {};
 
+    /**
+     * @property PAGING_VALUES Possible values for the number of entities shown per page of the table
+     * @property DEFAULT_PAGING_VALUE Default number of entities shown per page if the user has no value set for this yet in local storage
+     */
     readonly PAGING_VALUES: PagingValue[] = [10, 20, 50, 100, 200, 500, 1000, 'all'];
-    DEFAULT_PAGING_VALUE = 50;
+    readonly DEFAULT_PAGING_VALUE = 50;
 
+    /**
+     * @property isRendering Rendering state of the table (used for conditional display of the loading indicator)
+     * @property entities (Sorted) List of entities that are shown in the table (is a subset of allEntities after filters were applied)
+     * @property pagingValue Current number (or 'all') of entities displayed per page (can be changed and saved to local storage by the user)
+     * @property entityCriteria Contains a list of search terms
+     */
+    isRendering: boolean;
     entities: BaseEntity[];
+    pagingValue: PagingValue;
     entityCriteria: {
         textSearch: string[];
         sortProp: SortProp;
     };
-
-    pagingValue: PagingValue;
-    isRendering: boolean;
 
     constructor(private sortByPipe: SortByPipe) {
         this.entities = [];
@@ -73,15 +97,15 @@ export class DataTableComponent implements OnInit, OnChanges {
             textSearch: [],
             sortProp: { field: 'id', order: SortOrder.ASC },
         };
+    }
+
+    ngOnInit() {
+        this.pagingValue = this.getCachedEntitiesPerPage();
 
         // explicitly bind these callbacks to their current context
         // so that they can be used from child components
         this.onSort = this.onSort.bind(this);
         this.iconForSortPropField = this.iconForSortPropField.bind(this);
-    }
-
-    ngOnInit() {
-        this.pagingValue = this.getCachedEntitiesPerPage();
     }
 
     /**
@@ -90,9 +114,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param changes List of Inputs that were changed
      */
     ngOnChanges(changes: SimpleChanges) {
-        const triggerUpdateList = ['allEntities', 'customFilterKey'];
-
-        if (Object.keys(changes).filter(input => triggerUpdateList.includes(input))) {
+        if (changes.allEntities || changes.customFilterKey) {
             this.updateEntities();
         }
     }
@@ -272,7 +294,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                 }
                 return this.entities.filter(entity => {
                     const fieldValues = this.entityFieldValues(entity, this.searchFields);
-                    return fieldValues.some(fieldValue => this.foundIn(fieldValue)(lastSearchWord) && fieldValue.toLowerCase() !== lastSearchWord.toLowerCase());
+                    return fieldValues.some(fieldValue => this.foundIn(fieldValue)(lastSearchWord));
                 });
             }),
         );

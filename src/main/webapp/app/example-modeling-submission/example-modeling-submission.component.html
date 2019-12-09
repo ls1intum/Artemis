@@ -105,7 +105,8 @@
                 ></textarea>
             </div>
 
-            <jhi-assessment-instructions class="pr-2" *ngIf="exercise" [exercise]="exercise" [collapsed]="!readOnly && !toComplete"> </jhi-assessment-instructions>
+            <jhi-collapsable-assessment-instructions class="pr-2" *ngIf="exercise" [exercise]="exercise" [collapsed]="!readOnly && !toComplete">
+            </jhi-collapsable-assessment-instructions>
         </div>
     </div>
 </div>

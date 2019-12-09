@@ -7,9 +7,12 @@ import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { areManualResultsAllowed, Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from 'app/entities/exercise';
-import { HttpErrorResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-participation',
@@ -17,9 +20,9 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
+    readonly ExerciseType = ExerciseType;
+    readonly ActionType = ActionType;
+    readonly FeatureToggle = FeatureToggle;
 
     participations: StudentParticipation[] = [];
     eventSubscriber: Subscription;
@@ -29,6 +32,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading: boolean;
 
@@ -48,6 +54,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     loadAll() {
@@ -60,7 +67,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     this.participations = participationsResponse.body!;
                     this.isLoading = false;
                 });
-                if (this.exercise.type === this.PROGRAMMING) {
+                if (this.exercise.type === ExerciseType.PROGRAMMING) {
                     this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
@@ -124,16 +131,27 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     name: 'participationListModification',
                     content: 'Deleted an participation',
                 });
+                this.dialogErrorSource.next('');
             },
-            error => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+    /**
+     * Cleans programming exercise participation
+     * @param programmingExerciseParticipation the id of the participation that we want to delete
+     */
+    cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: StudentParticipation) {
+        this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'participationListModification',
+                    content: 'Cleanup the build plan of an participation',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
-
-    callback() {}
 
     /**
      * Formats the results in the autocomplete overlay.

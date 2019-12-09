@@ -6,7 +6,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +25,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -190,10 +198,10 @@ public class ExerciseResource {
         // TODO: This could just be one repository method as the exercise id is provided anyway.
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
                 + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + programmingExerciseService.countSubmissionsToAssessByExerciseId(exerciseId);
+                + programmingExerciseService.countSubmissions(exerciseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        Long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exerciseId);
+        Long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
         Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
@@ -282,6 +290,7 @@ public class ExerciseResource {
      */
     @DeleteMapping(value = "/exercises/{id}/cleanup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
@@ -289,7 +298,7 @@ public class ExerciseResource {
             return forbidden();
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -301,6 +310,7 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{id}/archive")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
@@ -318,26 +328,32 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/results : sends all results for a exercise and the logged in user
+     * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
      *
      * @param exerciseId the id of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/exercises/{exerciseId}/results")
+    @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getResultsForCurrentUser(@PathVariable Long exerciseId) {
+        // TODO: refactor this and load
+        // * the exercise (without the course, no template / solution participations)
+        // * all submissions (with their result) of the user (to be displayed in the result history)
+        // * the student questions
+        // * the hints
+        // also see exercise.service.ts and course-exercise-details.component.ts
         long start = System.currentTimeMillis();
-        User student = userService.getUserWithGroupsAndAuthorities();
-        log.debug(student.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        log.debug(user.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it
-        if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
+        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
         }
 
         if (exercise != null) {
-            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), student.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
 
             exercise.setStudentParticipations(new HashSet<>());
 
@@ -354,7 +370,7 @@ public class ExerciseResource {
             // TODO: we should also check that the submissions do not contain sensitive data
 
             // remove sensitive information for students
-            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
+            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
             if (isStudent) {
                 exercise.filterSensitiveInformation();
             }

@@ -13,6 +13,7 @@ import { ExerciseScoresPopupService } from 'app/scores';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/components/data-table/data-table.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [
     {
@@ -38,6 +39,7 @@ const ENTITY_STATES = [
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisProgrammingAssessmentModule,
+        FeatureToggleModule,
     ],
     declarations: [ExerciseScoresComponent],
     entryComponents: [ExerciseScoresComponent],

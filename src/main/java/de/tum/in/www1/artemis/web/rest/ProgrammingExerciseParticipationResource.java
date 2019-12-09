@@ -15,6 +15,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -58,7 +61,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
                 .findStudentParticipationWithLatestResultAndFeedbacks(participationId);
-        if (!participation.isPresent()) {
+        if (participation.isEmpty()) {
             return notFound();
         }
         if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
@@ -134,7 +137,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
     @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
         try {
@@ -143,7 +146,7 @@ public class ProgrammingExerciseParticipationResource {
         catch (EntityNotFoundException ex) {
             return notFound();
         }
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();
         }
         Map<Long, Optional<ProgrammingSubmission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
