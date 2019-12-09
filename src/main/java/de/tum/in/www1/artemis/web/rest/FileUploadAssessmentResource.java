@@ -8,14 +8,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 
 /**
@@ -29,26 +28,21 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "fileUploadAssessment";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final FileUploadAssessmentService fileUploadAssessmentService;
 
     private final FileUploadExerciseService fileUploadExerciseService;
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService messagingService;
 
-    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService,
-            FileUploadExerciseService fileUploadExerciseService, UserService userService, FileUploadSubmissionService fileUploadSubmissionService,
-            SimpMessageSendingOperations messagingTemplate) {
+    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService, UserService userService,
+            FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService) {
         super(authCheckService, userService);
-
         this.fileUploadAssessmentService = fileUploadAssessmentService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
-        this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
     }
 
     /**
@@ -114,7 +108,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
                 || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
     }

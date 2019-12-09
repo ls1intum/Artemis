@@ -18,7 +18,6 @@ export type EntityArrayResponseType = HttpResponse<Result[]>;
 export interface IResultService {
     find: (id: number) => Observable<EntityResponseType>;
     findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
-    findResultsForParticipation: (courseId: number, exerciseId: number, participationId: number, req?: any) => Observable<EntityArrayResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
     getLatestResultWithFeedbacks: (particpationId: number) => Observable<HttpResponse<Result>>;
     getFeedbackDetailsForResult: (resultId: number) => Observable<HttpResponse<Feedback[]>>;
@@ -28,6 +27,7 @@ export interface IResultService {
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
+    private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
@@ -45,20 +45,10 @@ export class ResultService implements IResultService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    findResultsForParticipation(courseId: number, exerciseId: number, participationId: number, req?: any): Observable<EntityArrayResponseType> {
+    getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
-            .get(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/participations/${participationId}/results`, {
-                params: options,
-                observe: 'response',
-            })
-            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
-    }
-
-    getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, {
+            .get<Result[]>(`${this.exerciseResourceUrl}/${exerciseId}/results`, {
                 params: options,
                 observe: 'response',
             })

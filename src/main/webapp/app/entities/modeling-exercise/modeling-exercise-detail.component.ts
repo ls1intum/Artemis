@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
+import { UMLModel } from '@ls1intum/apollon';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
@@ -17,10 +18,10 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
-    problemStatement: SafeHtml | null;
-    gradingInstructions: SafeHtml | null;
-    sampleSolution: SafeHtml | null;
-    sampleSolutionUML: SafeHtml | null;
+    problemStatement: SafeHtml;
+    gradingInstructions: SafeHtml;
+    sampleSolution: SafeHtml;
+    sampleSolutionUML: UMLModel;
 
     constructor(
         private eventManager: JhiEventManager,

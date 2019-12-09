@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
@@ -320,19 +322,20 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseForTutorDashboard(@PathVariable Long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
-        Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course))
-            return forbidden();
-
+        Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        List<Exercise> exercises = exerciseService.findAllForCourse(course, false, user);
+        if (!userHasPermission(course)) {
+            return forbidden();
+        }
 
-        exercises = exercises.stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC))).collect(Collectors.toList());
+        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
+                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)))
+                .collect(Collectors.toSet());
+        course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        for (Exercise exercise : exercises) {
+        for (Exercise exercise : interestingExercises) {
             TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
                     .findFirst().orElseGet(() -> {
                         TutorParticipation emptyTutorParticipation = new TutorParticipation();
@@ -342,14 +345,12 @@ public class CourseResource {
                     });
 
             final long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
-            final long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
-
-        course.setExercises(new HashSet<>(exercises));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -437,23 +438,23 @@ public class CourseResource {
         log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
         long start = System.currentTimeMillis();
         Course course = courseService.findOneWithExercises(courseId);
-
-        if (!userHasPermission(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getExercises().stream()
-                .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise).collect(Collectors.toSet());
-
+        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
+                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)))
+                .collect(Collectors.toSet());
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            final long numberOfParticipations = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
-            final long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            final long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
-            exercise.setNumberOfParticipations(numberOfParticipations);
+            exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfComplaints(numberOfComplaints);
             exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
@@ -559,7 +560,6 @@ public class CourseResource {
      */
     @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get categories of Course : {}", courseId);

@@ -1,7 +1,10 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.URL;
 import java.util.Set;
+
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 

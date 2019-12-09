@@ -15,6 +15,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
@@ -342,8 +344,9 @@ public class QuizScheduleService {
     }
 
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
+        var user = participation.getStudent().getLogin();
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
-        messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + quizExerciseId + "/participation", participation);
+        messagingTemplate.convertAndSendToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
 
     private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
@@ -353,12 +356,15 @@ public class QuizScheduleService {
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
+        participation.setStudent(null);
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
             if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
                 for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                     if (submittedAnswer.getQuizQuestion() != null) {
-                        submittedAnswer.getQuizQuestion().setQuizQuestionStatistic(null);
+                        // we do not need all information of the questions again, they are already stored in the exercise
+                        var question = submittedAnswer.getQuizQuestion();
+                        submittedAnswer.setQuizQuestion(question.copyQuestionId());
                     }
                 }
             }
