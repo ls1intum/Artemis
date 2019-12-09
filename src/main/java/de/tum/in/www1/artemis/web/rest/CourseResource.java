@@ -365,10 +365,10 @@ public class CourseResource {
                 numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
             else if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions += programmingExerciseService.countSubmissionsToAssessByExerciseId(exercise.getId());
+                numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
             }
 
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
@@ -484,10 +484,10 @@ public class CourseResource {
                 numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
             else if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions += programmingExerciseService.countSubmissionsToAssessByExerciseId(exercise.getId());
+                numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
             }
 
-            long numberOfAssessments = resultService.countNumberOfAssessmentsForExercise(exercise.getId());
+            long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
