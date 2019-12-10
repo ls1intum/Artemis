@@ -102,12 +102,12 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         const socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
             heartbeat: { outgoing: 10000, incoming: 20000 },
-            // debug: false,
+            debug: false,
             protocols: ['v12.stomp'],
         };
         this.stompClient = over(socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
-        // this.stompClient.debug = function(str) {};
+        this.stompClient.debug = function(str) {};
         const headers = <ConnectionHeaders>{};
         headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 
@@ -148,15 +148,15 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
                 // Setup periodic logs of websocket connection numbers
                 this.logTimers.push(
-                    timer(0, 3000).subscribe(x => {
+                    timer(0, 10000).subscribe(x => {
                         console.log('\n\n');
-                        console.log(`WS subscribers (${this.subscribers.size}): `, this.subscribers.values());
+                        console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
                         // this.subscribers.forEach((sub, topic) => console.log(topic));
 
-                        console.log(`Listeners (${this.myListeners.size}): `, this.myListeners.values());
+                        // console.log(`Listeners (${this.myListeners.size}): `, this.myListeners.values());
                         // this.myListeners.forEach((sub, topic) => console.log(topic));
 
-                        console.log(`Observers (${this.listenerObservers.size}): `, this.listenerObservers.values());
+                        // console.log(`Observers (${this.listenerObservers.size}): `, this.listenerObservers.values());
                         // this.listenerObservers.forEach((sub, topic) => console.log(topic));
                     }),
                 );
