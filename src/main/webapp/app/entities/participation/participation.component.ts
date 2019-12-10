@@ -54,6 +54,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise.id);
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
     }
