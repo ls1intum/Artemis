@@ -138,7 +138,6 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("/system-notifications/active-notification")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public SystemNotification getActiveSystemNotification() {
         log.debug("REST request to get active SystemNotification : {}");
         SystemNotification systemNotification = systemNotificationService.findActiveSystemNotification();
