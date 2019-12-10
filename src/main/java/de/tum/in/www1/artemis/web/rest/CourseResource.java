@@ -561,19 +561,16 @@ public class CourseResource {
     @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
-        long start = System.currentTimeMillis();
         log.debug("REST request to get categories of Course : {}", courseId);
 
-        User user = userService.getUser();
+        User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
 
-        List<Exercise> exercises = exerciseService.findAllExercisesForCourseAdministration(course, user);
+        List<Exercise> exercises = exerciseService.findAllExercisesForCourseWithCategories(course, user);
         Set<String> categories = new HashSet<>();
         for (Exercise exercise : exercises) {
             categories.addAll(exercise.getCategories());
         }
-
-        log.debug("getCategoriesInCourse took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseEntity.ok().body(categories);
     }

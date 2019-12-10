@@ -83,6 +83,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    ngOnDestroy() {
+        if (this.participationUpdateListener) {
+            this.participationUpdateListener.unsubscribe();
+            if (this.studentParticipation) {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id);
+            }
+        }
+    }
+
     loadExercise() {
         this.exercise = null;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
@@ -141,12 +150,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private sortParticipationsFinishedFirst(participations: StudentParticipation[]) {
         if (participations && participations.length > 1) {
             participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
-        }
-    }
-
-    ngOnDestroy() {
-        if (this.participationUpdateListener) {
-            this.participationUpdateListener.unsubscribe();
         }
     }
 
