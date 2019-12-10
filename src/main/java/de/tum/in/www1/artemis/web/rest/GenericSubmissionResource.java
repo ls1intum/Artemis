@@ -166,6 +166,7 @@ public abstract class GenericSubmissionResource<T extends Submission> {
      * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
      * database without explicitly saving them.
      *
+     * @param submission from which we want to remove sensitive information before sending it to client
      * @param user current user
      */
     public void hideDetails(Submission submission, User user) {
