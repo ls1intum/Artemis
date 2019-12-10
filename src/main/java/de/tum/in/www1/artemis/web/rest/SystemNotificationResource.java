@@ -134,6 +134,7 @@ public class SystemNotificationResource {
 
     /**
      * GET /system-notifications/:id : get the "id" system notification.
+     * This route is also accessible for unauthenticated users.
      *
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
