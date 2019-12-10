@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise';
 import { StudentParticipation } from 'app/entities/participation';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Result, UpdatingResultComponent } from 'app/entities/result';
+import { Result, ResultComponent, UpdatingResultComponent } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -51,6 +51,7 @@ describe('TableEditableFieldComponent', () => {
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsComponent),
                 MockComponent(ComplaintInteractionsComponent),
+                MockComponent(ResultComponent),
             ],
             providers: [
                 JhiAlertService,

@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks';
-import { UpdatingResultComponent } from 'app/entities/result';
+import { ResultComponent, UpdatingResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseType } from 'app/entities/exercise';
@@ -58,6 +58,7 @@ describe('TextAssessmentComponent', () => {
                 MockComponent(ResizableInstructionsComponent),
                 MockComponent(AssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
+                MockComponent(ResultComponent),
             ],
             providers: [
                 JhiLanguageHelper,
