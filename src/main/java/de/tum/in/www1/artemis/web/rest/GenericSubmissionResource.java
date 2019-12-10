@@ -48,7 +48,7 @@ public abstract class GenericSubmissionResource<T extends Submission> {
      * @param exercise that we want to check
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    ResponseEntity<T> checkExerciseValidityForStudent(Exercise exercise) {
+    final ResponseEntity<T> checkExerciseValidityForStudent(Exercise exercise) {
         if (exercise == null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
@@ -76,7 +76,7 @@ public abstract class GenericSubmissionResource<T extends Submission> {
      * @param submissionService concrete submission service that is used to check lock limit
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    <E extends Exercise> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType, SubmissionService submissionService) {
+    final <E extends Exercise> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType, SubmissionService submissionService) {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -104,8 +104,8 @@ public abstract class GenericSubmissionResource<T extends Submission> {
      * @param newSubmission new instance of concrete submission which can be needed if we don't find submission
      * @return the ResponseEntity with the participation as body
      */
-    <E extends Exercise> ResponseEntity<T> getDataForEditor(long participationId, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
-        StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
+    final <E extends Exercise> ResponseEntity<T> getDataForEditor(long participationId, Class<E> exerciseType, Class<T> submissionType, T newSubmission) {
+        final StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();

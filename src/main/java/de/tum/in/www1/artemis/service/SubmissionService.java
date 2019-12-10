@@ -81,14 +81,14 @@ public abstract class SubmissionService<T extends Submission> {
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
-    Result setNewResult(Submission submission) {
+    final Result setNewResult(Submission submission) {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
         if (submission.getParticipation() != null) {
             submission.getParticipation().addResult(result);
         }
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         submissionRepository.save(submission);
         return result;
     }
@@ -106,12 +106,12 @@ public abstract class SubmissionService<T extends Submission> {
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         submission.setResult(null);
 
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAndResultsAnyState(exercise.getId(),
+        final Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAndResultsAnyState(exercise.getId(),
                 username);
         if (optionalParticipation.isEmpty()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + exercise.getId());
         }
-        StudentParticipation participation = optionalParticipation.get();
+        final StudentParticipation participation = optionalParticipation.get();
 
         final var exerciseDueDate = exercise.getDueDate();
         if (exerciseDueDate != null && exerciseDueDate.isBefore(ZonedDateTime.now()) && participation.getInitializationDate().isBefore(exerciseDueDate)) {
@@ -135,7 +135,7 @@ public abstract class SubmissionService<T extends Submission> {
             messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
                     participation);
         }
-        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
+        final StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (submission.getId() == null) {
             Optional<T> optionalSubmission = savedParticipation.findLatestSubmissionOfType(submissionType);
             if (optionalSubmission.isPresent()) {
@@ -155,7 +155,7 @@ public abstract class SubmissionService<T extends Submission> {
      * @return a list of submissions of given type for the given exercise id
      */
     public List<T> getSubmissions(Long exerciseId, boolean submittedOnly, Class<T> submissionType) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        final List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         ArrayList<T> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null))
                 .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType))
@@ -228,7 +228,7 @@ public abstract class SubmissionService<T extends Submission> {
      *
      * @param submission the submission to lock
      */
-    Result lockSubmission(T submission) {
+    final Result lockSubmission(T submission) {
         Result result = submission.getResult();
         if (result == null) {
             result = setNewResult(submission);
@@ -250,7 +250,7 @@ public abstract class SubmissionService<T extends Submission> {
      * @return submission of the specified type
      */
     public Optional<T> getSubmissionWithoutManualResult(Exercise exercise, Class<T> submissionType) {
-        List<T> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId()).stream()
+        final List<T> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId()).stream()
                 .map(studentParticipation -> studentParticipation.findLatestSubmissionOfType(submissionType)).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
 
