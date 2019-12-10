@@ -8,7 +8,7 @@
             </h2>
         </div>
         <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
-            <div *ngIf="participation"><jhi-updating-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
+            <div *ngIf="participation"><jhi-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-result></div>
             <br />
             <jhi-button
                 class="submission-button"
