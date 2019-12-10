@@ -104,13 +104,13 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
         const socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
-            heartbeat: { outgoing: 25000, incoming: 25000 },
-            debug: false,
+            heartbeat: { outgoing: 10000, incoming: 20000 },
+            // debug: false,
             protocols: ['v12.stomp'],
         };
         this.stompClient = over(socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
-        this.stompClient.debug = function(str) {};
+        // this.stompClient.debug = function(str) {};
         const headers = <ConnectionHeaders>{};
         headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 

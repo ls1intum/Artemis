@@ -1,7 +1,7 @@
 <div *ngIf="exercise">
     <h2>
         {{ exercise.course?.title }} - {{ exercise.title }}
-        <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: results.length }">results</small>
+        <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredResultsSize }">results</small>
     </h2>
     <jhi-alert></jhi-alert>
     <div class="mb-2 clearfix">
@@ -62,6 +62,7 @@
         [searchResultFormatter]="searchResultFormatter"
         [customFilterKey]="resultCriteria.filterProp"
         [customFilter]="filterResultByProp"
+        (entitiesSizeChange)="handleResultsSizeChange($event)"
     >
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
