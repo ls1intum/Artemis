@@ -235,4 +235,11 @@ public class ModelFactory {
         result.setScore(score);
         return result;
     }
+
+    public static SystemNotification generateSystemNotification(ZonedDateTime expireDate, ZonedDateTime notificationDate) {
+        SystemNotification systemNotification = new SystemNotification();
+        systemNotification.setExpireDate(expireDate);
+        systemNotification.setNotificationDate(notificationDate);
+        return systemNotification;
+    }
 }
