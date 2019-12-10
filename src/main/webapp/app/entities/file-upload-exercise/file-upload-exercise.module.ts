@@ -10,6 +10,7 @@ import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficult
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
+import { StructuredGradingInstructionsModule } from 'app/structured-grading-instructions/structured-grading-instructions.module';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute];
 
@@ -24,6 +25,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute];
         ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
         AssessmentInstructionsModule,
+        StructuredGradingInstructionsModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

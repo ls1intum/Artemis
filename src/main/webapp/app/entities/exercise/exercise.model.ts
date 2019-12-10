@@ -8,7 +8,7 @@ import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { GradingCriteriaCommand } from 'app/markdown-editor/domainCommands';
-import { AssessmentInstructions } from 'app/assessment-instructions/assessment-instructions.model';
+import { AssessmentInstructions } from 'app/structured-grading-instructions/structured-grading-instructions.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',

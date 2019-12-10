@@ -38,6 +38,7 @@ import { ArtemisComplaintsModule } from 'app/complaints';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
+import { StructuredGradingInstructionsModule } from 'app/structured-grading-instructions/structured-grading-instructions.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -65,6 +66,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         AssessmentInstructionsModule,
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
+        StructuredGradingInstructionsModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,

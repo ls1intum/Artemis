@@ -11,6 +11,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
+import { StructuredGradingInstructionsModule } from 'app/structured-grading-instructions/structured-grading-instructions.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -25,6 +26,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
         AssessmentInstructionsModule,
+        StructuredGradingInstructionsModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
     entryComponents: [TextExerciseUpdateComponent, DeleteDialogComponent],

@@ -12,6 +12,7 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
+import { StructuredGradingInstructionsModule } from 'app/structured-grading-instructions/structured-grading-instructions.module';
 
 const ENTITY_STATES = [...modelingExerciseRoute];
 
@@ -27,6 +28,7 @@ const ENTITY_STATES = [...modelingExerciseRoute];
         ArtemisPresentationScoreModule,
         AssessmentInstructionsModule,
         ArtemisModelingEditorModule,
+        StructuredGradingInstructionsModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     entryComponents: [ModelingExerciseComponent, DeleteDialogComponent],
