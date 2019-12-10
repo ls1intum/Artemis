@@ -95,7 +95,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
-        textSubmission.hideDetails(authCheckService, user);
+        hideDetails(textSubmission, user);
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -134,7 +134,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
         // tutors should not see information about the student of a submission
         if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            textSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+            textSubmissions.forEach(submission -> hideDetails(submission, user));
         }
 
         // remove unnecessary data from the REST response
@@ -181,7 +181,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
         // Make sure the exercise is connected to the participation in the json response
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        textSubmission.hideDetails(authCheckService, userService.getUserWithGroupsAndAuthorities());
+        hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(textSubmission);
     }
 }

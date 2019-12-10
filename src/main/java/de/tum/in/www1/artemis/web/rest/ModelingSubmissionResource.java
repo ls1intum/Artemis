@@ -75,7 +75,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        modelingSubmission.hideDetails(authCheckService, user);
+        hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -101,7 +101,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        modelingSubmission.hideDetails(authCheckService, user);
+        hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -144,7 +144,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
 
         // tutors should not see information about the student of a submission
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            modelingSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+            modelingSubmissions.forEach(submission -> hideDetails(submission, user));
         }
 
         // remove unnecessary data from the REST response
@@ -181,7 +181,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         // Make sure the exercise is connected to the participation in the json response
 
         studentParticipation.setExercise(modelingExercise);
-        modelingSubmission.hideDetails(authCheckService, user);
+        hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -219,7 +219,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
-        modelingSubmission.hideDetails(authCheckService, userService.getUserWithGroupsAndAuthorities());
+        hideDetails(modelingSubmission, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(modelingSubmission);
     }
 

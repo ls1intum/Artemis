@@ -95,7 +95,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
                     "The uploaded file could not be saved on the server")).build();
         }
 
-        submission.hideDetails(authCheckService, user);
+        hideDetails(submission, user);
         return ResponseEntity.ok(submission);
     }
 
@@ -119,7 +119,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmission.hideDetails(authCheckService, user);
+        hideDetails(fileUploadSubmission, user);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -160,7 +160,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
 
         // tutors should not see information about the student of a submission
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            fileUploadSubmissions.forEach(submission -> submission.hideDetails(authCheckService, user));
+            fileUploadSubmissions.forEach(submission -> hideDetails(submission, user));
         }
 
         // remove unnecessary data from the REST response
@@ -207,7 +207,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmission.hideDetails(authCheckService, userService.getUserWithGroupsAndAuthorities());
+        hideDetails(fileUploadSubmission, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

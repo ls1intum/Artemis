@@ -160,4 +160,33 @@ public abstract class GenericSubmissionResource<T extends Submission> {
         return ResponseEntity.ok(submission);
     }
 
+    /**
+     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
+     * submission to the client.
+     * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
+     * database without explicitly saving them.
+     *
+     * @param user current user
+     */
+    public void hideDetails(Submission submission, User user) {
+        var participation = submission.getParticipation();
+        // do not send old submissions or old results to the client
+        if (participation != null) {
+            participation.setSubmissions(null);
+            participation.setResults(null);
+
+            Exercise exercise = participation.getExercise();
+            if (exercise != null) {
+                // make sure that sensitive information is not sent to the client for students
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                    exercise.filterSensitiveInformation();
+                    submission.setResult(null);
+                }
+                // remove information about the student from the submission for tutors to ensure a double-blind assessment
+                if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                    ((StudentParticipation) participation).filterSensitiveInformation();
+                }
+            }
+        }
+    }
 }
