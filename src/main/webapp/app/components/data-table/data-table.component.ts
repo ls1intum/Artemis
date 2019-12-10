@@ -6,6 +6,7 @@ import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
 import { get, isNumber } from 'lodash';
 import { BaseEntity } from 'app/shared';
+import { LocalStorageService } from 'ngx-webstorage';
 
 enum SortOrder {
     ASC = 'asc',
@@ -91,7 +92,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         sortProp: SortProp;
     };
 
-    constructor(private sortByPipe: SortByPipe) {
+    constructor(private sortByPipe: SortByPipe, private localStorage: LocalStorageService) {
         this.entities = [];
         this.entityCriteria = {
             textSearch: [],
@@ -178,7 +179,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * Get "items per page" setting from local storage. If it does not exist, use the default.
      */
     private getCachedEntitiesPerPage = () => {
-        const cachedValue = localStorage.getItem(this.perPageCacheKey);
+        const cachedValue = this.localStorage.retrieve(this.perPageCacheKey);
         if (cachedValue) {
             const parsedValue = parseInt(cachedValue, 10) || cachedValue;
             if (this.PAGING_VALUES.includes(parsedValue as any)) {
@@ -200,7 +201,7 @@ export class DataTableComponent implements OnInit, OnChanges {
             this.pagingValue = paging;
             this.isRendering = false;
         }, 500);
-        localStorage.setItem(this.perPageCacheKey, paging.toString());
+        this.localStorage.store(this.perPageCacheKey, paging.toString());
     };
 
     /**
