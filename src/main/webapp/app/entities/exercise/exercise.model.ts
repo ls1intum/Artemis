@@ -7,8 +7,7 @@ import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type';
-import { GradingCriteriaCommand } from 'app/markdown-editor/domainCommands';
-import { AssessmentInstructions } from 'app/structured-grading-instructions/structured-grading-instructions.model';
+import { StructuredGradingInstructionsModel } from 'app/structured-grading-instructions/structured-grading-instructions.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -49,8 +48,7 @@ export interface ExerciseCategory {
 export abstract class Exercise implements BaseEntity {
     public id: number;
     public problemStatement: string | null;
-    public gradingInstructions: string; // ToDo remove this and adapt database
-    public assessmentInstructions: AssessmentInstructions[];
+    public gradingInstructions: string; // ToDo remove this and adapt database change to:  public gradingInstructions: StructuredGradingInstructionsModel[];
     public title: string;
     public shortName: string;
     public releaseDate: Moment | null;
