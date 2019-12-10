@@ -42,6 +42,8 @@ export interface IProgrammingSubmissionService {
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
+    unsubscribeAllWebsocketTopics: (exerciseId: number) => void;
+    unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -53,11 +55,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/participation/%participationId%/newSubmission';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
-    private submissionTopicsSubscribed: { [participationId: number]: string } = {};
+    // participationId -> topic
+    private submissionTopicsSubscribed = new Map<number, string>();
     // Null describes the case where no pending submission exists, undefined is used for the setup process and will not be emitted to subscribers.
     private submissionSubjects: { [participationId: number]: BehaviorSubject<ProgrammingSubmissionStateObj | undefined> } = {};
-    private exerciseBuildStateSubjects: { [exerciseId: number]: BehaviorSubject<ExerciseSubmissionState | undefined> } = {};
-    private resultTimerSubjects: { [participationId: number]: Subject<null> } = {};
+    // exerciseId -> ExerciseSubmissionState
+    private exerciseBuildStateSubjects = new Map<number, BehaviorSubject<ExerciseSubmissionState | undefined>>();
+    // participationId -> Subject
+    private resultTimerSubjects = new Map<number, Subject<null>>();
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
     private resultEtaSubject = new BehaviorSubject<number>(this.DEFAULT_EXPECTED_RESULT_ETA);
 
@@ -69,7 +74,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
-        Object.values(this.submissionTopicsSubscribed).forEach(topic => this.websocketService.unsubscribe(topic));
+        this.submissionTopicsSubscribed.forEach((topic, _) => this.websocketService.unsubscribe(topic));
     }
 
     get exerciseBuildState() {
@@ -124,7 +129,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * @param exerciseId of programming exercise.
      */
-    private fetchLatestPendingSubmissionByExerciseId = (exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission | null }> => {
+    private fetchLatestPendingSubmissionsByExerciseId = (exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission | null }> => {
         return this.http
             .get<{ [participationId: number]: ProgrammingSubmission | null }>(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`)
             .pipe(catchError(() => of([])));
@@ -142,7 +147,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.resultTimerSubscriptions[participationId] = timer(time)
             .pipe(
                 tap(() => {
-                    this.resultTimerSubjects[participationId].next(null);
+                    this.resultTimerSubjects.get(participationId)!.next(null);
                 }),
             )
             .subscribe();
@@ -161,11 +166,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId that is connected to the participation.
      */
     private setupWebsocketSubscriptionForLatestPendingSubmission = (participationId: number, exerciseId: number): void => {
-        if (!this.submissionTopicsSubscribed[participationId]) {
+        if (!this.submissionTopicsSubscribed.get(participationId)) {
             const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
-            this.submissionTopicsSubscribed[participationId] = newSubmissionTopic;
+            this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
             this.websocketService.subscribe(newSubmissionTopic);
-            this.resultTimerSubjects[participationId] = new Subject<null>();
+            this.resultTimerSubjects.set(participationId, new Subject<null>());
             this.websocketService
                 .receive(newSubmissionTopic)
                 .pipe(
@@ -211,7 +216,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         );
 
         // If the timer runs out, we will emit an error as we assume the result is lost.
-        const timerObservable = this.resultTimerSubjects[participationId].pipe(
+        const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
             tap(() => {
                 this.emitFailedSubmission(participationId, exerciseId);
             }),
@@ -260,7 +265,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.submissionSubjects[participationId].next(newSubmissionState);
         // Inform exercise subscribers.
         this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: newSubmissionState } };
-        const exerciseBuildStateSubject = this.exerciseBuildStateSubjects[exerciseId];
+        const exerciseBuildStateSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (exerciseBuildStateSubject) {
             exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
         }
@@ -361,13 +366,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId id of programming exercise for which to retrieve all pending submissions.
      */
     public getSubmissionStateOfExercise = (exerciseId: number): Observable<ExerciseSubmissionState> => {
-        // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple done.
-        const preloadingSubject = this.exerciseBuildStateSubjects[exerciseId];
+        // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple times.
+        const preloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (preloadingSubject) {
             return preloadingSubject.asObservable().filter(val => val !== undefined) as Observable<ExerciseSubmissionState>;
         }
-        this.exerciseBuildStateSubjects[exerciseId] = new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined);
-        this.fetchLatestPendingSubmissionByExerciseId(exerciseId)
+        this.exerciseBuildStateSubjects.set(exerciseId, new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined));
+        this.fetchLatestPendingSubmissionsByExerciseId(exerciseId)
             .pipe(
                 map(Object.entries),
                 map(this.mapParticipationIdToNumber),
@@ -390,9 +395,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
-                this.exerciseBuildStateSubjects[exerciseId].next(exerciseBuildState);
+                this.exerciseBuildStateSubjects.get(exerciseId)!.next(exerciseBuildState);
             });
-        return this.exerciseBuildStateSubjects[exerciseId].asObservable().pipe(filter(val => val !== undefined)) as Observable<ExerciseSubmissionState>;
+        return this.exerciseBuildStateSubjects
+            .get(exerciseId)!
+            .asObservable()
+            .pipe(filter(val => val !== undefined)) as Observable<ExerciseSubmissionState>;
     };
 
     getResultEtaInMs = () => {
@@ -516,5 +524,35 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             body.push({ ...jsonResponse[i] });
         }
         return res.clone({ body });
+    }
+
+    /**
+     * unsubscribe from all websocket topics so that these are not kept after leaving a page who has subscribed before
+     * @param exerciseId
+     */
+    public unsubscribeAllWebsocketTopics(exerciseId: number) {
+        // TODO: we only should unsubscribe for submissions that belong to the given exerciseId
+        Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
+        this.resultSubscriptions = {};
+        Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
+        this.resultTimerSubscriptions = {};
+        this.submissionTopicsSubscribed.forEach((topic, _) => this.websocketService.unsubscribe(topic));
+        this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId));
+        this.submissionTopicsSubscribed.clear();
+        this.submissionSubjects = {};
+        this.exerciseBuildStateSubjects.delete(exerciseId);
+    }
+
+    /**
+     * Unsubscribe from the submission
+     * @param participationId
+     */
+    public unsubscribeForLatestSubmissionOfParticipation(participationId: number) {
+        if (!this.submissionTopicsSubscribed.get(participationId)) {
+            const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
+            this.websocketService.unsubscribe(newSubmissionTopic);
+            this.resultTimerSubjects.delete(participationId);
+            this.submissionTopicsSubscribed.delete(participationId);
+        }
     }
 }

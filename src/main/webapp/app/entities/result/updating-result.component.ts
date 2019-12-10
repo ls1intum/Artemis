@@ -58,9 +58,11 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     ngOnDestroy() {
         if (this.resultSubscription) {
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id);
             this.resultSubscription.unsubscribe();
         }
         if (this.submissionSubscription) {
+            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(this.participation.id);
             this.submissionSubscription.unsubscribe();
         }
     }

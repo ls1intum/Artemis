@@ -194,7 +194,7 @@
                             <td>{{ i + 1 }}</td>
                             <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                             <td>
-                                <jhi-updating-result [participation]="submission.participation"></jhi-updating-result>
+                                <jhi-result [participation]="submission.participation"></jhi-result>
                             </td>
                             <td>
                                 {{ calculateStatus(submission) }}
