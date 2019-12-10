@@ -123,38 +123,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all ModelingSubmissions");
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (assessedByTutor) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-
-        final List<ModelingSubmission> modelingSubmissions;
-        if (assessedByTutor) {
-            modelingSubmissions = modelingSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
-        }
-        else {
-            modelingSubmissions = modelingSubmissionService.getSubmissions(exerciseId, submittedOnly, ModelingSubmission.class);
-        }
-
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            modelingSubmissions.forEach(submission -> hideDetails(submission, user));
-        }
-
-        // remove unnecessary data from the REST response
-        modelingSubmissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-                submission.getParticipation().setExercise(null);
-            }
-        });
-
-        return ResponseEntity.ok().body(modelingSubmissions);
+        return getAllSubmissions(exerciseId, assessedByTutor, submittedOnly, modelingSubmissionService, ModelingSubmission.class);
     }
 
     /**

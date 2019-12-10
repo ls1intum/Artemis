@@ -154,7 +154,7 @@ public abstract class SubmissionService<T extends Submission> {
      * @param submissionType - type of the submission
      * @return a list of submissions of given type for the given exercise id
      */
-    public List<T> getSubmissions(Long exerciseId, boolean submittedOnly, Class<T> submissionType) {
+    public List<T> getSubmissions(long exerciseId, boolean submittedOnly, Class<T> submissionType) {
         final List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         ArrayList<T> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null))
@@ -171,7 +171,7 @@ public abstract class SubmissionService<T extends Submission> {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    public T findOneWithEagerResultAndAssessor(Long submissionId) {
+    public T findOneWithEagerResultAndAssessor(long submissionId) {
         return genericSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
@@ -183,7 +183,7 @@ public abstract class SubmissionService<T extends Submission> {
      * @param tutorId    - the id of the tutor we are interested in
      * @return a list of Submissions
      */
-    public List<T> getAllSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
+    public List<T> getAllSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
         return genericSubmissionRepository.findAllByResult_Participation_ExerciseIdAndResult_Assessor_Id(exerciseId, tutorId).stream().map(Optional::get)
                 .collect(Collectors.toList());
     }

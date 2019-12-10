@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -12,10 +13,11 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
- * Generic Resource for Text, Modeling and File Upload Submission REST Controllers
+ * Generic Resource for Text, Modeling, Programming and File Upload Submission REST Controllers
  */
 public abstract class GenericSubmissionResource<T extends Submission> {
 
@@ -76,7 +78,7 @@ public abstract class GenericSubmissionResource<T extends Submission> {
      * @param submissionService concrete submission service that is used to check lock limit
      * @return either null if exercise is valid or one of the error responses if it is not valid
      */
-    final <E extends Exercise> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType, SubmissionService submissionService) {
+    final <E extends Exercise> ResponseEntity<T> checkExerciseValidityForTutor(Exercise exercise, Class<E> exerciseType, SubmissionService<T> submissionService) {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -112,7 +114,7 @@ public abstract class GenericSubmissionResource<T extends Submission> {
         }
         E exercise;
         if (exerciseType.isInstance(participation.getExercise())) {
-            exercise = (E) participation.getExercise();
+            exercise = exerciseType.cast(participation.getExercise());
             if (exercise == null) {
                 return ResponseEntity.badRequest()
                         .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
@@ -189,5 +191,51 @@ public abstract class GenericSubmissionResource<T extends Submission> {
                 }
             }
         }
+    }
+
+    /**
+     * Get all submissions by exercise id.
+     *
+     * @param exerciseId id of the exercise for which the modeling submission should be returned
+     * @param submittedOnly if true, it returns only submission with submitted flag set to true
+     * @param assessedByTutor if true, it returns only the submissions which are assessed by the current user as a tutor
+     * @param submissionService concrete submission service used to get the submissions from the database
+     * @param submissionType type of the submission we want to get
+     * @return response with a list of submissions
+     */
+    final ResponseEntity<List<T>> getAllSubmissions(long exerciseId, boolean assessedByTutor, boolean submittedOnly, SubmissionService<T> submissionService,
+            Class<T> submissionType) {
+        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (assessedByTutor) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
+        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        final List<T> submissions;
+        if (assessedByTutor) {
+            submissions = submissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
+        }
+        else {
+            submissions = submissionService.getSubmissions(exerciseId, submittedOnly, submissionType);
+        }
+
+        // tutors should not see information about the student of a submission
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            submissions.forEach(submission -> hideDetails(submission, user));
+        }
+
+        // remove unnecessary data from the REST response
+        submissions.forEach(submission -> {
+            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+                submission.getParticipation().setExercise(null);
+            }
+        });
+        return ResponseEntity.ok().body(submissions);
     }
 }

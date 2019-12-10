@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -31,8 +30,6 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final TextSubmissionService textSubmissionService;
 
     private final TextExerciseService textExerciseService;
@@ -41,7 +38,6 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
             TextSubmissionService textSubmissionService, UserService userService, AuthorizationCheckService authCheckService) {
         super(courseService, authCheckService, userService, exerciseService, participationService);
         this.textExerciseService = textExerciseService;
-        this.authorizationCheckService = authCheckService;
         this.textSubmissionService = textSubmissionService;
     }
 
@@ -114,37 +110,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-        if (assessedByTutor) {
-            if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-        final List<TextSubmission> textSubmissions;
-        if (assessedByTutor) {
-            textSubmissions = textSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
-        }
-        else {
-            textSubmissions = textSubmissionService.getSubmissions(exerciseId, submittedOnly, TextSubmission.class);
-        }
-
-        // tutors should not see information about the student of a submission
-        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            textSubmissions.forEach(submission -> hideDetails(submission, user));
-        }
-
-        // remove unnecessary data from the REST response
-        textSubmissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-                submission.getParticipation().setExercise(null);
-            }
-        });
-
-        return ResponseEntity.ok().body(textSubmissions);
+        return getAllSubmissions(exerciseId, assessedByTutor, submittedOnly, textSubmissionService, TextSubmission.class);
     }
 
     /**

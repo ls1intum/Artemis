@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -138,39 +137,7 @@ public class FileUploadSubmissionResource extends GenericSubmissionResource<File
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
-        final User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (assessedByTutor) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
-            }
-        }
-        else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-
-        final List<FileUploadSubmission> fileUploadSubmissions;
-        if (assessedByTutor) {
-            fileUploadSubmissions = fileUploadSubmissionService.getAllSubmissionsByTutorForExercise(exerciseId, user.getId());
-        }
-        else {
-            fileUploadSubmissions = fileUploadSubmissionService.getSubmissions(exerciseId, submittedOnly, FileUploadSubmission.class);
-        }
-
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            fileUploadSubmissions.forEach(submission -> hideDetails(submission, user));
-        }
-
-        // remove unnecessary data from the REST response
-        fileUploadSubmissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-                submission.getParticipation().setExercise(null);
-            }
-        });
-
-        return ResponseEntity.ok().body(fileUploadSubmissions);
+        return getAllSubmissions(exerciseId, assessedByTutor, submittedOnly, fileUploadSubmissionService, FileUploadSubmission.class);
     }
 
     /**
