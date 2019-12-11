@@ -5,7 +5,9 @@
         <div class="col-8">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
-                <span [jhiTranslate]="headingTranslationKey" [translateValues]="{ exerciseTitle: exercise?.title }">(Example) Assessment Editor for Text Exercise</span>
+                <span *ngIf="exercise" [jhiTranslate]="headingTranslationKey" [translateValues]="{ exerciseTitle: exercise?.title }"
+                    >(Example) Assessment Editor for Text Exercise</span
+                >
             </h2>
         </div>
 

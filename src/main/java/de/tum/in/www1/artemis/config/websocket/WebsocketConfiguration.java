@@ -63,7 +63,7 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     public void logSubscriptions() {
         final var subscriptionCount = userRegistry().getUsers().stream().flatMap(simpUser -> simpUser.getSessions().stream())
                 .map(simpSession -> simpSession.getSubscriptions().size()).reduce(0, Integer::sum);
-        log.info("Currently active subscriptions: " + subscriptionCount);
+        log.info("Currently active websocket subscriptions: " + subscriptionCount);
     }
 
     @Autowired
