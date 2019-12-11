@@ -387,7 +387,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.openManualResultDialog(complaint.result);
         } else {
-            this.openAssessmentEditor(complaint.result.participation!.id, false);
+            this.openAssessmentEditor(complaint.result.submission!.id, false);
         }
     }
 
