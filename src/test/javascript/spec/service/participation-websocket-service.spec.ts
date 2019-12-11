@@ -74,7 +74,7 @@ describe('ParticipationWebsocketService', () => {
 
         expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
 
-        expect(participationWebsocketService.openWebsocketConnections.size).to.equal(1);
+        expect(participationWebsocketService.openWebsocketSubscriptions.size).to.equal(1);
 
         expect(participationWebsocketService.resultObservables.size).to.equal(1);
         expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;

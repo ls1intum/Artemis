@@ -16,6 +16,11 @@
     height: 40vh;
 }
 
+ngb-typeahead-window.dropdown-menu.show {
+    max-height: calc(100vh - 380px);
+    overflow-y: auto;
+}
+
 .dropdown-item.selected {
     background-color: $primary;
 }

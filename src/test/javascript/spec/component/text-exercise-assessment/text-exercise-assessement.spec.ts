@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks';
-import { UpdatingResultComponent } from 'app/entities/result';
+import { ResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseType } from 'app/entities/exercise';
@@ -53,7 +53,7 @@ describe('TextAssessmentComponent', () => {
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([textAssessmentRoutes[0]])],
             declarations: [
                 TextAssessmentComponent,
-                MockComponent(UpdatingResultComponent),
+                MockComponent(ResultComponent),
                 MockComponent(TextAssessmentEditorComponent),
                 MockComponent(ResizableInstructionsComponent),
                 MockComponent(AssessmentDetailComponent),
