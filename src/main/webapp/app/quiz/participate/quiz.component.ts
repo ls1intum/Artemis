@@ -897,7 +897,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             switch (this.mode) {
                 case 'practice':
                     if (!this.submission.id) {
-                        this.quizSubmissionService.submitForPractice(this.submission, 1, this.quizId).subscribe(
+                        this.quizSubmissionService.submitForPractice(this.submission, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
@@ -907,7 +907,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                     break;
                 case 'preview':
                     if (!this.submission.id) {
-                        this.quizSubmissionService.submitForPreview(this.submission, 1, this.quizId).subscribe(
+                        this.quizSubmissionService.submitForPreview(this.submission, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
