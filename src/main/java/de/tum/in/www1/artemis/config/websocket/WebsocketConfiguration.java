@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.config.websocket;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
@@ -18,6 +20,7 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
@@ -54,6 +57,13 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
         webSocketMessageBrokerStats = webSocketMessageBrokerStats();
         webSocketMessageBrokerStats.setLoggingPeriod(10 * 1000);
+    }
+
+    @Scheduled(fixedDelay = 10 * 1000)
+    public void logSubscriptions() {
+        final var subscriptionCount = userRegistry().getUsers().stream().flatMap(simpUser -> simpUser.getSessions().stream())
+                .map(simpSession -> simpSession.getSubscriptions().size()).reduce(0, Integer::sum);
+        log.info("Currently active websocket subscriptions: " + subscriptionCount);
     }
 
     @Autowired

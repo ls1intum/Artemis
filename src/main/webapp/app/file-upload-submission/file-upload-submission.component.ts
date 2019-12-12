@@ -128,15 +128,18 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 } else {
                     this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
                 }
+                this.isSaving = false;
             },
-            () => {
+            (error: HttpErrorResponse) => {
                 this.submission!.submitted = false;
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                const serverError = error.headers.get('X-artemisApp-error');
+                if (serverError) {
+                    this.jhiAlertService.error(serverError, { fileName: file['name'] });
+                } else {
+                    this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                }
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = null;
-                this.submission!.filePath = null;
-            },
-            () => {
                 this.isSaving = false;
             },
         );

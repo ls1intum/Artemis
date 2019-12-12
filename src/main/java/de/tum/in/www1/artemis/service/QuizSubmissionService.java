@@ -71,6 +71,10 @@ public class QuizSubmissionService {
         quizSubmissionRepository.save(quizSubmission);
         result = resultRepository.save(result);
 
+        // result.submission and result.participation.exercise.quizQuestions turn into proxy objects after saving, so we need to set it again to prevent problems later on
+        result.setSubmission(quizSubmission);
+        result.setParticipation(participation);
+
         // add result to statistics
         QuizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
 
