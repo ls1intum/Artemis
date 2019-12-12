@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -42,13 +45,29 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
      * @param principal            the user principal
      * @return the saved file upload submission
      * @throws IOException if file can't be saved
+     * @throws EmptyFileException if file is empty
      */
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
-            Principal principal) throws IOException {
+            Principal principal) throws IOException, EmptyFileException {
+        if (file.isEmpty()) {
+            throw new EmptyFileException(file.getOriginalFilename());
+        }
         fileUploadSubmission = save(fileUploadSubmission, fileUploadExercise, principal.getName(), FileUploadSubmission.class);
+        final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+        // We need to set id for newly created submissions
+        if (fileUploadSubmission.getId() == null) {
+            fileUploadSubmission = submissionRepository.save(fileUploadSubmission);
+        }
+        final var localPath = saveFileForSubmission(file, fileUploadSubmission, fileUploadExercise);
+
+        // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
+        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(localPath)));
+        if (!multipartFileHash.equals(storedFileHash)) {
+            throw new IOException("The file " + file.getName() + "could not be stored");
+        }
+
         // check if we already had file associated with this submission
         fileUploadSubmission.onDelete();
-        final var localPath = saveFileForSubmission(file, fileUploadSubmission, fileUploadExercise);
         fileUploadSubmission.setFilePath(fileService.publicPathForActualPath(localPath, fileUploadSubmission.getId()));
         genericSubmissionRepository.save(fileUploadSubmission);
         return fileUploadSubmission;

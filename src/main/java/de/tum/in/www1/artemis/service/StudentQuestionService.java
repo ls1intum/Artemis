@@ -18,12 +18,10 @@ public class StudentQuestionService {
         this.studentQuestionRepository = studentQuestionRepository;
     }
 
-    @Transactional(readOnly = true)
     public List<StudentQuestion> findStudentQuestionsForExercise(Long exerciseId) {
         return studentQuestionRepository.findStudentQuestionsForExercise(exerciseId);
     }
 
-    @Transactional(readOnly = true)
     public List<StudentQuestion> findStudentQuestionsForLecture(Long lectureId) {
         return studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
     }
