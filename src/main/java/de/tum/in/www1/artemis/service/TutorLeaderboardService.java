@@ -99,67 +99,67 @@ public class TutorLeaderboardService {
         List<TutorLeaderboardDTO> tutorLeaderBoardEntries = new ArrayList<>();
         for (User tutor : tutors) {
 
-            Long numberOfAssessments = 0L;
-            Long numberOfAcceptedComplaints = 0L;
-            Long numberOfNotAnsweredMoreFeedbackRequests = 0L;
-            Long numberOfComplaintResponses = 0L;
-            Long numberOfAnsweredMoreFeedbackRequests = 0L;
+            long numberOfAssessments = 0L;
+            long numberOfAcceptedComplaints = 0L;
+            long numberOfNotAnsweredMoreFeedbackRequests = 0L;
+            long numberOfComplaintResponses = 0L;
+            long numberOfAnsweredMoreFeedbackRequests = 0L;
             Long points = 0L;
 
             for (TutorLeaderboardAssessmentView assessmentsView : tutorLeaderboardAssessments) {
-                if (assessmentsView.getUserId().equals(tutor.getId())) {
+                if (tutor.getId().equals(assessmentsView.getUserId())) {
                     numberOfAssessments += assessmentsView.getAssessments();
                     if (assessmentsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the assessments
                         points += assessmentsView.getPoints();
                     }
-                    else if (assessmentsView.getAssessments() != null) {
+                    else {
                         points += assessmentsView.getAssessments();
                     }
                 }
             }
 
             for (TutorLeaderboardAcceptedComplaintsView acceptedComplaintsView : tutorLeaderboardAcceptedComplaints) {
-                if (acceptedComplaintsView.getUserId().equals(tutor.getId())) {
+                if (tutor.getId().equals(acceptedComplaintsView.getUserId())) {
                     numberOfAcceptedComplaints += acceptedComplaintsView.getAcceptedComplaints();
                     // accepted complaints count 2x negatively
                     if (acceptedComplaintsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the accepted complaints
                         points -= 2 * acceptedComplaintsView.getPoints();
                     }
-                    else if (acceptedComplaintsView.getAcceptedComplaints() != null) {
+                    else {
                         points -= 2 * acceptedComplaintsView.getAcceptedComplaints();
                     }
                 }
             }
 
             for (TutorLeaderboardNotAnsweredMoreFeedbackRequestsView notAnsweredMoreFeedbackRequestsView : tutorLeaderboardNotAnsweredMoreFeedbackRequests) {
-                if (notAnsweredMoreFeedbackRequestsView.getUserId().equals(tutor.getId())) {
+                if (tutor.getId().equals(notAnsweredMoreFeedbackRequestsView.getUserId())) {
                     numberOfNotAnsweredMoreFeedbackRequests += notAnsweredMoreFeedbackRequestsView.getNotAnsweredRequests();
                     // not answered requests count only 1x negatively
                     if (notAnsweredMoreFeedbackRequestsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the not answered
                                                                                      // requests
                         points -= notAnsweredMoreFeedbackRequestsView.getPoints();
                     }
-                    else if (notAnsweredMoreFeedbackRequestsView.getNotAnsweredRequests() != null) {
+                    else {
                         points -= notAnsweredMoreFeedbackRequestsView.getNotAnsweredRequests();
                     }
                 }
             }
 
             for (TutorLeaderboardComplaintResponsesView complaintResponsesView : tutorLeaderboardComplaintResponses) {
-                if (complaintResponsesView.getUserId().equals(tutor.getId())) {
+                if (tutor.getId().equals(complaintResponsesView.getUserId())) {
                     numberOfComplaintResponses += complaintResponsesView.getComplaintResponses();
                     // resolved complaints count 2x
                     if (complaintResponsesView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the complaint responses
                         points += 2 * complaintResponsesView.getPoints();
                     }
-                    else if (complaintResponsesView.getComplaintResponses() != null) {
+                    else {
                         points += 2 * complaintResponsesView.getComplaintResponses();
                     }
                 }
             }
 
             for (TutorLeaderboardAnsweredMoreFeedbackRequestsView moreFeedbackRequestsView : tutorLeaderboardAnsweredMoreFeedbackRequests) {
-                if (moreFeedbackRequestsView.getUserId().equals(tutor.getId())) {
+                if (tutor.getId().equals(moreFeedbackRequestsView.getUserId())) {
                     numberOfAnsweredMoreFeedbackRequests += moreFeedbackRequestsView.getAnsweredRequests();
                     // answered requests doesn't count, because it only means that the tutor repaired the negative points
                 }

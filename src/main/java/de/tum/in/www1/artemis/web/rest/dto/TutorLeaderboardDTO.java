@@ -2,24 +2,24 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 public class TutorLeaderboardDTO {
 
-    private Long userId;
+    private long userId;
 
     private String name;
 
-    private Long numberOfAssessments;
+    private long numberOfAssessments;
 
-    private Long numberOfAcceptedComplaints;
+    private long numberOfAcceptedComplaints;
 
-    private Long numberOfNotAnsweredMoreFeedbackRequests;
+    private long numberOfNotAnsweredMoreFeedbackRequests;
 
-    private Long numberOfComplaintResponses;
+    private long numberOfComplaintResponses;
 
-    private Long numberOfAnsweredMoreFeedbackRequests;
+    private long numberOfAnsweredMoreFeedbackRequests;
 
     private Long points;
 
-    public TutorLeaderboardDTO(Long userId, String name, Long numberOfAssessments, Long numberOfAcceptedComplaints, Long numberOfNotAnsweredMoreFeedbackRequests,
-            Long numberOfComplaintResponses, Long numberOfAnsweredMoreFeedbackRequests, Long points) {
+    public TutorLeaderboardDTO(long userId, String name, long numberOfAssessments, long numberOfAcceptedComplaints, long numberOfNotAnsweredMoreFeedbackRequests,
+            long numberOfComplaintResponses, long numberOfAnsweredMoreFeedbackRequests, Long points) {
         this.userId = userId;
         this.name = name;
         this.numberOfAssessments = numberOfAssessments;
@@ -34,11 +34,11 @@ public class TutorLeaderboardDTO {
     public TutorLeaderboardDTO() {
     }
 
-    public Long getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 
@@ -50,43 +50,43 @@ public class TutorLeaderboardDTO {
         this.name = name;
     }
 
-    public Long getNumberOfAssessments() {
+    public long getNumberOfAssessments() {
         return numberOfAssessments;
     }
 
-    public void setNumberOfAssessments(Long numberOfAssessments) {
+    public void setNumberOfAssessments(long numberOfAssessments) {
         this.numberOfAssessments = numberOfAssessments;
     }
 
-    public Long getNumberOfNotAnsweredMoreFeedbackRequests() {
+    public long getNumberOfNotAnsweredMoreFeedbackRequests() {
         return numberOfNotAnsweredMoreFeedbackRequests;
     }
 
-    public void setNumberOfNotAnsweredMoreFeedbackRequests(Long numberOfNotAnsweredMoreFeedbackRequests) {
+    public void setNumberOfNotAnsweredMoreFeedbackRequests(long numberOfNotAnsweredMoreFeedbackRequests) {
         this.numberOfNotAnsweredMoreFeedbackRequests = numberOfNotAnsweredMoreFeedbackRequests;
     }
 
-    public Long getNumberOfAcceptedComplaints() {
+    public long getNumberOfAcceptedComplaints() {
         return numberOfAcceptedComplaints;
     }
 
-    public void setNumberOfAcceptedComplaints(Long numberOfAcceptedComplaints) {
+    public void setNumberOfAcceptedComplaints(long numberOfAcceptedComplaints) {
         this.numberOfAcceptedComplaints = numberOfAcceptedComplaints;
     }
 
-    public Long getNumberOfComplaintResponses() {
+    public long getNumberOfComplaintResponses() {
         return numberOfComplaintResponses;
     }
 
-    public void setNumberOfComplaintResponses(Long numberOfComplaintResponses) {
+    public void setNumberOfComplaintResponses(long numberOfComplaintResponses) {
         this.numberOfComplaintResponses = numberOfComplaintResponses;
     }
 
-    public Long getNumberOfAnsweredMoreFeedbackRequests() {
+    public long getNumberOfAnsweredMoreFeedbackRequests() {
         return numberOfAnsweredMoreFeedbackRequests;
     }
 
-    public void setNumberOfAnsweredMoreFeedbackRequests(Long numberOfAnsweredMoreFeedbackRequests) {
+    public void setNumberOfAnsweredMoreFeedbackRequests(long numberOfAnsweredMoreFeedbackRequests) {
         this.numberOfAnsweredMoreFeedbackRequests = numberOfAnsweredMoreFeedbackRequests;
     }
 

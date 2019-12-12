@@ -13,18 +13,18 @@ public class TutorLeaderboardComplaintResponsesView {
     private LeaderboardId leaderboardId;
 
     @Column(name = "complaint_responses")
-    private Long complaintResponses;
+    private long complaintResponses;
 
     @Column(name = "points")
     private Long points;
 
     @Column(name = "course_id")
-    private Long courseId;
+    private long courseId;
 
     @Column(name = "first_name")
     private String userFirstName;
 
-    public Long getComplaintResponses() {
+    public long getComplaintResponses() {
         return complaintResponses;
     }
 
@@ -32,15 +32,15 @@ public class TutorLeaderboardComplaintResponsesView {
         return points;
     }
 
-    public Long getUserId() {
+    public long getUserId() {
         return leaderboardId.getUserId();
     }
 
-    public Long getCourseId() {
+    public long getCourseId() {
         return courseId;
     }
 
-    public Long getExerciseId() {
+    public long getExerciseId() {
         return leaderboardId.getExerciseId();
     }
 

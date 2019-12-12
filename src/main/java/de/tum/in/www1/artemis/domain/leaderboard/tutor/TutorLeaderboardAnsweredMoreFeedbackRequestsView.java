@@ -15,35 +15,42 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
     @EmbeddedId
     private LeaderboardId leaderboardId;
 
+    @Column(name = "all_requests")
+    private long allRequests;
+
     @Column(name = "answered_requests")
-    private Long answeredRequests;
+    private long answeredRequests;
 
     @Column(name = "points")
-    private Long points;
+    private long points;
 
     @Column(name = "course_id")
-    private Long courseId;
+    private long courseId;
 
     @Column(name = "first_name")
     private String userFirstName;
 
-    public Long getAnsweredRequests() {
+    public long getAllRequests() {
+        return allRequests;
+    }
+
+    public long getAnsweredRequests() {
         return answeredRequests;
     }
 
-    public Long getPoints() {
+    public long getPoints() {
         return points;
     }
 
-    public Long getUserId() {
+    public long getUserId() {
         return leaderboardId.getUserId();
     }
 
-    public Long getCourseId() {
+    public long getCourseId() {
         return courseId;
     }
 
-    public Long getExerciseId() {
+    public long getExerciseId() {
         return leaderboardId.getExerciseId();
     }
 
