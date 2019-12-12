@@ -114,14 +114,14 @@ public class ExerciseService {
     }
 
     /**
-     * Get all exercises for a given course and a given user. This method is used to retrieve this
+     * Get all exercises for a given course including their categories.
      *
      * @param course for return of exercises in course
-     * @param user the user who requests the exercises in the client. Is used to determine, if the user is allowed to see the exercise
+     * @param user the user who requests the exercises in the client. Is used to determine, if the user is allowed to see the exercises
+     *             (only TAs, instructors and admins in this case)
      * @return the list of exercises for the given course and user. This list can be empty, but should not be null
      */
-    @Transactional(readOnly = true)
-    public List<Exercise> findAllExercisesForCourseAdministration(Course course, User user) {
+    public List<Exercise> findAllExercisesForCourseWithCategories(Course course, User user) {
         List<Exercise> exercises = new ArrayList<>();
         if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
