@@ -20,6 +20,8 @@
         "quizNotEndedYet": "Das Quiz hat noch nicht geendet.",
         "quizAlreadyOpenForPractice": "Das Quiz ist bereits zur Übung geöffnet.",
         "unknownAction": "Diese Aktion kann nicht durchgeführt werden.",
-        "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden."
+        "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden.",
+        "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
+        "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut."
     }
 }
