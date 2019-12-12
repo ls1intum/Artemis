@@ -31,6 +31,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService, LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming-assessment/repo-export';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,12 +59,12 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         hasComplaint: true,
     };
     result.submission.id = 1;
-    const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result: result };
+    const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule, FormDateTimePickerModule, FormsModule],
-            declarations: [ProgrammingAssessmentManualResultDialogComponent, ComplaintsForTutorComponent],
+            declarations: [ProgrammingAssessmentManualResultDialogComponent, ComplaintsForTutorComponent, MockComponent(ProgrammingAssessmentRepoExportButtonComponent)],
             providers: [
                 ProgrammingAssessmentManualResultService,
                 ComplaintService,
@@ -116,7 +118,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
         fixture.detectChanges();
-        let complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
+        const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).to.exist;
         expect(comp.complaint).to.exist;
     }));
@@ -130,7 +132,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         expect(findByResultId.notCalled).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
-        let complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
+        const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).to.not.exist;
     }));
 });

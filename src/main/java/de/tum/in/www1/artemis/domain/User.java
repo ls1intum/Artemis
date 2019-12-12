@@ -55,7 +55,13 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @Size(max = 20)
     @Column(name = "registration_number", length = 20)
+    @JsonIgnore
     private String registrationNumber;
+
+    // this value is typically null, except the registration number should be explicitly shown in the client
+    // currently this is only the case for the course scores page and its csv export
+    @Transient
+    private String visibleRegistrationNumberTransient = null;
 
     @Email
     @Size(max = 100)
@@ -226,6 +232,22 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.langKey = langKey;
     }
 
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+    }
+
+    public String getVisibleRegistrationNumber() {
+        return visibleRegistrationNumberTransient;
+    }
+
+    public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {
+        this.visibleRegistrationNumberTransient = visibleRegistrationNumber;
+    }
+
     public Set<String> getGroups() {
         return groups;
     }
@@ -282,14 +304,6 @@ public class User extends AbstractAuditingEntity implements Serializable {
     public String toString() {
         return "User{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='" + imageUrl
                 + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
-    }
-
-    public String getRegistrationNumber() {
-        return registrationNumber;
-    }
-
-    public void setRegistrationNumber(String registrationNumber) {
-        this.registrationNumber = registrationNumber;
     }
 
     public User copyBasicUser() {
