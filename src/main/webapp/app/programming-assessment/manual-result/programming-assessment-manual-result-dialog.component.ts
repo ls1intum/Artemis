@@ -17,6 +17,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -60,6 +61,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             return;
         }
         this.initializeForResultCreation();
+    }
+
+    get repositoryUrl(): String {
+        return (this.participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
     }
 
     initializeForResultUpdate() {
