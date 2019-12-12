@@ -101,9 +101,11 @@ public class TutorLeaderboardService {
 
             long numberOfAssessments = 0L;
             long numberOfAcceptedComplaints = 0L;
+            long numberOfTutorComplaints = 0L;
             long numberOfNotAnsweredMoreFeedbackRequests = 0L;
             long numberOfComplaintResponses = 0L;
             long numberOfAnsweredMoreFeedbackRequests = 0L;
+            long numberOfTutorMoreFeedbackRequests = 0L;
             Long points = 0L;
 
             for (TutorLeaderboardAssessmentView assessmentsView : tutorLeaderboardAssessments) {
@@ -120,6 +122,7 @@ public class TutorLeaderboardService {
 
             for (TutorLeaderboardAcceptedComplaintsView acceptedComplaintsView : tutorLeaderboardAcceptedComplaints) {
                 if (tutor.getId().equals(acceptedComplaintsView.getUserId())) {
+                    numberOfTutorComplaints = acceptedComplaintsView.getAllComplaints();
                     numberOfAcceptedComplaints += acceptedComplaintsView.getAcceptedComplaints();
                     // accepted complaints count 2x negatively
                     if (acceptedComplaintsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the accepted complaints
@@ -160,13 +163,14 @@ public class TutorLeaderboardService {
 
             for (TutorLeaderboardAnsweredMoreFeedbackRequestsView moreFeedbackRequestsView : tutorLeaderboardAnsweredMoreFeedbackRequests) {
                 if (tutor.getId().equals(moreFeedbackRequestsView.getUserId())) {
+                    numberOfTutorMoreFeedbackRequests += moreFeedbackRequestsView.getAllRequests();
                     numberOfAnsweredMoreFeedbackRequests += moreFeedbackRequestsView.getAnsweredRequests();
                     // answered requests doesn't count, because it only means that the tutor repaired the negative points
                 }
             }
 
-            tutorLeaderBoardEntries.add(new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints,
-                    numberOfNotAnsweredMoreFeedbackRequests, numberOfComplaintResponses, numberOfAnsweredMoreFeedbackRequests, points));
+            tutorLeaderBoardEntries.add(new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints, numberOfTutorComplaints,
+                    numberOfNotAnsweredMoreFeedbackRequests, numberOfComplaintResponses, numberOfAnsweredMoreFeedbackRequests, numberOfTutorMoreFeedbackRequests, points));
         }
         return tutorLeaderBoardEntries;
     }

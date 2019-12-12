@@ -10,23 +10,30 @@ public class TutorLeaderboardDTO {
 
     private long numberOfAcceptedComplaints;
 
+    private long numberOfTutorComplaints;
+
     private long numberOfNotAnsweredMoreFeedbackRequests;
 
     private long numberOfComplaintResponses;
 
     private long numberOfAnsweredMoreFeedbackRequests;
 
+    private long numberOfTutorMoreFeedbackRequests;
+
     private Long points;
 
-    public TutorLeaderboardDTO(long userId, String name, long numberOfAssessments, long numberOfAcceptedComplaints, long numberOfNotAnsweredMoreFeedbackRequests,
-            long numberOfComplaintResponses, long numberOfAnsweredMoreFeedbackRequests, Long points) {
+    public TutorLeaderboardDTO(long userId, String name, long numberOfAssessments, long numberOfAcceptedComplaints, long numberOfTutorComplaints,
+            long numberOfNotAnsweredMoreFeedbackRequests, long numberOfComplaintResponses, long numberOfAnsweredMoreFeedbackRequests, long numberOfTutorMoreFeedbackRequests,
+            Long points) {
         this.userId = userId;
         this.name = name;
         this.numberOfAssessments = numberOfAssessments;
         this.numberOfAcceptedComplaints = numberOfAcceptedComplaints;
+        this.numberOfTutorComplaints = numberOfTutorComplaints;
         this.numberOfNotAnsweredMoreFeedbackRequests = numberOfNotAnsweredMoreFeedbackRequests;
         this.numberOfComplaintResponses = numberOfComplaintResponses;
         this.numberOfAnsweredMoreFeedbackRequests = numberOfAnsweredMoreFeedbackRequests;
+        this.numberOfTutorMoreFeedbackRequests = numberOfTutorMoreFeedbackRequests;
         this.points = points;
     }
 
