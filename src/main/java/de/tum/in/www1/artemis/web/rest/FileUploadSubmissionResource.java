@@ -165,7 +165,7 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
 
         if (assessedByTutor) {
@@ -212,7 +212,7 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
-        final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
+        final Exercise fileUploadExercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
