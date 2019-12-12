@@ -31,7 +31,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     @Input() result: Result;
     @Output() onResultModified = new EventEmitter<Result>();
 
-    participation: StudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
@@ -63,10 +63,6 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         this.initializeForResultCreation();
     }
 
-    get repositoryUrl(): String {
-        return (this.participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-    }
-
     initializeForResultUpdate() {
         // Used to check if the assessor is the current user
         this.accountService.identity().then(user => {
@@ -89,7 +85,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        this.participation = this.result.participation! as StudentParticipation;
+        this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
     }
 
     initializeForResultCreation() {
@@ -103,7 +99,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             .find(this.participationId)
             .pipe(
                 tap(({ body: participation }) => {
-                    this.participation = participation!;
+                    this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
                     this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
                 }),

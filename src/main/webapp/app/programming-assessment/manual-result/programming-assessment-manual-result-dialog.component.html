@@ -38,7 +38,12 @@
                 [singleStudentMode]="true"
                 [participationIdList]="participation?.id"
             ></jhi-programming-assessment-repo-export>
-            <a class="ml-2" [href]="repositoryUrl" target="_blank" rel="noopener noreferrer" jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
+            <a
+                class="ml-2"
+                href="{{ this.participation.repositoryUrl }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
                 >Go to repository</a
             >
         </div>
