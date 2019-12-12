@@ -138,13 +138,29 @@ public class ExerciseService {
     }
 
     /**
-     * Get one exercise by exerciseId.
+     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
+     * NOTE: prefer #findOne if you don't need these additional details
+     *
+     * @param exerciseId the exerciseId of the entity
+     * @return the entity
+     */
+    public Exercise findOne(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        return exercise.get();
+    }
+
+    /**
+     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
+     * NOTE: prefer #findOne if you don't need these additional details
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Exercise findOne(Long exerciseId) {
+    public Exercise findOneWithAdditionalElements(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
