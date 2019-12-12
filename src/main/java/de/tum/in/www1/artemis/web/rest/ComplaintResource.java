@@ -399,15 +399,14 @@ public class ComplaintResource {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
-    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> databaseComplaints, Principal principal, boolean assessorSameAsCaller) {
-        // TODO: filter out more data, e.g. exercise, resultBeforeComplaint, etc.
+    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
-        if (databaseComplaints.isEmpty()) {
+        if (complaints.isEmpty()) {
             return responseComplaints;
         }
 
-        databaseComplaints.forEach(complaint -> {
+        complaints.forEach(complaint -> {
             String submissorName = principal.getName();
             User assessor = complaint.getResult().getAssessor();
 
@@ -415,6 +414,7 @@ public class ComplaintResource {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
                 studentParticipation.setStudent(null);
+                studentParticipation.setExercise(null);
                 complaint.setStudent(null);
                 complaint.setResultBeforeComplaint(null);
 
