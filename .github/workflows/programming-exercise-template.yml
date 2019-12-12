@@ -1,0 +1,50 @@
+name: Programming Exercise Template
+
+on:
+  push:
+    paths:
+      - 'src/main/resources/templates/**'
+
+jobs:
+  java:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        java: [8, 12, 13]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+
+      - uses: actions/checkout@v1
+      - name: Test Java Template
+        run: echo Hello, Java!
+
+  python:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        python: [2.7, 3.6, 3.7, 3.8]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/setup-python@v1.1.1
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Test Python Template
+        run: echo Hello, Python!
+
+  c:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Test C Template
+        run: echo Hello, C!
