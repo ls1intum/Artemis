@@ -227,7 +227,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     name += ' ' + student.user.lastName;
                 }
                 const login = student.user.login!.trim();
-                const registrationNumber = student.user.registrationNumber ? student.user.registrationNumber!.trim() : '';
+                const registrationNumber = student.user.visibleRegistrationNumber ? student.user.visibleRegistrationNumber!.trim() : '';
                 const email = student.user.email!.trim();
                 let rowString = name + ',' + login + ',' + email + ',' + registrationNumber + ',';
 
