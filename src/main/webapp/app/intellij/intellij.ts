@@ -31,7 +31,7 @@ export interface OrionTestResultBridge {
     onBuildStarted(problemStatement: string): void;
     onBuildFinished(): void;
     onBuildFailed(buildLogsJsonString: string): void;
-    onTestResult(success: boolean, message: string): void;
+    onTestResult(success: boolean, testName: string, message: string): void;
 }
 
 export interface JavaUpcallBridgeFacade {
@@ -47,7 +47,7 @@ export interface JavaUpcallBridgeFacade {
     onBuildStarted(problemStatement: string): void;
     onBuildFinished(): void;
     onBuildFailed(buildErrors: BuildLogErrors): void;
-    onTestResult(success: boolean, message: string): void;
+    onTestResult(success: boolean, testName: string, message: string): void;
 }
 
 export interface JavaDowncallBridge {

@@ -134,9 +134,10 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      *
      * @param success True if the test was successful, false otherwise
      * @param message A detail message explaining the test result
+     * @param testName The name of finished test
      */
-    onTestResult(success: boolean, message: string) {
-        this.window.nativeWindow.orionTestResultsBridge.onTestResult(success, message);
+    onTestResult(success: boolean, testName: string, message: string) {
+        this.window.nativeWindow.orionTestResultsBridge.onTestResult(success, testName, message);
     }
 
     /**
