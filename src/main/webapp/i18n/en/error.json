@@ -22,6 +22,6 @@
         "unknownAction": "This action cannot be performed.",
         "groupNotFound": "The group you entered was not found.",
         "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
-        "emptyFile": "The uploaded file {{ fileName }} is empty. Please upload another file"
+        "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again."
     }
 }

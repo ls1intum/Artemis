@@ -22,6 +22,6 @@
         "unknownAction": "Diese Aktion kann nicht durchgeführt werden.",
         "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden.",
         "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
-        "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte lädst du eine andere Datei hoch"
+        "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut."
     }
 }
