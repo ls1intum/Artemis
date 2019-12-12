@@ -291,4 +291,13 @@ public class User extends AbstractAuditingEntity implements Serializable {
     public void setRegistrationNumber(String registrationNumber) {
         this.registrationNumber = registrationNumber;
     }
+
+    public User copyBasicUser() {
+        User user = new User();
+        user.setId(getId());
+        user.setFirstName(getFirstName());
+        user.setLastName(getLastName());
+        user.setLogin(getLogin());
+        return user;
+    }
 }
