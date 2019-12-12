@@ -2,8 +2,8 @@ name: Programming Exercise Template
 
 on:
   push:
-    paths:
-      - 'src/main/resources/templates/**'
+#    paths:
+#      - 'src/main/resources/templates/**'
 
 jobs:
   java:
