@@ -214,34 +214,6 @@ public class AssessmentComplaintIntegrationTest {
 
     @Test
     @WithMockUser(username = "student1")
-    public void getComplaintResponse_reviewerHiddenForStudent() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
-        complaintRepo.save(complaint);
-
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
-        complaintResponse = complaintResponseRepo.save(complaintResponse);
-
-        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/" + complaintResponse.getId(), HttpStatus.OK, ComplaintResponse.class);
-
-        assertThat(receivedComplaintResponse.getReviewer()).as("reviewer is not set").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1")
-    public void getComplaintResponse_studentHiddenForTutor() throws Exception {
-        complaint.setStudent(database.getUserByLogin("student1"));
-        complaintRepo.save(complaint);
-
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
-        complaintResponse = complaintResponseRepo.save(complaintResponse);
-
-        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/" + complaintResponse.getId(), HttpStatus.OK, ComplaintResponse.class);
-
-        assertThat(receivedComplaintResponse.getComplaint().getStudent()).as("student is not set").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "student1")
     public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
