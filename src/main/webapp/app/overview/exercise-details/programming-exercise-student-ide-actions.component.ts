@@ -44,6 +44,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     ngOnInit(): void {
         this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.ideState = ideState));
         this.route.queryParams.subscribe(params => {
+            this.javaBridge.log(JSON.stringify(this.ideState));
             if (params['withIdeSubmit']) {
                 this.submitChanges();
             }
@@ -130,5 +131,21 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     submitChanges() {
         this.javaBridge.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
+    }
+
+    get canImport(): boolean {
+        const notOpenedOrInstructor = this.ideState.inInstructorView || this.ideState.opened !== this.exercise.id;
+
+        return this.hasInitializedParticipation() && notOpenedOrInstructor;
+    }
+
+    get canSubmit(): boolean {
+        const openedAndNotInstructor = !this.ideState.inInstructorView && this.ideState.opened === this.exercise.id;
+
+        return this.hasInitializedParticipation() && openedAndNotInstructor;
+    }
+
+    private hasInitializedParticipation(): boolean {
+        return this.exercise.studentParticipations && this.participationStatus() === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
     }
 }
