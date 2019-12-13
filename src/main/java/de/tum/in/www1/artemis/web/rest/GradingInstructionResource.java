@@ -81,20 +81,20 @@ public class GradingInstructionResource {
         log.debug("REST request to save GradingInstruction : {}", gradingInstruction);
         if (gradingInstruction.getId() != null) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new gradingInstruction cannot already have an ID")).body(null);
+                .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new gradingInstruction cannot already have an ID")).body(null);
         }
 
         // fetch exercise from database to make sure client didn't change groups
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (exercise == null) {
             return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instructor does not exist"))
-                    .body(null);
+                HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instructor does not exist"))
+                .body(null);
         }
 
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
         return ResponseEntity.created(new URI("/api/grading-instruction/" + gradingInstruction.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
 
     }
 
@@ -118,8 +118,8 @@ public class GradingInstructionResource {
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (exercise == null) {
             return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
-                    .body(null);
+                HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
+                .body(null);
         }
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
 
