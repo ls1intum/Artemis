@@ -225,11 +225,6 @@
                                     </ng-template>
                                 </ng-container>
                                 <ng-template #programmingAssessment>
-                                    <jhi-programming-assessment-repo-export
-                                        [exerciseId]="exercise.id"
-                                        [singleStudentMode]="true"
-                                        [participationIdList]="submission.participation.id"
-                                    ></jhi-programming-assessment-repo-export>
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="submission.participation.id"
                                         [latestResult]="submission.result"
@@ -256,11 +251,6 @@
                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}
                                 </button>
                                 <ng-template #programmingAssessment>
-                                    <jhi-programming-assessment-repo-export
-                                        [exerciseId]="exercise.id"
-                                        [singleStudentMode]="true"
-                                        [participationIdList]="unassessedSubmission.participation.id"
-                                    ></jhi-programming-assessment-repo-export>
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="unassessedSubmission.participation.id"
                                         [latestResult]="unassessedSubmission.result"

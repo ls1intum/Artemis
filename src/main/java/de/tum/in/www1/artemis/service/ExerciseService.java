@@ -10,7 +10,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -18,9 +17,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,9 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -49,15 +43,9 @@ public class ExerciseService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final UserService userService;
-
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
-
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final Optional<VersionControlService> versionControlService;
 
     private final Optional<GitService> gitService;
 
@@ -67,23 +55,16 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final FileService fileService;
-
-    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
-            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
-            FileService fileService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            Optional<GitService> gitService, Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService,
+            QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
-        this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
-        this.fileService = fileService;
     }
 
     /**
@@ -95,22 +76,6 @@ public class ExerciseService {
     public Exercise save(Exercise exercise) {
         log.debug("Request to save Exercise : {}", exercise);
         return exerciseRepository.save(exercise);
-    }
-
-    /**
-     * Get all the exercises.
-     *
-     * @param pageable the pagination information
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public Page<Exercise> findAll(Pageable pageable) {
-        log.debug("Request to get all Exercises");
-        List<Exercise> result = exerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<Exercise> userExercises = result.stream().filter(exercise -> authCheckService.isAllowedToSeeExercise(exercise, user));
-        List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
-        return new PageImpl<>(userExercises.collect(Collectors.toList()), pageable, filteredExercises.size());
     }
 
     /**
@@ -173,13 +138,29 @@ public class ExerciseService {
     }
 
     /**
-     * Get one exercise by exerciseId.
+     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
+     * NOTE: prefer #findOne if you don't need these additional details
+     *
+     * @param exerciseId the exerciseId of the entity
+     * @return the entity
+     */
+    public Exercise findOne(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        return exercise.get();
+    }
+
+    /**
+     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
+     * NOTE: prefer #findOne if you don't need these additional details
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Exercise findOne(Long exerciseId) {
+    public Exercise findOneWithAdditionalElements(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
