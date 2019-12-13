@@ -44,7 +44,6 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     ngOnInit(): void {
         this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.ideState = ideState));
         this.route.queryParams.subscribe(params => {
-            this.javaBridge.log(JSON.stringify(this.ideState));
             if (params['withIdeSubmit']) {
                 this.submitChanges();
             }
