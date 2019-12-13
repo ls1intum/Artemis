@@ -571,6 +571,14 @@ public abstract class Exercise implements Serializable {
         // remove the unnecessary inner course attribute
         setCourse(null);
 
+        // remove the problem statement, which is loaded in the exercise details call
+        setProblemStatement(null);
+
+        if (this instanceof ProgrammingExercise) {
+            var programmingExercise = (ProgrammingExercise) this;
+            programmingExercise.setTestRepositoryUrl(null);
+        }
+
         // get user's participation for the exercise
         StudentParticipation participation = participations != null ? findRelevantParticipation(participations) : null;
 

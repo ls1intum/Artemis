@@ -61,7 +61,7 @@ public class TutorParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -93,7 +93,7 @@ public class TutorParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TutorParticipation> addExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
-        Exercise exercise = this.exerciseService.findOne(exerciseId);
+        Exercise exercise = this.exerciseService.findOneWithAdditionalElements(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 

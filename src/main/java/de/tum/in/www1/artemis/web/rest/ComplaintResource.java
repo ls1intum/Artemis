@@ -165,7 +165,7 @@ public class ComplaintResource {
     @GetMapping("/exercises/{exerciseId}/complaints-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -185,7 +185,7 @@ public class ComplaintResource {
     @GetMapping("/exercises/{exerciseId}/more-feedback-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForTutorDashboard(@PathVariable Long exerciseId, Principal principal) {
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -270,7 +270,7 @@ public class ComplaintResource {
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         if (exercise == null) {
             throw new BadRequestAlertException("The requested exercise does not exist", ENTITY_NAME, "wrongExerciseId");

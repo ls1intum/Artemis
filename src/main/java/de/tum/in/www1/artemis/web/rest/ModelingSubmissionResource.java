@@ -220,7 +220,7 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();

@@ -4,6 +4,7 @@ import { User } from 'app/core';
 import { StudentQuestionAnswer, StudentQuestionAnswerService } from 'app/entities/student-question-answer';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
+import { fileUploadAssessmentRoutes } from 'app/file-upload-assessment/file-upload-assessment.route';
 
 export interface StudentQuestionAction {
     name: QuestionActionName;
@@ -44,6 +45,10 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     }
 
     sortQuestionAnswers(): void {
+        if (!this.studentQuestion.answers) {
+            this.sortedQuestionAnswers = [];
+            return;
+        }
         this.sortedQuestionAnswers = this.studentQuestion.answers.sort((a, b) => {
             const aValue = moment(a.answerDate!).valueOf();
             const bValue = moment(b.answerDate!).valueOf();
@@ -90,6 +95,9 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         studentQuestionAnswer.question = this.studentQuestion;
         studentQuestionAnswer.answerDate = moment();
         this.studentQuestionAnswerService.create(studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
+            if (!this.studentQuestion.answers) {
+                this.studentQuestion.answers = [];
+            }
             this.studentQuestion.answers.push(studentQuestionResponse.body!);
             this.sortQuestionAnswers();
             this.questionAnswerText = null;
