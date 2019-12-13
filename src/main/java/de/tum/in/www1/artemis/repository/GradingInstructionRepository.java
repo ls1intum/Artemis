@@ -13,4 +13,5 @@ import java.util.List;
 @Repository
 public interface GradingInstructionRepository extends JpaRepository<GradingInstruction, Long> {
     List<GradingInstruction> findByExerciseId(@Param("exerciseId") Long exerciseId);
+
 }
