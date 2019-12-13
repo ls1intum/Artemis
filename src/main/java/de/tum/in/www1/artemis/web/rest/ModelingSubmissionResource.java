@@ -166,7 +166,7 @@ public class ModelingSubmissionResource extends GenericSubmissionResource<Modeli
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, ModelingExercise.class, modelingSubmissionService);
         if (exerciseInvalid != null) {
             return exerciseInvalid;

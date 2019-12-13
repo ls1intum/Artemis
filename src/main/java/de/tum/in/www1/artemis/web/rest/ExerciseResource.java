@@ -124,7 +124,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long id) {
         log.debug("REST request to get Exercise for tutor dashboard : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(id);
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -160,7 +160,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for tutor dashboard : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -213,7 +213,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
@@ -239,7 +239,7 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long exerciseId) {
         log.debug("REST request to delete Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         if (Optional.ofNullable(exercise).isPresent()) {
             if (!authCheckService.isAtLeastInstructorForExercise(exercise))
                 return forbidden();
@@ -277,7 +277,7 @@ public class ExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
-        Exercise exercise = exerciseService.findOne(id);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(id);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise))
             return forbidden();
         exerciseService.cleanup(id, deleteRepositories);
@@ -297,7 +297,7 @@ public class ExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(id);
         if (!authCheckService.isAtLeastInstructorForExercise(exercise))
             return forbidden();
         File zipFile = exerciseService.archive(id);
@@ -354,8 +354,7 @@ public class ExerciseResource {
             // TODO: we should also check that the submissions do not contain sensitive data
 
             // remove sensitive information for students
-            boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-            if (isStudent) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 exercise.filterSensitiveInformation();
             }
         }

@@ -125,7 +125,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, TextExercise.class, textSubmissionService);
         if (exerciseInvalid != null) {
