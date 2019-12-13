@@ -24,19 +24,21 @@ on:
 
 env:
   CI: true
+  node: 14.x
+  java: 14
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Use Node.js 14
+    - name: Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: '14.x'
-    - name: Use Java 14
+        node-version: '${{ env.node }}'
+    - name: Setup Java
       uses: actions/setup-java@v1
       with:
-        java-version: '14'
+        java-version: '${{ env.java }}'
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
       uses: actions/cache@v2
@@ -76,21 +78,21 @@ jobs:
     services:
       athene-segmentation:
         image: ls1intum/athene-segmentation
-        ports: 
+        ports:
           - 8000:8000
       athene-embedding:
         image: ls1intum/athene-embedding
-        ports: 
+        ports:
           - 8001:8000
       athene-clustering:
         image: ls1intum/athene-clustering
-        ports: 
+        ports:
           - 8002:8000
     steps:
-    - name: Use Java 14
+    - name: Setup Java
       uses: actions/setup-java@v1
       with:
-        java-version: '14'
+        java-version: '${{ env.java }}'
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
       uses: actions/cache@v2
@@ -112,10 +114,10 @@ jobs:
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
     steps:
-    - name: Use Node.js 13
+    - name: Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: '14.x'
+        node-version: '${{ env.node }}'
     - uses: actions/checkout@v2
     - name: Cache node modules
       uses: actions/cache@v2
