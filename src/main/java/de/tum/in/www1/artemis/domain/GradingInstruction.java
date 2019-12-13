@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A Structured Grading Instruction.
@@ -150,7 +151,7 @@ public class GradingInstruction implements Serializable {
     @Override
     public String toString() {
         return "GradingInstruction{" + "id=" + getId() + ", credits='" + getCredits() + "'" + ", level='" + getLevel() + "'" + ", instructionDescription='"
-            + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + ", usageCount='" + getUsageCount() + "'" + "}";
+                + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + ", usageCount='" + getUsageCount() + "'" + "}";
     }
 
 }

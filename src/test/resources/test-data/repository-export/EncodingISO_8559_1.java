@@ -1,7 +1,7 @@
 public class LineEndings {
 
     public void someMethod() {
-        // THESE ARE SPECIAL LETTERS: ÄÜÖß
+        // THESE ARE SPECIAL LETTERS: ï¿½ï¿½ï¿½ï¿½
         someService.call();
     }
 }

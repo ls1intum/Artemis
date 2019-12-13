@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingInstruction;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.GradingInstructionService;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,26 +14,32 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.GradingInstructionService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing Structured Grading Instructions.
  */
 @RestController
-@RequestMapping({"/api", "/api_basic"})
+@RequestMapping({ "/api", "/api_basic" })
 @PreAuthorize("hasRole('ADMIN')")
 public class GradingInstructionResource {
+
     private final Logger log = LoggerFactory.getLogger(GradingInstructionResource.class);
+
     private static final String ENTITY_NAME = "gradingInstruction";
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
     private final GradingInstructionService gradingInstructionService;
+
     private final ExerciseService exerciseService;
+
     private final AuthorizationCheckService authCheckService;
 
     public GradingInstructionResource(GradingInstructionService gradingInstructionService, ExerciseService exerciseService, AuthorizationCheckService authCheckService) {
@@ -74,20 +81,20 @@ public class GradingInstructionResource {
         log.debug("REST request to save GradingInstruction : {}", gradingInstruction);
         if (gradingInstruction.getId() != null) {
             return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new gradingInstruction cannot already have an ID")).body(null);
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new gradingInstruction cannot already have an ID")).body(null);
         }
 
         // fetch exercise from database to make sure client didn't change groups
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (exercise == null) {
-            return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instructor does not exist"))
-                .body(null);
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instructor does not exist"))
+                    .body(null);
         }
 
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
         return ResponseEntity.created(new URI("/api/grading-instruction/" + gradingInstruction.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
 
     }
 
@@ -110,9 +117,9 @@ public class GradingInstructionResource {
         // fetch exercise from database to make sure client didn't change groups
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (exercise == null) {
-            return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
-                .body(null);
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
+                    .body(null);
         }
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
 
