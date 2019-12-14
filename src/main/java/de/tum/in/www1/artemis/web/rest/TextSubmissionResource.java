@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
@@ -14,10 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing TextSubmission.
@@ -68,7 +70,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      * @param principal      the current user principal
      * @param textSubmission the textSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
-     *         500 (Internal Server Error) if the textSubmission couldn't be updated
+     * 500 (Internal Server Error) if the textSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -99,8 +101,8 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call
      *
-     * @param exerciseId exerciseID  for which all submissions should be returned
-     * @param submittedOnly mark if only submitted Submissions should be returned
+     * @param exerciseId      exerciseID  for which all submissions should be returned
+     * @param submittedOnly   mark if only submitted Submissions should be returned
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
@@ -116,14 +118,12 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     /**
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
-     * @param exerciseId exerciseID  for which a submission should be returned
-     * @param lockSubmission if true the submission will be locked by the requesting tutor
+     * @param exerciseId     exerciseID  for which a submission should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
         final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
@@ -132,22 +132,13 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
             return exerciseInvalid;
         }
 
-        TextSubmission textSubmission;
-        if (lockSubmission) {
-            textSubmission = this.textSubmissionService.getLockedTextSubmissionWithoutResult((TextExercise) exercise);
-        }
-        else {
-            Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getSubmissionWithoutManualResult((TextExercise) exercise);
-            if (optionalTextSubmission.isEmpty()) {
-                return notFound();
-            }
-            textSubmission = optionalTextSubmission.get();
-        }
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getSubmissionWithoutManualResult((TextExercise) exercise);
 
-        // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
-        studentParticipation.setExercise(exercise);
-        hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
-        return ResponseEntity.ok(textSubmission);
+        // tutors should not see information about the student of a submission
+        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
+                && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
+            ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
+        }
+        return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }
 }
