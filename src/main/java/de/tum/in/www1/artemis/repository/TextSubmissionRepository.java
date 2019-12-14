@@ -20,14 +20,6 @@ public interface TextSubmissionRepository extends GenericSubmissionRepository<Te
     Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessorAndBlocks(@Param("submissionId") Long submissionId);
 
     /**
-     * Gets all open (without a result) TextSubmissions which are submitted and loads all blocks, results, and participation
-     * @param exerciseId the Id of the exercise
-     * @return List of Text Submissions
-     */
-    @EntityGraph(attributePaths = { "blocks", "result", "participation" })
-    List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(long exerciseId);
-
-    /**
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date or no exercise
      *         due date at all
@@ -42,4 +34,12 @@ public interface TextSubmissionRepository extends GenericSubmissionRepository<Te
      */
     @Query("SELECT COUNT (DISTINCT textSubmission) FROM TextSubmission textSubmission WHERE textSubmission.participation.exercise.id = :#{#exerciseId} AND textSubmission.submitted = TRUE AND (textSubmission.submissionDate < textSubmission.participation.exercise.dueDate OR textSubmission.participation.exercise.dueDate IS NULL)")
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Gets all open (without a result) TextSubmissions which are submitted and loads all blocks, results, and participation
+     * @param exerciseId the Id of the exercise
+     * @return List of Text Submissions
+     */
+    @EntityGraph(attributePaths = { "blocks", "result", "participation" })
+    List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(long exerciseId);
 }
