@@ -37,10 +37,6 @@ public class TutorLeaderboardDTO {
         this.points = points;
     }
 
-    @SuppressWarnings("unused")
-    public TutorLeaderboardDTO() {
-    }
-
     public long getUserId() {
         return userId;
     }
