@@ -81,6 +81,14 @@ public class TutorLeaderboardDTO {
         this.numberOfAcceptedComplaints = numberOfAcceptedComplaints;
     }
 
+    public long getNumberOfTutorComplaints() {
+        return numberOfTutorComplaints;
+    }
+
+    public void setNumberOfTutorComplaints(long numberOfTutorComplaints) {
+        this.numberOfTutorComplaints = numberOfTutorComplaints;
+    }
+
     public long getNumberOfComplaintResponses() {
         return numberOfComplaintResponses;
     }
@@ -95,6 +103,14 @@ public class TutorLeaderboardDTO {
 
     public void setNumberOfAnsweredMoreFeedbackRequests(long numberOfAnsweredMoreFeedbackRequests) {
         this.numberOfAnsweredMoreFeedbackRequests = numberOfAnsweredMoreFeedbackRequests;
+    }
+
+    public long getNumberOfTutorMoreFeedbackRequests() {
+        return numberOfTutorMoreFeedbackRequests;
+    }
+
+    public void setNumberOfTutorMoreFeedbackRequests(long numberOfTutorMoreFeedbackRequests) {
+        this.numberOfTutorMoreFeedbackRequests = numberOfTutorMoreFeedbackRequests;
     }
 
     public Long getPoints() {
