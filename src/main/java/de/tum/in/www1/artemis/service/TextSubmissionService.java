@@ -96,6 +96,22 @@ public class TextSubmissionService extends SubmissionService<TextSubmission> {
     }
 
     /**
+     * @param courseId the course we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
+
+    /**
      * Get a text submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param textExercise the exercise the submission should belong to

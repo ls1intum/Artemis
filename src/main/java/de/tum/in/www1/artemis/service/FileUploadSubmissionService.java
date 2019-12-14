@@ -142,4 +142,20 @@ public class FileUploadSubmissionService extends SubmissionService<FileUploadSub
         lockFileUploadSubmission(fileUploadSubmission);
         return fileUploadSubmission;
     }
+
+    /**
+     * @param courseId the course we are interested in
+     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
+        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
 }
