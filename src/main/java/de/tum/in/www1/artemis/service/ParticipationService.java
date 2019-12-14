@@ -611,9 +611,9 @@ public class ParticipationService {
      * @param username   the username of the student
      * @return the participation of the given student and exercise with eager submissions in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAndResultsAnyState(Long exerciseId, String username) {
+    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return studentParticipationRepository.findWithEagerSubmissionsAndResultsByExerciseIdAndStudentLogin(exerciseId, username);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exerciseId, username);
     }
 
     /**

@@ -106,7 +106,7 @@ public abstract class SubmissionService<T extends Submission> {
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         submission.setResult(null);
 
-        final Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAndResultsAnyState(exercise.getId(),
+        final Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(exercise.getId(),
                 username);
         if (optionalParticipation.isEmpty()) {
             throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + exercise.getId());
@@ -171,8 +171,8 @@ public abstract class SubmissionService<T extends Submission> {
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the submission with the given id
      */
-    public T findOneWithEagerResultAndAssessor(long submissionId) {
-        return genericSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
+    public T findOneWithEagerResult(long submissionId) {
+        return genericSubmissionRepository.findByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 

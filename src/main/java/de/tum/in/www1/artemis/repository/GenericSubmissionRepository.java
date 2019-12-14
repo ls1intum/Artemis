@@ -29,7 +29,7 @@ public interface GenericSubmissionRepository<T extends Submission> extends JpaRe
      * @return the submission with its assessor
      */
     @Query("select distinct submission from #{#entityName} submission left join fetch submission.result r left join fetch r.assessor where submission.id=?1")
-    Optional<T> findByIdWithEagerResultAndAssessor(@Param("submissionId") long submissionId);
+    Optional<T> findByIdWithEagerResult(@Param("submissionId") long submissionId);
 
     /**
      * Load the submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of

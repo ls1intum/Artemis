@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -100,7 +97,7 @@ public class TextSubmissionService extends SubmissionService<TextSubmission> {
      * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        return ((TextSubmissionRepository) genericSubmissionRepository).countByCourseIdSubmittedBeforeDueDate(courseId);
     }
 
     /**
@@ -108,7 +105,7 @@ public class TextSubmissionService extends SubmissionService<TextSubmission> {
      * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+        return ((TextSubmissionRepository) genericSubmissionRepository).countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 
     /**

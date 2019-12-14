@@ -179,7 +179,7 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        return ((ModelingSubmissionRepository) genericSubmissionRepository).countByCourseIdSubmittedBeforeDueDate(courseId);
     }
 
     /**
@@ -187,6 +187,6 @@ public class ModelingSubmissionService extends SubmissionService<ModelingSubmiss
      * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
      */
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+        return ((ModelingSubmissionRepository) genericSubmissionRepository).countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }

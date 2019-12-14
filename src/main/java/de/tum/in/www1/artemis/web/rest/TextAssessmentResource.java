@@ -187,7 +187,7 @@ public class TextAssessmentResource extends AssessmentResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
-        TextSubmission submission = textSubmissionService.findOneWithEagerResultAndAssessor(submissionId);
+        TextSubmission submission = textSubmissionService.findOneWithEagerResult(submissionId);
         if (submission.getResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();

@@ -25,7 +25,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -69,9 +71,11 @@ public class ProgrammingSubmissionService {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
-            GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
+            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, ResultRepository resultRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.groupNotificationService = groupNotificationService;

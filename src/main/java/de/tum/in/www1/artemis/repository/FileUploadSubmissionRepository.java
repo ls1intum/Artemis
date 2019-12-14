@@ -27,4 +27,5 @@ public interface FileUploadSubmissionRepository extends GenericSubmissionReposit
      */
     @Query("SELECT COUNT (DISTINCT submission) FROM FileUploadSubmission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
+
 }

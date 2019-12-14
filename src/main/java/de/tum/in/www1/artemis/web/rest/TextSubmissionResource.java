@@ -30,9 +30,9 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
 
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
-    private final TextSubmissionService textSubmissionService;
-
     private final TextExerciseService textExerciseService;
+
+    private final TextSubmissionService textSubmissionService;
 
     public TextSubmissionResource(ExerciseService exerciseService, TextExerciseService textExerciseService, CourseService courseService, ParticipationService participationService,
             TextSubmissionService textSubmissionService, UserService userService, AuthorizationCheckService authCheckService) {
@@ -81,7 +81,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     }
 
     @NotNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable long exerciseId, Principal principal, TextSubmission textSubmission) {
+    private ResponseEntity<TextSubmission> handleTextSubmission(long exerciseId, Principal principal, TextSubmission textSubmission) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
         final ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidityForStudent(textExercise);
