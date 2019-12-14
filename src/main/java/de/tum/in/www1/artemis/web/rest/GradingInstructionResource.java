@@ -138,9 +138,14 @@ public class GradingInstructionResource {
         log.debug("REST request to delete GradingInstruction : {}", gradingInstructionId);
 
         GradingInstruction gradingInstruction = gradingInstructionService.findOne(gradingInstructionId);
+        Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (Optional.ofNullable(gradingInstruction).isPresent()) {
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+                return forbidden();
+            }
             gradingInstructionService.delete(gradingInstruction);
         }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, gradingInstructionId.toString())).build();
     }
 }
