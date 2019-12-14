@@ -51,7 +51,6 @@ describe('TableEditableFieldComponent', () => {
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsComponent),
                 MockComponent(ComplaintInteractionsComponent),
-                MockComponent(ResultComponent),
             ],
             providers: [
                 JhiAlertService,

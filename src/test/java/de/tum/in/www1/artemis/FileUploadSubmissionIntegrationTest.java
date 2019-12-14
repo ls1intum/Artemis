@@ -207,7 +207,7 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmissionsOfExercise() throws Exception {
         FileUploadSubmission submission1 = database.addFileUploadSubmission(fileUploadExercise, notSubmittedFileUploadSubmission, "student1");
         FileUploadSubmission submission2 = database.addFileUploadSubmission(fileUploadExercise, submittedFileUploadSubmission, "student2");
@@ -378,10 +378,10 @@ public class FileUploadSubmissionIntegrationTest {
     }
 
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {
+        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
         assertThat(submission.getParticipation().getSubmissions()).as("submissions are hidden in participation").isNullOrEmpty();
-        assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getResult()).as("result is hidden").isNull();
+            assertThat(submission.getResult()).isNull();
         }
         else {
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isNull();

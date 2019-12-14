@@ -58,7 +58,6 @@ describe('TextAssessmentComponent', () => {
                 MockComponent(ResizableInstructionsComponent),
                 MockComponent(AssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
-                MockComponent(ResultComponent),
             ],
             providers: [
                 JhiLanguageHelper,

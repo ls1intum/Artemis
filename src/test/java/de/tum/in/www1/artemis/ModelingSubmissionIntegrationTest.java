@@ -237,21 +237,21 @@ public class ModelingSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getAllSubmissionsOfExercise_asTutor() throws Exception {
-        database.addModelingSubmission(classExercise, submittedSubmission, "student1");
-        request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void getAllSubmissionsOfExercise_asInstructor() throws Exception {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         ModelingSubmission submission2 = database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getAllSubmissionsOfExercise_asTutor() throws Exception {
+        database.addModelingSubmission(classExercise, submittedSubmission, "student1");
+        request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
@@ -278,7 +278,7 @@ public class ModelingSubmissionIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
