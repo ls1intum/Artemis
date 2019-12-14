@@ -24,9 +24,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.errors.IllegalTodoFileModification;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.RebaseTodoLine;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
@@ -41,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -444,12 +443,12 @@ public class GitService {
     }
 
     /**
-     * Stager Task #6: Combine commits Combine/Squash all commits after last instructor commit
+     * Stager Task #6: Combine all commits after last instructor commit
      *
      * @param repository Local Repository Object.
      * @param exercise   ProgrammingExercise associated with this repo.
      */
-    public void squashAfterInstructor(Repository repository, ProgrammingExercise exercise) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise exercise) {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
@@ -467,38 +466,19 @@ public class GitService {
             // checkout own local "diff" branch
             studentGit.checkout().setCreateBranch(true).setName("diff").call();
 
-            // merge commits into one commit
-            studentGit.rebase().setUpstream(latestHash).runInteractively(new RebaseCommand.InteractiveHandler() {
-
-                @Override
-                public void prepareSteps(List<RebaseTodoLine> steps) {
-                    try {
-                        // flag all commits to "squash"
-                        for (RebaseTodoLine step : steps) {
-                            step.setAction(RebaseTodoLine.Action.SQUASH);
-                        }
-                        // flag latest commit to "pick"
-                        steps.get(0).setAction(RebaseTodoLine.Action.PICK);
-                    }
-                    catch (IllegalTodoFileModification illegalTodoFileModification) {
-                        log.error("Cannot modify commits in " + repository.getLocalPath() + " due to the following exception: " + illegalTodoFileModification);
-                    }
-                }
-
-                @Override
-                public String modifyCommitMessage(String oldCommitMsg) {
-                    // reuse old commit messages
-                    return oldCommitMsg;
-                }
-            }).call();
+            studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
+            studentGit.add().addFilepattern(".").call();
+            var student = ((StudentParticipation) repository.getParticipation()).getStudent();
+            var name = student != null ? student.getName() : ARTEMIS_GIT_NAME;
+            var email = student != null ? student.getEmail() : ARTEMIS_GIT_EMAIL;
+            studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
 
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
-
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
-            log.warn("Cannot rebase the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
+            log.warn("Cannot reset the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
         }
     }
 
@@ -583,19 +563,19 @@ public class GitService {
     }
 
     /**
-     * Squashes all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the squash to avoid conflicts.
+     * Combines all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the combine to avoid conflicts.
      * 
-     * @param repo to squash commits for
+     * @param repo to combine commits for
      * @throws GitAPIException       on io errors or git exceptions.
      * @throws IllegalStateException if there is no commit in the git repository.
      */
-    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
+    public void combineAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
         Git git = new Git(repo);
         try {
             resetToOriginMaster(repo);
             List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).collect(Collectors.toList());
             RevCommit firstCommit = commits.get(commits.size() - 1);
-            // If there is a first commit, squash all other commits into it.
+            // If there is a first commit, combine all other commits into it.
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
@@ -610,10 +590,10 @@ public class GitService {
         }
         // This exception occurrs when there was no change to the repo and a commit is done, so it is ignored.
         catch (JGitInternalException ex) {
-            log.debug("Did not squash the repository {} as there were no changes to commit.", repo);
+            log.debug("Did not combine the repository {} as there were no changes to commit.", repo);
         }
         catch (GitAPIException ex) {
-            log.error("Could not squash repository {} due to exception: {}", repo, ex);
+            log.error("Could not combine repository {} due to exception: {}", repo, ex);
             throw (ex);
         }
     }

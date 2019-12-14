@@ -552,15 +552,18 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Squash all commits into one in the template repository of a given exercise.
+     * Combine all commits into one in the template repository of a given exercise.
      * 
      * @param id of the exercise
-     * @return the ResponseEntity with status 200 (OK) if squash has been successfully executed, with status 403 (Forbidden) if the user is not admin and course instructor or with status 500 (Internal Server Error)
+     * @return the ResponseEntity with status
+     *              200 (OK) if combine has been successfully executed
+     *              403 (Forbidden) if the user is not admin and course instructor or
+     *              500 (Internal Server Error)
      */
-    @PutMapping(value = "/programming-exercises/{id}/squash-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PutMapping(value = "/programming-exercises/{id}/combine-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Void> squashTemplateRepositoryCommits(@PathVariable Long id) {
+    public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable Long id) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
         Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
@@ -577,7 +580,7 @@ public class ProgrammingExerciseResource {
 
         try {
             URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
-            programmingExerciseService.squashAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
+            programmingExerciseService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
         catch (IllegalStateException | InterruptedException | GitAPIException ex) {

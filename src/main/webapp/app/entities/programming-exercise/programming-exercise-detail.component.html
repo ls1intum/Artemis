@@ -197,10 +197,10 @@
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
             <span class="mr-1">
-                <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="squashTemplateCommits()" class="btn btn-secondary">
-                    <span jhiTranslate="artemisApp.programmingExercise.squashTemplateCommits">Squash Template Commits</span>
+                <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="combineTemplateCommits()" class="btn btn-secondary">
+                    <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
                 </button>
-                <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.squashTemplateCommitsWarning' | translate }}"></fa-icon>
+                <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | translate }}"></fa-icon>
             </span>
             <span *ngIf="programmingExercise.programmingLanguage == JAVA" class="mr-1">
                 <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
