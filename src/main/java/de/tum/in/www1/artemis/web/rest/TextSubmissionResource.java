@@ -70,7 +70,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      * @param principal      the current user principal
      * @param textSubmission the textSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
-     * 500 (Internal Server Error) if the textSubmission couldn't be updated
+     *         500 (Internal Server Error) if the textSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -101,8 +101,8 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
      * GET /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or only the one
      * assessed by the tutor who is doing the call
      *
-     * @param exerciseId      exerciseID  for which all submissions should be returned
-     * @param submittedOnly   mark if only submitted Submissions should be returned
+     * @param exerciseId exerciseID  for which all submissions should be returned
+     * @param submittedOnly mark if only submitted Submissions should be returned
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
@@ -118,14 +118,14 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
     /**
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
-     * @param exerciseId     exerciseID  for which a submission should be returned
+     * @param exerciseId exerciseID  for which a submission should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
-        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         final var exerciseInvalid = this.checkExerciseValidityForTutor(exercise, TextExercise.class, textSubmissionService);
         if (exerciseInvalid != null) {
@@ -139,6 +139,7 @@ public class TextSubmissionResource extends GenericSubmissionResource<TextSubmis
                 && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
             ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
         }
+
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }
 }
