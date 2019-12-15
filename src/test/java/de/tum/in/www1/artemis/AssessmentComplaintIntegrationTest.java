@@ -79,7 +79,7 @@ public class AssessmentComplaintIntegrationTest {
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 2, 1);
+        database.addUsers(2, 2, 1);
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
@@ -210,6 +210,26 @@ public class AssessmentComplaintIntegrationTest {
         Complaint receivedComplaint = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(receivedComplaint.getResult().getAssessor()).as("assessor is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    public void getComplaintByResultId_studentAndNotOwner_forbidden() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1")
+    public void getComplaintByResultid_instructor_sensitiveDataHidden() throws Exception {
+        complaintRepo.save(complaint);
+
+        final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+
+        assertThat(received.getResult().getParticipation()).as("Complaint should not contain participation").isNull();
+        assertThat(received.getResultBeforeComplaint()).as("Complaint should not contain old result").isNull();
     }
 
     @Test
