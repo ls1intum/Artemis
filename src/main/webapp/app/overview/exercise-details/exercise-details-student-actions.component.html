@@ -247,8 +247,8 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="publishBuildPlanUrl() && exercise.studentParticipations && exercise.studentParticipations.length > 0"
-            routerLink="/code-editor/{{ exercise.studentParticipations[0].id }}"
+            *ngIf="publishBuildPlanUrl() && buildPlanActive()"
+            (click)="goToBuildPlan(exercise.studentParticipations[0])"
         ></button>
     </div>
     <!-- ACTION END -->
