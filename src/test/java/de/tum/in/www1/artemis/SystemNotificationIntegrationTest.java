@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,23 +38,8 @@ public class SystemNotificationIntegrationTest {
     @Autowired
     SystemNotificationRepository systemNotificationRepo;
 
-    @AfterEach
-    public void resetDatabase() {
-        database.resetDatabase();
-    }
-
-    @Test
-    public void getActiveSystemNotification() throws Exception {
-        prepareGetActiveSystemNotification();
-        // Do the actual request that is tested here.
-        SystemNotification systemNotification = request.get("/api/system-notifications/active-notification", HttpStatus.OK, SystemNotification.class);
-
-        // The returned notification must be an active notification.
-        assertThat(systemNotification.getExpireDate()).as("Returned notification has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
-        assertThat(systemNotification.getNotificationDate()).as("Returned notification is active.").isBeforeOrEqualTo(ZonedDateTime.now());
-    }
-
-    private void prepareGetActiveSystemNotification() {
+    @BeforeEach
+    public void initTestCase() {
         // Generate a system notification that has expired.
         SystemNotification systemNotificationExpired = ModelFactory.generateSystemNotification((ZonedDateTime.now().minusDays(5)), (ZonedDateTime.now().minusDays(8)));
         systemNotificationRepo.save(systemNotificationExpired);
@@ -65,5 +51,20 @@ public class SystemNotificationIntegrationTest {
         // Generate an active system notification
         SystemNotification systemNotificationActive = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
         systemNotificationRepo.save(systemNotificationActive);
+    }
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
+    }
+
+    @Test
+    public void getActiveSystemNotification() throws Exception {
+        // Do the actual request that is tested here.
+        SystemNotification systemNotification = request.get("/api/system-notifications/active-notification", HttpStatus.OK, SystemNotification.class);
+
+        // The returned notification must be an active notification.
+        assertThat(systemNotification.getExpireDate()).as("Returned notification has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
+        assertThat(systemNotification.getNotificationDate()).as("Returned notification is active.").isBeforeOrEqualTo(ZonedDateTime.now());
     }
 }
