@@ -8,10 +8,11 @@ import { ActivatedRoute } from '@angular/router';
 import { areManualResultsAllowed, Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/feature-toggle';
 
 enum FilterProp {
@@ -47,6 +48,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     participationCriteria: {
         filterProp: FilterProp;
     };
+
+    exerciseSubmissionState: ExerciseSubmissionState;
 
     isLoading: boolean;
 
@@ -85,7 +88,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     this.isLoading = false;
                 });
                 if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
+                    this.programmingSubmissionService
+                        .getSubmissionStateOfExercise(this.exercise.id)
+                        .pipe(
+                            tap((exerciseSubmissionState: ExerciseSubmissionState) => {
+                                this.exerciseSubmissionState = exerciseSubmissionState;
+                            }),
+                        )
+                        .subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
@@ -104,13 +114,22 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     filterParticipationByProp = (participation: Participation) => {
         switch (this.participationCriteria.filterProp) {
             case FilterProp.FAILED:
-                return participation.results.length === 0;
+                return this.hasFailedSubmission(participation);
             case FilterProp.ALL:
                 return true;
             default:
                 return true;
         }
     };
+
+    hasFailedSubmission(participation: Participation) {
+        const submissionStateObj = this.exerciseSubmissionState[participation.id];
+        if (submissionStateObj) {
+            const { submissionState } = submissionStateObj;
+            return submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
+        }
+        return false;
+    }
 
     trackId(index: number, item: Participation) {
         return item.id;
