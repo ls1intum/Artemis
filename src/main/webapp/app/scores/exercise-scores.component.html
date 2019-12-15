@@ -198,6 +198,12 @@
                         ></jhi-programming-assessment-manual-result>
                     </ng-template>
                 </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" *ngIf="exercise.type === FILE_UPLOAD" [resizeable]="false" [minWidth]="150" [width]="150">
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <button class="btn btn-primary btn-sm mr-1" (click)="downloadFile(value)"><fa-icon [icon]="'download'" class="mr-1"></fa-icon>Download file</button>
+                    </ng-template>
+                </ngx-datatable-column>
             </ngx-datatable>
         </ng-template>
     </jhi-data-table>

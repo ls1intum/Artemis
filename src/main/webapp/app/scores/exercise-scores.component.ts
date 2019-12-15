@@ -16,6 +16,8 @@ import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { FeatureToggle } from 'app/feature-toggle';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { FileService } from 'app/shared';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 
 enum FilterProp {
     ALL = 'all',
@@ -34,9 +36,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     FilterProp = FilterProp;
 
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly MODELING = ExerciseType.MODELING;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly TEXT = ExerciseType.TEXT;
+
     readonly FeatureToggle = FeatureToggle;
 
     course: Course;
@@ -61,6 +66,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private resultService: ResultService,
         private programmingSubmissionService: ProgrammingSubmissionService,
+        private fileService: FileService,
     ) {
         this.resultCriteria = {
             filterProp: FilterProp.ALL,
@@ -165,6 +171,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     goToRepository(result: Result) {
         window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
+    }
+
+    downloadFile(result: Result) {
+        const { filePath } = result.submission as FileUploadSubmission;
+        if (filePath) {
+            this.fileService.downloadAttachment(filePath);
+        }
     }
 
     exportNames() {
