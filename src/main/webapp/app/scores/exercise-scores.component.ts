@@ -1,5 +1,5 @@
 import { JhiAlertService } from 'ng-jhipster';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
@@ -21,14 +21,17 @@ enum FilterProp {
     ALL = 'all',
     SUCCESSFUL = 'successful',
     UNSUCCESSFUL = 'unsuccessful',
+    BUILD_FAILED = 'build-failed',
     MANUAL = 'manual',
     AUTOMATIC = 'automatic',
 }
 
 @Component({
     selector: 'jhi-exercise-scores',
+    styleUrls: ['./exercise-scores.component.scss'],
     templateUrl: './exercise-scores.component.html',
     providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -136,6 +139,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 return result.successful;
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
+            case FilterProp.BUILD_FAILED:
+                // TODO: A boolean flag {buildFailed} on the result coming from the backend would be better
+                return result.resultString === 'No tests found';
             case FilterProp.MANUAL:
                 return result.assessmentType === AssessmentType.MANUAL;
             case FilterProp.AUTOMATIC:
