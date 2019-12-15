@@ -27,10 +27,10 @@
     </root>
 -->
 
-    <!-- Configure the Sentry appender, overriding the logging threshold to the WARN level -->
+    <!-- Configure the Sentry appender, overriding the logging threshold to the ERROR level -->
     <appender name="Sentry" class="io.sentry.logback.SentryAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
+            <level>ERROR</level>
         </filter>
     </appender>
 
@@ -54,8 +54,6 @@
     <logger name="com.ryantenney" level="WARN"/>
     <logger name="com.sun" level="WARN"/>
     <logger name="com.zaxxer" level="WARN"/>
-    <logger name="io.undertow" level="WARN"/>
-    <logger name="io.undertow.websockets.jsr" level="WARN"/>
     <logger name="org.ehcache" level="WARN"/>
     <logger name="org.apache" level="WARN"/>
     <logger name="org.apache.kafka" level="INFO"/>

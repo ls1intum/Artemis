@@ -5,7 +5,9 @@
         <div class="col-8">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="goToExerciseDashboard()" class="back-button mr-2"></fa-icon>
-                <span [jhiTranslate]="headingTranslationKey" [translateValues]="{ exerciseTitle: exercise?.title }">(Example) Assessment Editor for Text Exercise</span>
+                <span *ngIf="exercise" [jhiTranslate]="headingTranslationKey" [translateValues]="{ exerciseTitle: exercise?.title }"
+                    >(Example) Assessment Editor for Text Exercise</span
+                >
             </h2>
         </div>
 
@@ -69,9 +71,9 @@
 
 <div class="row justify-content-end mt-4">
     <div class="col text-right">
-        <span *ngIf="result && participation && showResult"><jhi-updating-result [participation]="participation"></jhi-updating-result></span>
+        <span *ngIf="result && participation && showResult"><jhi-result [participation]="participation"></jhi-result></span>
         <h6 *ngIf="result && result.assessor" style="color:red">
-            {{ 'artemisApp.textAssessment.assessor' | translate }}: {{ result.assessor.firstName }}
+            {{ 'artemisApp.textAssessment.assessor' | translate }}: {{ result.assessor.name }}
             <span>- {{ 'artemisApp.textAssessment.submissionLocked' | translate }}</span>
         </h6>
     </div>

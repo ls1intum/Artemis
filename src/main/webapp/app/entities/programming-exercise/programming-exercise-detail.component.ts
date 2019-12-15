@@ -91,13 +91,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         window.history.back();
     }
 
-    squashTemplateCommits() {
-        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+    combineTemplateCommits() {
+        this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
             () => {
-                this.jhiAlertService.success('artemisApp.programmingExercise.squashTemplateCommitsSuccess');
+                this.jhiAlertService.success('artemisApp.programmingExercise.combineTemplateCommitsSuccess');
             },
             () => {
-                this.jhiAlertService.error('artemisApp.programmingExercise.squashTemplateCommitsError');
+                this.jhiAlertService.error('artemisApp.programmingExercise.combineTemplateCommitsError');
             },
         );
     }

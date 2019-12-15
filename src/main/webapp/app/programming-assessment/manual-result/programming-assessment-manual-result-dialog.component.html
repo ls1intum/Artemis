@@ -32,6 +32,21 @@
             <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
             <span [innerHTML]="participation.exercise.gradingInstructions | htmlForMarkdown"></span>
         </div>
+        <div class="d-flex align-items-center mb-1 mt-1">
+            <jhi-programming-assessment-repo-export
+                [exerciseId]="participation.exercise?.id"
+                [singleStudentMode]="true"
+                [participationIdList]="participation?.id"
+            ></jhi-programming-assessment-repo-export>
+            <a
+                class="ml-2"
+                href="{{ this.participation.repositoryUrl }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
+                >Go to repository</a
+            >
+        </div>
         <div class="form-group">
             <h4 class="control-label" jhiTranslate="artemisApp.result.resultString">Result Text</h4>
             <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
