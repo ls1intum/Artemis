@@ -354,8 +354,8 @@ public class AssessmentComplaintIntegrationTest {
             assertThat(exercise.getProblemStatement()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getCourse()).as("Exercise only contains title and ID").isNull();
             assertThat(exercise.getAssessmentDueDate()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
+            assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             // TODO check exercise type specific sensitive attributes
         }
     }
