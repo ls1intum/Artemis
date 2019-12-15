@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -66,18 +68,6 @@ public class FileUploadExerciseIntegrationTest {
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
         assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(filePattern);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExerciseWithInvalidFilePattern() throws Exception {
-        String filePattern = "Example file pattern";
-        FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
-        fileUploadExercise.setFilePattern(filePattern);
-        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
-                HttpStatus.BAD_REQUEST);
-
-        assertThat(receivedFileUploadExercise).isNull();
     }
 
     @Test

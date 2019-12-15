@@ -24,7 +24,8 @@
             "assessedSubmission": "Deine bewertete Abgabe",
             "supportedFileExtensions": "Unterstützte Dateierweiterungen: ",
             "fileExtensionPattern": {
-                "pattern": "Ungültige Liste von Dateierweiterungen"
+                "minlength": "Jede Dateierweiterung muss mindestens 2 Zeichen lang sein.",
+                "forbidden": "Ungültige Liste von Dateierweiterungen"
             }
         }
     }

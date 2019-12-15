@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -10,6 +11,7 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { EditorMode } from 'app/markdown-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { filePatternValidator } from 'app/shared/form/filepattern-validator.directive';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -27,8 +29,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
-
-    filePatternRegex = /(doc|DOC|docx|DOCX|dotx|DOTX|xml|XML|pdf|PDF|wps|WPS|wpd|WPD|wp|WP|wp4|WP4|wp5|WP5|wp6|WP6|wp7|WP7|qxd|QXD|ps|PS|pub|PUB|tex|TEX|vsd|VSD|bmp|BMP|jpg|JPG|jpeg|JPEG|pjpeg|PJEPG|gif|GIF|pgn|PGN|png|PNG|txt|TXT|rtf|RTF|wav|WAV|mp3|MP3|html|HTML|odt|ODT|xls|XLS|xlsx|XLSX|wks|WKS|xlr|XLR|csv|CSV|ppt|PPT|pps|PPS|ppsx|PPXS|zip|ZIP|tar|TAR|war|WAR|rar|RAR|text|TEXT)$/;
+    fileUploadForm: FormGroup;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -64,6 +65,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+        this.fileUploadForm = new FormGroup({
+            filePattern: new FormControl(this.fileUploadExercise.filePattern, [Validators.required, Validators.minLength(2), filePatternValidator()]),
+        });
     }
 
     /**
@@ -128,5 +132,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+
+    get filePattern() {
+        return this.fileUploadForm.get('filePattern')!;
     }
 }

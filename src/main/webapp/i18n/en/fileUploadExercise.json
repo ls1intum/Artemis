@@ -24,7 +24,8 @@
             "assessedSubmission": "Your assessed submission",
             "supportedFileExtensions": "Supported file extensions: ",
             "fileExtensionPattern": {
-                "pattern": "The list of specified file extensions is invalid."
+                "minlength": "Each file extension has to be at lease 2 characters long.",
+                "forbidden": "The list of specified file extensions is invalid."
             }
         }
     }

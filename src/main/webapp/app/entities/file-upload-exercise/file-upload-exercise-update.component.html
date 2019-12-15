@@ -88,29 +88,30 @@
                     </select>
                 </div>
                 <div class="form-group">
-
-                        <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
-                        <fa-icon
-                            [icon]="'question-circle'"
-                            class="text-secondary"
-                            placement="top"
-                            ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"
-                        ></fa-icon>
-
-                    <input
-                        required
-                        minlength="2"
-                        type="text"
-                        class="form-control"
-                        name="filePattern"
-                        id="field_filePattern"
-                        [pattern]="filePatternRegex"
-                        [(ngModel)]="fileUploadExercise.filePattern"
-                        #filePattern="ngModel"
-                    />
-                    <ng-container *ngFor="let e of filePattern.errors! | keyvalue | removekeys: ['required']">
-                        <div *ngIf="filePattern.invalid && (filePattern.dirty || filePattern.touched)" class="alert alert-danger">
-                            <div [jhiTranslate]="'artemisApp.fileUploadExercise.fileExtensionPattern' + '.' + e.key"></div>
+                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"
+                    ></fa-icon>
+                    <form [formGroup]="fileUploadForm">
+                        <input
+                            required
+                            type="text"
+                            class="form-control"
+                            name="filePattern"
+                            id="field_filePattern"
+                            formControlName="filePattern"
+                            [(ngModel)]="fileUploadExercise.filePattern"
+                        />
+                    </form>
+                    <ng-container *ngIf="filePattern.invalid && (filePattern.dirty || filePattern.touched)">
+                        <div class="alert alert-danger">
+                            <div
+                                *ngFor="let e of filePattern.errors! | keyvalue | removekeys: ['required']"
+                                [jhiTranslate]="'artemisApp.fileUploadExercise.fileExtensionPattern' + '.' + e.key"
+                            ></div>
                         </div>
                     </ng-container>
                 </div>

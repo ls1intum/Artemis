@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +59,15 @@ public class FileUploadExerciseResource {
         this.fileUploadExerciseService = fileUploadExerciseService;
     }
 
+    private boolean containsOnlyValidFilePatterns(FileUploadExercise fileUploadExercise) {
+        String[] filePatterns = fileUploadExercise.getFilePattern().split(",");
+        int invalidFilePatterns = 0;
+        for (String pattern : filePatterns) {
+            invalidFilePatterns = FILE_PATTERN.matcher(pattern).matches() ? invalidFilePatterns : invalidFilePatterns++;
+        }
+        return invalidFilePatterns <= 0;
+    }
+
     /**
      * POST /file-upload-exercises : Create a new fileUploadExercise.
      *
@@ -74,11 +82,6 @@ public class FileUploadExerciseResource {
         if (fileUploadExercise.getId() != null) {
             throw new BadRequestAlertException("A new fileUploadExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        // Check if file pattern matches regex
-        Matcher filePatternMatcher = FILE_PATTERN.matcher(fileUploadExercise.getFilePattern());
-        if (!filePatternMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The specified file patterns are invalid", "filePatternInvalid")).body(null);
-        }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
         if (course == null) {
@@ -90,6 +93,9 @@ public class FileUploadExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
+        }
+        if (!containsOnlyValidFilePatterns(fileUploadExercise)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The specified file patterns are invalid", "filePatternInvalid")).body(null);
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
@@ -124,9 +130,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        // Check if file pattern matches regex
-        Matcher filePatternMatcher = FILE_PATTERN.matcher(fileUploadExercise.getFilePattern());
-        if (!filePatternMatcher.matches()) {
+        if (!containsOnlyValidFilePatterns(fileUploadExercise)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The specified file patterns are invalid", "filePatternInvalid")).body(null);
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
