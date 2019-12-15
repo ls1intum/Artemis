@@ -140,8 +140,7 @@ public class SystemNotificationResource {
      */
     @GetMapping("/system-notifications/active-notification")
     public SystemNotification getActiveSystemNotification() {
-        log.debug("REST request to get active SystemNotification : {}");
-        SystemNotification systemNotification = systemNotificationService.findActiveSystemNotification();
-        return systemNotification;
+        log.debug("REST request to get active SystemNotification");
+        return systemNotificationService.findActiveSystemNotification();
     }
 }
