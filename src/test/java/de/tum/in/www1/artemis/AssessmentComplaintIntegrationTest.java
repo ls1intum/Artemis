@@ -233,6 +233,31 @@ public class AssessmentComplaintIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "tutor1")
+    public void getComplaintByResultid_tutor_sensitiveDataHidden() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+
+        assertThat(received.getResult().getAssessor()).as("Tutors should not see the assessor of a complaint").isNull();
+        assertThat(received.getStudent()).as("Tutors should not see the student of a complaint").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintsForTutor_tutor_sensitiveDataHidden() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var complaints = request.getList("/api/complaints", HttpStatus.OK, Complaint.class, params);
+
+        complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
@@ -311,5 +336,37 @@ public class AssessmentComplaintIntegrationTest {
         modelingSubmission = database.addModelingSubmission(modelingExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
                 true);
+    }
+
+    private void checkComplaintContainsNoSensitiveData(Complaint receivedComplaint, boolean shouldStudentBeFilteredOut) {
+        if (shouldStudentBeFilteredOut) {
+            checkIfNoStudentInformationPresent(receivedComplaint);
+        }
+
+        final var participation = receivedComplaint.getResult().getParticipation();
+        if (participation != null && participation.getExercise() != null) {
+            final var exercise = participation.getExercise();
+            assertThat(exercise.getGradingInstructions()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getNumberOfAssessments()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getNumberOfComplaints()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getNumberOfMoreFeedbackRequests()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getNumberOfParticipations()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getProblemStatement()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getCourse()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getAssessmentDueDate()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNull();
+            // TODO check exercise type specific sensitive attributes
+        }
+    }
+
+    private void checkIfNoStudentInformationPresent(Complaint receivedComplaint) {
+        assertThat(receivedComplaint.getStudent()).as("Student should not be contained").isNull();
+        assertThat(receivedComplaint.getResultBeforeComplaint()).as("No old result info").isNull();
+
+        if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
+            assertThat(((StudentParticipation) receivedComplaint.getResult().getParticipation()).getStudent()).as("Result in complaint shouldn't contain student participation")
+                    .isNull();
+        }
     }
 }
