@@ -36,4 +36,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerCategories(@Param("exerciseId") Long exerciseId);
+
+    @Query("select distinct exercise from Exercise exercise left join fetch exercise.exampleSubmissions where exercise.id = :#{#exerciseId}")
+    Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 }
