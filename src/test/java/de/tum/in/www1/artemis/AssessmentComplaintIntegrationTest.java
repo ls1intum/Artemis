@@ -415,6 +415,7 @@ public class AssessmentComplaintIntegrationTest {
                     .isNull();
         }
     }
+
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsByExerciseId_tutor_sensitiveDataHidden() throws Exception {
@@ -423,9 +424,9 @@ public class AssessmentComplaintIntegrationTest {
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/exercises/" + complaint.getResult().getParticipation().getExercise().getId() + "/complaints",
-            HttpStatus.OK, Complaint.class, params);
-//
+        final var complaints = request.getList("/api/exercises/" + complaint.getResult().getParticipation().getExercise().getId() + "/complaints", HttpStatus.OK, Complaint.class,
+                params);
+        //
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
 }
