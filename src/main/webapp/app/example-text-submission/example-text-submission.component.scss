@@ -55,11 +55,17 @@
     height: 7px;
 }
 
-.card.collapsed .card-body,
-.card.collapsed .card-second-header,
-.card.collapsed .card-header .float-right,
-.card.collapsed .card-header h3 span {
-    display: none;
+.card.collapsed {
+    .card-body,
+    .card-second-header,
+    .card-header .float-right,
+    .card-header h3 span {
+        display: none;
+    }
+
+    .card-title {
+        text-align: center;
+    }
 }
 
 .submission-area {
