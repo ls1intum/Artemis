@@ -9,7 +9,7 @@ export type RepositoryExportOptions = {
     filterLateSubmissions: boolean;
     filterLateSubmissionsDate: Moment | null;
     addStudentName: boolean;
-    squashAfterInstructor: boolean;
+    combineStudentCommits: boolean;
     normalizeCodeStyle: boolean;
 };
 

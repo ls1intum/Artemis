@@ -1,7 +1,7 @@
 <div>
     <div class="d-flex">
         <h2>
-            <span>{{ exercise?.title }} - </span>{{ participations.length }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+            <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
         </h2>
         <jhi-programming-exercise-instructor-submission-state
             class="ml-auto"
@@ -17,10 +17,12 @@
         entityType="participation"
         [allEntities]="participations"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
         [searchFields]="['student.login', 'student.name']"
         [searchTextFromEntity]="searchTextFromParticipation"
         [searchResultFormatter]="searchResultFormatter"
+        (entitiesSizeChange)="handleParticipationsSizeChange($event)"
     >
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
@@ -118,15 +120,15 @@
 
                 <ngx-datatable-column prop="student" [minWidth]="120">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.firstName')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student">
                                 Student
                             </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('student.firstName')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('student.name')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}/view"> {{ value?.firstName }} {{ value?.lastName }} </a>
+                        <a routerLink="/admin/user-management/{{ value?.login }}/view"> {{ value?.name }} </a>
                     </ng-template>
                 </ngx-datatable-column>
 

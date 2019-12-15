@@ -38,7 +38,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.9.6"
+version = "3.9.7"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=12
@@ -165,7 +165,6 @@ if (!project.hasProperty("runList")) {
 
 configurations {
     providedRuntime
-    implementation.exclude module: "spring-boot-starter-tomcat"
 }
 
 repositories {
@@ -180,7 +179,7 @@ dependencies {
     implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.1'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.5.1.201910021850-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -224,9 +223,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "org.springframework.boot:spring-boot-starter-security"
     implementation ("org.springframework.boot:spring-boot-starter-web") {
-        exclude module: "spring-boot-starter-tomcat"
+        exclude module: "spring-boot-starter-undertow"
     }
-    implementation "org.springframework.boot:spring-boot-starter-undertow"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
     implementation "org.springframework.boot:spring-boot-starter-websocket"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 

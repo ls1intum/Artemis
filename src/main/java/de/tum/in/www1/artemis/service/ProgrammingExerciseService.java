@@ -657,16 +657,16 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Squash all commits of the given repository into one.
+     * Combine all commits of the given repository into one.
      * 
-     * @param repoUrl of the repository to squash.
+     * @param repoUrl of the repository to combine.
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
     @Transactional
-    public void squashAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
+    public void combineAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
-        gitService.squashAllCommitsIntoInitialCommit(exerciseRepository);
+        gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
     }
 
     /**
@@ -1141,9 +1141,9 @@ public class ProgrammingExerciseService {
                     addStudentIdToProjectName(repo, programmingExercise, participation);
                 }
 
-                if (repositoryExportOptions.isSquashAfterInstructor()) {
-                    log.debug("Squashing commits for participation {}", participation.toString());
-                    gitService.squashAfterInstructor(repo, programmingExercise);
+                if (repositoryExportOptions.isCombineStudentCommits()) {
+                    log.debug("Combining commits for participation {}", participation.toString());
+                    gitService.combineAllStudentCommits(repo, programmingExercise);
                 }
 
                 if (repositoryExportOptions.isNormalizeCodeStyle()) {

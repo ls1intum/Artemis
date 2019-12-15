@@ -9,7 +9,8 @@ export const options = {
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
     rps: 4,
-    setupTimeout: '90s'
+    setupTimeout: '90s',
+    teardownTimeout: '90s'
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;
@@ -73,10 +74,10 @@ export default function (data) {
 }
 
 export function teardown(data) {
-//    const artemis = login(adminUsername, adminPassword);
-//    const courseId = data.courseId;
-//    const exerciseId = data.exerciseId;
+   const artemis = login(adminUsername, adminPassword);
+   const courseId = data.courseId;
+   const exerciseId = data.exerciseId;
 
-//    deleteExercise(artemis, exerciseId);
-//    deleteCourse(artemis, courseId);
+   deleteExercise(artemis, exerciseId);
+   deleteCourse(artemis, courseId);
 }

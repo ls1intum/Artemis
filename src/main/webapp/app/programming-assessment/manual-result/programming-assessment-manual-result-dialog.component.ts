@@ -17,6 +17,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -30,7 +31,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     @Input() result: Result;
     @Output() onResultModified = new EventEmitter<Result>();
 
-    participation: StudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
@@ -84,7 +85,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        this.participation = this.result.participation! as StudentParticipation;
+        this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
     }
 
     initializeForResultCreation() {
@@ -98,7 +99,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             .find(this.participationId)
             .pipe(
                 tap(({ body: participation }) => {
-                    this.participation = participation!;
+                    this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
                     this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
                 }),

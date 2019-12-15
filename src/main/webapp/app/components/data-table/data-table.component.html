@@ -2,11 +2,11 @@
     <div class="d-flex mb-2">
         <div ngbDropdown class="d-inline-block mr-2">
             <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
-                {{ entitiesPerPageTranslation | translate: { number: entitiesPerPage } }}
+                {{ perPageTranslation(pagingValue) | translate: { number: pagingValue } }}
             </button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                <button *ngFor="let pagingValue of PAGING_VALUES" (click)="setEntitiesPerPage(pagingValue)" [class.selected]="pagingValue === entitiesPerPage" ngbDropdownItem>
-                    {{ entitiesPerPageTranslation | translate: { number: pagingValue } }}
+                <button *ngFor="let pagingOption of PAGING_VALUES" (click)="setEntitiesPerPage(pagingOption)" [class.selected]="pagingOption === pagingValue" ngbDropdownItem>
+                    {{ perPageTranslation(pagingOption) | translate: { number: pagingOption } }}
                 </button>
             </div>
         </div>

@@ -1,7 +1,7 @@
 <div *ngIf="exercise">
     <h2>
         {{ exercise.course?.title }} - {{ exercise.title }}
-        <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: results.length }">results</small>
+        <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredResultsSize }">results</small>
     </h2>
     <jhi-alert></jhi-alert>
     <div class="mb-2 clearfix">
@@ -56,12 +56,14 @@
         entityType="result"
         [allEntities]="results"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
         [searchFields]="['participation.student.login', 'participation.student.name']"
         [searchTextFromEntity]="searchTextFromResult"
         [searchResultFormatter]="searchResultFormatter"
         [customFilterKey]="resultCriteria.filterProp"
         [customFilter]="filterResultByProp"
+        (entitiesSizeChange)="handleResultsSizeChange($event)"
     >
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
@@ -133,7 +135,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <jhi-updating-result [exercise]="exercise" [showTestNames]="true" [participation]="value.participation"></jhi-updating-result>
+                        <jhi-result [result]="value" [showTestNames]="true" [participation]="value.participation"></jhi-result>
                     </ng-template>
                 </ngx-datatable-column>
 
