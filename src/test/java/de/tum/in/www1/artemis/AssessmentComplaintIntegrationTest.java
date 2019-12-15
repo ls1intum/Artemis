@@ -271,6 +271,25 @@ public class AssessmentComplaintIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintsForTutorDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-tutor-dashboard", HttpStatus.OK, Complaint.class, params);
+
+        complaints.forEach(compl -> {
+            final var participation = (StudentParticipation) compl.getResult().getParticipation();
+            assertThat(participation.getStudent()).as("No student information").isNull();
+            assertThat(compl.getStudent()).as("No student information").isNull();
+            assertThat(participation.getExercise()).as("No additional exercise information").isNull();
+            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
+        });
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
