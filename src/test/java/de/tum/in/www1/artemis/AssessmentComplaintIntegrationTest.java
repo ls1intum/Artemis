@@ -265,7 +265,7 @@ public class AssessmentComplaintIntegrationTest {
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/courses/1/complaints", HttpStatus.OK, Complaint.class, params);
+        final var complaints = request.getList("/api/courses/" + modelingExercise.getCourse().getId() + "/complaints", HttpStatus.OK, Complaint.class, params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
