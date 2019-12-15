@@ -4,6 +4,7 @@
     flex-flow: column nowrap;
     height: 100%;
     max-height: 100vh;
+    min-width: 350px;
 
     .card-header {
         display: flex;
@@ -70,7 +71,7 @@
 }
 
 .resizable-instructions {
-    width: 400px;
+    width: 600px;
     min-width: 400px;
 }
 
