@@ -35,7 +35,7 @@ public class GradingInstructionService {
      * @return the persisted entity
      */
     public GradingInstruction save(GradingInstruction gradingInstruction) {
-        log.debug("Request to save Exercise : {}", gradingInstruction);
+        log.debug("Request to save Grading Instruction : {}", gradingInstruction);
         return gradingInstructionRepository.save(gradingInstruction);
 
     }

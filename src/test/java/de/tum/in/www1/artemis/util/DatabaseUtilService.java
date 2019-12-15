@@ -36,6 +36,9 @@ public class DatabaseUtilService {
     private static ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
     @Autowired
+    GradingInstructionRepository gradingInstructionRepo;
+
+    @Autowired
     CourseRepository courseRepo;
 
     @Autowired
@@ -120,6 +123,7 @@ public class DatabaseUtilService {
     GroupNotificationRepository groupNotificationRepository;
 
     public void resetDatabase() {
+
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
         complaintResponseRepo.deleteAll();
@@ -135,10 +139,13 @@ public class DatabaseUtilService {
         participationRepo.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
+        gradingInstructionRepo.deleteAll();
         exerciseRepo.deleteAll();
         courseRepo.deleteAll();
         userRepo.deleteAll();
+
         assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
+        assertThat(gradingInstructionRepo.findAll()).as("grading instructions data has been cleared").isEmpty();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
@@ -270,6 +277,21 @@ public class DatabaseUtilService {
         Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
         resultRepo.save(result);
         return result;
+    }
+
+    public Exercise addGradingInstructionsToExercise(Exercise exercise) {
+        GradingInstruction gradingInstruction1 = new GradingInstruction();
+        gradingInstruction1.instructionDescription("(1)just for testing purpose").setExercise(exercise);
+        // gradingInstruction1 = gradingInstructionRepo.save(gradingInstruction1);
+        // gradingInstruction1.setId(null);
+        exercise.addStructuredGradingInstructions(gradingInstruction1);
+        GradingInstruction gradingInstruction2 = new GradingInstruction();
+        gradingInstruction2.instructionDescription("(2)just for testing purpose").setExercise(exercise);
+        // gradingInstruction2 = gradingInstructionRepo.save(gradingInstruction2);
+        // gradingInstruction2.setId(null);
+        exercise.addStructuredGradingInstructions(gradingInstruction2);
+        // return exerciseRepo.save(exercise);
+        return exercise;
     }
 
     public void addCourseWithOneModelingExercise() {

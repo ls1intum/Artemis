@@ -104,6 +104,12 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Course course;
 
+    // @OneToMany(mappedBy = "exercise", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "exercise", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<GradingInstruction> structuredGradingInstructions = new HashSet<>();
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
@@ -755,5 +761,30 @@ public abstract class Exercise implements Serializable {
 
     public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
         this.presentationScoreEnabled = presentationScoreEnabled;
+    }
+
+    public Set<GradingInstruction> getStructuredGradingInstructions() {
+        return structuredGradingInstructions;
+    }
+
+    public Exercise structuredGradingInstructions(Set<GradingInstruction> structuredGradingInstructions) {
+        this.structuredGradingInstructions = structuredGradingInstructions;
+        return this;
+    }
+
+    public Exercise addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
+        this.structuredGradingInstructions.add(structuredGradingInstruction);
+        structuredGradingInstruction.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
+        this.structuredGradingInstructions.remove(structuredGradingInstruction);
+        structuredGradingInstruction.setExercise(null);
+        return this;
+    }
+
+    public void setStructuredGradingInstructions(Set<GradingInstruction> structuredGradingInstructions) {
+        this.structuredGradingInstructions = structuredGradingInstructions;
     }
 }
