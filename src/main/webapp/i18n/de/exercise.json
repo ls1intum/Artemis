@@ -63,6 +63,7 @@
             "score": "Punktzahl",
             "duration": "Dauer",
             "showBuildFailed": "Nur \"Build Failed\" anzeigen",
+            "showFailed": "Nur gescheiterte anzeigen",
             "showUnsuccessful": "Nur unerfolgreiche anzeigen",
             "showSuccessful": "Nur erfolgreiche anzeigen",
             "showManual": "Nur manuelle anzeigen",

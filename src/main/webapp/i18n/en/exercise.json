@@ -63,6 +63,7 @@
             "score": "Score",
             "duration": "Duration",
             "showBuildFailed": "Show Build Failed",
+            "showFailed": "Show Failed",
             "showUnsuccessful": "Show Unsuccessful",
             "showSuccessful": "Show Successful",
             "showManual": "Show Manual",

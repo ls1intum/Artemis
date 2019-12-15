@@ -14,12 +14,19 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { FeatureToggle } from 'app/feature-toggle';
 
+enum FilterProp {
+    ALL = 'all',
+    FAILED = 'failed',
+}
+
 @Component({
     selector: 'jhi-participation',
     templateUrl: './participation.component.html',
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
+    readonly FilterProp = FilterProp;
+
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
@@ -37,6 +44,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    participationCriteria: {
+        filterProp: FilterProp;
+    };
+
     isLoading: boolean;
 
     constructor(
@@ -46,7 +57,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-    ) {}
+    ) {
+        this.participationCriteria = {
+            filterProp: FilterProp.ALL,
+        };
+    }
 
     ngOnInit() {
         this.loadAll();
@@ -77,6 +92,25 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             });
         });
     }
+
+    updateParticipationFilter(newValue: FilterProp) {
+        this.isLoading = true;
+        setTimeout(() => {
+            this.participationCriteria.filterProp = newValue;
+            this.isLoading = false;
+        });
+    }
+
+    filterParticipationByProp = (participation: Participation) => {
+        switch (this.participationCriteria.filterProp) {
+            case FilterProp.FAILED:
+                return participation.results.length === 0;
+            case FilterProp.ALL:
+                return true;
+            default:
+                return true;
+        }
+    };
 
     trackId(index: number, item: Participation) {
         return item.id;

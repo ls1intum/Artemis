@@ -35,7 +35,7 @@ enum FilterProp {
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
-    FilterProp = FilterProp;
+    readonly FilterProp = FilterProp;
 
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
