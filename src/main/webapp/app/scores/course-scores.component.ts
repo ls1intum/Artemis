@@ -222,7 +222,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rows.push(firstRowString + 'Overall Points,Overall Score,Presentation Score');
 
             for (const student of this.students.values()) {
-                let name = student.user.name!.trim();
+                const name = student.user.name!.trim();
                 const login = student.user.login!.trim();
                 const registrationNumber = student.user.visibleRegistrationNumber ? student.user.visibleRegistrationNumber!.trim() : '';
                 const email = student.user.email!.trim();
