@@ -258,6 +258,19 @@ public class AssessmentComplaintIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintsByCourseId_tutor_sensitiveDataHidden() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var complaints = request.getList("/api/courses/1/complaints", HttpStatus.OK, Complaint.class, params);
+
+        complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
@@ -343,6 +356,20 @@ public class AssessmentComplaintIntegrationTest {
             checkIfNoStudentInformationPresent(receivedComplaint);
         }
 
+        checkIfNoSensitiveExerciseDataPresent(receivedComplaint);
+        checkIfNoSensitiveSubmissionDataPresent(receivedComplaint);
+    }
+
+    private void checkIfNoSensitiveSubmissionDataPresent(Complaint receivedComplaint) {
+        final var submission = receivedComplaint.getResult().getSubmission();
+        if (submission != null) {
+            assertThat(submission.getParticipation()).as("Submission only contains ID").isNull();
+            assertThat(submission.getResult()).as("Submission only contains ID").isNull();
+            assertThat(submission.getSubmissionDate()).as("Submission only contains ID").isNull();
+        }
+    }
+
+    private void checkIfNoSensitiveExerciseDataPresent(Complaint receivedComplaint) {
         final var participation = receivedComplaint.getResult().getParticipation();
         if (participation != null && participation.getExercise() != null) {
             final var exercise = participation.getExercise();
