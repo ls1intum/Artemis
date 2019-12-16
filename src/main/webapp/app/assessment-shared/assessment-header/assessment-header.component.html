@@ -12,7 +12,7 @@
             class="text-danger ml-3"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
-            [translateValues]="{ otherUser: result?.assessor?.firstName }"
+            [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
             Assessment locked by another user!
         </span>
