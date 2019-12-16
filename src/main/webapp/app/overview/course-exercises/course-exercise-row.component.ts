@@ -54,7 +54,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         if (cachedParticipation) {
             this.exercise.studentParticipations = [cachedParticipation];
         }
-        this.participationWebsocketService.addExerciseForNewParticipation(this.exercise.id);
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
                 this.exercise.studentParticipations =

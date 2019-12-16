@@ -126,29 +126,30 @@ public class ParticipationResource {
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the participationId of the exercise for which to init a participation
-     * @param principal  the current user principal
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
+    // TODO: remove courseId attribute
+    public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourse();
-        if (!authCheckService.isAtLeastStudentInCourse(course, null)) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
-            if (authCheckService.isOnlyStudentInCourse(course, null)) {
+            if (authCheckService.isOnlyStudentInCourse(course, user)) {
                 return forbidden();
             }
         }
 
         // users cannot start the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
-        // Also don't allow participations of the feature is disabled
+        // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
             var pExercise = (ProgrammingExercise) exercise;
             if (!Feature.PROGRAMMING_EXERCISES.isEnabled() || (pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
@@ -157,7 +158,7 @@ public class ParticipationResource {
             }
         }
 
-        StudentParticipation participation = participationService.startExercise(exercise, principal.getName());
+        StudentParticipation participation = participationService.startExercise(exercise, user);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);

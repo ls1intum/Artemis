@@ -79,6 +79,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then(user => {
             this.userId = user!.id!;
         });
+        // TODO: we should check if the user is an instructor in the actual exercise behind the submission
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe(params => {

@@ -197,8 +197,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
                 }
             }
-        } else {
-            this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {

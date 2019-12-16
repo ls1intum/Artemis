@@ -22,11 +22,14 @@ export class TextSubmissionService {
 
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
-        return this.http
-            .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
-                observe: 'response',
-            })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return (
+            this.http
+                .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
+                    observe: 'response',
+                })
+                // TODO: take the updated participation in submission.participation and invoke this.participationWebsocketService.addParticipation(participation);
+                .map((res: EntityResponseType) => this.convertResponse(res))
+        );
     }
 
     get(textSubmissionId: number): Observable<HttpResponse<TextSubmission>> {

@@ -13,7 +13,6 @@ const PARTICIPATION_WEBSOCKET = 'participation_';
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
-    addExerciseForNewParticipation: (exerciseId: number) => void;
     getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
     subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result | null>;
@@ -81,7 +80,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     /**
      * This adds a participation to the cached data maps. The exercise information is required to find the correct
-     * participations for a given exercise.
+     * participations for a given exercise. Please note: we explicitly do not want to use websockets here!
      *
      * @param newParticipation The new participation for the cached data maps
      * @param exercise (optional) The exercise that the participation belongs to. Only needed if exercise is missing in participation.
@@ -94,14 +93,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         }
         participation.exercise = participation.exercise || exercise;
         this.cachedParticipations.set(participation.id, participation);
-        // TODO: we should cleanup these subscriptions when the user navigates to another page
-        this.openResultWebsocketSubscriptionIfNotExisting(participation.id);
-        this.openParticipationWebsocketSubscriptionIfNotExisting(participation.exercise.id);
+        this.notifyParticipationSubscribers(participation);
     };
-
-    public addExerciseForNewParticipation(exerciseId: number) {
-        this.openParticipationWebsocketSubscriptionIfNotExisting(exerciseId);
-    }
 
     /**
      * Returns all participations for all exercises. The participation objects include the exercise data and all results.
@@ -165,25 +158,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.jhiWebsocketService
                 .receive(participationResultTopic)
                 .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
-                .subscribe();
-        }
-    }
-
-    /**
-     * Checks for the given exercise if a websocket connection for new participations to the server already exists.
-     * If not a new one will be opened.
-     *
-     * @param exerciseId
-     * @private
-     */
-    private openParticipationWebsocketSubscriptionIfNotExisting(exerciseId: number) {
-        if (!this.openWebsocketSubscriptions.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)) {
-            const participationTopic = `/user/topic/exercise/${exerciseId}/participation`;
-            this.jhiWebsocketService.subscribe(participationTopic);
-            this.openWebsocketSubscriptions.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
-            this.jhiWebsocketService
-                .receive(participationTopic)
-                .pipe(tap(this.addParticipation), tap(this.notifyParticipationSubscribers))
                 .subscribe();
         }
     }

@@ -183,13 +183,14 @@ public class ParticipationService {
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
      * @param exercise the exercise which is started
-     * @param username the name of the user who starts the exercise
+     * @param user the user who starts the exercise
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, String username) {
+    public StudentParticipation startExercise(Exercise exercise, User user) {
         // common for all exercises
         // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), username);
+        var username = user.getLogin();
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -201,11 +202,8 @@ public class ParticipationService {
             }
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
+            participation.setStudent(user);
 
-            Optional<User> user = userService.getUserByLogin(username);
-            if (user.isPresent()) {
-                participation.setStudent(user.get());
-            }
             participation = save(participation);
         }
         else {
@@ -245,13 +243,7 @@ public class ParticipationService {
                 initializeSubmission(participation, exercise);
             }
         }
-
         participation = save(participation);
-
-        if (optionalStudentParticipation.isEmpty()) {
-            // only send a new participation to the client over websocket
-            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
-        }
 
         return participation;
     }
