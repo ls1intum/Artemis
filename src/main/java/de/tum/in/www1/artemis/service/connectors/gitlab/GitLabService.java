@@ -112,7 +112,7 @@ public class GitLabService implements VersionControlService {
         }
         catch (GitLabApiException e) {
             if (e.getValidationErrors().containsKey("access_level")
-                    && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to Owner inherited membership"))) {
+                    && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
                 log.warn("Member already has the requested permissions! Permission stays the same");
             }
             else {
