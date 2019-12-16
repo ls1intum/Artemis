@@ -116,13 +116,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             case FilterProp.FAILED:
                 return this.hasFailedSubmission(participation);
             case FilterProp.ALL:
-                return true;
             default:
                 return true;
         }
     };
 
-    hasFailedSubmission(participation: Participation) {
+    private hasFailedSubmission(participation: Participation) {
         const submissionStateObj = this.exerciseSubmissionState[participation.id];
         if (submissionStateObj) {
             const { submissionState } = submissionStateObj;
