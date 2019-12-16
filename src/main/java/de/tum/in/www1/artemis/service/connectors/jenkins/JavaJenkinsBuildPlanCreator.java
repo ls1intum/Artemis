@@ -39,16 +39,16 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private String artemisNotificationUrl;
 
-    @Value("${artemis.jenkins.secret-push-token}")
+    @Value("${artemis.ci.secret-push-token}")
     private String pushToken;
 
-    @Value("${artemis.jenkins.git-credentials}")
+    @Value("${artemis.ci.vcs-credentials}")
     private String gitCredentialsKey;
 
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
-    @Value("${artemis.jenkins.notification-token}")
+    @Value("${artemis.ci.notification-token}")
     private String NOTIFICATION_TOKEN;
 
     @PostConstruct

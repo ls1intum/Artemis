@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class GitLabHeaderAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
-    @Value("${artemis.gitlab.secret}")
+    @Value("${artemis.version-control.secret}")
     private String GITLAB_PRIVATE_TOKEN;
 
     @Override

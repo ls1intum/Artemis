@@ -58,13 +58,13 @@ import de.tum.in.www1.artemis.exception.ContinousIntegrationBuildPlanException;
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
-    @Value("${artemis.bamboo.user}")
+    @Value("${artemis.ci.user}")
     private String BAMBOO_USER;
 
-    @Value("${artemis.bamboo.password}")
+    @Value("${artemis.ci.password}")
     private String BAMBOO_PASSWORD;
 
-    @Value("${artemis.bamboo.url}")
+    @Value("${artemis.ci.url}")
     private URL BAMBOO_SERVER_URL;
 
     @Value("${artemis.jira.admin-group-name}")
@@ -73,7 +73,7 @@ public class BambooBuildPlanService {
     @Value("${server.url}")
     private URL SERVER_URL;
 
-    @Value("${artemis.bamboo.vcs-application-link-name}")
+    @Value("${artemis.ci.vcs-application-link-name}")
     private String VCS_APPLICATION_LINK_NAME;
 
     private final ResourceLoader resourceLoader;

@@ -56,16 +56,16 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
-    @Value("${artemis.bamboo.url}")
+    @Value("${artemis.ci.url}")
     private URL BAMBOO_SERVER_URL;
 
-    @Value("${artemis.bamboo.empty-commit-necessary}")
+    @Value("${artemis.ci.empty-commit-necessary}")
     private Boolean BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY;
 
-    @Value("${artemis.bamboo.user}")
+    @Value("${artemis.ci.user}")
     private String BAMBOO_USER;
 
-    @Value("${artemis.bamboo.password}")
+    @Value("${artemis.ci.password}")
     private String BAMBOO_PASSWORD;
 
     private final GitService gitService;

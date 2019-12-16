@@ -62,13 +62,13 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
-    @Value("${artemis.jenkins.user}")
+    @Value("${artemis.ci.user}")
     private String username;
 
-    @Value("${artemis.jenkins.password}")
+    @Value("${artemis.ci.password}")
     private String password;
 
-    @Value("${artemis.jenkins.url}")
+    @Value("${artemis.ci.url}")
     private URL JENKINS_SERVER_URL;
 
     private final JenkinsBuildPlanCreatorProvider buildPlanCreatorProvider;

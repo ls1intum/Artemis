@@ -44,7 +44,7 @@ public class GitLabService implements VersionControlService {
 
     private static final String GITLAB_API_BASE = "/api/v4";
 
-    @Value("${artemis.gitlab.url}")
+    @Value("${artemis.version-control.url}")
     private URL GITLAB_SERVER_URL;
 
     @Value("${artemis.lti.user-prefix-edx}")
@@ -53,10 +53,10 @@ public class GitLabService implements VersionControlService {
     @Value("${artemis.lti.user-prefix-u4i}")
     private String USER_PREFIX_U4I = "";
 
-    @Value("${artemis.gitlab.secret}")
+    @Value("${artemis.version-control.secret}")
     private String GITLAB_PRIVATE_TOKEN;
 
-    @Value("${artemis.gitlab.ci-token}")
+    @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
 
     private String BASE_API;
