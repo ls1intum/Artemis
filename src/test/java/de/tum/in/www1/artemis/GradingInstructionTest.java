@@ -108,7 +108,7 @@ public class GradingInstructionTest {
             GradingInstruction gradingInstruction = iterator.next();
             gradingInstructionRepository.save(gradingInstruction);
         }
-        request.getList("/api/gradingInstruction/" + exercise.getId(), HttpStatus.FORBIDDEN, GradingInstruction.class);
+        request.getList("/api/grading-instruction/" + exercise.getId(), HttpStatus.FORBIDDEN, GradingInstruction.class);
     }
 
 }

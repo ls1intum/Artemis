@@ -54,7 +54,7 @@ public class GradingInstructionResource {
      * @param exerciseId the id of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/gradingInstruction/{exerciseId}")
+    @GetMapping("/grading-instruction/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
@@ -127,9 +127,9 @@ public class GradingInstructionResource {
     }
 
     /**
-     * DELETE /quiz-exercises/:quizExerciseId : delete the "id" quizExercise.
+     * DELETE /grading-instruction/:gradingInstructionId : delete the "id" gradingInstruction.
      *
-     * @param gradingInstructionId the id of the quizExercise to delete
+     * @param gradingInstructionId the id of the gradingInstruction to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/grading-instruction/{gradingInstructionId}")
