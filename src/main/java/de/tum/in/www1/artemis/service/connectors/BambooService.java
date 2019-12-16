@@ -94,7 +94,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, VcsUtil.getRepositorySlugFromUrl(repositoryURL),VcsUtil.getRepositorySlugFromUrl(testRepositoryURL));
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, VcsUtil.getRepositorySlugFromUrl(repositoryURL), VcsUtil.getRepositorySlugFromUrl(testRepositoryURL));
     }
 
     private Base createBase() {

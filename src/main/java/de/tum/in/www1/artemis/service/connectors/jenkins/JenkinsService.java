@@ -17,6 +17,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
@@ -190,7 +191,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
+    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
         final var report = TestResults.convert(requestBody);
         final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
                 .filter(submission -> {
@@ -308,16 +309,9 @@ public class JenkinsService implements ContinuousIntegrationService {
             return Optional.empty();
         }
 
-        final var result = new Result();
-        final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
+        final var result = createResultFromBuildResult(report, (Participation) participation);
         result.setRatedIfNotExceeded(report.getRunDate(), submission);
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setCompletionDate(report.getRunDate());
-        result.setScore((long) calculateResultScore(report, testSum));
-        result.setParticipation((Participation) participation);
         result.setSubmission(submission);
-        addFeedbackToResult(result, report);
-        result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "Build Error");
 
         return Optional.empty();
     }
@@ -366,7 +360,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public List<Feedback> getLatestBuildResultDetails(Result result) {
         // TODO since this is unused as of now
-        return null;
+        throw new NotImplementedException("Jenkins service does not support fetching the latest feedback for a result");
     }
 
     @Override

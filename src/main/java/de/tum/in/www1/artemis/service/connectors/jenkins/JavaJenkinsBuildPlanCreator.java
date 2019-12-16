@@ -68,6 +68,10 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @Override
     public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) {
+        if (!isSequential) {
+            return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
+        }
+
         throw new NotImplementedException("Sequential Jenkins builds not yet supported for Java!");
     }
 }
