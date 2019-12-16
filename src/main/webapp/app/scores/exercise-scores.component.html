@@ -179,18 +179,18 @@
 
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.PROGRAMMING" [resizeable]="false" [minWidth]="450" [width]="450">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button *ngIf="exercise.type === ExerciseType.PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
+                        <button class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
                         </button>
-                        <button *ngIf="exercise.type === ExerciseType.PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(value)">
+                        <button class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(value)">
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>
                         <button
                             routerLink="/code-editor/{{ value.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
-                            *ngIf="exercise.type === ExerciseType.PROGRAMMING && value.participation.exercise.allowOnlineEditor"
+                            *ngIf="value.participation.exercise.allowOnlineEditor"
                             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
                             <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>
@@ -206,16 +206,16 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.FILE_UPLOAD" [resizeable]="false" [minWidth]="150" [width]="150">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.FILE_UPLOAD" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button (click)="downloadFile(value)" class="btn btn-primary btn-sm mr-1">
-                            <fa-icon [icon]="'download'" class="mr-1"></fa-icon>
-                            {{ 'artemisApp.fileUploadSubmission.download' | translate }}
+                        <button routerLink="/file-upload-exercise/{{ exercise.id }}/submission/{{ value.submission.id }}/assessment" class="btn btn-primary btn-sm mr-1">
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.fileUploadSubmission.view' | translate }}
                         </button>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING" [resizeable]="false" [minWidth]="220" [width]="220">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
                             routerLink="/modeling-exercise/{{ exercise.id }}/submissions/{{ value.submission.id }}/assessment"
@@ -228,7 +228,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT" [resizeable]="false" [minWidth]="200" [width]="200">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button routerLink="/text/{{ exercise.id }}/assessment/{{ value.submission.id }}" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
