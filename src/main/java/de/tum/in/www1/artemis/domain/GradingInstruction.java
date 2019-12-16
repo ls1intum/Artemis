@@ -29,7 +29,6 @@ public class GradingInstruction implements Serializable {
     @Column(name = "level")
     private String level;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "instruction_description")
     @Lob
     private String instructionDescription;

@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service Implementation for managing Structured Grading Instructions.
  */
 @Service
-@Transactional
 public class GradingInstructionService {
 
     private final Logger log = LoggerFactory.getLogger(GradingInstructionService.class);
@@ -44,7 +43,7 @@ public class GradingInstructionService {
      * Delete the grading instruction by id.
      * @param gradingInstruction the grading instruction to be deleted
      */
-    @Transactional
+
     public void delete(GradingInstruction gradingInstruction) {
         log.info("GradingInstructionService.Request to delete Grading Instruction : {}", gradingInstruction.getId());
         gradingInstructionRepository.delete(gradingInstruction);
@@ -56,7 +55,7 @@ public class GradingInstructionService {
      * @param gradingInstructionId the exerciseId of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
+
     public GradingInstruction findOne(Long gradingInstructionId) {
         Optional<GradingInstruction> gradingInstruction = gradingInstructionRepository.findById(gradingInstructionId);
         if (gradingInstruction.isEmpty()) {
@@ -71,7 +70,7 @@ public class GradingInstructionService {
      * @param exercise corresponding exercise
      * @return a List of all Exercises for the given course
      */
-    @Transactional(readOnly = true)
+
     public List<GradingInstruction> findAllForExercise(Exercise exercise) {
         return gradingInstructionRepository.findByExerciseId(exercise.getId());
     }
