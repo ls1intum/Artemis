@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ExerciseView, IntelliJState, JavaDowncallBridge, JavaUpcallBridgeFacade } from 'app/intellij/intellij';
+import { ExerciseView, OrionState, ArtemisClientConnector, JavaConnectorFacade } from 'app/intellij/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
@@ -24,16 +24,16 @@ import { BuildLogErrors } from 'app/code-editor';
 @Injectable({
     providedIn: 'root',
 })
-export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFacade {
-    private intellijState: IntelliJState;
-    private intellijStateSubject: BehaviorSubject<IntelliJState>;
+export class OrionConnectorService implements ArtemisClientConnector, JavaConnectorFacade {
+    private orionState: OrionState;
+    private orionStateSubject: BehaviorSubject<OrionState>;
 
     constructor(private window: WindowRef, private injector: Injector) {}
 
-    static initBridge(bridge: JavaBridgeService, win: WindowRef) {
-        win.nativeWindow.javaDowncallBridge = bridge;
-        bridge.intellijState = { opened: -1, inInstructorView: false, cloning: false, building: false };
-        bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
+    static initBridge(bridge: OrionConnectorService, win: WindowRef) {
+        win.nativeWindow.artemisClientConnector = bridge;
+        bridge.orionState = { opened: -1, inInstructorView: false, cloning: false, building: false };
+        bridge.orionStateSubject = new BehaviorSubject<OrionState>(bridge.orionState);
     }
 
     /**
@@ -53,7 +53,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * @param password The password of the current user. This is stored safely in the IDE's password safe
      */
     login(username: string, password: string) {
-        this.window.nativeWindow.orionCoreBridge.login(username, password);
+        this.window.nativeWindow.orionCoreConnector.login(username, password);
     }
 
     /**
@@ -63,7 +63,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * @param exercise The exercise for which the repository should get cloned.
      */
     workOnExercise(repository: string, exercise: ProgrammingExercise) {
-        this.window.nativeWindow.orionCoreBridge.workOnExercise(repository, stringifyCircular(exercise));
+        this.window.nativeWindow.orionCoreConnector.workOnExercise(repository, stringifyCircular(exercise));
     }
 
     /**
@@ -71,7 +71,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * get pushed to the remote master branch
      */
     submitChanges() {
-        this.window.nativeWindow.orionCoreBridge.submitChanges();
+        this.window.nativeWindow.orionCoreConnector.submitChanges();
     }
 
     /**
@@ -80,8 +80,8 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      *
      * @return An observable containing the internal state of the IDE
      */
-    state(): Observable<IntelliJState> {
-        return this.intellijStateSubject;
+    state(): Observable<OrionState> {
+        return this.orionStateSubject;
     }
 
     /**
@@ -90,7 +90,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * @param message The message to log in the development environment
      */
     log(message: string) {
-        this.window.nativeWindow.orionCoreBridge.log(message);
+        this.window.nativeWindow.orionCoreConnector.log(message);
     }
 
     /**
@@ -109,14 +109,14 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * Notify the IDE that a new build has started
      */
     onBuildStarted(problemStatement: string) {
-        this.window.nativeWindow.orionTestResultsBridge.onBuildStarted(problemStatement);
+        this.window.nativeWindow.orionTestResultsConnector.onBuildStarted(problemStatement);
     }
 
     /**
      * Notify the IDE that a build finished and all results have been sent
      */
     onBuildFinished() {
-        this.window.nativeWindow.orionTestResultsBridge.onBuildFinished();
+        this.window.nativeWindow.orionTestResultsConnector.onBuildFinished();
     }
 
     /**
@@ -125,7 +125,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * @param buildErrors All compile errors for the current build
      */
     onBuildFailed(buildErrors: BuildLogErrors) {
-        this.window.nativeWindow.orionTestResultsBridge.onBuildFailed(JSON.stringify(buildErrors));
+        this.window.nativeWindow.orionTestResultsConnector.onBuildFailed(JSON.stringify(buildErrors));
     }
 
     /**
@@ -137,7 +137,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * @param testName The name of finished test
      */
     onTestResult(success: boolean, testName: string, message: string) {
-        this.window.nativeWindow.orionTestResultsBridge.onTestResult(success, testName, message);
+        this.window.nativeWindow.orionTestResultsConnector.onTestResult(success, testName, message);
     }
 
     /**
@@ -158,9 +158,9 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
         this.setIDEStateParameter({ cloning });
     }
 
-    private setIDEStateParameter(patch: Partial<IntelliJState>) {
-        Object.assign(this.intellijState, patch);
-        this.intellijStateSubject.next(this.intellijState);
+    private setIDEStateParameter(patch: Partial<OrionState>) {
+        Object.assign(this.orionState, patch);
+        this.orionStateSubject.next(this.orionState);
     }
 
     /**
@@ -182,7 +182,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      */
     editExercise(exercise: ProgrammingExercise): void {
         this.setIDEStateParameter({ cloning: true });
-        this.window.nativeWindow.orionCoreBridge.editExercise(stringifyCircular(exercise));
+        this.window.nativeWindow.orionCoreConnector.editExercise(stringifyCircular(exercise));
     }
 
     /**
@@ -192,10 +192,10 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridgeFa
      * @param repository The repository to be selected for all future interactions
      */
     selectRepository(repository: REPOSITORY): void {
-        this.window.nativeWindow.orionInstructorBridge.selectRepository(repository);
+        this.window.nativeWindow.orionInstructorConnector.selectRepository(repository);
     }
 
     buildAndTestLocally(): void {
-        this.window.nativeWindow.orionInstructorBridge.buildAndTestLocally();
+        this.window.nativeWindow.orionInstructorConnector.buildAndTestLocally();
     }
 }

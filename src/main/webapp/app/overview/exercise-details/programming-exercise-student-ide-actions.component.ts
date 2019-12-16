@@ -4,9 +4,9 @@ import { InitializationState, Participation, ProgrammingExerciseStudentParticipa
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { IntelliJState } from 'app/intellij/intellij';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
+import { OrionState } from 'app/intellij/orion';
+import { OrionConnectorService } from 'app/intellij/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/intellij/orion-build-and-test.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/feature-toggle';
@@ -22,7 +22,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
-    ideState: IntelliJState;
+    ideState: OrionState;
     FeatureToggle = FeatureToggle;
 
     @Input() @HostBinding('class.col') equalColumns = true;
@@ -36,13 +36,13 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     constructor(
         private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
-        private javaBridge: JavaBridgeService,
-        private ideBuildAndTestService: IdeBuildAndTestService,
+        private javaBridge: OrionConnectorService,
+        private ideBuildAndTestService: OrionBuildAndTestService,
         private route: ActivatedRoute,
     ) {}
 
     ngOnInit(): void {
-        this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.ideState = ideState));
+        this.javaBridge.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
         this.route.queryParams.subscribe(params => {
             if (params['withIdeSubmit']) {
                 this.submitChanges();

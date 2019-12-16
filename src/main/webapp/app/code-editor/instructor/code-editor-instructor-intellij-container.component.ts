@@ -8,9 +8,9 @@ import { CodeEditorFileService, CodeEditorSessionService, DomainService } from '
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
-import { IntelliJState } from 'app/intellij/intellij';
+import { OrionConnectorService } from 'app/intellij/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/intellij/orion-build-and-test.service';
+import { OrionState } from 'app/intellij/orion';
 
 @Component({
     selector: 'jhi-code-editor-instructor-intellij',
@@ -18,11 +18,11 @@ import { IntelliJState } from 'app/intellij/intellij';
     styles: ['.instructions-intellij { height: 700px }'],
 })
 export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
-    intellijState: IntelliJState;
+    intellijState: OrionState;
 
     constructor(
-        private javaBridge: JavaBridgeService,
-        private intellijBuildAndTestService: IdeBuildAndTestService,
+        private javaBridge: OrionConnectorService,
+        private intellijBuildAndTestService: OrionBuildAndTestService,
         router: Router,
         exerciseService: ProgrammingExerciseService,
         courseExerciseService: CourseExerciseService,

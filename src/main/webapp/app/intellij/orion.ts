@@ -2,7 +2,7 @@ import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-ba
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { BuildLogErrors } from 'app/code-editor';
 
-export interface IntelliJState {
+export interface OrionState {
     opened: number;
     cloning: boolean;
     building: boolean;
@@ -14,7 +14,7 @@ export enum ExerciseView {
     INSTRUCTOR = 'INSTRUCTOR',
 }
 
-export interface OrionCoreBridge {
+export interface OrionCoreConnector {
     login(username: string, password: string): void;
     log(message: string): void;
     editExercise(exerciseJson: string): void;
@@ -22,19 +22,19 @@ export interface OrionCoreBridge {
     submitChanges(): void;
 }
 
-export interface OrionInstructorBridge {
+export interface OrionInstructorConnector {
     selectRepository(repository: REPOSITORY): void;
     buildAndTestLocally(): void;
 }
 
-export interface OrionTestResultBridge {
+export interface OrionTestResultConnector {
     onBuildStarted(problemStatement: string): void;
     onBuildFinished(): void;
     onBuildFailed(buildLogsJsonString: string): void;
     onTestResult(success: boolean, testName: string, message: string): void;
 }
 
-export interface JavaUpcallBridgeFacade {
+export interface JavaConnectorFacade {
     login(username: string, password: string): void;
     log(message: string): void;
     editExercise(exercise: ProgrammingExercise): void;
@@ -50,7 +50,7 @@ export interface JavaUpcallBridgeFacade {
     onTestResult(success: boolean, testName: string, message: string): void;
 }
 
-export interface JavaDowncallBridge {
+export interface ArtemisClientConnector {
     onExerciseOpened(opened: number, view: string): void;
     isCloning(cloning: boolean): void;
     isBuilding(building: boolean): void;
@@ -58,10 +58,10 @@ export interface JavaDowncallBridge {
 }
 
 export interface Window {
-    orionCoreBridge: OrionCoreBridge;
-    orionTestResultsBridge: OrionTestResultBridge;
-    orionInstructorBridge: OrionInstructorBridge;
-    javaDowncallBridge: JavaDowncallBridge;
+    orionCoreConnector: OrionCoreConnector;
+    orionTestResultsConnector: OrionTestResultConnector;
+    orionInstructorConnector: OrionInstructorConnector;
+    artemisClientConnector: ArtemisClientConnector;
 }
 
-export const isIntelliJ = window.navigator.userAgent.includes('IntelliJ');
+export const isOrion = window.navigator.userAgent.includes('IntelliJ');

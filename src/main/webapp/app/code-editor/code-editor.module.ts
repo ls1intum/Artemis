@@ -40,7 +40,7 @@ import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { CodeEditorInstructorIntellijContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-intellij-container.component';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { OrionModule } from 'app/intellij/orion.module';
 import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
 
 const ENTITY_STATES = [...codeEditorRoute];
@@ -58,7 +58,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         TreeviewModule.forRoot(),
         ArtemisExerciseHintModule,
         FeatureToggleModule,
-        IntellijModule,
+        OrionModule,
     ],
     declarations: [
         CodeEditorGridComponent,

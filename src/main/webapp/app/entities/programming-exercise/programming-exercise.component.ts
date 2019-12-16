@@ -16,8 +16,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { FeatureToggle } from 'app/feature-toggle';
-import { IntelliJState, isIntelliJ } from 'app/intellij/intellij';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { OrionState, isOrion } from 'app/intellij/orion';
+import { OrionConnectorService } from 'app/intellij/orion-connector.service';
 import { stringifyCircular } from 'app/shared/util/utils';
 
 @Component({
@@ -27,9 +27,9 @@ import { stringifyCircular } from 'app/shared/util/utils';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    readonly isIntelliJ = isIntelliJ;
+    readonly isIntelliJ = isOrion;
     FeatureToggle = FeatureToggle;
-    intelliJState: IntelliJState;
+    intelliJState: OrionState;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -39,7 +39,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
-        private javaBridge: JavaBridgeService,
+        private javaBridge: OrionConnectorService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,

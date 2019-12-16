@@ -23,7 +23,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { OrionModule } from 'app/intellij/orion.module';
 import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
 import { ProgrammingExerciseDialogComponent, ProgrammingExercisePopupComponent } from 'app/entities/programming-exercise/programming-exercise-dialog.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
@@ -56,7 +56,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArtemisComplaintsModule,
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
-        IntellijModule,
+        OrionModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,

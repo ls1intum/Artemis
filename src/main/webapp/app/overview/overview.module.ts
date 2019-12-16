@@ -28,7 +28,7 @@ import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.mod
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { OrionModule } from 'app/intellij/orion.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 
@@ -47,7 +47,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisCourseRegistrationSelector,
-        IntellijModule,
+        OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
     ],

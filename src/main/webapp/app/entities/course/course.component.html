@@ -6,7 +6,13 @@
                 <input type="checkbox" [checked]="showOnlyActive" (change)="showOnlyActive = !showOnlyActive" />
                 <span class="ml-2" jhiTranslate="artemisApp.course.showActive">Show only active courses</span>
             </label>
-            <button jhiIdeFilter [showInIDE]="false" *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary jh-create-entity create-course" [routerLink]="['/course/new']">
+            <button
+                jhiOrionFilter
+                [showInOrionWindow]="false"
+                *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                class="btn btn-primary jh-create-entity create-course"
+                [routerLink]="['/course/new']"
+            >
                 <fa-icon [icon]="'plus'"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel">
                     Create new Course
@@ -83,7 +89,7 @@
                             <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
                             <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
                         </td>
-                        <td jhiIdeFilter [showInIDE]="true">
+                        <td jhiOrionFilter [showInOrionWindow]="true">
                             <button
                                 *ngIf="course.isAtLeastTutor"
                                 type="submit"
@@ -95,7 +101,7 @@
                                 <span>{{ 'entity.action.exercise' | translate }}</span>
                             </button>
                         </td>
-                        <td jhiIdeFilter [showInIDE]="false" class="text-right">
+                        <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
                             <div class="btn-group flex-btn-group-container">
                                 <div class="btn-group-vertical mr-1 mb-1">
                                     <button

@@ -2,13 +2,13 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { OrionConnectorService } from 'app/intellij/orion-connector.service';
 import { CodeEditorBuildLogService } from 'app/code-editor';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../mocks/mock-programming-submission.service';
 import { MockCodeEditorBuildLogService, MockParticipationWebsocketService } from '../mocks';
 import { MockJavaBridgeService } from '../mocks/mock-java-bridge.service';
-import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
+import { OrionBuildAndTestService } from 'app/intellij/orion-build-and-test.service';
 import { Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { BehaviorSubject, of } from 'rxjs';
@@ -21,9 +21,9 @@ const expect = chai.expect;
 describe('IdeBuildAndTestService', () => {
     let submissionService: ProgrammingSubmissionService;
     let participationService: ParticipationWebsocketService;
-    let javaBridge: JavaBridgeService;
+    let javaBridge: OrionConnectorService;
     let buildLogService: CodeEditorBuildLogService;
-    let ideBuildAndTestService: IdeBuildAndTestService;
+    let ideBuildAndTestService: OrionBuildAndTestService;
 
     let onBuildFinishedSpy: SinonSpy;
     let onBuildStartedSpy: SinonSpy;
@@ -45,7 +45,7 @@ describe('IdeBuildAndTestService', () => {
         javaBridge = new MockJavaBridgeService();
         buildLogService = new MockCodeEditorBuildLogService();
 
-        ideBuildAndTestService = new IdeBuildAndTestService(submissionService, participationService, javaBridge, buildLogService);
+        ideBuildAndTestService = new OrionBuildAndTestService(submissionService, participationService, javaBridge, buildLogService);
 
         onBuildFinishedSpy = spy(javaBridge, 'onBuildFinished');
         onBuildStartedSpy = spy(javaBridge, 'onBuildStarted');

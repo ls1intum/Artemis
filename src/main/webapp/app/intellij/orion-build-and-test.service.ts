@@ -5,7 +5,7 @@ import { Participation } from '../entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from '../entities/result';
 import { filter, first, map, tap } from 'rxjs/operators';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { OrionConnectorService } from 'app/intellij/orion-connector.service';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
@@ -17,7 +17,7 @@ import { BuildLogService } from 'app/programming-assessment/build-logs/build-log
 @Injectable({
     providedIn: 'root',
 })
-export class IdeBuildAndTestService {
+export class OrionBuildAndTestService {
     private buildFinished = new Subject<void>();
     private resultSubsription: Subscription;
     private buildLogSubscription: Subscription;
@@ -26,7 +26,7 @@ export class IdeBuildAndTestService {
     constructor(
         private submissionService: ProgrammingSubmissionService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private javaBridge: JavaBridgeService,
+        private javaBridge: OrionConnectorService,
         private buildLogService: BuildLogService,
     ) {}
 

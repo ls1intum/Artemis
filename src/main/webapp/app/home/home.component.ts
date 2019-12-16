@@ -7,8 +7,8 @@ import { StateStorageService, User } from '../core';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { isIntelliJ } from 'app/intellij/intellij';
+import { OrionConnectorService } from 'app/intellij/orion-connector.service';
+import { isOrion } from 'app/intellij/orion';
 import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -41,7 +41,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private renderer: Renderer,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
-        private javaBridge: JavaBridgeService,
+        private javaBridge: OrionConnectorService,
         private modalService: NgbModal,
     ) {}
 
@@ -95,7 +95,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
 
                 // Log in to IntelliJ
-                if (isIntelliJ) {
+                if (isOrion) {
                     const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
                     modalRef.componentInstance.text = 'login.ide.confirmation';
                     modalRef.componentInstance.title = 'login.ide.title';
