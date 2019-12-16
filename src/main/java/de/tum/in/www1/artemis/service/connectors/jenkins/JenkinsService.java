@@ -183,6 +183,10 @@ public class JenkinsService implements ContinuousIntegrationService {
     public String getPlanKey(Object requestBody) throws Exception {
         final var result = TestResults.convert(requestBody);
         final var nameParams = result.getFullName().split(" ");
+        /*
+         * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
+         * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
+         */
         if (nameParams.length != 4) {
             throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
         }
