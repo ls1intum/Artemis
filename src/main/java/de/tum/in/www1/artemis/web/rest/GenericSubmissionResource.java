@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -171,6 +172,9 @@ public abstract class GenericSubmissionResource<T extends Submission> {
      * @param user current user
      */
     public void hideDetails(Submission submission, User user) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            throw new IllegalStateException("This method should never be called from a transactional context!");
+        }
         var participation = submission.getParticipation();
         // do not send old submissions or old results to the client
         if (participation != null) {
