@@ -163,7 +163,6 @@
                         <div class="text-right">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
-                                    <!-- TODO: In case the last result is manual, we should warn the user that a manual result would be overridden when clicking the button -->
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
                                         [exercise]="exercise"
