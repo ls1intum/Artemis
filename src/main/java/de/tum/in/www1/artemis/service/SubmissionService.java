@@ -158,7 +158,7 @@ public abstract class SubmissionService<T extends Submission> {
         final List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         ArrayList<T> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null))
-                .map(StudentParticipation -> StudentParticipation.findLatestSubmissionOfType(submissionType))
+                .map(studentParticipation -> studentParticipation.findLatestSubmissionOfType(submissionType))
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add(submission.get()));
         return submissions;

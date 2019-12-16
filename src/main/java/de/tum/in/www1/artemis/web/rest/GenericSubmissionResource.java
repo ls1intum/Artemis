@@ -129,7 +129,7 @@ public abstract class GenericSubmissionResource<T extends Submission> {
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
-        // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
+        // Students can only see their own submissions (to prevent cheating). TAs, instructors and admins can see all submissions.
         if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(exercise))) {
             return forbidden();
         }
@@ -142,7 +142,6 @@ public abstract class GenericSubmissionResource<T extends Submission> {
             submission.setParticipation(participation);
         }
         else {
-            // only try to get and set the file upload if the fileUploadSubmission existed before
             submission = optionalSubmission.get();
         }
 
