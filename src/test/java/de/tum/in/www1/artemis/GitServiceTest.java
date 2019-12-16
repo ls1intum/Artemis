@@ -88,12 +88,12 @@ public class GitServiceTest {
     }
 
     @Test
-    public void squashAllCommitsIntoInitialCommitTest() throws GitAPIException {
+    public void combineAllCommitsIntoInitialCommitTest() throws GitAPIException {
         String newFileContent1 = "lorem ipsum";
         String newFileContent2 = "lorem ipsum solet";
         String fileContent = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
 
-        // These commits should be squashed into the initial commit
+        // These commits should be combined into the initial commit
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent1);
         gitUtilService.stashAndCommitAll(GitUtilService.REPOS.REMOTE);
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2, newFileContent2);
@@ -103,7 +103,7 @@ public class GitServiceTest {
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3, fileContent);
         gitUtilService.stashAndCommitAll(GitUtilService.REPOS.REMOTE);
 
-        gitService.squashAllCommitsIntoInitialCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
+        gitService.combineAllCommitsIntoInitialCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
 
         Arrays.stream(GitUtilService.REPOS.values()).forEach(repo -> {
             Iterable<RevCommit> commits = gitUtilService.getLog(repo);
@@ -121,12 +121,12 @@ public class GitServiceTest {
     }
 
     @Test
-    public void squashAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws GitAPIException {
+    public void combineAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws GitAPIException {
         String oldFileContent1 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1);
         String oldFileContent2 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2);
         String oldFileContent3 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
 
-        gitService.squashAllCommitsIntoInitialCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
+        gitService.combineAllCommitsIntoInitialCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
 
         Arrays.stream(GitUtilService.REPOS.values()).forEach(repo -> {
             Iterable<RevCommit> commits = gitUtilService.getLog(repo);

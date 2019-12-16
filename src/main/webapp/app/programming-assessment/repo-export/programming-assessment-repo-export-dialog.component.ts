@@ -44,7 +44,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             filterLateSubmissions: false,
             filterLateSubmissionsDate: null,
             addStudentName: true,
-            squashAfterInstructor: false, // disabled by default because it is rather unstable
+            combineStudentCommits: false,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
         };
         this.exerciseService

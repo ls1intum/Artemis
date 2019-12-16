@@ -12,11 +12,11 @@
     </div>
     <div class="card-body">
         <div class="form-group row">
-            <label class="col-3" jhiTranslate="artemisApp.exercise.score"></label>
+            <label class="col-3 assessment-label" jhiTranslate="artemisApp.exercise.score"></label>
             <input class="col" type="number" step="0.5" [(ngModel)]="assessment.credits" (ngModelChange)="emitChanges()" [readOnly]="disabled" [disabled]="disabled" />
         </div>
         <div class="form-group row">
-            <label class="col-3" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
+            <label class="col-3 assessment-label" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
             <textarea class="col form-control" rows="2" [(ngModel)]="assessment.detailText" (ngModelChange)="emitChanges()" [readOnly]="disabled" [disabled]="disabled"></textarea>
         </div>
     </div>
