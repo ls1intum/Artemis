@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -74,11 +75,29 @@ public class GradingInstructionTest {
         Iterator<GradingInstruction> iterator = gradingInstructionSet.iterator();
         while (iterator.hasNext()) {
             GradingInstruction gradingInstruction = iterator.next();
-            System.out.println(gradingInstruction.getId());
             gradingInstruction = request.postWithResponseBody("/api/grading-instruction", gradingInstruction, GradingInstruction.class);
             assertThat(gradingInstruction).isNotNull();
             assertThat(gradingInstruction.getId()).isNotNull();
         }
 
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteGradingInstruction() throws Exception {
+        database.addCourseWithOneTextExercise();
+
+        long courseID = courseRepository.findAllActive().get(0).getId();
+        Exercise exercise = exerciseRepository.findByCourseId(courseID).get(0);
+
+        Set<GradingInstruction> gradingInstructionSet = database.addGradingInstructionsToExercise(exercise).getStructuredGradingInstructions();
+
+        Iterator<GradingInstruction> iterator = gradingInstructionSet.iterator();
+        while (iterator.hasNext()) {
+            GradingInstruction gradingInstruction = iterator.next();
+            GradingInstruction savedGradingInstruction = gradingInstructionRepository.save(gradingInstruction);
+            request.delete("/api/grading-instruction/" + savedGradingInstruction.getId(), HttpStatus.OK);
+        }
+        assertThat(gradingInstructionRepository.findAll().isEmpty()).isTrue();
     }
 }
