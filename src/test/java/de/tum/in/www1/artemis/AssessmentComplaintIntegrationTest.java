@@ -224,11 +224,12 @@ public class AssessmentComplaintIntegrationTest {
         ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
 
         assertThat(receivedComplaintResponse.getReviewer()).as("reviewer is not set").isNull();
+        assertThat(receivedComplaintResponse.getComplaint()).as("complaint is not set").isNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1")
-    public void getComplaintResponseByComplaintId_studentHiddenForTutor() throws Exception {
+    public void getComplaintResponseByComplaintId_sensitiveDataHiddenForTutor() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
@@ -237,7 +238,30 @@ public class AssessmentComplaintIntegrationTest {
 
         ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
 
-        assertThat(receivedComplaintResponse.getComplaint().getStudent()).as("student is not set").isNull();
+        Complaint receivedComplaint = receivedComplaintResponse.getComplaint();
+        assertThat(receivedComplaint.getStudent()).as("student is not set").isNull();
+        assertThat(receivedComplaint.getResultBeforeComplaint()).as("result before complaint is not set as it contains sensitive data").isNull();
+        assertThat(receivedComplaint.getResult().getParticipation()).as("participation is not set").isNull();
+        assertThat(receivedComplaint.getResult().getSubmission()).as("submission is not set").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1")
+    public void getComplaintResponseByComplaintId_sensitiveDataHiddenForInstructor() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected")
+                .reviewer(database.getUserByLogin("instructor1"));
+        complaintResponseRepo.save(complaintResponse);
+
+        ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
+
+        Complaint receivedComplaint = receivedComplaintResponse.getComplaint();
+        assertThat(receivedComplaint.getStudent()).as("student is set").isNotNull();
+        assertThat(receivedComplaint.getResultBeforeComplaint()).as("result before complaint is not set as it contains sensitive data").isNull();
+        assertThat(receivedComplaint.getResult().getParticipation()).as("participation is not set").isNull();
+        assertThat(receivedComplaint.getResult().getSubmission()).as("submission is not set").isNull();
     }
 
     @Test
