@@ -51,7 +51,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet)
             throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
-        final var exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        final var exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         final var repoUrl = exercise.getTestRepositoryUrlAsUrl();
 
         return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
@@ -59,13 +59,13 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     URL getRepositoryUrl(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         return exercise.getTestRepositoryUrlAsUrl();
     }
 
     @Override
     boolean canAccessRepository(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         return authCheckService.isAtLeastInstructorInCourse(exercise.getCourse(), userService.getUserWithGroupsAndAuthorities());
     }
 

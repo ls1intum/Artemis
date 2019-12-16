@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -27,6 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
     providers: [FileUploadAssessmentsService, WindowRef],
     templateUrl: './file-upload-assessment.component.html',
     styleUrls: ['./file-upload-assessment.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
     text: string;
