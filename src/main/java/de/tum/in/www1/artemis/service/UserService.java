@@ -52,6 +52,9 @@ public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
+    @Value("${artemis.encryption-password}")
+    private String ENCRYPTION_PASSWORD;
+
     private final UserRepository userRepository;
 
     private final AuthorityRepository authorityRepository;
@@ -146,8 +149,15 @@ public class UserService {
         return encryptor;
     }
 
-    @Value("${artemis.encryption-password}")
-    private String ENCRYPTION_PASSWORD;
+    /**
+     * Returns the password of the user as a char (as is the Java convention for handling sensitive Strings)
+     *
+     * @param user The use for whom to fetch the password
+     * @return The password of the specified user
+     */
+    public char[] getPasswordForUser(User user) {
+        return encryptor().decrypt(user.getPassword()).toCharArray();
+    }
 
     /**
      * Activate user registration
@@ -524,6 +534,10 @@ public class UserService {
      */
     public List<User> getTutors(Course course) {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
+    }
+
+    public List<User> getInstructors(Course course) {
+        return userRepository.findAllByGroups(course.getInstructorGroupName());
     }
 
     /**

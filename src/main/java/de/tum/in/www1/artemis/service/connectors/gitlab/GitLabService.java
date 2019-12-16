@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import static org.gitlab4j.api.models.AccessLevel.DEVELOPER;
-import static org.gitlab4j.api.models.AccessLevel.GUEST;
+import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -92,11 +92,11 @@ public class GitLabService implements VersionControlService {
         protectBranch("master", repositoryUrl);
     }
 
-    private void createUser(User user) {
+    private org.gitlab4j.api.models.User createUser(User user) {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false);
         try {
-            gitlab.getUserApi().createUser(gitlabUser, user.getPassword(), false);
+            return gitlab.getUserApi().createUser(gitlabUser, String.valueOf(userService.getPasswordForUser(user)), false);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);
@@ -228,9 +228,19 @@ public class GitLabService implements VersionControlService {
         final var exercisePath = programmingExercise.getProjectKey();
         final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
 
-        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        final var instructors = userService.getInstructors(programmingExercise.getCourse());
+        final var teachingAssistants = userService.getTutors(programmingExercise.getCourse()).stream().filter(user -> !instructors.contains(user)).collect(Collectors.toList());
+        var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         try {
-            gitlab.getGroupApi().addGroup(group);
+            group = gitlab.getGroupApi().addGroup(group);
+            for (final var instructor : instructors) {
+                final var userId = getUserIdCreateIfNotExists(instructor);
+                gitlab.getGroupApi().addMember(group.getId(), userId, MAINTAINER);
+            }
+            for (final var ta : teachingAssistants) {
+                final var userId = getUserIdCreateIfNotExists(ta);
+                gitlab.getGroupApi().addMember(group.getId(), userId, GUEST);
+            }
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new group for course " + exerciseName, e);
@@ -334,6 +344,20 @@ public class GitLabService implements VersionControlService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to get ID for user " + username, e);
+        }
+    }
+
+    private int getUserIdCreateIfNotExists(User user) {
+        try {
+            var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
+            if (gitlabUser == null) {
+                gitlabUser = createUser(user);
+            }
+
+            return gitlabUser.getId();
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to get ID for user " + user.getLogin(), e);
         }
     }
 
