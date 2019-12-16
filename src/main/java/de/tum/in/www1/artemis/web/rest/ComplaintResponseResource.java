@@ -69,7 +69,6 @@ public class ComplaintResponseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ComplaintResponse> createComplaintResponse(@RequestBody ComplaintResponse complaintResponse) throws URISyntaxException {
         log.debug("REST request to save ComplaintResponse: {}", complaintResponse);
-        // TODO authorizationCheckService.isAtLeastTeachingAssistantForExercise missing
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponse(complaintResponse);
 
         // To build correct creation alert on the client we must check which type is the complaint to apply correct i18n key.
@@ -114,23 +113,23 @@ public class ComplaintResponseResource {
         }
 
         if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            optionalComplaintResponse.get().getComplaint().setStudent(null);
+            complaintResponse.getComplaint().setStudent(null);
         }
 
         if (!atLeastTA) {
-            optionalComplaintResponse.get().setReviewer(null);
+            complaintResponse.setReviewer(null);
         }
-
-        // hide unnecessary information
-        complaintResponse.getComplaint().setResultBeforeComplaint(null);
-        complaintResponse.getComplaint().getResult().setParticipation(null);
-        complaintResponse.getComplaint().getResult().setSubmission(null);
 
         if (originalAuthor.getLogin() != null && originalAuthor.getLogin().equals(principal.getName())) {
-            // hide even more unnecessary information
+            // hide complaint completely if the user is the student who created the complaint
             complaintResponse.setComplaint(null);
         }
-
+        else {
+            // hide unnecessary information
+            complaintResponse.getComplaint().setResultBeforeComplaint(null);
+            complaintResponse.getComplaint().getResult().setParticipation(null);
+            complaintResponse.getComplaint().getResult().setSubmission(null);
+        }
         return ResponseUtil.wrapOrNotFound(optionalComplaintResponse);
     }
 }

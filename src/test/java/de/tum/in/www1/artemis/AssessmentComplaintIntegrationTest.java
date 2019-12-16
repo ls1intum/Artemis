@@ -342,6 +342,18 @@ public class AssessmentComplaintIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "student2")
+    public void getComplaintResponseByComplaintId_studentNotOriginalAuthor_forbidden() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        complaintResponseRepo.save(complaintResponse);
+
+        request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.FORBIDDEN, ComplaintResponse.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getSubmittedComplaints_byComplaintType() throws Exception {
         database.addComplaints("student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
@@ -450,7 +462,7 @@ public class AssessmentComplaintIntegrationTest {
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/exercises/" + complaint.getResult().getParticipation().getExercise().getId() + "/complaints", HttpStatus.OK, Complaint.class,
                 params);
-        //
+
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
 }
