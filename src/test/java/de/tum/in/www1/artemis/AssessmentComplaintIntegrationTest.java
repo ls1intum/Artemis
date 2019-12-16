@@ -158,6 +158,7 @@ public class AssessmentComplaintIntegrationTest {
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         request.post("/api/complaint-responses", complaintResponse, HttpStatus.CREATED);
+        assertThat(complaintResponse.getComplaint().getStudent()).isNull();
 
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
