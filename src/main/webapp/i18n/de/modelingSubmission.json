@@ -2,20 +2,20 @@
     "artemisApp": {
         "modelingSubmission": {
             "home": {
-                "title": "Modellierungseinreichungen",
-                "createLabel": "Modellierungseinreichung erstellen",
-                "createOrEditLabel": "Modellierungseinreichung erstellen oder bearbeiten"
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen",
+                "createOrEditLabel": "Einreichung erstellen oder bearbeiten"
             },
-            "created": "Modellierungseinreichung erstellt mit ID {{ param }}",
-            "updated": "Modellierungseinreichung aktualisiert mit ID {{ param }}",
-            "deleted": "Modellierungseinreichung gelöscht mit ID {{ param }}",
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Modellierungseinreichung {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Modellierungseinreichung"
+                "title": "Einreichung"
             },
-            "view": "Modellierungseinreichung ansehen",
+            "view": "Einreichung ansehen",
             "model": "Modell",
             "explanationText": "Erklärungstext",
             "modelingEditor": "Modellierungseditor",
