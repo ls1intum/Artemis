@@ -72,7 +72,7 @@ public class GradingInstructionService {
      * @return a List of all Exercises for the given course
      */
     @Transactional(readOnly = true)
-    public List<GradingInstruction> findAllForExercise(Exercise exercise) { // Todo call method in Exercise service
+    public List<GradingInstruction> findAllForExercise(Exercise exercise) {
         return gradingInstructionRepository.findByExerciseId(exercise.getId());
     }
 }

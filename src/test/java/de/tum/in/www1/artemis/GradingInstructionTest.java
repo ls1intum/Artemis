@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
+import de.tum.in.www1.artemis.service.GradingInstructionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -52,9 +53,24 @@ public class GradingInstructionTest {
     @Autowired
     GradingInstructionRepository gradingInstructionRepository;
 
+    @Autowired
+    GradingInstructionService gradingInstructionService;
+
+    private Exercise exercise;
+
+    private Set<GradingInstruction> gradingInstructionSet;
+
+    private Iterator<GradingInstruction> iterator;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(0, 10, 1);
+        database.addCourseWithOneTextExercise();
+        long courseID = courseRepository.findAllActive().get(0).getId();
+        exercise = exerciseRepository.findByCourseId(courseID).get(0);
+
+        gradingInstructionSet = database.addGradingInstructionsToExercise(exercise).getStructuredGradingInstructions();
+        iterator = gradingInstructionSet.iterator();
     }
 
     @AfterEach
@@ -65,14 +81,6 @@ public class GradingInstructionTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createGradingInstruction() throws Exception {
-        database.addCourseWithOneTextExercise();
-
-        long courseID = courseRepository.findAllActive().get(0).getId();
-        Exercise exercise = exerciseRepository.findByCourseId(courseID).get(0);
-
-        Set<GradingInstruction> gradingInstructionSet = database.addGradingInstructionsToExercise(exercise).getStructuredGradingInstructions();
-
-        Iterator<GradingInstruction> iterator = gradingInstructionSet.iterator();
         while (iterator.hasNext()) {
             GradingInstruction gradingInstruction = iterator.next();
             gradingInstruction = request.postWithResponseBody("/api/grading-instruction", gradingInstruction, GradingInstruction.class);
@@ -85,14 +93,6 @@ public class GradingInstructionTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteGradingInstruction() throws Exception {
-        database.addCourseWithOneTextExercise();
-
-        long courseID = courseRepository.findAllActive().get(0).getId();
-        Exercise exercise = exerciseRepository.findByCourseId(courseID).get(0);
-
-        Set<GradingInstruction> gradingInstructionSet = database.addGradingInstructionsToExercise(exercise).getStructuredGradingInstructions();
-
-        Iterator<GradingInstruction> iterator = gradingInstructionSet.iterator();
         while (iterator.hasNext()) {
             GradingInstruction gradingInstruction = iterator.next();
             GradingInstruction savedGradingInstruction = gradingInstructionRepository.save(gradingInstruction);
@@ -100,4 +100,15 @@ public class GradingInstructionTest {
         }
         assertThat(gradingInstructionRepository.findAll().isEmpty()).isTrue();
     }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getAllGradingInstructionsOfExerciseAsStudent() throws Exception {
+        while (iterator.hasNext()) {
+            GradingInstruction gradingInstruction = iterator.next();
+            gradingInstructionRepository.save(gradingInstruction);
+        }
+        request.getList("/api/gradingInstruction/" + exercise.getId(), HttpStatus.FORBIDDEN, GradingInstruction.class);
+    }
+
 }
