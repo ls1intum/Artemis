@@ -282,15 +282,10 @@ public class DatabaseUtilService {
     public Exercise addGradingInstructionsToExercise(Exercise exercise) {
         GradingInstruction gradingInstruction1 = new GradingInstruction();
         gradingInstruction1.instructionDescription("(1)just for testing purpose").setExercise(exercise);
-        // gradingInstruction1 = gradingInstructionRepo.save(gradingInstruction1);
-        // gradingInstruction1.setId(null);
         exercise.addStructuredGradingInstructions(gradingInstruction1);
         GradingInstruction gradingInstruction2 = new GradingInstruction();
         gradingInstruction2.instructionDescription("(2)just for testing purpose").setExercise(exercise);
-        // gradingInstruction2 = gradingInstructionRepo.save(gradingInstruction2);
-        // gradingInstruction2.setId(null);
         exercise.addStructuredGradingInstructions(gradingInstruction2);
-        // return exerciseRepo.save(exercise);
         return exercise;
     }
 

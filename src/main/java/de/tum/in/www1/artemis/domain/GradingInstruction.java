@@ -148,12 +148,6 @@ public class GradingInstruction implements Serializable {
         return Objects.hashCode(getId());
     }
 
-    // @Override
-    // public String toString() {
-    // return "GradingInstruction{" + "id=" + getId() + ", credits='" + getCredits() + "'" + ", level='" + getLevel() + "'" + ", instructionDescription='"
-    // + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + ", usageCount='" + getUsageCount() + "'" + "}";
-    // }
-
     @Override
     public String toString() {
         return "GradingInstruction{" + "id=" + id + ", exercise=" + exercise + ", credits=" + credits + ", level='" + level + '\'' + ", instructionDescription='"

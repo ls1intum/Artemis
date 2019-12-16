@@ -104,7 +104,6 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Course course;
 
-    // @OneToMany(mappedBy = "exercise", fetch = FetchType.LAZY)
     @OneToMany(mappedBy = "exercise", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
