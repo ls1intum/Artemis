@@ -150,9 +150,9 @@ public class UserService {
     }
 
     /**
-     * Returns the password of the user as a char (as is the Java convention for handling sensitive Strings)
+     * Returns the password of the user as a char array (as is the Java convention for handling sensitive Strings)
      *
-     * @param user The use for whom to fetch the password
+     * @param user The user for whom to fetch the password
      * @return The password of the specified user
      */
     public char[] getPasswordForUser(User user) {
@@ -536,6 +536,12 @@ public class UserService {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
     }
 
+    /**
+     * Get all instructors for a given course
+     *
+     * @param course The course for which to fetch all instructors
+     * @return A list of all users that have the role of instructor in the course
+     */
     public List<User> getInstructors(Course course) {
         return userRepository.findAllByGroups(course.getInstructorGroupName());
     }

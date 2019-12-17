@@ -294,7 +294,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
+    public boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
         try {
             jobXml(projectKey, buildPlanId);
             return true;

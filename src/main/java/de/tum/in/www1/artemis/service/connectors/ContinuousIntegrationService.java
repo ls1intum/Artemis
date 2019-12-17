@@ -117,7 +117,7 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if build plan is valid otherwise false
      */
-    Boolean buildPlanIdIsValid(String projectKey, String buildPlanId);
+    boolean buildPlanIdIsValid(String projectKey, String buildPlanId);
 
     /**
      * Get details about the latest build result. Used to display the results of the test cases to the student: webapp/app/courses/results/result-deatil.html Used to generate the
