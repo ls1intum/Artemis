@@ -108,6 +108,7 @@ export class ListOfComplaintsComponent implements OnInit {
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
             const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.participationId = studentParticipation.id;
+            modalRef.componentInstance.exercise = exercise;
             modalRef.componentInstance.result = cloneDeep(complaint.result);
             modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
             modalRef.result.then(

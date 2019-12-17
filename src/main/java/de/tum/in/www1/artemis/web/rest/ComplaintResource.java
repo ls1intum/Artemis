@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -125,7 +124,7 @@ public class ComplaintResource {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
         var optionalComplaint = complaintService.getByResultId(resultId);
         if (optionalComplaint.isEmpty()) {
-            return notFound();
+            return ResponseEntity.ok().build();
         }
         var complaint = optionalComplaint.get();
         var user = userService.getUserWithGroupsAndAuthorities();
