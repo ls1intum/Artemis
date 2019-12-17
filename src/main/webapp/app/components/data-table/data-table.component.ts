@@ -219,7 +219,8 @@ export class DataTableComponent implements OnInit, OnChanges {
             filter(this.customFilter),
         )(this.allEntities);
         this.entities = this.sortByPipe.transform(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
-        this.entitiesSizeChange.emit(this.entities.length);
+        // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
+        setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
     }
 
     /**
