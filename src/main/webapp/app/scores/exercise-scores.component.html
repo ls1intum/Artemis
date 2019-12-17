@@ -210,7 +210,13 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.FILE_UPLOAD" [resizeable]="false" [minWidth]="180" [width]="180">
+                <ngx-datatable-column
+                    prop=""
+                    *ngIf="exercise.type === ExerciseType.FILE_UPLOAD && exercise.isAtLeastInstructor"
+                    [resizeable]="false"
+                    [minWidth]="180"
+                    [width]="180"
+                >
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button routerLink="/file-upload-exercise/{{ exercise.id }}/submission/{{ value.submission.id }}/assessment" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -219,7 +225,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING" [resizeable]="false" [minWidth]="180" [width]="180">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
                             routerLink="/modeling-exercise/{{ exercise.id }}/submissions/{{ value.submission.id }}/assessment"
@@ -232,7 +238,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT" [resizeable]="false" [minWidth]="180" [width]="180">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button routerLink="/text/{{ exercise.id }}/assessment/{{ value.submission.id }}" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
