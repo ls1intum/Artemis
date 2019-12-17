@@ -72,6 +72,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
 
                     this.exercises.forEach(exercise => {
+                        // Retrieve exampleSubmission for correct calculation of the jhi-tutor-participation-graph
                         this.exerciseService.getForTutors(exercise.id).subscribe((exerciseRes: HttpResponse<Exercise>) => {
                             const retrievedExercise = exerciseRes.body!;
                             exercise.exampleSubmissions = retrievedExercise.exampleSubmissions;
