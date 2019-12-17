@@ -26,9 +26,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, ProgrammingAssessmentUpdate assessmentUpdate) {
-        super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);
         originalResult.setResultString(assessmentUpdate.getResultString());
         originalResult.setScore(assessmentUpdate.getScore());
-        return resultRepository.save(originalResult);
+        return super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);
     }
 }
