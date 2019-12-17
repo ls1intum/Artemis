@@ -198,4 +198,11 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             },
         );
     }
+
+    /**
+     * the dialog is readonly if there is a complaint that was accepted or rejected
+     */
+    readOnly() {
+        return this.complaint !== undefined && this.complaint.accepted !== undefined;
+    }
 }
