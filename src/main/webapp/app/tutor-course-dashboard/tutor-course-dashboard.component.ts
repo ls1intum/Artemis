@@ -3,11 +3,12 @@ import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { User } from '../core';
+import { User } from 'app/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -46,6 +47,7 @@ export class TutorCourseDashboardComponent implements OnInit {
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
+        private exerciseService: ExerciseService,
     ) {}
 
     ngOnInit(): void {
@@ -68,6 +70,13 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.unfinishedExercises = unfinishedExercises;
                     // sort exercises by type to get a better overview in the dashboard
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
+
+                    this.exercises.forEach(exercise => {
+                        this.exerciseService.getForTutors(exercise.id).subscribe((exerciseRes: HttpResponse<Exercise>) => {
+                            const retrievedExercise = exerciseRes.body!;
+                            exercise.exampleSubmissions = retrievedExercise.exampleSubmissions;
+                        });
+                    });
                 }
             },
             (response: string) => this.onError(response),
