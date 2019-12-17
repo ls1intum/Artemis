@@ -11,7 +11,7 @@
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
                     <span class="ml-1">{{ 'artemisApp.exercise.showAll' | translate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === PROGRAMMING">
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.BUILD_FAILED)" [value]="FilterProp.BUILD_FAILED" />
                     <span class="ml-1">{{ 'artemisApp.exercise.showBuildFailed' | translate }}</span>
                 </label>
