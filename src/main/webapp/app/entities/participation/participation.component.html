@@ -1,8 +1,20 @@
 <div>
     <div class="d-flex">
-        <h2>
-            <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
-        </h2>
+        <div class="mb-3">
+            <h2>
+                <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+            </h2>
+            <div *ngIf="exercise?.type === ExerciseType.PROGRAMMING" class="d-flex align-items-center mt-2">
+                <label class="radio-inline mb-0 d-flex align-items-center">
+                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
+                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | translate }}</span>
+                </label>
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
+                    <span class="ml-1">{{ 'artemisApp.exercise.showFailed' | translate }}</span>
+                </label>
+            </div>
+        </div>
         <jhi-programming-exercise-instructor-submission-state
             class="ml-auto"
             *ngIf="exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING"
@@ -10,8 +22,6 @@
         ></jhi-programming-exercise-instructor-submission-state>
     </div>
     <jhi-alert></jhi-alert>
-    <div class="row"></div>
-    <br />
     <jhi-data-table
         [isLoading]="isLoading"
         entityType="participation"
@@ -22,6 +32,8 @@
         [searchFields]="['student.login', 'student.name']"
         [searchTextFromEntity]="searchTextFromParticipation"
         [searchResultFormatter]="searchResultFormatter"
+        [customFilterKey]="participationCriteria.filterProp"
+        [customFilter]="filterParticipationByProp"
         (entitiesSizeChange)="handleParticipationsSizeChange($event)"
     >
         <ng-template let-settings="settings" let-controls="controls">
@@ -151,7 +163,6 @@
                         <div class="text-right">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
-                                    <!-- TODO: In case the last result is manuel, we should warn the user that a manual result would be overridden when clicking the button -->
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
                                         [exercise]="exercise"

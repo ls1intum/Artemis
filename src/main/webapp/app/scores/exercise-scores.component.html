@@ -5,11 +5,15 @@
     </h2>
     <jhi-alert></jhi-alert>
     <div class="mb-2 clearfix">
-        <div class="d-flex align-content-center float-xl-left my-2">
+        <div class="exercise-scores-filter-toolbar d-flex align-content-center my-2">
             <div class="d-flex align-items-center">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
                     <span class="ml-1">{{ 'artemisApp.exercise.showAll' | translate }}</span>
+                </label>
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === PROGRAMMING">
+                    <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.BUILD_FAILED)" [value]="FilterProp.BUILD_FAILED" />
+                    <span class="ml-1">{{ 'artemisApp.exercise.showBuildFailed' | translate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.UNSUCCESSFUL)" [value]="FilterProp.UNSUCCESSFUL" />
