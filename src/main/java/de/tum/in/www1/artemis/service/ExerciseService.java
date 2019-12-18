@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service Implementation for managing Exercise.
  */
 @Service
-@Transactional
 public class ExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
@@ -99,21 +98,19 @@ public class ExerciseService {
      * Finds all Exercises for a given Course
      *
      * @param course corresponding course
-     * @param withLtiOutcomeUrlExisting check if only exercises with an exisitng LTI Outcome URL should be returned
      * @param user the user entity
      * @return a List of all Exercises for the given course
      */
-    @Transactional(readOnly = true)
-    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, User user) {
+    public List<Exercise> findAllForCourse(Course course, User user) {
         List<Exercise> exercises = null;
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findByCourseId(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
 
-            if (course.isOnlineCourse() && withLtiOutcomeUrlExisting) {
-                // students in only courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+            if (course.isOnlineCourse()) {
+                // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
                 exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
@@ -121,16 +118,17 @@ public class ExerciseService {
             }
 
             // user is student for this course and might not have the right to see it so we have to filter
-
             // filter out exercises that are not released (or explicitly made visible to students) yet
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }
 
         // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-        for (Exercise exercise : exercises) {
-            if (exercise instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) exercise;
-                quizExercise.filterSensitiveInformation();
+        if (exercises != null) {
+            for (Exercise exercise : exercises) {
+                if (exercise instanceof QuizExercise) {
+                    QuizExercise quizExercise = (QuizExercise) exercise;
+                    quizExercise.filterSensitiveInformation();
+                }
             }
         }
 
@@ -175,7 +173,6 @@ public class ExerciseService {
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
     public Exercise findOneWithCategories(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerCategories(exerciseId);
         if (exercise.isEmpty()) {
@@ -191,7 +188,6 @@ public class ExerciseService {
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
-    @Transactional(readOnly = true)
     public Exercise findOneLoadParticipations(Long exerciseId) {
         log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
@@ -316,7 +312,6 @@ public class ExerciseService {
      * @return the archive File
      */
     // does not delete anything
-    @Transactional(readOnly = true)
     public java.io.File archive(Long id) {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to archive all participations repositories for Exercise : {}", exercise.getTitle());

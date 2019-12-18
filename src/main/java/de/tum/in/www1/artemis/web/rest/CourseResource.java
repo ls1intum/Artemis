@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -163,7 +162,6 @@ public class CourseResource {
      */
     @PutMapping("/courses")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Transactional
     public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
         log.debug("REST request to update Course : {}", updatedCourse);
         if (updatedCourse.getId() == null) {
@@ -307,7 +305,7 @@ public class CourseResource {
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
-                // add participation with result to each exercise
+                // add participation with submission and result to each exercise
                 exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
@@ -568,7 +566,6 @@ public class CourseResource {
      */
     @DeleteMapping("/courses/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    @Transactional
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
         Course course = courseService.findOne(id);
