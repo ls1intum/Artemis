@@ -108,8 +108,8 @@ public class TextAssessmentIntegrationTest {
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
-        Result updatedResult = request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + textAssessment.getId() + "/after-complaint",
-                assessmentUpdate, Result.class, HttpStatus.OK);
+        Result updatedResult = request.putWithResponseBody("/api/text-assessments/text-submission/" + textSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+                Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
