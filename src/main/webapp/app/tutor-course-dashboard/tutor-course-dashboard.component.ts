@@ -8,7 +8,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
-import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-courses',
@@ -47,7 +46,6 @@ export class TutorCourseDashboardComponent implements OnInit {
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
-        private exerciseService: ExerciseService,
     ) {}
 
     ngOnInit(): void {
