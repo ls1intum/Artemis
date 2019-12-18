@@ -304,6 +304,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 },
             );
     }
+
     onSubmitAssessment() {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
@@ -452,8 +453,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                result => {
-                    this.result = result;
+                response => {
+                    this.result = response.body!;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
