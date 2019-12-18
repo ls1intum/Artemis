@@ -371,9 +371,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private openManualResultDialog(result: Result) {
-        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participationId = result.participation!.id;
         modalRef.componentInstance.result = cloneDeep(result);
+        modalRef.componentInstance.exercise = this.exercise;
         modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
         modalRef.result.then(
             _ => this.loadAll(),

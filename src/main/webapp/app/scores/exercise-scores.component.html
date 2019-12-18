@@ -204,6 +204,7 @@
                             *ngIf="newManualResultAllowed"
                             [participationId]="value.participation.id"
                             [latestResult]="value"
+                            [exercise]="exercise"
                             (onResultModified)="refresh()"
                             class="mr-1"
                         ></jhi-programming-assessment-manual-result>
