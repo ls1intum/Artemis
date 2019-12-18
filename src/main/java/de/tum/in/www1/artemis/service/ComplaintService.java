@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_TIME_WEEKS;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,8 +15,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -128,160 +125,47 @@ public class ComplaintService {
      * Given an exercise id, retrieve all the complaints apart the ones related to whoever is calling the method. Useful for creating a list of complaints a tutor can review.
      *
      * @param exerciseId - the id of the exercise we are interested in
-     * @param principal  - the callee
      * @return a list of complaints
      */
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByExerciseIdButMine(long exerciseId, Principal principal) {
-        Optional<List<Complaint>> databaseComplaints = complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId,
-                ComplaintType.COMPLAINT);
-
-        return buildComplaintsListForAssessor(databaseComplaints, principal, false);
+    public List<Complaint> getAllComplaintsByExerciseIdButMine(long exerciseId) {
+        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.COMPLAINT);
     }
 
     /**
      * Given an exercise id, retrieve more feedback requests related to whoever is calling the method. Useful for creating a list of more feedback requests a tutor can review.
      *
      * @param exerciseId - the id of the exercise we are interested in
-     * @param principal  - the callee
      * @return a list of complaints
      */
     @Transactional(readOnly = true)
-    public List<Complaint> getMyMoreFeedbackRequests(long exerciseId, Principal principal) {
-        Optional<List<Complaint>> databaseMoreFeedbackRequests = complaintRepository
-                .findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
-
-        return buildComplaintsListForAssessor(databaseMoreFeedbackRequests, principal, true);
+    public List<Complaint> getMyMoreFeedbackRequests(long exerciseId) {
+        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
-        List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_Id(tutorId);
-
-        return filterOutUselessDataFromComplaints(complaints, true);
+        return complaintRepository.getAllByResult_Assessor_Id(tutorId);
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByCourseId(Long courseId, boolean includeStudentsName) {
-        List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
-
-        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
+    public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
+        return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId, boolean includeStudentsName) {
-        List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
-
-        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
+    public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
+        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId, boolean includeStudentsName) {
-        List<Complaint> complaints = complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
-
-        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
+    public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
+        return complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
     }
 
     @Transactional(readOnly = true)
-    public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId, boolean includeStudentsName) {
-        List<Complaint> complaints = complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
-
-        return filterOutUselessDataFromComplaints(complaints, !includeStudentsName);
-    }
-
-    private void filterOutStudentFromComplaint(Complaint complaint) {
-        complaint.setStudent(null);
-        complaint.setResultBeforeComplaint(null);
-
-        if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
-            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-            studentParticipation.setStudent(null);
-        }
-    }
-
-    private void filterOutUselessDataFromComplaint(Complaint complaint) {
-        if (complaint.getResult() == null) {
-            return;
-        }
-
-        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-        if (originalParticipation != null && originalParticipation.getExercise() != null) {
-            Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
-            if (exerciseWithOnlyTitle instanceof TextExercise) {
-                exerciseWithOnlyTitle = new TextExercise();
-            }
-            else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
-                exerciseWithOnlyTitle = new ModelingExercise();
-            }
-            else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
-                exerciseWithOnlyTitle = new FileUploadExercise();
-            }
-
-            else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
-                exerciseWithOnlyTitle = new ProgrammingExercise();
-            }
-            exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
-            exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
-
-            originalParticipation.setExercise(exerciseWithOnlyTitle);
-        }
-
-        Submission originalSubmission = complaint.getResult().getSubmission();
-        if (originalSubmission != null) {
-            Submission submissionWithOnlyId;
-            if (originalSubmission instanceof TextSubmission) {
-                submissionWithOnlyId = new TextSubmission();
-            }
-            else if (originalSubmission instanceof ModelingSubmission) {
-                submissionWithOnlyId = new ModelingSubmission();
-            }
-            else if (originalSubmission instanceof FileUploadSubmission) {
-                submissionWithOnlyId = new FileUploadSubmission();
-            }
-            else if (originalSubmission instanceof ProgrammingSubmission) {
-                submissionWithOnlyId = new ProgrammingSubmission();
-            }
-            else {
-                return;
-            }
-            submissionWithOnlyId.setId(originalSubmission.getId());
-            complaint.getResult().setSubmission(submissionWithOnlyId);
-        }
-    }
-
-    private List<Complaint> filterOutUselessDataFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
-        if (filterOutStudentFromComplaints) {
-            complaints.forEach(this::filterOutStudentFromComplaint);
-        }
-
-        complaints.forEach(this::filterOutUselessDataFromComplaint);
-
-        return complaints;
-    }
-
-    private List<Complaint> buildComplaintsListForAssessor(Optional<List<Complaint>> databaseComplaints, Principal principal, boolean assessorSameAsCaller) {
-        List<Complaint> responseComplaints = new ArrayList<>();
-
-        if (databaseComplaints.isEmpty()) {
-            return responseComplaints;
-        }
-
-        databaseComplaints.get().forEach(complaint -> {
-            String submissorName = principal.getName();
-            User assessor = complaint.getResult().getAssessor();
-
-            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller) {
-                // Remove data about the student
-                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-                studentParticipation.setStudent(null);
-                complaint.setStudent(null);
-                complaint.setResultBeforeComplaint(null);
-
-                responseComplaints.add(complaint);
-            }
-        });
-
-        return responseComplaints;
+    public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
+        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
     }
 
     /**
