@@ -116,7 +116,7 @@
                     </div>
                     <div class="checkbox col-md-6">
                         <label class="artemis-label">
-                            <input type="checkbox" name="positive{{ i }}" [readOnly]="readOnly()" [(ngModel)]="feedback.positive" />&nbsp;<span
+                            <input type="checkbox" name="positive{{ i }}" [disabled]="readOnly()" [(ngModel)]="feedback.positive" />&nbsp;<span
                                 jhiTranslate="artemisApp.result.positive"
                                 >Positive</span
                             >
