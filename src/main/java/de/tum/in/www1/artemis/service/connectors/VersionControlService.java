@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -45,6 +46,19 @@ public interface VersionControlService {
      * @param user The local Artemis user, that should alos be available in the VCS
      */
     void createUser(User user);
+
+    /**
+     * Updates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user management.
+     * This will change the following:
+     * <ul>
+     *     <li>Update the password of the user</li>
+     *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
+     * </ul>
+     *
+     * @param removedGroups Groups that the user does not belong to any longer
+     * @param user The updated user in Artemis
+     */
+    void updateUser(User user, Set<String> removedGroups);
 
     /**
      * Get the clone URL used for cloning

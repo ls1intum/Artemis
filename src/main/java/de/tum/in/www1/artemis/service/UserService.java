@@ -359,29 +359,29 @@ public class UserService {
     /**
      * Update all information for a specific user, and return the modified user.
      *
-     * @param userDTO user to update
+     * @param updatedUserDTO user to update
      * @return updated user
      */
-    public Optional<UserDTO> updateUser(ManagedUserVM userDTO) {
-        return Optional.of(userRepository.findById(userDTO.getId())).filter(Optional::isPresent).map(Optional::get).map(user -> {
-            this.clearUserCaches(user);
-            user.setLogin(userDTO.getLogin().toLowerCase());
-            user.setFirstName(userDTO.getFirstName());
-            user.setLastName(userDTO.getLastName());
-            user.setEmail(userDTO.getEmail().toLowerCase());
-            user.setImageUrl(userDTO.getImageUrl());
-            user.setActivated(userDTO.isActivated());
-            user.setLangKey(userDTO.getLangKey());
-            if (userDTO.getPassword() != null) {
-                user.setPassword(passwordEncoder().encode(userDTO.getPassword()));
-            }
-            Set<Authority> managedAuthorities = user.getAuthorities();
-            managedAuthorities.clear();
-            userDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
-            this.clearUserCaches(user);
-            log.debug("Changed Information for User: {}", user);
-            return user;
-        }).map(UserDTO::new);
+    public User updateUser(User user, ManagedUserVM updatedUserDTO) {
+        this.clearUserCaches(user);
+        user.setLogin(updatedUserDTO.getLogin().toLowerCase());
+        user.setFirstName(updatedUserDTO.getFirstName());
+        user.setLastName(updatedUserDTO.getLastName());
+        user.setEmail(updatedUserDTO.getEmail().toLowerCase());
+        user.setImageUrl(updatedUserDTO.getImageUrl());
+        user.setActivated(updatedUserDTO.isActivated());
+        user.setLangKey(updatedUserDTO.getLangKey());
+        user.setGroups(updatedUserDTO.getGroups());
+        if (updatedUserDTO.getPassword() != null) {
+            user.setPassword(passwordEncoder().encode(updatedUserDTO.getPassword()));
+        }
+        Set<Authority> managedAuthorities = user.getAuthorities();
+        managedAuthorities.clear();
+        updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
+        user = userRepository.save(user);
+        this.clearUserCaches(user);
+        log.debug("Changed Information for User: {}", user);
+        return user;
     }
 
     /**
@@ -443,7 +443,7 @@ public class UserService {
      * @return all users
      */
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
-        return userRepository.findAll(pageable).map(UserDTO::new);
+        return userRepository.findAllWithGroups(pageable).map(UserDTO::new);
     }
 
     /**
@@ -461,7 +461,7 @@ public class UserService {
      * @return existing user with given login string or null
      */
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
-        return userRepository.findOneWithAuthoritiesByLogin(login);
+        return userRepository.findOneWithAuthoritiesAndGroupsByLogin(login);
     }
 
     /**

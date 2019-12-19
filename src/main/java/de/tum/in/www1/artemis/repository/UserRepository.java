@@ -6,6 +6,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -41,13 +44,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select distinct user from User user left join fetch user.groups where user.login = :#{#login}")
     Optional<User> findOneWithGroupsByLogin(@Param("login") String login);
 
-    @Query("select distinct user from User user left join fetch user.authorities where user.login = :#{#login}")
+    @Query("select distinct user from User user left join fetch user.authorities left join fetch user.groups where user.login = :#{#login}")
     @Cacheable(cacheNames = USERS_CACHE)
-    Optional<User> findOneWithAuthoritiesByLogin(@Param("login") String login);
+    Optional<User> findOneWithAuthoritiesAndGroupsByLogin(@Param("login") String login);
 
     Long countByGroupsIsContaining(Set<String> groups);
 
     List<User> findAllByGroups(String group);
+
+    @EntityGraph(attributePaths = { "groups" })
+    @Query("select user from User user")
+    Page<User> findAllWithGroups(Pageable pageable);
 
     @Modifying
     @Query("Update User user set user.lastNotificationRead = utc_timestamp where user.id = :#{#userId}")

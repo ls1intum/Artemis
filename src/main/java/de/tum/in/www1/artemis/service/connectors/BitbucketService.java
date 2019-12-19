@@ -334,6 +334,13 @@ public class BitbucketService implements VersionControlService {
     @Override
     public void createUser(User user) {
         // Not needed for now, since Bitbucket works in conjunction with Jira
+        // TODO: If we implement an extensive user management system using Artemis, we might want to also implement this method in this case
+    }
+
+    @Override
+    public void updateUser(User user, Set<String> removedGroups) {
+        // Not needed for now, since Bitbucket works in conjunction with Jira
+        // TODO: If we implement an extensive user management system using Artemis, we might want to also implement this method in this case
     }
 
     /**

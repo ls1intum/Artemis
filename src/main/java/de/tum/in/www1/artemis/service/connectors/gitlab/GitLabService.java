@@ -4,10 +4,7 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -111,12 +108,43 @@ public class GitLabService implements VersionControlService {
         addUserToGroups(userId, teachingAssistantGroups, GUEST);
     }
 
+    @Override
+    public void updateUser(User user, Set<String> removedGroups) {
+        try {
+            final var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
+            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
+            for (final var exercise : exercisesWithOutdatedGroups) {
+                // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
+                // then we have to add him as a member with the new access level
+                final var course = exercise.getCourse();
+                if (user.getGroups().contains(course.getInstructorGroupName())) {
+                    gitlab.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), MAINTAINER);
+                }
+                else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+                    gitlab.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), GUEST);
+                }
+                else {
+                    // If the user is not a member of any relevant group any more, we can remove him from the exercise
+                    gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
+                }
+            }
+            gitlab.getUserApi().updateUser(gitlabUser, String.valueOf(userService.getPasswordForUser(user)));
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
+        }
+    }
+
     private void addUserToGroups(int userId, List<Group> groups, AccessLevel accessLevel) {
         for (final var group : groups) {
             try {
                 gitlab.getGroupApi().addMember(group.getId(), userId, accessLevel);
             }
             catch (GitLabApiException e) {
+                if (e.getMessage().equals("Member already exists")) {
+                    log.debug("Member already exists for group " + group.getName());
+                    return;
+                }
                 throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, group.toString()), e);
             }
         }
@@ -272,9 +300,20 @@ public class GitLabService implements VersionControlService {
         final var exercisePath = programmingExercise.getProjectKey();
         final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
 
-        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         try {
-            gitlab.getGroupApi().addGroup(group);
+            group = gitlab.getGroupApi().addGroup(group);
+
+            final var instructors = userService.getInstructors(programmingExercise.getCourse());
+            final var teachingAssistants = userService.getTutors(programmingExercise.getCourse());
+            for (final var instructor : instructors) {
+                final var userId = getUserId(instructor.getLogin());
+                addUserToGroups(userId, List.of(group), MAINTAINER);
+            }
+            for (final var ta : teachingAssistants) {
+                final var userId = getUserId(ta.getLogin());
+                addUserToGroups(userId, List.of(group), GUEST);
+            }
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new group for course " + exerciseName, e);

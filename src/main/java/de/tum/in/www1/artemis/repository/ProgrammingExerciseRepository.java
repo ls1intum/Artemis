@@ -111,4 +111,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
 
     List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
+
+    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.course.instructorGroupName IN :#{#groupNames} OR pe.course.teachingAssistantGroupName IN :#{#groupNames}")
+    List<ProgrammingExercise> findAllByInstructorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 }

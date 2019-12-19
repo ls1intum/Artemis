@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -146,13 +147,24 @@ public class UserResource {
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
         }
-        existingUser = userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase());
+        existingUser = userRepository.findOneWithAuthoritiesAndGroupsByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
-        Optional<UserDTO> updatedUser = userService.updateUser(managedUserVM);
 
-        return ResponseUtil.wrapOrNotFound(updatedUser, HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin()));
+        User updatedUser = null;
+        if (existingUser.isPresent()) {
+            final var oldGroups = existingUser.get().getGroups();
+            updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
+            if (!EXTERNAL_USER_MANAGEMENT) {
+                final var updatedGroups = updatedUser.getGroups();
+                final var groupDelta = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
+                versionControlService.get().updateUser(updatedUser, groupDelta);
+            }
+        }
+
+        final var responseDTO = Optional.ofNullable(updatedUser != null ? new UserDTO(updatedUser) : null);
+        return ResponseUtil.wrapOrNotFound(responseDTO, HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin()));
     }
 
     /**
