@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.net.URL;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.Commit;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
@@ -59,6 +56,17 @@ public interface VersionControlService {
      * @param user The updated user in Artemis
      */
     void updateUser(User user, Set<String> removedGroups);
+
+    /**
+     * Updates all exercises in a course based on the new instructors and teaching assistant groups. This entails removing
+     * all users from exercises, that are no longer part of any relevant group and adding all users to exercises in the course
+     * that are part of the updated groups.
+     *
+     * @param updatedCourse The updated course with the new permissions
+     * @param oldInstructorGroup The old instructor group name
+     * @param oldTeachingAssistantGroup The old teaching assistant group name
+     */
+    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup);
 
     /**
      * Get the clone URL used for cloning

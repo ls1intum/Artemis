@@ -59,4 +59,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("Update User user set user.lastNotificationRead = utc_timestamp where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId);
+
+    List<User> findAllByGroupsContainingAndNotIn(String groupName, Set<User> ignoredUsers);
 }

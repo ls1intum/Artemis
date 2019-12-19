@@ -23,12 +23,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Commit;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -66,12 +66,16 @@ public class GitLabService implements VersionControlService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final UserRepository userRepository;
+
     private GitLabApi gitlab;
 
-    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService, ProgrammingExerciseRepository programmingExerciseRepository,
+            UserRepository userRepository) {
         this.restTemplate = restTemplate;
         this.userService = userService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.userRepository = userRepository;
     }
 
     @PostConstruct
@@ -132,6 +136,82 @@ public class GitLabService implements VersionControlService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
+        }
+    }
+
+    @Override
+    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
+        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
+            // Do nothing if the group names didn't change
+            return;
+        }
+
+        final var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
+        final var processedUsers = new HashSet<User>();
+        if (!oldInstructorGroup.equals(updatedCourse.getInstructorGroupName())) {
+            final var oldInstructors = userRepository.findAllByGroups(oldInstructorGroup);
+            updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
+            processedUsers.addAll(oldInstructors);
+        }
+        if (!oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
+            final var oldTeachingAssistants = userRepository.findAllByGroups(oldTeachingAssistantGroup);
+            updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+            processedUsers.addAll(oldTeachingAssistants);
+        }
+
+        // Now, we only have to add all users, that have not been updated yet AND that are part of one of the new groups
+        final var remainingInstructors = userRepository.findAllByGroupsContainingAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
+    }
+
+    /**
+     * Updates all exercise groups in GitLab for the new course instructor/TA group names. Removes users that are no longer
+     * in any group and moves users to the new group, if they still have a valid group (e.g. instructor to TA).
+     * If a user still belongs to a group that is valid for the same access level, he will stay on this level. If a user
+     * can be upgraded, i.e. from instructor to TA, this will also be done.
+     * All cases:
+     * <ul>
+     *     <li>DOWNGRADE from instructor to TA</li>
+     *     <li>STAY instructor, because other group name is valid for newInstructorGroup</li>
+     *     <li>UPGRADE from TA to instructor</li>
+     *     <li>REMOVAL from GitLab group, because no valid active group is present</li>
+     * </ul>
+     *
+     * @param exercises All exercises for the updated course
+     * @param users All user in the old group
+     * @param newGroupName The name of the new group, e.g. "newInstructors"
+     * @param alternativeGroupName The name of the other group (instructor or TA), e.g. "newTeachingAssistant"
+     * @param alternativeAccessLevel The access level for the alternative group, e.g. GUEST for TAs
+     * @param doUpgrade True, if the alternative group would be an upgrade. This is the case of the old group was TA, so the new instructor group would be better (if applicable)
+     */
+    private void updateOldGroupMembers(List<ProgrammingExercise> exercises, List<User> users, String newGroupName, String alternativeGroupName, AccessLevel alternativeAccessLevel,
+            boolean doUpgrade) {
+        for (final var user : users) {
+            final var userId = getUserId(user.getLogin());
+            final Optional<AccessLevel> newAccessLevel;
+            if (user.getGroups().contains(alternativeGroupName)) {
+                newAccessLevel = Optional.of(GUEST);
+            }
+            else {
+                newAccessLevel = Optional.empty();
+            }
+            if (user.getGroups().contains(newGroupName) && (!doUpgrade || newAccessLevel.isEmpty())) {
+                // One of the user's groups is still valid for the current level AND an upgrade is not possible or the
+                // other group is just below the current one, e.g. if the other group is TA and the current group is instructor
+                continue;
+            }
+            exercises.forEach(exercise -> {
+                try {
+                    if (newAccessLevel.isPresent()) {
+                        gitlab.getGroupApi().updateMember(exercise.getProjectKey(), userId, newAccessLevel.get());
+                    }
+                    else {
+                        gitlab.getGroupApi().removeMember(exercise.getProjectKey(), userId);
+                    }
+                }
+                catch (GitLabApiException e) {
+                    throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
+                }
+            });
         }
     }
 
