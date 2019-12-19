@@ -107,4 +107,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("SELECT COUNT (DISTINCT participation) FROM ProgrammingExerciseStudentParticipation participation WHERE participation.exercise.course.id = :#{#courseId} AND (participation.exercise.dueDate IS NULL OR EXISTS (SELECT submission FROM ProgrammingSubmission submission WHERE submission.participation.id = participation.id AND submission.submissionDate IS NOT NULL AND submission.submitted = TRUE AND submission.submissionDate < participation.exercise.dueDate))")
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") Long courseId);
+
+    List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
+
+    List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 }

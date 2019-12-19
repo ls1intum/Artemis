@@ -5,6 +5,7 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -65,11 +67,14 @@ public class GitLabService implements VersionControlService {
 
     private final UserService userService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private GitLabApi gitlab;
 
-    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService) {
+    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.restTemplate = restTemplate;
         this.userService = userService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @PostConstruct
@@ -84,7 +89,7 @@ public class GitLabService implements VersionControlService {
         if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
             if (!userExists(username)) {
                 final var user = userService.getUserByLogin(username).get();
-                createUser(user);
+                importUser(user);
             }
         }
 
@@ -92,7 +97,46 @@ public class GitLabService implements VersionControlService {
         protectBranch("master", repositoryUrl);
     }
 
-    private org.gitlab4j.api.models.User createUser(User user) {
+    @Override
+    public void createUser(User user) {
+        final var userId = getUserIdCreateIfNotExists(user);
+
+        // Add user to existing exercises
+        final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
+        final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
+                .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
+        final var instructorGroups = getAllGroupsForExercises(user, instructorExercises);
+        final var teachingAssistantGroups = getAllGroupsForExercises(user, teachingAssistantExercises);
+        addUserToGroups(userId, instructorGroups, MAINTAINER);
+        addUserToGroups(userId, teachingAssistantGroups, GUEST);
+    }
+
+    private void addUserToGroups(int userId, List<Group> groups, AccessLevel accessLevel) {
+        for (final var group : groups) {
+            try {
+                gitlab.getGroupApi().addMember(group.getId(), userId, accessLevel);
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, group.toString()), e);
+            }
+        }
+    }
+
+    private List<Group> getAllGroupsForExercises(User user, List<ProgrammingExercise> instructorExercises) {
+        final var instructorGroups = new LinkedList<Group>();
+        for (final var exercise : instructorExercises) {
+            try {
+                instructorGroups.add(gitlab.getGroupApi().getGroup(exercise.getProjectKey()));
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Unable to featch all groups in GitLab for user " + user, e);
+            }
+        }
+
+        return instructorGroups;
+    }
+
+    private org.gitlab4j.api.models.User importUser(User user) {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         try {
@@ -228,19 +272,9 @@ public class GitLabService implements VersionControlService {
         final var exercisePath = programmingExercise.getProjectKey();
         final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
 
-        final var instructors = userService.getInstructors(programmingExercise.getCourse());
-        final var teachingAssistants = userService.getTutors(programmingExercise.getCourse()).stream().filter(user -> !instructors.contains(user)).collect(Collectors.toList());
-        var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         try {
-            group = gitlab.getGroupApi().addGroup(group);
-            for (final var instructor : instructors) {
-                final var userId = getUserIdCreateIfNotExists(instructor);
-                gitlab.getGroupApi().addMember(group.getId(), userId, MAINTAINER);
-            }
-            for (final var ta : teachingAssistants) {
-                final var userId = getUserIdCreateIfNotExists(ta);
-                gitlab.getGroupApi().addMember(group.getId(), userId, GUEST);
-            }
+            gitlab.getGroupApi().addGroup(group);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new group for course " + exerciseName, e);
@@ -351,7 +385,7 @@ public class GitLabService implements VersionControlService {
         try {
             var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
             if (gitlabUser == null) {
-                gitlabUser = createUser(user);
+                gitlabUser = importUser(user);
             }
 
             return gitlabUser.getId();

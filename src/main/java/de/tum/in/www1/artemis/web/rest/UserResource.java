@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
@@ -66,16 +68,26 @@ public class UserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    @Value("${artemis.external-user-management:false}")
+    private boolean EXTERNAL_USER_MANAGEMENT;
+
     private final UserRepository userRepository;
 
     private final UserService userService;
 
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final Optional<VersionControlService> versionControlService;
+
     private final MailService mailService;
 
-    public UserResource(UserRepository userRepository, UserService userService, MailService mailService) {
+    public UserResource(UserRepository userRepository, UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, MailService mailService) {
 
         this.userRepository = userRepository;
         this.userService = userService;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
         this.mailService = mailService;
     }
 
@@ -106,6 +118,12 @@ public class UserResource {
         }
         else {
             User newUser = userService.createUser(managedUserVM);
+
+            // If user management is done by Artemis, we have to also create the user in the CI and VCS systems
+            if (!EXTERNAL_USER_MANAGEMENT) {
+                versionControlService.get().createUser(newUser);
+            }
+
             mailService.sendCreationEmail(newUser);
             return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", newUser.getLogin())).body(newUser);

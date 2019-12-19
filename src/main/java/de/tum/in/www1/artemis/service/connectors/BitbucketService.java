@@ -331,6 +331,11 @@ public class BitbucketService implements VersionControlService {
         return true;
     }
 
+    @Override
+    public void createUser(User user) {
+        // Not needed for now, since Bitbucket works in conjunction with Jira
+    }
+
     /**
      * Creates an user on Bitbucket
      *

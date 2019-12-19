@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.util.RandomUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
  * Service class for managing users.
@@ -305,7 +306,7 @@ public class UserService {
      * @param userDTO user data transfer object
      * @return newly created user
      */
-    public User createUser(UserDTO userDTO) {
+    public User createUser(ManagedUserVM userDTO) {
         User user = new User();
         user.setLogin(userDTO.getLogin());
         user.setFirstName(userDTO.getFirstName());
@@ -323,7 +324,7 @@ public class UserService {
                     .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
-        String encryptedPassword = passwordEncoder().encode(RandomUtil.generatePassword());
+        String encryptedPassword = passwordEncoder().encode(userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword());
         user.setPassword(encryptedPassword);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());

@@ -72,4 +72,10 @@ export class UserManagementUpdateComponent implements OnInit {
     private onSaveError() {
         this.isSaving = false;
     }
+
+    randomizePassword(useRandomPassword: any) {
+        if (useRandomPassword) {
+            this.user.password = null;
+        }
+    }
 }

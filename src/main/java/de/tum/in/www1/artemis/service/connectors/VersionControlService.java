@@ -4,6 +4,7 @@ import java.net.URL;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
@@ -36,6 +37,14 @@ public interface VersionControlService {
      * @param repositoryUrl of the repository that should be deleted
      */
     void deleteRepository(URL repositoryUrl);
+
+    /**
+     * Creates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user creation
+     * and management
+     *
+     * @param user The local Artemis user, that should alos be available in the VCS
+     */
+    void createUser(User user);
 
     /**
      * Get the clone URL used for cloning
