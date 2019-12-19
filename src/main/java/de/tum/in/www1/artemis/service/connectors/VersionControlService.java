@@ -55,7 +55,7 @@ public interface VersionControlService {
      * @param removedGroups Groups that the user does not belong to any longer
      * @param user The updated user in Artemis
      */
-    void updateUser(User user, Set<String> removedGroups);
+    void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups);
 
     /**
      * Updates all exercises in a course based on the new instructors and teaching assistant groups. This entails removing

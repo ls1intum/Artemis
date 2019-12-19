@@ -111,29 +111,42 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public void updateUser(User user, Set<String> removedGroups) {
-        if (removedGroups.isEmpty()) {
+    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups) {
+        if (removedGroups.isEmpty() && addedGroups.isEmpty()) {
             return;
         }
         try {
             final var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
-            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
-            for (final var exercise : exercisesWithOutdatedGroups) {
-                // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
-                // then we have to add him as a member with the new access level
-                final var course = exercise.getCourse();
-                if (user.getGroups().contains(course.getInstructorGroupName())) {
-                    gitlab.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), MAINTAINER);
-                }
-                else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
-                    gitlab.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), GUEST);
-                }
-                else {
-                    // If the user is not a member of any relevant group any more, we can remove him from the exercise
-                    gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
+
+            // Add as member to new groups
+            if (!addedGroups.isEmpty()) {
+                final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
+                for (final var exercise : exercisesWithAddedGroups) {
+                    final var accessLevel = addedGroups.contains(exercise.getCourse().getInstructorGroupName()) ? MAINTAINER : GUEST;
+                    gitlab.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
                 }
             }
-            gitlab.getUserApi().updateUser(gitlabUser, String.valueOf(userService.getPasswordForUser(user)));
+
+            // Update/remove old groups
+            if (!removedGroups.isEmpty()) {
+                final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
+                for (final var exercise : exercisesWithOutdatedGroups) {
+                    // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
+                    // then we have to add him as a member with the new access level
+                    final var course = exercise.getCourse();
+                    if (user.getGroups().contains(course.getInstructorGroupName())) {
+                        gitlab.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), MAINTAINER);
+                    }
+                    else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+                        gitlab.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), GUEST);
+                    }
+                    else {
+                        // If the user is not a member of any relevant group any more, we can remove him from the exercise
+                        gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
+                    }
+                }
+                gitlab.getUserApi().updateUser(gitlabUser, String.valueOf(userService.getPasswordForUser(user)));
+            }
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
@@ -190,7 +203,7 @@ public class GitLabService implements VersionControlService {
      * @param newGroupName The name of the new group, e.g. "newInstructors"
      * @param alternativeGroupName The name of the other group (instructor or TA), e.g. "newTeachingAssistant"
      * @param alternativeAccessLevel The access level for the alternative group, e.g. GUEST for TAs
-     * @param doUpgrade True, if the alternative group would be an upgrade. This is the case of the old group was TA, so the new instructor group would be better (if applicable)
+     * @param doUpgrade True, if the alternative group would be an upgrade. This is the case if the old group was TA, so the new instructor group would be better (if applicable)
      */
     private void updateOldGroupMembers(List<ProgrammingExercise> exercises, List<User> users, String newGroupName, String alternativeGroupName, AccessLevel alternativeAccessLevel,
             boolean doUpgrade) {

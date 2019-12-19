@@ -158,8 +158,9 @@ public class UserResource {
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
             if (!EXTERNAL_USER_MANAGEMENT && versionControlService.isPresent()) {
                 final var updatedGroups = updatedUser.getGroups();
-                final var groupDelta = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
-                versionControlService.get().updateUser(updatedUser, groupDelta);
+                final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
+                final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
+                versionControlService.get().updateUser(updatedUser, removedGroups, addedGroups);
             }
         }
 
