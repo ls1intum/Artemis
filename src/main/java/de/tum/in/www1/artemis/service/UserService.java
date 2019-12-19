@@ -362,7 +362,7 @@ public class UserService {
      * @param userDTO user to update
      * @return updated user
      */
-    public Optional<UserDTO> updateUser(UserDTO userDTO) {
+    public Optional<UserDTO> updateUser(ManagedUserVM userDTO) {
         return Optional.of(userRepository.findById(userDTO.getId())).filter(Optional::isPresent).map(Optional::get).map(user -> {
             this.clearUserCaches(user);
             user.setLogin(userDTO.getLogin().toLowerCase());
@@ -372,6 +372,9 @@ public class UserService {
             user.setImageUrl(userDTO.getImageUrl());
             user.setActivated(userDTO.isActivated());
             user.setLangKey(userDTO.getLangKey());
+            if (userDTO.getPassword() != null) {
+                user.setPassword(passwordEncoder().encode(userDTO.getPassword()));
+            }
             Set<Authority> managedAuthorities = user.getAuthorities();
             managedAuthorities.clear();
             userDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
