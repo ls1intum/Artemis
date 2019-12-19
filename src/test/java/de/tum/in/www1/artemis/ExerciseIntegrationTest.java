@@ -19,6 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -50,6 +51,9 @@ public class ExerciseIntegrationTest {
     @Autowired
     CourseRepository courseRepository;
 
+    @Autowired
+    ComplaintRepository complaintRepo;
+
     @BeforeEach
     public void init() {
         database.addUsers(10, 1, 1);
@@ -67,6 +71,8 @@ public class ExerciseIntegrationTest {
         long courseID = courseRepository.findAllActive().get(0).getId();
         Exercise exercise = exerciseRepository.findByCourseId(courseID).get(0);
         List<Submission> submissions = new ArrayList<>();
+        Result res;
+        User user;
         for (int i = 1; i <= 6; i++) {
             TextSubmission textSubmission = new TextSubmission();
             textSubmission.text("Text");
@@ -74,10 +80,16 @@ public class ExerciseIntegrationTest {
             textSubmission.submissionDate(ZonedDateTime.now());
             submissions.add(database.addSubmission(exercise, textSubmission, "student" + i));
             if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"));
+                res = database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("tutor1"));
+                user = database.getUserByLogin("student" + i);
+                Complaint complaint = new Complaint().student(user).result(res).complaintType(ComplaintType.COMPLAINT);
+                complaintRepo.save(complaint);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"));
+                res = database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("tutor1"));
+                user = database.getUserByLogin("student" + i);
+                Complaint complaint = new Complaint().student(user).result(res).complaintType(ComplaintType.MORE_FEEDBACK);
+                complaintRepo.save(complaint);
             }
         }
         StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,

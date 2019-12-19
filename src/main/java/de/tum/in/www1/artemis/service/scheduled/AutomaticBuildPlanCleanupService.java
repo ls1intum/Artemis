@@ -71,19 +71,26 @@ public class AutomaticBuildPlanCleanupService {
                 continue;
             }
 
-            if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())
-                    && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+            if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())) {
+                var programmingExercise = participation.getProgrammingExercise();
 
-                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
-                    // we don't clean up plans that will definitely be executed in the future
-                    continue;
+                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+                    if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
+                        // we don't clean up plans that will definitely be executed in the future
+                        continue;
+                    }
+
+                    // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
+                    // and the students repos will be locked anyways.
+                    if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
+                        participationsWithBuildPlanToDelete.add(participation);
+                        countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
+                        continue;
+                    }
                 }
 
-                // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
-                // and the students repos will be locked anyways.
-                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
-                    participationsWithBuildPlanToDelete.add(participation);
-                    countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
+                if (programmingExercise.isPublishBuildPlanUrl() == Boolean.TRUE) {
+                    // this was an exercise where students needed to configure the build plan, therefore we should not clean it up
                     continue;
                 }
             }

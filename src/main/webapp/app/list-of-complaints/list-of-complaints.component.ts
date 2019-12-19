@@ -106,8 +106,9 @@ export class ListOfComplaintsComponent implements OnInit {
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+            const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
             modalRef.componentInstance.participationId = studentParticipation.id;
+            modalRef.componentInstance.exercise = exercise;
             modalRef.componentInstance.result = cloneDeep(complaint.result);
             modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
             modalRef.result.then(
