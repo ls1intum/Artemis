@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -100,7 +100,7 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final Optional<VcsUserManagementService> vcsUserManagementService;
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
@@ -108,7 +108,7 @@ public class CourseResource {
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
             FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
-            Optional<VersionControlService> versionControlService) {
+            Optional<VcsUserManagementService> vcsUserManagementService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -129,7 +129,7 @@ public class CourseResource {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.programmingExerciseService = programmingExerciseService;
-        this.versionControlService = versionControlService;
+        this.vcsUserManagementService = vcsUserManagementService;
     }
 
     /**
@@ -197,8 +197,8 @@ public class CourseResource {
                 final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
                 final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
                 Course result = courseService.save(updatedCourse);
-                if (!EXTERNAL_USER_MANAGEMENT && versionControlService.isPresent()) {
-                    versionControlService.get().updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup);
+                if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
+                    vcsUserManagementService.get().updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup);
                 }
                 return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
             }

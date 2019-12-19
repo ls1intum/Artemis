@@ -30,6 +30,13 @@ public interface VcsUserManagementService {
     void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups);
 
     /**
+     * Deletes the user under the specified login from the VCS
+     *
+     * @param login The login of the user that should get deleted
+     */
+    void deleteUser(String login);
+
+    /**
      * Updates all exercises in a course based on the new instructors and teaching assistant groups. This entails removing
      * all users from exercises, that are no longer part of any relevant group and adding all users to exercises in the course
      * that are part of the updated groups.

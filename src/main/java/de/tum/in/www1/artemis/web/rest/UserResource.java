@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
@@ -78,17 +78,17 @@ public class UserResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final Optional<VcsUserManagementService> vcsUserManagementService;
 
     private final MailService mailService;
 
     public UserResource(UserRepository userRepository, UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, MailService mailService) {
+            Optional<VcsUserManagementService> vcsUserManagementService, MailService mailService) {
 
         this.userRepository = userRepository;
         this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
+        this.vcsUserManagementService = vcsUserManagementService;
         this.mailService = mailService;
     }
 
@@ -121,8 +121,8 @@ public class UserResource {
             User newUser = userService.createUser(managedUserVM);
 
             // If user management is done by Artemis, we have to also create the user in the CI and VCS systems
-            if (!EXTERNAL_USER_MANAGEMENT && versionControlService.isPresent()) {
-                versionControlService.get().createUser(newUser);
+            if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
+                vcsUserManagementService.get().createUser(newUser);
             }
 
             mailService.sendCreationEmail(newUser);
@@ -156,11 +156,11 @@ public class UserResource {
         if (existingUser.isPresent()) {
             final var oldGroups = existingUser.get().getGroups();
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
-            if (!EXTERNAL_USER_MANAGEMENT && versionControlService.isPresent()) {
+            if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
                 final var updatedGroups = updatedUser.getGroups();
                 final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
                 final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-                versionControlService.get().updateUser(updatedUser, removedGroups, addedGroups);
+                vcsUserManagementService.get().updateUser(updatedUser, removedGroups, addedGroups);
             }
         }
 
@@ -212,6 +212,9 @@ public class UserResource {
     @Secured(AuthoritiesConstants.ADMIN)
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
+        if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
+            vcsUserManagementService.get().deleteUser(login);
+        }
         userService.deleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
     }

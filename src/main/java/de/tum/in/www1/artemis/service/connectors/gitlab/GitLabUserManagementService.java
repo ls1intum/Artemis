@@ -199,6 +199,18 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
+    @Override
+    public void deleteUser(String login) {
+        try {
+            // Delete by login String doesn't work, so we need to get the actual userId first.
+            final var userId = getUserId(login);
+            gitlab.getUserApi().deleteUser(userId, true);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException(String.format("Cannot delete user %s from GitLab!", login), e);
+        }
+    }
+
     private int getUserIdCreateIfNotExists(User user) {
         try {
             var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
