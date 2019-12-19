@@ -74,10 +74,10 @@ public class ExerciseIntegrationTest {
             textSubmission.submissionDate(ZonedDateTime.now());
             submissions.add(database.addSubmission(exercise, textSubmission, "student" + i));
             if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("tutor1"));
+                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"));
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("tutor1"));
+                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"));
             }
         }
         StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,

@@ -108,13 +108,10 @@ public class CourseIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllForTutorDashboard() throws Exception {
         prepareGetAllCoursesForDashboard();
-        // Do the actual request that is tested here.
         Course course = request.get("/api/courses/" + course1.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
 
-        // Test that the remaining course has two exercises.
         assertThat(course.getExercises().size()).as("Two exercises are returned").isEqualTo(2);
 
-        // Iterate over all exercises of the remaining course.
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof TextExercise) {
                 assertThat(exercise.getNumberOfParticipations()).isEqualTo(2L);
@@ -130,7 +127,6 @@ public class CourseIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllStatsForTutorDashboard() throws Exception {
         prepareGetAllCoursesForDashboard();
-        // Do the actual request that is tested here.
         StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + course1.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK, StatsForInstructorDashboardDTO.class);
 
         assertThat(stats.getNumberOfAssessments()).isEqualTo(0);
@@ -144,10 +140,16 @@ public class CourseIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getAllStatsForTutorDashboard_asStudent_forbidden() throws Exception {
+        prepareGetAllCoursesForDashboard();
+        request.get("/api/courses/" + course1.getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllStatsForInstructorDashboard() throws Exception {
         prepareGetAllCoursesForDashboard();
-        // Do the actual request that is tested here.
         StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + course1.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
 
@@ -159,6 +161,13 @@ public class CourseIntegrationTest {
         assertThat(stats.getNumberOfOpenComplaints()).isEqualTo(0);
         assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
         assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllStatsForInstructorDashboard_asTutor_forbidden() throws Exception {
+        prepareGetAllCoursesForDashboard();
+        request.get("/api/courses/" + course1.getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
     }
 
     @Test
