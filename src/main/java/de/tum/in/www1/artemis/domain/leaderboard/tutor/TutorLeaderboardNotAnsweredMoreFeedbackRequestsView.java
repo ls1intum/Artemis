@@ -15,6 +15,9 @@ public class TutorLeaderboardNotAnsweredMoreFeedbackRequestsView {
     @EmbeddedId
     private LeaderboardId leaderboardId;
 
+    @Column(name = "all_requests")
+    private long allRequests;
+
     @Column(name = "not_answered_requests")
     private long notAnsweredRequests;
 
@@ -26,6 +29,10 @@ public class TutorLeaderboardNotAnsweredMoreFeedbackRequestsView {
 
     @Column(name = "first_name")
     private String userFirstName;
+
+    public long getAllRequests() {
+        return allRequests;
+    }
 
     public long getNotAnsweredRequests() {
         return notAnsweredRequests;

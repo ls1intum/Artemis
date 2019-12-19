@@ -15,9 +15,6 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
     @EmbeddedId
     private LeaderboardId leaderboardId;
 
-    @Column(name = "all_requests")
-    private long allRequests;
-
     @Column(name = "answered_requests")
     private long answeredRequests;
 
@@ -29,10 +26,6 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
 
     @Column(name = "first_name")
     private String userFirstName;
-
-    public long getAllRequests() {
-        return allRequests;
-    }
 
     public long getAnsweredRequests() {
         return answeredRequests;

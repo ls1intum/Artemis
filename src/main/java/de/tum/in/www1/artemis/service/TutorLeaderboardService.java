@@ -137,6 +137,7 @@ public class TutorLeaderboardService {
             for (TutorLeaderboardNotAnsweredMoreFeedbackRequestsView notAnsweredMoreFeedbackRequestsView : tutorLeaderboardNotAnsweredMoreFeedbackRequests) {
                 if (tutor.getId().equals(notAnsweredMoreFeedbackRequestsView.getUserId())) {
                     numberOfNotAnsweredMoreFeedbackRequests += notAnsweredMoreFeedbackRequestsView.getNotAnsweredRequests();
+                    numberOfTutorMoreFeedbackRequests += notAnsweredMoreFeedbackRequestsView.getAllRequests();
                     // not answered requests count only 1x negatively
                     if (notAnsweredMoreFeedbackRequestsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the not answered
                                                                                      // requests
@@ -163,7 +164,6 @@ public class TutorLeaderboardService {
 
             for (TutorLeaderboardAnsweredMoreFeedbackRequestsView moreFeedbackRequestsView : tutorLeaderboardAnsweredMoreFeedbackRequests) {
                 if (tutor.getId().equals(moreFeedbackRequestsView.getUserId())) {
-                    numberOfTutorMoreFeedbackRequests += moreFeedbackRequestsView.getAllRequests();
                     numberOfAnsweredMoreFeedbackRequests += moreFeedbackRequestsView.getAnsweredRequests();
                     // answered requests doesn't count, because it only means that the tutor repaired the negative points
                 }
