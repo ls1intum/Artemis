@@ -13,14 +13,10 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.AssessmentUpdate;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -148,25 +144,29 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Updates a Assessment to a TextExercise if the student complaints
+     * Update an assessment after a complaint was accepted.
      *
-     * @param exerciseId the exerciseId of the exercise which will be corrected
-     * @param resultId the resultId the assessment belongs to
-     * @param assessmentUpdate the update of the Assessment
-     * @return 200 Ok if successful with the updated result as a body, but sensitive information are filtered out
+     * @param submissionId     the id of the submission for which the assessment should be updated
+     * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
+     * @return the updated result
      */
-    @PutMapping("/exercise/{exerciseId}/result/{resultId}/after-complaint")
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping("/text-submission/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody AssessmentUpdate assessmentUpdate) {
+    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+        log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
+        TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
-        Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
-        Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
+        checkAuthorization(textExercise, user);
+        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getResult(), textExercise, assessmentUpdate);
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
-                && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
+        // TODO: in case of automatic assessment, we might want to update the assessment engine
+
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
 
         return ResponseEntity.ok(result);

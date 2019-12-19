@@ -365,7 +365,9 @@ public class Result implements Serializable {
      */
     public void updateAllFeedbackItems(List<Feedback> feedbacks) {
         for (Feedback feedback : feedbacks) {
-            feedback.setPositive(feedback.getCredits() >= 0);
+            if (feedback.getCredits() != null) {
+                feedback.setPositive(feedback.getCredits() >= 0);
+            }
             setFeedbackType(feedback);
         }
         // Note: If there is old feedback that gets removed here and not added again in the forEach-loop, it

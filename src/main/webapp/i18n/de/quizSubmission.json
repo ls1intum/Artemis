@@ -2,21 +2,21 @@
     "artemisApp": {
         "quizSubmission": {
             "home": {
-                "title": "Quiz Submissions",
-                "createLabel": "Quiz Submission erstellen",
-                "createOrEditLabel": "Quiz Submission erstellen oder bearbeiten"
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen",
+                "createOrEditLabel": "Einreichung erstellen oder bearbeiten"
             },
-            "created": "Quiz Submission erstellt mit ID {{ param }}",
-            "updated": "Quiz Submission aktualisiert mit ID {{ param }}",
-            "deleted": "Quiz Submission gelöscht mit ID {{ param }}",
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Quiz Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Quiz Submission"
+                "title": "Einreichung"
             },
-            "scoreInPoints": "Score In Points",
-            "submittedAnswers": "Submitted Answers"
+            "scoreInPoints": "Punktzahl",
+            "submittedAnswers": "Eingereichte Antworten"
         }
     }
 }

@@ -62,6 +62,8 @@
             "submissionCount": "Submissions",
             "score": "Score",
             "duration": "Duration",
+            "showBuildFailed": "Show Build Failed",
+            "showFailed": "Show Failed Submissions (without Result)",
             "showUnsuccessful": "Show Unsuccessful",
             "showSuccessful": "Show Successful",
             "showManual": "Show Manual",
