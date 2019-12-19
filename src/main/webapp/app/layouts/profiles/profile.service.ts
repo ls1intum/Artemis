@@ -34,6 +34,11 @@ export class ProfileService {
                             profileInfo.guidedTourMapping = guidedTourMapping;
                         }
 
+                        const fileUploadExerciseSetting = data['file-upload-exercise'];
+                        if (fileUploadExerciseSetting) {
+                            profileInfo.fileUploadExerciseSetting = fileUploadExerciseSetting;
+                        }
+
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
                             if (ribbonProfiles.length !== 0) {

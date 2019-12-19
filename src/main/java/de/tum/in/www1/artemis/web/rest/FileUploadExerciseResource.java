@@ -1,20 +1,22 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.FILE_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.FileUploadExerciseProperties;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -49,23 +51,25 @@ public class FileUploadExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    @Autowired
+    private FileUploadExerciseProperties fileUploadExerciseProperties;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, FileUploadExerciseService fileUploadExerciseService) {
+            CourseService courseService, GroupNotificationService groupNotificationService, FileUploadExerciseService fileUploadExerciseService,
+            FileUploadExerciseProperties fileUploadExerciseProperties) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.fileUploadExerciseService = fileUploadExerciseService;
+        this.fileUploadExerciseProperties = fileUploadExerciseProperties;
     }
 
     private boolean containsOnlyValidFilePatterns(FileUploadExercise fileUploadExercise) {
-        String[] filePatterns = fileUploadExercise.getFilePattern().split(",");
-        int invalidFilePatterns = 0;
-        for (String pattern : filePatterns) {
-            invalidFilePatterns = FILE_PATTERN.matcher(pattern).matches() ? invalidFilePatterns : invalidFilePatterns++;
-        }
-        return invalidFilePatterns <= 0;
+        String[] validFilePatterns = fileUploadExerciseProperties.getFilePatterns();
+        String[] inputFilePatterns = fileUploadExercise.getFilePattern().split(",");
+        return Arrays.stream(inputFilePatterns).allMatch(pattern -> (Arrays.asList(validFilePatterns).contains(pattern)));
     }
 
     /**

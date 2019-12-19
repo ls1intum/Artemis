@@ -1,60 +1,28 @@
-import { AbstractControl, ValidatorFn } from '@angular/forms';
+import { Directive, Input, OnInit } from '@angular/core';
+import { Validator, AbstractControl } from '@angular/forms';
+import { NG_VALIDATORS } from '@angular/forms';
+import { FileUploadExerciseUpdateComponent } from 'app/entities/file-upload-exercise';
 
-export function filePatternValidator(): ValidatorFn {
-    return (control: AbstractControl): { [key: string]: any } | null => {
-        return validateFilePattern(control.value) ? null : { forbidden: { value: control.value } };
-    };
+@Directive({
+    selector: '[jhiFilePatternInput]',
+    providers: [{ provide: NG_VALIDATORS, useExisting: FilePatternValidatorDirective, multi: true }],
+})
+export class FilePatternValidatorDirective implements Validator, OnInit {
+    @Input('jhiFilePatternInput') filePattern: string;
+
+    constructor(private fileUploadExerciseComponent: FileUploadExerciseUpdateComponent) {}
+
+    validPatterns: string[] = [];
+
+    ngOnInit() {
+        this.validPatterns = this.fileUploadExerciseComponent.fileUploadExerciseSetting.filePatterns;
+    }
+
+    validate(control: AbstractControl): { [key: string]: any } | null {
+        return validateFilePattern(control.value, this.validPatterns) ? null : { forbidden: { value: control.value } };
+    }
 }
 
-function validateFilePattern(input: String | null): boolean {
-    let allowed: boolean;
-    let invalidPatterns = 0;
-    const validPatterns: String[] = [
-        'doc',
-        'docx',
-        'dotx',
-        'xml',
-        'pdf',
-        'wps',
-        'wpd',
-        'wpqxd',
-        'ps',
-        'pub',
-        'tex',
-        'vsd',
-        'bmp',
-        'jpg',
-        'jpeg',
-        'gif',
-        'pgn',
-        'png',
-        'txt',
-        'rtf',
-        'wav',
-        'mp3',
-        'html',
-        'odt',
-        'xls',
-        'xlsx',
-        'wks',
-        'xlr',
-        'csv',
-        'ppt',
-        'pps',
-        'ppsx',
-        'zip',
-        'tar',
-    ];
-
-    if (input !== null && input !== '') {
-        const filePatterns: String[] = input.split(',');
-        for (const filePattern of filePatterns) {
-            if (!validPatterns.includes(filePattern.replace(/\s/g, '').toLowerCase())) {
-                invalidPatterns++;
-            }
-        }
-    }
-    allowed = invalidPatterns <= 0;
-    invalidPatterns = 0;
-    return allowed;
+function validateFilePattern(input: String | null, validPatterns: string[]): boolean {
+    return !!input && input.split(',').every(pattern => Object.values(validPatterns).includes(pattern.replace(/\s/g, '').toLowerCase()));
 }

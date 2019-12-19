@@ -9,6 +9,7 @@ import { ArtemisCategorySelectorModule } from 'app/components/category-selector/
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
+import { FilePatternValidatorDirective } from 'app/shared/form/filepattern-validator.directive';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute];
 
@@ -23,7 +24,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute];
         ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
     ],
-    declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
+    declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent, FilePatternValidatorDirective],
     exports: [FileUploadExerciseComponent],
     providers: [FileUploadExerciseService],
 })

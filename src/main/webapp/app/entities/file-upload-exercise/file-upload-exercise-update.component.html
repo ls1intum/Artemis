@@ -95,17 +95,16 @@
                         placement="top"
                         ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | translate }}"
                     ></fa-icon>
-                    <form [formGroup]="fileUploadForm">
-                        <input
-                            required
-                            type="text"
-                            class="form-control"
-                            name="filePattern"
-                            id="field_filePattern"
-                            formControlName="filePattern"
-                            [(ngModel)]="fileUploadExercise.filePattern"
-                        />
-                    </form>
+                    <input
+                        required
+                        type="text"
+                        class="form-control"
+                        name="filePattern"
+                        id="field_filePattern"
+                        jhiFilePatternInput="fileUploadExercise.filePattern"
+                        [(ngModel)]="fileUploadExercise.filePattern"
+                        #filePattern="ngModel"
+                    />
                     <ng-container *ngIf="filePattern.invalid && (filePattern.dirty || filePattern.touched)">
                         <div class="alert alert-danger">
                             <div
