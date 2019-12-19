@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
 @Profile("bitbucket")
-public class BitbucketService implements VersionControlService {
+public class BitbucketService implements VersionControlService, VcsUserManagementService {
 
     private static final int MAX_FORK_RETRIES = 5;
 
@@ -335,7 +335,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void updateUser(User user, Set<String> removedGroups) {
+    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups) {
         // Not needed for now, since Bitbucket works in conjunction with Jira
         // TODO: If we implement an extensive user management system using Artemis, we might want to also implement this method in this case
     }

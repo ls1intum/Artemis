@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
-import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -35,38 +34,6 @@ public interface VersionControlService {
      * @param repositoryUrl of the repository that should be deleted
      */
     void deleteRepository(URL repositoryUrl);
-
-    /**
-     * Creates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user creation
-     * and management
-     *
-     * @param user The local Artemis user, that should alos be available in the VCS
-     */
-    void createUser(User user);
-
-    /**
-     * Updates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user management.
-     * This will change the following:
-     * <ul>
-     *     <li>Update the password of the user</li>
-     *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
-     * </ul>
-     *
-     * @param removedGroups Groups that the user does not belong to any longer
-     * @param user The updated user in Artemis
-     */
-    void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups);
-
-    /**
-     * Updates all exercises in a course based on the new instructors and teaching assistant groups. This entails removing
-     * all users from exercises, that are no longer part of any relevant group and adding all users to exercises in the course
-     * that are part of the updated groups.
-     *
-     * @param updatedCourse The updated course with the new permissions
-     * @param oldInstructorGroup The old instructor group name
-     * @param oldTeachingAssistantGroup The old teaching assistant group name
-     */
-    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup);
 
     /**
      * Get the clone URL used for cloning
