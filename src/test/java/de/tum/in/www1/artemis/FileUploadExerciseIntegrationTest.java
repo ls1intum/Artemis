@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.tum.in.www1.artemis.config.FileUploadExerciseProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ public class FileUploadExerciseIntegrationTest {
     @Autowired
     FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
+    @Autowired
+    FileUploadExerciseProperties fileUploadExerciseProperties;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 1, 1);
@@ -61,6 +65,8 @@ public class FileUploadExerciseIntegrationTest {
         String filePattern = "pdf";
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(filePattern);
+
+        assertThat(fileUploadExerciseProperties.getFilePatterns()).isNotNull();
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class);
 
         assertThat(receivedFileUploadExercise).isNotNull();
