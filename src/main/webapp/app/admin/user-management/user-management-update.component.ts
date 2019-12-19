@@ -30,6 +30,9 @@ export class UserManagementUpdateComponent implements OnInit {
             this.authorities = authorities;
         });
         this.languages = this.languageHelper.getAll();
+        if (!this.user.id) {
+            this.user.groups = [];
+        }
     }
 
     /**

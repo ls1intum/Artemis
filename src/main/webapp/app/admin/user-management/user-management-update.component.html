@@ -59,21 +59,21 @@
                         </small>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-check-label" for="randomPassword">
+                <div class="form-check mb-2">
+                    <div class="d-flex align-items-center">
                         <input
                             type="checkbox"
-                            class="form-control"
+                            class="form-check-input"
                             name="randomPassword"
                             id="randomPassword"
                             (change)="randomizePassword($event)"
                             [defaultChecked]="!user.id"
                             #randomPassword
                         />
-                        <span>Random Password</span>
-                    </label>
+                        <label class="form-check-label" for="randomPassword">Random Password</label>
+                    </div>
                 </div>
-                <div class="form-group" [hidden]="!randomPassword.checked">
+                <div class="form-group" [hidden]="randomPassword.checked">
                     <input
                         type="password"
                         class="form-control"
@@ -91,7 +91,12 @@
                         </small>
                     </div>
                 </div>
-                <div class="form-group" <div class="form-group">
+                <div class="form-group">
+                    <label class="form-control-label">Groups</label>
+                    <tag-input name="groups" [(ngModel)]="user.groups" [theme]="'bootstrap'" [modelAsStrings]="true" placeholder="+ Group" secondaryPlaceholder="Enter a group">
+                    </tag-input>
+                </div>
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="userManagement.email">Email</label>
                     <input type="email" class="form-control" name="email" #emailInput="ngModel" [(ngModel)]="user.email" minlength="5" required maxlength="254" email />
 

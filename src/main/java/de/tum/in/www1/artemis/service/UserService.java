@@ -328,6 +328,7 @@ public class UserService {
         user.setPassword(encryptedPassword);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
+        user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         userRepository.save(user);
         log.debug("Created Information for User: {}", user);
