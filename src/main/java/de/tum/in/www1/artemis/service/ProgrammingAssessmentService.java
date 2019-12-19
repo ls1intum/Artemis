@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -25,10 +26,11 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @param assessmentUpdate the assessment update
      * @return the updated Result
      */
+    // NOTE: transactional makes sense here because we change multiple objects in the database and the changes might be invalid in case, one save operation fails
+    @Transactional
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, ProgrammingAssessmentUpdate assessmentUpdate) {
-        super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);
         originalResult.setResultString(assessmentUpdate.getResultString());
         originalResult.setScore(assessmentUpdate.getScore());
-        return resultRepository.save(originalResult);
+        return super.updateAssessmentAfterComplaint(originalResult, exercise, assessmentUpdate);
     }
 }

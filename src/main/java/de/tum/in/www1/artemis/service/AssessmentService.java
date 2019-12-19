@@ -58,6 +58,7 @@ abstract class AssessmentService {
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
+    // NOTE: transactional makes sense here because we change multiple objects in the database and the changes might be invalid in case, one save operation fails
     @Transactional
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdate assessmentUpdate) {
         if (assessmentUpdate.getFeedbacks() == null || assessmentUpdate.getComplaintResponse() == null) {
@@ -79,6 +80,7 @@ abstract class AssessmentService {
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
         if (!(exercise instanceof ProgrammingExercise)) {
+            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here!
             originalResult.evaluateFeedback(exercise.getMaxScore());
         }
         // Note: This also saves the feedback objects in the database because of the 'cascade =
@@ -92,7 +94,6 @@ abstract class AssessmentService {
      *
      * @param submission the submission for which the current assessment should be canceled
      */
-    @Transactional
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
