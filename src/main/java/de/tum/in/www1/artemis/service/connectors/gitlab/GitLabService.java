@@ -106,14 +106,15 @@ public class GitLabService implements VersionControlService {
         final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
         final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
                 .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
-        final var instructorGroups = getAllGroupsForExercises(user, instructorExercises);
-        final var teachingAssistantGroups = getAllGroupsForExercises(user, teachingAssistantExercises);
-        addUserToGroups(userId, instructorGroups, MAINTAINER);
-        addUserToGroups(userId, teachingAssistantGroups, GUEST);
+        addUserToGroups(userId, instructorExercises, MAINTAINER);
+        addUserToGroups(userId, teachingAssistantExercises, GUEST);
     }
 
     @Override
     public void updateUser(User user, Set<String> removedGroups) {
+        if (removedGroups.isEmpty()) {
+            return;
+        }
         try {
             final var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
             final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
@@ -148,19 +149,27 @@ public class GitLabService implements VersionControlService {
 
         final var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
         final var processedUsers = new HashSet<User>();
-        if (!oldInstructorGroup.equals(updatedCourse.getInstructorGroupName())) {
-            final var oldInstructors = userRepository.findAllByGroups(oldInstructorGroup);
-            updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
-            processedUsers.addAll(oldInstructors);
-        }
-        if (!oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
-            final var oldTeachingAssistants = userRepository.findAllByGroups(oldTeachingAssistantGroup);
-            updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
-            processedUsers.addAll(oldTeachingAssistants);
-        }
 
-        // Now, we only have to add all users, that have not been updated yet AND that are part of one of the new groups
+        final var oldInstructors = userRepository.findAllByGroups(oldInstructorGroup);
+        updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
+        processedUsers.addAll(oldInstructors);
+
+        final var oldTeachingAssistants = userRepository.findAllByGroupsContainingAndNotIn(oldTeachingAssistantGroup, new HashSet<>(oldInstructors));
+        updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+        processedUsers.addAll(oldTeachingAssistants);
+
+        // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
         final var remainingInstructors = userRepository.findAllByGroupsContainingAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
+        remainingInstructors.forEach(user -> {
+            final var userId = getUserId(user.getLogin());
+            addUserToGroups(userId, exercises, MAINTAINER);
+        });
+        processedUsers.addAll(remainingInstructors);
+        final var remainingTeachingAssistants = userRepository.findAllByGroupsContainingAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
+        remainingTeachingAssistants.forEach(user -> {
+            final var userId = getUserId(user.getLogin());
+            addUserToGroups(userId, exercises, GUEST);
+        });
     }
 
     /**
@@ -189,7 +198,7 @@ public class GitLabService implements VersionControlService {
             final var userId = getUserId(user.getLogin());
             final Optional<AccessLevel> newAccessLevel;
             if (user.getGroups().contains(alternativeGroupName)) {
-                newAccessLevel = Optional.of(GUEST);
+                newAccessLevel = Optional.of(alternativeAccessLevel);
             }
             else {
                 newAccessLevel = Optional.empty();
@@ -215,33 +224,19 @@ public class GitLabService implements VersionControlService {
         }
     }
 
-    private void addUserToGroups(int userId, List<Group> groups, AccessLevel accessLevel) {
-        for (final var group : groups) {
+    private void addUserToGroups(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) {
+        for (final var exercise : exercises) {
             try {
-                gitlab.getGroupApi().addMember(group.getId(), userId, accessLevel);
+                gitlab.getGroupApi().addMember(exercise.getProjectKey(), userId, accessLevel);
             }
             catch (GitLabApiException e) {
                 if (e.getMessage().equals("Member already exists")) {
-                    log.debug("Member already exists for group " + group.getName());
+                    log.debug("Member already exists for group " + exercise.getProjectKey());
                     return;
                 }
-                throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, group.toString()), e);
+                throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, exercise.toString()), e);
             }
         }
-    }
-
-    private List<Group> getAllGroupsForExercises(User user, List<ProgrammingExercise> instructorExercises) {
-        final var instructorGroups = new LinkedList<Group>();
-        for (final var exercise : instructorExercises) {
-            try {
-                instructorGroups.add(gitlab.getGroupApi().getGroup(exercise.getProjectKey()));
-            }
-            catch (GitLabApiException e) {
-                throw new GitLabException("Unable to featch all groups in GitLab for user " + user, e);
-            }
-        }
-
-        return instructorGroups;
     }
 
     private org.gitlab4j.api.models.User importUser(User user) {
@@ -380,19 +375,19 @@ public class GitLabService implements VersionControlService {
         final var exercisePath = programmingExercise.getProjectKey();
         final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
 
-        var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         try {
-            group = gitlab.getGroupApi().addGroup(group);
+            gitlab.getGroupApi().addGroup(group);
 
             final var instructors = userService.getInstructors(programmingExercise.getCourse());
             final var teachingAssistants = userService.getTutors(programmingExercise.getCourse());
             for (final var instructor : instructors) {
                 final var userId = getUserId(instructor.getLogin());
-                addUserToGroups(userId, List.of(group), MAINTAINER);
+                addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
             }
             for (final var ta : teachingAssistants) {
                 final var userId = getUserId(ta.getLogin());
-                addUserToGroups(userId, List.of(group), GUEST);
+                addUserToGroups(userId, List.of(programmingExercise), GUEST);
             }
         }
         catch (GitLabApiException e) {

@@ -21,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -53,6 +56,9 @@ public class CourseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    @Value("${artemis.external-user-management:false}")
+    private boolean EXTERNAL_USER_MANAGEMENT;
 
     private final Environment env;
 
@@ -94,12 +100,15 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final Optional<VersionControlService> versionControlService;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
             FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService) {
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
+            Optional<VersionControlService> versionControlService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -120,6 +129,7 @@ public class CourseResource {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.programmingExerciseService = programmingExerciseService;
+        this.versionControlService = versionControlService;
     }
 
     /**
@@ -184,7 +194,12 @@ public class CourseResource {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
                 checkIfGroupsExists(updatedCourse);
+                final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
+                final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
                 Course result = courseService.save(updatedCourse);
+                if (!EXTERNAL_USER_MANAGEMENT && versionControlService.isPresent()) {
+                    versionControlService.get().updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup);
+                }
                 return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
             }
             catch (ArtemisAuthenticationException ex) {

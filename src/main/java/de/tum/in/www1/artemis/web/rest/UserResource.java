@@ -121,7 +121,7 @@ public class UserResource {
             User newUser = userService.createUser(managedUserVM);
 
             // If user management is done by Artemis, we have to also create the user in the CI and VCS systems
-            if (!EXTERNAL_USER_MANAGEMENT) {
+            if (!EXTERNAL_USER_MANAGEMENT && versionControlService.isPresent()) {
                 versionControlService.get().createUser(newUser);
             }
 
@@ -156,7 +156,7 @@ public class UserResource {
         if (existingUser.isPresent()) {
             final var oldGroups = existingUser.get().getGroups();
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
-            if (!EXTERNAL_USER_MANAGEMENT) {
+            if (!EXTERNAL_USER_MANAGEMENT && versionControlService.isPresent()) {
                 final var updatedGroups = updatedUser.getGroups();
                 final var groupDelta = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
                 versionControlService.get().updateUser(updatedUser, groupDelta);
