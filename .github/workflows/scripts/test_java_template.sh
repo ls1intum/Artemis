@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd src/main/resources/templates/java || exit 1
+
 # Copy test template
 mkdir -p github-actions/solution
 cp -r test/projectTemplate/. github-actions/solution/

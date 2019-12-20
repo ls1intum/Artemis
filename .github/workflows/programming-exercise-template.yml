@@ -21,8 +21,7 @@ jobs:
 
       - uses: actions/checkout@v1
       - name: Test Java Template
-        working-directory: ./src/main/resources/templates/java
-        run: bash .github/workflows/scripts/test_java_template.sh
+        run: ./.github/workflows/scripts/test_java_template.sh
 
   python:
     strategy:
@@ -37,8 +36,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Test Python Template
-        working-directory: ./src/main/resources/templates/python
-        run: bash .github/workflows/scripts/test_python_template.sh
+        run: ./.github/workflows/scripts/test_python_template.sh
 
   c:
     strategy:
@@ -49,5 +47,4 @@ jobs:
 
     steps:
       - name: Test C Template
-        working-directory: ./src/main/resources/templates/c
-        run: bash .github/workflows/scripts/test_c_template.sh
+        run: ./.github/workflows/scripts/test_c_template.sh

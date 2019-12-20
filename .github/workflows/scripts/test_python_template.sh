@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd src/main/resources/templates/python || exit 1
+
 # Create folder structur for tests
 mkdir -p github-actions/assignment
 
