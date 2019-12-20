@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # Create folder structur for tests
-cd src/main/resources/templates/python || exit 1
 mkdir -p github-actions/assignment
 
 # Copy tests and template to run test against

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # Create folder structur for tests
-cd src/main/resources/templates/c || exit 1
 mkdir -p github-actions/assignment
 mkdir github-actions/tests
 cp -r "$1"/* github-actions/assignment/
