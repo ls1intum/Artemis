@@ -33,8 +33,6 @@ public class TextSubmissionService extends SubmissionService {
 
     private final ParticipationService participationService;
 
-    private final ResultRepository resultRepository;
-
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -42,7 +40,7 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService);
+        super(submissionRepository, userService, authCheckService, resultRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
@@ -223,6 +221,19 @@ public class TextSubmissionService extends SubmissionService {
             textSubmissions.add(optionalTextSubmission.get());
         }
         return textSubmissions;
+    }
+
+    /**
+     * Get a text submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     *
+     * @param textExercise the exercise the submission should belong to
+     * @return a locked modeling submission that needs an assessment
+     */
+    public TextSubmission getLockedTextSubmissionWithoutResult(TextExercise textExercise) {
+        TextSubmission textSubmission = getTextSubmissionWithoutManualResult(textExercise)
+                .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
+        super.lockSubmission(textSubmission);
+        return textSubmission;
     }
 
     public TextSubmission findOneWithEagerResultAndAssessor(Long submissionId) {

@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -120,6 +122,49 @@ public class TextSubmissionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithoutAssessment_lockSubmission() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+
+        TextSubmission storedSubmission = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment?lock=true", HttpStatus.OK,
+                TextSubmission.class);
+
+        // set dates to UTC and round to milliseconds for comparison
+        textSubmission.setSubmissionDate(ZonedDateTime.ofInstant(textSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(textSubmission, "result");
+        assertThat(storedSubmission.getResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithoutAssessment_noSubmittedSubmission_notFound() throws Exception {
+        TextSubmission submission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, false);
+        database.addTextSubmission(textExerciseAfterDueDate, submission, "student1");
+
+        request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+
+        request.get("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getTextSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+
+        request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void getResultsForCurrentStudent_assessorHiddenForStudent() throws Exception {
         textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -177,5 +222,15 @@ public class TextSubmissionIntegrationTest {
         participationRepository.save(afterDueDateParticipation);
 
         request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {
+        assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
+        if (isStudent) {
+            assertThat(submission.getResult()).as("result is hidden").isNull();
+        }
+        else {
+            assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        }
     }
 }

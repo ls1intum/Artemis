@@ -5,9 +5,12 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -16,14 +19,17 @@ public class SubmissionService {
 
     protected SubmissionRepository submissionRepository;
 
+    protected ResultRepository resultRepository;
+
     private UserService userService;
 
     protected AuthorizationCheckService authCheckService;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -68,5 +74,45 @@ public class SubmissionService {
                 }
             }
         }
+    }
+
+    /**
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
+     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
+     *
+     * @param submission the submission for which a new result should be created
+     * @return the newly created result
+     */
+    public Result setNewResult(Submission submission) {
+        Result result = new Result();
+        result.setSubmission(submission);
+        submission.setResult(result);
+        if (submission.getParticipation() != null) {
+            submission.getParticipation().addResult(result);
+        }
+        result = resultRepository.save(result);
+        submissionRepository.save(submission);
+        return result;
+    }
+
+    /**
+     * Soft lock the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     *
+     * @param submission the submission to lock
+     */
+    final Result lockSubmission(Submission submission) {
+        Result result = submission.getResult();
+        if (result == null) {
+            result = setNewResult(submission);
+        }
+
+        if (result.getAssessor() == null) {
+            result.setAssessor(userService.getUser());
+        }
+
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(result);
+        return result;
     }
 }

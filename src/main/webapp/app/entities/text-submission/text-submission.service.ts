@@ -29,14 +29,6 @@ export class TextSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    get(textSubmissionId: number): Observable<HttpResponse<TextSubmission>> {
-        return this.http
-            .get<TextSubmission>(`api/text-submissions/${textSubmissionId}`, {
-                observe: 'response',
-            })
-            .map((res: HttpResponse<TextSubmission>) => this.convertResponse(res));
-    }
-
     getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -47,8 +39,12 @@ export class TextSubmissionService {
             .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
     }
 
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<TextSubmission> {
-        return this.http.get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`);
+    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<TextSubmission> {
+        let url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
+        return this.http.get<TextSubmission>(url);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

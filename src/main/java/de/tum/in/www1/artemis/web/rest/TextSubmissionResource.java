@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -208,12 +207,13 @@ public class TextSubmissionResource {
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
      * @param exerciseId exerciseID  for which a submission should be returned
+     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
@@ -232,14 +232,22 @@ public class TextSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
-
-        // tutors should not see information about the student of a submission
-        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
-                && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
+        final TextSubmission textSubmission;
+        if (lockSubmission) {
+            textSubmission = textSubmissionService.getLockedTextSubmissionWithoutResult((TextExercise) exercise);
+        }
+        else {
+            Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+            if (optionalTextSubmission.isEmpty()) {
+                return notFound();
+            }
+            textSubmission = optionalTextSubmission.get();
         }
 
-        return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
+        // Make sure the exercise is connected to the participation in the json response
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        studentParticipation.setExercise(exercise);
+        textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
+        return ResponseEntity.ok(textSubmission);
     }
 }
