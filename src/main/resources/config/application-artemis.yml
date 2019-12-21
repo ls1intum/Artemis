@@ -6,6 +6,7 @@ artemis:
     repo-clone-path: ./repos/
     repo-download-clone-path: ./repos-download/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+    external-user-management: true              # If false, user management is done using Artemis. True, if you use e.g. Jira, LDAP, etc.
     ldap:
         url: <url>
         user-dn: <user-dn>
