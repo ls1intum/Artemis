@@ -83,7 +83,6 @@
     "devDependencies": {
         "@angular-devkit/build-angular": "0.803.21",
         "@angular/cdk": "8.2.3",
-        "@angular/cli": "8.3.21",
         "@angular/compiler-cli": "8.2.14",
         "@angular/language-service": "8.2.14",
         "@ngtools/webpack": "8.3.21",
@@ -121,7 +120,6 @@
         "file-loader": "5.0.2",
         "fork-ts-checker-webpack-plugin": "3.1.1",
         "friendly-errors-webpack-plugin": "1.7.0",
-        "generator-jhipster": "6.6.0",
         "html-loader": "0.5.5",
         "html-webpack-plugin": "3.2.0",
         "husky": "3.1.0",
@@ -135,7 +133,6 @@
         "moment-locales-webpack-plugin": "1.1.2",
         "node-sass": "4.13.0",
         "optimize-css-assets-webpack-plugin": "5.0.3",
-        "phantomjs-prebuilt": "2.1.16",
         "postcss-loader": "3.0.0",
         "prettier": "1.19.1",
         "reflect-metadata": "0.1.13",
