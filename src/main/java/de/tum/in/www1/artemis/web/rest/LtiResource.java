@@ -35,13 +35,10 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  * REST controller for receiving LTI messages.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     @Value("${artemis.lti.id}")
     private String LTI_ID;

@@ -43,7 +43,7 @@ import io.github.jhipster.web.util.ResponseUtil;
  * REST controller for managing Course.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
 public class CourseResource {
 
