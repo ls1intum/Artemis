@@ -186,8 +186,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
     implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring:1.7.28"
-    implementation "io.sentry:sentry-logback:1.7.28"
+    implementation "io.sentry:sentry-spring:1.7.29"
+    implementation "io.sentry:sentry-logback:1.7.29"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -266,8 +266,8 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.12.0'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.12.0'
-    testImplementation "org.mockito:mockito-core:3.2.0"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.2.0"
+    testImplementation "org.mockito:mockito-core:3.2.4"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.2.4"
     testImplementation "org.hamcrest:hamcrest-library"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.1"
