@@ -158,13 +158,26 @@ public class ExerciseService {
      * @return the entity
      */
     @Transactional(readOnly = true)
+    // TODO: redesign this method, the caller should specify which exact elements should be loaded from the database
     public Exercise findOneWithAdditionalElements(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
-        if (exercise.isEmpty()) {
+        Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
+        if (optionalExercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        updateExerciseElementsAfterDatabaseFetch(exercise.get());
-        return exercise.get();
+        Exercise exercise = optionalExercise.get();
+        if (exercise instanceof QuizExercise) {
+            QuizExercise quizExercise = (QuizExercise) exercise;
+            // eagerly load questions and statistic
+            quizExercise.getQuizQuestions().size();
+            quizExercise.getQuizPointStatistic().getId();
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            // eagerly load templateParticipation and solutionParticipation
+            programmingExercise.setTemplateParticipation((TemplateProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation((SolutionProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
+        }
+        return exercise;
     }
 
     /**
@@ -178,7 +191,6 @@ public class ExerciseService {
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        updateExerciseElementsAfterDatabaseFetch(exercise.get());
         return exercise.get();
     }
 
@@ -188,35 +200,18 @@ public class ExerciseService {
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
-    public Exercise findOneLoadParticipations(Long exerciseId) {
+    public Exercise findOneWithStudentParticipations(Long exerciseId) {
         log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
         Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
 
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        updateExerciseElementsAfterDatabaseFetch(exercise.get());
         return exercise.get();
     }
 
-    // TODO this is not a nice solution, we unproxy elements and potentially hide them again afterwards.
-    private void updateExerciseElementsAfterDatabaseFetch(Exercise exercise) {
-        if (exercise instanceof QuizExercise) {
-            QuizExercise quizExercise = (QuizExercise) exercise;
-            // eagerly load questions and statistic
-            quizExercise.getQuizQuestions().size();
-            quizExercise.getQuizPointStatistic().getId();
-        }
-        else if (exercise instanceof ProgrammingExercise) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            // eagerly load templateParticipation and solutionParticipation
-            programmingExercise.setTemplateParticipation((TemplateProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
-            programmingExercise.setSolutionParticipation((SolutionProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
-        }
-    }
-
     /**
-     * Resets an Exercise by deleting all its Participations
+     * Resets an Exercise by deleting all its participations
      *
      * @param exercise which shold be resetted
      */
@@ -230,7 +225,7 @@ public class ExerciseService {
         if (exercise instanceof QuizExercise) {
 
             // refetch exercise to make sure we have an updated version
-            exercise = findOneLoadParticipations(exercise.getId());
+            exercise = findOneWithAdditionalElements(exercise.getId());
 
             // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
             QuizExercise quizExercise = (QuizExercise) exercise;
@@ -275,14 +270,14 @@ public class ExerciseService {
     }
 
     /**
-     * Delete build plans (except BASE) and optionally git repositories of all exercise participations.
+     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
      *
-     * @param id id of the exercise for which build plans in respective participations are deleted
+     * @param exerciseId programming exercise for which build plans in respective student participations are deleted
      * @param deleteRepositories if true, the repositories gets deleted
      */
     @Transactional(noRollbackFor = { Throwable.class })
-    public void cleanup(Long id, boolean deleteRepositories) {
-        Exercise exercise = findOneLoadParticipations(id);
+    public void cleanup(Long exerciseId, boolean deleteRepositories) {
+        Exercise exercise = findOneWithStudentParticipations(exerciseId);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
         if (exercise instanceof ProgrammingExercise) {
@@ -300,20 +295,19 @@ public class ExerciseService {
 
         }
         else {
-            log.warn("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
+            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
         }
     }
 
     /**
      * Archives all all participations repositories for a given exerciseID,
-     * if the exercise is a ProgrammingExercise
+     * if the exercise is a ProgrammingExercise, does not delete anything
      *
-     * @param id the exerciseID of the exercise which will be archived
+     * @param exerciseId exercise which will be archived
      * @return the archive File
      */
-    // does not delete anything
-    public java.io.File archive(Long id) {
-        Exercise exercise = findOneLoadParticipations(id);
+    public java.io.File archive(Long exerciseId) {
+        Exercise exercise = findOneWithStudentParticipations(exerciseId);
         log.info("Request to archive all participations repositories for Exercise : {}", exercise.getTitle());
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path finalZipFilePath = null;
@@ -357,12 +351,12 @@ public class ExerciseService {
                 }
             }
             else {
-                log.info("The zip file could not be created. Ignoring the request to archive repositories", id);
+                log.info("The zip file could not be created. Ignoring the request to archive repositories for exerciseId", exerciseId);
                 return null;
             }
         }
         else {
-            log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to archive repositories", id);
+            log.info("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to archive repositories", exerciseId);
             return null;
         }
         return new java.io.File(finalZipFilePath.toString());

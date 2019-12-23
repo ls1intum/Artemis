@@ -320,7 +320,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/for-tutor-dashboard
+     * GET /courses/:courseId/for-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
@@ -336,7 +336,7 @@ public class CourseResource {
         }
 
         Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
-                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)))
+                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && !exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)))
                 .collect(Collectors.toSet());
         course.setExercises(interestingExercises);
 
@@ -377,7 +377,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
+     * GET /courses/:courseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
      * @param courseId the id of the course to retrieve
@@ -414,40 +414,42 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id : get the "id" course.
+     * GET /courses/:courseId : get the "id" course.
      *
-     * @param id the id of the course to retrieve
+     * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{id}")
+    @GetMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourse(@PathVariable Long id) {
-        log.debug("REST request to get Course : {}", id);
-        Course course = courseService.findOne(id);
-        if (!userHasPermission(course))
+    public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get Course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        if (!userHasPermission(course)) {
             return forbidden();
+        }
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
     /**
-     * GET /courses/:id : get the "id" course.
+     * GET /courses/:courseId : get the "id" course.
      *
-     * @param id the id of the course to retrieve
+     * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{id}/with-exercises")
+    @GetMapping("/courses/{courseId}/with-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long id) {
-        log.debug("REST request to get Course : {}", id);
-        Course course = courseService.findOneWithExercises(id);
-        if (!userHasPermission(course))
+    public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
+        log.debug("REST request to get Course : {}", courseId);
+        Course course = courseService.findOneWithExercises(courseId);
+        if (!userHasPermission(course)) {
             return forbidden();
+        }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
     /**
-     * GET /courses/:id/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
+     * GET /courses/:courseId/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
      * instructors for the instructor dashboard
      *
      * @param courseId the id of the course to retrieve
@@ -500,7 +502,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/stats-for-instructor-dashboard
+     * GET /courses/:courseId/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
      * assessments - number of complaints - number of open complaints - tutor leaderboard data
@@ -559,16 +561,16 @@ public class CourseResource {
     }
 
     /**
-     * DELETE /courses/:id : delete the "id" course.
+     * DELETE /courses/:courseId : delete the "id" course.
      *
-     * @param id the id of the course to delete
+     * @param courseId the id of the course to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{id}")
+    @DeleteMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
-        log.debug("REST request to delete Course : {}", id);
-        Course course = courseService.findOne(id);
+    public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
+        log.debug("REST request to delete Course : {}", courseId);
+        Course course = courseService.findOne(courseId);
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
@@ -585,7 +587,7 @@ public class CourseResource {
             notificationService.deleteNotification(notification);
         }
         String title = course.getTitle();
-        courseService.delete(id);
+        courseService.delete(courseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
     }
 

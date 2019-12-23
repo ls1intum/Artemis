@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.validation.constraints.NotNull;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
@@ -1090,12 +1091,12 @@ public class ProgrammingExerciseService {
      * @return a zip file containing all requested participations
      */
     @Transactional(readOnly = true)
-    public java.io.File exportStudentRepositories(Long exerciseId, List<ProgrammingExerciseStudentParticipation> participations,
+    public java.io.File exportStudentRepositories(Long exerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
         // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
         String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOneLoadParticipations(exerciseId);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
 
         if (repositoryExportOptions.isExportAllStudents()) {
             log.info("Request to export all student repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "'");
@@ -1168,7 +1169,7 @@ public class ProgrammingExerciseService {
                 }
             }
         }
-        if (programmingExercise.getStudentParticipations().isEmpty() || zippedRepoFiles.isEmpty()) {
+        if (zippedRepoFiles.isEmpty()) {
             log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
             return null;
         }
@@ -1203,7 +1204,7 @@ public class ProgrammingExerciseService {
 
     /**
      * @param exerciseId the exercise we are interested in
-     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of programming submissions which should be assessed
      */
     public long countSubmissions(Long exerciseId) {
         return programmingExerciseRepository.countSubmissions(exerciseId);
