@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
