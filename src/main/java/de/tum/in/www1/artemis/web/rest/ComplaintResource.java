@@ -6,8 +6,8 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -117,25 +119,32 @@ public class ComplaintResource {
      */
     @GetMapping("/complaints/result/{resultId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: the URL should rather be "/complaints?resultId={resultId}" and resultId should be mandatory
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
-        Optional<Complaint> complaint = complaintService.getByResultId(resultId);
-
-        if (complaint.isPresent() && complaint.get().getResult() != null) {
-            var participation = (StudentParticipation) complaint.get().getResult().getParticipation();
-            Exercise exercise = participation.getExercise();
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                complaint.get().getResult().setAssessor(null);
-
-                if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                    // filter student information if user is not instructor but at least teaching assistant (means that user is teaching assistant)
-                    complaint.get().filterSensitiveInformation();
-                    participation.filterSensitiveInformation();
-                }
-            }
+        var optionalComplaint = complaintService.getByResultId(resultId);
+        if (optionalComplaint.isEmpty()) {
+            return ResponseEntity.ok().build();
         }
+        var complaint = optionalComplaint.get();
+        var user = userService.getUserWithGroupsAndAuthorities();
+        var participation = (StudentParticipation) complaint.getResult().getParticipation();
+        var exercise = participation.getExercise();
+        var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
+        var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (!isOwner && !isAtLeastTA) {
+            return forbidden();
+        }
+        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        return complaint.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok().build());
+        if (!isAtLeastInstructor) {
+            complaint.getResult().setAssessor(null);
+            complaint.filterSensitiveInformation();
+        }
+        // hide participation + exercise + course which might include sensitive information
+        complaint.getResult().setParticipation(null);
+        complaint.setResultBeforeComplaint(null);
+        return ResponseEntity.ok(complaint);
     }
 
     /**
@@ -170,7 +179,8 @@ public class ComplaintResource {
             return forbidden();
         }
 
-        List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId, principal);
+        List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, false);
         return ResponseEntity.ok(responseComplaints);
     }
 
@@ -190,7 +200,8 @@ public class ComplaintResource {
             return forbidden();
         }
 
-        List<Complaint> responseComplaints = complaintService.getMyMoreFeedbackRequests(exerciseId, principal);
+        List<Complaint> responseComplaints = complaintService.getMyMoreFeedbackRequests(exerciseId);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true);
         return ResponseEntity.ok(responseComplaints);
     }
 
@@ -210,6 +221,7 @@ public class ComplaintResource {
         // Of course tutors cannot ask for complaints about other tutors.
         User user = userService.getUser();
         List<Complaint> complaints = complaintService.getAllComplaintsByTutorId(user.getId());
+        filterOutUselessDataFromComplaints(complaints, true);
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
     }
 
@@ -233,24 +245,27 @@ public class ComplaintResource {
             throw new BadRequestAlertException("The requested course does not exist", ENTITY_NAME, "wrongCourseId");
         }
 
-        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, null);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, null);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
 
         if (!isAtLeastTutor) {
             throw new AccessForbiddenException("Insufficient permission for these complaints");
         }
 
         if (!isAtLeastInstructor) {
-            tutorId = userService.getUser().getId();
+            tutorId = user.getId();
         }
 
         List<Complaint> complaints;
 
         if (tutorId == null) {
-            complaints = complaintService.getAllComplaintsByCourseId(courseId, isAtLeastInstructor);
+            complaints = complaintService.getAllComplaintsByCourseId(courseId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
         else {
-            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId, isAtLeastInstructor);
+            complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
@@ -270,14 +285,15 @@ public class ComplaintResource {
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
 
         if (exercise == null) {
             throw new BadRequestAlertException("The requested exercise does not exist", ENTITY_NAME, "wrongExerciseId");
         }
 
-        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
         if (!isAtLeastTutor) {
             throw new AccessForbiddenException("Insufficient permission for these complaints");
@@ -291,10 +307,12 @@ public class ComplaintResource {
         List<Complaint> complaints;
 
         if (tutorId == null) {
-            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId, isAtLeastInstructor);
+            complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
         else {
-            complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId, isAtLeastInstructor);
+            complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
@@ -309,4 +327,101 @@ public class ComplaintResource {
     private List<Complaint> getComplaintsByComplaintType(List<Complaint> complaints, ComplaintType complaintType) {
         return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).collect(Collectors.toList());
     }
+
+    private void filterOutStudentFromComplaint(Complaint complaint) {
+        complaint.setStudent(null);
+        complaint.setResultBeforeComplaint(null);
+
+        if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
+            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+            studentParticipation.setStudent(null);
+        }
+    }
+
+    private void filterOutUselessDataFromComplaint(Complaint complaint) {
+        if (complaint.getResult() == null) {
+            return;
+        }
+
+        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        if (originalParticipation != null && originalParticipation.getExercise() != null) {
+            Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
+            if (exerciseWithOnlyTitle instanceof TextExercise) {
+                exerciseWithOnlyTitle = new TextExercise();
+            }
+            else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
+                exerciseWithOnlyTitle = new ModelingExercise();
+            }
+            else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
+                exerciseWithOnlyTitle = new FileUploadExercise();
+            }
+
+            else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
+                exerciseWithOnlyTitle = new ProgrammingExercise();
+            }
+            exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
+            exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
+
+            originalParticipation.setExercise(exerciseWithOnlyTitle);
+        }
+
+        Submission originalSubmission = complaint.getResult().getSubmission();
+        if (originalSubmission != null) {
+            Submission submissionWithOnlyId;
+            if (originalSubmission instanceof TextSubmission) {
+                submissionWithOnlyId = new TextSubmission();
+            }
+            else if (originalSubmission instanceof ModelingSubmission) {
+                submissionWithOnlyId = new ModelingSubmission();
+            }
+            else if (originalSubmission instanceof FileUploadSubmission) {
+                submissionWithOnlyId = new FileUploadSubmission();
+            }
+            else if (originalSubmission instanceof ProgrammingSubmission) {
+                submissionWithOnlyId = new ProgrammingSubmission();
+            }
+            else {
+                return;
+            }
+            submissionWithOnlyId.setId(originalSubmission.getId());
+            complaint.getResult().setSubmission(submissionWithOnlyId);
+        }
+
+        complaint.setResultBeforeComplaint(null);
+    }
+
+    private void filterOutUselessDataFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
+        if (filterOutStudentFromComplaints) {
+            complaints.forEach(this::filterOutStudentFromComplaint);
+        }
+
+        complaints.forEach(this::filterOutUselessDataFromComplaint);
+    }
+
+    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller) {
+        List<Complaint> responseComplaints = new ArrayList<>();
+
+        if (complaints.isEmpty()) {
+            return responseComplaints;
+        }
+
+        complaints.forEach(complaint -> {
+            String submissorName = principal.getName();
+            User assessor = complaint.getResult().getAssessor();
+
+            if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller) {
+                // Remove data about the student
+                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+                studentParticipation.setStudent(null);
+                studentParticipation.setExercise(null);
+                complaint.setStudent(null);
+                complaint.setResultBeforeComplaint(null);
+
+                responseComplaints.add(complaint);
+            }
+        });
+
+        return responseComplaints;
+    }
+
 }

@@ -9,10 +9,10 @@ import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService, StudentParticipation } from 'src/main/webapp/app/entities/participation';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
+import { ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { MockExerciseHintService, MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
@@ -60,6 +60,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
     };
     result.submission.id = 1;
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
+    const exercise = <ProgrammingExercise>{ id: 1, gradingInstructions: 'Grading Instructions' };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -112,6 +113,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         findByResultId.returns(of({ body: complaint }));
         getIdentity.returns(new Promise(resolve => resolve(user)));
         comp.result = result;
+        comp.exercise = exercise;
         comp.ngOnInit();
         tick();
         expect(findByResultId.calledOnce).to.be.true;
@@ -127,6 +129,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         getIdentity.returns(new Promise(resolve => resolve(user)));
         result.hasComplaint = false;
         comp.result = result;
+        comp.exercise = exercise;
         comp.ngOnInit();
         tick();
         expect(findByResultId.notCalled).to.be.true;

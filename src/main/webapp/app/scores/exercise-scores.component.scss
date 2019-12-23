@@ -1,0 +1,16 @@
+.exercise-scores-filter-toolbar {
+    /*
+      Window width required for same-line display of filters and buttons by site language:
+        - English: 1400px
+        - German: 1870px
+     */
+    @media (min-width: 1400px) {
+        html[lang='en'] & {
+            float: left;
+        }
+    }
+
+    @media (min-width: 1870px) {
+        float: left;
+    }
+}

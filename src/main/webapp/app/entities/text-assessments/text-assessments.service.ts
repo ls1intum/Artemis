@@ -31,8 +31,8 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    public updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/after-complaint`;
+    public updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/text-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
@@ -68,19 +68,19 @@ export class TextAssessmentsService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Result = this.convertItemFromServer(res.body!);
+        const result = this.convertItemFromServer(res.body!);
 
-        if (body.completionDate) {
-            body.completionDate = moment(body.completionDate);
+        if (result.completionDate) {
+            result.completionDate = moment(result.completionDate);
         }
-        if (body.submission && body.submission.submissionDate) {
-            body.submission.submissionDate = moment(body.submission.submissionDate);
+        if (result.submission && result.submission.submissionDate) {
+            result.submission.submissionDate = moment(result.submission.submissionDate);
         }
-        if (body.participation && body.participation.initializationDate) {
-            body.participation.initializationDate = moment(body.participation.initializationDate);
+        if (result.participation && result.participation.initializationDate) {
+            result.participation.initializationDate = moment(result.participation.initializationDate);
         }
 
-        return res.clone({ body });
+        return res.clone({ body: result });
     }
 
     private convertItemFromServer(result: Result): Result {

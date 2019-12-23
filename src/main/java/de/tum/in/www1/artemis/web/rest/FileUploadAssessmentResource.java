@@ -114,7 +114,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Update an assessment after a complaint was accepted. After the result is updated accordingly,
+     * Update an assessment after a complaint was accepted.
      *
      * @param submissionId     the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
@@ -125,11 +125,12 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
-        checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
+        checkAuthorization(fileUploadExercise, user);
 
         Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
 
