@@ -36,7 +36,7 @@ import io.github.jhipster.web.util.ResponseUtil;
  * REST controller for managing Result.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);

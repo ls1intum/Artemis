@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  * REST controller for managing Participation.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
 public class ParticipationResource {
 
