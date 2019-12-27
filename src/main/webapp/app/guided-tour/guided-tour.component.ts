@@ -562,6 +562,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }, 1000);
     }
 
+    /**
+     * Observe and change position of highlight element
+     */
     private observeSelectedRectPosition() {
         const selectedElement = this.getSelectedElement();
         if (!selectedElement) {
@@ -572,7 +575,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             .observeMutations(document.querySelector('.alerts'), { childList: true })
             .pipe(take(1))
             .subscribe(mutation => {
-                console.log('scroll and set: ', mutation);
                 this.scrollToAndSetElement();
             });
     }
