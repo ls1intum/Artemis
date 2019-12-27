@@ -797,8 +797,12 @@ public class ProgrammingExerciseService {
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
-        participationService.deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation.getId());
-        participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId());
+        if (solutionProgrammingExerciseParticipation != null) {
+            participationService.deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation.getId());
+        }
+        if (templateProgrammingExerciseParticipation != null) {
+            participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId());
+        }
         // This will also delete the template & solution participation.
         programmingExerciseRepository.delete(programmingExercise);
     }

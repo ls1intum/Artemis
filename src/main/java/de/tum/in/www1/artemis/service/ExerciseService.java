@@ -46,17 +46,16 @@ public class ExerciseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<GitService> gitService;
+    private final GitService gitService;
 
-    private final Optional<ProgrammingExerciseService> programmingExerciseService;
+    private final ProgrammingExerciseService programmingExerciseService;
 
     private final QuizStatisticService quizStatisticService;
 
     private final QuizScheduleService quizScheduleService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            Optional<GitService> gitService, Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService,
-            QuizScheduleService quizScheduleService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService, GitService gitService,
+            ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -81,17 +80,10 @@ public class ExerciseService {
      * Get all exercises for a given course including their categories.
      *
      * @param course for return of exercises in course
-     * @param user the user who requests the exercises in the client. Is used to determine, if the user is allowed to see the exercises
-     *             (only TAs, instructors and admins in this case)
-     * @return the list of exercises for the given course and user. This list can be empty, but should not be null
+     * @return the set of categories of all exercises in this course
      */
-    public List<Exercise> findAllExercisesForCourseWithCategories(Course course, User user) {
-        List<Exercise> exercises = new ArrayList<>();
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
-            // user can see this exercise
-            exercises = exerciseRepository.findAllByCourseIdWithEagerCategories(course.getId());
-        }
-        return exercises;
+    public Set<String> findAllExerciseCategoriesForCourse(Course course) {
+        return exerciseRepository.findAllCategoryNames(course.getId());
     }
 
     /**
@@ -262,7 +254,7 @@ public class ExerciseService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            programmingExerciseService.get().delete(exercise.getId(), deleteBaseReposBuildPlans);
+            programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
             exerciseRepository.delete(exercise);
@@ -317,13 +309,13 @@ public class ExerciseService {
                 try {
                     if (studentParticipation.getRepositoryUrl() != null) {     // ignore participations without repository URL and without student
                         // 1. clone the repository
-                        Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
+                        Repository repo = gitService.getOrCheckoutRepository(studentParticipation);
                         // 2. zip repository and collect the zip file
                         log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-                        Path zippedRepoFile = gitService.get().zipRepository(repo);
+                        Path zippedRepoFile = gitService.zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
                         // 3. delete the locally cloned repo again
-                        gitService.get().deleteLocalRepository(studentParticipation);
+                        gitService.deleteLocalRepository(studentParticipation);
                     }
                 }
                 catch (IOException | GitException | GitAPIException | InterruptedException ex) {

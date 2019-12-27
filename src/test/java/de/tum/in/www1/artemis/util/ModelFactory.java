@@ -18,6 +18,7 @@ public class ModelFactory {
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
+        programmingExercise.generateAndSetProjectKey();
         return programmingExercise;
     }
 
@@ -45,16 +46,14 @@ public class ModelFactory {
     public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        exercise.setProblemStatement("Problem Statement");
         exercise.setMaxScore(5.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
         exercise.setCourse(course);
-        exercise.setStudentParticipations(new HashSet<>());
-        exercise.setExampleSubmissions(new HashSet<>());
-        exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setCategories(new HashSet<>());
+        exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
     }

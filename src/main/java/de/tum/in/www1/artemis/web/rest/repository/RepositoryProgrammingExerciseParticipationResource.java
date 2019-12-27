@@ -42,7 +42,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
@@ -67,7 +67,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
-        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
     @Override

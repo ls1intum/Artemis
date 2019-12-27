@@ -64,6 +64,8 @@ if (project.hasProperty("war")) {
     apply from: "gradle/war.gradle"
 }
 
+apply plugin: "jacoco"
+
 idea {
     module {
         excludeDirs += files("node_modules")

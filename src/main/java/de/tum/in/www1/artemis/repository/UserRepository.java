@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -21,8 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     String USERS_CACHE = "users";
 
     Optional<User> findOneByActivationKey(String activationKey);
-
-    List<User> findAllByActivatedIsFalseAndCreatedDateBefore(Instant dateTime);
 
     List<User> findAllByRegistrationNumberIsNull();
 

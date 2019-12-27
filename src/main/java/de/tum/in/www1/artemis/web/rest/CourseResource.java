@@ -227,22 +227,26 @@ public class CourseResource {
      * database.
      * @param courseId to find the course
      * @return response entity for user who has been registered to the course
-     * @throws URISyntaxException exception thrown to indicate that a string could not be parsed as a URI reference.
      */
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) throws URISyntaxException {
+    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
                     .body(null);
         }
         if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
+                    .body(null);
+        }
+        if (course.isRegistrationEnabled() != Boolean.TRUE) {
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
         }
         artemisAuthenticationProvider.get().registerUserForCourse(user, course);
@@ -598,19 +602,19 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/categories")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-
-        List<Exercise> exercises = exerciseService.findAllExercisesForCourseWithCategories(course, user);
-        Set<String> categories = new HashSet<>();
-        for (Exercise exercise : exercises) {
-            categories.addAll(exercise.getCategories());
+        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user)) {
+            // user can see this exercise
+            Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
+            return ResponseEntity.ok().body(categories);
         }
-
-        return ResponseEntity.ok().body(categories);
+        else {
+            return forbidden();
+        }
     }
 }
