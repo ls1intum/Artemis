@@ -25,6 +25,13 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
     Optional<TextSubmission> findByIdWithEagerResultAndAssessor(@Param("submissionId") Long submissionId);
 
     /**
+     * @param submissionId the submission id we are interested in
+     * @return the submission with its feedback and assessor
+     */
+    @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    Optional<TextSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
+
+    /**
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date or no exercise
      *         due date at all

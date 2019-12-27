@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/entities/participation';
 import { filter } from 'rxjs/operators';
 import { cloneDeep } from 'lodash';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',
@@ -28,6 +29,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     @Input() participationId: number;
     @Output() onResultModified = new EventEmitter<Result>();
     @Input() latestResult?: Result | null;
+    @Input() exercise: ProgrammingExercise;
 
     latestResultSubscription: Subscription;
 
@@ -66,6 +68,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participationId = this.participationId;
         modalRef.componentInstance.result = cloneDeep(this.latestResult);
+        modalRef.componentInstance.exercise = this.exercise;
         modalRef.componentInstance.onResultModified.subscribe(($event: Result) => this.onResultModified.emit($event));
         modalRef.result.then(
             result => this.onResultModified.emit(result),

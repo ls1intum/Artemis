@@ -16,9 +16,9 @@
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ result.score }}%, </span>
                 <span *ngIf="hasFeedback">
-                    <span class="result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip">{{ resultString }}</span>
+                    <span class="result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">{{ resultString }}</span>
                 </span>
-                <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip">
+                <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip" container="body">
                     {{ result.resultString }}
                 </span>
                 <span *ngIf="!short"> ({{ result.completionDate! | amTimeAgo }}) </span>

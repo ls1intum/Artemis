@@ -121,10 +121,6 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        if (textExercise.getDueDate() != null && textExercise.getAssessmentDueDate() == null) {
-            textExercise.setAssessmentDueDate(textExercise.getDueDate().plusWeeks(1));
-        }
-
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);

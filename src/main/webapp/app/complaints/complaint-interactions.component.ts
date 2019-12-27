@@ -22,8 +22,6 @@ export class ComplaintInteractionsComponent implements OnInit {
     hasRequestMoreFeedback = false;
     // the number of complaints that the student is still allowed to submit in the course. this is used for disabling the complain button.
     numberOfAllowedComplaints: number;
-    // indicates if the result is older than one week. if it is, the complain button is disabled
-    // isTimeOfComplaintValid: boolean;
     showComplaintForm = false;
     ComplaintType = ComplaintType;
 
