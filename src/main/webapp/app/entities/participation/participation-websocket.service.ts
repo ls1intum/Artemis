@@ -17,12 +17,13 @@ export interface IParticipationWebsocketService {
     getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
     subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result | null>;
+    unsubscribeForLatestResultOfParticipation: (participationId: number) => void;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
-    openWebsocketConnections: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
+    openWebsocketSubscriptions: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation | null> | null;
 
@@ -93,12 +94,13 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         }
         participation.exercise = participation.exercise || exercise;
         this.cachedParticipations.set(participation.id, participation);
-        this.createResultWSConnectionIfNotExisting(participation.id);
-        this.createParticipationWSConnectionIfNotExisting(participation.exercise.id);
+        // TODO: we should cleanup these subscriptions when the user navigates to another page
+        this.openResultWebsocketSubscriptionIfNotExisting(participation.id);
+        this.openParticipationWebsocketSubscriptionIfNotExisting(participation.exercise.id);
     };
 
     public addExerciseForNewParticipation(exerciseId: number) {
-        this.createParticipationWSConnectionIfNotExisting(exerciseId);
+        this.openParticipationWebsocketSubscriptionIfNotExisting(exerciseId);
     }
 
     /**
@@ -131,20 +133,20 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     /**
      * Removes all participation information locally from all cached data maps.
      *
-     * @param id ID of the participation that should not be tracked anymore
-     * @param exerciseId optional the id an exercise that should not be tracked anymore
+     * @param participationId ID of the participation that should not be tracked anymore
+     * @param exerciseId optional the participationId an exercise that should not be tracked anymore
      */
-    private removeParticipation(id: number, exerciseId?: number) {
-        this.cachedParticipations.delete(id);
+    private removeParticipation(participationId: number, exerciseId?: number) {
+        this.cachedParticipations.delete(participationId);
         // removing results observable
-        const participationResultTopic = this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${id}`)!;
+        const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
         this.jhiWebsocketService.unsubscribe(participationResultTopic);
-        this.openWebsocketConnections.delete(`${RESULTS_WEBSOCKET}${id}`);
+        this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);
         // removing exercise observable
         if (exerciseId) {
-            const participationTopic = this.openWebsocketConnections.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)!;
+            const participationTopic = this.openWebsocketSubscriptions.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)!;
             this.jhiWebsocketService.unsubscribe(participationTopic);
-            this.openWebsocketConnections.delete(`${PARTICIPATION_WEBSOCKET}${exerciseId}`);
+            this.openWebsocketSubscriptions.delete(`${PARTICIPATION_WEBSOCKET}${exerciseId}`);
         }
     }
 
@@ -155,11 +157,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participationId
      * @private
      */
-    private createResultWSConnectionIfNotExisting(participationId: number) {
-        if (!this.openWebsocketConnections.get(`${RESULTS_WEBSOCKET}${participationId}`)) {
+    private openResultWebsocketSubscriptionIfNotExisting(participationId: number) {
+        if (!this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)) {
             const participationResultTopic = `/topic/participation/${participationId}/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.openWebsocketConnections.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
+            this.openWebsocketSubscriptions.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
             this.jhiWebsocketService
                 .receive(participationResultTopic)
                 .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
@@ -174,11 +176,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId
      * @private
      */
-    private createParticipationWSConnectionIfNotExisting(exerciseId: number) {
-        if (!this.openWebsocketConnections.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)) {
+    private openParticipationWebsocketSubscriptionIfNotExisting(exerciseId: number) {
+        if (!this.openWebsocketSubscriptions.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)) {
             const participationTopic = `/user/topic/exercise/${exerciseId}/participation`;
             this.jhiWebsocketService.subscribe(participationTopic);
-            this.openWebsocketConnections.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
+            this.openWebsocketSubscriptions.set(`${PARTICIPATION_WEBSOCKET}${exerciseId}`, participationTopic);
             this.jhiWebsocketService
                 .receive(participationTopic)
                 .pipe(tap(this.addParticipation), tap(this.notifyParticipationSubscribers))
@@ -208,12 +210,22 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participationId Id of Participation of which result to subscribe to
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
-        this.createResultWSConnectionIfNotExisting(participationId);
+        this.openResultWebsocketSubscriptionIfNotExisting(participationId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
             resultObservable = new BehaviorSubject<Result | null>(null);
             this.resultObservables.set(participationId, resultObservable);
         }
         return resultObservable;
+    }
+
+    /**
+     * Unsubscribe from the result
+     * @param participationId
+     */
+    public unsubscribeForLatestResultOfParticipation(participationId: number): void {
+        const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
+        this.jhiWebsocketService.unsubscribe(participationResultTopic);
+        this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);
     }
 }

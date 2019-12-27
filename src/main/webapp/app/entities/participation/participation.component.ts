@@ -8,11 +8,17 @@ import { ActivatedRoute } from '@angular/router';
 import { areManualResultsAllowed, Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/feature-toggle';
+
+enum FilterProp {
+    ALL = 'all',
+    FAILED = 'failed',
+}
 
 @Component({
     selector: 'jhi-participation',
@@ -20,11 +26,14 @@ import { FeatureToggle } from 'app/feature-toggle';
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
+    readonly FilterProp = FilterProp;
+
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
 
     participations: StudentParticipation[] = [];
+    filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
@@ -36,6 +45,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    participationCriteria: {
+        filterProp: FilterProp;
+    };
+
+    exerciseSubmissionState: ExerciseSubmissionState;
+
     isLoading: boolean;
 
     constructor(
@@ -45,7 +60,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-    ) {}
+    ) {
+        this.participationCriteria = {
+            filterProp: FilterProp.ALL,
+        };
+    }
 
     ngOnInit() {
         this.loadAll();
@@ -53,6 +72,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise.id);
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
     }
@@ -68,12 +88,46 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                     this.isLoading = false;
                 });
                 if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id).subscribe(() => (this.hasLoadedPendingSubmissions = true));
+                    this.programmingSubmissionService
+                        .getSubmissionStateOfExercise(this.exercise.id)
+                        .pipe(
+                            tap((exerciseSubmissionState: ExerciseSubmissionState) => {
+                                this.exerciseSubmissionState = exerciseSubmissionState;
+                            }),
+                        )
+                        .subscribe(() => (this.hasLoadedPendingSubmissions = true));
                 }
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
                 this.presentationScoreEnabled = this.checkPresentationScoreConfig();
             });
         });
+    }
+
+    updateParticipationFilter(newValue: FilterProp) {
+        this.isLoading = true;
+        setTimeout(() => {
+            this.participationCriteria.filterProp = newValue;
+            this.isLoading = false;
+        });
+    }
+
+    filterParticipationByProp = (participation: Participation) => {
+        switch (this.participationCriteria.filterProp) {
+            case FilterProp.FAILED:
+                return this.hasFailedSubmission(participation);
+            case FilterProp.ALL:
+            default:
+                return true;
+        }
+    };
+
+    private hasFailedSubmission(participation: Participation) {
+        const submissionStateObj = this.exerciseSubmissionState[participation.id];
+        if (submissionStateObj) {
+            const { submissionState } = submissionStateObj;
+            return submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
+        }
+        return false;
     }
 
     trackId(index: number, item: Participation) {
@@ -152,6 +206,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
+
+    /**
+     * Update the number of filtered participations
+     *
+     * @param filteredParticipationsSize Total number of participations after filters have been applied
+     */
+    handleParticipationsSizeChange = (filteredParticipationsSize: number) => {
+        this.filteredParticipationsSize = filteredParticipationsSize;
+    };
 
     /**
      * Formats the results in the autocomplete overlay.

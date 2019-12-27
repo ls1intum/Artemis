@@ -16,8 +16,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.config.ApplicationProperties;
-import de.tum.in.www1.artemis.config.DefaultProfileUtil;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import io.github.jhipster.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
 
 @SpringBootApplication

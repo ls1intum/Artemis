@@ -24,13 +24,37 @@
                 </div>
 
                 <div class="card-body">
-                    <div *ngIf="submission.filePath" class="card-text">
+                    <div *ngIf="submission.filePath" class="mb-6 card-text">
                         <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
-                        <span class="ml-1 badge badge-info">
+                        <span class="ml-2 badge badge-info">
                             {{ attachmentExtension(submission.filePath!) | uppercase }}
                         </span>
                     </div>
-                    <button class="btn btn-success" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
+                    <button class="btn btn-success mt-4" (click)="addReferencedFeedback()">{{ 'artemisApp.fileUploadAssessment.addFeedback' | translate }}</button>
+                    <ng-container *ngIf="!busy && !notFound">
+                        <div class="row mt-4">
+                            <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
+                            <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+                            <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
+                                <div class="alert alert-secondary text-center" role="alert">
+                                    <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
+                                </div>
+                            </div>
+                            <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
+                                <jhi-assessment-detail
+                                    [(assessment)]="referencedFeedback[i]"
+                                    (assessmentChange)="updateAssessment(assessment)"
+                                    (deleteAssessment)="deleteAssessment($event)"
+                                ></jhi-assessment-detail>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
+                            <div class="col-12 col-lg-8 col-xl-6">
+                                <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
+                            </div>
+                        </div>
+                    </ng-container>
                 </div>
             </div>
 
@@ -46,29 +70,4 @@
             </jhi-resizable-instructions>
         </div>
     </div>
-
-    <ng-container *ngIf="!busy && !notFound">
-        <div class="row mt-3">
-            <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
-            <div *ngIf="invalidError" class="col-12 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
-            <div *ngIf="!referencedFeedback || referencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
-                <div class="alert alert-secondary text-center" role="alert">
-                    <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | translate }}</p>
-                </div>
-            </div>
-            <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-md-6 col-xl-4">
-                <jhi-assessment-detail
-                    [(assessment)]="referencedFeedback[i]"
-                    (assessmentChange)="updateAssessment(assessment)"
-                    (deleteAssessment)="deleteAssessment($event)"
-                ></jhi-assessment-detail>
-            </div>
-        </div>
-        <div class="row mt-2">
-            <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
-            <div class="col-12 col-lg-8 col-xl-6">
-                <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
-            </div>
-        </div>
-    </ng-container>
 </jhi-assessment-layout>

@@ -34,12 +34,12 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
 
     private loadQuestions() {
         if (this.exercise) {
-            this.studentQuestionService.query({ exercise: this.exercise.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
+            this.studentQuestionService.findQuestionsForExercise(this.exercise.id).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body!;
             });
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
         } else {
-            this.studentQuestionService.query({ lecture: this.lecture.id }).subscribe((res: HttpResponse<StudentQuestion[]>) => {
+            this.studentQuestionService.findQuestionsForLecture(this.lecture.id).subscribe((res: HttpResponse<StudentQuestion[]>) => {
                 this.studentQuestions = res.body!;
             });
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course);

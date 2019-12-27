@@ -10,7 +10,7 @@ import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash';
 
 @Component({
@@ -106,11 +106,15 @@ export class ListOfComplaintsComponent implements OnInit {
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+            const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
             modalRef.componentInstance.participationId = studentParticipation.id;
+            modalRef.componentInstance.exercise = exercise;
             modalRef.componentInstance.result = cloneDeep(complaint.result);
             modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
-            modalRef.result.then(() => this.loadComplaints());
+            modalRef.result.then(
+                _ => this.loadComplaints(),
+                () => {},
+            );
             return;
         }
         this.router.navigate([route!]);

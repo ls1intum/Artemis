@@ -19,10 +19,10 @@
                     <th jhiSortBy="duration">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.firstName" *ngIf="exercise.isAtLeastInstructor">
+                    <th jhiSortBy="student.name" *ngIf="exercise.isAtLeastInstructor">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.student">Student</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessor.firstName">
+                    <th jhiSortBy="assessor.name">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
@@ -35,7 +35,7 @@
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>
-                        <jhi-updating-result [participation]="submission.participation"></jhi-updating-result>
+                        <jhi-result [participation]="submission.participation"></jhi-result>
                     </td>
                     <td>
                         <ng-container *ngIf="submission.participation.submissions">
@@ -54,9 +54,9 @@
                         }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
                     </td>
-                    <td *ngIf="exercise.isAtLeastInstructor">{{ submission.participation.student?.firstName }} {{ submission.participation.student?.lastName }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">{{ submission.participation.student?.name }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
+                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }}</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">

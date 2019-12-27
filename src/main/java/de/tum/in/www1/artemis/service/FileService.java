@@ -163,7 +163,7 @@ public class FileService {
             }
             final var exerciseId = Long.parseLong(shouldBeExerciseId);
             final var submissionId = Long.parseLong(shouldBeSubmissionId);
-            return FileUploadSubmission.buildFilePath(exerciseId, submissionId);
+            return FileUploadSubmission.buildFilePath(exerciseId, submissionId) + filename;
         }
 
         // path is unknown => cannot convert

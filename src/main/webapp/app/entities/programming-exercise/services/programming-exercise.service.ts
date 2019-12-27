@@ -44,8 +44,8 @@ export class ProgrammingExerciseService {
         return this.http.get(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
     }
 
-    squashTemplateRepositoryCommits(exerciseId: number) {
-        return this.http.put(this.resourceUrl + '/' + exerciseId + '/squash-template-commits', { responseType: 'text' });
+    combineTemplateRepositoryCommits(exerciseId: number) {
+        return this.http.put(this.resourceUrl + '/' + exerciseId + '/combine-template-commits', { responseType: 'text' });
     }
 
     /**

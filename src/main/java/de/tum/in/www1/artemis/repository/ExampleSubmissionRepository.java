@@ -17,9 +17,14 @@ import de.tum.in.www1.artemis.domain.ExampleSubmission;
 @Repository
 public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmission, Long> {
 
+    Long countAllByExerciseId(long exerciseId);
+
     List<ExampleSubmission> findAllByExerciseId(long exerciseId);
 
     List<ExampleSubmission> findAllByExerciseIdAndUsedForTutorial(Long exercise_id, Boolean usedForTutorial);
+
+    @Query("select distinct exampleSubmission from ExampleSubmission exampleSubmission left join fetch exampleSubmission.tutorParticipations where exampleSubmission.id = :#{#exampleSubmissionId}")
+    Optional<ExampleSubmission> findByIdWithEagerTutorParticipations(@Param("exampleSubmissionId") Long exampleSubmissionId);
 
     @Query("select distinct exampleSubmission from ExampleSubmission exampleSubmission left join fetch exampleSubmission.submission s left join fetch s.result r left join fetch r.feedbacks where exampleSubmission.id = :#{#exampleSubmissionId}")
     Optional<ExampleSubmission> findByIdWithEagerResultAndFeedback(@Param("exampleSubmissionId") Long exampleSubmissionId);

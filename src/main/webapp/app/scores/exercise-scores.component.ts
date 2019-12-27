@@ -1,5 +1,5 @@
 import { JhiAlertService } from 'ng-jhipster';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
@@ -10,33 +10,33 @@ import { Course, CourseService } from 'app/entities/course';
 import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { ParticipationService, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
-import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { FeatureToggle } from 'app/feature-toggle';
+import { ProgrammingSubmissionService } from 'app/programming-submission';
 
 enum FilterProp {
     ALL = 'all',
     SUCCESSFUL = 'successful',
     UNSUCCESSFUL = 'unsuccessful',
+    BUILD_FAILED = 'build-failed',
     MANUAL = 'manual',
     AUTOMATIC = 'automatic',
 }
 
 @Component({
     selector: 'jhi-exercise-scores',
+    styleUrls: ['./exercise-scores.component.scss'],
     templateUrl: './exercise-scores.component.html',
     providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
-    FilterProp = FilterProp;
-
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
+    readonly FilterProp = FilterProp;
+    readonly ExerciseType = ExerciseType;
     readonly FeatureToggle = FeatureToggle;
 
     course: Course;
@@ -44,6 +44,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     reverse: boolean;
     results: Result[];
+    filteredResultsSize: number;
     eventSubscriber: Subscription;
     newManualResultAllowed: boolean;
 
@@ -59,14 +60,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private resultService: ResultService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private participationService: ParticipationService,
         private programmingSubmissionService: ProgrammingSubmissionService,
     ) {
         this.resultCriteria = {
             filterProp: FilterProp.ALL,
         };
         this.results = [];
+        this.filteredResultsSize = 0;
     }
 
     ngOnInit() {
@@ -91,7 +91,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Will return immediately if the exercise is not of type PROGRAMMING.
      */
     private loadAndCacheProgrammingExerciseSubmissionState() {
-        return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
+        // TODO: this is deactivated because of performance reasons as it would lead quickly to thousands of subscribed websocket topics
+        // return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(null);
+        return of(null);
     }
 
     getResults() {
@@ -103,18 +105,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             })
             .pipe(
                 tap((res: HttpResponse<Result[]>) => {
-                    const tempResults: Result[] = res.body!;
-                    tempResults.forEach(result => {
+                    this.results = res.body!.map(result => {
                         result.participation!.results = [result];
                         (result.participation! as StudentParticipation).exercise = this.exercise;
                         result.durationInMinutes = this.durationInMinutes(
                             result.completionDate!,
                             result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
                         );
-                    });
-                    this.results = tempResults;
-                    // Nest submission into participation so that it is available for the result component
-                    this.results = this.results.map(result => {
+                        // Nest submission into participation so that it is available for the result component
                         if (result.participation && result.submission) {
                             result.participation.submissions = [result.submission];
                         }
@@ -138,6 +136,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 return result.successful;
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
+            case FilterProp.BUILD_FAILED:
+                // TODO: A boolean flag {buildFailed} on the result coming from the backend would be better
+                return result.resultString === 'No tests found';
             case FilterProp.MANUAL:
                 return result.assessmentType === AssessmentType.MANUAL;
             case FilterProp.AUTOMATIC:
@@ -145,6 +146,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             default:
                 return true;
         }
+    };
+
+    /**
+     * Update the number of filtered results
+     *
+     * @param filteredResultsSize Total number of results after filters have been applied
+     */
+    handleResultsSizeChange = (filteredResultsSize: number) => {
+        this.filteredResultsSize = filteredResultsSize;
     };
 
     durationInMinutes(completionDate: Moment, initializationDate: Moment) {
@@ -165,10 +175,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
-                let studentName = studentParticipation.student.firstName!;
-                if (studentParticipation.student.lastName != null && studentParticipation.student.lastName !== '') {
-                    studentName = studentName + ' ' + studentParticipation.student.lastName;
-                }
+                const studentName = studentParticipation.student.name!;
                 rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + studentName : studentName);
             });
             const csvContent = rows.join('\n');
@@ -186,10 +193,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
-                let studentName = studentParticipation.student.firstName!;
-                if (studentParticipation.student.lastName != null && studentParticipation.student.lastName !== '') {
-                    studentName = studentName + ' ' + studentParticipation.student.lastName;
-                }
+                const studentName = studentParticipation.student.name!;
                 const studentId = studentParticipation.student.login;
                 const score = result.score;
 
@@ -246,5 +250,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.paramSub.unsubscribe();
+        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise.id);
     }
 }

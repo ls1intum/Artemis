@@ -145,7 +145,7 @@ public class RepositoryWebsocketResource {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
         VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName);
         String topic = "/topic/test-repository/" + exerciseId + "/files";

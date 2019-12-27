@@ -23,7 +23,7 @@
                     <th jhiSortBy="assessmentType">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessor.firstName">
+                    <th jhiSortBy="assessor.name">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
@@ -37,7 +37,7 @@
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>
-                        <jhi-updating-result [participation]="submission.participation"></jhi-updating-result>
+                        <jhi-result [participation]="submission.participation"></jhi-result>
                     </td>
                     <td>
                         <ng-container *ngIf="submission.participation.submissions">
@@ -59,7 +59,7 @@
                     </td>
                     <td>{{ assessmentTypeTranslationKey(submission.result) | translate }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
+                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }}</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">

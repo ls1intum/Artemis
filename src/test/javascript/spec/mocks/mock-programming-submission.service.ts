@@ -6,4 +6,6 @@ export class MockProgrammingSubmissionService implements IProgrammingSubmissionS
     getSubmissionStateOfExercise = (exerciseId: number) => of(null);
     triggerBuild = (participationId: number) => of({});
     triggerInstructorBuild = (participationId: number) => of({});
+    unsubscribeAllWebsocketTopics = (exerciseId: number) => of(null);
+    unsubscribeForLatestSubmissionOfParticipation = (participationId: number) => of(null);
 }

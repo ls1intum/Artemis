@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing TutorParticipation.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
 public class TutorParticipationResource {
 
@@ -62,15 +62,13 @@ public class TutorParticipationResource {
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
-        Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
 
-        TutorParticipation existingTutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
-        if (existingTutorParticipation != null && existingTutorParticipation.getId() != null) {
+        if (tutorParticipationService.existsByAssessedExerciseIdAndTutorId(exerciseId, user.getId())) {
             // tutorParticipation already exists
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "tutorParticipationAlreadyExists",
                     "There is already a tutorParticipations for the given exercise and user.")).body(null);
@@ -94,19 +92,18 @@ public class TutorParticipationResource {
     public ResponseEntity<TutorParticipation> addExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseService.findOne(exerciseId);
-        Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
 
-        TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission);
+        TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
 
         // Avoid infinite recursion for JSON
-        resultTutorParticipation.getTrainedExampleSubmissions().forEach(t -> {
-            t.setTutorParticipations(null);
-            t.setExercise(null);
+        resultTutorParticipation.getTrainedExampleSubmissions().forEach(trainedExampleSubmissioin -> {
+            trainedExampleSubmissioin.setTutorParticipations(null);
+            trainedExampleSubmissioin.setExercise(null);
         });
 
         return ResponseEntity.ok().body(resultTutorParticipation);

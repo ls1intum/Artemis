@@ -67,6 +67,10 @@ public class ProgrammingExerciseParticipationResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
             return forbidden();
         }
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.get().getExercise())) {
+            // hide details that should not be shown to the students
+            participation.get().getExercise().filterSensitiveInformation();
+        }
         return ResponseEntity.ok(participation.get());
     }
 

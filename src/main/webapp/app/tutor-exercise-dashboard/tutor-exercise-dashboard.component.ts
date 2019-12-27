@@ -28,7 +28,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise/programmi
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { Result } from 'app/entities/result/result.model';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { cloneDeep } from 'lodash';
 
@@ -371,11 +371,15 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private openManualResultDialog(result: Result) {
-        const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participationId = result.participation!.id;
         modalRef.componentInstance.result = cloneDeep(result);
+        modalRef.componentInstance.exercise = this.exercise;
         modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
-        modalRef.result.then(() => this.loadAll());
+        modalRef.result.then(
+            _ => this.loadAll(),
+            () => {},
+        );
         return;
     }
 
@@ -387,7 +391,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.openManualResultDialog(complaint.result);
         } else {
-            this.openAssessmentEditor(complaint.result.participation!.id, false);
+            this.openAssessmentEditor(complaint.result.submission!.id, false);
         }
     }
 

@@ -54,11 +54,9 @@
             <tbody>
                 <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of optimalSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
-                    <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName }}</td>
+                    <td>{{ submission.participation.student.name }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.assessor"
-                            >{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }} (lock)</span
-                        >
+                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }} (lock)</span>
                     </td>
                     <td>
                         <button
@@ -100,7 +98,7 @@
                     <th>
                         <a class="th-link">#</a>
                     </th>
-                    <th jhiSortBy="participation.student.firstName">
+                    <th jhiSortBy="participation.student.name">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="submissionDate">
@@ -117,7 +115,7 @@
                     <th jhiSortBy="assessmentType">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessmentType">Assessment Type</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="assessor.firstName">
+                    <th jhiSortBy="assessor.name">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a> <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
@@ -129,10 +127,10 @@
             <tbody>
                 <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of otherSubmissions | sortBy: predicate:reverse; let i = index">
                     <td>{{ i + 1 }}</td>
-                    <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName }}</td>
+                    <td>{{ submission.participation.student.name }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>
-                        <jhi-updating-result [participation]="submission.participation"></jhi-updating-result>
+                        <jhi-result [participation]="submission.participation"></jhi-result>
                     </td>
                     <td>{{ submission.participation.submissions.length }}</td>
                     <td>
@@ -149,7 +147,7 @@
                     </td>
                     <td>{{ submission.result && submission.result.assessmentType }}</td>
                     <td>
-                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
+                        <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }}</span>
                     </td>
                     <td>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
