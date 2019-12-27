@@ -1,8 +1,8 @@
 artemis:
     bamboo:
         url: http://localhost:8085
-        user: ga38hov    # e.g. ga12abc
-        password: FgXYZtfhC6CFNwit
+        user: <username>    # e.g. ga12abc
+        password: <password>
         vcs-application-link-name: Bitbucket
         empty-commit-necessary: true
         authentication-token: secret
