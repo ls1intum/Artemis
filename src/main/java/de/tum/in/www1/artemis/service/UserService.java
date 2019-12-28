@@ -150,16 +150,6 @@ public class UserService {
     }
 
     /**
-     * Returns the password of the user as a char array (as is the Java convention for handling sensitive Strings)
-     *
-     * @param user The user for whom to fetch the password
-     * @return The password of the specified user
-     */
-    public char[] getPasswordForUser(User user) {
-        return encryptor().decrypt(user.getPassword()).toCharArray();
-    }
-
-    /**
      * Activate user registration
      * @param key activation key for user registration
      * @return user if user exists otherwise null
@@ -428,8 +418,18 @@ public class UserService {
      * @param login of a user
      * @return decrypted password or empty string
      */
-    public Optional<String> decryptPasswordByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(u -> encryptor().decrypt(u.getPassword()));
+    public Optional<char[]> decryptPasswordByLogin(String login) {
+        return userRepository.findOneByLogin(login).map(this::decryptPasswordOfUser);
+    }
+
+    /**
+     * Returns the password of the user as a char array (as is the Java convention for handling sensitive Strings)
+     *
+     * @param user The user for whom to fetch the password
+     * @return The password of the specified user
+     */
+    public char[] decryptPasswordOfUser(User user) {
+        return encryptor().decrypt(user.getPassword()).toCharArray();
     }
 
     /**

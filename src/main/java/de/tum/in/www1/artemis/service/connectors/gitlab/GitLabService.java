@@ -96,7 +96,7 @@ public class GitLabService implements VersionControlService {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         try {
-            return gitlab.getUserApi().createUser(gitlabUser, String.valueOf(userService.getPasswordForUser(user)), false);
+            return gitlab.getUserApi().createUser(gitlabUser, String.valueOf(userService.decryptPasswordOfUser(user)), false);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);

@@ -228,12 +228,6 @@ public class BambooService implements ContinuousIntegrationService {
         return planInfo != null && planInfo.containsKey("enabled") && ((boolean) planInfo.get("enabled"));
     }
 
-    /**
-     * Delete the build plan with given identifier from Bamboo.
-     *
-     * @param projectKey The key of the project of the related programming exercise
-     * @param buildPlanId unique identifier for the build plan on Bamboo.
-     */
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
         deletePlan(buildPlanId);
@@ -506,6 +500,8 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebhookUrl(String projectKey, String buildPlanId) {
+        // No webhooks needed between Bamboo and Bitbucket, so we return an empty Optional
+        // See https://confluence.atlassian.com/bamboo/integrating-bamboo-with-bitbucket-server-779302772.html
         return Optional.empty();
     }
 
