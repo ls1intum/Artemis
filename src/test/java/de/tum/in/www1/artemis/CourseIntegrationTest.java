@@ -141,7 +141,7 @@ public class CourseIntegrationTest {
         // Test that the prepared inactive course was filtered out.
         assertThat(courses.size()).as("Inactive course was filtered out").isEqualTo(1);
         // Test that the remaining course has two exercises.
-        assertThat(courses.get(0).getExercises().size()).as("Four exercises are returned").isEqualTo(4);
+        assertThat(courses.get(0).getExercises().size()).as("Five exercises are returned").isEqualTo(5);
 
         // Iterate over all exercises of the remaining course.
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -254,7 +254,7 @@ public class CourseIntegrationTest {
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         Set<String> categories1 = request.get("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, Set.class);
-        assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "File", "Text", "Programming");
+        assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "Quiz", "File", "Text", "Programming");
         Set<String> categories2 = request.get("/api/courses/" + course2.getId() + "/categories", HttpStatus.OK, Set.class);
         assertThat(categories2).as("No categories in course2").isEmpty();
     }

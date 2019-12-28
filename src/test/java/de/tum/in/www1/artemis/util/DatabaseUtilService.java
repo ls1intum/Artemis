@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
@@ -219,6 +220,10 @@ public class DatabaseUtilService {
         programmingExercise.getCategories().add("Programming");
         course1.addExercises(programmingExercise);
 
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, course1);
+        programmingExercise.getCategories().add("Quiz");
+        course1.addExercises(quizExercise);
+
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
 
@@ -231,6 +236,7 @@ public class DatabaseUtilService {
         textExercise = exerciseRepo.save(textExercise);
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
         programmingExercise = exerciseRepo.save(programmingExercise);
+        quizExercise = exerciseRepo.save(quizExercise);
 
         User user = (userRepo.findOneByLogin("student1")).get();
         StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);

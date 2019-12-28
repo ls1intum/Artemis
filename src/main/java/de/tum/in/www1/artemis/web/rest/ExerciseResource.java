@@ -104,14 +104,14 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
-        User student = userService.getUserWithGroupsAndAuthorities();
+        User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
 
-        if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
+        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
         }
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             exercise.filterSensitiveInformation();
         }
 

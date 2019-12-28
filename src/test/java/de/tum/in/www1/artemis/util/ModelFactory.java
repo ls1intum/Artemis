@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
 public class ModelFactory {
 
@@ -30,6 +31,18 @@ public class ModelFactory {
         attachment.setName("TestAttachement");
         attachment.setLecture(lecture);
         return attachment;
+    }
+
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise = (QuizExercise) populateExercise(quizExercise, releaseDate, dueDate, null, course);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(10);
+        quizExercise.setRandomizeQuestionOrder(true);
+        return quizExercise;
     }
 
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
