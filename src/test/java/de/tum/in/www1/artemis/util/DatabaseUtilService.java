@@ -131,6 +131,7 @@ public class DatabaseUtilService {
         complaintResponseRepo.deleteAll();
         complaintRepo.deleteAll();
         resultRepo.deleteAll();
+        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         feedbackRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
@@ -139,18 +140,17 @@ public class DatabaseUtilService {
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
+        assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
+        assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
-        userRepo.deleteAll();
-        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
-        assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
+        userRepo.deleteAll();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
-        assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
     }
 
@@ -264,6 +264,7 @@ public class DatabaseUtilService {
         submissionRepository.save(modelingSubmission1);
         submissionRepository.save(modelingSubmission2);
         submissionRepository.save(textSubmission);
+
         return Arrays.asList(course1, course2);
     }
 

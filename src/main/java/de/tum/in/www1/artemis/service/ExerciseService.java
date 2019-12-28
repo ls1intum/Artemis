@@ -1,19 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +15,6 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
@@ -205,9 +193,9 @@ public class ExerciseService {
     /**
      * Resets an Exercise by deleting all its participations
      *
-     * @param exercise which shold be resetted
+     * @param exercise which should be resetted
      */
-    @Transactional(noRollbackFor = { Throwable.class })
+    @Transactional
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
@@ -267,7 +255,6 @@ public class ExerciseService {
      * @param exerciseId programming exercise for which build plans in respective student participations are deleted
      * @param deleteRepositories if true, the repositories gets deleted
      */
-    @Transactional(noRollbackFor = { Throwable.class })
     public void cleanup(Long exerciseId, boolean deleteRepositories) {
         Exercise exercise = findOneWithStudentParticipations(exerciseId);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
@@ -289,118 +276,5 @@ public class ExerciseService {
         else {
             log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
         }
-    }
-
-    /**
-     * Archives all all participations repositories for a given exerciseID,
-     * if the exercise is a ProgrammingExercise, does not delete anything
-     *
-     * @param exerciseId exercise which will be archived
-     * @return the archive File
-     */
-    public java.io.File archive(Long exerciseId) {
-        Exercise exercise = findOneWithStudentParticipations(exerciseId);
-        log.info("Request to archive all participations repositories for Exercise : {}", exercise.getTitle());
-        List<Path> zippedRepoFiles = new ArrayList<>();
-        Path finalZipFilePath = null;
-        if (exercise instanceof ProgrammingExercise) {
-            exercise.getStudentParticipations().forEach(participation -> {
-                ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-                try {
-                    if (studentParticipation.getRepositoryUrl() != null) {     // ignore participations without repository URL and without student
-                        // 1. clone the repository
-                        Repository repo = gitService.getOrCheckoutRepository(studentParticipation);
-                        // 2. zip repository and collect the zip file
-                        log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-                        Path zippedRepoFile = gitService.zipRepository(repo);
-                        zippedRepoFiles.add(zippedRepoFile);
-                        // 3. delete the locally cloned repo again
-                        gitService.deleteLocalRepository(studentParticipation);
-                    }
-                }
-                catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                    log.error("Archiving and deleting the repository " + studentParticipation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
-                }
-            });
-
-            if (!exercise.getStudentParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
-                try {
-                    // create a large zip file with all zipped repos and provide it for download
-                    log.info("Create zip file for all repositories");
-                    String exerciseName = exercise.getShortName() != null ? exercise.getShortName() : exercise.getTitle().replaceAll("\\s", "");
-                    finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getShortName() + "-" + exerciseName + ".zip");
-                    createZipFile(finalZipFilePath, zippedRepoFiles);
-                    scheduleForDeletion(finalZipFilePath, 15);
-
-                    log.info("Delete all temporary zip repo files");
-                    // delete the temporary zipped repo files
-                    for (Path zippedRepoFile : zippedRepoFiles) {
-                        Files.delete(zippedRepoFile);
-                    }
-                }
-                catch (IOException ex) {
-                    log.error("Archiving and deleting the local repositories did not work as expected");
-                }
-            }
-            else {
-                log.info("The zip file could not be created. Ignoring the request to archive repositories for exerciseId", exerciseId);
-                return null;
-            }
-        }
-        else {
-            log.info("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to archive repositories", exerciseId);
-            return null;
-        }
-        return new java.io.File(finalZipFilePath.toString());
-    }
-
-    /**
-     * Create a zipfile of the given paths and save it in the zipFilePath
-     *
-     * @param zipFilePath path where the zipfile should be saved
-     * @param paths the paths that should be zipped
-     * @throws IOException if an error occured while zipping
-     */
-    public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(path.toString());
-                try {
-                    zipOutputStream.putNextEntry(zipEntry);
-                    Files.copy(path, zipOutputStream);
-                    zipOutputStream.closeEntry();
-                }
-                catch (Exception e) {
-                    log.error("Create zip file error", e);
-                }
-            });
-        }
-    }
-
-    private Map<Path, ScheduledFuture> futures = new HashMap<>();
-
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-
-    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
-
-    /**
-     * Schedule the deletion of the given path with a given delay
-     *
-     * @param path The path that should be deleted
-     * @param delayInMinutes The delay in minutes after which the path should be deleted
-     */
-    public void scheduleForDeletion(Path path, long delayInMinutes) {
-        ScheduledFuture future = executor.schedule(() -> {
-            try {
-                log.info("Delete file " + path);
-                Files.delete(path);
-                futures.remove(path);
-            }
-            catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
-            }
-        }, delayInMinutes, MINUTES);
-
-        futures.put(path, future);
     }
 }

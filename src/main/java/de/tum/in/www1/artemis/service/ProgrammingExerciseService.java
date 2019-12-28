@@ -10,8 +10,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.validation.constraints.NotNull;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -1182,8 +1188,8 @@ public class ProgrammingExerciseService {
             log.debug("Create zip file for all repositories");
             Path zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
                     programmingExercise.getCourse().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
-            exerciseService.createZipFile(zipFilePath, zippedRepoFiles);
-            exerciseService.scheduleForDeletion(zipFilePath, 15);
+            createZipFile(zipFilePath, zippedRepoFiles);
+            scheduleForDeletion(zipFilePath, 15);
             log.info("Export student repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
             return new java.io.File(zipFilePath.toString());
         }
@@ -1207,6 +1213,29 @@ public class ProgrammingExerciseService {
     }
 
     /**
+     * Create a zipfile of the given paths and save it in the zipFilePath
+     *
+     * @param zipFilePath path where the zipfile should be saved
+     * @param paths the paths that should be zipped
+     * @throws IOException if an error occured while zipping
+     */
+    private void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
+            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
+                ZipEntry zipEntry = new ZipEntry(path.toString());
+                try {
+                    zipOutputStream.putNextEntry(zipEntry);
+                    Files.copy(path, zipOutputStream);
+                    zipOutputStream.closeEntry();
+                }
+                catch (Exception e) {
+                    log.error("Create zip file error", e);
+                }
+            });
+        }
+    }
+
+    /**
      * @param exerciseId the exercise we are interested in
      * @return the number of programming submissions which should be assessed
      */
@@ -1220,5 +1249,32 @@ public class ProgrammingExerciseService {
      */
     public long countSubmissionsToAssessByCourseId(Long courseId) {
         return programmingExerciseRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    private Map<Path, ScheduledFuture> futures = new HashMap<>();
+
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
+
+    /**
+     * Schedule the deletion of the given path with a given delay
+     *
+     * @param path The path that should be deleted
+     * @param delayInMinutes The delay in minutes after which the path should be deleted
+     */
+    private void scheduleForDeletion(Path path, long delayInMinutes) {
+        ScheduledFuture future = executor.schedule(() -> {
+            try {
+                log.info("Delete file " + path);
+                Files.delete(path);
+                futures.remove(path);
+            }
+            catch (IOException e) {
+                log.error("Deleting the file " + path + " did not work", e);
+            }
+        }, delayInMinutes, MINUTES);
+
+        futures.put(path, future);
     }
 }

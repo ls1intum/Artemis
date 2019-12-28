@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -14,9 +11,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -116,8 +111,7 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
-        if (isStudent) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student)) {
             exercise.filterSensitiveInformation();
         }
 
@@ -232,12 +226,12 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-instructor-dashboard")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
 
@@ -302,37 +296,12 @@ public class ExerciseResource {
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise))
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
+        }
         exerciseService.cleanup(exerciseId, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * GET /exercises/:exerciseId/archive : archive all repositories (except BASE) of all participations belonging to this exercise into a zip file and provide a downloadable link.
-     *
-     * @param exerciseId exercise to delete and archive the repositories
-     * @return ResponseEntity with status
-     * @throws IOException if repositories can't be archived
-     */
-    @GetMapping(value = "/exercises/{exerciseId}/archive")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> archiveRepositories(@PathVariable Long exerciseId) throws IOException {
-        log.info("Start to archive repositories for Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise))
-            return forbidden();
-        File zipFile = exerciseService.archive(exerciseId);
-        if (zipFile == null) {
-            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName,
-                    "There was an error on the server and the zip file could not be created, possibly because all repositories have already been deleted or this is not a programming exercise.",
-                    "")).build();
-        }
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        log.info("Archive repositories was successful for Exercise : {}", exerciseId);
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
     /**
@@ -343,7 +312,7 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getResultsForCurrentUser(@PathVariable Long exerciseId) {
+    public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         // TODO: refactor this and load
         // * the exercise (without the course, no template / solution participations)
         // * all submissions (with their result) of the user (to be displayed in the result history)

@@ -120,7 +120,7 @@ public class StudentParticipation extends Participation {
 
     @Override
     public String toString() {
-        return "StudentParticipation{" + "presentationScore=" + presentationScore + ", student=" + student + '}';
+        return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", student=" + student + '}';
     }
 
     @Override

@@ -20,7 +20,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
@@ -36,19 +35,22 @@ public class ExerciseIntegrationTest {
     DatabaseUtilService database;
 
     @Autowired
-    ResultService resultService;
-
-    @Autowired
     RequestUtilService request;
 
     @Autowired
-    ResultRepository resultRepository;
+    CourseRepository courseRepository;
 
     @Autowired
     ExerciseRepository exerciseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    ParticipationRepository participationRepository;
+
+    @Autowired
+    SubmissionRepository submissionRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     @BeforeEach
     public void init() {
@@ -61,8 +63,8 @@ public class ExerciseIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void getStatsForTutorExerciseDashboardTest() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetStatsForTutorExerciseDashboardTest() throws Exception {
         List<Course> courses = database.createCoursesWithExercises();
         Course course = courses.get(0);
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
@@ -92,5 +94,111 @@ public class ExerciseIntegrationTest {
             assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
             assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
         }
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+                // TODO: check some entries and check that some are filtered out
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetExerciseDetails() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
+                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetExerciseForTutorDashboard() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                Exercise exerciseForTutorDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
+                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetStatsForTutorExerciseDashboard() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                StatsForInstructorDashboardDTO exerciseServer = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+                        StatsForInstructorDashboardDTO.class);
+                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetStatsForInstructorExerciseDashboard() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                StatsForInstructorDashboardDTO exerciseServer = request.get("/api/exercises/" + exercise.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
+                        StatsForInstructorDashboardDTO.class);
+                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                request.delete("/api/exercises/" + exercise.getId(), HttpStatus.OK);
+            }
+        }
+
+        assertThat(exerciseRepository.findAll()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testResetExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
+                // TODO: check that all participations are deleted for the exercise
+                // TODO: also test this for quiz exercises
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCleanupExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercises();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                request.delete("/api/exercises/" + exercise.getId() + "/cleanup", HttpStatus.OK);
+                // TODO: check all participations in programming exercises do not have build plan ids any more
+            }
+        }
+        // NOTE: for some reason, the cleanup does not work properly in this case.
+        // Therefore we have some additional cleanup code here
+
+        resultRepository.deleteAll();
+        submissionRepository.deleteAll();
+        exerciseRepository.deleteAll();
     }
 }
