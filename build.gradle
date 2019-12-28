@@ -123,6 +123,8 @@ task integrationTest(type: Test) {
     include "**/*IT*", "**/*IntTest*"
     exclude "**/*CucumberIT*"
 
+    maxHeapSize = '2048m'
+    jvmArgs '-XX:MaxPermSize=256m'
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
@@ -146,7 +148,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.5
+                minimum = 0.4
             }
         }
     }

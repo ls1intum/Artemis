@@ -65,14 +65,14 @@ public class ExerciseIntegrationTest {
     public void getStatsForTutorExerciseDashboardTest() throws Exception {
         List<Course> courses = database.createCoursesWithExercises();
         Course course = courses.get(0);
-        TextExercise exercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
+        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
         List<Submission> submissions = new ArrayList<>();
         for (int i = 1; i <= 6; i++) {
             TextSubmission textSubmission = new TextSubmission();
             textSubmission.text("Text");
             textSubmission.submitted(true);
             textSubmission.submissionDate(ZonedDateTime.now());
-            submissions.add(database.addSubmission(exercise, textSubmission, "student" + (i + 1))); // student1 was already used
+            submissions.add(database.addSubmission(textExercise, textSubmission, "student" + (i + 1))); // student1 was already used
             if (i % 3 == 0) {
                 database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"));
             }
@@ -80,10 +80,17 @@ public class ExerciseIntegrationTest {
                 database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"));
             }
         }
-        StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+        StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
         assertThat(statsForInstructorDashboardDTO.getNumberOfSubmissions()).isEqualTo(submissions.size() + 1);
         assertThat(statsForInstructorDashboardDTO.getNumberOfAssessments()).isEqualTo(3);
         assertThat(statsForInstructorDashboardDTO.getNumberOfAutomaticAssistedAssessments()).isEqualTo(1);
+
+        for (Exercise exercise : course.getExercises()) {
+            StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+                    StatsForInstructorDashboardDTO.class);
+            assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
+            assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
+        }
     }
 }
