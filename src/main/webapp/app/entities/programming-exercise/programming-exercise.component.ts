@@ -17,7 +17,7 @@ import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exe
 import { FeatureToggle } from 'app/feature-toggle';
 import { IntelliJState, isIntelliJ } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { stringifyCricular } from 'app/shared/util/utils';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -26,7 +26,7 @@ import { stringifyCricular } from 'app/shared/util/utils';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    readonly isIDE = isIntelliJ;
+    readonly isIntelliJ = isIntelliJ;
     FeatureToggle = FeatureToggle;
     intelliJState: IntelliJState;
 
@@ -119,12 +119,12 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     editIntIntelliJ(programmingExercise: ProgrammingExercise) {
-        this.javaBridge.editExercise(stringifyCricular(programmingExercise));
+        this.javaBridge.editExercise(stringifyCircular(programmingExercise));
     }
 
-    openIntelliJEditor(exericse: ProgrammingExercise) {
+    openIntelliJEditor(exercise: ProgrammingExercise) {
         try {
-            this.router.navigate(['code-editor', 'ide', exericse.id, 'admin', 'test']);
+            this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation.id]);
         } catch (e) {
             this.javaBridge.log(e);
         }

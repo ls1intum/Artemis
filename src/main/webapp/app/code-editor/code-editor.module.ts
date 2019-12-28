@@ -22,7 +22,6 @@ import {
     CodeEditorGridComponent,
     CodeEditorGridService,
     CodeEditorInstructionsComponent,
-    CodeEditorInstructorContainerComponent,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryIsLockedComponent,
     CodeEditorRepositoryService,
@@ -40,8 +39,9 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { CodeEditorInstructorIntellijComponent } from 'app/code-editor/code-editor-instructor-intellij.component';
+import { CodeEditorInstructorIntellijContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-intellij-container.component';
 import { IntellijModule } from 'app/intellij/intellij.module';
+import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
@@ -76,11 +76,11 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
-        CodeEditorInstructorIntellijComponent,
+        CodeEditorInstructorIntellijContainerComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     entryComponents: [
-        CodeEditorInstructorIntellijComponent,
+        CodeEditorInstructorIntellijContainerComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserDeleteComponent,

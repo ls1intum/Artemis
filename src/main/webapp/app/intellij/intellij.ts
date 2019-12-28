@@ -1,4 +1,4 @@
-import { REPOSITORY } from 'app/code-editor/code-editor-instructor-base-container.component';
+import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 
 export interface IntelliJState {
     opened: number;

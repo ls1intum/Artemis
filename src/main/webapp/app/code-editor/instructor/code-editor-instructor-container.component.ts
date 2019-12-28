@@ -12,10 +12,10 @@ import {
     CodeEditorBuildOutputComponent,
     CodeEditorFileBrowserComponent,
     CodeEditorInstructionsComponent,
-    CodeEditorInstructorBaseContainerComponent,
     CodeEditorSessionService,
 } from 'app/code-editor';
 import { UpdatingResultComponent } from 'app/entities/result';
+import { CodeEditorInstructorBaseContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 
 @Component({
     selector: 'jhi-code-editor-instructor',

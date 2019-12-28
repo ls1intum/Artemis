@@ -2,8 +2,9 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent } from './';
-import { CodeEditorInstructorIntellijComponent } from 'app/code-editor/code-editor-instructor-intellij.component';
+import { CodeEditorStudentContainerComponent } from './';
+import { CodeEditorInstructorIntellijContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-intellij-container.component';
+import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
 
 export const codeEditorRoute: Routes = [
     {
@@ -48,7 +49,7 @@ export const codeEditorRoute: Routes = [
     },
     {
         path: 'ide/:exerciseId/admin/test',
-        component: CodeEditorInstructorIntellijComponent,
+        component: CodeEditorInstructorIntellijContainerComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR'],
             pageTitle: 'artemisApp.editor.home.title',
@@ -61,7 +62,7 @@ export const codeEditorRoute: Routes = [
     },
     {
         path: 'ide/:exerciseId/admin/:participationId',
-        component: CodeEditorInstructorIntellijComponent,
+        component: CodeEditorInstructorIntellijContainerComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR'],
             pageTitle: 'artemisApp.editor.home.title',

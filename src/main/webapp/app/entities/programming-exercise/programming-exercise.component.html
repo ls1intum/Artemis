@@ -96,7 +96,7 @@
                     <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ programmingExercise.dueDate | date: 'medium' }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
-                    <td *ngIf="!isIDE" class="d-flex flex-column">
+                    <td *ngIf="!isIntelliJ" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl"
                                 ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span

@@ -24,7 +24,7 @@ export const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
  *
  * @param value The object you want to stringify
  */
-export const stringifyCricular = (val: any): string => {
+export const stringifyCircular = (val: any): string => {
     const cache: any[] = [];
     return JSON.stringify(val, (key, value) => {
         if (typeof value === 'object' && value !== null) {

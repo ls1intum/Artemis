@@ -10,7 +10,7 @@ import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/feature-toggle';
-import { stringifyCricular } from 'app/shared/util/utils';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -121,7 +121,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     importIntoIntelliJ() {
         const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
-        this.javaBridge.clone(repo, stringifyCricular(this.exercise));
+        this.javaBridge.clone(repo, stringifyCircular(this.exercise));
     }
 
     /**

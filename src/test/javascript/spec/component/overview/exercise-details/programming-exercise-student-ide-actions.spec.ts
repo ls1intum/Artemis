@@ -25,7 +25,7 @@ import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-te
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../../mocks/mock-feature-toggle-service';
-import { stringifyCricular } from 'app/shared/util/utils';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -143,7 +143,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
         const progExercise = { id: 42, title: 'Test Title' } as Exercise;
         progExercise.studentParticipations = [participation];
-        const exerciseJson = stringifyCricular(progExercise);
+        const exerciseJson = stringifyCircular(progExercise);
         comp.exercise = progExercise;
         comp.courseId = 456;
 

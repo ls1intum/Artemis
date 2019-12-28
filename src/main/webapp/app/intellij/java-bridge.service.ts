@@ -3,7 +3,7 @@ import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ExerciseView, IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
 import { Router } from '@angular/router';
-import { REPOSITORY } from 'app/code-editor/code-editor-instructor-base-container.component';
+import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin

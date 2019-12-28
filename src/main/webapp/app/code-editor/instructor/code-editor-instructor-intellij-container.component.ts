@@ -6,7 +6,7 @@ import { CourseExerciseService } from 'app/entities/course';
 import { CodeEditorFileService, CodeEditorSessionService, DomainService } from 'app/code-editor/service';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/code-editor/code-editor-instructor-base-container.component';
+import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { IntelliJState } from 'app/intellij/intellij';
@@ -16,7 +16,7 @@ import { IntelliJState } from 'app/intellij/intellij';
     templateUrl: './code-editor-instructor-intellij.component.html',
     styles: ['.instructions-intellij { height: 700px }'],
 })
-export class CodeEditorInstructorIntellijComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
+export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
     intellijState: IntelliJState;
 
     constructor(

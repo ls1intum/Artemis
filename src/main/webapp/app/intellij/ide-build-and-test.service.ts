@@ -3,7 +3,7 @@ import { ProgrammingExercise } from '../entities/programming-exercise';
 import { ProgrammingSubmissionService } from '../programming-submission';
 import { Participation, ParticipationWebsocketService } from '../entities/participation';
 import { Result } from '../entities/result';
-import { filter, map, tap } from 'rxjs/operators';
+import { filter, first, map, tap } from 'rxjs/operators';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Observable, Subject, Subscription } from 'rxjs';
@@ -75,6 +75,7 @@ export class IdeBuildAndTestService {
                     } else {
                         this.forwardBuildLogs(participationId);
                     }
+                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId);
                 }),
             )
             .subscribe();

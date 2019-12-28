@@ -9,8 +9,6 @@ export * from './status';
 export * from './model';
 
 export * from './code-editor-mode-container.component';
-export * from './code-editor-instructor-base-container.component';
-export * from './code-editor-instructor-container.component';
 export * from './code-editor-student-container.component';
 
 export { ArtemisCodeEditorModule } from './code-editor.module';
