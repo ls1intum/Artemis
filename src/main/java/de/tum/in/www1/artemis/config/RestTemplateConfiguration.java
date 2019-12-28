@@ -36,13 +36,13 @@ public class RestTemplateConfiguration {
     }
 
     @NotNull
-    private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor jenkinsInterceptor) {
+    private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor) {
         final var restTemplate = new RestTemplate();
         var interceptors = restTemplate.getInterceptors();
         if (interceptors.isEmpty()) {
             interceptors = new ArrayList<>();
         }
-        interceptors.add(jenkinsInterceptor);
+        interceptors.add(interceptor);
         restTemplate.setInterceptors(interceptors);
 
         return restTemplate;
