@@ -4,10 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -15,10 +12,31 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 public class ModelFactory {
 
+    public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
+        Lecture lecture = new Lecture();
+        lecture.setStartDate(startDate);
+        lecture.setDescription("Description");
+        lecture.setTitle("Lecture");
+        lecture.setEndDate(endDate);
+        lecture.setCourse(course);
+        return lecture;
+    }
+
+    public static Attachment generateAttachment(ZonedDateTime startDate, Lecture lecture) {
+        Attachment attachment = new Attachment();
+        attachment.setAttachmentType(AttachmentType.FILE);
+        attachment.setReleaseDate(startDate);
+        attachment.setUploadDate(startDate);
+        attachment.setName("TestAttachement");
+        attachment.setLecture(lecture);
+        return attachment;
+    }
+
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
         programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         return programmingExercise;
     }
 

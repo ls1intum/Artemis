@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,10 +24,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
@@ -55,18 +50,6 @@ public class CourseIntegrationTest {
 
     @Autowired
     CustomAuditEventRepository auditEventRepo;
-
-    @Autowired
-    ExerciseRepository exerciseRepo;
-
-    @Autowired
-    ParticipationRepository participationRepo;
-
-    @Autowired
-    ResultRepository resultRepo;
-
-    @Autowired
-    SubmissionRepository submissionRepo;
 
     @Autowired
     UserRepository userRepo;
@@ -97,8 +80,7 @@ public class CourseIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
-        List<Course> courses = createTestData();
-        // TODO: add some lectures into the courses
+        List<Course> courses = database.createCoursesWithExercises();
         for (Course course : courses) {
             request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
         }
@@ -134,14 +116,13 @@ public class CourseIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetCourseWithoutPermission() throws Exception {
-        createTestData();
         request.getList("/api/courses", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCoursesWithPermission() throws Exception {
-        createTestData();
+        database.createCoursesWithExercises();
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("All courses are available").isEqualTo(2);
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -153,7 +134,7 @@ public class CourseIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllCoursesForDashboard() throws Exception {
-        createTestData();
+        database.createCoursesWithExercises();
         // Do the actual request that is tested here.
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
 
@@ -214,7 +195,7 @@ public class CourseIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetCourseForTutorDashboard() throws Exception {
-        List<Course> testCourses = createTestData();
+        List<Course> testCourses = database.createCoursesWithExercises();
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
@@ -235,7 +216,7 @@ public class CourseIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourseForInstructorDashboard() throws Exception {
-        List<Course> testCourses = createTestData();
+        List<Course> testCourses = database.createCoursesWithExercises();
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
@@ -256,7 +237,7 @@ public class CourseIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourse() throws Exception {
-        List<Course> testCourses = createTestData();
+        List<Course> testCourses = database.createCoursesWithExercises();
         for (Course testCourse : testCourses) {
             Course courseWithExercisesAndRelevantParticipations = request.get("/api/courses/" + testCourse.getId() + "/with-exercises-and-relevant-participations", HttpStatus.OK,
                     Course.class);
@@ -269,7 +250,7 @@ public class CourseIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCategoriesInCourse() throws Exception {
-        List<Course> testCourses = createTestData();
+        List<Course> testCourses = database.createCoursesWithExercises();
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         Set<String> categories1 = request.get("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, Set.class);
@@ -302,76 +283,5 @@ public class CourseIntegrationTest {
         assertThat(auditEvent.getData().get("course")).as("Correct Event Data").isEqualTo(course1.getTitle());
 
         request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
-    }
-
-    private List<Course> createTestData() {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
-
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
-        modelingExercise.setGradingInstructions("some grading instructions");
-        modelingExercise.getCategories().add("Modeling");
-        course1.addExercises(modelingExercise);
-
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
-        textExercise.setGradingInstructions("some grading instructions");
-        textExercise.getCategories().add("Text");
-        course1.addExercises(textExercise);
-
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
-        fileUploadExercise.setGradingInstructions("some grading instructions");
-        fileUploadExercise.getCategories().add("File");
-        course1.addExercises(fileUploadExercise);
-
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course1);
-        programmingExercise.setGradingInstructions("some grading instructions");
-        programmingExercise.getCategories().add("Programming");
-        course1.addExercises(programmingExercise);
-
-        course1 = courseRepo.save(course1);
-        course2 = courseRepo.save(course2);
-
-        modelingExercise = exerciseRepo.save(modelingExercise);
-        textExercise = exerciseRepo.save(textExercise);
-        fileUploadExercise = exerciseRepo.save(fileUploadExercise);
-        programmingExercise = exerciseRepo.save(programmingExercise);
-
-        User user = (userRepo.findOneByLogin("student1")).get();
-        Participation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
-        Participation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
-        Participation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
-
-        Submission modelingSubmission1 = ModelFactory.generateModelingSubmission("model1", true);
-        Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
-        Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
-
-        Result result1 = ModelFactory.generateResult(true, 10);
-        Result result2 = ModelFactory.generateResult(true, 12);
-        Result result3 = ModelFactory.generateResult(false, 0);
-
-        result1 = resultRepo.save(result1);
-        result2 = resultRepo.save(result2);
-        result3 = resultRepo.save(result3);
-
-        modelingSubmission1.setResult(result1);
-        modelingSubmission2.setResult(result2);
-        textSubmission.setResult(result3);
-
-        participation1 = participationRepo.save(participation1);
-        participation2 = participationRepo.save(participation2);
-        participation3 = participationRepo.save(participation3);
-
-        modelingSubmission1.setParticipation(participation1);
-        textSubmission.setParticipation(participation1);
-        modelingSubmission2.setParticipation(participation3);
-
-        submissionRepo.save(modelingSubmission1);
-        submissionRepo.save(modelingSubmission2);
-        submissionRepo.save(textSubmission);
-        return Arrays.asList(course1, course2);
     }
 }
