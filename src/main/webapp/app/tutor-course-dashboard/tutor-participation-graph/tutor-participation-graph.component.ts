@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { Router } from '@angular/router';
-import * as _ from 'lodash';
+import { get } from 'lodash';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 @Component({
@@ -32,8 +32,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.tutorParticipationStatus = this.tutorParticipation.status;
-        const exerciseId = _.get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.id');
-        const courseId = _.get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.course.id');
+        const exerciseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.id');
+        const courseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.course.id');
 
         if (courseId && exerciseId) {
             this.routerLink = `/course/${courseId}/exercise/${exerciseId}/tutor-dashboard`;
