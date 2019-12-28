@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.gitlab.model;
+package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GitLabCommit {
+public class GitLabCommitDTO {
 
     @JsonProperty("id")
     private String hash;

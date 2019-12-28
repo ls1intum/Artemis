@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.gitlab.model;
+package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GitLabPushNotification {
+public class GitLabPushNotificationDTO {
 
     @JsonProperty("object_kind")
     private String triggerType;
@@ -44,17 +44,17 @@ public class GitLabPushNotification {
     @JsonProperty("project_id")
     private int projectId;
 
-    private GitLabProject project;
+    private GitLabProjectDTO project;
 
-    private List<GitLabCommit> commits;
+    private List<GitLabCommitDTO> commits;
 
     @JsonProperty("total_commits_count")
     private int totalCommitsCount;
 
-    private GitLabRepository repository;
+    private GitLabRepositoryDTO repository;
 
-    public static GitLabPushNotification convert(Object someNotification) {
-        return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someNotification, GitLabPushNotification.class);
+    public static GitLabPushNotificationDTO convert(Object someNotification) {
+        return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someNotification, GitLabPushNotificationDTO.class);
     }
 
     public String getTriggerType() {
@@ -153,19 +153,19 @@ public class GitLabPushNotification {
         this.projectId = projectId;
     }
 
-    public GitLabProject getProject() {
+    public GitLabProjectDTO getProject() {
         return project;
     }
 
-    public void setProject(GitLabProject project) {
+    public void setProject(GitLabProjectDTO project) {
         this.project = project;
     }
 
-    public List<GitLabCommit> getCommits() {
+    public List<GitLabCommitDTO> getCommits() {
         return commits;
     }
 
-    public void setCommits(List<GitLabCommit> commits) {
+    public void setCommits(List<GitLabCommitDTO> commits) {
         this.commits = commits;
     }
 
@@ -177,11 +177,11 @@ public class GitLabPushNotification {
         this.totalCommitsCount = totalCommitsCount;
     }
 
-    public GitLabRepository getRepository() {
+    public GitLabRepositoryDTO getRepository() {
         return repository;
     }
 
-    public void setRepository(GitLabRepository repository) {
+    public void setRepository(GitLabRepositoryDTO repository) {
         this.repository = repository;
     }
 }

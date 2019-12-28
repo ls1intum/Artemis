@@ -1,8 +1,8 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins.model;
+package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.util.List;
 
-public class TestCase {
+public class TestCaseDTO {
 
     private String name;
 
@@ -10,9 +10,9 @@ public class TestCase {
 
     private double time;
 
-    private List<Failure> failures;
+    private List<FailureDTO> failures;
 
-    private List<Error> errors;
+    private List<ErrorDTO> errors;
 
     public String getName() {
         return name;
@@ -38,19 +38,19 @@ public class TestCase {
         this.time = time;
     }
 
-    public List<Failure> getFailures() {
+    public List<FailureDTO> getFailures() {
         return failures;
     }
 
-    public void setFailures(List<Failure> failures) {
+    public void setFailures(List<FailureDTO> failures) {
         this.failures = failures;
     }
 
-    public List<Error> getErrors() {
+    public List<ErrorDTO> getErrors() {
         return errors;
     }
 
-    public void setErrors(List<Error> errors) {
+    public void setErrors(List<ErrorDTO> errors) {
         this.errors = errors;
     }
 }

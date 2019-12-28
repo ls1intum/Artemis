@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.connectors.gitlab.model.GitLabPushNotification;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
@@ -209,7 +209,7 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
-        final var details = GitLabPushNotification.convert(requestBody);
+        final var details = GitLabPushNotificationDTO.convert(requestBody);
         final var commit = new Commit();
         // We will notify for every commit, so we can just use the first commit in the notification list
         final var gitLabCommit = details.getCommits().get(0);

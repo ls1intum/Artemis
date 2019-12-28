@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins.model;
+package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-public class TestResults {
+public class TestResultsDTO {
 
     private int successful;
 
@@ -18,14 +18,14 @@ public class TestResults {
 
     private String fullName;
 
-    private List<Commit> commits;
+    private List<CommitDTO> commits;
 
-    private List<Testsuite> results;
+    private List<TestsuiteDTO> results;
 
     private ZonedDateTime runDate;
 
-    public static TestResults convert(Object someResult) {
-        return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResults.class);
+    public static TestResultsDTO convert(Object someResult) {
+        return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);
     }
 
     public int getSuccessful() {
@@ -76,19 +76,19 @@ public class TestResults {
         this.runDate = runDate;
     }
 
-    public List<Commit> getCommits() {
+    public List<CommitDTO> getCommits() {
         return commits;
     }
 
-    public void setCommits(List<Commit> commits) {
+    public void setCommits(List<CommitDTO> commits) {
         this.commits = commits;
     }
 
-    public List<Testsuite> getResults() {
+    public List<TestsuiteDTO> getResults() {
         return results;
     }
 
-    public void setResults(List<Testsuite> results) {
+    public void setResults(List<TestsuiteDTO> results) {
         this.results = results;
     }
 }

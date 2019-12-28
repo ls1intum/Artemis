@@ -1,6 +1,6 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins.model;
+package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
-public class Failure {
+public class FailureDTO {
 
     private String message;
 

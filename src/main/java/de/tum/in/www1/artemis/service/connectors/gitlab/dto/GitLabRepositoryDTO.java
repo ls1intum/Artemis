@@ -1,11 +1,11 @@
-package de.tum.in.www1.artemis.service.connectors.gitlab.model;
+package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
 import java.net.URL;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GitLabRepository {
+public class GitLabRepositoryDTO {
 
     private String name;
 
