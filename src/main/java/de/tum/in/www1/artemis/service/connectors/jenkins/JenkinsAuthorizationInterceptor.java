@@ -22,13 +22,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 @Component
 public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
-    @Value("${artemis.ci.user}")
+    @Value("${artemis.continuous-integration.user}")
     private String username;
 
-    @Value("${artemis.ci.password}")
+    @Value("${artemis.continuous-integration.password}")
     private String password;
 
-    @Value("${artemis.ci.url}")
+    @Value("${artemis.continuous-integration.url}")
     private URL jenkinsURL;
 
     @NotNull
