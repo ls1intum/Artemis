@@ -10,6 +10,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -159,8 +160,9 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void addWebHookToCISystem(URL repositoryUrl, String notificationUrl, String webHookName) {
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         // Not needed for Bitbucket
+        throw new NotImplementedException("Authenticated webhooks with Bitbucket are not supported!");
     }
 
     @Override

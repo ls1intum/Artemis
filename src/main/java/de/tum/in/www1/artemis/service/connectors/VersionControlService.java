@@ -21,7 +21,16 @@ public interface VersionControlService {
      */
     void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
 
-    void addWebHookToCISystem(URL repositoryUrl, String notificationUrl, String webHookName);
+    /**
+     * Authenticated version of {@link VersionControlService#addWebHook(URL, String, String)}
+     *
+     * @param repositoryUrl     The repository to create the hook on
+     * @param notificationUrl   The URL that should be notified when a push occurred. This includes all arguments.
+     * @param webHookName       The name of the WebHook that should be added as additional information (if applicable)
+     * @param secretToken       Secret token every webhook should contain in order to only allow authenticated hooks to get accepted
+     * @see VersionControlService#addWebHook(URL, String, String)
+     */
+    void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken);
 
     /**
      * Deletes the project for the given project key

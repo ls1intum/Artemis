@@ -56,9 +56,6 @@ public class GitLabService implements VersionControlService {
     @Value("${artemis.version-control.secret}")
     private String GITLAB_PRIVATE_TOKEN;
 
-    @Value("${artemis.version-control.ci-token}")
-    private String CI_TOKEN;
-
     private String BASE_API;
 
     private final RestTemplate restTemplate;
@@ -144,17 +141,12 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public void addWebHookToCISystem(URL repositoryUrl, String notificationUrl, String webHookName) {
-        addWebHook(repositoryUrl, notificationUrl, webHookName, CI_TOKEN);
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+        addWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        addWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
-
-    }
-
-    private void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 
