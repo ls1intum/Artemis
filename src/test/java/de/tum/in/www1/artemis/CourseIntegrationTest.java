@@ -265,7 +265,7 @@ public class CourseIntegrationTest {
 
             StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                     StatsForInstructorDashboardDTO.class);
-            long numberOfSubmissions = course.getId() == 1 ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
+            long numberOfSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
             assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
@@ -278,8 +278,7 @@ public class CourseIntegrationTest {
             }
             else {
                 assertThat(stats2).as("Stats are available for instructor").isNotNull();
-                assertThat(stats2).as("Stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats, "numberOfSubmissions", "numberOfAssessments",
-                        "tutorLeaderboardEntries");
+                assertThat(stats2).as("Stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats, "numberOfSubmissions", "numberOfAssessments");
             }
         }
     }
@@ -324,8 +323,9 @@ public class CourseIntegrationTest {
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
             // - Course 2 has 0 exercises in total, 0 exercises with relevant participations
-            long numberOfExercises = courseOnly.getId() == 1 ? 5 : 0;
-            long numberOfInterestingExercises = courseOnly.getId() == 1 ? 4 : 0;
+            boolean isFirstCourse = courseOnly.getId().equals(testCourses.get(0).getId());
+            long numberOfExercises = isFirstCourse ? 5 : 0;
+            long numberOfInterestingExercises = isFirstCourse ? 4 : 0;
             assertThat(courseWithExercises.getExercises().size()).as("Course contains correct number of exercises").isEqualTo(numberOfExercises);
             assertThat(courseWithExercisesAndRelevantParticipations.getExercises().size()).as("Course contains correct number of exercises")
                     .isEqualTo(numberOfInterestingExercises);
