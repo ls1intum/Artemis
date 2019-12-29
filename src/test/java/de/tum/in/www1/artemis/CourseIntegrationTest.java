@@ -26,9 +26,11 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -245,17 +247,34 @@ public class CourseIntegrationTest {
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
-                exercise.getNumberOfAssessments();
-                exercise.getTutorParticipations();
-                exercise.getNumberOfParticipations();
-                // TODO: check number of participations, number of assessments and tutor participation in each exercise
+                assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
+                assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
+                // Mock data contains exactly one participation for the modeling and text exercise
+                if (exercise instanceof ModelingExercise || exercise instanceof TextExercise) {
+                    assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(1);
+                }
+                // Mock data contains no participations for the file upload and programming exercise
+                if (exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise) {
+                    assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(0);
+                }
+                // Check tutor participation
+                if (exercise.getTutorParticipations().size() > 0) {
+                    TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
+                    assertThat(tutorParticipation.getStatus()).as("Tutor participation status is correctly initialized").isEqualTo(TutorParticipationStatus.NOT_PARTICIPATED);
+                    assertThat(tutorParticipation.getPoints()).as("Tutor participation points are correctly initialized").isNull();
+                }
             }
 
             StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                     StatsForInstructorDashboardDTO.class);
+            long numberOfSubmissions = course.getId() == 1 ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
+            assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
+            assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
+            assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+
             StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN,
                     StatsForInstructorDashboardDTO.class);
-            // TODO: add additional checks for the retrieved data
+            assertThat(stats2).as("Stats for instructor are not available to tutor").isNull();
         }
     }
 
