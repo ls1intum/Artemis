@@ -19,6 +19,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -103,7 +109,74 @@ public class ExerciseIntegrationTest {
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
-                // TODO: check some entries and check that some are filtered out
+
+                // Test that certain properties were set correctly
+                assertThat(exerciseServer.getReleaseDate()).as("Release date is present").isNotNull();
+                assertThat(exerciseServer.getDueDate()).as("Due date is present").isNotNull();
+                assertThat(exerciseServer.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseServer.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
+
+                // Test that certain properties were filtered out as the test user is a student
+                assertThat(exerciseServer.getGradingInstructions()).as("Grading instructions were filtered out").isNull();
+                assertThat(exerciseServer.getTutorParticipations().size()).as("Tutor participations not included").isZero();
+                assertThat(exerciseServer.getExampleSubmissions().size()).as("Example submissions not included").isZero();
+
+                // Test presence and absence of exercise type specific properties
+                if (exerciseServer instanceof FileUploadExercise) {
+                    FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseServer;
+                    assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
+                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                }
+                if (exerciseServer instanceof ModelingExercise) {
+                    ModelingExercise modelingExercise = (ModelingExercise) exerciseServer;
+                    assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
+                    assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
+                    assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                }
+                if (exerciseServer instanceof ProgrammingExercise) {
+                    ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exerciseServer;
+                    assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
+                    assertThat(programmingExerciseExercise.getTemplateRepositoryUrl()).as("Template repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionRepositoryUrl()).as("Solution repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
+                }
+                if (exerciseServer instanceof QuizExercise) {
+                    QuizExercise quizExercise = (QuizExercise) exerciseServer;
+                    assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
+                    assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
+                    assertThat(quizExercise.getQuizPointStatistic().getId()).as("Quiz point statistic was filtered out").isNull();
+                    assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
+                }
+                if (exerciseServer instanceof TextExercise) {
+                    TextExercise textExercise = (TextExercise) exerciseServer;
+                    assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                }
+
+                // Test that the exercise does not have more than one participation.
+                assertThat(exerciseServer.getStudentParticipations().size()).as("At most one participation for exercise").isLessThanOrEqualTo(1);
+                if (exerciseServer.getStudentParticipations().size() > 0) {
+                    // Buffer participation so that null checking is easier.
+                    Participation participation = exerciseServer.getStudentParticipations().iterator().next();
+                    if (participation.getSubmissions().size() > 0) {
+                        // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
+                        assertThat(participation.getSubmissions().size()).as("At most one submission for participation").isLessThanOrEqualTo(1);
+                        Submission submission = participation.getSubmissions().iterator().next();
+                        if (submission != null) {
+                            // Test that the correct text submission was filtered.
+                            if (submission instanceof TextSubmission) {
+                                TextSubmission textSubmission = (TextSubmission) submission;
+                                assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
+                            }
+                            // Test that the correct modeling submission was filtered.
+                            if (submission instanceof ModelingSubmission) {
+                                ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                                assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model2");
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -115,7 +188,43 @@ public class ExerciseIntegrationTest {
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
-                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+
+                if (exerciseWithDetails instanceof FileUploadExercise) {
+                    FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseWithDetails;
+                    assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
+                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(fileUploadExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
+                }
+                if (exerciseWithDetails instanceof ModelingExercise) {
+                    ModelingExercise modelingExercise = (ModelingExercise) exerciseWithDetails;
+                    assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
+                    assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
+                    assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertThat(modelingExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(1);
+                }
+                if (exerciseWithDetails instanceof ProgrammingExercise) {
+                    ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exerciseWithDetails;
+                    assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
+                    assertThat(programmingExerciseExercise.getTemplateRepositoryUrl()).as("Template repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionRepositoryUrl()).as("Solution repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
+                    assertThat(programmingExerciseExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
+                }
+                if (exerciseWithDetails instanceof QuizExercise) {
+                    QuizExercise quizExercise = (QuizExercise) exerciseWithDetails;
+                    assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
+                    assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
+                    assertThat(quizExercise.getQuizPointStatistic().getId()).as("Quiz point statistic was filtered out").isNull();
+                    assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
+                    assertThat(quizExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
+                }
+                if (exerciseWithDetails instanceof TextExercise) {
+                    TextExercise textExercise = (TextExercise) exerciseWithDetails;
+                    assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(textExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(2);
+                }
             }
         }
     }
@@ -127,7 +236,33 @@ public class ExerciseIntegrationTest {
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseForTutorDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
-                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+                assertThat(exerciseForTutorDashboard.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
+                assertThat(exerciseForTutorDashboard.getExampleSubmissions().size()).as("Example submissions are not null").isZero();
+
+                // Test that certain properties were set correctly
+                assertThat(exerciseForTutorDashboard.getReleaseDate()).as("Release date is present").isNotNull();
+                assertThat(exerciseForTutorDashboard.getDueDate()).as("Due date is present").isNotNull();
+                assertThat(exerciseForTutorDashboard.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
+                assertThat(exerciseForTutorDashboard.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
+
+                // Test presence of exercise type specific properties
+                if (exerciseForTutorDashboard instanceof FileUploadExercise) {
+                    FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseForTutorDashboard;
+                    assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
+                }
+                if (exerciseForTutorDashboard instanceof ModelingExercise) {
+                    ModelingExercise modelingExercise = (ModelingExercise) exerciseForTutorDashboard;
+                    assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
+                }
+                if (exerciseForTutorDashboard instanceof ProgrammingExercise) {
+                    ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exerciseForTutorDashboard;
+                    assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
+                }
+                if (exerciseForTutorDashboard instanceof QuizExercise) {
+                    QuizExercise quizExercise = (QuizExercise) exerciseForTutorDashboard;
+                    assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
+                    assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
+                }
             }
         }
     }
@@ -138,9 +273,28 @@ public class ExerciseIntegrationTest {
         List<Course> courses = database.createCoursesWithExercises();
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                StatsForInstructorDashboardDTO exerciseServer = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
-                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+                assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
+                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+                assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should not be available to tutor").isNull();
+                assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should not be available to tutor").isNull();
+
+                if (exercise instanceof FileUploadExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
+                }
+                if (exercise instanceof ModelingExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                }
+                if (exercise instanceof ProgrammingExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
+                }
+                if (exercise instanceof QuizExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for quiz exercise is correct").isEqualTo(0);
+                }
+                if (exercise instanceof TextExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for text exercise is correct").isEqualTo(1);
+                }
             }
         }
     }
@@ -151,9 +305,28 @@ public class ExerciseIntegrationTest {
         List<Course> courses = database.createCoursesWithExercises();
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                StatsForInstructorDashboardDTO exerciseServer = request.get("/api/exercises/" + exercise.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
-                // TODO: check some entries (e.g. that this includes student questions, results, etc. and check that some are filtered out
+                assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
+                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+                assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints is zero").isZero();
+                assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests is zero").isZero();
+
+                if (exercise instanceof FileUploadExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
+                }
+                if (exercise instanceof ModelingExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                }
+                if (exercise instanceof ProgrammingExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
+                }
+                if (exercise instanceof QuizExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for quiz exercise is correct").isEqualTo(0);
+                }
+                if (exercise instanceof TextExercise) {
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for text exercise is correct").isEqualTo(1);
+                }
             }
         }
     }
@@ -167,7 +340,6 @@ public class ExerciseIntegrationTest {
                 request.delete("/api/exercises/" + exercise.getId(), HttpStatus.OK);
             }
         }
-
         assertThat(exerciseRepository.findAll()).hasSize(0);
     }
 
@@ -178,10 +350,11 @@ public class ExerciseIntegrationTest {
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
-                // TODO: check that all participations are deleted for the exercise
-                // TODO: also test this for quiz exercises
+                assertThat(exercise.getStudentParticipations().size()).as("Student participations have been deleted").isZero();
+                assertThat(exercise.getTutorParticipations().size()).as("Tutor participations have been deleted").isZero();
             }
         }
+        assertThat(participationRepository.findAll()).hasSize(0);
     }
 
     @Test
@@ -191,7 +364,12 @@ public class ExerciseIntegrationTest {
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 request.delete("/api/exercises/" + exercise.getId() + "/cleanup", HttpStatus.OK);
-                // TODO: check all participations in programming exercises do not have build plan ids any more
+                if (exercise instanceof ProgrammingExercise) {
+                    for (StudentParticipation participation : exercise.getStudentParticipations()) {
+                        ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
+                        assertThat(programmingExerciseParticipation.getBuildPlanId()).as("Build plan id has been removed").isNull();
+                    }
+                }
             }
         }
         // NOTE: for some reason, the cleanup does not work properly in this case.
