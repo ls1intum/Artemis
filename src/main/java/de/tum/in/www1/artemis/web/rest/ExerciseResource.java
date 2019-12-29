@@ -134,8 +134,8 @@ public class ExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-        // Programming exercises without semi automatic assessment should not be available on the tutor dashboard!
-        if (exercise instanceof ProgrammingExercise && !exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)) {
+        // Programming exercises with only automatic assessment should *NOT* be available on the tutor dashboard!
+        if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             return badRequest();
         }
 

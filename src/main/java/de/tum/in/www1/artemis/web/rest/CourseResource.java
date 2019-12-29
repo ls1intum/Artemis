@@ -344,21 +344,12 @@ public class CourseResource {
             return forbidden();
         }
 
-        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
-                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && !exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)))
-                .collect(Collectors.toSet());
+        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
         course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
-            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
-
-                        return emptyTutorParticipation;
-                    });
 
             // TODO: This could be 1 repository method as the exercise id is provided anyway.
             long numberOfSubmissions = 0L;
@@ -377,15 +368,21 @@ public class CourseResource {
 
             long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
+            exercise.setNumberOfParticipations(numberOfSubmissions);
+            exercise.setNumberOfAssessments(numberOfAssessments);
+
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment
             exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
             exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
 
-            exercise.setNumberOfParticipations(numberOfSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
+            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
+                    .findFirst().orElseGet(() -> {
+                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
+                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+                        return emptyTutorParticipation;
+                    });
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-
         }
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
@@ -485,9 +482,7 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
-                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)))
-                .collect(Collectors.toSet());
+        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
