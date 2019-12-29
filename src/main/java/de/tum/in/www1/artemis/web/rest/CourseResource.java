@@ -340,7 +340,7 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course)) {
+        if (!userHasPermission(course, user)) {
             return forbidden();
         }
 
@@ -379,7 +379,7 @@ public class CourseResource {
 
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
+            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
             exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
@@ -404,7 +404,8 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             return forbidden();
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
@@ -439,7 +440,8 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             return forbidden();
         }
 
@@ -457,7 +459,8 @@ public class CourseResource {
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseService.findOneWithExercises(courseId);
-        if (!userHasPermission(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
@@ -532,7 +535,8 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
         long start = System.currentTimeMillis();
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -570,8 +574,7 @@ public class CourseResource {
         return ResponseEntity.ok(stats);
     }
 
-    private boolean userHasPermission(Course course) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+    private boolean userHasPermission(Course course, User user) {
         return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
     }
 

@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -30,11 +30,11 @@ public class ExerciseService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final TutorParticipationRepository tutorParticipationRepository;
+
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
-
-    private final GitService gitService;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -42,15 +42,19 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService, GitService gitService,
-            ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService) {
+    private final ExampleSubmissionService exampleSubmissionService;
+
+    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.gitService = gitService;
         this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
+        this.tutorParticipationRepository = tutorParticipationRepository;
+        this.exampleSubmissionService = exampleSubmissionService;
     }
 
     /**
@@ -240,6 +244,13 @@ public class ExerciseService {
         log.info("ExerciseService.Request to delete Exercise : {}", exercise.getTitle());
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
+        // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
+        for (ExampleSubmission exampleSubmission : exercise.getExampleSubmissions()) {
+            exampleSubmissionService.deleteById(exampleSubmission.getId());
+        }
+        // make sure tutor participations are deleted before the exercise is deleted
+        tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
+
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);

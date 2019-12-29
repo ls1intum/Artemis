@@ -112,6 +112,9 @@ public class DatabaseUtilService {
     ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
+    TutorParticipationRepository tutorParticipationRepo;
+
+    @Autowired
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
@@ -134,6 +137,7 @@ public class DatabaseUtilService {
         resultRepo.deleteAll();
         assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         feedbackRepo.deleteAll();
+        tutorParticipationRepo.deleteAll();
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
@@ -192,7 +196,7 @@ public class DatabaseUtilService {
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
-    public List<Course> createCoursesWithExercises() {
+    public List<Course> createCoursesWithExercises() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -237,6 +241,14 @@ public class DatabaseUtilService {
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
         programmingExercise = exerciseRepo.save(programmingExercise);
         quizExercise = exerciseRepo.save(quizExercise);
+
+        String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
+        var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
+        exampleSubmission.assessmentExplanation("exp");
+        var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor1"));
+        exampleSubmission.addTutorParticipations(tutorParticipation);
+        tutorParticipationRepo.save(tutorParticipation);
+        exampleSubmissionRepo.save(exampleSubmission);
 
         User user = (userRepo.findOneByLogin("student1")).get();
         StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
@@ -812,7 +824,7 @@ public class DatabaseUtilService {
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
 
-    public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission, String login) {
+    public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
         modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
         return exampleSubmissionRepo.save(exampleSubmission);
     }

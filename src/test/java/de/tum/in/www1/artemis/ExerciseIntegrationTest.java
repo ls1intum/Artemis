@@ -52,6 +52,12 @@ public class ExerciseIntegrationTest {
     @Autowired
     ResultRepository resultRepository;
 
+    @Autowired
+    ExampleSubmissionRepository exampleSubmissionRepo;
+
+    @Autowired
+    TutorParticipationRepository tutorParticipationRepo;
+
     @BeforeEach
     public void init() {
         database.addUsers(10, 1, 1);
@@ -197,6 +203,8 @@ public class ExerciseIntegrationTest {
         // NOTE: for some reason, the cleanup does not work properly in this case.
         // Therefore we have some additional cleanup code here
 
+        tutorParticipationRepo.deleteAll();
+        exampleSubmissionRepo.deleteAll();
         resultRepository.deleteAll();
         submissionRepository.deleteAll();
         exerciseRepository.deleteAll();
