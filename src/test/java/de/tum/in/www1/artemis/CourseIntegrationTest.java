@@ -240,9 +240,7 @@ public class CourseIntegrationTest {
         assertThat(courses.size()).as("One course is available to register").isEqualTo(1);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseForTutorDashboard() throws Exception {
+    private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {
         List<Course> testCourses = database.createCoursesWithExercises();
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
@@ -272,31 +270,30 @@ public class CourseIntegrationTest {
             assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
 
-            StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN,
-                    StatsForInstructorDashboardDTO.class);
-            assertThat(stats2).as("Stats for instructor are not available to tutor").isNull();
+            StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
+                    isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+
+            if (!isInstructor) {
+                assertThat(stats2).as("Stats for instructor are not available to tutor").isNull();
+            }
+            else {
+                assertThat(stats2).as("Stats are available for instructor").isNotNull();
+                assertThat(stats2).as("Stats for instructor are correct.").isEqualToComparingOnlyGivenFields(stats, "numberOfSubmissions", "numberOfAssessments",
+                        "tutorLeaderboardEntries");
+            }
         }
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetCourseForInstructorDashboard() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercises();
-        for (Course testCourse : testCourses) {
-            Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
-            for (Exercise exercise : course.getExercises()) {
-                exercise.getNumberOfAssessments();
-                exercise.getTutorParticipations();
-                exercise.getNumberOfParticipations();
-                // TODO: check number of participations, number of assessments and tutor participation in each exercise
-            }
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseForTutorDashboardWithStats() throws Exception {
+        getCourseForDashboardWithStats(false);
+    }
 
-            StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
-                    StatsForInstructorDashboardDTO.class);
-            StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
-                    StatsForInstructorDashboardDTO.class);
-            // TODO: add additional checks for the retrieved data
-        }
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCourseForInstructorDashboardWithStats() throws Exception {
+        getCourseForDashboardWithStats(true);
     }
 
     @Test
@@ -308,7 +305,30 @@ public class CourseIntegrationTest {
                     Course.class);
             Course courseWithExercises = request.get("/api/courses/" + testCourse.getId() + "/with-exercises", HttpStatus.OK, Course.class);
             Course courseOnly = request.get("/api/courses/" + testCourse.getId(), HttpStatus.OK, Course.class);
-            // TODO: add additional checks for the retrieved data
+
+            // Check course properties on courseOnly
+            assertThat(courseOnly.getStudentGroupName()).as("Student group name is correct").isEqualTo("tumuser");
+            assertThat(courseOnly.getTeachingAssistantGroupName()).as("Teaching assistant group name is correct").isEqualTo("tutor");
+            assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo("instructor");
+            assertThat(courseOnly.getEndDate()).as("End date is after start date").isAfter(courseOnly.getStartDate());
+            assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(5);
+            assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
+            assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
+
+            // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
+            String[] fields = { "studentGroupName", "teachingAssistantGroupName", "instructorGroupName", "startDate", "endDate", "maxComplaints", "presentationScore" };
+            assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").isEqualToComparingOnlyGivenFields(courseOnly, fields);
+            assertThat(courseWithExercisesAndRelevantParticipations).as("courseWithExercisesAndRelevantParticipations same as courseOnly")
+                    .isEqualToComparingOnlyGivenFields(courseOnly, fields);
+
+            // Verify presence of exercises in mock courses
+            // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
+            // - Course 2 has 0 exercises in total, 0 exercises with relevant participations
+            long numberOfExercises = courseOnly.getId() == 1 ? 5 : 0;
+            long numberOfInterestingExercises = courseOnly.getId() == 1 ? 4 : 0;
+            assertThat(courseWithExercises.getExercises().size()).as("Course contains correct number of exercises").isEqualTo(numberOfExercises);
+            assertThat(courseWithExercisesAndRelevantParticipations.getExercises().size()).as("Course contains correct number of exercises")
+                    .isEqualTo(numberOfInterestingExercises);
         }
     }
 
