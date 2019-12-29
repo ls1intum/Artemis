@@ -24,14 +24,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -153,51 +150,6 @@ public class CourseIntegrationTest {
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
-            // Test that certain properties were set correctly
-            assertThat(exercise.getReleaseDate()).as("Release date is present").isNotNull();
-            assertThat(exercise.getDueDate()).as("Due date is present").isNotNull();
-            assertThat(exercise.getMaxScore()).as("Max score was set correctly").isEqualTo(5.0);
-            assertThat(exercise.getDifficulty()).as("Difficulty was set correctly").isEqualTo(DifficultyLevel.MEDIUM);
-
-            // Test that certain properties were filtered out as the test user is a student
-            assertThat(exercise.getGradingInstructions()).as("Grading instructions were filtered out").isNull();
-            assertThat(exercise.getProblemStatement()).as("Problem statements were filtered out").isNull();
-            assertThat(exercise.getTutorParticipations().size()).as("Tutor participations not included").isZero();
-            assertThat(exercise.getExampleSubmissions().size()).as("Example submissions not included").isZero();
-
-            // Test presence and absence of exercise type specific properties
-            if (exercise instanceof FileUploadExercise) {
-                FileUploadExercise fileUploadExercise = (FileUploadExercise) exercise;
-                assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
-            }
-            if (exercise instanceof ModelingExercise) {
-                ModelingExercise modelingExercise = (ModelingExercise) exercise;
-                assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
-                assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
-            }
-            if (exercise instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exercise;
-                assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
-                assertThat(programmingExerciseExercise.getTemplateRepositoryUrl()).as("Template repository url was filtered out").isNull();
-                assertThat(programmingExerciseExercise.getSolutionRepositoryUrl()).as("Solution repository url was filtered out").isNull();
-                assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
-                assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
-                assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
-            }
-            if (exercise instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) exercise;
-                assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
-                assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
-                assertThat(quizExercise.getQuizPointStatistic().getId()).as("Quiz point statistic was filtered out").isNull();
-                assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
-            }
-            if (exercise instanceof TextExercise) {
-                TextExercise textExercise = (TextExercise) exercise;
-                assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
-            }
-
             // Test that the exercise does not have more than one participation.
             assertThat(exercise.getStudentParticipations().size()).as("At most one participation for exercise").isLessThanOrEqualTo(1);
             if (exercise.getStudentParticipations().size() > 0) {

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -19,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -68,7 +71,72 @@ public class QuizExerciseIntegrationTest {
     public void testCreateQuizExercise() throws Exception {
         QuizExercise quizExerciseServer = createQuizOnServer();
 
-        // TODO: add some checks
+        // General assertions
+        assertThat(quizExerciseServer.getQuizQuestions().size()).as("Quiz questions were saved").isEqualTo(3);
+        assertThat(quizExerciseServer.getDuration()).as("Quiz duration was correctly set").isEqualTo(10);
+        assertThat(quizExerciseServer.getDifficulty()).as("Quiz difficulty was correctly set").isEqualTo(DifficultyLevel.MEDIUM);
+
+        // Quiz type specific assertions
+        for (QuizQuestion question : quizExerciseServer.getQuizQuestions()) {
+            if (question instanceof MultipleChoiceQuestion) {
+                MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) question;
+                assertThat(multipleChoiceQuestion.getAnswerOptions().size()).as("Multiple choice question answer options were saved").isEqualTo(2);
+                assertThat(multipleChoiceQuestion.getTitle()).as("Multiple choice question title is correct").isEqualTo("MC");
+                assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
+                assertThat(multipleChoiceQuestion.getScore()).as("Multiple choice question score is correct").isEqualTo(1);
+
+                List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+                assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("A");
+                assertThat(answerOptions.get(0).getHint()).as("Hint for answer option is correct").isEqualTo("H1");
+                assertThat(answerOptions.get(0).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E1");
+                assertThat(answerOptions.get(0).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
+                assertThat(answerOptions.get(1).getText()).as("Text for answer option is correct").isEqualTo("B");
+                assertThat(answerOptions.get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
+                assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
+                assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
+            }
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
+                assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
+                assertThat(dragAndDropQuestion.getScore()).as("Drag and drop question score is correct").isEqualTo(1);
+
+                List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
+                assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
+                assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
+                assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+
+                List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
+                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
+                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
+            }
+            if (question instanceof ShortAnswerQuestion) {
+                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+                assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(2);
+                assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(2);
+                assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
+                assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
+                assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(2);
+
+                List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
+                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(0);
+                assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(1);
+                assertThat(spots.get(1).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
+                assertThat(spots.get(1).getWidth()).as("Width for spot is correct").isEqualTo(2);
+
+                List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
+                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("is");
+                assertThat(solutions.get(1).getText()).as("Text for solution is correct").isEqualTo("long");
+            }
+        }
+
     }
 
     @Test
