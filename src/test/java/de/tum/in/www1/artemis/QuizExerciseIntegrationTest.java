@@ -110,14 +110,15 @@ public class QuizExerciseIntegrationTest {
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
                 assertThat(multipleChoiceQuestion.getScore()).as("Multiple choice question score is correct").isEqualTo(1);
 
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(0).getText()).as("Text for answer option is correct").isEqualTo("A");
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(0).getHint()).as("Hint for answer option is correct").isEqualTo("H1");
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(0).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E1");
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(0).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(1).getText()).as("Text for answer option is correct").isEqualTo("B");
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
-                assertThat(multipleChoiceQuestion.getAnswerOptions().get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
+                List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+                assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("A");
+                assertThat(answerOptions.get(0).getHint()).as("Hint for answer option is correct").isEqualTo("H1");
+                assertThat(answerOptions.get(0).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E1");
+                assertThat(answerOptions.get(0).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
+                assertThat(answerOptions.get(1).getText()).as("Text for answer option is correct").isEqualTo("B");
+                assertThat(answerOptions.get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
+                assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
+                assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
             }
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
@@ -127,17 +128,19 @@ public class QuizExerciseIntegrationTest {
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getScore()).as("Drag and drop question score is correct").isEqualTo(1);
 
-                assertThat(dragAndDropQuestion.getDropLocations().get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(10);
-                assertThat(dragAndDropQuestion.getDropLocations().get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
-                assertThat(dragAndDropQuestion.getDropLocations().get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
-                assertThat(dragAndDropQuestion.getDropLocations().get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dragAndDropQuestion.getDropLocations().get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
-                assertThat(dragAndDropQuestion.getDropLocations().get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
-                assertThat(dragAndDropQuestion.getDropLocations().get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
-                assertThat(dragAndDropQuestion.getDropLocations().get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
+                assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
+                assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
+                assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
+                assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
 
-                assertThat(dragAndDropQuestion.getDragItems().get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
-                assertThat(dragAndDropQuestion.getDragItems().get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
+                List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
+                assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
+                assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
             if (question instanceof ShortAnswerQuestion) {
                 ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
@@ -147,13 +150,15 @@ public class QuizExerciseIntegrationTest {
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
                 assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(2);
 
-                assertThat(shortAnswerQuestion.getSpots().get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(0);
-                assertThat(shortAnswerQuestion.getSpots().get(0).getWidth()).as("Width for spot is correct").isEqualTo(1);
-                assertThat(shortAnswerQuestion.getSpots().get(1).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
-                assertThat(shortAnswerQuestion.getSpots().get(1).getWidth()).as("Width for spot is correct").isEqualTo(2);
+                List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
+                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(0);
+                assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(1);
+                assertThat(spots.get(1).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
+                assertThat(spots.get(1).getWidth()).as("Width for spot is correct").isEqualTo(2);
 
-                assertThat(shortAnswerQuestion.getSolutions().get(0).getText()).as("Text for solution is correct").isEqualTo("is");
-                assertThat(shortAnswerQuestion.getSolutions().get(1).getText()).as("Text for solution is correct").isEqualTo("long");
+                List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
+                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("is");
+                assertThat(solutions.get(1).getText()).as("Text for solution is correct").isEqualTo("long");
             }
         }
     }
