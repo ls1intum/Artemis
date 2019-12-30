@@ -119,11 +119,8 @@ public class LtiService {
 
         if (auth.isPresent()) {
             // Authentication was successful
-
             SecurityContextHolder.getContext().setAuthentication(auth.get());
-
             onSuccessfulLtiAuthentication(launchRequest, exercise);
-
         }
         else {
 

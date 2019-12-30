@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.Principal;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,8 +77,6 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseService exerciseService;
 
-    private final ResultService resultService;
-
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
@@ -94,9 +91,8 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ResultService resultService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, StudentParticipationRepository studentParticipationRepository,
-            GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, GroupNotificationService groupNotificationService,
+            ProgrammingExerciseScheduleService programmingExerciseScheduleService, StudentParticipationRepository studentParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -104,7 +100,6 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
-        this.resultService = resultService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -319,7 +314,7 @@ public class ProgrammingExerciseResource {
      * @see ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseService#importRepositories(ProgrammingExercise, ProgrammingExercise)
-     * @param sourceExerciseId The ID of the template exercise which should get imported
+     * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
@@ -340,32 +335,32 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        final var optionalTemplate = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
-        if (optionalTemplate.isEmpty()) {
+        final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+        if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
 
-        final var template = optionalTemplate.get();
-        final var imported = programmingExerciseService.importProgrammingExerciseBasis(template, newExercise);
+        final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
+        final var importedProgrammingExercise = programmingExerciseService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
-        programmingExerciseService.importRepositories(template, imported);
+        programmingExerciseService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
         try {
             // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
             // an import as the source exercise might still have this trigger.
-            programmingExerciseService.importBuildPlans(template, imported);
-            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
+            programmingExerciseService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
         catch (HttpException e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
 
         // Remove unnecessary fields
-        imported.setTestCases(null);
-        imported.setTemplateParticipation(null);
-        imported.setSolutionParticipation(null);
-        imported.setExerciseHints(null);
+        importedProgrammingExercise.setTestCases(null);
+        importedProgrammingExercise.setTemplateParticipation(null);
+        importedProgrammingExercise.setSolutionParticipation(null);
+        importedProgrammingExercise.setExerciseHints(null);
 
-        return ResponseEntity.ok().headers(responseHeaders).body(imported);
+        return ResponseEntity.ok().headers(responseHeaders).body(importedProgrammingExercise);
     }
 
     /**
@@ -794,13 +789,12 @@ public class ProgrammingExerciseResource {
      * of exercises in the DB.
      *
      * @param search The pageable search containing the page size, page number and query string
-     * @param principal The identification of the user calling this endpoint
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
-    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search, Principal principal) {
-        final var user = userService.getUserWithGroupsAndAuthorities(principal);
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
     }
 }
