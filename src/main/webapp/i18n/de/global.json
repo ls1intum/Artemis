@@ -171,6 +171,7 @@
             "dashboard": "Dashboard",
             "edit": "Bearbeiten",
             "editInEditor": "In Editor bearbeiten",
+            "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "editLink": "Link bearbeiten",
             "generate": "Generieren",

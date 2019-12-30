@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ExampleModelingSubmissionComponent } from './example-modeling-submission.component';
 
 export const exampleModelingSubmissionRoute: Routes = [

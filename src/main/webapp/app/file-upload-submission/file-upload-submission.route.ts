@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
