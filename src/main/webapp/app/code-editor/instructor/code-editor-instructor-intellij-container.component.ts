@@ -13,7 +13,7 @@ import { IntelliJState } from 'app/intellij/intellij';
 
 @Component({
     selector: 'jhi-code-editor-instructor-intellij',
-    templateUrl: './code-editor-instructor-intellij.component.html',
+    templateUrl: './code-editor-instructor-intellij-container.component.html',
     styles: ['.instructions-intellij { height: 700px }'],
 })
 export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
