@@ -147,7 +147,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
 
     /**
      * Notifies Artemis if the IDE is in the process of importing (i.e. cloning) an exercise)
-     *selected
+     *
      * @param cloning True, if there is a open clone process, false otherwise
      */
     isCloning(cloning: boolean): void {
