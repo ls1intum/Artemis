@@ -36,7 +36,7 @@ import io.github.jhipster.web.util.ResponseUtil;
  * REST controller for managing Result.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -46,7 +46,7 @@ public class ResultResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.ci.secret}")
+    @Value("${artemis.continuous-integration.secret}")
     private String CI_AUTHENTICATION_TOKEN = "";
 
     private final ResultRepository resultRepository;

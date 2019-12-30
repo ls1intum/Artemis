@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.gitlab.model;
+package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
 import java.net.URL;
 
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GitLabProject {
+public class GitLabProjectDTO {
 
     private int id;
 

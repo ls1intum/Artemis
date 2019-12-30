@@ -39,10 +39,10 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
-import de.tum.in.www1.artemis.service.util.RandomUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import io.github.jhipster.security.RandomUtil;
 
 /**
  * Service class for managing users.
@@ -148,16 +148,6 @@ public class UserService {
         encryptor.setAlgorithm("PBEWithMD5AndDES");
         encryptor.setPassword(ENCRYPTION_PASSWORD);
         return encryptor;
-    }
-
-    /**
-     * Returns the password of the user as a char array (as is the Java convention for handling sensitive Strings)
-     *
-     * @param user The user for whom to fetch the password
-     * @return The password of the specified user
-     */
-    public char[] getPasswordForUser(User user) {
-        return encryptor().decrypt(user.getPassword()).toCharArray();
     }
 
     /**
@@ -433,8 +423,18 @@ public class UserService {
      * @param login of a user
      * @return decrypted password or empty string
      */
-    public Optional<String> decryptPasswordByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(u -> encryptor().decrypt(u.getPassword()));
+    public Optional<char[]> decryptPasswordByLogin(String login) {
+        return userRepository.findOneByLogin(login).map(this::decryptPasswordOfUser);
+    }
+
+    /**
+     * Returns the password of the user as a char array (as is the Java convention for handling sensitive Strings)
+     *
+     * @param user The user for whom to fetch the password
+     * @return The password of the specified user
+     */
+    public char[] decryptPasswordOfUser(User user) {
+        return encryptor().decrypt(user.getPassword()).toCharArray();
     }
 
     /**

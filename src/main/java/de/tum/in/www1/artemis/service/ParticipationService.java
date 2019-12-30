@@ -44,6 +44,9 @@ public class ParticipationService {
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
+    @Value("${artemis.version-control.ci-token:}")
+    private String CI_TOKEN;
+
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -462,7 +465,7 @@ public class ParticipationService {
                     "Artemis WebHook");
             // Optional webhook from the VCS to the CI (needed for some systems such as GitLab + Jenkins)
             final var ciHookUrl = continuousIntegrationService.get().getWebhookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
-            ciHookUrl.ifPresent(s -> versionControlService.get().addWebHookToCISystem(participation.getRepositoryUrlAsUrl(), s, "Artemis trigger to CI"));
+            ciHookUrl.ifPresent(s -> versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), s, "Artemis trigger to CI", CI_TOKEN));
         }
         return participation;
     }

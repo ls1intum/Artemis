@@ -32,13 +32,13 @@ import de.tum.in.www1.artemis.exception.BambooException;
 @Service
 public class BambooUpdateService {
 
-    @Value("${artemis.ci.url}")
+    @Value("${artemis.continuous-integration.url}")
     protected URL BAMBOO_SERVER_URL;
 
-    @Value("${artemis.ci.user}")
+    @Value("${artemis.continuous-integration.user}")
     protected String BAMBOO_USER;
 
-    @Value("${artemis.ci.password}")
+    @Value("${artemis.continuous-integration.password}")
     protected String BAMBOO_PASSWORD;
 
     @Service

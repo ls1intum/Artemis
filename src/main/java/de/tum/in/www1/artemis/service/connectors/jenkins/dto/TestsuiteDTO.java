@@ -1,8 +1,8 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins.model;
+package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.util.List;
 
-public class Testsuite {
+public class TestsuiteDTO {
 
     private String name;
 
@@ -16,7 +16,7 @@ public class Testsuite {
 
     private int tests;
 
-    private List<TestCase> testCases;
+    private List<TestCaseDTO> testCases;
 
     public String getName() {
         return name;
@@ -66,11 +66,11 @@ public class Testsuite {
         this.tests = tests;
     }
 
-    public List<TestCase> getTestCases() {
+    public List<TestCaseDTO> getTestCases() {
         return testCases;
     }
 
-    public void setTestCases(List<TestCase> testCases) {
+    public void setTestCases(List<TestCaseDTO> testCases) {
         this.testCases = testCases;
     }
 }

@@ -103,6 +103,9 @@ public class ProgrammingExerciseService {
     @Value("${artemis.repo-download-clone-path}")
     private String REPO_DOWNLOAD_CLONE_PATH;
 
+    @Value("${artemis.version-control.ci-token:}")
+    private String CI_TOKEN;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService,
@@ -371,9 +374,9 @@ public class ProgrammingExerciseService {
         final var templatePlanNotificationUrl = continuousIntegrationService.get().getWebhookUrl(projectKey, templateParticipation.getBuildPlanId());
         final var solutionPlanNotificationUrl = continuousIntegrationService.get().getWebhookUrl(projectKey, solutionParticipation.getBuildPlanId());
         if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            versionControlService.get().addWebHookToCISystem(exerciseRepoUrl, templatePlanNotificationUrl.get(), "Artemis Exercise WebHook");
-            versionControlService.get().addWebHookToCISystem(solutionRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Solution WebHook");
-            versionControlService.get().addWebHookToCISystem(testsRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Tests WebHook");
+            versionControlService.get().addWebHook(exerciseRepoUrl, templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", CI_TOKEN);
+            versionControlService.get().addWebHook(solutionRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", CI_TOKEN);
+            versionControlService.get().addWebHook(testsRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", CI_TOKEN);
         }
     }
 

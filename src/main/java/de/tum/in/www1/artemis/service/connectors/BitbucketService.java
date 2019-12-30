@@ -10,6 +10,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -80,7 +81,7 @@ public class BitbucketService implements VersionControlService, VcsUserManagemen
             if (!userExists(username)) {
                 log.debug("Bitbucket user {} does not exist yet", username);
                 String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+                createUser(username, String.valueOf(userService.decryptPasswordByLogin(username).get()), user.getEmail(), displayName);
 
                 try {
                     addUserToGroups(username, user.getGroups());
@@ -156,8 +157,9 @@ public class BitbucketService implements VersionControlService, VcsUserManagemen
     }
 
     @Override
-    public void addWebHookToCISystem(URL repositoryUrl, String notificationUrl, String webHookName) {
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         // Not needed for Bitbucket
+        throw new NotImplementedException("Authenticated webhooks with Bitbucket are not supported!");
     }
 
     @Override

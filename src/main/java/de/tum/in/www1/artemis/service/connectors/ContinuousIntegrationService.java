@@ -24,10 +24,10 @@ public interface ContinuousIntegrationService {
     /**
      * Creates the base build plan for the given programming exercise
      * 
-     * @param exercise           a programming exercise with the required information to create the base build plan
-     * @param planKey            the key of the plan
-     * @param repositoryURL     the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testRepositoryURL the slug of the test repository, i.e. the unique identifier
+     * @param exercise          a programming exercise with the required information to create the base build plan
+     * @param planKey           the key of the plan
+     * @param repositoryURL     the URL of the assignment repository (used to separate between exercise and solution)
+     * @param testRepositoryURL the URL of the test repository
      */
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL);
 
@@ -186,7 +186,7 @@ public interface ContinuousIntegrationService {
      * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
-     * @param repoUrl              The lower level identifier of the repository.
+     * @param repoUrl               The url of the newly to be referenced repository.
      * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
     void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, Optional<List<String>> triggeredBy);

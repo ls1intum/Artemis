@@ -51,8 +51,8 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.model.Commit;
-import de.tum.in.www1.artemis.service.connectors.jenkins.model.TestResults;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -62,13 +62,13 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
-    @Value("${artemis.ci.user}")
+    @Value("${artemis.continuous-integration.user}")
     private String username;
 
-    @Value("${artemis.ci.password}")
+    @Value("${artemis.continuous-integration.password}")
     private String password;
 
-    @Value("${artemis.ci.url}")
+    @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;
 
     private final JenkinsBuildPlanCreatorProvider buildPlanCreatorProvider;
@@ -181,7 +181,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws Exception {
-        final var result = TestResults.convert(requestBody);
+        final var result = TestResultsDTO.convert(requestBody);
         final var nameParams = result.getFullName().split(" ");
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
@@ -196,7 +196,7 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
-        final var report = TestResults.convert(requestBody);
+        final var report = TestResultsDTO.convert(requestBody);
         final var latestPendingSubmission = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId()).stream()
                 .filter(submission -> {
                     final var commitHash = getCommitHash(report, submission.getType());
@@ -218,7 +218,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @NotNull
-    private ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, TestResults report) {
+    private ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, TestResultsDTO report) {
         ProgrammingSubmission submission;
         // There can be two reasons for the case that there is no programmingSubmission:
         // 1) Manual build triggered from Jenkins.
@@ -238,7 +238,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         return submission;
     }
 
-    private Result createResultFromBuildResult(TestResults report, Participation participation) {
+    private Result createResultFromBuildResult(TestResultsDTO report, Participation participation) {
         final var result = new Result();
         final var testSum = report.getSkipped() + report.getFailures() + report.getErrors() + report.getSuccessful();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -252,7 +252,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         return result;
     }
 
-    private double calculateResultScore(TestResults report, int testSum) {
+    private double calculateResultScore(TestResultsDTO report, int testSum) {
         return ((1.0 * report.getSuccessful()) / testSum) * 100;
     }
 
@@ -262,16 +262,15 @@ public class JenkinsService implements ContinuousIntegrationService {
      * @param submissionType describes why the build was started.
      * @return if the commit hash for the given submission type was found, otherwise null.
      */
-    private Optional<String> getCommitHash(TestResults report, SubmissionType submissionType) {
+    private Optional<String> getCommitHash(TestResultsDTO report, SubmissionType submissionType) {
         final var assignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
         final var testSubmission = submissionType == SubmissionType.TEST;
         final var testSlugSuffix = RepositoryType.TESTS.getName();
 
         // It's either an assignment submission, so then we return the hash of the assignment (*-exercise, *-studentId),
         // or the hash of the test repository for test repo changes (*-tests)
-        return report.getCommits().stream().filter(
-                commit -> (assignmentSubmission && !commit.getRepositorySlug().endsWith(testSlugSuffix)) || (testSubmission && commit.getRepositorySlug().endsWith(testSlugSuffix)))
-                .map(Commit::getHash).findFirst();
+        return report.getCommits().stream().filter(commitDTO -> (assignmentSubmission && !commitDTO.getRepositorySlug().endsWith(testSlugSuffix))
+                || (testSubmission && commitDTO.getRepositorySlug().endsWith(testSlugSuffix))).map(CommitDTO::getHash).findFirst();
     }
 
     @Override
@@ -309,7 +308,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var report = fetchLatestBuildResultFromJenkins(participation);
 
         // The retrieved build result must match the commitHash of the provided submission.
-        if (report.getCommits().stream().map(Commit::getHash).noneMatch(hash -> hash.equals(submission.getCommitHash()))) {
+        if (report.getCommits().stream().map(CommitDTO::getHash).noneMatch(hash -> hash.equals(submission.getCommitHash()))) {
             return Optional.empty();
         }
 
@@ -320,7 +319,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         return Optional.empty();
     }
 
-    private void addFeedbackToResult(Result result, TestResults report) {
+    private void addFeedbackToResult(Result result, TestResultsDTO report) {
         // No feedback for build errors
         if (report.getResults() == null || report.getResults().isEmpty()) {
             result.setHasFeedback(false);
@@ -353,12 +352,12 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.addFeedbacks(feedbacks);
     }
 
-    private TestResults fetchLatestBuildResultFromJenkins(ProgrammingExerciseParticipation participation) {
+    private TestResultsDTO fetchLatestBuildResultFromJenkins(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
         final var url = Endpoint.TEST_RESULTS.buildEndpoint(JENKINS_SERVER_URL.toString(), projectKey, planKey).build(true);
 
-        return restTemplate.getForObject(url.toUri(), TestResults.class);
+        return restTemplate.getForObject(url.toUri(), TestResultsDTO.class);
     }
 
     @Override

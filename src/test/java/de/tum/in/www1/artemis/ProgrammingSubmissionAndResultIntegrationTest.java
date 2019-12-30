@@ -38,7 +38,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -66,7 +69,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         STUDENT, TEMPLATE, SOLUTION
     }
 
-    @Value("${artemis.bamboo.authentication-token}")
+    @Value("${artemis.continuous-integration.secret}")
     private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
 
     @MockBean

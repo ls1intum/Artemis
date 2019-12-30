@@ -45,8 +45,8 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.util.RandomUtil;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import io.github.jhipster.security.RandomUtil;
 
 @Service
 @Transactional

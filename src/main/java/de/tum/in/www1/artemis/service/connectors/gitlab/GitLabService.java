@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.connectors.gitlab.model.GitLabPushNotification;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
@@ -53,9 +53,6 @@ public class GitLabService implements VersionControlService {
 
     @Value("${artemis.version-control.secret}")
     private String GITLAB_PRIVATE_TOKEN;
-
-    @Value("${artemis.version-control.ci-token}")
-    private String CI_TOKEN;
 
     private String BASE_API;
 
@@ -134,17 +131,12 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public void addWebHookToCISystem(URL repositoryUrl, String notificationUrl, String webHookName) {
-        addWebHook(repositoryUrl, notificationUrl, webHookName, CI_TOKEN);
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+        addWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        addWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
-
-    }
-
-    private void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 
@@ -199,7 +191,7 @@ public class GitLabService implements VersionControlService {
 
     @Override
     public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
-        final var details = GitLabPushNotification.convert(requestBody);
+        final var details = GitLabPushNotificationDTO.convert(requestBody);
         final var commit = new Commit();
         // We will notify for every commit, so we can just use the first commit in the notification list
         final var gitLabCommit = details.getCommits().get(0);
