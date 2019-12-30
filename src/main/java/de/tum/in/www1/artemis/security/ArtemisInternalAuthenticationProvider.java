@@ -41,7 +41,7 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        final var user = userService.getUserByLogin(authentication.getName());
+        final var user = userService.getUserWithAuthoritiesByLogin(authentication.getName());
         if (user.isEmpty()) {
             throw new AuthenticationServiceException(String.format("User %s does not exist in the Artemis database!", authentication.getName()));
         }
@@ -75,7 +75,7 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
 
     @Override
     public void addUserToGroup(String username, String group) {
-        final var user = userService.getUserByLogin(username).get();
+        final var user = userService.getUserWithGroupsByLogin(username).get();
         addUserToGroup(user, group);
     }
 
