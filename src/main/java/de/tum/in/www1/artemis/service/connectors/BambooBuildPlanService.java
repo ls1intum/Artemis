@@ -197,7 +197,8 @@ public class BambooBuildPlanService {
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
-        final var directoryPattern = "classpath:buildscripts/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+        final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
+                + "*.sh";
         try {
             final var scriptResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern);
             // Have to use foreach because of possible IOException
