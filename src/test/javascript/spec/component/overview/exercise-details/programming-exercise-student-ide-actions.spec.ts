@@ -23,8 +23,9 @@ import { ExerciseActionButtonComponent, ProgrammingExerciseStudentIdeActionsComp
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-test.service';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/feature-toggle';
+import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../../mocks/mock-feature-toggle-service';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -142,11 +143,12 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
         const progExercise = { id: 42, title: 'Test Title' } as Exercise;
         progExercise.studentParticipations = [participation];
+        const exerciseJson = stringifyCircular(progExercise);
         comp.exercise = progExercise;
         comp.courseId = 456;
 
         comp.importIntoIntelliJ();
-        expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', 'Test Title', 42, 456);
+        expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', exerciseJson);
     });
 
     it('should submit the changes and then forward the build results on submit', () => {
