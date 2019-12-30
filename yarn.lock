@@ -8000,7 +8000,7 @@ ngx-cacheable@1.3.2:
   resolved "https://registry.yarnpkg.com/ngx-cacheable/-/ngx-cacheable-1.3.2.tgz#b92301c314016e86180e6c78ea9eb590b2e2ec25"
   integrity sha512-aeBBx6P1L7QifFQ7rP/3nINtKwnE6I7whNIpYwJ8kPTrDl4xE+Izm/23gZmQHolmyuy2yOmElxWLBq9zmP2Htw==
 
-ngx-chips@2.1.0:
+ngx-chips@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/ngx-chips/-/ngx-chips-2.1.0.tgz#aa299bcf40dc3e1f6288bf1d29e2fdfe9a132ed3"
   integrity sha512-OQV4dTfD3nXm5d2mGKUSgwOtJOaMnZ4F+lwXOtd7DWRSUne0JQWwoZNHdOpuS6saBGhqCPDAwq6KxdR5XSgZUQ==
