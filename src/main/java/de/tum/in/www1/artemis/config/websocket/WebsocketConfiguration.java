@@ -5,16 +5,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -28,7 +24,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurationSupport;
 import org.springframework.web.socket.server.HandshakeInterceptor;
@@ -49,17 +44,18 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     private final ObjectMapper objectMapper;
 
-    private TaskScheduler messageBrokerTaskScheduler;
+    private final TaskScheduler messageBrokerTaskScheduler;
 
-    private WebSocketMessageBrokerStats webSocketMessageBrokerStats;
+    private final TaskScheduler taskScheduler;
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final int LOGGING_DELAY_SECONDS = 10;
 
-    private static final int LOGGING_DELAY = 10;
-
-    public WebsocketConfiguration(Environment env, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    public WebsocketConfiguration(Environment env, MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
+            TaskScheduler taskScheduler) {
         this.env = env;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
+        this.taskScheduler = taskScheduler;
     }
 
     @PostConstruct
@@ -69,20 +65,15 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         // Note: this mechanism prevents that this is logged during testing
         if (activeProfiles.contains("websocketLog")) {
-            webSocketMessageBrokerStats = webSocketMessageBrokerStats();
-            webSocketMessageBrokerStats.setLoggingPeriod(LOGGING_DELAY * 1000);
+            final var webSocketMessageBrokerStats = webSocketMessageBrokerStats();
+            webSocketMessageBrokerStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000);
 
-            scheduler.scheduleAtFixedRate(() -> {
+            taskScheduler.scheduleAtFixedRate(() -> {
                 final var subscriptionCount = userRegistry().getUsers().stream().flatMap(simpUser -> simpUser.getSessions().stream())
                         .map(simpSession -> simpSession.getSubscriptions().size()).reduce(0, Integer::sum);
                 log.info("Currently active websocket subscriptions: " + subscriptionCount);
-            }, LOGGING_DELAY, LOGGING_DELAY, TimeUnit.SECONDS);
+            }, LOGGING_DELAY_SECONDS * 1000);
         }
-    }
-
-    @Autowired
-    public void setMessageBrokerTaskScheduler(TaskScheduler taskScheduler) {
-        this.messageBrokerTaskScheduler = taskScheduler;
     }
 
     @Override
