@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { FileUploadAssessmentComponent } from 'app/file-upload-assessment/file-upload-assessment.component';
 import { FileUploadAssessmentDashboardComponent } from 'app/file-upload-assessment/file-upload-assessment-dashboard/file-upload-assessment-dashboard.component';
 
