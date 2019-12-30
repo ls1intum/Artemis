@@ -2,12 +2,18 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -85,34 +91,30 @@ public class CourseService {
      * @return the list of all courses including exercises for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesForUser(User user) {
-
-        List<Course> allCourses = findAllActive();
-        Set<Course> userCourses = new HashSet<>();
-        // filter old courses and courses the user should not be able to see
-        for (Course course : allCourses) {
-            if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
+        return findAllActive().stream()
+                // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
-                continue;
-            }
-            // Instructors and TAs see all courses that have not yet finished
-            if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                userCourses.add(course);
-            }
-            // Students see all courses that have already started (and not yet finished)
-            else if (user.getGroups().contains(course.getStudentGroupName())) {
-                if (course.getStartDate() == null || course.getStartDate().isBefore(ZonedDateTime.now())) {
-                    userCourses.add(course);
-                }
-            }
+                .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isActiveCourseVisibleForUser(user, course))
+                .peek(course -> {
+                    // fetch visible lectures exercises for each course after filtering
+                    Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
+                    List<Exercise> exercises = exerciseService.findAllForCourse(course, user);
+                    course.setExercises(new HashSet<>(exercises));
+                    course.setLectures(lectures);
+                }).collect(Collectors.toList());
+    }
+
+    private boolean isActiveCourseVisibleForUser(User user, Course course) {
+        // Instructors and TAs see all courses that have not yet finished
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return true;
         }
-        for (Course course : userCourses) {
-            // fetch visible lectures exercises for each course after filtering
-            Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
-            List<Exercise> exercises = exerciseService.findAllForCourse(course, user);
-            course.setExercises(new HashSet<>(exercises));
-            course.setLectures(lectures);
+        // Students see all courses that have already started (and not yet finished)
+        if (user.getGroups().contains(course.getStudentGroupName())) {
+            return course.getStartDate() == null || course.getStartDate().isBefore(ZonedDateTime.now());
         }
-        return new ArrayList<>(userCourses);
+
+        return false;
     }
 
     /**
