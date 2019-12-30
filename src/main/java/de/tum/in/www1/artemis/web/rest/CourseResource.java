@@ -223,19 +223,19 @@ public class CourseResource {
         }
         // only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
         if (course.getInstructorGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
+            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException(
                         "Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
             }
         }
         if (course.getTeachingAssistantGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
+            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getTeachingAssistantGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName()
                         + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
             }
         }
         if (course.getStudentGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
+            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getStudentGroupName())) {
                 throw new ArtemisAuthenticationException(
                         "Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
             }

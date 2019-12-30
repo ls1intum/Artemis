@@ -193,7 +193,6 @@ public class LtiService {
      * @throws AuthenticationException
      */
     private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws ArtemisAuthenticationException, AuthenticationException {
-
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (SecurityUtils.isAuthenticated()) {
@@ -242,7 +241,8 @@ public class LtiService {
 
             if (usernameLookupByEmail.isPresent()) {
                 log.info("Signing in as {}", usernameLookupByEmail.get());
-                User user = artemisAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(usernameLookupByEmail.get(), ""), true);
+                User user = artemisAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(usernameLookupByEmail.get(), ""), USER_GROUP_NAME_EDX,
+                        fullname, email, true);
 
                 return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(),
                         Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));

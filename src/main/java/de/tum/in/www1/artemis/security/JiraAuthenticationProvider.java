@@ -83,7 +83,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
-        User user = getOrCreateUser(authentication, false);
+        // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
+        User user = getOrCreateUser(authentication, null, null, null, false);
 
         // load additional details if the ldap service is available and the registration number is not available and if the user follows the TUM pattern
         if (ldapUserService.isPresent() && user.getRegistrationNumber() == null && TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
@@ -96,16 +97,9 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
     }
 
-    /**
-     * Gets or creates the user object for an JIRA user.
-     *
-     * @param authentication the Spring authentication object which includes the username and password
-     * @param skipPasswordCheck whether the password check on JIRA should be skipped
-     * @return
-     */
     @Override
     @SuppressWarnings("unchecked")
-    public User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
+    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
         HttpEntity<Principal> entity = new HttpEntity<>(
@@ -232,14 +226,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         }
     }
 
-    /**
-     * Checks if the group exists in JIRA to avoid specifying a group that does not exist
-     *
-     * @param group
-     * @return
-     */
     @Override
-    public Boolean checkIfGroupExists(String group) {
+    public boolean isGroupAvailable(String group) {
         HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
