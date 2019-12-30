@@ -1,8 +1,10 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent } from './';
+import { CodeEditorStudentContainerComponent } from './';
+import { CodeEditorInstructorIntellijContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-intellij-container.component';
+import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
 
 export const codeEditorRoute: Routes = [
     {
@@ -37,6 +39,32 @@ export const codeEditorRoute: Routes = [
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'ide/:exerciseId/admin/test',
+        component: CodeEditorInstructorIntellijContainerComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR'],
+            pageTitle: 'artemisApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'ide/:exerciseId/admin/:participationId',
+        component: CodeEditorInstructorIntellijContainerComponent,
+        data: {
+            authorities: ['ROLE_INSTRUCTOR'],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

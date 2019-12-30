@@ -14,7 +14,7 @@ import { ExampleSubmissionService } from 'app/entities/example-submission/exampl
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
