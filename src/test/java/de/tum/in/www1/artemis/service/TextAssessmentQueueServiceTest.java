@@ -31,6 +31,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
     @SpyBean
     private TextSubmissionService textSubmissionService;
 
+    // TODO: this mock and the spies above increase the test execution time by ~30s, because the whole application needs to restart twice.
     @MockBean
     private TextClusterRepository textClusterRepository;
 
@@ -67,6 +68,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
         TextExercise textExercise = createSampleTextExercise(textBlocks, submissionCount, submissionSize);
         List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
         List<TextCluster> clusters = addTextBlocksToCluster(textBlocks, clusterSizes);
+        // TODO: can we not just save the text clusters into the database here?
         doReturn(clusters).when(textClusterRepository).findAllByExercise(textExercise);
         HashMap<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
         textBlocks.forEach(textBlock -> {
@@ -153,6 +155,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
             studentParticipations[i] = studentParticipation;
 
         }
+        // TODO: why do we actually need this? Can we not just normally use these service methods and save the data to the database before?
         doReturn(Arrays.asList(studentParticipations)).when(participationService).findByExerciseId(textExercise.getId());
         doReturn(Arrays.asList(submissions)).when(textSubmissionService).getTextSubmissionsByExerciseId(textExercise.getId(), true);
         return textExercise;
