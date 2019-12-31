@@ -1,44 +1,39 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 
 import java.util.*;
 
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis,automaticText")
-public class TextAssessmentQueueServiceTest {
+public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private TextAssessmentQueueService textAssessmentQueueService;
 
-    @MockBean
-    private ParticipationService participationServiceMock;
+    @SpyBean
+    private ParticipationService participationService;
 
-    @MockBean
+    @SpyBean
     private TextSubmissionService textSubmissionService;
 
+    // TODO: this mock and the spies above increase the test execution time by ~30s, because the whole application needs to restart twice.
     @MockBean
-    private TextClusterRepository textClusterRepositoryMock;
+    private TextClusterRepository textClusterRepository;
 
     private Random random;
 
@@ -68,12 +63,13 @@ public class TextAssessmentQueueServiceTest {
     public void calculateSmallerClusterPercentageTest() {
         int submissionCount = 5;
         int submissionSize = 4;
-        int clusterSizes[] = new int[] { 4, 5, 10, 1 };
+        int[] clusterSizes = new int[] { 4, 5, 10, 1 };
         ArrayList<TextBlock> textBlocks = generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = createSampleTextExercise(textBlocks, submissionCount, submissionSize);
         List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
         List<TextCluster> clusters = addTextBlocksToCluster(textBlocks, clusterSizes);
-        Mockito.when(textClusterRepositoryMock.findAllByExercise(textExercise)).thenReturn(clusters);
+        // TODO: can we not just save the text clusters into the database here?
+        doReturn(clusters).when(textClusterRepository).findAllByExercise(textExercise);
         HashMap<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
         textBlocks.forEach(textBlock -> {
             if (textBlock.getCluster() == clusters.get(0)) {
@@ -159,8 +155,9 @@ public class TextAssessmentQueueServiceTest {
             studentParticipations[i] = studentParticipation;
 
         }
-        Mockito.when(participationServiceMock.findByExerciseId(textExercise.getId())).thenReturn(Arrays.asList(studentParticipations));
-        Mockito.when(textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true)).thenReturn(Arrays.asList(submissions));
+        // TODO: why do we actually need this? Can we not just normally use these service methods and save the data to the database before?
+        doReturn(Arrays.asList(studentParticipations)).when(participationService).findByExerciseId(textExercise.getId());
+        doReturn(Arrays.asList(submissions)).when(textSubmissionService).getTextSubmissionsByExerciseId(textExercise.getId(), true);
         return textExercise;
     }
 
