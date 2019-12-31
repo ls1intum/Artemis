@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { InstructorCourseDashboardComponent } from './instructor-course-dashboard.component';
 
 export const instructorCourseDashboardRoute: Routes = [

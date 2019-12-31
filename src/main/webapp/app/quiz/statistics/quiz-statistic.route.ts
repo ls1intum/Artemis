@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { QuizStatisticComponent } from './quiz-statistic/quiz-statistic.component';
 import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-statistic.component';
 import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-question-statistic/multiple-choice-question-statistic.component';
