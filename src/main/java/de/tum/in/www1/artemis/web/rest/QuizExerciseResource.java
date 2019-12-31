@@ -92,6 +92,7 @@ public class QuizExerciseResource {
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
@@ -136,6 +137,7 @@ public class QuizExerciseResource {
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
@@ -252,7 +254,7 @@ public class QuizExerciseResource {
      *
      * @param quizExerciseId     the id of the quiz exercise to start
      * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
-     * @return the response entity with status 204 if quiz was started, appropriate error code otherwise
+     * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
