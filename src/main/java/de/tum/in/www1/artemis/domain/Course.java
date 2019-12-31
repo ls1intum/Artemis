@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL;
+import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC;
+
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -18,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FileService;
@@ -459,7 +461,9 @@ public class Course implements Serializable {
 
     @JsonIgnore
     public Set<Exercise> getInterestingExercisesForAssessmentDashboards() {
-        return getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                || (exercise instanceof ProgrammingExercise && !exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC))).collect(Collectors.toSet());
+        return getExercises().stream()
+                .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
+                        || (exercise instanceof ProgrammingExercise && (exercise.getAssessmentType().equals(SEMI_AUTOMATIC) || exercise.getAssessmentType().equals(MANUAL))))
+                .collect(Collectors.toSet());
     }
 }
