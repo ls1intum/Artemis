@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -66,14 +65,7 @@ public class ProgrammingExerciseTestCaseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise;
-        try {
-            programmingExercise = programmingExerciseService.findById(exerciseId);
-        }
-        catch (NoSuchElementException ex) {
-            return notFound();
-        }
-
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         Course course = programmingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -124,14 +116,7 @@ public class ProgrammingExerciseTestCaseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> resetWeights(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise;
-        try {
-            programmingExercise = programmingExerciseService.findById(exerciseId);
-        }
-        catch (NoSuchElementException ex) {
-            return notFound();
-        }
-
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         Course course = programmingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
 

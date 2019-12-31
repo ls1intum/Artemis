@@ -177,6 +177,7 @@
             "download": "Download",
             "edit": "Edit",
             "editInEditor": "Edit in editor",
+            "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",
             "editLink": "Edit Link",
             "generate": "Generate",

@@ -17,7 +17,7 @@ import { CommitState, EditorState } from 'app/code-editor/model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/feature-toggle';
+import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 import { cartesianProduct } from 'app/shared/util/utils';
