@@ -191,7 +191,6 @@ public class BitbucketService implements VersionControlService {
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
         log.debug("getCloneURL: " + cloneUrl.toString());
-
         return cloneUrl;
     }
 

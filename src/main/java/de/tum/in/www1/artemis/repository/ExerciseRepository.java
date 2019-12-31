@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,8 +29,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select e from Exercise e where e.course.id = :#{#courseId} and exists (select l from LtiOutcomeUrl l where e = l.exercise and l.user.login = :#{#login})")
     List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
 
-    @Query("select e from Exercise e left join fetch e.categories where e.course.id = :#{#courseId}")
-    List<Exercise> findAllByCourseIdWithEagerCategories(@Param("courseId") Long courseId);
+    @Query("select distinct c from Exercise e join e.categories c where e.course.id = :#{#courseId}")
+    Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.studentParticipations where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
