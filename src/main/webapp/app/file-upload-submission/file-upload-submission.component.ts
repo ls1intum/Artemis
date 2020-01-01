@@ -16,6 +16,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
+import { ParticipationWebsocketService } from 'app/entities/participation';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -50,6 +51,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
+        private participationWebsocketService: ParticipationWebsocketService,
         private fileUploadAssessmentService: FileUploadAssessmentsService,
     ) {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
@@ -121,6 +123,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
             response => {
                 this.submission = response.body!;
+                this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.fileUploadExercise);
                 this.result = this.submission.result;
                 this.setSubmittedFile();
                 if (this.isActive) {

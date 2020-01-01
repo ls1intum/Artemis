@@ -7,7 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
 import { Result, ResultService } from 'app/entities/result';
-import { ParticipationService } from 'app/entities/participation';
+import { ParticipationService, ParticipationWebsocketService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -46,6 +46,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
         private translateService: TranslateService,
+        private participationWebsocketService: ParticipationWebsocketService,
     ) {
         this.isSaving = false;
     }
@@ -87,7 +88,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             newSubmission.submitted = false;
             newSubmission.text = this.answer;
             if (this.submission.id) {
-                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe();
+                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe(response => {
+                    this.submission = response.body!;
+                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                });
             }
         }
     }
@@ -167,6 +171,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
             response => {
                 this.submission = response.body!;
+                this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
                 this.result = this.submission.result;
                 this.isSaving = false;
 

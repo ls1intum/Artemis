@@ -23,14 +23,11 @@ export class FileUploadSubmissionService {
         const submissionBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('file', submissionFile);
         formData.append('submission', submissionBlob);
-        return (
-            this.http
-                .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
-                    observe: 'response',
-                })
-                // TODO: take the updated participation in submission.participation and invoke this.participationWebsocketService.addParticipation(participation);
-                .map((res: EntityResponseType) => this.convertResponse(res))
-        );
+        return this.http
+            .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
+                observe: 'response',
+            })
+            .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     /**

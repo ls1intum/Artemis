@@ -25,14 +25,11 @@ export class ModelingSubmissionService {
 
     update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
-        return (
-            this.http
-                .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
-                    observe: 'response',
-                })
-                // TODO: take the updated participation in submission.participation and invoke this.participationWebsocketService.addParticipation(participation);
-                .map((res: EntityResponseType) => this.convertResponse(res))
-        );
+        return this.http
+            .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
+                observe: 'response',
+            })
+            .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     getModelingSubmissionsForExercise(exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {

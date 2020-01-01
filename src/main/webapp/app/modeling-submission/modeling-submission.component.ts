@@ -237,6 +237,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
                     this.submission = response.body!;
+                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                     this.result = this.submission.result;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                 },
@@ -287,6 +288,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     response => {
                         this.submission = response.body!;
+                        this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                         this.result = this.submission.result;
                         this.retryStarted = false;
 
