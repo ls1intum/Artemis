@@ -88,12 +88,17 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
+        bitbucketRequestMockProvider.mockAddWebHooks(exercise);
+        bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
+        bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
 
-        // TODO: don't mock the git and file services, but actually provide some fake repositories on alower level in order
+        // TODO: don't mock the git and file services, but actually provide some fake repositories on a lower level in order
         // to also properly test these methods
         doReturn(null).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean());
         doReturn(List.of(new File(java.io.File.createTempFile("artemis", "test"), null))).when(gitService).listFiles(any());
         doNothing().when(gitService).commitAndPush(any(), anyString(), any());
 
+        // TODO: check the actual plan and plan permissions that get passed here
+        doReturn(null).when(bambooServer).publish(any());
     }
 }

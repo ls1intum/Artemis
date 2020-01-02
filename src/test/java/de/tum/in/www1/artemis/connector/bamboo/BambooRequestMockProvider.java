@@ -1,13 +1,14 @@
 package de.tum.in.www1.artemis.connector.bamboo;
 
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -58,5 +59,34 @@ public class BambooRequestMockProvider {
         final var projectSearchPath = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/search/projects").queryParam("searchTerm", projectName);
         mockServer.expect(ExpectedCount.once(), requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bambooSearchDTO)).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {
+        final var projectKey = exercise.getProjectKey();
+        List.of("ANONYMOUS", "LOGGED_IN").stream().map(role -> {
+            try {
+                return UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/permissions/project/").pathSegment(projectKey).path("/roles/")
+                        .pathSegment(role).build().toUri();
+            }
+            catch (URISyntaxException e) {
+                throw new AssertionError("Should be able to build URIs for Bamboo roles in mock setup");
+            }
+        }).forEach(rolePath -> mockServer.expect(ExpectedCount.once(), requestTo(rolePath)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT)));
+    }
+
+    public void mockGiveProjectPermissions(ProgrammingExercise exercise) throws URISyntaxException, IOException {
+        final var projectKey = exercise.getProjectKey();
+        final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getInstructorGroupName());
+        final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getTeachingAssistantGroupName());
+
+        mockServer.expect(ExpectedCount.once(), requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
+                .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        mockServer.expect(ExpectedCount.once(), requestTo(tutorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("READ"))))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+    }
+
+    private URI buildGivePermissionsURIFor(String projectKey, String groupName) throws URISyntaxException {
+        return UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/permissions/project/").pathSegment(projectKey).path("/groups/").pathSegment(groupName)
+                .build().toUri();
     }
 }
