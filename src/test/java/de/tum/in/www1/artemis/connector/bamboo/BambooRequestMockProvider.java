@@ -53,10 +53,10 @@ public class BambooRequestMockProvider {
         bambooSearchDTO.setSize(0);
         bambooSearchDTO.setSearchResults(new ArrayList<>());
 
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey)).andExpect(method(HttpMethod.GET))
+        mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
         final var projectSearchPath = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/search/projects").queryParam("searchTerm", projectName);
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
+        mockServer.expect(ExpectedCount.once(), requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bambooSearchDTO)).contentType(MediaType.APPLICATION_JSON));
     }
 }

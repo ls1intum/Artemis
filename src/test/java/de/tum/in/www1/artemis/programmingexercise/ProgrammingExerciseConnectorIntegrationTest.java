@@ -61,6 +61,7 @@ public class ProgrammingExerciseConnectorIntegrationTest extends AbstractSpringI
         final var exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.mockCheckIfProjectExists(exercise);
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise);
+        bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
 
         final var generated = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 

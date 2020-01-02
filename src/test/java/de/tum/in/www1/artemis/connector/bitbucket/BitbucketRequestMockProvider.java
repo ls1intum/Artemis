@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.connector.bitbucket;
 
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +32,9 @@ public class BitbucketRequestMockProvider {
     @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER_URL;
 
+    @Value("${artemis.jira.admin-group-name}")
+    private String ADMIN_GROUP_NAME;
+
     private final RestTemplate restTemplate;
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -53,10 +56,31 @@ public class BitbucketRequestMockProvider {
         bitbucketSearchDTO.setSize(0);
         bitbucketSearchDTO.setSearchResults(new ArrayList<>());
 
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey)).andExpect(method(HttpMethod.GET))
+        mockServer.expect(ExpectedCount.once(), requestTo(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
         final var projectSearchPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").queryParam("name", projectName);
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
+        mockServer.expect(ExpectedCount.once(), requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bitbucketSearchDTO)).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+        final var projectKey = exercise.getProjectKey();
+        final var projectName = exercise.getProjectName();
+        final var body = Map.of("key", projectKey, "name", projectName);
+
+        mockServer.expect(ExpectedCount.once(), requestTo(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects")).andExpect(method(HttpMethod.POST))
+                .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
+
+        mockGrantGroupPermissionToProject(exercise, ADMIN_GROUP_NAME, "PROJECT_ADMIN");
+        mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN");
+        mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE");
+    }
+
+    public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, String permission) throws URISyntaxException {
+        final var projectKey = exercise.getProjectKey();
+
+        final var permissionPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).path("/permissions/groups/")
+                .queryParam("name", groupName).queryParam("permission", permission);
+        mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 }

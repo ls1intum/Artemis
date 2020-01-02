@@ -267,6 +267,9 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-library"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.1"
+
+    // Java's leightweight JSON library for internals of rest template mock server
+    testImplementation group: 'org.json', name: 'json', version: '20190722'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
