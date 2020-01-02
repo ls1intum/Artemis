@@ -68,8 +68,7 @@ public class BitbucketService extends ArtemisVersionControlService {
 
     private final RestTemplate restTemplate;
 
-    public BitbucketService(UserService userService, RestTemplate restTemplate, Optional<ContinuousIntegrationService> continuousIntegrationService) {
-        super(continuousIntegrationService);
+    public BitbucketService(UserService userService, RestTemplate restTemplate) {
         this.userService = userService;
         this.restTemplate = restTemplate;
     }

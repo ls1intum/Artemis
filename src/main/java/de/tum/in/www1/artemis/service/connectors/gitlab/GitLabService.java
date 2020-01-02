@@ -7,7 +7,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -34,7 +33,6 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ArtemisVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
@@ -64,15 +62,11 @@ public class GitLabService extends ArtemisVersionControlService {
 
     private final UserService userService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     private GitLabApi gitlab;
 
-    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
-        super(continuousIntegrationService);
+    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService) {
         this.restTemplate = restTemplate;
         this.userService = userService;
-        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     @PostConstruct
