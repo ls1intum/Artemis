@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class BitbucketProjectSearchDTO {
+public class BitbucketSearchDTO {
 
     private int size;
 
     @JsonProperty("values")
-    private List<BitbucketProjectDTO> searchResults;
+    private List<Object> searchResults;
 
     public int getSize() {
         return size;
@@ -19,11 +19,11 @@ public class BitbucketProjectSearchDTO {
         this.size = size;
     }
 
-    public List<BitbucketProjectDTO> getSearchResults() {
+    public List<Object> getSearchResults() {
         return searchResults;
     }
 
-    public void setSearchResults(List<BitbucketProjectDTO> searchResults) {
+    public void setSearchResults(List<Object> searchResults) {
         this.searchResults = searchResults;
     }
 }
