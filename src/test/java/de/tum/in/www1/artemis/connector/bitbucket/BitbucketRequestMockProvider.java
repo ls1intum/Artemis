@@ -78,9 +78,18 @@ public class BitbucketRequestMockProvider {
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, String permission) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-
         final var permissionPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).path("/permissions/groups/")
                 .queryParam("name", groupName).queryParam("permission", permission);
+
         mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws URISyntaxException, IOException {
+        final var projectKey = exercise.getProjectKey();
+        final var body = Map.of("name", repositoryName);
+        final var createRepoPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).path("/repos");
+
+        mockServer.expect(requestTo(createRepoPath.build().toUri())).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
+                .andRespond(withStatus(HttpStatus.OK));
     }
 }
