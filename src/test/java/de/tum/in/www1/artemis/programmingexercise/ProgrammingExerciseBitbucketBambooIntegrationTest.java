@@ -4,8 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoi
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -63,6 +62,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @AfterEach
     public void tearDown() {
         programmingExerciseRepository.deleteAll();
+        reset(gitService);
+        reset(bambooServer);
     }
 
     @Test
