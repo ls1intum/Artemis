@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH
 import java.net.URL;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -20,9 +21,10 @@ public abstract class ArtemisVersionControlService implements VersionControlServ
     @Value("${artemis.version-control.ci-token:}")
     private String CI_TOKEN;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    protected ArtemisVersionControlService(Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    @Autowired
+    public void setContinuousIntegrationService(Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.continuousIntegrationService = continuousIntegrationService;
     }
 
