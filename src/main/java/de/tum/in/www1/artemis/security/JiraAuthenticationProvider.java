@@ -28,6 +28,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -266,7 +267,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             groups.add(courseStudentGroupName);
             user.setGroups(groups);
             userRepository.save(user);
-            var auditEvent = new AuditEvent(user.getLogin(), "REGISTER_FOR_COURSE", "course=" + course.getTitle());
+            var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
             auditEventRepository.add(auditEvent);
             log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
         }

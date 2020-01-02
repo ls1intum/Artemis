@@ -64,6 +64,8 @@ if (project.hasProperty("war")) {
     apply from: "gradle/war.gradle"
 }
 
+apply plugin: "jacoco"
+
 idea {
     module {
         excludeDirs += files("node_modules")
@@ -121,6 +123,8 @@ task integrationTest(type: Test) {
     include "**/*IT*", "**/*IntTest*"
     exclude "**/*CucumberIT*"
 
+    maxHeapSize = '2048m'
+    jvmArgs '-XX:MaxPermSize=256m'
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
@@ -137,6 +141,19 @@ task integrationTestReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn integrationTest
 }
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.45
+            }
+        }
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
 
 if (!project.hasProperty("runList")) {
     project.ext.runList = "main"
@@ -335,11 +352,12 @@ task buildJarForDocker (type: Exec) {
 
 // Available commands:
 //
-// 1) Build production:             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests:                ./gradlew executeTests
-// 3) Check Java code format:       ./gradlew spotlessCheck
-// 4) Apply Java code formatter:    ./gradlew spotlessApply
-// 5) Find dependency updates:      ./gradlew dependencyUpdates
-// 6) Check JavaDoc:                ./gradlew checkstyleMain
-// 7) Generate Liquibase diff:      ./gradlew liquibaseDiffChangelog
-// 8) Clear Liquibase checksums:    ./gradlew liquibaseClearChecksums
+// 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
+// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport
+// 3) Check Java code format:                       ./gradlew spotlessCheck
+// 4) Apply Java code formatter:                    ./gradlew spotlessApply
+// 5) Find dependency updates:                      ./gradlew dependencyUpdates
+// 6) Check JavaDoc:                                ./gradlew checkstyleMain
+// 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
+// 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
+// 9) Enforce code coverage verification:           ./gradlew jacocoTestCoverageVerification

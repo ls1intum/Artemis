@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { ApollonDiagramDetailComponent } from './apollon-diagram-detail.component';
 import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
-import { UserRouteAccessService } from '../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const apollonDiagramsRoutes: Routes = [
     {

@@ -13,20 +13,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -34,31 +28,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.BambooService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
-public class ProgrammingSubmissionIntegrationTest {
-
-    @MockBean
-    BambooService continuousIntegrationServiceMock;
-
-    @MockBean
-    GitService gitServiceMock;
-
-    @MockBean
-    GroupNotificationService groupNotificationService;
-
-    @MockBean
-    WebsocketMessagingService websocketMessagingService;
+public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -86,8 +59,11 @@ public class ProgrammingSubmissionIntegrationTest {
         exercise.setTestCasesChanged(true);
         exerciseRepository.save(exercise);
 
-        when(gitServiceMock.getLastCommitHash(null)).thenReturn(new ObjectId(4, 5, 2, 5, 3));
-        when(gitServiceMock.getLastCommitHash(exercise.getTemplateParticipation().getRepositoryUrlAsUrl())).thenReturn(new ObjectId(4, 5, 2, 5, 3));
+        doNothing().when(continuousIntegrationService).triggerBuild(any());
+
+        var newObjectId = new ObjectId(4, 5, 2, 5, 3);
+        doReturn(newObjectId).when(gitService).getLastCommitHash(null);
+        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getRepositoryUrlAsUrl());
     }
 
     @AfterEach
@@ -175,7 +151,7 @@ public class ProgrammingSubmissionIntegrationTest {
             participations.add((ProgrammingExerciseParticipation) submission.getParticipation());
 
             // Check that the CI build was triggered for the given submission.
-            verify(continuousIntegrationServiceMock).triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            verify(continuousIntegrationService).triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
         }
 
         SecurityUtils.setAuthorizationObject();
@@ -228,7 +204,7 @@ public class ProgrammingSubmissionIntegrationTest {
             participations.add((ProgrammingExerciseStudentParticipation) submission.getParticipation());
 
             // Check that the CI build was triggered for the given submission.
-            verify(continuousIntegrationServiceMock).triggerBuild((ProgrammingExerciseStudentParticipation) submission.getParticipation());
+            verify(continuousIntegrationService).triggerBuild((ProgrammingExerciseStudentParticipation) submission.getParticipation());
         }
     }
 
