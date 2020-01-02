@@ -153,7 +153,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
         doNothing().when(versionControlService).createProjectForExercise(any());
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
-        doNothing().when(versionControlService).addWebHook(any(), anyString(), anyString());
+        doNothing().when(versionControlService).addWebHooksForExercise(any());
         doNothing().when(continuousIntegrationService).giveProjectPermissions(anyString(), any(), any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any());
         doNothing().when(continuousIntegrationService).triggerBuild(any());
