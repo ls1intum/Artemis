@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connector.bitbucket;
 
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
@@ -23,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketProjectSearchDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;
 
 @Component
 @Profile("bitbucket")
@@ -52,7 +53,7 @@ public class BitbucketRequestMockProvider {
     public void mockCheckIfProjectExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
-        final var bitbucketSearchDTO = new BitbucketProjectSearchDTO();
+        final var bitbucketSearchDTO = new BitbucketSearchDTO();
         bitbucketSearchDTO.setSize(0);
         bitbucketSearchDTO.setSearchResults(new ArrayList<>());
 
@@ -91,5 +92,16 @@ public class BitbucketRequestMockProvider {
 
         mockServer.expect(requestTo(createRepoPath.build().toUri())).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
                 .andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockAddWebHooks(ProgrammingExercise exercise) throws IOException {
+        final var projectKey = exercise.getProjectKey();
+        final var searchResult = new BitbucketSearchDTO();
+        searchResult.setSize(0);
+        searchResult.setSearchResults(new ArrayList<>());
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/.*/webhooks")))
+                .andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(searchResult)).contentType(MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/.*/webhooks")))
+                .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 }

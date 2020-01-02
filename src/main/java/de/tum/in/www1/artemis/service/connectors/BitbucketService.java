@@ -630,7 +630,7 @@ public class BitbucketService implements VersionControlService {
 
         Map<Integer, String> webHooks = new HashMap<>();
 
-        if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
             // TODO: BitBucket uses a pagination API to split up the responses, so we might have to check all pages
             List<Map<String, Object>> rawWebHooks = (List<Map<String, Object>>) response.getBody().get("values");
             for (Map<String, Object> rawWebHook : rawWebHooks) {
