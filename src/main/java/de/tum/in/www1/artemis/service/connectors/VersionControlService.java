@@ -16,9 +16,7 @@ public interface VersionControlService {
      * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified
      * repository.
      *
-     * @param repositoryUrl   The repository to create the hook on
-     * @param notificationUrl The URL that should be notified when a push occurred. This includes all arguments.
-     * @param repositoryType  The type of the repository for which to add all necessary webhooks
+     * @param exercise The programming exercise for which to add all required webhooks
      */
     void addWebHooksForExercise(ProgrammingExercise exercise);
 
