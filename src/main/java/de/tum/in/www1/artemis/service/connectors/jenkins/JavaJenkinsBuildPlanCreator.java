@@ -6,7 +6,6 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,6 +71,6 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
         }
 
-        throw new NotImplementedException("Sequential Jenkins builds not yet supported for Java!");
+        throw new UnsupportedOperationException("Sequential Jenkins builds not yet supported for Java!");
     }
 }

@@ -17,7 +17,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
@@ -363,7 +362,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public List<Feedback> getLatestBuildResultDetails(Result result) {
         // TODO since this is unused as of now
-        throw new NotImplementedException("Jenkins service does not support fetching the latest feedback for a result");
+        throw new UnsupportedOperationException("Jenkins service does not support fetching the latest feedback for a result");
     }
 
     @Override

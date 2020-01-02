@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -31,14 +32,15 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ArtemisVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
 @Service
-public class GitLabService implements VersionControlService {
+public class GitLabService extends ArtemisVersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabService.class);
 
@@ -62,11 +64,15 @@ public class GitLabService implements VersionControlService {
 
     private final UserService userService;
 
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
     private GitLabApi gitlab;
 
-    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService) {
+    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+        super(continuousIntegrationService);
         this.restTemplate = restTemplate;
         this.userService = userService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     @PostConstruct
@@ -141,12 +147,12 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
         addWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 

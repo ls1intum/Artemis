@@ -1,7 +1,6 @@
 
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.time.ZonedDateTime;
@@ -227,7 +226,7 @@ public class ParticipationService {
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
             programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
             // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
-            programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
+            versionControlService.get().addWebHookForParticipation(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
             programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
             // after saving, we need to make sure the object that is used after the if statement is the right one
@@ -457,17 +456,6 @@ public class ParticipationService {
         else {
             return participation;
         }
-    }
-
-    private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
-                    "Artemis WebHook");
-            // Optional webhook from the VCS to the CI (needed for some systems such as GitLab + Jenkins)
-            final var ciHookUrl = continuousIntegrationService.get().getWebhookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
-            ciHookUrl.ifPresent(s -> versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), s, "Artemis trigger to CI", CI_TOKEN));
-        }
-        return participation;
     }
 
     /**

@@ -97,14 +97,8 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
-    @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
-
     @Value("${artemis.repo-download-clone-path}")
     private String REPO_DOWNLOAD_CLONE_PATH;
-
-    @Value("${artemis.version-control.ci-token:}")
-    private String CI_TOKEN;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
@@ -341,13 +335,6 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", user);
         }
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
-        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoUrl, testsRepoUrl);
@@ -361,23 +348,11 @@ public class ProgrammingExerciseService {
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "Artemis Tests WebHook");
-
-        // Depending on the activated VCS/CI systems, the VCS system pushes commit notifications to the CI, or the CI pulls
-        addOptionalNotificationsIfNecessary(projectKey, templateParticipation, solutionParticipation, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        // The creation of the webhooks must occur after the initial push, because the participation is
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
+        versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         return programmingExercise;
-    }
-
-    private void addOptionalNotificationsIfNecessary(String projectKey, TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
-        final var templatePlanNotificationUrl = continuousIntegrationService.get().getWebhookUrl(projectKey, templateParticipation.getBuildPlanId());
-        final var solutionPlanNotificationUrl = continuousIntegrationService.get().getWebhookUrl(projectKey, solutionParticipation.getBuildPlanId());
-        if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            versionControlService.get().addWebHook(exerciseRepoUrl, templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", CI_TOKEN);
-            versionControlService.get().addWebHook(solutionRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", CI_TOKEN);
-            versionControlService.get().addWebHook(testsRepoUrl, solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", CI_TOKEN);
-        }
     }
 
     /**
@@ -921,12 +896,7 @@ public class ProgrammingExerciseService {
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
         reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
-        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(newExercise.getTestRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
-                "Artemis Tests WebHook");
+        versionControlService.get().addWebHooksForExercise(newExercise);
     }
 
     /**

@@ -10,7 +10,6 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
 @Profile("bitbucket")
-public class BitbucketService implements VersionControlService {
+public class BitbucketService extends ArtemisVersionControlService {
 
     private static final int MAX_FORK_RETRIES = 5;
 
@@ -69,7 +68,8 @@ public class BitbucketService implements VersionControlService {
 
     private final RestTemplate restTemplate;
 
-    public BitbucketService(UserService userService, RestTemplate restTemplate) {
+    public BitbucketService(UserService userService, RestTemplate restTemplate, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+        super(continuousIntegrationService);
         this.userService = userService;
         this.restTemplate = restTemplate;
     }
@@ -153,16 +153,16 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
         if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
             createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         // Not needed for Bitbucket
-        throw new NotImplementedException("Authenticated webhooks with Bitbucket are not supported!");
+        throw new UnsupportedOperationException("Authenticated webhooks with Bitbucket are not supported!");
     }
 
     @Override

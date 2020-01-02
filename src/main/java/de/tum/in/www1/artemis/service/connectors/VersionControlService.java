@@ -5,6 +5,7 @@ import java.net.URL;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
@@ -12,25 +13,21 @@ public interface VersionControlService {
     void configureRepository(URL repositoryUrl, String username);
 
     /**
-     * This creates a WebHook on the Version Control System that notifies the given URL about pushes to the repository. Multiple calls won't affect the result as the implementation
-     * must ensure that there is only one WebHook per URL.
+     * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified
+     * repository.
      *
      * @param repositoryUrl   The repository to create the hook on
      * @param notificationUrl The URL that should be notified when a push occurred. This includes all arguments.
-     * @param webHookName     The name of the WebHook that should be added as additional information (if applicable)
+     * @param repositoryType  The type of the repository for which to add all necessary webhooks
      */
-    void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
+    void addWebHooksForExercise(ProgrammingExercise exercise);
 
     /**
-     * Authenticated version of {@link VersionControlService#addWebHook(URL, String, String)}
+     * Adds the webhook for new pushes to a participation repository to Artemis
      *
-     * @param repositoryUrl     The repository to create the hook on
-     * @param notificationUrl   The URL that should be notified when a push occurred. This includes all arguments.
-     * @param webHookName       The name of the WebHook that should be added as additional information (if applicable)
-     * @param secretToken       Secret token every webhook should contain in order to only allow authenticated hooks to get accepted
-     * @see VersionControlService#addWebHook(URL, String, String)
+     * @param participation The participation for which webhooks should get triggered
      */
-    void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken);
+    void addWebHookForParticipation(ProgrammingExerciseParticipation participation);
 
     /**
      * Deletes the project for the given project key
