@@ -31,7 +31,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -53,7 +55,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing ProgrammingExercise. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(ProgrammingExerciseResource.Endpoints.ROOT)
 public class ProgrammingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
@@ -191,7 +193,7 @@ public class ProgrammingExerciseResource {
      * @param programmingExercise the programmingExercise to setup
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
-    @PostMapping("/programming-exercises/setup")
+    @PostMapping(Endpoints.SETUP)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
@@ -244,12 +246,6 @@ public class ProgrammingExerciseResource {
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
-        }
-
-        // Check if course shortname is set
-        if (course.getShortName() == null || course.getShortName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
-                    .body(null);
         }
 
         // Check if programming language is set
@@ -796,5 +792,12 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
         final var user = userService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api/programming-exercises";
+
+        public static final String SETUP = "/setup";
     }
 }

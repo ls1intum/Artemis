@@ -50,6 +50,8 @@ public class ModelFactory {
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setPackageName("de.test");
         return programmingExercise;
     }
 
