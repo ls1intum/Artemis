@@ -188,7 +188,6 @@ public class BitbucketService extends ArtemisVersionControlService {
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
         log.debug("getCloneURL: " + cloneUrl.toString());
-
         return cloneUrl;
     }
 

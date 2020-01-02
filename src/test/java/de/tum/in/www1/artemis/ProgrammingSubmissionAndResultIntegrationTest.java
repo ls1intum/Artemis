@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
@@ -19,24 +18,15 @@ import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.boot.test.mock.mockito.SpyBeans;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -49,21 +39,12 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
-import de.tum.in.www1.artemis.service.connectors.BambooService;
-import de.tum.in.www1.artemis.service.connectors.BitbucketService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo, bitbucket")
-@SpyBeans(@SpyBean(BambooService.class))
-class ProgrammingSubmissionAndResultIntegrationTest {
+class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegrationTest {
 
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
@@ -71,12 +52,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
 
     @Value("${artemis.continuous-integration.secret}")
     private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
-
-    @MockBean
-    GitService gitServiceMock;
-
-    @Autowired
-    BambooService bambooService;
 
     @Autowired
     ProgrammingExerciseRepository exerciseRepo;
@@ -117,9 +92,6 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     @Autowired
     ResultRepository resultRepository;
 
-    @Autowired
-    BitbucketService versionControlService;
-
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -129,15 +101,13 @@ class ProgrammingSubmissionAndResultIntegrationTest {
     private List<Long> participationIds;
 
     @BeforeEach
-    void reset() {
-        doReturn(true).when(bambooService).isBuildPlanEnabled(anyString(), anyString());
+    void reset() throws Exception {
+        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
+
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
-        /*
-         * exercise = database.addTemplateParticipationForProgrammingExercise(exercise); exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
-         */
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
@@ -374,7 +344,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         Long participationId = getParticipationIdByType(participationType, 0);
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
-        when(gitServiceMock.getLastCommitHash(repositoryUrl)).thenReturn(objectId);
+        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerBuild(participationType, 0, HttpStatus.OK);
 
         // Now a submission for the manual build should exist.
@@ -413,7 +383,7 @@ class ProgrammingSubmissionAndResultIntegrationTest {
         Long participationId = getParticipationIdByType(participationType, 0);
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        when(gitServiceMock.getLastCommitHash(repositoryUrl)).thenReturn(objectId);
+        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerInstructorBuild(participationType, 0, HttpStatus.OK);
 
         // Now a submission for the manual build should exist.
