@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.MockitoVerfication;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
@@ -91,16 +93,24 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "student1", roles = "USER")
     public void startProgrammingExercise_student_correctInitializationState() throws Exception {
         final var course = exercise.getCourse();
-        mockConnectorRequestsForStartParticipation(exercise, "student1");
+        final var verifications = mockConnectorRequestsForStartParticipation(exercise, "student1");
 
         final var path = ParticipationResource.Endpoints.ROOT
                 + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", "" + course.getId()).replace("{exerciseId}", "" + exercise.getId());
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
+
+        for (final var verification : verifications) {
+            verification.verify();
+        }
     }
 
-    private void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
+    private List<MockitoVerfication> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username) throws Exception {
+        final var verifications = new LinkedList<MockitoVerfication>();
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username);
+        verifications.addAll(bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username));
+
+        return verifications;
     }
 
     private void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, URISyntaxException, GitAPIException, InterruptedException {

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.connector.bamboo;
 
+import static de.tum.in.www1.artemis.util.MockitoVerfication.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
@@ -8,11 +10,16 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -23,15 +30,28 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.appfire.bamboo.cli.BambooClient;
+import com.appfire.bamboo.cli.helpers.PlanHelper;
+import com.appfire.common.cli.CliClient;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
+import de.tum.in.www1.artemis.util.MockitoVerfication;
 
 @Component
 @Profile("bamboo")
 public class BambooRequestMockProvider {
 
+    @Mock
+    private PlanHelper planHelper;
+
     @Value("${artemis.bamboo.url}")
     private URL BAMBOO_SERVER_URL;
+
+    @SpyBean
+    @InjectMocks
+    private BambooClient bambooClient;
 
     private final RestTemplate restTemplate;
 
@@ -45,6 +65,7 @@ public class BambooRequestMockProvider {
 
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        MockitoAnnotations.initMocks(this);
     }
 
     public void reset() {
@@ -92,5 +113,20 @@ public class BambooRequestMockProvider {
     private URI buildGivePermissionsURIFor(String projectKey, String groupName) throws URISyntaxException {
         return UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/permissions/project/").pathSegment(projectKey).path("/groups/").pathSegment(groupName)
                 .build().toUri();
+    }
+
+    public List<MockitoVerfication> mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username)
+            throws CliClient.RemoteRestException, CliClient.ClientException {
+        final var verifications = new LinkedList<MockitoVerfication>();
+        final var projectKey = exercise.getProjectKey();
+        final var targetPlanName = username.toUpperCase();
+        final var targetPlanKey = projectKey + "-" + targetPlanName;
+        final var sourcePlanKey = projectKey + "-" + BuildPlanType.TEMPLATE.getName();
+        final var buildProjectName = exercise.getCourse().getShortName().toUpperCase() + " " + exercise.getTitle();
+
+        when(planHelper.clonePlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean())).thenReturn("success");
+        verifications.add(from(() -> verify(planHelper, times(1)).clonePlan(sourcePlanKey, targetPlanKey, targetPlanName, "", buildProjectName, true)));
+
+        return verifications;
     }
 }

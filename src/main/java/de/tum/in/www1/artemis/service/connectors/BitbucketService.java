@@ -423,7 +423,12 @@ public class BitbucketService implements VersionControlService {
                     else {
                         throw e;
                     }
+
+                    // Try again if there was an exception
+                    continue;
                 }
+                // Don't try again if everything went fine
+                break;
             }
         }
         catch (HttpClientErrorException e) {
