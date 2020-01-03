@@ -43,7 +43,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 200;
+    private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1200;
 
     @BeforeEach
     void init() {
@@ -114,7 +114,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
 
     @Test
     void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
-        long delayMS = 200; // 100 ms.
+        long delayMS = 100; // 100 ms.
         programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
         // Setting it the first time.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
