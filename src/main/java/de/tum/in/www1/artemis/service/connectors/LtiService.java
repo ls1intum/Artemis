@@ -43,10 +43,9 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.util.RandomUtil;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import io.github.jhipster.security.RandomUtil;
 
 @Service
 @Transactional
@@ -92,13 +91,11 @@ public class LtiService {
 
     private final HttpServletResponse response;
 
-    private final TokenProvider tokenProvider;
-
     public final HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
     public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
             PasswordEncoder passwordEncoder, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository,
-            HttpServletResponse response, TokenProvider tokenProvider) {
+            HttpServletResponse response) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
@@ -107,7 +104,6 @@ public class LtiService {
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
         this.response = response;
-        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -123,11 +119,8 @@ public class LtiService {
 
         if (auth.isPresent()) {
             // Authentication was successful
-
             SecurityContextHolder.getContext().setAuthentication(auth.get());
-
             onSuccessfulLtiAuthentication(launchRequest, exercise);
-
         }
         else {
 

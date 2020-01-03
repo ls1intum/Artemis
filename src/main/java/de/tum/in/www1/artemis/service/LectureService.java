@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
@@ -14,7 +13,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 
 @Service
-@Transactional
 public class LectureService {
 
     private LectureRepository lectureRepository;
@@ -40,11 +38,10 @@ public class LectureService {
      * @param user the user entity
      * @return a List of all Lectures for the given course
      */
-    @Transactional(readOnly = true)
     public Set<Lecture> findAllForCourse(Course course, User user) {
         Set<Lecture> lectures = lectureRepository.findAllByCourseId(course.getId());
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
-            lectures = filterActiveAttachments(lectures);
+            lectures = filterActiveAttachments(lectures, user);
         }
         return lectures;
     }
@@ -53,10 +50,10 @@ public class LectureService {
      * For tutors, admins and instructors returns  lecture with all attachments, for students lecture with only active attachments
      *
      * @param lectureWithAttachments lecture that has attachments
+     * @param user the user for which this call should filter
      * @return lecture with filtered attachments
      */
-    public Lecture filterActiveAttachments(Lecture lectureWithAttachments) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+    public Lecture filterActiveAttachments(Lecture lectureWithAttachments, User user) {
         Course course = lectureWithAttachments.getCourse();
         if (user.getGroups().contains(course.getTeachingAssistantGroupName()) || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin()) {
             return lectureWithAttachments;
@@ -76,12 +73,13 @@ public class LectureService {
      * Filter active attachments for a set of lectures.
      *
      * @param lecturesWithAttachments lectures that have attachments
+     * @param user the user for which this call should filter
      * @return lectures with filtered attachments
      */
-    public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments) {
+    public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture));
+            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
         }
         return lecturesWithFilteredAttachments;
     }

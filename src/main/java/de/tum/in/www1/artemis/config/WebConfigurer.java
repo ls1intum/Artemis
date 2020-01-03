@@ -132,6 +132,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         cachingHttpHeadersFilter.setAsyncSupported(true);
     }
 
+    // not used at the moment
     private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
         log.debug("Registering Logging Filter");
         HttpLoggingFilter httpLoggingFilter = new HttpLoggingFilter();

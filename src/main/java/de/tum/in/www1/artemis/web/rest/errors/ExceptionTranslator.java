@@ -89,6 +89,8 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
+    // TODO this exception also hides when optional services cannot be retrieved via "get()" which should instead lead to a proper exception
+    // SK: I guess we should remove this handler, because it is confusing
     @ExceptionHandler
     public ResponseEntity<Problem> handleNoSuchElementException(NoSuchElementException ex, NativeWebRequest request) {
         Problem problem = Problem.builder().withStatus(Status.NOT_FOUND).with(MESSAGE_KEY, ErrorConstants.ENTITY_NOT_FOUND_TYPE).build();

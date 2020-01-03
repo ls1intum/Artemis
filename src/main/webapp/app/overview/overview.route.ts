@@ -9,7 +9,7 @@ import {
     CourseStatisticsComponent,
     OverviewComponent,
 } from './';
-import { UserRouteAccessService } from 'app/core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const OVERVIEW_ROUTES: Routes = [
     {
