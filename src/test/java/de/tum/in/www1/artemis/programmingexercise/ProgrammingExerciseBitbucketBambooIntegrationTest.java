@@ -109,6 +109,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username);
         verifications.addAll(bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username));
+        verifications.addAll(bambooRequestMockProvider.mockUpdatePlanRepositoryForParticipation(exercise, username));
 
         return verifications;
     }
