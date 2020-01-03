@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.connector.bamboo;
 
-import static de.tum.in.www1.artemis.util.MockitoVerfication.from;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -42,7 +41,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdateProvider;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
-import de.tum.in.www1.artemis.util.MockitoVerfication;
+import de.tum.in.www1.artemis.util.Verifiable;
 
 @Component
 @Profile("bamboo")
@@ -126,9 +125,8 @@ public class BambooRequestMockProvider {
                 .build().toUri();
     }
 
-    public List<MockitoVerfication> mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username)
-            throws CliClient.RemoteRestException, CliClient.ClientException {
-        final var verifications = new LinkedList<MockitoVerfication>();
+    public List<Verifiable> mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws CliClient.RemoteRestException, CliClient.ClientException {
+        final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var targetPlanName = username.toUpperCase();
         final var targetPlanKey = projectKey + "-" + targetPlanName;
@@ -136,14 +134,14 @@ public class BambooRequestMockProvider {
         final var buildProjectName = exercise.getCourse().getShortName().toUpperCase() + " " + exercise.getTitle();
 
         when(planHelper.clonePlan(anyString(), anyString(), anyString(), anyString(), anyString(), anyBoolean())).thenReturn("success");
-        verifications.add(from(() -> verify(planHelper, times(1)).clonePlan(sourcePlanKey, targetPlanKey, targetPlanName, "", buildProjectName, true)));
+        verifications.add((() -> verify(planHelper, times(1)).clonePlan(sourcePlanKey, targetPlanKey, targetPlanName, "", buildProjectName, true)));
 
         return verifications;
     }
 
-    public List<MockitoVerfication> mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username)
+    public List<Verifiable> mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username)
             throws CliClient.RemoteRestException, CliClient.ClientException {
-        final var verifications = new LinkedList<MockitoVerfication>();
+        final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var bambooRepoName = Constants.ASSIGNMENT_REPO_NAME;
         final var planKey = (projectKey + "-" + username).toUpperCase();
@@ -151,7 +149,7 @@ public class BambooRequestMockProvider {
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
 
         when(repositoryHelper.getRemoteRepository(anyString(), anyString(), anyBoolean())).thenReturn(repositoryResponse);
-        verifications.add(from(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false)));
+        verifications.add(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false));
 
         doNothing().when(bambooBuildPlanUpdateProvider).updateRepository(repositoryResponse, bitbucketRepoName, projectKey.toUpperCase(), planKey);
 

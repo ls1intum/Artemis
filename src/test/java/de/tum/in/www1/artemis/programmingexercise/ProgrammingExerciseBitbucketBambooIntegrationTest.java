@@ -32,9 +32,9 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.MockitoVerfication;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationTest {
@@ -101,14 +101,14 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
 
         for (final var verification : verifications) {
-            verification.verify();
+            verification.performVerification();
         }
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
-    private List<MockitoVerfication> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username) throws Exception {
-        final var verifications = new LinkedList<MockitoVerfication>();
+    private List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username) throws Exception {
+        final var verifications = new LinkedList<Verifiable>();
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username);
         verifications.addAll(bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username));
