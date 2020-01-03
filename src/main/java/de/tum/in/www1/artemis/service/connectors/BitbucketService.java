@@ -83,7 +83,7 @@ public class BitbucketService extends ArtemisVersionControlService {
             if (!userExists(username)) {
                 log.debug("Bitbucket user {} does not exist yet", username);
                 String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                createUser(username, String.valueOf(userService.decryptPasswordByLogin(username).get()), user.getEmail(), displayName);
+                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
                 try {
                     addUserToGroups(username, user.getGroups());
