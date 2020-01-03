@@ -185,9 +185,29 @@ public class DatabaseUtilService {
         return users;
     }
 
-    public Result addParticipationWithResultForExercise(Exercise exercise, String login) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
-        return addResultToParticipation(participation);
+    public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
+        var storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        final StudentParticipation studentParticipation;
+        if (storedParticipation.isEmpty()) {
+            final var user = getUserByLogin(login);
+            final var participation = new ProgrammingExerciseStudentParticipation();
+            final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
+            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setStudent(user);
+            participation.setBuildPlanId(buildPlanId);
+            participation.setProgrammingExercise(exercise);
+            participation.setInitializationState(InitializationState.INITIALIZED);
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+            programmingExerciseStudentParticipationRepo.save(participation);
+            storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+            assertThat(storedParticipation).isPresent();
+            studentParticipation = studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
+        }
+        else {
+            studentParticipation = storedParticipation.get();
+        }
+        return addResultToParticipation(studentParticipation);
     }
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
@@ -316,13 +336,18 @@ public class DatabaseUtilService {
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
         }
-        User user = getUserByLogin(login);
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+
+        final var user = getUserByLogin(login);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        participation.setInitializationDate(ZonedDateTime.now());
         participation.setStudent(user);
-        participation.setExercise(exercise);
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-" + login.toUpperCase());
+        participation.setBuildPlanId(buildPlanId);
+        participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
-        return studentParticipationRepo.save(participation);
+        participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+        return programmingExerciseStudentParticipationRepo.save(participation);
     }
 
     @Transactional
@@ -330,7 +355,7 @@ public class DatabaseUtilService {
         final var repoName = (exercise.getProjectKey() + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
+        participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.TEMPLATE.getName());
         participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
@@ -343,7 +368,7 @@ public class DatabaseUtilService {
         final var repoName = (exercise.getProjectKey() + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
+        participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.SOLUTION.getName());
         participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);

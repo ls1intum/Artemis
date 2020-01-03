@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
@@ -28,6 +28,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -100,13 +101,15 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private List<Long> participationIds;
 
+    private ProgrammingExercise exercise;
+
     @BeforeEach
-    void reset() throws Exception {
+    void setUp() {
         doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString());
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
@@ -242,7 +245,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *
+     *BASE
      * After that the CI builds the code submission and notifies Artemis so it can create the result - however for an unknown reason this request is sent twice!
      *
      * Only the last result should be linked to the created submission.
@@ -515,7 +518,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
      */
     private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationNumber);
-        postResult("TEST201904BPROGRAMMINGEXERCISE6-" + buildPlanStudentId, expectedStatus, additionalCommit);
+        postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
     @SuppressWarnings("unchecked")

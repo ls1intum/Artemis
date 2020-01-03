@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -55,7 +56,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addParticipationWithResultForExercise(exercise, "student1");
+        database.addProgrammingParticipationWithResultForExercise(exercise, "student1");
         exercise.setTestCasesChanged(true);
         exerciseRepository.save(exercise);
 
@@ -74,6 +75,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void triggerBuildStudent() throws Exception {
+        doReturn(ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d")).when(gitService).getLastCommitHash(any());
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
@@ -90,6 +92,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
+        doReturn(ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d")).when(gitService).getLastCommitHash(any());
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
@@ -125,6 +128,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Timeout(5)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExercise_Instructor() throws Exception {
+        doReturn(ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d")).when(gitService).getLastCommitHash(any());
         String login1 = "student1";
         String login2 = "student2";
         String login3 = "student3";
@@ -186,6 +190,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         // We only trigger two participations here: 1 and 3.
         List<Long> participationsToTrigger = new ArrayList<>(Arrays.asList(participation1.getId(), participation3.getId()));
 
+        doReturn(ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d")).when(gitService).getLastCommitHash(any());
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build", participationsToTrigger, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
