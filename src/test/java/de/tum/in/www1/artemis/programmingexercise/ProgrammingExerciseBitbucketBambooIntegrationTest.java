@@ -61,7 +61,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @AfterEach
     public void tearDown() {
-        programmingExerciseRepository.deleteAll();
+        database.resetDatabase();
         reset(gitService);
         reset(bambooServer);
     }
