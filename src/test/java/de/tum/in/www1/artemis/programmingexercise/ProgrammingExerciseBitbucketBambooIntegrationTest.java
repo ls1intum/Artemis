@@ -27,10 +27,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -51,10 +53,15 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     private Course course;
 
+    private ProgrammingExercise exercise;
+
     @BeforeEach
     public void setup() {
         database.addUsers(1, 1, 1);
-        course = database.addEmptyCourse();
+        course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(1L).get();
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(exercise);
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
@@ -64,6 +71,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         database.resetDatabase();
         reset(gitService);
         reset(bambooServer);
+        bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
     }
 
     @Test
@@ -76,6 +85,22 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         exercise.setId(generated.getId());
         assertThat(exercise).isEqualTo(generated);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void startProgrammingExercise_student_correctInitializationState() throws Exception {
+        final var course = exercise.getCourse();
+        mockConnectorRequestsForStartParticipation(exercise, "student1");
+
+        final var path = ParticipationResource.Endpoints.ROOT
+                + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", "" + course.getId()).replace("{exerciseId}", "" + exercise.getId());
+        final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
+    }
+
+    private void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username);
     }
 
     private void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws IOException, URISyntaxException, GitAPIException, InterruptedException {

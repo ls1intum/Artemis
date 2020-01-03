@@ -47,6 +47,10 @@ public class BambooRequestMockProvider {
         mockServer = MockRestServiceServer.createServer(restTemplate);
     }
 
+    public void reset() {
+        mockServer.reset();
+    }
+
     public void mockCheckIfProjectExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();

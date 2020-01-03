@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
@@ -117,28 +118,14 @@ public class BitbucketService implements VersionControlService {
         log.debug("Setting up branch protection for repository " + repositorySlug);
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
-        HashMap<String, Object> matcher = new HashMap<>();
-
+        final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
         // A wildcard (*) ist used to protect all branches
-        matcher.put("displayId", "*");
-        matcher.put("id", "*");
-        HashMap<String, Object> type = new HashMap<>();
-        type.put("id", "PATTERN");
-        type.put("name", "Pattern");
-        matcher.put("type", type);
-        matcher.put("active", true);
-
-        HashMap<String, Object> fastForwardOnlyType = new HashMap<>();
-        fastForwardOnlyType.put("type", "fast-forward-only"); // Prevent force-pushes
-        fastForwardOnlyType.put("matcher", matcher);
-
-        HashMap<String, Object> noDeletesType = new HashMap<>();
-        noDeletesType.put("type", "no-deletes"); // Prevent deletion of branches
-        noDeletesType.put("matcher", matcher);
-
-        List<Object> body = new ArrayList<>();
-        body.add(fastForwardOnlyType);
-        body.add(noDeletesType);
+        final var matcher = new BitbucketBranchProtectionDTO.MatcherDTO("*", "*", type, true);
+        // Prevent force-pushes
+        final var fastForwardOnlyProtection = new BitbucketBranchProtectionDTO("fast-forward-only", matcher);
+        // Prevent deletion of branches
+        final var noDeletesProtection = new BitbucketBranchProtectionDTO("no-deletes", matcher);
+        final var body = List.of(fastForwardOnlyProtection, noDeletesProtection);
 
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type manually as required by Bitbucket
@@ -304,11 +291,9 @@ public class BitbucketService implements VersionControlService {
     public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 3) {
-            String repositorySlug = urlParts[3];
-            if (repositorySlug.endsWith(".git")) {
-                repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-            }
+        if (urlParts[urlParts.length - 1].endsWith(".git")) {
+            String repositorySlug = urlParts[urlParts.length - 1];
+            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
             return repositorySlug;
         }
 
