@@ -331,7 +331,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             feedback.setText(testCase.getName());
             String errorMessage = null;
             // If we have errors or failures, they will always be of length == 1 since JUnit (and the format itself)
-            // should generally only report he first failure in a test case
+            // should generally only report the first failure in a test case
             if (testCase.getErrors() != null) {
                 errorMessage = testCase.getErrors().get(0).getMessage();
             }

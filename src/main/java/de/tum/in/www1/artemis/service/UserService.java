@@ -419,9 +419,7 @@ public class UserService {
      * @return decrypted password or empty string
      */
     public Optional<String> decryptPasswordByLogin(String login) {
-        final var optionalUser = userRepository.findOneByLogin(login);
-
-        return optionalUser.flatMap(user -> Optional.of(encryptor().decrypt(user.getPassword())));
+        return userRepository.findOneByLogin(login).map(user -> encryptor().decrypt(user.getPassword()));
     }
 
     /**
