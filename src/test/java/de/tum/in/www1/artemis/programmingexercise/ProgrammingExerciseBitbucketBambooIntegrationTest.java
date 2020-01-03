@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -61,7 +62,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void setup() {
         database.addUsers(1, 1, 1);
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(1L).get();
+        exercise = programmingExerciseRepository.findAll().get(0);
         exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.save(exercise);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -102,6 +103,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         for (final var verification : verifications) {
             verification.verify();
         }
+
+        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
     private List<MockitoVerfication> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username) throws Exception {
@@ -110,6 +113,10 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username);
         verifications.addAll(bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username));
         verifications.addAll(bambooRequestMockProvider.mockUpdatePlanRepositoryForParticipation(exercise, username));
+        bitbucketRequestMockProvider.mockAddWebHooks(exercise);
+
+        // TODO mock the actual git calls in the git service
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
 
         return verifications;
     }
