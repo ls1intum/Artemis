@@ -4,7 +4,7 @@ import { AfterViewInit, Component, OnInit, ViewEncapsulation } from '@angular/co
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { WindowRef } from '../core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

@@ -68,7 +68,7 @@ public class ParticipationService {
 
     private final UserService userService;
 
-    private final Optional<GitService> gitService;
+    private final GitService gitService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -85,9 +85,9 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
+            QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService,
+            AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -773,7 +773,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional(noRollbackFor = { Throwable.class })
+    @Transactional
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
@@ -795,7 +795,7 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
-                    gitService.get().deleteLocalRepository(programmingExerciseParticipation);
+                    gitService.deleteLocalRepository(programmingExerciseParticipation);
                 }
             }
             catch (Exception ex) {

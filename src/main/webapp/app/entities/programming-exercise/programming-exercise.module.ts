@@ -37,6 +37,7 @@ import { ArtemisMarkdownEditorModule } from 'app/markdown-editor';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
+import { IntellijModule } from 'app/intellij/intellij.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -63,6 +64,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ArtemisComplaintsModule,
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
+        IntellijModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,

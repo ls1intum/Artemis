@@ -19,6 +19,8 @@
         </button>
 -->
         <button
+            jhiIdeFilter
+            [showInIDE]="false"
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-import-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
@@ -31,6 +33,8 @@
             </span>
         </button>
         <button
+            jhiIdeFilter
+            [showInIDE]="false"
             *ngIf="course && course.isAtLeastInstructor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
@@ -50,21 +54,25 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="shortName"><span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="shortName">
+                        <span jhiTranslate="artemisApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
-                    <th><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
-                    <th jhiSortBy="publishBuildPlanUrl">
+                    <th class="d-none d-md-table-cell" jhiSortBy="maxScore">
+                        <span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiIdeFilter [showInIDE]="false"><span jhiTranslate="artemisApp.programmingExercise.repositories">Repositories</span></th>
+                    <th jhiIdeFilter [showInIDE]="false"><span jhiTranslate="artemisApp.programmingExercise.buildplans">Build Plans</span>&nbsp;</th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="publishBuildPlanUrl">
                         <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="allowOnlineEditor">
+                    <th class="d-none d-md-table-cell" jhiSortBy="allowOnlineEditor">
                         <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
+                    <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
@@ -73,7 +81,7 @@
 
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate:reverse; trackBy: trackId">
-                    <td>
+                    <td class="d-none d-md-table-cell">
                         <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.id }}</a>
                     </td>
                     <td>
@@ -84,11 +92,11 @@
                             [hasUpdatedTestCasesInitialValue]="programmingExercise.testCasesChanged"
                         ></jhi-programming-exercise-test-cases-dirty-warning>
                     </td>
-                    <td>{{ programmingExercise.shortName }}</td>
+                    <td class="d-none d-md-table-cell">{{ programmingExercise.shortName }}</td>
                     <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ programmingExercise.dueDate | date: 'medium' }}</td>
-                    <td>{{ programmingExercise.maxScore }}</td>
-                    <td class="d-flex flex-column">
+                    <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
+                    <td *ngIf="!isIntelliJ" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl"
                                 ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
@@ -123,7 +131,7 @@
                             <span *ngIf="programmingExercise.testRepositoryUrl"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span>
                         </div>
                     </td>
-                    <td>
+                    <td jhiIdeFilter [showInIDE]="false">
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                         <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
                             ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.templateParticipation.buildPlanId }}" target="_blank">Template</a></span
@@ -133,10 +141,35 @@
                         ><br />
                     </td>
 
-                    <td>{{ programmingExercise.publishBuildPlanUrl }}</td>
-                    <td>{{ programmingExercise.allowOnlineEditor }}</td>
-                    <td *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
-                    <td class="text-right">
+                    <td class="d-none d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
+                    <td class="d-none d-md-table-cell">{{ programmingExercise.allowOnlineEditor }}</td>
+                    <td class="d-none d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
+                    <td jhiIdeFilter [showInIDE]="true" class="align-middle">
+                        <jhi-ide-button
+                            *ngIf="
+                                intelliJState.inInstructorView &&
+                                    intelliJState.opened === programmingExercise.id &&
+                                    programmingExercise.isAtLeastInstructor &&
+                                    programmingExercise.templateParticipation;
+                                else importAsInstructor
+                            "
+                            buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | translate }}"
+                            [smallButton]="false"
+                            (click)="openIntelliJEditor(programmingExercise)"
+                        >
+                        </jhi-ide-button>
+                        <ng-template #importAsInstructor>
+                            <jhi-ide-button
+                                *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                [buttonLabel]="'entity.action.editInIntelliJ' | translate"
+                                [buttonLoading]="intelliJState.cloning"
+                                [smallButton]="false"
+                                (click)="editIntIntelliJ(programmingExercise)"
+                            >
+                            </jhi-ide-button>
+                        </ng-template>
+                    </td>
+                    <td jhiIdeFilter [showInIDE]="false" class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button
@@ -163,6 +196,8 @@
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                    jhiIdeFilter
+                                    [showInIDE]="false"
                                     routerLink="/code-editor/{{ programmingExercise.id }}/admin/{{ programmingExercise.templateParticipation.id }}"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
