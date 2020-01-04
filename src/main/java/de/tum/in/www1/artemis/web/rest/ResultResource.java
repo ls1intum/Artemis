@@ -47,7 +47,7 @@ public class ResultResource {
     private String applicationName;
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String CI_AUTHENTICATION_TOKEN = "";
+    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
 
     private final ResultRepository resultRepository;
 
@@ -189,7 +189,7 @@ public class ResultResource {
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
-        if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+        if (token == null || !token.equals(ARTEMIS_AUTHENTICATION_TOKEN_VALUE)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
