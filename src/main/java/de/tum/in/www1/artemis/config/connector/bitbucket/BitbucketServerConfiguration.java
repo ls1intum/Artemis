@@ -20,7 +20,7 @@ public class BitbucketServerConfiguration {
     @Value("${artemis.version-control.user}")
     private String BITBUCKET_USER;
 
-    @Value("${artemis.version-control.secret}")
+    @Value("${artemis.version-control.password}")
     private String BITBUCKET_PASSWORD;
 
     @Value("${artemis.version-control.url}")
