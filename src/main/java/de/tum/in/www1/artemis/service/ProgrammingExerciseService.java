@@ -928,17 +928,26 @@ public class ProgrammingExerciseService {
         final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
 
-        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
+        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct repo URLs and
         // running the plan for the first time
         continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
         giveCIProjectPermissions(newExercise);
         continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
+
+        // update 2 repositories for the template (BASE) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTemplateRepositoryUrl(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTestRepositoryUrl(), Optional.empty());
+
+        // update 2 repositories for the solution (SOLUTION) build plan
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getSolutionRepositoryUrl(), Optional.empty());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTestRepositoryUrl(), Optional.empty());
+
         try {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
             continuousIntegrationService.get().triggerBuild(solutionParticipation);
