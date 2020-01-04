@@ -56,7 +56,7 @@ import de.tum.in.www1.artemis.exception.ContinousIntegrationBuildPlanException;
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
-    @Value("${artemis.bamboo.user}")
+    @Value("${artemis.continuous-integration.user}")
     private String BAMBOO_USER;
 
     @Value("${artemis.jira.admin-group-name}")
@@ -65,7 +65,7 @@ public class BambooBuildPlanService {
     @Value("${server.url}")
     private URL SERVER_URL;
 
-    @Value("${artemis.bamboo.vcs-application-link-name}")
+    @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String VCS_APPLICATION_LINK_NAME;
 
     private final ResourceLoader resourceLoader;
@@ -189,7 +189,8 @@ public class BambooBuildPlanService {
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
-        final var directoryPattern = "classpath:buildscripts/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+        final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
+                + "*.sh";
         try {
             final var scriptResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern);
             // Have to use foreach because of possible IOException

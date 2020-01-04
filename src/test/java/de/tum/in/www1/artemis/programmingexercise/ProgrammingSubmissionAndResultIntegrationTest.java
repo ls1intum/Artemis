@@ -51,7 +51,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         STUDENT, TEMPLATE, SOLUTION
     }
 
-    @Value("${artemis.bamboo.authentication-token}")
+    @Value("${artemis.continuous-integration.secret}")
     private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
 
     @Autowired
@@ -105,7 +105,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     void setUp() {
-        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString());
+        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
+
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -245,7 +246,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     *BASE
+     *
      * After that the CI builds the code submission and notifies Artemis so it can create the result - however for an unknown reason this request is sent twice!
      *
      * Only the last result should be linked to the created submission.
