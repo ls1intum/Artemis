@@ -583,12 +583,12 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
         log.debug("REST request to delete Course : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseService.findOneWithExercises(courseId);
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
         for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise, false, false);
+            exerciseService.delete(exercise.getId(), false, false);
         }
 
         for (Lecture lecture : course.getLectures()) {
