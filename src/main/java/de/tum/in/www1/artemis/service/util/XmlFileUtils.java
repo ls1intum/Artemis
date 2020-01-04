@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.file.Path;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -29,25 +28,24 @@ public class XmlFileUtils {
     /**
      * Reads an XMl file from the resources for a given relative path
      *
-     * @param path The path in the resources under which the XML file is stored
-     * @return The parsed XML file
+     * @param file The XML file with the data properly formatted
+     * @return The parsed XML document
      */
-    public static Document readXmlFile(Path path) {
-        return readXmlFile(path, null);
+    public static Document readXmlFile(File file) {
+        return readXmlFile(file, null);
     }
 
     /**
      * Reads an XMl file from the resources for a given relative path. Also replaces all Strings in the given file
      * based on the map parameter. Meaning key in the map -> replaced by mapped value
      *
-     * @param path The path in the resources under which the XML file is stored
+     * @param file The XML file with the data properly formatted
      * @param variablesToReplace A map containing key, that should get replaced by their mapped values
-     * @return The parsed XML file with the replaced values
+     * @return The parsed XML document with the replaced values
      */
-    public static Document readXmlFile(Path path, @Nullable Map<String, String> variablesToReplace) {
-        final var configXmlFile = new File(XmlFileUtils.class.getClassLoader().getResource(path.toString()).getFile());
+    public static Document readXmlFile(File file, @Nullable Map<String, String> variablesToReplace) {
         try {
-            var configXmlText = FileUtils.readFileToString(configXmlFile, CharEncoding.UTF_8);
+            var configXmlText = FileUtils.readFileToString(file, CharEncoding.UTF_8);
             if (variablesToReplace != null) {
                 for (final var replacement : variablesToReplace.entrySet()) {
                     configXmlText = configXmlText.replace(replacement.getKey(), replacement.getValue());
