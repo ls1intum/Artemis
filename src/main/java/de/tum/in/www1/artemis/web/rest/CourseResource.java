@@ -20,7 +20,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -588,7 +589,7 @@ public class CourseResource {
             return ResponseEntity.notFound().build();
         }
         for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId(), false, false);
+            exerciseService.delete(exercise, false, false);
         }
 
         for (Lecture lecture : course.getLectures()) {
