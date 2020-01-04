@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,12 +38,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
-
-    @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
-
-    @Value("${artemis.version-control.ci-token:}")
-    private String CI_TOKEN;
 
     private final ParticipationRepository participationRepository;
 
