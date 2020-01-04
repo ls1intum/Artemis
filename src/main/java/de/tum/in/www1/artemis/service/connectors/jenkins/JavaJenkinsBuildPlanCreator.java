@@ -47,8 +47,8 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
-    @Value("${artemis.continuous-integration.notification-token}")
-    private String NOTIFICATION_TOKEN;
+    @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
+    private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
 
     @PostConstruct
     public void init() {
@@ -60,7 +60,7 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         final var resourcePath = Path.of("templates", "jenkins", "java", "config.xml");
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
-                artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, NOTIFICATION_TOKEN);
+                artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
 
         return XmlFileUtils.readXmlFile(resourcePath, replacements);
     }
