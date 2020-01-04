@@ -18,9 +18,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Value("${server.url}")
     protected String ARTEMIS_BASE_URL;
 
-    @Value("${artemis.version-control.ci-token}")
-    private String CI_TOKEN;
-
     private ApplicationContext applicationContext;
 
     @Autowired
@@ -47,7 +44,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
      */
     protected abstract void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken);
 
-    private ContinuousIntegrationService getContinuousIntegrationService() {
+    protected ContinuousIntegrationService getContinuousIntegrationService() {
         // We need to get the CI service from the context, because Bamboo and Bitbucket would end up in a circular dependency otherwise
         return applicationContext.getBean(ContinuousIntegrationService.class);
     }
@@ -63,16 +60,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         addWebHook(exercise.getTemplateRepositoryUrlAsUrl(), artemisTemplateHookPath, "Artemis WebHook");
         addWebHook(exercise.getSolutionRepositoryUrlAsUrl(), artemisSolutionHookPath, "Artemis WebHook");
         addWebHook(exercise.getTestRepositoryUrlAsUrl(), artemisTestsHookPath, "Artemis WebHook");
-
-        // Optional webhook from the version control system to the continuous integration system (needed for some systems such as GitLab + Jenkins)
-        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
-        final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
-        final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
-        if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            addAuthenticatedWebHook(exercise.getTemplateRepositoryUrlAsUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", CI_TOKEN);
-            addAuthenticatedWebHook(exercise.getSolutionRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", CI_TOKEN);
-            addAuthenticatedWebHook(exercise.getTestRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", CI_TOKEN);
-        }
     }
 
     @Override
@@ -80,11 +67,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             // first add a web hook from the version control service to Artemis, so that Artemis is notified can create a ProgrammingSubmission when students push their code
             addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "Artemis WebHook");
-
-            // Optional webhook from the version control system to the continuous integration system (needed for some systems such as GitLab + Jenkins)
-            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
-            getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
-                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", CI_TOKEN));
         }
     }
 }
