@@ -594,9 +594,9 @@ public class CourseResource {
      */
     @DeleteMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.debug("REST request to delete Course : {}", courseId);
-        Course course = courseService.findOne(courseId);
+        Course course = courseService.findOneWithExercisesAndLectures(courseId);
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
