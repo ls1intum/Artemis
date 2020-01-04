@@ -495,7 +495,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Optional<String> getWebhookUrl(String projectKey, String buildPlanId) {
+    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         // No webhooks needed between Bamboo and Bitbucket, so we return an empty Optional
         // See https://confluence.atlassian.com/bamboo/integrating-bamboo-with-bitbucket-server-779302772.html
         return Optional.empty();

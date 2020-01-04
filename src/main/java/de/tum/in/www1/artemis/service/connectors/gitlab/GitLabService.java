@@ -31,14 +31,14 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.ArtemisVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
 @Service
-public class GitLabService extends ArtemisVersionControlService {
+public class GitLabService extends AbstractVersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabService.class);
 
@@ -142,11 +142,11 @@ public class GitLabService extends ArtemisVersionControlService {
 
     @Override
     protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        addWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
+        addAuthenticatedWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
     }
 
     @Override
-    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    protected void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 

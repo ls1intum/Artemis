@@ -231,7 +231,7 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId The ID of the build plan, that should get triggered/notified
      * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
      */
-    Optional<String> getWebhookUrl(String projectKey, String buildPlanId);
+    Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
 
     /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out

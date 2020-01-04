@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
-public abstract class ArtemisVersionControlService implements VersionControlService {
+public abstract class AbstractVersionControlService implements VersionControlService {
 
     @Value("${server.url}")
     protected String ARTEMIS_BASE_URL;
@@ -45,7 +45,7 @@ public abstract class ArtemisVersionControlService implements VersionControlServ
      * @param webHookName Any arbitrary name for the webhook
      * @param secretToken A secret token that authenticates the webhook against the system behind the notification URL
      */
-    protected abstract void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken);
+    protected abstract void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken);
 
     private ContinuousIntegrationService getContinuousIntegrationService() {
         // We need to get the CI service from the context, because Bamboo and Bitbucket would end up in a circular dependency otherwise
@@ -63,12 +63,12 @@ public abstract class ArtemisVersionControlService implements VersionControlServ
         addWebHook(exercise.getTestRepositoryUrlAsUrl(), artemisTestsHookPath, "Artemis WebHook");
 
         // Depending on the activated VCS/CI systems, the VCS system pushes commit notifications to the CI, or the CI pulls
-        final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebhookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
-        final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebhookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
+        final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
+        final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
         if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            addWebHook(exercise.getTemplateRepositoryUrlAsUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", CI_TOKEN);
-            addWebHook(exercise.getSolutionRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", CI_TOKEN);
-            addWebHook(exercise.getTestRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", CI_TOKEN);
+            addAuthenticatedWebHook(exercise.getTemplateRepositoryUrlAsUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", CI_TOKEN);
+            addAuthenticatedWebHook(exercise.getSolutionRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", CI_TOKEN);
+            addAuthenticatedWebHook(exercise.getTestRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", CI_TOKEN);
         }
     }
 
@@ -77,8 +77,8 @@ public abstract class ArtemisVersionControlService implements VersionControlServ
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "Artemis WebHook");
             // Optional webhook from the VCS to the CI (needed for some systems such as GitLab + Jenkins)
-            final var ciHookUrl = getContinuousIntegrationService().getWebhookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
-            ciHookUrl.ifPresent(hookUrl -> addWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", CI_TOKEN));
+            getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
+                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", CI_TOKEN));
         }
     }
 }

@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
 @Profile("bitbucket")
-public class BitbucketService extends ArtemisVersionControlService {
+public class BitbucketService extends AbstractVersionControlService {
 
     private static final int MAX_FORK_RETRIES = 5;
 
@@ -159,7 +159,7 @@ public class BitbucketService extends ArtemisVersionControlService {
     }
 
     @Override
-    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    protected void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         // Not needed for Bitbucket
         throw new UnsupportedOperationException("Authenticated webhooks with Bitbucket are not supported!");
     }

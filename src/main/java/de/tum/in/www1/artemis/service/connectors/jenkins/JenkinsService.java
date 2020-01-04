@@ -212,7 +212,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Optional<String> getWebhookUrl(String projectKey, String buildPlanId) {
+    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         return Optional.of(JENKINS_SERVER_URL + "/project/" + projectKey + "/" + buildPlanId);
     }
 
