@@ -21,7 +21,7 @@ artemis:
     repo-clone-path: ./repos/
     repo-download-clone-path: ./repos-download/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
-    ldap:
+    ldap:     # note: this section is optional
         url: <url>
         user-dn: <user-dn>
         password: <password>
@@ -182,4 +182,3 @@ artemis:
     clustering-url: http://localhost:8000/cluster
     secret: null
 ```
-
