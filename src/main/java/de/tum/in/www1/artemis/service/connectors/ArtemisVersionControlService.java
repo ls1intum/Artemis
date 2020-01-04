@@ -29,7 +29,7 @@ public abstract class ArtemisVersionControlService implements VersionControlServ
     }
 
     /**
-     * Adds a webhook for teh specified repository to the given notification URL.
+     * Adds a webhook for the specified repository to the given notification URL.
      *
      * @param repositoryUrl The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
@@ -38,7 +38,7 @@ public abstract class ArtemisVersionControlService implements VersionControlServ
     protected abstract void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
 
     /**
-     * Adds an authenticated webhook for teh specified repository to the given notification URL.
+     * Adds an authenticated webhook for the specified repository to the given notification URL.
      *
      * @param repositoryUrl The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
