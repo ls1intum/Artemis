@@ -31,9 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -533,21 +531,27 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", id);
-        final var programmingExercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(id);
-        log.info("Found ProgrammingExercise to delete with title: {}", programmingExercise.getTitle());
-        Course course = programmingExercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return forbidden();
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        if (programmingExercise.isPresent()) {
+            log.info("Found ProgrammingExercise to delete with title: {}", programmingExercise.get().getTitle());
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+                return forbidden();
+            }
+            String title = programmingExercise.get().getTitle();
+            exerciseService.delete(programmingExercise.get().getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
         }
-        String title = programmingExercise.getTitle();
-        exerciseService.delete(programmingExercise, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
+        else {
+            log.warn("ProgrammingExercise with id {} not found for delete request", id);
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
      * Combine all commits into one in the template repository of a given exercise.
-     * 
+     *
      * @param id of the exercise
      * @return the ResponseEntity with status
      *              200 (OK) if combine has been successfully executed
