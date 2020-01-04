@@ -50,7 +50,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         STUDENT, TEMPLATE, SOLUTION
     }
 
-    @Value("${artemis.bamboo.authentication-token}")
+    @Value("${artemis.continuous-integration.secret}")
     private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
 
     @Autowired
@@ -102,7 +102,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     void reset() throws Exception {
-        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString());
+        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
+
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
