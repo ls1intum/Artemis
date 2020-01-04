@@ -541,7 +541,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
         String title = programmingExercise.getTitle();
-        exerciseService.delete(programmingExercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+        exerciseService.delete(programmingExercise, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
     }
 
