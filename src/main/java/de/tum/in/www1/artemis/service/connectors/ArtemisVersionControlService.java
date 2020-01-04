@@ -18,7 +18,7 @@ public abstract class ArtemisVersionControlService implements VersionControlServ
     @Value("${server.url}")
     protected String ARTEMIS_BASE_URL;
 
-    @Value("${artemis.version-control.ci-token:}")
+    @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
 
     private ApplicationContext applicationContext;
