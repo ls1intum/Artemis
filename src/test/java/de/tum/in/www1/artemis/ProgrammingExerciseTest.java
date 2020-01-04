@@ -46,9 +46,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
-        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getTemplateBuildPlanId())).thenReturn(true);
+        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())).thenReturn(true);
         when(versionControlService.repositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl())).thenReturn(true);
-        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getSolutionBuildPlanId())).thenReturn(true);
+        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId())).thenReturn(true);
         when(versionControlService.repositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl())).thenReturn(true);
 
         ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
