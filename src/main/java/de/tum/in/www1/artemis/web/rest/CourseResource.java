@@ -17,11 +17,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -177,7 +175,6 @@ public class CourseResource {
      */
     @PutMapping("/courses")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Transactional
     public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
         log.debug("REST request to update Course : {}", updatedCourse);
         if (updatedCourse.getId() == null) {
@@ -248,22 +245,26 @@ public class CourseResource {
      * database.
      * @param courseId to find the course
      * @return response entity for user who has been registered to the course
-     * @throws URISyntaxException exception thrown to indicate that a string could not be parsed as a URI reference.
      */
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) throws URISyntaxException {
+    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
                     .body(null);
         }
         if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
+                    .body(null);
+        }
+        if (course.isRegistrationEnabled() != Boolean.TRUE) {
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
         }
         artemisAuthenticationProvider.get().registerUserForCourse(user, course);
@@ -326,7 +327,7 @@ public class CourseResource {
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
-                // add participation with result to each exercise
+                // add participation with submission and result to each exercise
                 exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
@@ -341,7 +342,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/for-tutor-dashboard
+     * GET /courses/:courseId/for-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
@@ -352,25 +353,16 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!userHasPermission(course)) {
+        if (!userHasPermission(course, user)) {
             return forbidden();
         }
 
-        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
-                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)))
-                .collect(Collectors.toSet());
+        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
         course.setExercises(interestingExercises);
 
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
-            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
-                    .findFirst().orElseGet(() -> {
-                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
-                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
-
-                        return emptyTutorParticipation;
-                    });
 
             // TODO: This could be 1 repository method as the exercise id is provided anyway.
             long numberOfSubmissions = 0L;
@@ -389,22 +381,28 @@ public class CourseResource {
 
             long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
-            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
-            // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
-            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
-
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
-            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
+            List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+            // Do not provide example submissions without any assessment
+            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getResult() == null);
+            exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+            TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
+                    .findFirst().orElseGet(() -> {
+                        TutorParticipation emptyTutorParticipation = new TutorParticipation();
+                        emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+                        return emptyTutorParticipation;
+                    });
+            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
     /**
-     * GET /courses/:id/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
+     * GET /courses/:courseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
      * @param courseId the id of the course to retrieve
@@ -416,7 +414,8 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             return forbidden();
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
@@ -441,40 +440,44 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id : get the "id" course.
+     * GET /courses/:courseId : get the "id" course.
      *
-     * @param id the id of the course to retrieve
+     * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{id}")
+    @GetMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourse(@PathVariable Long id) {
-        log.debug("REST request to get Course : {}", id);
-        Course course = courseService.findOne(id);
-        if (!userHasPermission(course))
+    public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get Course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             return forbidden();
+        }
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
     /**
-     * GET /courses/:id : get the "id" course.
+     * GET /courses/:courseId : get the "id" course.
      *
-     * @param id the id of the course to retrieve
+     * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{id}/with-exercises")
+    @GetMapping("/courses/{courseId}/with-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long id) {
-        log.debug("REST request to get Course : {}", id);
-        Course course = courseService.findOneWithExercises(id);
-        if (!userHasPermission(course))
+    public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
+        log.debug("REST request to get Course : {}", courseId);
+        Course course = courseService.findOneWithExercises(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             return forbidden();
+        }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
     /**
-     * GET /courses/:id/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
+     * GET /courses/:courseId/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
      * instructors for the instructor dashboard
      *
      * @param courseId the id of the course to retrieve
@@ -492,9 +495,7 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        Set<Exercise> interestingExercises = course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise
-                || exercise instanceof FileUploadExercise || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)))
-                .collect(Collectors.toSet());
+        Set<Exercise> interestingExercises = course.getInterestingExercisesForAssessmentDashboards();
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
@@ -527,7 +528,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/stats-for-instructor-dashboard
+     * GET /courses/:courseId/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including: - number of students - number of instructors - number of submissions - number of
      * assessments - number of complaints - number of open complaints - tutor leaderboard data
@@ -542,7 +543,8 @@ public class CourseResource {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
         long start = System.currentTimeMillis();
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!userHasPermission(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
@@ -580,23 +582,21 @@ public class CourseResource {
         return ResponseEntity.ok(stats);
     }
 
-    private boolean userHasPermission(Course course) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+    private boolean userHasPermission(Course course, User user) {
         return authCheckService.isTeachingAssistantInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin();
     }
 
     /**
-     * DELETE /courses/:id : delete the "id" course.
+     * DELETE /courses/:courseId : delete the "id" course.
      *
-     * @param id the id of the course to delete
+     * @param courseId the id of the course to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{id}")
+    @DeleteMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    @Transactional
-    public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
-        log.debug("REST request to delete Course : {}", id);
-        Course course = courseService.findOne(id);
+    public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
+        log.debug("REST request to delete Course : {}", courseId);
+        Course course = courseService.findOne(courseId);
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
@@ -613,7 +613,7 @@ public class CourseResource {
             notificationService.deleteNotification(notification);
         }
         String title = course.getTitle();
-        courseService.delete(id);
+        courseService.delete(courseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
     }
 
@@ -624,19 +624,19 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/categories")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-
-        List<Exercise> exercises = exerciseService.findAllExercisesForCourseWithCategories(course, user);
-        Set<String> categories = new HashSet<>();
-        for (Exercise exercise : exercises) {
-            categories.addAll(exercise.getCategories());
+        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user)) {
+            // user can see this exercise
+            Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
+            return ResponseEntity.ok().body(categories);
         }
-
-        return ResponseEntity.ok().body(categories);
+        else {
+            return forbidden();
+        }
     }
 }

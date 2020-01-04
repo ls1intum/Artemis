@@ -17,7 +17,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
@@ -213,7 +212,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Optional<String> getWebhookUrl(String projectKey, String buildPlanId) {
+    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         return Optional.of(JENKINS_SERVER_URL + "/project/" + projectKey + "/" + buildPlanId);
     }
 
@@ -332,7 +331,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             feedback.setText(testCase.getName());
             String errorMessage = null;
             // If we have errors or failures, they will always be of length == 1 since JUnit (and the format itself)
-            // should generally only report he first failure in a test case
+            // should generally only report the first failure in a test case
             if (testCase.getErrors() != null) {
                 errorMessage = testCase.getErrors().get(0).getMessage();
             }
@@ -363,7 +362,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public List<Feedback> getLatestBuildResultDetails(Result result) {
         // TODO since this is unused as of now
-        throw new NotImplementedException("Jenkins service does not support fetching the latest feedback for a result");
+        throw new UnsupportedOperationException("Jenkins service does not support fetching the latest feedback for a result");
     }
 
     @Override

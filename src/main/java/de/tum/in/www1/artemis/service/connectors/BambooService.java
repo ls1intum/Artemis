@@ -70,21 +70,17 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final GitService gitService;
     private final ResultRepository resultRepository;
-    private final FeedbackRepository feedbackRepository;
-    private final ParticipationRepository participationRepository;
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final BambooBuildPlanService bambooBuildPlanService;
     private final RestTemplate restTemplate;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
+    public BambooService(GitService gitService, ResultRepository resultRepository,
                          ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
                          Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, RestTemplate restTemplate) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
-        this.feedbackRepository = feedbackRepository;
-        this.participationRepository = participationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
@@ -499,7 +495,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Optional<String> getWebhookUrl(String projectKey, String buildPlanId) {
+    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         // No webhooks needed between Bamboo and Bitbucket, so we return an empty Optional
         // See https://confluence.atlassian.com/bamboo/integrating-bamboo-with-bitbucket-server-779302772.html
         return Optional.empty();
@@ -890,12 +886,12 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
 
-        List logs = new ArrayList<BuildLogEntry>();
+        var logs = new ArrayList<BuildLogEntry>();
 
         if (response != null) {
             for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
                 String logString = (String) logEntry.get("log");
-                boolean compilationErrorFound = true;
+                boolean compilationErrorFound = false;
 
                 if (logString.contains("COMPILATION ERROR")) {
                     compilationErrorFound = true;

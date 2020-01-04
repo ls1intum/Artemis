@@ -98,6 +98,9 @@
                 "templateSuccess": "Das Template Repository erfüllt keinen Testfall.",
                 "templateInfo": "Kein Ergebnis verfügbar.",
                 "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
+            },
+            "intellij": {
+                "testLocally": "Lokal Testen"
             }
         }
     }

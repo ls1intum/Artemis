@@ -13,7 +13,7 @@ import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
 import { RepositoryFileService } from 'app/entities/repository';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import * as ace from 'brace';
 
 import { AnnotationArray, TextChange } from 'app/entities/ace-editor';

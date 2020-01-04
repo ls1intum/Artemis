@@ -394,7 +394,7 @@ public class QuizExerciseService {
                 }
             }
 
-            // replace drop location
+            // drop location index
             DropLocation dropLocation = mapping.getDropLocation();
             boolean dropLocationFound = false;
             for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {

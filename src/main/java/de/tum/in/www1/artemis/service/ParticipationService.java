@@ -1,7 +1,6 @@
 
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.time.ZonedDateTime;
@@ -11,7 +10,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,12 +39,6 @@ public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
-    @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
-
-    @Value("${artemis.version-control.ci-token:}")
-    private String CI_TOKEN;
-
     private final ParticipationRepository participationRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -71,7 +63,7 @@ public class ParticipationService {
 
     private final UserService userService;
 
-    private final Optional<GitService> gitService;
+    private final GitService gitService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -88,9 +80,9 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
+            QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService,
+            AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -461,11 +453,7 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
-                    "Artemis WebHook");
-            // Optional webhook from the VCS to the CI (needed for some systems such as GitLab + Jenkins)
-            final var ciHookUrl = continuousIntegrationService.get().getWebhookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
-            ciHookUrl.ifPresent(s -> versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), s, "Artemis trigger to CI", CI_TOKEN));
+            versionControlService.get().addWebHookForParticipation(participation);
         }
         return participation;
     }
@@ -780,7 +768,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional(noRollbackFor = { Throwable.class })
+    @Transactional
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
@@ -803,7 +791,7 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
-                    gitService.get().deleteLocalRepository(programmingExerciseParticipation);
+                    gitService.deleteLocalRepository(programmingExerciseParticipation);
                 }
             }
             catch (Exception ex) {

@@ -27,16 +27,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
 @Service
-public class GitLabService implements VersionControlService {
+public class GitLabService extends AbstractVersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabService.class);
 
@@ -53,6 +55,9 @@ public class GitLabService implements VersionControlService {
 
     @Value("${artemis.version-control.secret}")
     private String GITLAB_PRIVATE_TOKEN;
+
+    @Value("${artemis.version-control.ci-token}")
+    private String CI_TOKEN;
 
     private String BASE_API;
 
@@ -131,12 +136,40 @@ public class GitLabService implements VersionControlService {
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
-        addWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
+    public void addWebHooksForExercise(ProgrammingExercise exercise) {
+        super.addWebHooksForExercise(exercise);
+        final var projectKey = exercise.getProjectKey();
+
+        // Optional webhook from the version control system to the continuous integration system
+        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
+        final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
+        final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
+        if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
+            addAuthenticatedWebHook(exercise.getTemplateRepositoryUrlAsUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", CI_TOKEN);
+            addAuthenticatedWebHook(exercise.getSolutionRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", CI_TOKEN);
+            addAuthenticatedWebHook(exercise.getTestRepositoryUrlAsUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", CI_TOKEN);
+        }
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+    public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+            super.addWebHookForParticipation(participation);
+
+            // Optional webhook from the version control system to the continuous integration system
+            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
+            getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
+                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", CI_TOKEN));
+        }
+    }
+
+    @Override
+    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+        addAuthenticatedWebHook(repositoryUrl, notificationUrl, webHookName, "noSecretNeeded");
+    }
+
+    @Override
+    protected void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 
