@@ -10,7 +10,7 @@ import * as $ from 'jquery';
 import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { StudentParticipation } from 'app/entities/participation';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
@@ -304,6 +304,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 },
             );
     }
+
     onSubmitAssessment() {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
@@ -452,8 +453,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                result => {
-                    this.result = result;
+                response => {
+                    this.result = response.body!;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');

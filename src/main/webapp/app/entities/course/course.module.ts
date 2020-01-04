@@ -15,6 +15,7 @@ import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { SortByModule } from 'app/components/pipes';
 import { MomentModule } from 'ngx-moment';
+import { IntellijModule } from 'app/intellij/intellij.module';
 
 const ENTITY_STATES = [...courseRoute];
 
@@ -33,6 +34,7 @@ const ENTITY_STATES = [...courseRoute];
         ArtemisColorSelectorModule,
         ImageCropperModule,
         MomentModule,
+        IntellijModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],

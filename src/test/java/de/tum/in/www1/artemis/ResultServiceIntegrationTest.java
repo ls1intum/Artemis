@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,20 +16,13 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -38,21 +35,11 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.connectors.BambooService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
-public class ResultServiceIntegrationTest {
-
-    @MockBean
-    BambooService continuousIntegrationServiceMock;
+public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ResultService resultService;
@@ -80,9 +67,6 @@ public class ResultServiceIntegrationTest {
 
     @Autowired
     ResultRepository resultRepository;
-
-    @MockBean
-    GitService gitService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -137,7 +121,7 @@ public class ResultServiceIntegrationTest {
 
         Object requestDummy = new Object();
 
-        when(continuousIntegrationServiceMock.onBuildCompletedNew(solutionParticipation, requestDummy)).thenReturn(result);
+        doReturn(result).when(continuousIntegrationService).onBuildCompletedNew(solutionParticipation, requestDummy);
         resultService.processNewProgrammingExerciseResult(solutionParticipation, requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());

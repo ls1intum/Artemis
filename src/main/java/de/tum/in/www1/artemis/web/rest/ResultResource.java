@@ -36,7 +36,7 @@ import io.github.jhipster.web.util.ResponseUtil;
  * REST controller for managing Result.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -46,8 +46,8 @@ public class ResultResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.bamboo.authentication-token}")
-    private String CI_AUTHENTICATION_TOKEN = "";
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
 
     private final ResultRepository resultRepository;
 
@@ -189,7 +189,7 @@ public class ResultResource {
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
-        if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+        if (token == null || !token.equals(ARTEMIS_AUTHENTICATION_TOKEN_VALUE)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }

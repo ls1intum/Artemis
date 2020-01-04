@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../core';
 import { TutorExerciseDashboardComponent } from './tutor-exercise-dashboard.component';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const tutorExerciseDashboardRoute: Routes = [
     {

@@ -15,7 +15,7 @@
                     >Evaluate complaint
                 </span>
             </ng-template>
-            ({{ participation?.exercise?.title }})
+            ({{ exercise.title }})
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
@@ -28,13 +28,13 @@
                 >The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.</span
             >
         </div>
-        <div class="form-group" *ngIf="participation?.exercise?.gradingInstructions">
+        <div class="form-group" *ngIf="exercise.gradingInstructions">
             <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
-            <span [innerHTML]="participation.exercise.gradingInstructions | htmlForMarkdown"></span>
+            <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
         </div>
         <div class="d-flex align-items-center mb-1 mt-1">
             <jhi-programming-assessment-repo-export
-                [exerciseId]="participation.exercise?.id"
+                [exerciseId]="exercise.id"
                 [singleStudentMode]="true"
                 [participationIdList]="participation?.id"
             ></jhi-programming-assessment-repo-export>
@@ -49,7 +49,16 @@
         </div>
         <div class="form-group">
             <h4 class="control-label" jhiTranslate="artemisApp.result.resultString">Result Text</h4>
-            <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
+            <input
+                type="text"
+                required
+                class="form-control"
+                [readOnly]="readOnly()"
+                name="resultString"
+                id="resultString"
+                [(ngModel)]="result.resultString"
+                #resultString="ngModel"
+            />
             <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired"
                 >Result text is required.</span
             >
@@ -64,6 +73,7 @@
                     class="form-control"
                     name="score"
                     id="field_score"
+                    [readOnly]="readOnly()"
                     [(ngModel)]="result.score"
                     (ngModelChange)="result.score === 100 ? (result.successful = true) : (result.successful = false)"
                     #score="ngModel"
@@ -78,14 +88,14 @@
                 </label>
             </div>
         </div>
-        <div class="form-group mb-0">
+        <div class="form-group mb-0" *ngIf="!readOnly()">
             <a [hidden]="feedbacks.length > 0" (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">Add feedback</a>
         </div>
         <div *ngIf="feedbacks.length > 0">
             <div *ngFor="let feedback of feedbacks; let i = index">
                 <div class="form-group">
                     <label class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }"> Feedback #{{ i + 1 }} Text </label>
-                    <input type="text" class="form-control" name="feedbackText{{ i }}" required [(ngModel)]="feedback.text" #feedbackText="ngModel" />
+                    <input type="text" class="form-control" name="feedbackText{{ i }}" [readOnly]="readOnly()" required [(ngModel)]="feedback.text" #feedbackText="ngModel" />
                     <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="artemisApp.result.feedbackTextRequired"
                         >Feedback text is required.</span
                     >
@@ -95,17 +105,27 @@
                         <label class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }">
                             Feedback #{{ i + 1 }} Detail Text
                         </label>
-                        <textarea type="text" class="form-control" id="feedbackErrorText" name="feedbackErrorText{{ i }}" [(ngModel)]="feedback.detailText"></textarea>
+                        <textarea
+                            type="text"
+                            class="form-control"
+                            id="feedbackErrorText"
+                            name="feedbackErrorText{{ i }}"
+                            [readOnly]="readOnly()"
+                            [(ngModel)]="feedback.detailText"
+                        ></textarea>
                     </div>
                     <div class="checkbox col-md-6">
                         <label class="artemis-label">
-                            <input type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />&nbsp;<span jhiTranslate="artemisApp.result.positive">Positive</span>
+                            <input type="checkbox" name="positive{{ i }}" [disabled]="readOnly()" [(ngModel)]="feedback.positive" />&nbsp;<span
+                                jhiTranslate="artemisApp.result.positive"
+                                >Positive</span
+                            >
                         </label>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="form-group mb-0" *ngIf="feedbacks.length > 0">
+        <div class="form-group mb-0" *ngIf="feedbacks.length > 0 && !readOnly()">
             <a (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">More feedback</a>
             &nbsp;
             <a (click)="popFeedback()" jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</a>

@@ -13,6 +13,7 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { CourseScoreCalculationService } from 'app/overview';
 import { isIntelliJ } from 'app/intellij/intellij';
 import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { LocalStorageService } from 'ngx-webstorage';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -62,20 +63,21 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private guidedTourService: GuidedTourService,
         private programmingSubmissionService: ProgrammingSubmissionService,
+        private localStorage: LocalStorageService,
     ) {}
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
         this.numberOfExercises = 0;
-        const filters = localStorage.getItem(SortFilterStorageKey.FILTER) || null;
+        const filters = this.localStorage.retrieve(SortFilterStorageKey.FILTER);
         const filtersInStorage = filters
             ? filters
                   .split(',')
-                  .map(filter => ExerciseFilter[filter])
+                  .map((filter: string) => ExerciseFilter[filter])
                   .filter(Boolean)
             : [];
         this.activeFilters = new Set(filtersInStorage);
-        const orderInStorage = localStorage.getItem(SortFilterStorageKey.ORDER);
+        const orderInStorage = this.localStorage.retrieve(SortFilterStorageKey.ORDER);
         const parsedOrderInStorage = Object.keys(ExerciseSortingOrder).find(exerciseOrder => exerciseOrder === orderInStorage);
         this.sortingOrder = parsedOrderInStorage ? (+parsedOrderInStorage as ExerciseSortingOrder) : ExerciseSortingOrder.DUE_DATE_ASC;
         this.paramSubscription = this.route.parent!.params.subscribe(params => {
@@ -115,7 +117,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      */
     flipOrder() {
         this.sortingOrder = this.sortingOrder === this.ASC ? this.DESC : this.ASC;
-        localStorage.setItem(SortFilterStorageKey.ORDER, this.sortingOrder.toString());
+        this.localStorage.store(SortFilterStorageKey.ORDER, this.sortingOrder.toString());
         this.applyFiltersAndOrder();
     }
 
@@ -126,7 +128,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      */
     toggleFilters(filters: ExerciseFilter[]) {
         filters.forEach(filter => (this.activeFilters.has(filter) ? this.activeFilters.delete(filter) : this.activeFilters.add(filter)));
-        localStorage.setItem(SortFilterStorageKey.FILTER, Array.from(this.activeFilters).join(','));
+        this.localStorage.store(SortFilterStorageKey.FILTER, Array.from(this.activeFilters).join(','));
         this.applyFiltersAndOrder();
     }
 
@@ -242,12 +244,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     private updateUpcomingExercises(upcomingExercises: Exercise[]) {
-        if (upcomingExercises.length < 5) {
+        if (upcomingExercises.length <= 5) {
             this.upcomingExercises = this.sortExercises(upcomingExercises);
         } else {
-            const numberOfExercises = upcomingExercises.length;
-            upcomingExercises = upcomingExercises.slice(numberOfExercises - 5, numberOfExercises);
-            this.upcomingExercises = this.sortExercises(upcomingExercises);
+            // sort after due date and take the first 5 elements
+            this.upcomingExercises = this.sortExercises(upcomingExercises).slice(0, 5);
         }
     }
 
