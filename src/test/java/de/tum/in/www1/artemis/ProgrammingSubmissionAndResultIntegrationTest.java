@@ -50,7 +50,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         STUDENT, TEMPLATE, SOLUTION
     }
 
-    @Value("${artemis.continuous-integration.authentication-token}")
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String CI_AUTHENTICATION_TOKEN;
 
     @Autowired
