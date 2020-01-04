@@ -588,7 +588,7 @@ public class CourseResource {
             return ResponseEntity.notFound().build();
         }
         for (Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise, false, false);
+            exerciseService.delete(exercise.getId(), false, false);
         }
 
         for (Lecture lecture : course.getLectures()) {
