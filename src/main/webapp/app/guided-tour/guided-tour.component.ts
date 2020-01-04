@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
+import { take } from 'rxjs/internal/operators';
 
 import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
@@ -174,6 +175,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     public scrollToAndSetElement(): void {
         this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), false);
+        this.observeSelectedRectPosition();
 
         // Set timeout to allow things to render in order to scroll to the correct location
         setTimeout(() => {
@@ -553,10 +555,27 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Sets the startFade class for the tour step div to ease the transition between tour steps
      */
-    public handleTransition() {
+    private handleTransition() {
         this.startFade = true;
         setTimeout(() => {
             this.startFade = false;
         }, 1000);
+    }
+
+    /**
+     * Observe and change position of highlight element
+     */
+    private observeSelectedRectPosition() {
+        const selectedElement = this.getSelectedElement();
+        if (!selectedElement) {
+            return;
+        }
+
+        this.guidedTourService
+            .observeMutations(document.querySelector('.alerts'), { childList: true })
+            .pipe(take(1))
+            .subscribe(mutation => {
+                this.scrollToAndSetElement();
+            });
     }
 }
