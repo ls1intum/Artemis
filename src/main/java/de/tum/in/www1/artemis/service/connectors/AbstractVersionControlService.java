@@ -58,11 +58,14 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final var artemisTemplateHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getTemplateParticipation().getId();
         final var artemisSolutionHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getSolutionParticipation().getId();
         final var artemisTestsHookPath = ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + exercise.getId();
+        // first add web hooks from the version control service to Artemis, so that Artemis is notified and can create ProgrammingSubmission when instructors push their template or
+        // solution code
         addWebHook(exercise.getTemplateRepositoryUrlAsUrl(), artemisTemplateHookPath, "Artemis WebHook");
         addWebHook(exercise.getSolutionRepositoryUrlAsUrl(), artemisSolutionHookPath, "Artemis WebHook");
         addWebHook(exercise.getTestRepositoryUrlAsUrl(), artemisTestsHookPath, "Artemis WebHook");
 
-        // Depending on the activated VCS/CI systems, the VCS system pushes commit notifications to the CI, or the CI pulls
+        // Optional webhook from the version control system to the continuous integration system (needed for some systems such as GitLab + Jenkins)
+        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
         final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
         final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
         if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
@@ -75,8 +78,11 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Override
     public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+            // first add a web hook from the version control service to Artemis, so that Artemis is notified can create a ProgrammingSubmission when students push their code
             addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "Artemis WebHook");
-            // Optional webhook from the VCS to the CI (needed for some systems such as GitLab + Jenkins)
+
+            // Optional webhook from the version control system to the continuous integration system (needed for some systems such as GitLab + Jenkins)
+            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
             getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
                     .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getRepositoryUrlAsUrl(), hookUrl, "Artemis trigger to CI", CI_TOKEN));
         }
