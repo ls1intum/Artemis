@@ -219,7 +219,7 @@ public class ParticipationService {
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
             programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
             // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
-            versionControlService.get().addWebHookForParticipation(programmingExerciseStudentParticipation);
+            programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
             programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
             programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
             // after saving, we need to make sure the object that is used after the if statement is the right one
@@ -449,6 +449,13 @@ public class ParticipationService {
         else {
             return participation;
         }
+    }
+
+    private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+            versionControlService.get().addWebHookForParticipation(participation);
+        }
+        return participation;
     }
 
     /**
