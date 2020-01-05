@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -161,7 +160,6 @@ public class ExerciseService {
             // eagerly load templateParticipation and solutionParticipation
             programmingExercise.setTemplateParticipation(HibernateUtils.unproxy(programmingExercise.getTemplateParticipation()));
             programmingExercise.setSolutionParticipation(HibernateUtils.unproxy(programmingExercise.getSolutionParticipation()));
-            programmingExercise.setExampleSubmissions(new HashSet<>(programmingExercise.getExampleSubmissions()));
         }
         return exercise;
     }
