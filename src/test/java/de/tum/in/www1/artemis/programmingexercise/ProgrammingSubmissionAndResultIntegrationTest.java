@@ -51,8 +51,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         STUDENT, TEMPLATE, SOLUTION
     }
 
-    @Value("${artemis.continuous-integration.secret}")
-    private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
     ProgrammingExerciseRepository exerciseRepo;
@@ -543,7 +543,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         }
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", CI_AUTHENTICATION_TOKEN);
+        httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, expectedStatus, httpHeaders);
     }
 

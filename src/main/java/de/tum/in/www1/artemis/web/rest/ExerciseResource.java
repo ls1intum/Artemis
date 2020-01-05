@@ -260,7 +260,7 @@ public class ExerciseResource {
             if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
                 return forbidden();
             }
-            exerciseService.delete(exercise, true, false);
+            exerciseService.delete(exercise.getId(), true, false);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }

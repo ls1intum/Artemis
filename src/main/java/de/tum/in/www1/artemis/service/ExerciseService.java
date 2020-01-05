@@ -235,12 +235,14 @@ public class ExerciseService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param exercise                     the exercise to be deleted
+     * @param exerciseId                     the exercise to be deleted
      * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted
      * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted
      */
     @Transactional
-    public void delete(Exercise exercise, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+    public void delete(Long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+        // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
+        Exercise exercise = findOne(exerciseId);
         log.info("ExerciseService.Request to delete Exercise : {}", exercise.getTitle());
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
