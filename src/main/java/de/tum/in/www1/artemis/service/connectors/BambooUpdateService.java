@@ -32,13 +32,13 @@ import de.tum.in.www1.artemis.exception.BambooException;
 @Service
 public class BambooUpdateService {
 
-    @Value("${artemis.bamboo.url}")
+    @Value("${artemis.continuous-integration.url}")
     protected URL BAMBOO_SERVER_URL;
 
-    @Value("${artemis.bamboo.user}")
+    @Value("${artemis.continuous-integration.user}")
     protected String BAMBOO_USER;
 
-    @Value("${artemis.bamboo.password}")
+    @Value("${artemis.continuous-integration.password}")
     protected String BAMBOO_PASSWORD;
 
     @Service
@@ -53,7 +53,7 @@ public class BambooUpdateService {
         @Value("${artemis.version-control.user}")
         private String BITBUCKET_USER;
 
-        @Value("${artemis.version-control.secret}")
+        @Value("${artemis.version-control.password}")
         private String BITBUCKET_PASSWORD;
 
         @Value("${artemis.version-control.url}")

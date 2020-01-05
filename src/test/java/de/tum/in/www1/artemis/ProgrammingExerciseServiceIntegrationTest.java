@@ -144,15 +144,16 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
+
         doReturn(toBeImported.getTemplateBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.TEMPLATE.getName()), anyString(),
                 anyString(), eq(BuildPlanType.TEMPLATE.getName()));
         doReturn(toBeImported.getSolutionBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.SOLUTION.getName()), anyString(),
                 anyString(), eq(BuildPlanType.SOLUTION.getName()));
-        doReturn("").when(continuousIntegrationService).enablePlan(anyString());
+        doNothing().when(continuousIntegrationService).enablePlan(anyString(), anyString());
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
         doNothing().when(versionControlService).createProjectForExercise(any());
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
-        doNothing().when(versionControlService).addWebHook(any(), anyString(), anyString());
+        doNothing().when(versionControlService).addWebHooksForExercise(any());
         doNothing().when(continuousIntegrationService).giveProjectPermissions(anyString(), any(), any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any());
         doNothing().when(continuousIntegrationService).triggerBuild(any());

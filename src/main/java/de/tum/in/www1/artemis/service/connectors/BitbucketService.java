@@ -25,15 +25,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
 @Profile("bitbucket")
-public class BitbucketService implements VersionControlService {
+public class BitbucketService extends AbstractVersionControlService {
 
     private static final int MAX_FORK_RETRIES = 5;
 
@@ -50,7 +52,7 @@ public class BitbucketService implements VersionControlService {
     @Value("${artemis.version-control.user}")
     private String BITBUCKET_USER;
 
-    @Value("${artemis.version-control.secret}")
+    @Value("${artemis.version-control.password}")
     private String BITBUCKET_PASSWORD;
 
     @Value("${artemis.lti.user-prefix-edx}")
@@ -150,10 +152,16 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+    protected void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
         if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl))) {
             createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
+    }
+
+    @Override
+    protected void addAuthenticatedWebHook(URL repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
+        // Not needed for Bitbucket
+        throw new UnsupportedOperationException("Authenticated webhooks with Bitbucket are not supported!");
     }
 
     @Override
@@ -173,18 +181,6 @@ public class BitbucketService implements VersionControlService {
     @Override
     public void deleteRepository(URL repositoryUrl) {
         deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
-    }
-
-    @Override
-    public URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation) {
-        try {
-            return new URL(BITBUCKET_SERVER_URL + "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrlAsUrl()) + "/repos/"
-                    + getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl()) + "/browse");
-        }
-        catch (MalformedURLException e) {
-            log.error("Couldn't construct repository web URL");
-        }
-        return BITBUCKET_SERVER_URL;
     }
 
     @Override
@@ -473,7 +469,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public String checkIfProjectExists(String projectKey, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
@@ -481,7 +477,7 @@ public class BitbucketService implements VersionControlService {
             // first check that the project key is unique
             response = restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey, HttpMethod.GET, entity, Map.class);
             log.warn("Bitbucket project with key " + projectKey + " already exists");
-            return "The project " + projectKey + " already exists in the VCS Server. Please choose a different short name!";
+            return true;
         }
         catch (HttpClientErrorException e) {
             log.debug("Bitbucket project " + projectKey + " does not exit");
@@ -496,14 +492,14 @@ public class BitbucketService implements VersionControlService {
                         String vcsProjectName = (String) ((Map) vcsProject).get("name");
                         if (vcsProjectName.equalsIgnoreCase(projectName)) {
                             log.warn("Bitbucket project with name" + projectName + " already exists");
-                            return "The project " + projectName + " already exists in the VCS Server. Please choose a different title!";
+                            return true;
                         }
                     }
                 }
-                return null;
+                return false;
             }
         }
-        return "The project already exists in the VCS Server. Please choose a different title and short name!";
+        return true;
     }
 
     /**

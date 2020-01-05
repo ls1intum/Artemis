@@ -104,9 +104,6 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
-    @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
-
     @Value("${artemis.repo-download-clone-path}")
     private String REPO_DOWNLOAD_CLONE_PATH;
 
@@ -345,17 +342,11 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", user);
         }
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
-        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-
+        continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoName, testRepoName);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoUrl, testsRepoUrl);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoName, testRepoName);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoUrl, testsRepoUrl);
 
         // Give appropriate permissions for CI projects
         continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
@@ -364,7 +355,9 @@ public class ProgrammingExerciseService {
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "Artemis Tests WebHook");
+        // The creation of the webhooks must occur after the initial push, because the participation is
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
+        versionControlService.get().addWebHooksForExercise(programmingExercise);
 
         return programmingExercise;
     }
@@ -775,11 +768,11 @@ public class ProgrammingExerciseService {
 
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
             if (templateBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(templateBuildPlanId);
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
             }
             final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
             if (solutionBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(solutionBuildPlanId);
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
             }
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
@@ -914,12 +907,7 @@ public class ProgrammingExerciseService {
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
         reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
-        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(),
-                ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "Artemis WebHook");
-        versionControlService.get().addWebHook(newExercise.getTestRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + newExercise.getId(),
-                "Artemis Tests WebHook");
+        versionControlService.get().addWebHooksForExercise(newExercise);
     }
 
     /**
@@ -940,21 +928,26 @@ public class ProgrammingExerciseService {
         final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
 
-        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct rep URLs and
+        // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct repo URLs and
         // running the plan for the first time
         continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
         giveCIProjectPermissions(newExercise);
-        continuousIntegrationService.get().enablePlan(templateParticipation.getBuildPlanId());
-        continuousIntegrationService.get().enablePlan(solutionParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
+
+        // update 2 repositories for the template (BASE) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryName(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
+                newExercise.getTemplateRepositoryUrl(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryName(), Optional.empty());
+                newExercise.getTestRepositoryUrl(), Optional.empty());
+
+        // update 2 repositories for the solution (SOLUTION) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getSolutionRepositoryName(), Optional.empty());
+                newExercise.getSolutionRepositoryUrl(), Optional.empty());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryName(), Optional.empty());
+                newExercise.getTestRepositoryUrl(), Optional.empty());
+
         try {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
             continuousIntegrationService.get().triggerBuild(solutionParticipation);
