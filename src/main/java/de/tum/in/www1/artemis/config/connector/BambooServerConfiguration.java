@@ -45,7 +45,8 @@ public class BambooServerConfiguration {
     }
 
     /**
-     * Create a BambooClient for communication with the Bamboo server.
+     * Creates a Bamboo client for communication with the Bamboo instance over the non-REST API. This beans is also connected to the Bitbucket server
+     * if the bitbucket profile is activated (incl. authentication).
      *
      * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
      */
@@ -61,6 +62,12 @@ public class BambooServerConfiguration {
         return bambooClient;
     }
 
+    /**
+     * Creates a Bamboo client for communication with the Bamboo instance over the non-REST API. This bean has NO connection
+     * to the Bitbucket server and only gets instantiated if the Bitbucket profile is not active
+     *
+     * @return
+     */
     @Bean("bambooClient")
     @Profile("!bitbucket")
     public BambooClient bambooClientWithoutBitbucket() {

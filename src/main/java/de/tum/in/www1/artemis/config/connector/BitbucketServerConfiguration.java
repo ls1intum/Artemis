@@ -26,6 +26,11 @@ public class BitbucketServerConfiguration {
     @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER;
 
+    /**
+     * Creates the client the Bitbucket services use when communicating with the non-REST Bitbucket API.
+     *
+     * @return A Bitbucketclient bean that is already authenticated
+     */
     @Bean
     public BitbucketClient bitbucketClient() {
         final var bitbucketClient = new BitbucketClient(createBase());
