@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -11,13 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.util.HibernateUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -158,8 +158,8 @@ public class ExerciseService {
         else if (exercise instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             // eagerly load templateParticipation and solutionParticipation
-            programmingExercise.setTemplateParticipation((TemplateProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
-            programmingExercise.setSolutionParticipation((SolutionProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
+            programmingExercise.setTemplateParticipation(HibernateUtils.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation(HibernateUtils.unproxy(programmingExercise.getSolutionParticipation()));
         }
         return exercise;
     }
@@ -240,9 +240,10 @@ public class ExerciseService {
      * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted
      */
     @Transactional
-    public void delete(Long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+    public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
-        Exercise exercise = findOne(exerciseId);
+        final var exercise = findOne(exerciseId);
+        // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         log.info("ExerciseService.Request to delete Exercise : {}", exercise.getTitle());
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);

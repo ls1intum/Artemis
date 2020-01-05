@@ -20,7 +20,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -581,9 +582,9 @@ public class CourseResource {
      */
     @DeleteMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.debug("REST request to delete Course : {}", courseId);
-        Course course = courseService.findOneWithExercises(courseId);
+        Course course = courseService.findOneWithExercisesAndLectures(courseId);
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
