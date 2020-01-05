@@ -551,7 +551,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * Combine all commits into one in the template repository of a given exercise.
-     * 
+     *
      * @param id of the exercise
      * @return the ResponseEntity with status
      *              200 (OK) if combine has been successfully executed
