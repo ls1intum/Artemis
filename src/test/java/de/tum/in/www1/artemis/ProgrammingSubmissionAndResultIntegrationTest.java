@@ -50,8 +50,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         STUDENT, TEMPLATE, SOLUTION
     }
 
-    @Value("${artemis.bamboo.authentication-token}")
-    private String CI_AUTHENTICATION_TOKEN = "<secrettoken>";
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
     ProgrammingExerciseRepository exerciseRepo;
@@ -102,7 +102,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     void reset() throws Exception {
-        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString());
+        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
+
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -539,7 +540,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         }
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", CI_AUTHENTICATION_TOKEN);
+        httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, obj, expectedStatus, httpHeaders);
     }
 

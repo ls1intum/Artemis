@@ -1,7 +1,6 @@
 
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.time.ZonedDateTime;
@@ -11,7 +10,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,9 +38,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
-
-    @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
 
     private final ParticipationRepository participationRepository;
 
@@ -458,8 +453,7 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
-                    "Artemis WebHook");
+            versionControlService.get().addWebHookForParticipation(participation);
         }
         return participation;
     }
@@ -743,7 +737,8 @@ public class ParticipationService {
     public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // ignore participations without build plan id
         if (participation.getBuildPlanId() != null) {
-            continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+            final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
+            continuousIntegrationService.get().deleteBuildPlan(projectKey, participation.getBuildPlanId());
             participation.setInitializationState(INACTIVE);
             participation.setBuildPlanId(null);
             save(participation);
@@ -781,7 +776,8 @@ public class ParticipationService {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
             if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExerciseParticipation.getBuildPlanId());
+                final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+                continuousIntegrationService.get().deleteBuildPlan(projectKey, programmingExerciseParticipation.getBuildPlanId());
             }
             if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
