@@ -53,7 +53,7 @@ public class BambooRequestMockProvider {
     @Mock
     private RepositoryHelper repositoryHelper;
 
-    @Value("${artemis.bamboo.url}")
+    @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
 
     @SpyBean
