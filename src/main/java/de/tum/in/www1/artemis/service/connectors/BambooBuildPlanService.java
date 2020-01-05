@@ -45,8 +45,6 @@ import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
-import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
-import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -61,12 +59,6 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.user}")
     private String BAMBOO_USER;
 
-    @Value("${artemis.continuous-integration.password}")
-    private String BAMBOO_PASSWORD;
-
-    @Value("${artemis.continuous-integration.url}")
-    private URL BAMBOO_SERVER_URL;
-
     @Value("${artemis.jira.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
@@ -78,8 +70,11 @@ public class BambooBuildPlanService {
 
     private final ResourceLoader resourceLoader;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader) {
+    private final BambooServer bambooServer;
+
+    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer) {
         this.resourceLoader = resourceLoader;
+        this.bambooServer = bambooServer;
     }
 
     /**
@@ -96,9 +91,6 @@ public class BambooBuildPlanService {
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
                 .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
-
-        UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
-        BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
         bambooServer.publish(plan);
 
@@ -167,7 +159,7 @@ public class BambooBuildPlanService {
         return new VcsCheckoutTask().description("Checkout Default Repository").checkoutItems(
                 new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath),
                 new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath) // NOTE: this path needs to be specified in the Maven
-                                                                                                                             // pom.xml in the Tests Repo
+        // pom.xml in the Tests Repo
         );
     }
 
