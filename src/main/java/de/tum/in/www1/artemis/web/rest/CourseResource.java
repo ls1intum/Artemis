@@ -14,11 +14,14 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
@@ -97,13 +100,15 @@ public class CourseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
+    private final AuditEventRepository auditEventRepository;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
             FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, AuditEventRepository auditEventRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -125,6 +130,7 @@ public class CourseResource {
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.programmingExerciseService = programmingExerciseService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -583,14 +589,19 @@ public class CourseResource {
     @DeleteMapping("/courses/{courseId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
-        log.debug("REST request to delete Course : {}", courseId);
+        log.info("REST request to delete Course : {}", courseId);
         Course course = courseService.findOneWithExercisesAndLectures(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
         for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise.getId(), false, false);
         }
+
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " has requested to delete the course {}", course.getTitle());
 
         for (Lecture lecture : course.getLectures()) {
             lectureService.delete(lecture);
