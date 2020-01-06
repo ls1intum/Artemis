@@ -325,9 +325,9 @@ public class ModelingSubmissionResource {
      * @param participationId the participationId for which to find the submission and data for the modeling editor
      * @return the ResponseEntity with the submission as body
      */
-    @GetMapping("/modeling-editor/{participationId}")
+    @GetMapping("/participations/{participationId}/latest-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
+    public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()

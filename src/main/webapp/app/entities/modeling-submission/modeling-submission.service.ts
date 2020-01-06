@@ -55,8 +55,8 @@ export class ModelingSubmissionService {
     }
 
     // TODO CZ: change name + change URL?
-    getDataForModelingEditor(participationId: number): Observable<ModelingSubmission> {
-        return this.http.get<ModelingSubmission>(`api/modeling-editor/${participationId}`, { responseType: 'json' });
+    getLatestSubmisisonForModelingEditor(participationId: number): Observable<ModelingSubmission> {
+        return this.http.get<ModelingSubmission>(`api/participations/${participationId}/latest-submission`, { responseType: 'json' });
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
