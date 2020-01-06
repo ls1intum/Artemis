@@ -295,7 +295,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
+    public ResponseEntity<Object> cancelAssessment(@PathVariable Long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
         if (modelingSubmission.getResult() == null) {

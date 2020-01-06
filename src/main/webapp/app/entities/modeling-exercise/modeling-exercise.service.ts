@@ -26,11 +26,11 @@ export class ModelingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
+    update(modelingExercise: ModelingExercise, exerciseId: number, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.exerciseService.convertDateFromClient(modelingExercise);
         return this.http
-            .put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .put<ModelingExercise>(`${this.resourceUrl}/${exerciseId}`, copy, { params: options, observe: 'response' })
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
