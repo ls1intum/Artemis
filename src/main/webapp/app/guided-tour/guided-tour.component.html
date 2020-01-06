@@ -119,7 +119,7 @@
                     *ngIf="guidedTourService.isCurrentTour(completedTour)"
                     class="restart-button"
                     [disabled]="guidedTourService.isOnResizeMessage"
-                    (click)="guidedTourService.startTour()"
+                    (click)="guidedTourService.restartTour()"
                 >
                     <fa-icon icon="play-circle"></fa-icon>
                     <span jhiTranslate="global.menu.restartTutorial"></span>

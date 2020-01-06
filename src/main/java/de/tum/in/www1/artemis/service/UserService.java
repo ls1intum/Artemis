@@ -531,13 +531,30 @@ public class UserService {
      * @param guidedTourSettings the updated set of guided tour settings
      * @return the updated user object with the changed guided tour settings
      */
-    @Transactional
     public User updateGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         loggedInUser.getGuidedTourSettings().clear();
         for (GuidedTourSetting setting : guidedTourSettings) {
             loggedInUser.addGuidedTourSetting(setting);
             guidedTourSettingsRepository.save(setting);
+        }
+        return userRepository.save(loggedInUser);
+    }
+
+    /**
+     * Delete a given guided tour setting of the currently logged in user
+     * @param guidedTourSettingsKey the key of the guided tour setting that should be deleted
+     * @return the updated user object without the deleted guided tour setting
+     */
+    public User deleteGuidedTourSetting(String guidedTourSettingsKey) {
+        User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
+        Set<GuidedTourSetting> guidedTourSettings = loggedInUser.getGuidedTourSettings();
+        for (GuidedTourSetting setting : guidedTourSettings) {
+            if (setting.getGuidedTourKey().equals(guidedTourSettingsKey)) {
+                loggedInUser.removeGuidedTourSetting(setting);
+                guidedTourSettingsRepository.save(setting);
+                break;
+            }
         }
         return userRepository.save(loggedInUser);
     }

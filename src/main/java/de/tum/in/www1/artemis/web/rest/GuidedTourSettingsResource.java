@@ -46,4 +46,16 @@ public class GuidedTourSettingsResource {
         User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);
         return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
     }
+
+    /**
+     * DELETE /guided-tour-settings: delete guided tour setting of the current user
+     * @return the guided tour settings
+     */
+    @DeleteMapping("/guided-tour-settings/{settingsKey}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<GuidedTourSetting>> deleteGuidedTourSetting(@PathVariable String settingsKey) {
+        log.debug("REST request to delete GuidedTourSetting : {}", settingsKey);
+        User currentUser = userService.deleteGuidedTourSetting(settingsKey);
+        return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
+    }
 }
