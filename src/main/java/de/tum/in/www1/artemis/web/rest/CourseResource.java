@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -593,7 +594,7 @@ public class CourseResource {
         Course course = courseService.findOneWithExercisesAndLectures(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (course == null) {
-            return ResponseEntity.notFound().build();
+            return notFound();
         }
         for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise.getId(), false, false);
