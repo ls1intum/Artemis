@@ -52,6 +52,9 @@ public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
+    @Value("${artemis.encryption-password}")
+    private String ENCRYPTION_PASSWORD;
+
     private final UserRepository userRepository;
 
     private final AuthorityRepository authorityRepository;
@@ -145,9 +148,6 @@ public class UserService {
         encryptor.setPassword(ENCRYPTION_PASSWORD);
         return encryptor;
     }
-
-    @Value("${artemis.encryption-password}")
-    private String ENCRYPTION_PASSWORD;
 
     /**
      * Activate user registration
@@ -419,7 +419,7 @@ public class UserService {
      * @return decrypted password or empty string
      */
     public Optional<String> decryptPasswordByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(u -> encryptor().decrypt(u.getPassword()));
+        return userRepository.findOneByLogin(login).map(user -> encryptor().decrypt(user.getPassword()));
     }
 
     /**
@@ -524,6 +524,16 @@ public class UserService {
      */
     public List<User> getTutors(Course course) {
         return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * Get all instructors for a given course
+     *
+     * @param course The course for which to fetch all instructors
+     * @return A list of all users that have the role of instructor in the course
+     */
+    public List<User> getInstructors(Course course) {
+        return userRepository.findAllByGroups(course.getInstructorGroupName());
     }
 
     /**
