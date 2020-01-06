@@ -332,18 +332,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercises();
-        for (Course course : courses) {
-            for (Exercise exercise : course.getExercises()) {
-                request.delete("/api/exercises/" + exercise.getId(), HttpStatus.OK);
-            }
-        }
-        assertThat(exerciseRepository.findAll()).hasSize(0);
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testResetExercise() throws Exception {
         List<Course> courses = database.createCoursesWithExercises();
         for (Course course : courses) {
