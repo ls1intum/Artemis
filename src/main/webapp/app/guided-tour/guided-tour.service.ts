@@ -4,7 +4,7 @@ import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, map, flatMap } from 'rxjs/operators';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -597,11 +597,20 @@ export class GuidedTourService {
 
     /** Resets participation and enables the restart of the current tour */
     public restartTour() {
+        if (!this.availableTourForComponent) {
+            return;
+        }
         if (this.currentCourse && this.currentExercise) {
             const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
-            this.participationService.findParticipation(this.currentExercise.id).subscribe((response: HttpResponse<StudentParticipation>) => {
-                const participation = response.body!;
-                this.participationService.delete(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }).subscribe(() => {
+            this.participationService
+                .findParticipation(this.currentExercise.id)
+                .pipe(
+                    map((response: HttpResponse<StudentParticipation>) => response.body!),
+                    flatMap(participation =>
+                        this.participationService.delete(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
+                    ),
+                )
+                .subscribe(() => {
                     this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
                         const index = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
                         this.guidedTourSettings.splice(index, 1);
@@ -610,7 +619,6 @@ export class GuidedTourService {
                         });
                     });
                 });
-            });
         } else {
             this.startTour();
         }
