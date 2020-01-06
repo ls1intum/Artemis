@@ -7,6 +7,9 @@
             </column>
             <column name="team_scope" type="varchar(255)" afterColumn="mode"/>
         </addColumn>
+        <addColumn tableName="participation">
+            <column name="team_id" type="BIGINT" afterColumn="student_id"/>
+        </addColumn>
         <createTable tableName="team">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
@@ -22,8 +25,12 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <createIndex indexName="fk_participation_team_id" tableName="participation">
+            <column name="team_id"/>
+        </createIndex>
         <addPrimaryKey columnNames="team_id, student_id" tableName="team_students"/>
         <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="team_students" constraintName="fk_team_students_team_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="team"/>
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="team_students" constraintName="fk_team_students_student_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="participation" constraintName="fk_participation_team_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="team"/>
     </changeSet>
 </databaseChangeLog>
