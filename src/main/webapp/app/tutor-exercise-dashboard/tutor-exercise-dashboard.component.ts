@@ -55,6 +55,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     numberOfSubmissions = 0;
     numberOfAssessments = 0;
     numberOfComplaints = 0;
+    numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
@@ -70,6 +71,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
     complaints: Complaint[] = [];
+    NumberOfOpenExerciseComplaints: number;
     moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
 
@@ -192,6 +194,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
                 const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
                 if (tutorLeaderboardEntry) {

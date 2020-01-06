@@ -70,6 +70,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfParticipations?: number;
     public numberOfAssessments?: number;
     public numberOfComplaints?: number;
+    public numberOfOpenComplaints?: number;
     public numberOfMoreFeedbackRequests?: number;
 
     // helper attributes

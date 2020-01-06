@@ -14,6 +14,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfParticipations: number;
     @Input() public numberOfAssessments: number;
+    @Input() public numberOfComplaints: number;
+    @Input() public numberOfOpenComplaints: number;
     @Input() exercise: Exercise;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;

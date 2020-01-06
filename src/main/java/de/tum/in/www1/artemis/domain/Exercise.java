@@ -147,6 +147,9 @@ public abstract class Exercise implements Serializable {
     private Long numberOfComplaintsTransient;
 
     @Transient
+    private Long numberOfOpenComplaintsTransient;
+
+    @Transient
     private Long numberOfMoreFeedbackRequestsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -734,6 +737,14 @@ public abstract class Exercise implements Serializable {
 
     public void setNumberOfComplaints(Long numberOfComplaints) {
         this.numberOfComplaintsTransient = numberOfComplaints;
+    }
+
+    public Long getNumberOfOpenComplaints() {
+        return numberOfOpenComplaintsTransient;
+    }
+
+    public void setNumberOfOpenComplaints(Long numberOfOpenComplaintsTransient) {
+        this.numberOfOpenComplaintsTransient = numberOfOpenComplaintsTransient;
     }
 
     public Long getNumberOfMoreFeedbackRequests() {

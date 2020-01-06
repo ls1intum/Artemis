@@ -12,6 +12,7 @@
             "moreFeedbackRequestsForYourAssessments": "Feedbackanfragen über deine Bewertungen",
             "totalMoreFeedbackRequests": "Gesamtzahl der weiteren Feedbackanfragen",
             "showFinishedExerciseres": "Beendete Übungen anzeigen",
+            "showOpenComplaints": "Unausgewertete Beschwerden",
             "exercise": "Übungen",
             "exerciseType": "Aufgabentyp",
             "yourStatus": "Dein Status",
@@ -21,7 +22,8 @@
             "notReleased": "Nicht freigegeben",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
             "trainOnExampleSubmissions": "Übung zu Beispiel Einreichungen",
-            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten."
+            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten.",
+            "numberOfOpenComplaints": "Anzahl an offene Beschwerden"
         }
     }
 }

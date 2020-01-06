@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course, CourseService } from '../entities/course';
@@ -19,16 +19,20 @@ export class TutorCourseDashboardComponent implements OnInit {
     courseId: number;
     unfinishedExercises: Exercise[] = [];
     finishedExercises: Exercise[] = [];
+    exerciseWithOpenComplaints: Exercise[] = [];
+    exerciseComplaintsEvaluated: Exercise[] = [];
     exercises: Exercise[] = [];
     numberOfSubmissions = 0;
     numberOfAssessments = 0;
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
+    numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
+    showOpenComplaints = false;
 
     stats = new StatsForDashboard();
 
@@ -64,6 +68,10 @@ export class TutorCourseDashboardComponent implements OnInit {
                 if (this.course.exercises && this.course.exercises.length > 0) {
                     // TODO: I think we should use a different criterion how to filter finished exercises.
                     const [finishedExercises, unfinishedExercises] = partition(this.course.exercises, exercise => exercise.numberOfAssessments === exercise.numberOfParticipations);
+                    const [exerciseComplaintsEvaluated, exerciseWithOpenComplaints] = partition(this.course.exercises, exercise => exercise.numberOfOpenComplaints === 0);
+                    this.exerciseComplaintsEvaluated = exerciseComplaintsEvaluated;
+                    this.exerciseWithOpenComplaints = exerciseWithOpenComplaints;
+
                     this.finishedExercises = finishedExercises;
                     this.unfinishedExercises = unfinishedExercises;
                     // sort exercises by type to get a better overview in the dashboard
@@ -79,6 +87,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.numberOfSubmissions = this.stats.numberOfSubmissions;
                 this.numberOfAssessments = this.stats.numberOfAssessments;
                 this.numberOfComplaints = this.stats.numberOfComplaints;
+                this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                 const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
@@ -105,6 +114,18 @@ export class TutorCourseDashboardComponent implements OnInit {
         if (this.showFinishedExercises) {
             this.exercises = this.unfinishedExercises.concat(this.finishedExercises);
         } else {
+            this.exercises = this.unfinishedExercises;
+            this.showOpenComplaints = false;
+        }
+    }
+
+    triggerOpenComplaints() {
+        this.showOpenComplaints = !this.showOpenComplaints;
+
+        if (this.showOpenComplaints) {
+            this.exercises = this.exerciseWithOpenComplaints;
+        } else {
+            this.showFinishedExercises = false;
             this.exercises = this.unfinishedExercises;
         }
     }

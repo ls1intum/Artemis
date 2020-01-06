@@ -12,6 +12,9 @@
         >
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
+        <li [ngbTooltip]="'artemisApp.tutorCourseDashboard.numberOfOpenComplaints' | translate">
+            {{ numberOfOpenComplaints }}
+        </li>
 
         <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
             <div class="progress position-relative" [ngbTooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
