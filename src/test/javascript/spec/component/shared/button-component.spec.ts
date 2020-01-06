@@ -12,7 +12,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
 import { MockSyncStorage } from '../../mocks';
-import { FeatureToggleService } from 'app/feature-toggle';
+import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);

@@ -315,8 +315,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id).subscribe(
-            (result: Result) => {
-                this.result = result;
+            response => {
+                this.result = response.body!;
+                // reconnect
+                this.result.participation!.results = [this.result];
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },

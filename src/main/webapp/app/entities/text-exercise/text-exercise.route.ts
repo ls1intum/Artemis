@@ -1,6 +1,6 @@
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextExerciseComponent } from './text-exercise.component';
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExerciseUpdateComponent } from './text-exercise-update.component';

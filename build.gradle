@@ -1,4 +1,3 @@
-import org.gradle.internal.os.OperatingSystem
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
@@ -38,7 +37,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.9.7"
+version = "3.9.8"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=12
@@ -64,6 +63,8 @@ if (project.hasProperty("zipkin")) {
 if (project.hasProperty("war")) {
     apply from: "gradle/war.gradle"
 }
+
+apply plugin: "jacoco"
 
 idea {
     module {
@@ -98,26 +99,6 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
     }
 }
 
-// See https://virgo47.wordpress.com/2018/09/14/classpath-too-long-with-spring-boot-and-gradle/ for details
-// https://github.com/jhipster/generator-jhipster/issues/9713
-if (OperatingSystem.current().isWindows()) {
-    task classpathJar(type: Jar) {
-        inputs.files sourceSets.main.runtimeClasspath
-
-        archiveName = "runboot-classpath.jar"
-        doFirst {
-            manifest {
-                def classpath = sourceSets.main.runtimeClasspath.files
-                attributes "Class-Path": classpath.collect {f -> f.toURI().toString()}.join(" ")
-            }
-        }
-    }
-
-    bootRun {
-        classpath = classpathJar.outputs.files
-    }
-}
-
 defaultTasks "bootRun"
 
 springBoot {
@@ -142,6 +123,8 @@ task integrationTest(type: Test) {
     include "**/*IT*", "**/*IntTest*"
     exclude "**/*CucumberIT*"
 
+    maxHeapSize = '2048m'
+    jvmArgs '-XX:MaxPermSize=256m'
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
@@ -159,6 +142,19 @@ task integrationTestReport(type: TestReport) {
     reportOn integrationTest
 }
 
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.45
+            }
+        }
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
+
 if (!project.hasProperty("runList")) {
     project.ext.runList = "main"
 }
@@ -175,7 +171,8 @@ repositories {
 }
 
 dependencies {
-
+    implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.1'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r"
@@ -186,8 +183,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
     implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring:1.7.28"
-    implementation "io.sentry:sentry-logback:1.7.28"
+    implementation "io.sentry:sentry-spring:1.7.29"
+    implementation "io.sentry:sentry-logback:1.7.29"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -266,8 +263,8 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.12.0'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.12.0'
-    testImplementation "org.mockito:mockito-core:3.2.0"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.2.0"
+    testImplementation "org.mockito:mockito-core:3.2.4"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.2.4"
     testImplementation "org.hamcrest:hamcrest-library"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.1"
@@ -334,6 +331,11 @@ if (project.hasProperty("nodeInstall")) {
     }
 }
 
+gitProperties {
+    failOnNoGitDirectory = false
+    keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
+}
+
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion = "8.24"
@@ -351,11 +353,12 @@ task buildJarForDocker (type: Exec) {
 
 // Available commands:
 //
-// 1) Build production:             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests:                ./gradlew executeTests
-// 3) Check Java code format:       ./gradlew spotlessCheck
-// 4) Apply Java code formatter:    ./gradlew spotlessApply
-// 5) Find dependency updates:      ./gradlew dependencyUpdates
-// 6) Check JavaDoc:                ./gradlew checkstyleMain
-// 7) Generate Liquibase diff:      ./gradlew liquibaseDiffChangelog
-// 8) Clear Liquibase checksums:    ./gradlew liquibaseClearChecksums
+// 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
+// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack -x generateGitProperties
+// 3) Check Java code format:                       ./gradlew spotlessCheck
+// 4) Apply Java code formatter:                    ./gradlew spotlessApply
+// 5) Find dependency updates:                      ./gradlew dependencyUpdates
+// 6) Check JavaDoc:                                ./gradlew checkstyleMain
+// 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
+// 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
+// 9) Enforce code coverage verification:           ./gradlew jacocoTestCoverageVerification

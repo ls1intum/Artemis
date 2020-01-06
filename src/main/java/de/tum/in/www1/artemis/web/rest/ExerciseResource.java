@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -14,9 +11,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +20,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -41,7 +37,7 @@ import io.github.jhipster.web.util.ResponseUtil;
  * REST controller for managing Exercise.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
 public class ExerciseResource {
 
@@ -98,9 +94,9 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:id : get the "id" exercise.
+     * GET /exercises/:exerciseId : get the "exerciseId" exercise.
      *
-     * @param exerciseId the id of the exercise to retrieve
+     * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}")
@@ -108,15 +104,14 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
-        User student = userService.getUserWithGroupsAndAuthorities();
+        User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
 
-        if (!authCheckService.isAllowedToSeeExercise(exercise, student)) {
+        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
         }
 
-        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student);
-        if (isStudent) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             exercise.filterSensitiveInformation();
         }
 
@@ -124,28 +119,28 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:id : get the "id" exercise with data useful for tutors.
+     * GET /exercises/:exerciseId : get the "exerciseId" exercise with data useful for tutors.
      *
-     * @param id the id of the exercise to retrieve
+     * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{id}/for-tutor-dashboard")
+    @GetMapping("/exercises/{exerciseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long id) {
-        log.debug("REST request to get Exercise for tutor dashboard : {}", id);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(id);
+    public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long exerciseId) {
+        log.debug("REST request to get Exercise for tutor dashboard : {}", exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-        // Programming exercises without semi automatic assessment should not be available on the tutor dashboard!
-        if (exercise instanceof ProgrammingExercise && !exercise.getAssessmentType().equals(AssessmentType.SEMI_AUTOMATIC)) {
+        // Programming exercises with only automatic assessment should *NOT* be available on the tutor dashboard!
+        if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             return badRequest();
         }
 
         // TODO CZ: load results of submissions eagerly to prevent additional database calls
-        List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
+        List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
         exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
@@ -160,9 +155,9 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:id/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given id
+     * GET /exercises/:exerciseId/stats-for-tutor-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
      *
-     * @param exerciseId the id of the exercise to retrieve
+     * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-tutor-dashboard")
@@ -181,7 +176,7 @@ public class ExerciseResource {
     }
 
     /**
-     * Given an exercise id, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
      * stats for tutor dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
@@ -191,10 +186,19 @@ public class ExerciseResource {
         Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        // TODO: This could just be one repository method as the exercise id is provided anyway.
-        Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + modelingSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId) + fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exerciseId)
-                + programmingExerciseService.countSubmissions(exerciseId);
+        long numberOfSubmissions = 0L;
+        if (exercise instanceof TextExercise) {
+            numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof ModelingExercise) {
+            numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+        }
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
@@ -216,18 +220,18 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:id/stats-for-instructor-dashboard A collection of useful statistics for the instructor exercise dashboard of the exercise with the given id
+     * GET /exercises/:exerciseId/stats-for-instructor-dashboard A collection of useful statistics for the instructor exercise dashboard of the exercise with the given exerciseId
      *
-     * @param exerciseId the id of the exercise to retrieve
+     * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-instructor-dashboard")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
 
@@ -242,96 +246,53 @@ public class ExerciseResource {
     }
 
     /**
-     * DELETE /exercises/:id : delete the "id" exercise.
+     * Reset the exercise by deleting all its partcipations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom implementations
      *
-     * @param exerciseId the id of the exercise to delete
+     * @param exerciseId exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/exercises/{exerciseId}")
+    @DeleteMapping(value = "/exercises/{exerciseId}/reset")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (Optional.ofNullable(exercise).isPresent()) {
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise))
-                return forbidden();
-            exerciseService.delete(exercise, true, false);
-        }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
-    }
-
-    /**
-     * Reset the exercise by deleting all its partcipations /exercises/:id/reset This can be used by all exercise types, however they can also provide custom implementations
-     *
-     * @param id the id of the exercise to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping(value = "/exercises/{id}/reset")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> reset(@PathVariable Long id) {
-        log.debug("REST request to reset Exercise : {}", id);
-        Exercise exercise = exerciseService.findOneLoadParticipations(id);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise))
+    public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
+        log.debug("REST request to reset Exercise : {}", exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
+        }
         exerciseService.reset(exercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
     }
 
     /**
-     * DELETE /exercises/:id/cleanup : delete all build plans (except BASE) of all participations belonging to this exercise. Optionally delete and archive all repositories
+     * DELETE /exercises/:exerciseId/cleanup : delete all build plans (except BASE) of all participations belonging to this exercise. Optionally delete and archive all repositories
      *
-     * @param id                 the id of the exercise to delete build plans for
+     * @param exerciseId         exercise to delete build plans for
      * @param deleteRepositories whether repositories should be deleted or not
      * @return ResponseEntity with status
      */
-    @DeleteMapping(value = "/exercises/{id}/cleanup")
+    @DeleteMapping(value = "/exercises/{exerciseId}/cleanup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
-        log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(id);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise))
+    public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
+        log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
-        exerciseService.cleanup(id, deleteRepositories);
-        log.info("Cleanup build plans was successful for Exercise : {}", id);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * GET /exercises/:id/archive : archive all repositories (except BASE) of all participations belonging to this exercise into a zip file and provide a downloadable link.
-     *
-     * @param id the id of the exercise to delete and archive the repositories
-     * @return ResponseEntity with status
-     * @throws IOException if repositories can't be archived
-     */
-    @GetMapping(value = "/exercises/{id}/archive")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
-        log.info("Start to archive repositories for Exercise : {}", id);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(id);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise))
-            return forbidden();
-        File zipFile = exerciseService.archive(id);
-        if (zipFile == null) {
-            return ResponseEntity.noContent().headers(HeaderUtil.createAlert(applicationName,
-                    "There was an error on the server and the zip file could not be created, possibly because all repositories have already been deleted or this is not a programming exercise.",
-                    "")).build();
         }
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        log.info("Archive repositories was successful for Exercise : {}", id);
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        exerciseService.cleanup(exerciseId, deleteRepositories);
+        log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
+        return ResponseEntity.ok().build();
     }
 
     /**
      * GET /exercises/:exerciseId/details : sends exercise details including all results for the currently logged in user
      *
-     * @param exerciseId the id of the exercise to get the repos from
+     * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getResultsForCurrentUser(@PathVariable Long exerciseId) {
+    public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         // TODO: refactor this and load
         // * the exercise (without the course, no template / solution participations)
         // * all submissions (with their result) of the user (to be displayed in the result history)
@@ -340,7 +301,7 @@ public class ExerciseResource {
         // also see exercise.service.ts and course-exercise-details.component.ts
         long start = System.currentTimeMillis();
         User user = userService.getUserWithGroupsAndAuthorities();
-        log.debug(user.getLogin() + " requested access for exercise with id " + exerciseId, exerciseId);
+        log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it

@@ -16,7 +16,7 @@ import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
@@ -477,7 +477,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id).subscribe(
             response => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();

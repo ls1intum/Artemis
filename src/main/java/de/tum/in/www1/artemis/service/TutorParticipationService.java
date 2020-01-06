@@ -131,13 +131,7 @@ public class TutorParticipationService {
      * @return a list of tutor participation for the course
      */
     public List<TutorParticipation> findAllByCourseAndTutor(Course course, User user) {
-        List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
-
-        for (TutorParticipation tutorParticipation : tutorParticipations) {
-            tutorParticipation.setAssessedExercise(tutorParticipation.getAssessedExercise());
-        }
-
-        return tutorParticipations;
+        return tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
     }
 
     /**
