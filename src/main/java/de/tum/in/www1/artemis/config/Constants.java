@@ -32,8 +32,6 @@ public final class Constants {
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
-    public static final String FILEPATH_COMPASS = "compass";
-
     public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
@@ -100,6 +98,12 @@ public final class Constants {
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
+
+    public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
+
+    public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
+
+    public static final String DELETE_COURSE = "DELETE_COURSE";
 
     private Constants() {
     }

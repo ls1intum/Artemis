@@ -1,33 +1,19 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.matches;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.MockBeans;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.google.gson.Gson;
@@ -39,29 +25,17 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.connectors.BambooService;
-import de.tum.in.www1.artemis.service.connectors.BitbucketService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira" })
-@MockBeans({ @MockBean(BambooService.class), @MockBean(BitbucketService.class) })
-public class ProgrammingExerciseServiceIntegrationTest {
+public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationTest {
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
-    @Autowired
-    BambooService bambooService;
-
-    @Autowired
-    BitbucketService bitbucketService;
+    private static final String DUMMY_URL = "https://te12ste@repobruegge.in.tum.de/scm/TEST2019TEST/testexercise-te12ste.git";
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -75,29 +49,22 @@ public class ProgrammingExerciseServiceIntegrationTest {
     @Autowired
     RequestUtilService request;
 
-    private Course baseCourse;
-
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
 
-    private Set<ExerciseHint> hints;
-
     @BeforeEach
     public void setUp() throws MalformedURLException {
         databse.addUsers(1, 1, 1);
-        databse.addInstructor("other-instructors", "instructorOther");
-        baseCourse = databse.addCourseWithOneProgrammingExerciseAndTestCases();
+        databse.addInstructor("other-instructors", "instructorother");
+        databse.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = databse.addEmptyCourse();
         programmingExercise = databse.loadProgrammingExerciseWithEagerReferences();
-        hints = databse.addHintsToExercise(programmingExercise);
+        databse.addHintsToExercise(programmingExercise);
         databse.addHintsToProblemStatement(programmingExercise);
 
         // Load again to fetch changes to statement and hints while keeping eager refs
         programmingExercise = databse.loadProgrammingExerciseWithEagerReferences();
-
-        ReflectionTestUtils.setField(bitbucketService, "log", LoggerFactory.getLogger(BitbucketService.class));
-        ReflectionTestUtils.setField(bitbucketService, "BITBUCKET_SERVER_URL", new URL("http://testurl.de"));
     }
 
     @AfterEach
@@ -177,12 +144,19 @@ public class ProgrammingExerciseServiceIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
-        when(bambooService.copyBuildPlan(anyString(), matches(BuildPlanType.TEMPLATE.getName()), anyString(), anyString(), matches(BuildPlanType.TEMPLATE.getName())))
-                .thenReturn(toBeImported.getTemplateBuildPlanId());
-        when(bambooService.copyBuildPlan(anyString(), matches(BuildPlanType.SOLUTION.getName()), anyString(), anyString(), matches(BuildPlanType.SOLUTION.getName())))
-                .thenReturn(toBeImported.getSolutionBuildPlanId());
-        when(bambooService.enablePlan(anyString())).thenReturn("");
-        doCallRealMethod().when(bitbucketService).getCloneRepositoryUrl(anyString(), anyString());
+
+        doReturn(toBeImported.getTemplateBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.TEMPLATE.getName()), anyString(),
+                anyString(), eq(BuildPlanType.TEMPLATE.getName()));
+        doReturn(toBeImported.getSolutionBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.SOLUTION.getName()), anyString(),
+                anyString(), eq(BuildPlanType.SOLUTION.getName()));
+        doNothing().when(continuousIntegrationService).enablePlan(anyString(), anyString());
+        doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        doNothing().when(versionControlService).createProjectForExercise(any());
+        doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
+        doNothing().when(versionControlService).addWebHooksForExercise(any());
+        doNothing().when(continuousIntegrationService).giveProjectPermissions(anyString(), any(), any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any());
+        doNothing().when(continuousIntegrationService).triggerBuild(any());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
     }
@@ -212,9 +186,9 @@ public class ProgrammingExerciseServiceIntegrationTest {
         final var templateRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var solutionRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
         final var testRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        when(bitbucketService.getCloneRepositoryUrl(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new DummyRepositoryUrl("http://template-url"));
-        when(bitbucketService.getCloneRepositoryUrl(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl("http://solution-url"));
-        when(bitbucketService.getCloneRepositoryUrl(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl("http://tests-url"));
+        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
+        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
+        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
 
         return programmingExerciseService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }

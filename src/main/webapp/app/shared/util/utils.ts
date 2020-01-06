@@ -17,3 +17,22 @@ export const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
     const fab = cartesianConcatHelper(a, b);
     return cartesianProduct(fab, b2, ...c2);
 };
+
+/**
+ * https://stackoverflow.com/questions/11616630/how-can-i-print-a-circular-structure-in-a-json-like-format
+ * Stringify a circular JSON structure by omitting keys that would close a circle
+ *
+ * @param value The object you want to stringify
+ */
+export const stringifyCircular = (val: any): string => {
+    const cache: any[] = [];
+    return JSON.stringify(val, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.indexOf(value) !== -1) {
+                return;
+            }
+            cache.push(value);
+        }
+        return value;
+    });
+};

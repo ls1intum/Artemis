@@ -30,6 +30,7 @@ import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -89,6 +90,8 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
+    // TODO this exception also hides when optional services cannot be retrieved via "get()" which should instead lead to a proper exception
+    // SK: I guess we should remove this handler, because it is confusing
     @ExceptionHandler
     public ResponseEntity<Problem> handleNoSuchElementException(NoSuchElementException ex, NativeWebRequest request) {
         Problem problem = Problem.builder().withStatus(Status.NOT_FOUND).with(MESSAGE_KEY, ErrorConstants.ENTITY_NOT_FOUND_TYPE).build();
@@ -134,5 +137,11 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         else {
             return new HttpEntity<>(e.getMessage());
         }
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleGitlabException(GitLabException ex, NativeWebRequest request) {
+        final var problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ex.getMessage()).build();
+        return create(ex, problem, request);
     }
 }

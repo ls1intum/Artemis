@@ -4,20 +4,52 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
 public class ModelFactory {
+
+    public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
+        Lecture lecture = new Lecture();
+        lecture.setStartDate(startDate);
+        lecture.setDescription("Description");
+        lecture.setTitle("Lecture");
+        lecture.setEndDate(endDate);
+        lecture.setCourse(course);
+        return lecture;
+    }
+
+    public static Attachment generateAttachment(ZonedDateTime startDate, Lecture lecture) {
+        Attachment attachment = new Attachment();
+        attachment.setAttachmentType(AttachmentType.FILE);
+        attachment.setReleaseDate(startDate);
+        attachment.setUploadDate(startDate);
+        attachment.setName("TestAttachement");
+        attachment.setLecture(lecture);
+        return attachment;
+    }
+
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise = (QuizExercise) populateExercise(quizExercise, releaseDate, dueDate, null, course);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise.setIsPlannedToStart(true);
+        quizExercise.setIsVisibleBeforeStart(true);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(10);
+        quizExercise.setRandomizeQuestionOrder(true);
+        return quizExercise;
+    }
 
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
+        programmingExercise.generateAndSetProjectKey();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         return programmingExercise;
     }
 
@@ -45,22 +77,20 @@ public class ModelFactory {
     public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        exercise.setProblemStatement("Problem Statement");
         exercise.setMaxScore(5.0);
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
         exercise.setCourse(course);
-        exercise.setStudentParticipations(new HashSet<>());
-        exercise.setExampleSubmissions(new HashSet<>());
-        exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setCategories(new HashSet<>());
+        exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
     }
 
-    public static LinkedList<User> generateActivatedUsers(String loginPrefix, String[] groups, int amount) {
-        LinkedList<User> generatedUsers = new LinkedList<>();
+    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, int amount) {
+        List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
             if (groups != null) {

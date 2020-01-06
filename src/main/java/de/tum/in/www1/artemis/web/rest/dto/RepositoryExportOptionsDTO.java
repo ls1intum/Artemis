@@ -15,7 +15,7 @@ public class RepositoryExportOptionsDTO {
 
     private boolean addStudentName;
 
-    private boolean squashAfterInstructor;
+    private boolean combineStudentCommits;
 
     private boolean normalizeCodeStyle;
 
@@ -51,12 +51,12 @@ public class RepositoryExportOptionsDTO {
         this.addStudentName = addStudentName;
     }
 
-    public boolean isSquashAfterInstructor() {
-        return squashAfterInstructor;
+    public boolean isCombineStudentCommits() {
+        return combineStudentCommits;
     }
 
-    public void setSquashAfterInstructor(boolean squashAfterInstructor) {
-        this.squashAfterInstructor = squashAfterInstructor;
+    public void setCombineStudentCommits(boolean combineStudentCommits) {
+        this.combineStudentCommits = combineStudentCommits;
     }
 
     public boolean isNormalizeCodeStyle() {

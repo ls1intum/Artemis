@@ -8,7 +8,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { catchError, tap, filter } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
@@ -17,6 +16,8 @@ import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -28,9 +29,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
 
     @Input() participationId: number;
     @Input() result: Result;
+    @Input() exercise: ProgrammingExercise;
     @Output() onResultModified = new EventEmitter<Result>();
 
-    participation: StudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
@@ -84,7 +86,8 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        this.participation = this.result.participation! as StudentParticipation;
+        // TODO: the participation needs additional information
+        this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
     }
 
     initializeForResultCreation() {
@@ -98,7 +101,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             .find(this.participationId)
             .pipe(
                 tap(({ body: participation }) => {
-                    this.participation = participation!;
+                    this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
                     this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
                 }),
@@ -194,5 +197,12 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
             },
         );
+    }
+
+    /**
+     * the dialog is readonly if there is a complaint that was accepted or rejected
+     */
+    readOnly() {
+        return this.complaint !== undefined && this.complaint.accepted !== undefined;
     }
 }

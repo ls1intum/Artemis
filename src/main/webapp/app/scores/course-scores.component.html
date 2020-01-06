@@ -16,7 +16,7 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="user.firstName"><span jhiTranslate="instructorDashboard.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="user.naame"><span jhiTranslate="instructorDashboard.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="user.login"><span jhiTranslate="instructorDashboard.username">Username</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="numberOfParticipatedExercises">
                         <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span> <fa-icon [icon]="'sort'"></fa-icon>
@@ -58,7 +58,7 @@
             </thead>
             <tbody>
                 <tr *ngFor="let student of students | sortBy: predicate:reverse">
-                    <td>{{ student.user.firstName }} {{ student.user.lastName }}</td>
+                    <td>{{ student.user.name }}</td>
                     <td>{{ student.user.login }}</td>
                     <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1' }}%)</td>
                     <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1' }}%)</td>

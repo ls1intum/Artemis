@@ -5,11 +5,15 @@
     </h2>
     <jhi-alert></jhi-alert>
     <div class="mb-2 clearfix">
-        <div class="d-flex align-content-center float-xl-left my-2">
+        <div class="exercise-scores-filter-toolbar d-flex align-content-center my-2">
             <div class="d-flex align-items-center">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
                     <span class="ml-1">{{ 'artemisApp.exercise.showAll' | translate }}</span>
+                </label>
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+                    <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.BUILD_FAILED)" [value]="FilterProp.BUILD_FAILED" />
+                    <span class="ml-1">{{ 'artemisApp.exercise.showBuildFailed' | translate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.UNSUCCESSFUL)" [value]="FilterProp.UNSUCCESSFUL" />
@@ -43,7 +47,11 @@
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
                 </button>
-                <jhi-programming-assessment-repo-export *ngIf="exercise.type === PROGRAMMING" [exerciseId]="exercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
+                <jhi-programming-assessment-repo-export
+                    *ngIf="exercise.type === ExerciseType.PROGRAMMING"
+                    [exerciseId]="exercise.id"
+                    class="mr-1"
+                ></jhi-programming-assessment-repo-export>
                 <button class="btn btn-primary btn-sm" (click)="refresh()">
                     <fa-icon [icon]="'sync'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
@@ -173,29 +181,70 @@
                     <ng-template ngx-datatable-cell-template let-value="value"> {{ value }} min</ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" *ngIf="exercise.type === PROGRAMMING" [resizeable]="false" [minWidth]="450" [width]="450">
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.PROGRAMMING" [resizeable]="false" [minWidth]="450" [width]="450">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
-                            <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>Repository
+                        <button class="btn btn-primary btn-sm mr-1" (click)="goToRepository(value)">
+                            <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
+                            Repository
                         </button>
-                        <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(value)">
-                            <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>Build plan
+                        <button class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(value)">
+                            <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
+                            Build plan
                         </button>
                         <button
                             routerLink="/code-editor/{{ value.participation.id }}"
                             class="btn btn-info btn-sm mr-1"
-                            *ngIf="exercise.type === PROGRAMMING && value.participation.exercise.allowOnlineEditor"
+                            *ngIf="value.participation.exercise.allowOnlineEditor"
                             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
-                            <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
+                            <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>
+                            Online editor
                         </button>
                         <jhi-programming-assessment-manual-result
                             *ngIf="newManualResultAllowed"
                             [participationId]="value.participation.id"
                             [latestResult]="value"
+                            [exercise]="exercise"
                             (onResultModified)="refresh()"
                             class="mr-1"
                         ></jhi-programming-assessment-manual-result>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                    prop=""
+                    *ngIf="exercise.type === ExerciseType.FILE_UPLOAD && exercise.isAtLeastInstructor"
+                    [resizeable]="false"
+                    [minWidth]="180"
+                    [width]="180"
+                >
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <button routerLink="/file-upload-exercise/{{ exercise.id }}/submission/{{ value.submission.id }}/assessment" class="btn btn-primary btn-sm mr-1">
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.fileUploadSubmission.view' | translate }}
+                        </button>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <button
+                            routerLink="/modeling-exercise/{{ exercise.id }}/submissions/{{ value.submission.id }}/assessment"
+                            [queryParams]="{ optimal: false, hideBackButton: true }"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.modelingSubmission.view' | translate }}
+                        </button>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <button routerLink="/text/{{ exercise.id }}/assessment/{{ value.submission.id }}" class="btn btn-primary btn-sm mr-1">
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            {{ 'artemisApp.textSubmission.view' | translate }}
+                        </button>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>

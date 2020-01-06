@@ -2,14 +2,8 @@ package de.tum.in.www1.artemis.service.compass.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,17 +19,8 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.assessment.SimilaritySetAssessment;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLControlFlow;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
 class AutomaticAssessmentControllerTest {
 

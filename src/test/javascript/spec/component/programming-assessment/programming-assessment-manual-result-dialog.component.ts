@@ -9,10 +9,10 @@ import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService, StudentParticipation } from 'src/main/webapp/app/entities/participation';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
+import { ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { MockExerciseHintService, MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
@@ -31,6 +31,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService, LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming-assessment/repo-export';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,12 +59,13 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         hasComplaint: true,
     };
     result.submission.id = 1;
-    const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result: result };
+    const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
+    const exercise = <ProgrammingExercise>{ id: 1, gradingInstructions: 'Grading Instructions' };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule, FormDateTimePickerModule, FormsModule],
-            declarations: [ProgrammingAssessmentManualResultDialogComponent, ComplaintsForTutorComponent],
+            declarations: [ProgrammingAssessmentManualResultDialogComponent, ComplaintsForTutorComponent, MockComponent(ProgrammingAssessmentRepoExportButtonComponent)],
             providers: [
                 ProgrammingAssessmentManualResultService,
                 ComplaintService,
@@ -110,13 +113,14 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         findByResultId.returns(of({ body: complaint }));
         getIdentity.returns(new Promise(resolve => resolve(user)));
         comp.result = result;
+        comp.exercise = exercise;
         comp.ngOnInit();
         tick();
         expect(findByResultId.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
         fixture.detectChanges();
-        let complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
+        const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).to.exist;
         expect(comp.complaint).to.exist;
     }));
@@ -125,12 +129,13 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
         getIdentity.returns(new Promise(resolve => resolve(user)));
         result.hasComplaint = false;
         comp.result = result;
+        comp.exercise = exercise;
         comp.ngOnInit();
         tick();
         expect(findByResultId.notCalled).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
-        let complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
+        const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).to.not.exist;
     }));
 });
