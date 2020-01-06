@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,12 +24,12 @@ public interface ContinuousIntegrationService {
     /**
      * Creates the base build plan for the given programming exercise
      * 
-     * @param exercise           a programming exercise with the required information to create the base build plan
-     * @param planKey            the key of the plan
-     * @param repositoryName     the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
-     * @param testRepositoryName the slug of the test repository, i.e. the unique identifier
+     * @param exercise          a programming exercise with the required information to create the base build plan
+     * @param planKey           the key of the plan
+     * @param repositoryURL     the URL of the assignment repository (used to separate between exercise and solution)
+     * @param testRepositoryURL the URL of the test repository
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String repositoryName, String testRepositoryName);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
@@ -75,9 +76,10 @@ public interface ContinuousIntegrationService {
     /**
      * Delete build plan with given identifier from CI system.
      *
+     * @param projectKey The key of the related programming exercise
      * @param buildPlanId unique identifier for build plan on CI system
      */
-    void deleteBuildPlan(String buildPlanId);
+    void deleteBuildPlan(String projectKey, String buildPlanId);
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
@@ -111,10 +113,11 @@ public interface ContinuousIntegrationService {
     /**
      * Check if the given build plan ID is valid and accessible.
      *
+     * @param projectKey The key of the related programming exercise
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if build plan is valid otherwise false
      */
-    Boolean buildPlanIdIsValid(String buildPlanId);
+    boolean buildPlanIdIsValid(String projectKey, String buildPlanId);
 
     /**
      * Get details about the latest build result. Used to display the results of the test cases to the student: webapp/app/courses/results/result-deatil.html Used to generate the
@@ -128,10 +131,11 @@ public interface ContinuousIntegrationService {
     /**
      * Get the build logs of the latest CI build.
      *
+     * @param projectKey The key of the project under which the plan is stored
      * @param buildPlanId to get the latest build logs
      * @return list of build log entries
      */
-    List<BuildLogEntry> getLatestBuildLogs(String buildPlanId);
+    List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
@@ -162,17 +166,18 @@ public interface ContinuousIntegrationService {
      * Checks if a given build plan is deactivated, or enabled
      *
      * @param planId The ID of the build plan
+     * @param projectKey The key of the project for which to check the build plan
      * @return True, if the plan is enabled, false otherwise
      */
-    boolean isBuildPlanEnabled(final String planId);
+    boolean isBuildPlanEnabled(final String projectKey, final String planId);
 
     /**
      * Enables the given build plan.
      *
+     * @param projectKey The key of the project for which to enable the plan
      * @param planKey to identify the plan in the CI service.
-     * @return the message indicating the result of the enabling operation.
      */
-    String enablePlan(String planKey);
+    void enablePlan(String projectKey, String planKey);
 
     /**
      * Updates the configured repository for a given plan to the given Bamboo Server repository.
@@ -181,10 +186,10 @@ public interface ContinuousIntegrationService {
      * @param bambooPlan            The key of the plan, which is usually the name combined with the project, e.g. 'PROJECT-GA56HUR'.
      * @param bambooRepositoryName  The name of the configured repository in the CI plan.
      * @param repoProjectName       The key of the project that contains the repository.
-     * @param repoName              The lower level identifier of the repository.
+     * @param repoUrl               The url of the newly to be referenced repository.
      * @param triggeredBy           Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
-    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy);
+    void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, Optional<List<String>> triggeredBy);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
@@ -210,6 +215,23 @@ public interface ContinuousIntegrationService {
      * @return The health of the CI service containing if it is up and running and any additional data, or the throwing exception otherwise
      */
     ConnectorHealth health();
+
+    /**
+     * Creates a project on the CI server.
+     *
+     * @param programmingExercise for which a project should be created
+     */
+    void createProjectForExercise(ProgrammingExercise programmingExercise);
+
+    /**
+     * Get the webhook URL to call if one wants to trigger the build plan or notify the plan about an event that should
+     * trigger. E.g. a new push to the repository
+     *
+     * @param projectKey The key of the project related to the build plan
+     * @param buildPlanId The ID of the build plan, that should get triggered/notified
+     * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
+     */
+    Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
 
     /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out

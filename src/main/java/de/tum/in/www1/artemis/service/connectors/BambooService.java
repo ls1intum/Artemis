@@ -37,6 +37,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -55,35 +56,31 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
-    @Value("${artemis.bamboo.url}")
+    @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
 
-    @Value("${artemis.bamboo.empty-commit-necessary}")
+    @Value("${artemis.continuous-integration.empty-commit-necessary}")
     private Boolean BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY;
 
-    @Value("${artemis.bamboo.user}")
+    @Value("${artemis.continuous-integration.user}")
     private String BAMBOO_USER;
 
-    @Value("${artemis.bamboo.password}")
+    @Value("${artemis.continuous-integration.password}")
     private String BAMBOO_PASSWORD;
 
     private final GitService gitService;
     private final ResultRepository resultRepository;
-    private final FeedbackRepository feedbackRepository;
-    private final ParticipationRepository participationRepository;
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final BambooBuildPlanService bambooBuildPlanService;
     private final RestTemplate restTemplate;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
+    public BambooService(GitService gitService, ResultRepository resultRepository,
                          ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
                          Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, RestTemplate restTemplate) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
-        this.feedbackRepository = feedbackRepository;
-        this.participationRepository = participationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
@@ -92,8 +89,8 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, repositoryName, testRepositoryName);
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, VcsUtil.getRepositorySlugFromUrl(repositoryURL), VcsUtil.getRepositorySlugFromUrl(testRepositoryURL));
     }
 
     private Base createBase() {
@@ -149,10 +146,10 @@ public class BambooService implements ContinuousIntegrationService {
             planKey,
             ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
-            versionControlService.get().getRepositoryName(repositoryUrl),
+            repositoryUrl.toString(),
             Optional.empty()
         );
-        enablePlan(planKey);
+        enablePlan(planProject, planKey);
     }
 
     @Override
@@ -191,6 +188,11 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
+    @Override
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) {
+        // Do nothing since Bamboo automatically creates projects
+    }
+
     /**
      * Triggers a build for the build plan in the given participation.
      *
@@ -214,7 +216,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public boolean isBuildPlanEnabled(final String planId) {
+    public boolean isBuildPlanEnabled(final String projectKey, final String planId) {
         final var headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         final var entity = new HttpEntity<>(null, headers);
@@ -222,13 +224,8 @@ public class BambooService implements ContinuousIntegrationService {
         return planInfo != null && planInfo.containsKey("enabled") && ((boolean) planInfo.get("enabled"));
     }
 
-    /**
-     * Delete the build plan with given identifier from Bamboo.
-     *
-     * @param buildPlanId unique identifier for the build plan on Bamboo.
-     */
     @Override
-    public void deleteBuildPlan(String buildPlanId) {
+    public void deleteBuildPlan(String projectKey, String buildPlanId) {
         deletePlan(buildPlanId);
     }
 
@@ -288,14 +285,8 @@ public class BambooService implements ContinuousIntegrationService {
         return feedbackItems;
     }
 
-    /**
-     * Get the build logs of the latest Bamboo build for the given build plan.
-     *
-     * @param buildPlanId to get the latest build logs.
-     * @return list of build log entries.
-     */
     @Override
-    public List<BuildLogEntry> getLatestBuildLogs(String buildPlanId) {
+    public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
         return retrieveLatestBuildLogs(buildPlanId);
     }
 
@@ -369,13 +360,12 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String enablePlan(String planKey) throws BambooException {
+    public void enablePlan(String projectKey, String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + planKey);
             //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
             String message = createBambooClient().getPlanHelper().enablePlan(planKey, true);
             log.info("Enable build plan " + planKey + " was successful. " + message);
-            return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while enabling the build plan", e);
@@ -383,8 +373,13 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName, Optional<List<String>> triggeredBy) throws BambooException {
-        continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName, triggeredBy);
+    public void updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoUrl, Optional<List<String>> triggeredBy) throws BambooException {
+        try {
+            final var repositoryName = versionControlService.get().getRepositoryName(new URL(repoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repositoryName, triggeredBy);
+        } catch (MalformedURLException e) {
+            throw new BambooException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -497,6 +492,13 @@ public class BambooService implements ContinuousIntegrationService {
 
         health.setAdditionalInfo(Map.of("url", BAMBOO_SERVER_URL));
         return health;
+    }
+
+    @Override
+    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
+        // No webhooks needed between Bamboo and Bitbucket, so we return an empty Optional
+        // See https://confluence.atlassian.com/bamboo/integrating-bamboo-with-bitbucket-server-779302772.html
+        return Optional.empty();
     }
 
     /**
@@ -884,12 +886,12 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
 
-        List logs = new ArrayList<BuildLogEntry>();
+        var logs = new ArrayList<BuildLogEntry>();
 
         if (response != null) {
             for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
                 String logString = (String) logEntry.get("log");
-                boolean compilationErrorFound = true;
+                boolean compilationErrorFound = false;
 
                 if (logString.contains("COMPILATION ERROR")) {
                     compilationErrorFound = true;
@@ -1067,7 +1069,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return true if the build plan id is valid.
      */
     @Override
-    public Boolean buildPlanIdIsValid(String buildPlanId) {
+    public boolean buildPlanIdIsValid(String projectKey, String buildPlanId) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
