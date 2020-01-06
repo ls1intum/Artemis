@@ -48,7 +48,7 @@ export class ModelingAssessmentService {
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
-        const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/exampleAssessment`;
+        const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/example-assessment`;
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 

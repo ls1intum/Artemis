@@ -223,9 +223,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT modeling-submissions/:exampleSubmissionId/exampleAssessment : save manual example modeling assessment
+     * PUT modeling-submissions/:submissionId/example-assessment : save manual example modeling assessment
      *
-     * @param exampleSubmissionId id of the submission
+     * @param submissionId id of the submission
      * @param feedbacks list of feedbacks
      * @return result after saving example modeling assessment
      */
@@ -233,11 +233,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
             @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
-    @PutMapping("/modeling-submissions/{exampleSubmissionId}/exampleAssessment")
+    @PutMapping("/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable Long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable Long submissionId, @RequestBody List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(submissionId);
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
         checkAuthorization(modelingExercise, user);
