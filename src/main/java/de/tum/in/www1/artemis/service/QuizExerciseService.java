@@ -32,8 +32,6 @@ public class QuizExerciseService {
 
     private final ShortAnswerMappingRepository shortAnswerMappingRepository;
 
-    private final ParticipationService participationService;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ResultRepository resultRepository;
@@ -47,14 +45,13 @@ public class QuizExerciseService {
     private final ObjectMapper objectMapper;
 
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
+            ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
             MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
-        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -262,18 +259,6 @@ public class QuizExerciseService {
      */
     public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
         return quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
-    }
-
-    /**
-     * Delete the quiz exercise by id.
-     *
-     * @param id the id of the entity
-     */
-    public void delete(Long id) {
-        log.debug("Request to delete Exercise : {}", id);
-        // delete all participations belonging to this quiz
-        participationService.deleteAllByExerciseId(id, false, false);
-        quizExerciseRepository.deleteById(id);
     }
 
     /**
