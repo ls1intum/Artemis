@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -95,6 +96,10 @@ public abstract class Exercise implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
     private DifficultyLevel difficulty;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode")
+    private ExerciseMode mode;
 
     @Nullable
     @Column(name = "presentation_score_enabled")
@@ -295,6 +300,19 @@ public abstract class Exercise implements Serializable {
 
     public void setDifficulty(DifficultyLevel difficulty) {
         this.difficulty = difficulty;
+    }
+
+    public ExerciseMode getMode() {
+        return mode;
+    }
+
+    public Exercise mode(ExerciseMode mode) {
+        this.mode = mode;
+        return this;
+    }
+
+    public void setMode(ExerciseMode mode) {
+        this.mode = mode;
     }
 
     public Set<String> getCategories() {
@@ -700,8 +718,8 @@ public abstract class Exercise implements Serializable {
     public String toString() {
         return "Exercise{" + "id=" + getId() + ", problemStatement='" + getProblemStatement() + "'" + ", gradingInstructions='" + getGradingInstructions() + "'" + ", title='"
                 + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", dueDate='" + getDueDate() + "'"
-                + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", categories='"
-                + getCategories() + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
+                + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", mode='" + getMode() + "'"
+                + ", categories='" + getCategories() + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
     }
 
     public Set<TutorParticipation> getTutorParticipations() {

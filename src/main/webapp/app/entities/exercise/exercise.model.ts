@@ -14,6 +14,11 @@ export const enum DifficultyLevel {
     HARD = 'HARD',
 }
 
+export const enum ExerciseMode {
+    INDIVIDUAL = 'INDIVIDUAL',
+    TEAM = 'TEAM',
+}
+
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum ExerciseType {
     PROGRAMMING = 'programming',
@@ -56,6 +61,7 @@ export abstract class Exercise implements BaseEntity {
     public maxScore: number;
     public assessmentType: AssessmentType;
     public difficulty: DifficultyLevel | null;
+    public mode: ExerciseMode;
     public categories: string[];
     public type: ExerciseType;
 

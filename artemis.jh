@@ -65,6 +65,7 @@ entity Exercise (exercise) {        //abstract
     maxScore Double,
     assessmentType AssessmentType,
     difficulty DifficultyLevel,
+    mode ExerciseMode,
     categories String               //List<String>, similar to User --> groups
 }
 
@@ -72,6 +73,11 @@ enum DifficultyLevel {
 	EASY,
     MEDIUM,
     HARD
+}
+
+enum ExerciseMode {
+	INDIVIDUAL,
+    TEAM
 }
 
 entity TextExercise {               //extends Exercise

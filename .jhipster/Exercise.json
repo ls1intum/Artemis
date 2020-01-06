@@ -34,9 +34,19 @@
             "fieldType": "Double"
         },
         {
+            "fieldName": "assessmentType",
+            "fieldType": "AssessmentType",
+            "fieldValues": "AUTOMATIC,SEMI_AUTOMATIC,MANUAL"
+        },
+        {
             "fieldName": "difficulty",
             "fieldType": "DifficultyLevel",
             "fieldValues": "EASY,MEDIUM,HARD"
+        },
+        {
+            "fieldName": "mode",
+            "fieldType": "ExerciseMode",
+            "fieldValues": "INDIVIDUAL,TEAM"
         },
         {
             "fieldName": "categories",
@@ -90,5 +100,6 @@
     "jpaMetamodelFiltering": false,
     "fluentMethods": true,
     "clientRootFolder": "",
-    "applications": "*"
+    "applications": "*",
+    "readOnly": false
 }
