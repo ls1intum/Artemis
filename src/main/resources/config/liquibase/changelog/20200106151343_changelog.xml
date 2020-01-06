@@ -2,7 +2,28 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
     <changeSet id="20200106151343" author="madwau">
         <addColumn tableName="exercise">
-            <column name="mode" defaultValue="INDIVIDUAL" type="varchar(255)" afterColumn="difficulty"/>
+            <column name="mode" defaultValue="INDIVIDUAL" type="varchar(255)" afterColumn="difficulty">
+                <constraints nullable="false"/>
+            </column>
+            <column name="team_scope" type="varchar(255)" afterColumn="mode"/>
         </addColumn>
+        <createTable tableName="team">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)"/>
+            <column name="image" type="varchar(255)"/>
+        </createTable>
+        <createTable tableName="team_students">
+            <column name="team_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="student_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey columnNames="team_id, student_id" tableName="team_students"/>
+        <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="team_students" constraintName="fk_team_students_team_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="team"/>
+        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="team_students" constraintName="fk_team_students_student_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
     </changeSet>
 </databaseChangeLog>

@@ -200,6 +200,11 @@ entity ShortAnswerSolution {
     invalid Boolean
 }
 
+entity Team {
+    name String
+    image String
+}
+
 entity Participation (participation) {
     repositoryUrl String,
     buildPlanId String,
@@ -522,6 +527,7 @@ relationship OneToOne {
 relationship ManyToOne {
     TutorGroup{tutor} to User,
     Participation{student} to User,
+    Participation{team} to Team,
     LtiOutcomeUrl{user} to User,
     LtiOutcomeUrl{exercise} to Exercise,
     SubmittedAnswer{quizQuestion} to QuizQuestion
@@ -541,6 +547,7 @@ relationship ManyToOne {
 }
 
 relationship ManyToMany {
+    Team{students} to User,    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
     TutorGroup{students} to User,    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption,
 	TutorParticipation{trainedExampleSubmissions} to ExampleSubmission{tutorParticipations},

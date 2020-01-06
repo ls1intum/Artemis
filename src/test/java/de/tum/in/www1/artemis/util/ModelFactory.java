@@ -4,10 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -54,6 +51,8 @@ public class ModelFactory {
         exercise.setExampleSubmissions(new HashSet<>());
         exercise.setTutorParticipations(new HashSet<>());
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
+        exercise.setMode(ExerciseMode.INDIVIDUAL);
+        exercise.setTeamScope(null);
         exercise.setCategories(new HashSet<>());
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
@@ -188,6 +187,8 @@ public class ModelFactory {
         toBeImported.setMaxScore(template.getMaxScore());
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());
+        toBeImported.setMode(template.getMode());
+        toBeImported.setTeamScope(template.getTeamScope());
         toBeImported.setAssessmentType(template.getAssessmentType());
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());

@@ -14,10 +14,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -100,6 +97,10 @@ public abstract class Exercise implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "mode")
     private ExerciseMode mode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "team_scope")
+    private TeamScope teamScope;
 
     @Nullable
     @Column(name = "presentation_score_enabled")
@@ -313,6 +314,19 @@ public abstract class Exercise implements Serializable {
 
     public void setMode(ExerciseMode mode) {
         this.mode = mode;
+    }
+
+    public TeamScope getTeamScope() {
+        return teamScope;
+    }
+
+    public Exercise teamScope(TeamScope teamScope) {
+        this.teamScope = teamScope;
+        return this;
+    }
+
+    public void setTeamScope(TeamScope teamScope) {
+        this.teamScope = teamScope;
     }
 
     public Set<String> getCategories() {
