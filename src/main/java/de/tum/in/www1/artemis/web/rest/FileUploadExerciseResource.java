@@ -54,7 +54,8 @@ public class FileUploadExerciseResource {
     private FileUploadExerciseProperties fileUploadExerciseProperties;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, FileUploadExerciseProperties fileUploadExerciseProperties) {
+            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
+            FileUploadExerciseProperties fileUploadExerciseProperties) {
 
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
