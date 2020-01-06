@@ -37,7 +37,7 @@ export class ModelingAssessmentService {
     }
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
-        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
+        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
         if (submit) {
             url += '?submit=true';
             if (ignoreConflicts) {

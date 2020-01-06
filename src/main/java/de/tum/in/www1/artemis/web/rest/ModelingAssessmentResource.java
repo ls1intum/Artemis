@@ -162,7 +162,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT modeling-submissions/:submissionId/feedback : save manual modeling assessment
+     * PUT modeling-submissions/:submissionId/assessment : save manual modeling assessment
      *
      * @param submissionId id of the submission
      * @param feedbacks list of feedbacks
@@ -174,7 +174,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
             @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
-    @PutMapping("/modeling-submissions/{submissionId}/feedback")
+    @PutMapping("/modeling-submissions/{submissionId}/assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ changing submitted assessment always produces Conflict
     public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
