@@ -49,6 +49,7 @@ public class GuidedTourSettingsResource {
 
     /**
      * DELETE /guided-tour-settings: delete guided tour setting of the current user
+     * @param settingsKey the guided tour settings key that of the setting that should be deleted
      * @return the guided tour settings
      */
     @DeleteMapping("/guided-tour-settings/{settingsKey}")
