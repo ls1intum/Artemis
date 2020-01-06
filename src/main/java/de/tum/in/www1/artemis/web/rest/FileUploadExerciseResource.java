@@ -10,13 +10,12 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.config.FileUploadExerciseProperties;
+import de.tum.in.www1.artemis.config.properties.FileUploadExerciseProperties;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -51,7 +50,6 @@ public class FileUploadExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    @Autowired
     private FileUploadExerciseProperties fileUploadExerciseProperties;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
@@ -67,9 +65,9 @@ public class FileUploadExerciseResource {
     }
 
     private boolean containsOnlyValidFilePatterns(FileUploadExercise fileUploadExercise) {
-        String[] validFilePatterns = fileUploadExerciseProperties.getFilePatterns();
+        List<String> validFilePatterns = fileUploadExerciseProperties.getFilePatterns();
         String[] inputFilePatterns = fileUploadExercise.getFilePattern().split(",");
-        return Arrays.stream(inputFilePatterns).allMatch(pattern -> (Arrays.asList(validFilePatterns).contains(pattern)));
+        return Arrays.stream(inputFilePatterns).allMatch(pattern -> (validFilePatterns.contains(pattern)));
     }
 
     /**

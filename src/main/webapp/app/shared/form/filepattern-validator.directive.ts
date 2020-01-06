@@ -12,7 +12,7 @@ export class FilePatternValidatorDirective implements Validator, OnInit {
 
     constructor(private fileUploadExerciseComponent: FileUploadExerciseUpdateComponent) {}
 
-    validPatterns: string[] = [];
+    private validPatterns: string[] = [];
 
     ngOnInit() {
         this.validPatterns = this.fileUploadExerciseComponent.fileUploadExerciseSetting.filePatterns;

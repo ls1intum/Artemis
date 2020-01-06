@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.config.FileUploadExerciseProperties;
+import de.tum.in.www1.artemis.config.properties.FileUploadExerciseProperties;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -64,6 +64,17 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
         assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(filePattern);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createFileUploadExerciseWithInvalidExtension() throws Exception {
+        String filePattern = "invalid";
+        FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
+        fileUploadExercise.setFilePattern(filePattern);
+
+        assertThat(fileUploadExerciseProperties.getFilePatterns()).isNotNull();
+        request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
