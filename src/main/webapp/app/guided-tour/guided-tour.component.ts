@@ -568,6 +568,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private observeSelectedRectPosition() {
         const selectedElement = this.getSelectedElement();
         const alertElement = document.querySelector('.alerts');
+
+        // Observe alerts and update the highlight element position if necessary
         if (selectedElement && alertElement) {
             this.guidedTourService
                 .observeMutations(document.querySelector('.alerts'), { childList: true })

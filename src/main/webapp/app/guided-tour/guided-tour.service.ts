@@ -307,6 +307,11 @@ export class GuidedTourService {
             this.currentTour.completeCallback();
         }
 
+        if (this.isCurrentTour(completedTour)) {
+            this.resetTour();
+            return;
+        }
+
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (!nextStep) {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
