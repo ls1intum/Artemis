@@ -14,7 +14,7 @@
         </jhi-exercise-details-student-actions>
 
         <!-- TODO: this is quite some duplicated code from course-exercise-row.component.html that we should unify in one component -->
-        <div class="col-auto" [ngSwitch]="exercise.participationStatus">
+        <div class="col d-flex justify-content-flex-end" style="flex-grow: 4" [ngSwitch]="exercise.participationStatus">
             <div class="d-none d-sm-inline">
                 <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
                 <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
@@ -33,18 +33,20 @@
                 <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
                 <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
             </div>
-            <span *ngSwitchCase="'initialized'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
-            <span *ngSwitchCase="'inactive'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
-            <span *ngSwitchCase="'quiz-finished'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
-            <span *ngSwitchCase="'exercise-submitted'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
+            <div class="my-2">
+                <span *ngSwitchCase="'initialized'">
+                    <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                </span>
+                <span *ngSwitchCase="'inactive'">
+                    <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                </span>
+                <span *ngSwitchCase="'quiz-finished'">
+                    <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                </span>
+                <span *ngSwitchCase="'exercise-submitted'">
+                    <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                </span>
+            </div>
             <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
                 <jhi-programming-exercise-student-trigger-build-button
                     [exercise]="exercise"
