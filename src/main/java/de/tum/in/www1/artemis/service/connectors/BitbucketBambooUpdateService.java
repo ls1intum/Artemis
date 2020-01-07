@@ -30,6 +30,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER;
 
+    private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
+
     private final Logger log = LoggerFactory.getLogger(BitbucketBambooUpdateService.class);
 
     private final BambooClient bambooClient;
@@ -49,7 +51,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             com.appfire.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName, planKey, false);
             // Workaround for old exercises which used a different repositoryName
             if (bambooRemoteRepository == null) {
-                bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository("Assignment", planKey, false);
+                bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(OLD_ASSIGNMENT_REPO_NAME, planKey, false);
                 if (bambooRemoteRepository == null) {
                     throw new BambooException("Something went wrong while updating the template repository of the build plan " + planKey
                             + " to the student repository : Could not find assignment nor Assignment repository");
@@ -59,8 +61,9 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             bambooBuildPlanUpdateProvider.updateRepository(bambooRemoteRepository, bitbucketRepository, bitbucketProject, planKey);
 
             // Overwrite triggers if needed, incl workaround for different repo names
-            if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals("Assignment")) {
-                triggeredBy = Optional.of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, "Assignment")).collect(Collectors.toList()));
+            if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
+                triggeredBy = Optional
+                        .of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
             }
             triggeredBy.ifPresent(repoTriggers -> overwriteTriggers(planKey, bambooClient, repoTriggers));
 
