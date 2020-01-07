@@ -29,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -93,6 +94,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Autowired
     ResultRepository resultRepository;
 
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -106,6 +110,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @BeforeEach
     void setUp() {
         doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
+        bambooRequestMockProvider.enableMockingOfRequests();
 
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -125,6 +130,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        bambooRequestMockProvider.reset();
     }
 
     /**
@@ -384,7 +390,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         // Set buildAndTestAfterDueDate in future.
         setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
         Long participationId = getParticipationIdByType(participationType, 0);
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
+        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerInstructorBuild(participationType, 0, HttpStatus.OK);
