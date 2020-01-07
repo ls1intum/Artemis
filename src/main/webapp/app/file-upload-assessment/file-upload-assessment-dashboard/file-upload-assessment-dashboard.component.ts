@@ -13,7 +13,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission/file-u
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/entities/submission';
-import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
+import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
@@ -33,7 +33,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private accountService: AccountService,
         private exerciseService: ExerciseService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
-        private assessmentsService: TextAssessmentsService,
+        private fileUploadAssessmentsService: FileUploadAssessmentsService,
         private momentDiff: DifferencePipe,
         private translateService: TranslateService,
     ) {
@@ -123,7 +123,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.assessmentsService.cancelAssessment(this.exercise.id, submission.id).subscribe(() => {
+            this.fileUploadAssessmentsService.cancelAssessment(submission.id).subscribe(() => {
                 this.getSubmissions(this.exercise.id);
             });
         }

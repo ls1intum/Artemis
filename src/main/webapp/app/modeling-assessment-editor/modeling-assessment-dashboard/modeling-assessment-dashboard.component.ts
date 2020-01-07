@@ -15,7 +15,6 @@ import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission } from 'app/entities/submission';
-import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -62,7 +61,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
         private accountService: AccountService,
-        private assessmentsService: TextAssessmentsService,
         private translateService: TranslateService,
     ) {
         this.reverse = false;
@@ -225,7 +223,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.assessmentsService.cancelAssessment(this.modelingExercise.id, submission.id).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(submission.id).subscribe(() => {
                 this.refresh();
             });
         }
