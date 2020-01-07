@@ -452,15 +452,16 @@ export class GuidedTourService {
             let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
 
             if (userInteraction === UserInteractionEvent.CLICK) {
-                /** The first DOM mutation on the click event listener triggers the enableNextStepClick() call */
-                this.observeMutations(targetNode, options)
-                    .pipe(take(1))
-                    .subscribe(() => {
+                targetNode.addEventListener(
+                    'click',
+                    () => {
                         this.enableNextStepClick();
                         if (currentStep.triggerNextStep) {
                             this.nextStep();
                         }
-                    });
+                    },
+                    false,
+                );
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
                 /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
                 targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
@@ -519,7 +520,7 @@ export class GuidedTourService {
      * @param target    target node of an HTMLElement of which DOM changes should be observed
      * @param options   the configuration options for the mutation observer
      */
-    private observeMutations = (target: any, options: MutationObserverInit) =>
+    public observeMutations = (target: any, options: MutationObserverInit) =>
         new Observable<MutationRecord>(subscribe => {
             const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {

@@ -29,22 +29,19 @@ import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 @Service
 public class RepositoryService {
 
-    private Optional<GitService> gitService;
+    private GitService gitService;
 
     private AuthorizationCheckService authCheckService;
 
     private UserService userService;
 
-    private ParticipationService participationService;
-
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    public RepositoryService(Optional<GitService> gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
+    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
         this.userService = userService;
-        this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
@@ -56,7 +53,7 @@ public class RepositoryService {
      */
     @SuppressWarnings("unchecked")
     public HashMap<String, FileType> getFiles(Repository repository) {
-        Iterator itr = gitService.get().listFilesAndFolders(repository).entrySet().iterator();
+        Iterator itr = gitService.listFilesAndFolders(repository).entrySet().iterator();
 
         HashMap<String, FileType> fileList = new HashMap<>();
 
@@ -77,7 +74,7 @@ public class RepositoryService {
      * @throws IOException if the file can't be found, is corrupt, etc.
      */
     public byte[] getFile(Repository repository, String filename) throws IOException {
-        Optional<File> file = gitService.get().getFileByName(repository, filename);
+        Optional<File> file = gitService.getFileByName(repository, filename);
         if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
@@ -95,7 +92,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
     public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
-        if (gitService.get().getFileByName(repository, filename).isPresent()) {
+        if (gitService.getFileByName(repository, filename).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
 
@@ -117,7 +114,7 @@ public class RepositoryService {
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
     public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
-        if (gitService.get().getFileByName(repository, folderName).isPresent()) {
+        if (gitService.getFileByName(repository, folderName).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
         File file = new File(new java.io.File(repository.getLocalPath() + File.separator + folderName), repository);
@@ -141,7 +138,7 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains .. or /../)
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Optional<File> file = gitService.get().getFileByName(repository, fileMove.getCurrentFilePath());
+        Optional<File> file = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
         if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
@@ -149,7 +146,7 @@ public class RepositoryService {
             throw new IllegalArgumentException();
         }
         File newFile = new File(new java.io.File(file.get().toPath().getParent().toString() + File.separator + fileMove.getNewFilename()), repository);
-        if (gitService.get().getFileByName(repository, newFile.getName()).isPresent()) {
+        if (gitService.getFileByName(repository, newFile.getName()).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
         boolean isRenamed = file.get().renameTo(newFile);
@@ -171,7 +168,7 @@ public class RepositoryService {
      */
     public void deleteFile(Repository repository, String filename) throws IllegalArgumentException, IOException {
 
-        Optional<File> file = gitService.get().getFileByName(repository, filename);
+        Optional<File> file = gitService.getFileByName(repository, filename);
 
         if (file.isEmpty()) {
             throw new FileNotFoundException();
@@ -194,7 +191,7 @@ public class RepositoryService {
      * @param repository for which to pull the current state of the remote.
      */
     public void pullChanges(Repository repository) {
-        gitService.get().pullIgnoreConflicts(repository);
+        gitService.pullIgnoreConflicts(repository);
     }
 
     /**
@@ -205,8 +202,8 @@ public class RepositoryService {
      * @throws GitAPIException if the staging/committing process fails.
      */
     public void commitChanges(Repository repository, User user) throws GitAPIException {
-        gitService.get().stageAllChanges(repository);
-        gitService.get().commitAndPush(repository, "Changes by Online Editor", user);
+        gitService.stageAllChanges(repository);
+        gitService.commitAndPush(repository, "Changes by Online Editor", user);
     }
 
     /**
@@ -219,8 +216,8 @@ public class RepositoryService {
      * @throws GitAPIException if the repository status can't be retrieved.
      */
     public boolean isClean(URL repositoryUrl) throws IOException, GitAPIException, InterruptedException {
-        Repository repository = gitService.get().getOrCheckoutRepository(repositoryUrl, true);
-        return gitService.get().isClean(repository);
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
+        return gitService.isClean(repository);
     }
 
     /**
@@ -243,7 +240,7 @@ public class RepositoryService {
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
-        return gitService.get().getOrCheckoutRepository(repoUrl, pullOnCheckout);
+        return gitService.getOrCheckoutRepository(repoUrl, pullOnCheckout);
     }
 
     /**
@@ -264,7 +261,7 @@ public class RepositoryService {
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }
-        return gitService.get().getOrCheckoutRepository(repoUrl, true);
+        return gitService.getOrCheckoutRepository(repoUrl, true);
     }
 
     /**
@@ -284,6 +281,6 @@ public class RepositoryService {
             throw new IllegalAccessException();
         }
 
-        return gitService.get().getOrCheckoutRepository(participation);
+        return gitService.getOrCheckoutRepository(participation);
     }
 }

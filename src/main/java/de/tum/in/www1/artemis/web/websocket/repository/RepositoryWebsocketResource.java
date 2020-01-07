@@ -44,7 +44,7 @@ public class RepositoryWebsocketResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<GitService> gitService;
+    private final GitService gitService;
 
     private final UserService userService;
 
@@ -60,10 +60,9 @@ public class RepositoryWebsocketResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            SimpMessageSendingOperations messagingTemplate, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+    public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService, SimpMessageSendingOperations messagingTemplate,
+            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
+            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -116,7 +115,7 @@ public class RepositoryWebsocketResource {
         // Git repository must be available to update a file
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(programmingExerciseParticipation);
+            repository = gitService.getOrCheckoutRepository(programmingExerciseParticipation);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
@@ -205,7 +204,7 @@ public class RepositoryWebsocketResource {
      * @throws IOException
      */
     private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
-        Optional<File> file = gitService.get().getFileByName(repository, submission.getFileName());
+        Optional<File> file = gitService.getFileByName(repository, submission.getFileName());
 
         if (file.isEmpty()) {
             throw new IOException("File could not be found.");

@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -32,20 +31,16 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
 public class TestRepositoryResource extends RepositoryResource {
 
     private final ExerciseService exerciseService;
 
-    private final Optional<VersionControlService> versionControlService;
-
-    public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService,
-            Optional<VersionControlService> versionControlService) {
+    public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.exerciseService = exerciseService;
-        this.versionControlService = versionControlService;
     }
 
     @Override

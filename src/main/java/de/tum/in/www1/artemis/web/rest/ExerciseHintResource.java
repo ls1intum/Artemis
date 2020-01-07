@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -135,14 +134,7 @@ public class ExerciseHintResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
-        ProgrammingExercise programmingExercise;
-        try {
-            programmingExercise = programmingExerciseService.findById(exerciseId);
-        }
-        catch (NoSuchElementException ex) {
-            return notFound();
-        }
-
+        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = programmingExercise.getCourse();
         if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))

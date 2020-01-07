@@ -18,7 +18,7 @@
         [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
         [buttonLoading]="exercise.loading || ideState.cloning"
         [smallButton]="smallButtons"
-        *ngIf="ideState.opened !== exercise.id && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
+        *ngIf="canImport"
     ></jhi-ide-button>
     <jhi-ide-button
         [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -26,6 +26,6 @@
         buttonLabel="Submit"
         [buttonLoading]="exercise.loading || ideState.building"
         [smallButton]="smallButtons"
-        *ngIf="ideState.opened === exercise.id && exercise.studentParticipations && participationStatus() == INITIALIZED && exercise.studentParticipations.length > 0"
+        *ngIf="canSubmit"
     ></jhi-ide-button>
 </div>

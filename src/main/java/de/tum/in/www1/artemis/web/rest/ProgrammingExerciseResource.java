@@ -10,11 +10,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.Principal;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -76,8 +77,6 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseService exerciseService;
 
-    private final ResultService resultService;
-
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
@@ -92,9 +91,8 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ResultService resultService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, StudentParticipationRepository studentParticipationRepository,
-            GroupNotificationService groupNotificationService) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, GroupNotificationService groupNotificationService,
+            ProgrammingExerciseScheduleService programmingExerciseScheduleService, StudentParticipationRepository studentParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -102,7 +100,6 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
-        this.resultService = resultService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -114,7 +111,7 @@ public class ProgrammingExerciseResource {
      * @return the error message as response or null if everything is fine
      */
     private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getTemplateBuildPlanId())) {
+        if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.template.build.plan.id", "The Template Build Plan ID seems to be invalid."))
                     .body(null);
@@ -125,7 +122,7 @@ public class ProgrammingExerciseResource {
                             HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.template.repository.url", "The Template Repository URL seems to be invalid."))
                     .body(null);
         }
-        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getSolutionBuildPlanId())) {
+        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.solution.build.plan.id", "The Solution Build Plan ID seems to be invalid."))
                     .body(null);
@@ -279,11 +276,12 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
         }
 
+        programmingExercise.generateAndSetProjectKey();
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
-        String errorMessageVCS = versionControlService.get().checkIfProjectExists(projectKey, projectName);
-        if (errorMessageVCS != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageVCS, "vcsProjectExists")).body(null);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Project does not exist in VCS: " + projectKey, "vcsProjectExists")).body(null);
         }
 
         String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
@@ -317,7 +315,7 @@ public class ProgrammingExerciseResource {
      * @see ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
      * @see ProgrammingExerciseService#importRepositories(ProgrammingExercise, ProgrammingExercise)
-     * @param sourceExerciseId The ID of the template exercise which should get imported
+     * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
@@ -338,32 +336,32 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        final var optionalTemplate = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
-        if (optionalTemplate.isEmpty()) {
+        final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+        if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
 
-        final var template = optionalTemplate.get();
-        final var imported = programmingExerciseService.importProgrammingExerciseBasis(template, newExercise);
+        final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
+        final var importedProgrammingExercise = programmingExerciseService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
-        programmingExerciseService.importRepositories(template, imported);
+        programmingExerciseService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
         try {
             // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
             // an import as the source exercise might still have this trigger.
-            programmingExerciseService.importBuildPlans(template, imported);
-            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, imported.getTitle());
+            programmingExerciseService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
         catch (HttpException e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
 
         // Remove unnecessary fields
-        imported.setTestCases(null);
-        imported.setTemplateParticipation(null);
-        imported.setSolutionParticipation(null);
-        imported.setExerciseHints(null);
+        importedProgrammingExercise.setTestCases(null);
+        importedProgrammingExercise.setTemplateParticipation(null);
+        importedProgrammingExercise.setSolutionParticipation(null);
+        importedProgrammingExercise.setExerciseHints(null);
 
-        return ResponseEntity.ok().headers(responseHeaders).body(imported);
+        return ResponseEntity.ok().headers(responseHeaders).body(importedProgrammingExercise);
     }
 
     /**
@@ -522,38 +520,34 @@ public class ProgrammingExerciseResource {
     /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
-     * @param id the id of the programmingExercise to delete
+     * @param exerciseId the id of the programmingExercise to delete
      * @param deleteStudentReposBuildPlans boolean which states whether the corresponding build plan should be deleted as well
      * @param deleteBaseReposBuildPlans the ResponseEntity with status 200 (OK)
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
-    @DeleteMapping("/programming-exercises/{id}")
+    @DeleteMapping("/programming-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
-        log.info("REST request to delete ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
-        if (programmingExercise.isPresent()) {
-            log.info("Found ProgrammingExercise to delete with title: {}", programmingExercise.get().getTitle());
-            Course course = programmingExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-                return forbidden();
-            }
-            String title = programmingExercise.get().getTitle();
-            exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, title)).build();
+        log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+        if (programmingExercise.isEmpty()) {
+            return notFound();
         }
-        else {
-            log.warn("ProgrammingExercise with id {} not found for delete request", id);
-            return ResponseEntity.notFound().build();
+        Course course = programmingExercise.get().getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
         }
+        exerciseService.logDeletion(programmingExercise.get(), course, user);
+        exerciseService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.get().getTitle())).build();
     }
 
     /**
      * Combine all commits into one in the template repository of a given exercise.
-     * 
+     *
      * @param id of the exercise
      * @return the ResponseEntity with status
      *              200 (OK) if combine has been successfully executed
@@ -659,8 +653,9 @@ public class ProgrammingExerciseResource {
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise))
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             return forbidden();
+        }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
@@ -677,7 +672,7 @@ public class ProgrammingExerciseResource {
     }
 
     // TODO: Should not throw the IOException but handle it!
-    private ResponseEntity<Resource> provideZipForParticipations(List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations, Long exerciseId,
+    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations, Long exerciseId,
             RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
         if (exportedStudentParticipations.isEmpty()) {
@@ -792,13 +787,12 @@ public class ProgrammingExerciseResource {
      * of exercises in the DB.
      *
      * @param search The pageable search containing the page size, page number and query string
-     * @param principal The identification of the user calling this endpoint
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("programming-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
-    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search, Principal principal) {
-        final var user = userService.getUserWithGroupsAndAuthorities(principal);
+    public ResponseEntity<SearchResultPageDTO> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userService.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
     }
 }

@@ -6,7 +6,7 @@
                 <input type="checkbox" [checked]="showOnlyActive" (change)="showOnlyActive = !showOnlyActive" />
                 <span class="ml-2" jhiTranslate="artemisApp.course.showActive">Show only active courses</span>
             </label>
-            <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary jh-create-entity create-course" [routerLink]="['/course/new']">
+            <button jhiIdeFilter [showInIDE]="false" *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary jh-create-entity create-course" [routerLink]="['/course/new']">
                 <fa-icon [icon]="'plus'"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel">
                     Create new Course
@@ -21,8 +21,8 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th></th>
-                    <th jhiSortBy="id">
+                    <th class="d-none d-md-table-cell"></th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | translate }}</span
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -31,7 +31,7 @@
                         <span>{{ 'artemisApp.course.title' | translate }}</span
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th>
+                    <th class="d-none d-md-table-cell">
                         <span>{{ 'artemisApp.course.accessGroups' | translate }}</span>
                     </th>
                     <th jhiSortBy="startDate">
@@ -42,11 +42,11 @@
                         <span>{{ 'artemisApp.course.endDate' | translate }}</span
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="onlineCourse">
+                    <th class="d-none d-md-table-cell" jhiSortBy="onlineCourse">
                         <span>{{ 'artemisApp.course.onlineCourse' | translate }}</span
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="presentationScoreEnabled">
+                    <th class="d-none d-md-table-cell" jhiSortBy="presentationScoreEnabled">
                         <span>{{ 'artemisApp.course.presentationScoreEnabled.title' | translate }}</span
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -56,10 +56,10 @@
             <tbody>
                 <tr *ngFor="let course of courses | sortBy: predicate:reverse; trackBy: trackId">
                     <ng-container *ngIf="!showOnlyActive || !course.endDate || (course.endDate | amIsAfter: today:'second')">
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <a [routerLink]="['/course', course.id, 'view']">{{ course.id }}</a>
                         </td>
                         <td>
@@ -68,22 +68,34 @@
                                 ><span class="bold">{{ 'artemisApp.course.shortName' | translate }}:</span> {{ course.shortName }}</span
                             >
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span> {{ course.studentGroupName }}<br />
                             <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span> {{ course.teachingAssistantGroupName }}<br />
                             <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span> {{ course.instructorGroupName }}
                         </td>
                         <td>{{ course.startDate | date: 'medium' }}</td>
                         <td>{{ course.endDate | date: 'medium' }}</td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <span *ngIf="course.onlineCourse">{{ 'artemisApp.course.onlineCourseTrue' | translate }}</span>
                             <span *ngIf="!course.onlineCourse">{{ 'artemisApp.course.onlineCourseFalse' | translate }}</span>
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
                             <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
                         </td>
-                        <td class="text-right">
+                        <td jhiIdeFilter [showInIDE]="true">
+                            <button
+                                *ngIf="course.isAtLeastTutor"
+                                type="submit"
+                                [routerLink]="['/course', course.id]"
+                                class="btn btn-primary btn-sm mr-1 mb-1"
+                                id="exercises-ide-button-{{ course.id }}"
+                            >
+                                <fa-icon [icon]="'list-alt'"></fa-icon>
+                                <span>{{ 'entity.action.exercise' | translate }}</span>
+                            </button>
+                        </td>
+                        <td jhiIdeFilter [showInIDE]="false" class="text-right">
                             <div class="btn-group flex-btn-group-container">
                                 <div class="btn-group-vertical mr-1 mb-1">
                                     <button

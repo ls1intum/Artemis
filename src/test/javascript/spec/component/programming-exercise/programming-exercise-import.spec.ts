@@ -17,7 +17,7 @@ import { SortByModule } from 'app/components/pipes';
 import { DifferencePipe } from 'ngx-moment';
 import { ButtonComponent } from 'app/shared/components';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/feature-toggle';
+import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 chai.use(sinonChai);
