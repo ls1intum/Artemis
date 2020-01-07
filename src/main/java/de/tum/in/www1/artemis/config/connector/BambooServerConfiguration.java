@@ -62,23 +62,6 @@ public class BambooServerConfiguration {
         return bambooClient;
     }
 
-    /**
-     * Creates a Bamboo client for communication with the Bamboo instance over the non-REST API. This bean has NO connection
-     * to the Bitbucket server and only gets instantiated if the Bitbucket profile is not active
-     *
-     * @return
-     */
-    @Bean("bambooClient")
-    @Profile("!bitbucket")
-    public BambooClient bambooClientWithoutBitbucket() {
-        final var bambooClient = new BambooClient(createBase());
-        // setup the Bamboo Client to use the correct username and password
-        final var args = new String[] { "-s", BAMBOO_SERVER_URL.toString(), "--user", BAMBOO_USER, "--password", BAMBOO_PASSWORD };
-
-        bambooClient.doWork(args); // only invoke this to set server address, username and password so that the following action will work
-        return bambooClient;
-    }
-
     private Base createBase() {
         // we override the out stream to prevent unnecessary log statements in our log files
         final var outputStream = new ByteArrayOutputStream();
