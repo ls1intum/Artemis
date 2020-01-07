@@ -567,15 +567,16 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private observeSelectedRectPosition() {
         const selectedElement = this.getSelectedElement();
-        if (!selectedElement) {
-            return;
-        }
+        const alertElement = document.querySelector('.alerts');
 
-        this.guidedTourService
-            .observeMutations(document.querySelector('.alerts'), { childList: true })
-            .pipe(take(1))
-            .subscribe(mutation => {
-                this.scrollToAndSetElement();
-            });
+        // Observe alerts and update the highlight element position if necessary
+        if (selectedElement && alertElement) {
+            this.guidedTourService
+                .observeMutations(document.querySelector('.alerts'), { childList: true })
+                .pipe(take(1))
+                .subscribe(mutation => {
+                    this.scrollToAndSetElement();
+                });
+        }
     }
 }
