@@ -8,7 +8,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 @Entity
-@Table(name = "view_tutor_leaderboard_not_answered_more_feedback_requests")
+@Table(name = "view_tutor_leaderboard_more_feedback_requests")
 @Immutable
 public class TutorLeaderboardMoreFeedbackRequestsView {
 
