@@ -101,17 +101,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         // * the student questions
         // * the hints
         // --> The retrieved data then needs to be passed correctly into the sub components
-        if (this.studentParticipation) {
-            // we only need to update the exercise itself, because we have already have the latest participation
-            this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.handleNewExercise(exerciseResponse.body!);
-            });
-        } else {
-            // we do not have a participation, so we need to load it with the exercise
-            this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.handleNewExercise(exerciseResponse.body!);
-            });
-        }
+        this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.handleNewExercise(exerciseResponse.body!);
+        });
     }
 
     handleNewExercise(newExercise: Exercise) {

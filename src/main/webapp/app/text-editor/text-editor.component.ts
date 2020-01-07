@@ -90,6 +90,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             if (this.submission.id) {
                 this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe(response => {
                     this.submission = response.body!;
+                    // reconnect so that the submission status is displayed correctly in the result.component
+                    this.submission.participation.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
                 });
             }
@@ -171,6 +173,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
             response => {
                 this.submission = response.body!;
+                // reconnect so that the submission status is displayed correctly in the result.component
+                this.submission.participation.submissions = [this.submission];
                 this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
                 this.result = this.submission.result;
                 this.isSaving = false;
