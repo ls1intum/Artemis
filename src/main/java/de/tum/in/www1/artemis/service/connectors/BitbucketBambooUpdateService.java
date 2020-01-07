@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.bitbucket.cli.BitbucketClient;
 import com.appfire.common.cli.CliClient;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -33,14 +32,11 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     private final Logger log = LoggerFactory.getLogger(BitbucketBambooUpdateService.class);
 
-    private final BitbucketClient bitbucketClient;
-
     private final BambooClient bambooClient;
 
     private final BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider;
 
-    public BitbucketBambooUpdateService(BitbucketClient bitbucketClient, BambooClient bambooClient, BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider) {
-        this.bitbucketClient = bitbucketClient;
+    public BitbucketBambooUpdateService(BambooClient bambooClient, BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider) {
         this.bambooClient = bambooClient;
         this.bambooBuildPlanUpdateProvider = bambooBuildPlanUpdateProvider;
     }
