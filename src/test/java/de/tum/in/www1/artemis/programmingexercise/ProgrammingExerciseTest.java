@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,10 +47,10 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
-        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())).thenReturn(true);
-        when(versionControlService.repositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl())).thenReturn(true);
-        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId())).thenReturn(true);
-        when(versionControlService.repositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl())).thenReturn(true);
+        doReturn(true).when(continuousIntegrationService).buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId());
+        doReturn(true).when(versionControlService).repositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl());
+        doReturn(true).when(continuousIntegrationService).buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId());
+        doReturn(true).when(versionControlService).repositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl());
 
         ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
