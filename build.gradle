@@ -354,7 +354,7 @@ task buildJarForDocker (type: Exec) {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport
+// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack -x generateGitProperties
 // 3) Check Java code format:                       ./gradlew spotlessCheck
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates
