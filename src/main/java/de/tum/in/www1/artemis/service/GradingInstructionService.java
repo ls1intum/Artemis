@@ -51,7 +51,7 @@ public class GradingInstructionService {
     /**
      * Get one grading instruction by gradingInstructionId.
      *
-     * @param gradingInstructionId the exerciseId of the entity
+     * @param gradingInstructionId the gradingInstructionId of the entity
      * @return the entity
      */
 
@@ -67,7 +67,7 @@ public class GradingInstructionService {
      * Finds all Grading Instructions for a given Exercise
      *
      * @param exercise corresponding exercise
-     * @return a List of all Exercises for the given course
+     * @return a List of all Grading Instructions for the given exercise
      */
 
     public List<GradingInstruction> findAllForExercise(Exercise exercise) {

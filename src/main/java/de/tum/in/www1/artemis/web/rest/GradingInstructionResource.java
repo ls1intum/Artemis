@@ -49,9 +49,9 @@ public class GradingInstructionResource {
     }
 
     /**
-     * GET /exercises/:id : get the "id" exercise.
+     * GET /grading-instruction/:id : get the "id" exercise.
      *
-     * @param exerciseId the id of the exercise to retrieve
+     * @param exerciseId the id of the exercise to retrieve its grading instructions
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/grading-instruction/{exerciseId}")
@@ -88,7 +88,7 @@ public class GradingInstructionResource {
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (exercise == null) {
             return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instructor does not exist"))
+                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
                     .body(null);
         }
 
