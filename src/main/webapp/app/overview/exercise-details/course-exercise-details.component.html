@@ -34,16 +34,7 @@
                 <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
             </div>
             <div class="my-2">
-                <span *ngSwitchCase="'initialized'">
-                    <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-                </span>
-                <span *ngSwitchCase="'inactive'">
-                    <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-                </span>
-                <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-                </span>
-                <span *ngSwitchCase="'exercise-submitted'">
+                <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus)">
                     <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
                 </span>
             </div>
