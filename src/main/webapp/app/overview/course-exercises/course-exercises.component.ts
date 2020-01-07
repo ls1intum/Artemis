@@ -244,12 +244,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     private updateUpcomingExercises(upcomingExercises: Exercise[]) {
-        if (upcomingExercises.length < 5) {
+        if (upcomingExercises.length <= 5) {
             this.upcomingExercises = this.sortExercises(upcomingExercises);
         } else {
-            const numberOfExercises = upcomingExercises.length;
-            upcomingExercises = upcomingExercises.slice(numberOfExercises - 5, numberOfExercises);
-            this.upcomingExercises = this.sortExercises(upcomingExercises);
+            // sort after due date and take the first 5 elements
+            this.upcomingExercises = this.sortExercises(upcomingExercises).slice(0, 5);
         }
     }
 

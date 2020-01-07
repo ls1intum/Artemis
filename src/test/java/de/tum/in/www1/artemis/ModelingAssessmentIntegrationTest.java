@@ -160,6 +160,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -175,6 +176,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -190,6 +192,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -220,6 +223,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -243,6 +247,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     // region Automatic Assessment Tests

@@ -255,26 +255,6 @@ public class ExerciseResource {
     }
 
     /**
-     * DELETE /exercises/:exerciseId : delete the "exerciseId" exercise.
-     *
-     * @param exerciseId the exerciseId of the exercise to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("/exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete Exercise : {}", exerciseId);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (Optional.ofNullable(exercise).isPresent()) {
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                return forbidden();
-            }
-            exerciseService.delete(exercise, true, false);
-        }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
-    }
-
-    /**
      * Reset the exercise by deleting all its partcipations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param exerciseId exercise to delete

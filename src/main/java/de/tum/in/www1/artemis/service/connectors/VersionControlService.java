@@ -13,14 +13,19 @@ public interface VersionControlService {
     void configureRepository(URL repositoryUrl, String username);
 
     /**
-     * This creates a WebHook on the Version Control System that notifies the given URL about pushes to the repository. Multiple calls won't affect the result as the implementation
-     * must ensure that there is only one WebHook per URL.
+     * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified
+     * repository.
      *
-     * @param repositoryUrl   The repository to create the hook on
-     * @param notificationUrl The URL that should be notified when a push occurred. This includes all arguments.
-     * @param webHookName     The name of the WebHook that should be added as additional information (if applicable)
+     * @param exercise The programming exercise for which to add all required webhooks
      */
-    void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
+    void addWebHooksForExercise(ProgrammingExercise exercise);
+
+    /**
+     * Adds the webhook for new pushes to a participation repository to Artemis
+     *
+     * @param participation The participation for which webhooks should get triggered
+     */
+    void addWebHookForParticipation(ProgrammingExerciseParticipation participation);
 
     /**
      * Deletes the project for the given project key
@@ -35,14 +40,6 @@ public interface VersionControlService {
      * @param repositoryUrl of the repository that should be deleted
      */
     void deleteRepository(URL repositoryUrl);
-
-    /**
-     * Generates the web url for the repository that belongs to the given participation
-     *
-     * @param participation a participation of a programming exercise
-     * @return the URL of the repository of the participation
-     */
-    URL getRepositoryWebUrl(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the clone URL used for cloning
@@ -103,7 +100,7 @@ public interface VersionControlService {
      * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
-    String checkIfProjectExists(String projectKey, String projectName);
+    boolean checkIfProjectExists(String projectKey, String projectName);
 
     /**
      * Copies a repository from one project to another one. The project can be the same.
