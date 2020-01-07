@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 @AutoConfigureTestDatabase
 @ActiveProfiles("artemis")
 
-public class GradingInstructionTest {
+public class GradingInstructionIntegrationTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
