@@ -82,6 +82,11 @@
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                             </button>
                         </span>
+                        <span *ngIf="exercise.isAtLeastInstructor">
+                            <button *ngIf="submission" (click)="cancelAssessment(submission)" [disabled]="busy" class="btn btn-outline-secondary btn-sm">
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                            </button>
+                        </span>
                     </td>
                 </tr>
             </tbody>
