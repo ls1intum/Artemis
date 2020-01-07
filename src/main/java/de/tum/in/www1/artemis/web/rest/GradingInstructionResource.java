@@ -49,7 +49,7 @@ public class GradingInstructionResource {
     }
 
     /**
-     * GET /grading-instructions/:id : get the "id" exercise.
+     * GET /exercises/:exerciseId/grading-instructions : get the "id" exercise.
      *
      * @param exerciseId the id of the exercise to retrieve its grading instructions
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
