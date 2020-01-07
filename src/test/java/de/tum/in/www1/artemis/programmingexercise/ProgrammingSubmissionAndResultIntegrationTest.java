@@ -430,6 +430,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
