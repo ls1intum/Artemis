@@ -352,7 +352,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
+        URL repositoryUrl = (programmingParticipation).getRepositoryUrlAsUrl();
         doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerBuild(participationType, 0, HttpStatus.OK);
 
