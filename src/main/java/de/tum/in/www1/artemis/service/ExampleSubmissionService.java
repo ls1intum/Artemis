@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -102,6 +103,7 @@ public class ExampleSubmissionService {
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
+    @Transactional
     public void deleteById(long exampleSubmissionId) {
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmissionId);
 
@@ -116,7 +118,9 @@ public class ExampleSubmissionService {
             Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
 
             // Remove the reference to the exercise when the example submission is deleted
-            exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
+            exerciseWithExampleSubmission.ifPresent(exercise -> {
+                exercise.removeExampleSubmission(exampleSubmission);
+            });
 
             // due to Cascase.Remove this will also remove the submission and the result in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);
