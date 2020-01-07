@@ -83,7 +83,12 @@
                             </button>
                         </span>
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            <button *ngIf="submission && submission.result" (click)="cancelAssessment(submission)" [disabled]="busy" class="btn btn-outline-secondary btn-sm mb-1">
+                            <button
+                                *ngIf="submission && submission.result && !submission.result.completionDate"
+                                (click)="cancelAssessment(submission)"
+                                [disabled]="busy"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
                                 <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
                             </button>
                         </span>
