@@ -83,7 +83,7 @@ public class GradingInstructionTest {
     public void createGradingInstruction() throws Exception {
         while (iterator.hasNext()) {
             GradingInstruction gradingInstruction = iterator.next();
-            gradingInstruction = request.postWithResponseBody("/api/grading-instruction", gradingInstruction, GradingInstruction.class);
+            gradingInstruction = request.postWithResponseBody("/api/grading-instructions", gradingInstruction, GradingInstruction.class);
             assertThat(gradingInstruction).isNotNull();
             assertThat(gradingInstruction.getId()).isNotNull();
         }
@@ -96,7 +96,7 @@ public class GradingInstructionTest {
         while (iterator.hasNext()) {
             GradingInstruction gradingInstruction = iterator.next();
             GradingInstruction savedGradingInstruction = gradingInstructionRepository.save(gradingInstruction);
-            request.delete("/api/grading-instruction/" + savedGradingInstruction.getId(), HttpStatus.OK);
+            request.delete("/api/grading-instructions/" + savedGradingInstruction.getId(), HttpStatus.OK);
         }
         assertThat(gradingInstructionRepository.findAll().isEmpty()).isTrue();
     }
@@ -108,7 +108,7 @@ public class GradingInstructionTest {
             GradingInstruction gradingInstruction = iterator.next();
             gradingInstructionRepository.save(gradingInstruction);
         }
-        request.getList("/api/grading-instruction/" + exercise.getId(), HttpStatus.FORBIDDEN, GradingInstruction.class);
+        request.getList("/api/grading-instructions/" + exercise.getId(), HttpStatus.FORBIDDEN, GradingInstruction.class);
     }
 
 }

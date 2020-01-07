@@ -49,12 +49,12 @@ public class GradingInstructionResource {
     }
 
     /**
-     * GET /grading-instruction/:id : get the "id" exercise.
+     * GET /grading-instructions/:id : get the "id" exercise.
      *
      * @param exerciseId the id of the exercise to retrieve its grading instructions
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/grading-instruction/{exerciseId}")
+    @GetMapping("/grading-instructions/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
@@ -69,13 +69,13 @@ public class GradingInstructionResource {
     }
 
     /**
-     * POST /grading-instruction : Create a new gradingInstruction.
+     * POST /grading-instructions : Create a new gradingInstruction.
      *
      * @param gradingInstruction the gradingInstruction to create
      * @return the ResponseEntity with status 201 (Created) and with body the new gradingInstruction, or with status 400 (Bad Request) if the gradingInstruction has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/grading-instruction")
+    @PostMapping("/grading-instructions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingInstruction> createGradingInstruction(@RequestBody GradingInstruction gradingInstruction) throws URISyntaxException {
         log.debug("REST request to save GradingInstruction : {}", gradingInstruction);
@@ -93,20 +93,20 @@ public class GradingInstructionResource {
         }
 
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
-        return ResponseEntity.created(new URI("/api/grading-instruction/" + gradingInstruction.getId()))
+        return ResponseEntity.created(new URI("/api/grading-instructions/" + gradingInstruction.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
 
     }
 
     /**
-     * PUT /grading-instruction : Updates an existing gradingInstruction.
+     * PUT /grading-instructions : Updates an existing gradingInstruction.
      *
      * @param gradingInstruction the gradingInstruction to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated gradingInstruction, or with status 400 (Bad Request) if the gradingInstruction is not valid, or with status 500
      * (Internal Server Error) if the gradingInstruction couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/grading-instruction")
+    @PutMapping("/grading-instructions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingInstruction> updateGradingInstruction(@RequestBody GradingInstruction gradingInstruction) throws URISyntaxException {
         log.debug("REST request to update GradingInstruction : {}", gradingInstruction);
@@ -127,12 +127,12 @@ public class GradingInstructionResource {
     }
 
     /**
-     * DELETE /grading-instruction/:gradingInstructionId : delete the "id" gradingInstruction.
+     * DELETE /grading-instructions/:gradingInstructionId : delete the "id" gradingInstruction.
      *
      * @param gradingInstructionId the id of the gradingInstruction to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/grading-instruction/{gradingInstructionId}")
+    @DeleteMapping("/grading-instructions/{gradingInstructionId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteGradingInstruction(@PathVariable Long gradingInstructionId) {
         log.debug("REST request to delete GradingInstruction : {}", gradingInstructionId);
