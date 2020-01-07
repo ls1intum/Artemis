@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +57,7 @@ public class GradingInstructionResource {
      */
     @GetMapping("/exercises/{exerciseId}/grading-instructions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable Long exerciseId) {
+    public ResponseEntity<Set<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -64,7 +65,7 @@ public class GradingInstructionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-        List<GradingInstruction> gradingInstructions = gradingInstructionService.findAllForExercise(exercise);
+        Set<GradingInstruction> gradingInstructions = exercise.getStructuredGradingInstructions();
         return ResponseEntity.ok(gradingInstructions);
     }
 
