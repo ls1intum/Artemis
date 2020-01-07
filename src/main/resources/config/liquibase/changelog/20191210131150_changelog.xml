@@ -12,6 +12,6 @@
             <column name="usage_count" type="INT"/>
             <column name="exercise_id" type="BIGINT"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="grading_instruction" constraintName="fk_grading_instruction_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="grading_instruction" constraintName="fk_grading_instruction_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise"/>
     </changeSet>
 </databaseChangeLog>
