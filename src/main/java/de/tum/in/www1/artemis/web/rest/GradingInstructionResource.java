@@ -54,7 +54,7 @@ public class GradingInstructionResource {
      * @param exerciseId the id of the exercise to retrieve its grading instructions
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/grading-instructions/{exerciseId}")
+    @GetMapping("/exercises/{exerciseId}/grading-instructions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable Long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
