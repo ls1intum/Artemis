@@ -20,12 +20,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     // Used to adjust values to determine scroll. This is a blanket value to adjust for elements like nav bars.
     public topOfPageAdjustment = 0;
     // Sets the width of all tour step elements.
-    // TODO automatically determine optimal width of tourstep
+    // TODO automatically determine optimal width of tour step
     public tourStepWidth = 550;
     // Sets the minimal width of all tour step elements.
     public minimalTourStepWidth = 500;
-    // Sets the highlight padding around the selected .
-    public highlightPadding = 4;
+    public orientation: Orientation;
     public transformX: number;
     /**
      * The current tour step should be of type the TourStep subclasses or null but have to be declared as any in this case
@@ -174,6 +173,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Scroll to and set highlighted element
      */
     public scrollToAndSetElement(): void {
+        this.orientation = this.currentTourStep.orientation;
         this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), false);
         this.observeSelectedRectPosition();
 
@@ -196,6 +196,13 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     throw err;
                 }
             }
+
+            // Set timeout to allow things to render in order to update the orientation if necessary
+            setTimeout(() => {
+                if (!this.isTourOnScreen()) {
+                    this.updateOrientation();
+                }
+            }, 300);
         }, 0);
     }
 
@@ -221,7 +228,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             return false;
         }
         let top = element.offsetTop;
+        let sideOffset = false;
         const height = element.offsetHeight;
+        const width = element.offsetWidth;
+        const left = element.offsetLeft;
 
         while (element.offsetParent) {
             element = element.offsetParent as HTMLElement;
@@ -231,10 +241,16 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         const scrollAdjustment = this.currentTourStep && this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
         const stepScreenAdjustment = this.getStepScreenAdjustment();
 
+        if (this.isRight()) {
+            sideOffset = width + left > window.innerWidth;
+        } else if (this.isLeft()) {
+            sideOffset = left - width < window.innerWidth;
+        }
+
         if (this.isBottom()) {
-            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight;
+            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight && !sideOffset;
         } else {
-            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight;
+            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight && !sideOffset;
         }
     }
 
@@ -255,6 +271,40 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         // When the user clicks on the backdrop or tour step while seeing the cancel tour step, the cancel tour will be finished automatically
         if (this.guidedTourService.isCurrentTour(cancelTour)) {
             this.guidedTourService.finishGuidedTour();
+        }
+    }
+
+    public updateOrientation(): void {
+        if (this.isLeft()) {
+            switch (this.orientation) {
+                case Orientation.LEFT: {
+                    this.orientation = Orientation.RIGHT;
+                    break;
+                }
+                case Orientation.TOPLEFT: {
+                    this.orientation = Orientation.TOPRIGHT;
+                    break;
+                }
+                case Orientation.BOTTOMLEFT: {
+                    this.orientation = Orientation.BOTTOMRIGHT;
+                    break;
+                }
+            }
+        } else if (this.isRight()) {
+            switch (this.orientation) {
+                case Orientation.RIGHT: {
+                    this.orientation = Orientation.LEFT;
+                    break;
+                }
+                case Orientation.TOPRIGHT: {
+                    this.orientation = Orientation.TOPLEFT;
+                    break;
+                }
+                case Orientation.BOTTOMRIGHT: {
+                    this.orientation = Orientation.BOTTOMLEFT;
+                    break;
+                }
+            }
         }
     }
 
@@ -283,6 +333,28 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.currentTourStep.orientation === Orientation.TOP ||
                 this.currentTourStep.orientation === Orientation.TOPLEFT ||
                 this.currentTourStep.orientation === Orientation.TOPRIGHT
+            );
+        }
+        return false;
+    }
+
+    private isLeft(): boolean {
+        if (this.currentTourStep && this.currentTourStep.orientation) {
+            return (
+                this.currentTourStep.orientation === Orientation.LEFT ||
+                this.currentTourStep.orientation === Orientation.TOPLEFT ||
+                this.currentTourStep.orientation === Orientation.BOTTOMLEFT
+            );
+        }
+        return false;
+    }
+
+    private isRight(): boolean {
+        if (this.currentTourStep && this.currentTourStep.orientation) {
+            return (
+                this.currentTourStep.orientation === Orientation.RIGHT ||
+                this.currentTourStep.orientation === Orientation.TOPRIGHT ||
+                this.currentTourStep.orientation === Orientation.BOTTOMRIGHT
             );
         }
         return false;
@@ -354,14 +426,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return highlight padding for current tour step
      */
     public getHighlightPadding(): number {
-        if (this.currentTourStep) {
-            let paddingAdjustment = this.currentTourStep.highlightPadding ? this.highlightPadding : 0;
-            if (this.currentTourStep.highlightPadding) {
-                paddingAdjustment = this.currentTourStep.highlightPadding;
-            }
-            return paddingAdjustment;
+        if (!this.currentTourStep) {
+            return 0;
         }
-        return 0;
+        return this.currentTourStep.highlightPadding ? this.currentTourStep.highlightPadding : 0;
     }
 
     /**
@@ -472,19 +540,19 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
         const paddingAdjustment = this.currentTourStep.highlightPadding ? this.currentTourStep.highlightPadding : 0;
 
-        if (this.currentTourStep.orientation === Orientation.TOPRIGHT || this.currentTourStep.orientation === Orientation.BOTTOMRIGHT) {
+        if (this.orientation === Orientation.TOPRIGHT || this.orientation === Orientation.BOTTOMRIGHT) {
             return this.selectedElementRect.right - this.tourStepWidth;
         }
 
-        if (this.currentTourStep.orientation === Orientation.TOPLEFT || this.currentTourStep.orientation === Orientation.BOTTOMLEFT) {
+        if (this.orientation === Orientation.TOPLEFT || this.orientation === Orientation.BOTTOMLEFT) {
             return this.selectedElementRect.left;
         }
 
-        if (this.currentTourStep.orientation === Orientation.LEFT) {
+        if (this.orientation === Orientation.LEFT) {
             return this.selectedElementRect.left - this.tourStepWidth - paddingAdjustment;
         }
 
-        if (this.currentTourStep.orientation === Orientation.RIGHT) {
+        if (this.orientation === Orientation.RIGHT) {
             return this.selectedElementRect.left + this.selectedElementRect.width + paddingAdjustment;
         }
         return this.selectedElementRect.right - this.selectedElementRect.width / 2 - this.tourStepWidth / 2;
@@ -514,7 +582,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.selectedElementRect || !this.currentTourStep) {
             return 0;
         }
-        if (this.currentTourStep.orientation === Orientation.LEFT || this.currentTourStep.orientation === Orientation.RIGHT) {
+        if (this.orientation === Orientation.LEFT || this.orientation === Orientation.RIGHT) {
             return 0;
         }
 

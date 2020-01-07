@@ -10,18 +10,11 @@ export enum Orientation {
     BOTTOM = 'bottom',
     BOTTOMLEFT = 'bottom-left',
     BOTTOMRIGHT = 'bottom-right',
-    CENTER = 'center',
     LEFT = 'left',
     RIGHT = 'right',
     TOP = 'top',
     TOPLEFT = 'top-left',
     TOPRIGHT = 'top-right',
-}
-
-/* Link type of the link within the tour step content */
-export enum LinkType {
-    LINK,
-    BUTTON,
 }
 
 export enum GuidedTourState {
