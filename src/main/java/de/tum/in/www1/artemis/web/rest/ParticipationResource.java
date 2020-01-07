@@ -587,7 +587,7 @@ public class ParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtInstructor(participation, user);
         String username = participation.getStudent().getFirstName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "participation=" + participation.getId());
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
         auditEventRepository.add(auditEvent);
         log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
                 username, deleteBuildPlan, deleteRepository, principal.getName());
