@@ -14,3 +14,10 @@ jobs:
           project: Artemis Development
           column: Ready for review
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
+      - name: "Assign Team"
+        uses: rowi1de/auto-assign-review-teams@v0.0.6
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          teams: "@ls1intum/artemis"
+          include-draft: true
+          skip-with-manual-reviewers: 5
