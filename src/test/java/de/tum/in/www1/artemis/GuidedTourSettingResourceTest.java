@@ -68,7 +68,7 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest
     @WithMockUser(value = "student1")
     public void updateGuidedTourSettings() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createMockSettings();
-        Set<GuidedTourSetting> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        Set serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).isNotNull();
         assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
         assertThat(serverGuidedTourSettings.size()).isEqualTo(2);

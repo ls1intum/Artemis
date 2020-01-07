@@ -120,10 +120,10 @@ describe('GuidedTourComponent', () => {
     describe('Keydown Element', () => {
         beforeEach(async () => {
             // Prepare guided tour service
-            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
-            spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
+            spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService['availableTourForComponent'] = courseOverviewTour;
                 guidedTourService.currentTour = courseOverviewTour;
             });
@@ -133,7 +133,7 @@ describe('GuidedTourComponent', () => {
 
             // Start course overview tour
             expect(guidedTourComponent.currentTourStep).to.not.exist;
-            guidedTourService.enableTour(courseOverviewTour);
+            guidedTourService['enableTour'](courseOverviewTour);
             guidedTourService.startTour();
             expect(guidedTourComponent.currentTourStep).to.exist;
 
@@ -156,7 +156,7 @@ describe('GuidedTourComponent', () => {
 
         it('should navigate next with the right arrow key', () => {
             const nextStep = spyOn(guidedTourService, 'nextStep').and.callThrough();
-            const dotCalculation = spyOn(guidedTourService, 'calculateAndDisplayDotNavigation');
+            const dotCalculation = spyOn<any>(guidedTourService, 'calculateAndDisplayDotNavigation');
             const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(nextStep.calls.count()).to.equal(1);
@@ -168,7 +168,7 @@ describe('GuidedTourComponent', () => {
         it('should navigate back with the left arrow key', () => {
             const backStep = spyOn(guidedTourService, 'backStep').and.callThrough();
             const nextStep = spyOn(guidedTourService, 'nextStep').and.callThrough();
-            const dotCalculation = spyOn(guidedTourService, 'calculateAndDisplayDotNavigation');
+            const dotCalculation = spyOn<any>(guidedTourService, 'calculateAndDisplayDotNavigation');
             const eventMockRight = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             const eventMockLeft = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
 
@@ -247,7 +247,7 @@ describe('GuidedTourComponent', () => {
 
         afterEach(() => {
             if (guidedTourComponent.currentTourStep) {
-                guidedTourComponent.currentTourStep!.orientation = undefined;
+                guidedTourComponent.currentTourStep.orientation = undefined;
             }
         });
 

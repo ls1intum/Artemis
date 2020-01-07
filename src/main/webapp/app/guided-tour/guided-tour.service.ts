@@ -28,7 +28,7 @@ export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 export class GuidedTourService {
     public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
     public guidedTourSettings: GuidedTourSetting[];
-    public currentTour: GuidedTour | null;
+    public currentTour: GuidedTour | null = null;
 
     /** Helper variables */
     private currentTourStepIndex = 0;
@@ -37,8 +37,8 @@ export class GuidedTourService {
     private modelingResultCorrect = false;
 
     /** Current course and exercise */
-    private currentCourse: Course | null;
-    private currentExercise: Exercise | null;
+    private currentCourse: Course | null = null;
+    private currentExercise: Exercise | null = null;
 
     /** Guided tour service subjects */
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
@@ -401,10 +401,10 @@ export class GuidedTourService {
      * @param guidedTour that should be checked for the state
      * @param state that should be checked, if no state is given, then true is returned if the tour has been started or finished
      */
-    public checkTourState(guidedTour: GuidedTour, state?: GuidedTourState): boolean {
+    private checkTourState(guidedTour: GuidedTour, state?: GuidedTourState): boolean {
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
         if (state) {
-            return !!(tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[state]);
+            return tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[state];
         }
         return tourSetting.length >= 1;
     }
@@ -429,11 +429,11 @@ export class GuidedTourService {
             this.updateGuidedTourSettings(cancelTour.settingsKey, 1, GuidedTourState.FINISHED);
         }
         if (this.isCurrentTour(completedTour)) {
-            this.currentTour = null;
             this.currentExercise = null;
             this.currentCourse = null;
         }
         document.body.classList.remove('tour-open');
+        this.currentTour = null;
         this.currentTourStepIndex = 0;
         this.guidedTourCurrentStepSubject.next(null);
     }
@@ -643,7 +643,7 @@ export class GuidedTourService {
     /**
      *  @return true if highlighted element is available, otherwise false
      */
-    public checkSelectorValidity(): boolean {
+    private checkSelectorValidity(): boolean {
         if (!this.currentTour) {
             return false;
         }
@@ -822,7 +822,7 @@ export class GuidedTourService {
      *
      * @param guidedTour
      */
-    public enableTour(guidedTour: GuidedTour) {
+    private enableTour(guidedTour: GuidedTour) {
         /**
          * Set timeout so that the reset of the previous guided tour on the navigation end can be processed first
          * to prevent ExpressionChangedAfterItHasBeenCheckedError
@@ -900,7 +900,7 @@ export class GuidedTourService {
      * @param course    current course
      * @return true if the current course is a course for a guided tour, otherwise false
      */
-    public isGuidedTourAvailableForCourse(course: Course): boolean {
+    private isGuidedTourAvailableForCourse(course: Course): boolean {
         if (!course || !this.guidedTourMapping) {
             return false;
         }
@@ -913,12 +913,12 @@ export class GuidedTourService {
      * @param guidedTour of which the availability should be checked
      * @return true if the current exercise is an exercise for a guided tour, otherwise false
      */
-    public isGuidedTourAvailableForExercise(exercise: Exercise, guidedTour?: GuidedTour): boolean {
+    private isGuidedTourAvailableForExercise(exercise: Exercise, guidedTour?: GuidedTour): boolean {
         if (!exercise || !this.guidedTourMapping) {
             return false;
         }
 
-        let exerciseMatches = false;
+        let exerciseMatches: boolean;
         let settingsKey = '';
         if (guidedTour) {
             settingsKey = guidedTour.settingsKey;
@@ -939,7 +939,7 @@ export class GuidedTourService {
      * @param currentIndex index of the current step
      * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
      */
-    public calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
+    private calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
         if (this.currentTour && this.currentTour.steps.length < this.maxDots) {
             return;
         }
@@ -988,7 +988,7 @@ export class GuidedTourService {
      * Defines the translateX value for the <ul> transform style
      * @param step  last seen tour step
      */
-    public calculateTranslateValue(step: TourStep): void {
+    private calculateTranslateValue(step: TourStep): void {
         let transform = 0;
         const lastSeenStep = this.getLastSeenTourStepIndex() + 1;
         if (lastSeenStep > this.maxDots) {
