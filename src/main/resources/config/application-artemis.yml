@@ -69,41 +69,4 @@ artemis:
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
         secret: null
-info:
-    file-upload-exercise:
-        filePatterns:
-            - 'doc'
-            - 'docx'
-            - 'dotx'
-            - 'xml'
-            - 'pdf'
-            - 'wps'
-            - 'wpd'
-            - 'wpqxd'
-            - 'ps'
-            - 'pub'
-            - 'tex'
-            - 'vsd'
-            - 'bmp'
-            - 'jpg'
-            - 'jpeg'
-            - 'gif'
-            - 'pgn'
-            - 'png'
-            - 'txt'
-            - 'rtf'
-            - 'wav'
-            - 'mp3'
-            - 'html'
-            - 'odt'
-            - 'xls'
-            - 'xlsx'
-            - 'wks'
-            - 'xlr'
-            - 'csv'
-            - 'ppt'
-            - 'pps'
-            - 'ppsx'
-            - 'zip'
-            - 'tar'
 

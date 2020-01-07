@@ -119,7 +119,42 @@ info:
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
-
+    file-upload-exercise:
+        filePatterns:
+            - 'doc'
+            - 'docx'
+            - 'dotx'
+            - 'xml'
+            - 'pdf'
+            - 'wps'
+            - 'wpd'
+            - 'wpqxd'
+            - 'ps'
+            - 'pub'
+            - 'tex'
+            - 'vsd'
+            - 'bmp'
+            - 'jpg'
+            - 'jpeg'
+            - 'gif'
+            - 'pgn'
+            - 'png'
+            - 'txt'
+            - 'rtf'
+            - 'wav'
+            - 'mp3'
+            - 'html'
+            - 'odt'
+            - 'xls'
+            - 'xlsx'
+            - 'wks'
+            - 'xlr'
+            - 'csv'
+            - 'ppt'
+            - 'pps'
+            - 'ppsx'
+            - 'zip'
+            - 'tar'
 jhipster:
     clientApp:
         name: 'artemisApp'
