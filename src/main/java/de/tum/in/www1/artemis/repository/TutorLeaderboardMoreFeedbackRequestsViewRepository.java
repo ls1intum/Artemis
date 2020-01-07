@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedb
 @Repository
 public interface TutorLeaderboardMoreFeedbackRequestsViewRepository extends JpaRepository<TutorLeaderboardMoreFeedbackRequestsView, Long> {
 
-    List<TutorLeaderboardMoreFeedbackRequestsView> findAllByCourseId(Long courseId);
+    List<TutorLeaderboardMoreFeedbackRequestsView> findAllByCourseId(long courseId);
 
-    List<TutorLeaderboardMoreFeedbackRequestsView> findAllByLeaderboardId_ExerciseId(Long exerciseId);
+    List<TutorLeaderboardMoreFeedbackRequestsView> findAllByLeaderboardId_ExerciseId(long exerciseId);
 }

@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaint
 @Repository
 public interface TutorLeaderboardComplaintResponsesViewRepository extends JpaRepository<TutorLeaderboardComplaintResponsesView, Long> {
 
-    List<TutorLeaderboardComplaintResponsesView> findAllByCourseId(Long courseId);
+    List<TutorLeaderboardComplaintResponsesView> findAllByCourseId(long courseId);
 
-    List<TutorLeaderboardComplaintResponsesView> findAllByLeaderboardId_ExerciseId(Long exerciseId);
+    List<TutorLeaderboardComplaintResponsesView> findAllByLeaderboardId_ExerciseId(long exerciseId);
 }
