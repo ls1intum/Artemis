@@ -27,6 +27,7 @@ import { Course } from 'app/entities/course/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
+import { completedTour } from 'app/guided-tour/tours/general-tour';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -240,6 +241,17 @@ describe('GuidedTourService', () => {
             const course1 = { id: 1, shortName: 'tutorial', exercises: [exercise2, exercise1] } as Course;
             const course2 = { id: 1, shortName: 'test' } as Course;
 
+            function resetCurrentTour(): void {
+                guidedTourService.currentTour = completedTour;
+                guidedTourService.resetTour();
+            }
+
+            function currentCourseAndExerciseNull(): void {
+                expect(guidedTourService.currentTour).to.be.null;
+                expect(guidedTourService['currentCourse']).to.be.null;
+                expect(guidedTourService['currentExercise']).to.be.null;
+            }
+
             beforeEach(async () => {
                 guidedTourService.guidedTourMapping = guidedTourMapping;
                 prepareGuidedTour(tourWithCourseAndExercise);
@@ -252,38 +264,39 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
                 expect(guidedTourService['currentCourse']).to.equal(course1);
                 expect(guidedTourService['currentExercise']).to.be.null;
-
-                guidedTourService.resetTour();
+                resetCurrentTour();
 
                 courses = [course2];
                 // disable tour for not matching titles
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.be.null;
-                expect(guidedTourService['currentExercise']).to.be.null;
+                currentCourseAndExerciseNull();
             });
 
             it('should start the tour for the matching exercise short name', () => {
                 // disable tour for exercises without courses
                 guidedTourService.currentTour = null;
                 guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.be.null;
+                currentCourseAndExerciseNull();
+                resetCurrentTour();
 
                 // disable tour for not matching course and exercise identifiers
                 exercise2.course = course2;
-                guidedTourService.currentTour = null;
                 guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.be.null;
+                currentCourseAndExerciseNull();
+                resetCurrentTour();
 
                 // disable tour for not matching course identifier
                 exercise3.course = course2;
-                guidedTourService.currentTour = null;
                 guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise);
-                expect(guidedTourService.currentTour).to.be.null;
+                currentCourseAndExerciseNull();
+                resetCurrentTour();
 
                 // enable tour for matching course and exercise identifiers
                 exercise1.course = course1;
                 guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                expect(guidedTourService['currentCourse']).to.equal(course1);
+                expect(guidedTourService['currentExercise']).to.equal(exercise1);
             });
 
             it('should start the tour for the matching course / exercise short name', () => {
