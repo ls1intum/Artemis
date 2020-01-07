@@ -26,8 +26,8 @@ public class GradingInstruction implements Serializable {
     @Column(name = "credits")
     private Double credits;
 
-    @Column(name = "level")
-    private String level;
+    @Column(name = "grading_scale")
+    private String gradingScale;
 
     @Column(name = "instruction_description")
     @Lob
@@ -101,17 +101,17 @@ public class GradingInstruction implements Serializable {
         this.instructionDescription = instructionDescription;
     }
 
-    public String getLevel() {
-        return level;
+    public String getGradingScale() {
+        return gradingScale;
     }
 
-    public GradingInstruction level(String level) {
-        this.level = level;
+    public GradingInstruction gradingScale(String gradingScale) {
+        this.gradingScale = gradingScale;
         return this;
     }
 
-    public void setLevel(String level) {
-        this.level = level;
+    public void setGradingScale(String gradingScale) {
+        this.gradingScale = gradingScale;
     }
 
     public String getFeedback() {
@@ -149,7 +149,7 @@ public class GradingInstruction implements Serializable {
 
     @Override
     public String toString() {
-        return "GradingInstruction{" + "id=" + id + ", exercise=" + exercise + ", credits=" + credits + ", level='" + level + '\'' + ", instructionDescription='"
-                + instructionDescription + '\'' + ", feedback='" + feedback + '\'' + ", usageCount=" + usageCount + '}';
+        return "GradingInstruction{" + "id=" + getId() + ", exercise='" + getExercise() + "'" + ", credits='" + getCredits() + "'" + ", gradingScale='" + getGradingScale() + "'"
+                + ", instructionDescription='" + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'" + ", usageCount='" + getUsageCount() + "'" + '}';
     }
 }

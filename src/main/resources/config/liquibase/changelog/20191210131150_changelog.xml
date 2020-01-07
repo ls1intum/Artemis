@@ -6,7 +6,7 @@
                 <constraints primaryKey="true"/>
             </column>
             <column name="credits" type="DOUBLE"/>
-            <column name="level" type="VARCHAR(255)"/>
+            <column name="grading_scale" type="VARCHAR(255)"/>
             <column name="instruction_description" type="LONGTEXT"/>
             <column name="feedback" type="LONGTEXT"/>
             <column name="usage_count" type="INT"/>
