@@ -193,7 +193,7 @@ public class TextAssessmentResource extends AssessmentResource {
             return ResponseEntity.ok().build();
         }
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!isAtLeastInstructor && !userService.getUser().getId().equals(submission.getResult().getAssessor().getId())) {
+        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }

@@ -13,6 +13,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { DifferencePipe } from 'ngx-moment';
+import { TranslateService } from '@ngx-translate/core';
+import { Submission } from 'app/entities/submission';
+import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -30,6 +33,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
+
+    private cancelConfirmationText: string;
 
     // all available submissions
     submissions: ModelingSubmission[];
@@ -57,6 +62,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
         private accountService: AccountService,
+        private assessmentsService: TextAssessmentsService,
+        private translateService: TranslateService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -64,6 +71,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.optimalSubmissions = [];
         this.otherSubmissions = [];
         this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
     }
 
     ngOnInit() {
@@ -209,6 +217,18 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
         this.router.onSameUrlNavigation = 'reload';
         this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
+    }
+
+    /**
+     * Cancel the current assessment and reload the submissions to reflect the change.
+     */
+    cancelAssessment(submission: Submission) {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.assessmentsService.cancelAssessment(this.modelingExercise.id, submission.id).subscribe(() => {
+                this.refresh();
+            });
+        }
     }
 
     ngOnDestroy() {
