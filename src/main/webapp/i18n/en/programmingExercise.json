@@ -177,6 +177,9 @@
                 "testRepoTooltip": "The repository, which contains all tests",
                 "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the template of the exercise. Used as a reference, for which all tests have to fail",
                 "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the solution of the exercise. Used as a reference, for which all tests have to succeed"
+            },
+            "intellij": {
+                "openEditor": "Open Editor"
             }
         },
         "error": {

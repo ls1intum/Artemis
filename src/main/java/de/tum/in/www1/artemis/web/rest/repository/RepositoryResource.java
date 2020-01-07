@@ -45,13 +45,13 @@ public abstract class RepositoryResource {
 
     protected final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    protected final Optional<GitService> gitService;
+    protected final GitService gitService;
 
     protected final UserService userService;
 
     protected final RepositoryService repositoryService;
 
-    public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+    public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
@@ -238,7 +238,7 @@ public abstract class RepositoryResource {
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, false);
-            gitService.get().resetToOriginMaster(repository);
+            gitService.resetToOriginMaster(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }

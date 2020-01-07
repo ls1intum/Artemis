@@ -88,7 +88,7 @@ public class SubmissionService {
         result.setSubmission(submission);
         submission.setResult(result);
         if (submission.getParticipation() != null) {
-            submission.getParticipation().addResult(result);
+            result.setParticipation(submission.getParticipation());
         }
         result = resultRepository.save(result);
         submissionRepository.save(submission);

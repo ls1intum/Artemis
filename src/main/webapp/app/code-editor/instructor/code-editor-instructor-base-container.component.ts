@@ -1,10 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
-import { catchError, filter, map, tap } from 'rxjs/operators';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CodeEditorContainer } from 'app/code-editor/code-editor-mode-container.component';
+import { OnDestroy, OnInit } from '@angular/core';
+import { ExerciseType } from 'app/entities/exercise';
+import { Observable, Subscription, throwError } from 'rxjs';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
-import { CourseExerciseService } from 'app/entities/course';
 import {
     Participation,
     ParticipationService,
@@ -12,30 +10,22 @@ import {
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
-import { CodeEditorContainer } from './code-editor-mode-container.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CourseExerciseService } from 'app/entities/course';
+import { CodeEditorFileService, CodeEditorSessionService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { TranslateService } from '@ngx-translate/core';
-import { CodeEditorFileService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { JhiAlertService } from 'ng-jhipster';
-import {
-    CodeEditorAceComponent,
-    CodeEditorActionsComponent,
-    CodeEditorBuildOutputComponent,
-    CodeEditorFileBrowserComponent,
-    CodeEditorInstructionsComponent,
-    CodeEditorSessionService,
-} from 'app/code-editor';
-import { UpdatingResultComponent } from 'app/entities/result';
-import { ExerciseType } from 'app/entities/exercise';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ButtonSize } from 'app/shared/components';
 
-enum REPOSITORY {
+export enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
     TEMPLATE = 'TEMPLATE',
     SOLUTION = 'SOLUTION',
     TEST = 'TEST',
 }
 
-enum LOADING_STATE {
+export enum LOADING_STATE {
     CLEAR = 'CLEAR',
     INITIALIZING = 'INITIALIZING',
     FETCHING_FAILED = 'FETCHING_FAILED',
@@ -43,18 +33,7 @@ enum LOADING_STATE {
     DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
 }
 
-@Component({
-    selector: 'jhi-code-editor-instructor',
-    templateUrl: './code-editor-instructor-container.component.html',
-})
-export class CodeEditorInstructorContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
-    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
-    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
-    @ViewChild(CodeEditorAceComponent, { static: false }) aceEditor: CodeEditorAceComponent;
-    @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
-
+export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEditorContainer implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
     REPOSITORY = REPOSITORY;
     LOADING_STATE = LOADING_STATE;
@@ -81,8 +60,8 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
     // State variables
     loadingState = LOADING_STATE.CLEAR;
 
-    constructor(
-        private router: Router,
+    protected constructor(
+        protected router: Router,
         private exerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
@@ -179,16 +158,20 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
                 filter(domain => !!domain),
                 map(domain => domain as DomainChange),
                 tap(([domainType, domainValue]) => {
-                    this.initializeProperties();
-                    if (domainType === DomainType.PARTICIPATION) {
-                        this.setSelectedParticipation(domainValue.id);
-                    } else {
-                        this.selectedParticipation = null;
-                        this.selectedRepository = REPOSITORY.TEST;
-                    }
+                    this.applyDomainChange(domainType, domainValue);
                 }),
             )
             .subscribe();
+    }
+
+    protected applyDomainChange(domainType: any, domainValue: any) {
+        this.initializeProperties();
+        if (domainType === DomainType.PARTICIPATION) {
+            this.setSelectedParticipation(domainValue.id);
+        } else {
+            this.selectedParticipation = null;
+            this.selectedRepository = REPOSITORY.TEST;
+        }
     }
 
     /**
@@ -249,21 +232,13 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorContainer 
         }
     }
 
-    selectSolutionParticipation() {
-        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.solutionParticipation.id}`);
-    }
+    abstract selectSolutionParticipation(): void;
 
-    selectTemplateParticipation() {
-        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.templateParticipation.id}`);
-    }
+    abstract selectTemplateParticipation(): void;
 
-    selectAssignmentParticipation() {
-        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.studentParticipations[0].id}`);
-    }
+    abstract selectAssignmentParticipation(): void;
 
-    selectTestRepository() {
-        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/test`);
-    }
+    abstract selectTestRepository(): void;
 
     /**
      * Creates an assignment participation for this user for this exercise.

@@ -21,7 +21,10 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -51,7 +54,7 @@ public class GitService {
     @Value("${artemis.version-control.user}")
     private String GIT_USER;
 
-    @Value("${artemis.version-control.secret}")
+    @Value("${artemis.version-control.password}")
     private String GIT_PASSWORD;
 
     @Value("${artemis.repo-clone-path}")

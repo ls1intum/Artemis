@@ -300,7 +300,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
             // Create new drop location
             this.currentDropLocation = new DropLocation();
-            this.currentDropLocation.tempID = TempID.generate();
             this.currentDropLocation.posX = this.mouse.x;
             this.currentDropLocation.posY = this.mouse.y;
             this.currentDropLocation.width = 0;
@@ -358,7 +357,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      */
     duplicateDropLocation(dropLocation: DropLocation): void {
         const duplicatedDropLocation = new DropLocation();
-        duplicatedDropLocation.tempID = TempID.generate();
         duplicatedDropLocation.posX = dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3);
         duplicatedDropLocation.posY = dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3);
         duplicatedDropLocation.width = dropLocation.width;
@@ -424,7 +422,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
             this.question.dragItems = [];
         }
         const dragItem = new DragItem();
-        dragItem.tempID = TempID.generate();
         dragItem.text = 'Text';
         this.question.dragItems.push(dragItem);
         this.questionUpdated.emit();
@@ -457,7 +454,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
                     this.question.dragItems = [];
                 }
                 const dragItem = new DragItem();
-                dragItem.tempID = TempID.generate();
                 dragItem.pictureFilePath = result.path;
                 this.question.dragItems.push(dragItem);
                 this.questionUpdated.emit();

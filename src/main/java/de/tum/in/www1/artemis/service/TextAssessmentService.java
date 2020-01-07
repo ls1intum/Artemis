@@ -78,6 +78,9 @@ public class TextAssessmentService extends AssessmentService {
         User user = userService.getUser();
         result.setAssessor(user);
 
+        // TODO: how can the result be connected with the submission, if the result is newly created?
+        // TODO: where is the relationship between result and participation established?
+
         if (result.getSubmission() instanceof TextSubmission && result.getSubmission().getResult() == null) {
             TextSubmission textSubmission = (TextSubmission) result.getSubmission();
             textSubmission.setResult(result);

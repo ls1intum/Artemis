@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -15,7 +15,6 @@ import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise
 import {
     ArtemisCodeEditorModule,
     CodeEditorBuildLogService,
-    CodeEditorInstructorContainerComponent,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
     CodeEditorSessionService,
@@ -52,6 +51,7 @@ import { problemStatement } from '../../sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

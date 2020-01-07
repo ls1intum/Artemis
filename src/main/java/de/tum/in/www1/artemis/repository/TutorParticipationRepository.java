@@ -26,4 +26,6 @@ public interface TutorParticipationRepository extends JpaRepository<TutorPartici
 
     @EntityGraph(attributePaths = "trainedExampleSubmissions")
     List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);
+
+    void deleteAllByAssessedExerciseId(long assessedExerciseId);
 }

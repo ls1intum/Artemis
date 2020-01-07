@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
@@ -42,7 +42,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
@@ -67,7 +67,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
-        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
     @Override
@@ -183,7 +183,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getBuildPlanId());
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }
