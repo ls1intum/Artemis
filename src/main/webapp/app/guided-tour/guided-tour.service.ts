@@ -607,7 +607,11 @@ export class GuidedTourService {
                 .pipe(
                     map((response: HttpResponse<StudentParticipation>) => response.body!),
                     flatMap(participation =>
-                        this.participationService.delete(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
+                        this.participationService.delete(participation.id, {
+                            deleteBuildPlan: isProgrammingExercise,
+                            deleteRepository: isProgrammingExercise,
+                            // TODO add security check for deleting exercise participations
+                        }),
                     ),
                 )
                 .subscribe(() => {

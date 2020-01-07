@@ -28,6 +28,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
+import { InitializationState, StudentParticipation } from 'app/entities/participation';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -143,7 +144,7 @@ describe('GuidedTourService', () => {
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
 
                     const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
-                    navBarComponentFixture.componentInstance;
+                    const navBarComponent = navBarComponentFixture.componentInstance;
 
                     guidedTourService = TestBed.get(GuidedTourService);
                     router = TestBed.get(Router);
@@ -325,6 +326,20 @@ describe('GuidedTourService', () => {
                 course2.exercises = [exercise3];
                 guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
                 expect(guidedTourService.currentTour).to.be.null;
+            });
+
+            describe('Tour with student participation', () => {
+                const studentParticipation = { id: 1, student: { id: 1 }, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
+
+                it('should delete the student participation', () => {
+                    exercise1.course = course1;
+                    studentParticipation.exercise = exercise1;
+                    exercise1.studentParticipations = [studentParticipation];
+
+                    guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                    guidedTourService.restartTour();
+                    // TODO: check if participations are correctly deleted
+                });
             });
         });
 
