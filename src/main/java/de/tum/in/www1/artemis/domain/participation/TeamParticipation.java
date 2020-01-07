@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.team.Team;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity

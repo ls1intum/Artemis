@@ -1,7 +1,8 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.team;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
@@ -11,15 +12,24 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A Team of students.
  */
 @Entity
 @Table(name = "team")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue(value = "T")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+// Annotation necessary to distinguish between concrete implementations of Team when deserializing from JSON
+@JsonSubTypes({ @JsonSubTypes.Type(value = ExerciseTeam.class, name = "exercise"), @JsonSubTypes.Type(value = CourseTeam.class, name = "course"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Team implements Serializable {
+public abstract class Team implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -33,10 +43,9 @@ public class Team implements Serializable {
     @Column(name = "image")
     private String image;
 
-    @ManyToMany
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "team_students", joinColumns = @JoinColumn(name = "team_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "students_id", referencedColumnName = "id"))
-    private Set<User> students = new HashSet<>();
+    protected Set<TeamStudent> students = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -73,27 +82,31 @@ public class Team implements Serializable {
         this.image = image;
     }
 
-    public Set<User> getStudents() {
+    public Set<TeamStudent> getStudents() {
         return students;
     }
 
-    public Team students(Set<User> users) {
-        this.students = users;
+    public Team students(Set<TeamStudent> teamStudents) {
+        this.students = teamStudents;
         return this;
     }
 
-    public Team addStudents(User user) {
-        this.students.add(user);
-        return this;
+    public void setStudents(Set<TeamStudent> teamStudents) {
+        this.students = teamStudents;
     }
+
+    public abstract Team addStudents(User user);
 
     public Team removeStudents(User user) {
-        this.students.remove(user);
+        for (Iterator<TeamStudent> iterator = this.students.iterator(); iterator.hasNext();) {
+            TeamStudent teamStudent = iterator.next();
+            if (teamStudent.getTeam().equals(this) && teamStudent.getStudent().equals(user)) {
+                iterator.remove();
+                teamStudent.setTeam(null);
+                teamStudent.setStudent(null);
+            }
+        }
         return this;
-    }
-
-    public void setStudents(Set<User> users) {
-        this.students = users;
     }
 
     @Override

@@ -205,6 +205,14 @@ entity Team {
     image String
 }
 
+entity ExerciseTeam {          //extends Team
+
+}
+
+entity CourseTeam {          //extends Team
+
+}
+
 entity Participation (participation) {
     repositoryUrl String,
     buildPlanId String,
@@ -526,6 +534,8 @@ relationship OneToOne {
 
 relationship ManyToOne {
     TutorGroup{tutor} to User,
+    CourseTeam{course} to Course,
+    ExerciseTeam{exercise} to Exercise,
     Participation{student} to User,
     Participation{team} to Team,
     LtiOutcomeUrl{user} to User,
