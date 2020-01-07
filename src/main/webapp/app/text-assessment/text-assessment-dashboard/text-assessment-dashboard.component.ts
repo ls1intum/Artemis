@@ -85,12 +85,14 @@ export class TextAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Cancel the current assessment and navigate back to the exercise dashboard.
+     * Cancel the current assessment and reload the submissions to reflect the change.
      */
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.assessmentsService.cancelAssessment(this.exercise.id, submission.id).subscribe();
+            this.assessmentsService.cancelAssessment(this.exercise.id, submission.id).subscribe(() => {
+                this.getSubmissions();
+            });
         }
     }
 }
