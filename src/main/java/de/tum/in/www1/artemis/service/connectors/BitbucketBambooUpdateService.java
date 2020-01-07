@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdateProvider;
 
 @Service
+// Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
+// this if any profile is active (OR). We want both (AND)
 @Profile("bamboo & bitbucket")
 public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdateService {
 

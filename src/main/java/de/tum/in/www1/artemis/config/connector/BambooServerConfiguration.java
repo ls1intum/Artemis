@@ -51,7 +51,6 @@ public class BambooServerConfiguration {
      * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
      */
     @Bean
-    @Profile("bitbucket")
     public BambooClient bambooClient() {
         final var bambooClient = new BambooClient(createBase());
         // setup the Bamboo Client to use the correct username and password
