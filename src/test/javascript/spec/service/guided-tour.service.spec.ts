@@ -119,13 +119,22 @@ describe('GuidedTourService', () => {
             httpMock.verify();
         });
 
-        it('should call correct update URL and return the right JSON object', () => {
+        it('should call the correct update URL and return the right JSON object', () => {
             service.guidedTourSettings = [];
-            service.updateGuidedTourSettings('guided_tour_key', 1, GuidedTourState.STARTED).subscribe();
+            service['updateGuidedTourSettings']('guided_tour_key', 1, GuidedTourState.STARTED).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
             const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
             expect(req.request.url).equal(`${resourceUrl}`);
             expect(service.guidedTourSettings).to.eql([expected]);
+        });
+
+        it('should call the correct delete URL', () => {
+            service.guidedTourSettings = [];
+            service['deleteGuidedTourSetting']('guided_tour_key').subscribe();
+            const req = httpMock.expectOne({ method: 'DELETE' });
+            const resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
+            expect(req.request.url).equal(`${resourceUrl}/guided_tour_key`);
+            expect(service.guidedTourSettings).to.eql([]);
         });
     });
 
@@ -183,7 +192,7 @@ describe('GuidedTourService', () => {
             spyOn(guidedTourService, 'checkSelectorValidity').and.returnValue(true);
             spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
             spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
-            spyOn(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
+            spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService['availableTourForComponent'] = tour;
                 guidedTourService.currentTour = tour;

@@ -612,8 +612,6 @@ export class GuidedTourService {
                 )
                 .subscribe(() => {
                     this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
-                        const index = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
-                        this.guidedTourSettings.splice(index, 1);
                         this.router.navigateByUrl(`/overview/${this.currentCourse!.id}/exercises`).then(() => {
                             location.reload();
                         });
@@ -786,7 +784,7 @@ export class GuidedTourService {
      * @param guidedTourState displays whether the user has finished (FINISHED) the current tour or only STARTED it and cancelled it in the middle
      * @return Observable<EntityResponseType>: updated guided tour settings
      */
-    public updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
+    private updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');
@@ -811,6 +809,9 @@ export class GuidedTourService {
             this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');
         }
+
+        const index = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === guidedTourKey);
+        this.guidedTourSettings.splice(index, 1);
 
         return this.http.delete<GuidedTourSetting[]>(`${this.resourceUrl}/${guidedTourKey}`, { observe: 'response' });
     }

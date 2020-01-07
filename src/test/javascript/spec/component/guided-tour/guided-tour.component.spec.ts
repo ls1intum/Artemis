@@ -120,7 +120,7 @@ describe('GuidedTourComponent', () => {
     describe('Keydown Element', () => {
         beforeEach(async () => {
             // Prepare guided tour service
-            spyOn(guidedTourService, 'updateGuidedTourSettings');
+            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
             spyOn(guidedTourService, 'enableTour').and.callFake(() => {
