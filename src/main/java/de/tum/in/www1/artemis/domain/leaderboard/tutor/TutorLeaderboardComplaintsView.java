@@ -7,7 +7,7 @@ import org.hibernate.annotations.Immutable;
 @Entity
 @Table(name = "view_tutor_leaderboard_accepted_complaints")
 @Immutable
-public class TutorLeaderboardAcceptedComplaintsView {
+public class TutorLeaderboardComplaintsView {
 
     @EmbeddedId
     private LeaderboardId leaderboardId;
