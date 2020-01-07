@@ -416,7 +416,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const positionAdjustment = this.isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = this.isTop() ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15 : this.selectedElementRect.top + positionAdjustment;
+            topPosition = this.isTop() ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15 : this.selectedElementRect.bottom + positionAdjustment;
         }
         return topPosition;
     }

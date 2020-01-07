@@ -96,7 +96,7 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.contact.content',
             hintTranslateKey: 'tour.courseOverview.contact.hint',
             highlightPadding: 5,
-            orientation: Orientation.TOPLEFT,
+            orientation: Orientation.TOP,
         }),
     ],
 };
