@@ -55,10 +55,10 @@ public class GradingInstructionService {
      * @return the entity
      */
 
-    public GradingInstruction findOne(Long gradingInstructionId) {
+    public GradingInstruction findOne(long gradingInstructionId) {
         Optional<GradingInstruction> gradingInstruction = gradingInstructionRepository.findById(gradingInstructionId);
         if (gradingInstruction.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + gradingInstructionId + " does not exist!");
+            throw new EntityNotFoundException("Grading Instruction with gradingInstructionId " + gradingInstructionId + " does not exist!");
         }
         return gradingInstruction.get();
     }
