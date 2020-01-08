@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -10,12 +9,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.bitbucket.cli.BitbucketClient;
 import com.appfire.common.cli.CliClient;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -23,22 +20,20 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdateProvider;
 
 @Service
+// Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
+// this if any profile is active (OR). We want both (AND)
 @Profile("bamboo & bitbucket")
 public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdateService {
 
-    @Value("${artemis.version-control.url}")
-    private URL BITBUCKET_SERVER;
+    private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
 
     private final Logger log = LoggerFactory.getLogger(BitbucketBambooUpdateService.class);
-
-    private final BitbucketClient bitbucketClient;
 
     private final BambooClient bambooClient;
 
     private final BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider;
 
-    public BitbucketBambooUpdateService(BitbucketClient bitbucketClient, BambooClient bambooClient, BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider) {
-        this.bitbucketClient = bitbucketClient;
+    public BitbucketBambooUpdateService(BambooClient bambooClient, BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider) {
         this.bambooClient = bambooClient;
         this.bambooBuildPlanUpdateProvider = bambooBuildPlanUpdateProvider;
     }
@@ -51,7 +46,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             com.appfire.bamboo.cli.objects.RemoteRepository bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(bambooRepositoryName, planKey, false);
             // Workaround for old exercises which used a different repositoryName
             if (bambooRemoteRepository == null) {
-                bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository("Assignment", planKey, false);
+                bambooRemoteRepository = bambooClient.getRepositoryHelper().getRemoteRepository(OLD_ASSIGNMENT_REPO_NAME, planKey, false);
                 if (bambooRemoteRepository == null) {
                     throw new BambooException("Something went wrong while updating the template repository of the build plan " + planKey
                             + " to the student repository : Could not find assignment nor Assignment repository");
@@ -61,8 +56,9 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             bambooBuildPlanUpdateProvider.updateRepository(bambooRemoteRepository, bitbucketRepository, bitbucketProject, planKey);
 
             // Overwrite triggers if needed, incl workaround for different repo names
-            if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals("Assignment")) {
-                triggeredBy = Optional.of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, "Assignment")).collect(Collectors.toList()));
+            if (triggeredBy.isPresent() && bambooRemoteRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
+                triggeredBy = Optional
+                        .of(triggeredBy.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
             }
             triggeredBy.ifPresent(repoTriggers -> overwriteTriggers(planKey, bambooClient, repoTriggers));
 
@@ -94,21 +90,5 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             throw new BambooException("Unable to overwrite triggers for " + planKey + "\n" + e.getMessage(), e);
         }
-    }
-
-    @Override
-    public void triggerUpdate(String buildPlanId, boolean initialBuild) {
-        // NOT NEEDED
-    }
-
-    /**
-     * e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
-     * @param project the bitbucket project name
-     * @param slug the bitbucket repo name
-     * @return the ssh repository url
-     */
-    private String buildSshRepositoryUrl(String project, String slug) {
-        final int sshPort = 7999;
-        return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
     }
 }

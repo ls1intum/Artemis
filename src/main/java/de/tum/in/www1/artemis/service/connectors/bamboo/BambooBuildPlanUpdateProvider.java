@@ -97,6 +97,7 @@ public class BambooBuildPlanUpdateProvider {
      * This method was taken from RepositoryHelper of the Bamboo CLI Plugin
      * @param data the response from the server
      * @return an error message
+     * @see com.appfire.bamboo.cli.helpers.RepositoryHelper
      */
     private String checkForError(String data) {
         String message = CliUtils.matchRegex(data, "(?s)<div[^>]*class=\"aui-message error\">\\s+<p>([^<]*)<").trim();

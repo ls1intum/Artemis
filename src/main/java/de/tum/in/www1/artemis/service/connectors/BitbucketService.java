@@ -520,7 +520,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
             if (programmingExercise.getCourse().getTeachingAssistantGroupName() != null && !programmingExercise.getCourse().getTeachingAssistantGroupName().isEmpty()) {
                 grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
-                                                                                                                                             // write-permissions
+                // write-permissions
             }
         }
         catch (HttpClientErrorException e) {
