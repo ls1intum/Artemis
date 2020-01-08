@@ -90,7 +90,9 @@ public class GradingInstructionResource {
                     HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
                     .body(null);
         }
-
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
         return ResponseEntity.created(new URI("/api/grading-instructions/" + gradingInstruction.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
@@ -119,6 +121,9 @@ public class GradingInstructionResource {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
                     .body(null);
+        }
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
         }
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
 
