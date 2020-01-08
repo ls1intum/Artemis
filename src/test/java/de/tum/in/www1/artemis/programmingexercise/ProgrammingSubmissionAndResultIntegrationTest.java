@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -351,18 +352,17 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
-        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
         URL repositoryUrl = (programmingParticipation).getRepositoryUrlAsUrl();
-        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
         triggerBuild(participationType, 0, HttpStatus.OK);
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(1);
         ProgrammingSubmission submission = submissions.get(0);
-        assertThat(submission.getCommitHash()).isEqualTo(objectId.getName());
+        assertThat(submission.getCommitHash()).isEqualTo(COMMIT_HASH_OBJECT_ID.getName());
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
 
@@ -395,7 +395,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
         URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
-        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        ObjectId objectId = COMMIT_HASH_OBJECT_ID;
         doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerInstructorBuild(participationType, 0, HttpStatus.OK);
 
