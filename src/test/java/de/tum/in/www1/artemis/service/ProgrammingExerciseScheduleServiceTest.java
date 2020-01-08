@@ -4,6 +4,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -75,9 +76,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
 
     @Test
     void shouldExecuteScheduledBuildAndTestAfterDueDate() throws Exception {
-        long delayMS = 200;
-        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
+        long delayMS = 1200;
+        long dueDateDelayMS = 200;
+        programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plus(dueDateDelayMS, ChronoUnit.MILLIS));
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
 
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
