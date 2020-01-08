@@ -833,7 +833,7 @@ export class GuidedTourService {
             this.availableTourForComponent = cloneDeep(guidedTour);
             this.guidedTourAvailabilitySubject.next(true);
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
-            // Only start tour automatically if the user has never seen it before or manually restarts it
+            // Only start tour automatically if the user has never seen it before
             if (!hasStartedOrFinishedTour) {
                 this.currentTour = this.availableTourForComponent;
                 this.startTour();

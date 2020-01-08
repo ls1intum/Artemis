@@ -588,7 +588,10 @@ public class ParticipationResource {
 
         // Only allow USER's and TA's to delete their own StudentParticipations
         if (!user.getId().equals(participation.getStudent().getId())) {
-            checkAccessPermissionAtInstructor(participation, user);
+            checkAccessPermissionAtLeastInstructor(participation, user);
+        }
+        else {
+            checkAccessPermissionAtLeastStudent(participation, user);
         }
 
         String username = participation.getStudent().getFirstName();
@@ -614,13 +617,20 @@ public class ParticipationResource {
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtInstructor(participation, user);
+        checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
     }
 
-    private void checkAccessPermissionAtInstructor(StudentParticipation participation, User user) {
+    private void checkAccessPermissionAtLeastStudent(StudentParticipation participation, User user) {
+        Course course = findCourseFromParticipation(participation);
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+    }
+
+    private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -656,7 +666,7 @@ public class ParticipationResource {
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtInstructor(participation, user);
+        checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = participationService.getSubmissionsWithParticipationId(participationId);
         return ResponseEntity.ok(submissions);
     }
