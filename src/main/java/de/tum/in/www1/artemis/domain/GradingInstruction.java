@@ -24,7 +24,7 @@ public class GradingInstruction implements Serializable {
     private Exercise exercise;
 
     @Column(name = "credits")
-    private Double credits;
+    private double credits;
 
     @Column(name = "grading_scale")
     private String gradingScale;
@@ -49,11 +49,11 @@ public class GradingInstruction implements Serializable {
         this.id = id;
     }
 
-    public Double getCredits() {
+    public double getCredits() {
         return credits;
     }
 
-    public GradingInstruction credits(Double credits) {
+    public GradingInstruction credits(double credits) {
         this.credits = credits;
         return this;
     }
