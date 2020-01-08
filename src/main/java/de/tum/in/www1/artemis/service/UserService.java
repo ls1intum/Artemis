@@ -349,7 +349,8 @@ public class UserService {
     /**
      * Update all information for a specific user, and return the modified user.
      *
-     * @param updatedUserDTO user to update
+     * @param user The user that should get updated
+     * @param updatedUserDTO The DTO containing the to be updated values
      * @return updated user
      */
     public User updateUser(User user, ManagedUserVM updatedUserDTO) {
