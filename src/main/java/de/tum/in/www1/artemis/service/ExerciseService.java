@@ -8,9 +8,12 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -45,9 +48,11 @@ public class ExerciseService {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final AuditEventRepository auditEventRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService) {
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -56,6 +61,7 @@ public class ExerciseService {
         this.quizScheduleService = quizScheduleService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -161,7 +167,6 @@ public class ExerciseService {
             // eagerly load templateParticipation and solutionParticipation
             programmingExercise.setTemplateParticipation(HibernateUtils.unproxy(programmingExercise.getTemplateParticipation()));
             programmingExercise.setSolutionParticipation(HibernateUtils.unproxy(programmingExercise.getSolutionParticipation()));
-            programmingExercise.setExampleSubmissions(new HashSet<>(programmingExercise.getExampleSubmissions()));
         }
         return exercise;
     }
@@ -237,17 +242,20 @@ public class ExerciseService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param exercise                     the exercise to be deleted
-     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted
-     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted
+     * @param exerciseId                   the exercise to be deleted
+     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
+     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      */
     @Transactional
-    public void delete(Exercise exercise, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
-        log.info("ExerciseService.Request to delete Exercise : {}", exercise.getTitle());
+    public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+        // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
+        final var exercise = findOne(exerciseId);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
-        for (ExampleSubmission exampleSubmission : exercise.getExampleSubmissions()) {
+        // to avoid a ConcurrentModificationException, we need to use a copy of the set
+        var exampleSubmissions = new HashSet<ExampleSubmission>(exercise.getExampleSubmissions());
+        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             exampleSubmissionService.deleteById(exampleSubmission.getId());
         }
         // make sure tutor participations are deleted before the exercise is deleted
@@ -289,5 +297,11 @@ public class ExerciseService {
         else {
             log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
         }
+    }
+
+    public void logDeletion(Exercise exercise, Course course, User user) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
 }
