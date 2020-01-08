@@ -35,6 +35,20 @@ public class RestTemplateConfiguration {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor);
     }
 
+    @Bean
+    @Profile("bitbucket")
+    public RestTemplate bitbucketRestTemplate() {
+        // TODO: authenticate here
+        return new RestTemplate();
+    }
+
+    @Bean
+    @Profile("bamboo")
+    public RestTemplate bambooRestTemplate() {
+        // TODO: authenticate here
+        return new RestTemplate();
+    }
+
     @NotNull
     private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor) {
         final var restTemplate = new RestTemplate();

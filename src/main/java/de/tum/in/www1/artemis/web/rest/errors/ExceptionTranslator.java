@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.errors;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -11,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpEntity;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.socket.sockjs.SockJsMessageDeliveryException;
 import org.zalando.problem.DefaultProblem;
 import org.zalando.problem.Problem;
 import org.zalando.problem.ProblemBuilder;
@@ -39,6 +41,8 @@ import io.github.jhipster.web.util.HeaderUtil;
  */
 @ControllerAdvice
 public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
+
+    private final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
 
     private static final String FIELD_ERRORS_KEY = "fieldErrors";
 
@@ -90,14 +94,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
-    // TODO this exception also hides when optional services cannot be retrieved via "get()" which should instead lead to a proper exception
-    // SK: I guess we should remove this handler, because it is confusing
-    @ExceptionHandler
-    public ResponseEntity<Problem> handleNoSuchElementException(NoSuchElementException ex, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.NOT_FOUND).with(MESSAGE_KEY, ErrorConstants.ENTITY_NOT_FOUND_TYPE).build();
-        return create(ex, problem, request);
-    }
-
     @ExceptionHandler
     public ResponseEntity<Problem> handleEmailAreadyUsedException(de.tum.in.www1.artemis.exception.EmailAlreadyUsedException ex, NativeWebRequest request) {
         EmailAlreadyUsedException problem = new EmailAlreadyUsedException();
@@ -131,7 +127,21 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     // taken from https://mtyurt.net/post/spring-how-to-handle-ioexception-broken-pipe.html
     public Object exceptionHandler(IOException e, HttpServletRequest request) {
         if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
-            // (2) socket is closed, cannot return any response
+            log.info("Broken pipe IOException occurred: " + e.getMessage());
+            // socket is closed, cannot return any response
+            return null;
+        }
+        else {
+            return new HttpEntity<>(e.getMessage());
+        }
+    }
+
+    @ExceptionHandler(SockJsMessageDeliveryException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public Object exceptionHandler(SockJsMessageDeliveryException e, HttpServletRequest request) {
+        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Session closed")) {
+            // session is closed, cannot return any response
+            log.info("Session closed SockJsMessageDeliveryException occurred: " + e.getMessage());
             return null;
         }
         else {
@@ -144,4 +154,5 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         final var problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ex.getMessage()).build();
         return create(ex, problem, request);
     }
+
 }
