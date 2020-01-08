@@ -47,10 +47,6 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
  * REST controller for managing Participation.
- *
- * FIXME: The REST endpoint mapping is really inconsistent here. We have /participations, but also /course/{courseId}/.../paricipations.
- *        we should decide on one base path. There also is .../resume-programming-participation, but the method is called
- *        resumeParticipation.
  */
 @RestController
 @RequestMapping(ParticipationResource.Endpoints.ROOT)

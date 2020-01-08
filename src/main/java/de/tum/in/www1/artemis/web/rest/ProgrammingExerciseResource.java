@@ -242,6 +242,12 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
+        // Check if course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
+                    .body(null);
+        }
+
         // Check if exercise shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
@@ -524,7 +530,7 @@ public class ProgrammingExerciseResource {
     @DeleteMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable("id") Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
@@ -819,5 +825,8 @@ public class ProgrammingExerciseResource {
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 
         public static final String TEST_CASE_STATE = PROGRAMMING_EXERCISE + "/test-case-state";
+
+        private Endpoints() {
+        }
     }
 }
