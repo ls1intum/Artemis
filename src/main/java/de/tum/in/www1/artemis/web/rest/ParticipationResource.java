@@ -615,6 +615,40 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participation);
     }
 
+    /**
+     * DELETE /participations/:participationId/guided-tour : enables the deletion of a StudentParticipation in the scope of a guided tour
+     *
+     * @param participationId the participationId of the participation to delete
+     * @param deleteBuildPlan True, if the build plan should also get deleted
+     * @param deleteRepository True, if the repository should also get deleted
+     * @param principal The identity of the user accessing this resource
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/participations/{participationId}/guided-tour")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Participation> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
+            @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!user.getId().equals(participation.getStudent().getId())) {
+            return forbidden();
+        }
+
+        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
+            return forbidden();
+        }
+
+        String username = participation.getStudent().getFirstName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        auditEventRepository.add(auditEvent);
+        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
+                username, deleteBuildPlan, deleteRepository, principal.getName());
+        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+    }
+
     private void checkAccessPermissionAtInstructor(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {

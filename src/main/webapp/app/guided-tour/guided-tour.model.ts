@@ -16,6 +16,4 @@ export interface GuidedTour {
      * This should only be set if you are completely sure your tour is displaying correctly on all screen sizes otherwise a user can get stuck.
      */
     preventBackdropFromAdvancing?: boolean;
-    /** Defines if the UML model in the apollon editor should be resetted if the user restarts the tutorial */
-    resetUMLModel?: boolean;
 }

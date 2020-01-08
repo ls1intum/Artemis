@@ -5,7 +5,6 @@ import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'a
 
 export const modelingTour: GuidedTour = {
     settingsKey: 'modeling_tour',
-    resetUMLModel: true,
     steps: [
         new TextTourStep({
             headlineTranslateKey: 'tour.modelingExercise.editorArea.headline',

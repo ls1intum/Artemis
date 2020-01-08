@@ -31,7 +31,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
-        this.subscribeForUMLModelReset();
         this.guidedTourService.checkModelingComponent().subscribe(key => {
             if (key) {
                 this.assessModelForGuidedTour(key, this.getCurrentModel());
@@ -127,30 +126,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     }
 
     /**
-     * Resets the UML model for the guided tour by removing the elements, relationships and assessments
-     * @param umlModel the model that should be reset
-     */
-    private resetUMLModelForGuidedTour(umlModel: UMLModel): void {
-        if (umlModel) {
-            umlModel.elements = [];
-            umlModel.relationships = [];
-            umlModel.assessments = [];
-        }
-        this.initializeApollonEditor();
-    }
-
-    /**
-     * Subscribes to the guided tour service
-     */
-    private subscribeForUMLModelReset() {
-        this.guidedTourService.resetUMLModel().subscribe(reset => {
-            if (reset) {
-                this.resetUMLModelForGuidedTour(this.umlModel);
-            }
-        });
-    }
-
-    /**
      * Assess the model for the modeling guided tutorial
      * @param umlName  the identifier of the UML element that has to be assessed
      * @param umlModel  the current UML model in the editor
@@ -165,8 +140,8 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             // Check if the Person class is correct
             case personUML.name: {
                 const nameAttribute = this.elementWithAttribute(personUML.attribute, umlModel);
-                const emptyMethod = this.elementWithMethod('', umlModel);
-                const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id && emptyMethod === undefined : false;
+                // const emptyMethod = this.elementWithMethod('', umlModel);
+                const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id : false;
                 this.guidedTourService.updateModelingResult(umlName, personClassCorrect);
                 break;
             }

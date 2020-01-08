@@ -46,7 +46,6 @@ export class GuidedTourService {
     private isUserInteractionFinishedSubject = new Subject<boolean>();
     private transformSubject = new Subject<number>();
     private checkModelingComponentSubject = new Subject<string | null>();
-    private resetUMLModelSubject = new Subject<boolean>();
 
     /** Variables for the dot navigation */
     public maxDots = 10;
@@ -157,13 +156,6 @@ export class GuidedTourService {
      */
     public checkModelingComponent(): Observable<string | null> {
         return this.checkModelingComponentSubject.asObservable();
-    }
-
-    /**
-     * @return Observable of resetUMLModelSubject, which is true if the UML model should be reset
-     */
-    resetUMLModel() {
-        return this.resetUMLModelSubject.asObservable();
     }
 
     /**
@@ -594,9 +586,6 @@ export class GuidedTourService {
             }
             this.setPreparedTourStep();
             this.calculateTranslateValue(currentStep);
-            if (this.currentTourStepIndex === 0 && this.currentTour.resetUMLModel) {
-                this.resetUMLModelSubject.next(true);
-            }
         }
     }
 
@@ -612,11 +601,15 @@ export class GuidedTourService {
                 .pipe(
                     map((response: HttpResponse<StudentParticipation>) => response.body!),
                     flatMap(participation =>
-                        this.participationService.delete(participation.id, {
-                            deleteBuildPlan: isProgrammingExercise,
-                            deleteRepository: isProgrammingExercise,
-                            // TODO add security check for deleting exercise participations
-                        }),
+                        this.participationService.deleteForGuidedTour(
+                            participation.id,
+                            isProgrammingExercise
+                                ? {
+                                      deleteBuildPlan: isProgrammingExercise,
+                                      deleteRepository: isProgrammingExercise,
+                                  }
+                                : () => {},
+                        ),
                     ),
                 )
                 .subscribe(() => {
