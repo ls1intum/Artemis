@@ -601,7 +601,7 @@ export class GuidedTourService {
                 .pipe(
                     map((response: HttpResponse<StudentParticipation>) => response.body!),
                     flatMap(participation =>
-                        this.participationService.deleteForGuidedTour(
+                        this.participationService.delete(
                             participation.id,
                             isProgrammingExercise
                                 ? {
