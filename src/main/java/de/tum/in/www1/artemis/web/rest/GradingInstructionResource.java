@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping({ "/api" })
-@PreAuthorize("hasAnyRole('INSTRUCTOR','ADMIN')")
 public class GradingInstructionResource {
 
     private final Logger log = LoggerFactory.getLogger(GradingInstructionResource.class);
