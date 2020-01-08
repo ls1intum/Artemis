@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +9,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +24,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdatePro
 // this if any profile is active (OR). We want both (AND)
 @Profile("bamboo & bitbucket")
 public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdateService {
-
-    @Value("${artemis.version-control.url}")
-    private URL BITBUCKET_SERVER;
 
     private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
 
@@ -95,21 +90,5 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             throw new BambooException("Unable to overwrite triggers for " + planKey + "\n" + e.getMessage(), e);
         }
-    }
-
-    @Override
-    public void triggerUpdate(String buildPlanId, boolean initialBuild) {
-        // NOT NEEDED
-    }
-
-    /**
-     * e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
-     * @param project the bitbucket project name
-     * @param slug the bitbucket repo name
-     * @return the ssh repository url
-     */
-    private String buildSshRepositoryUrl(String project, String slug) {
-        final int sshPort = 7999;
-        return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
     }
 }

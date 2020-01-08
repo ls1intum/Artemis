@@ -50,7 +50,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationBuildPlanException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 
 @Service
 @Profile("bamboo")
@@ -211,7 +211,7 @@ public class BambooBuildPlanService {
             return scriptContents.entrySet().stream().map(script -> new ScriptTask().description(script.getKey()).inlineBody(script.getValue())).collect(Collectors.toList());
         }
         catch (IOException e) {
-            throw new ContinousIntegrationBuildPlanException("Unable to load template build plans", e);
+            throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);
         }
     }
 }
