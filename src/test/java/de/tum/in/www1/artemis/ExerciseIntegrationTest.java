@@ -59,7 +59,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @BeforeEach
     public void init() {
-        database.addUsers(10, 1, 1);
+        database.addUsers(10, 5, 1);
     }
 
     @AfterEach
@@ -275,7 +275,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                 StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
                 assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
-                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should not be available to tutor").isNull();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should not be available to tutor").isNull();
 
@@ -307,7 +307,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                 StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
                 assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
-                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints is zero").isZero();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests is zero").isZero();
 

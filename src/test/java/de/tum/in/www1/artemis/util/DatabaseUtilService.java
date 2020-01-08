@@ -265,13 +265,23 @@ public class DatabaseUtilService {
         programmingExercise = exerciseRepo.save(programmingExercise);
         quizExercise = exerciseRepo.save(quizExercise);
 
-        String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
-        var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
-        exampleSubmission.assessmentExplanation("exp");
-        var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor1"));
-        exampleSubmission.addTutorParticipations(tutorParticipation);
-        tutorParticipationRepo.save(tutorParticipation);
-        exampleSubmissionRepo.save(exampleSubmission);
+        // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
+        var tutorParticipations = new ArrayList<TutorParticipation>();
+        for (int i = 1; i < 6; i++) {
+            var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i));
+            tutorParticipationRepo.save(tutorParticipation);
+            tutorParticipations.add(tutorParticipation);
+        }
+
+        for (int i = 0; i < 5; i++) {
+            String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
+            var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
+            exampleSubmission.assessmentExplanation("exp");
+            for (var tutorParticipation : tutorParticipations) {
+                exampleSubmission.addTutorParticipations(tutorParticipation);
+            }
+            exampleSubmissionRepo.save(exampleSubmission);
+        }
 
         User user = (userRepo.findOneByLogin("student1")).get();
         StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
