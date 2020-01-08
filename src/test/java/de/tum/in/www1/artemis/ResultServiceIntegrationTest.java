@@ -79,10 +79,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     private StudentParticipation studentParticipation;
 
     @BeforeEach
-    public void setUp() {
+    public void reset() {
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        programmingExercise = programmingExerciseRepository.findAll().get(0);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         templateParticipation = programmingExercise.getTemplateParticipation();
