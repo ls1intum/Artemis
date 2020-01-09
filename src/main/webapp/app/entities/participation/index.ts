@@ -7,5 +7,4 @@ export * from './participation-popup.service';
 export * from './participation.service';
 export * from './participation.component';
 export * from './participation.route';
-export * from './participation-websocket.service';
 export * from './participation-utils';

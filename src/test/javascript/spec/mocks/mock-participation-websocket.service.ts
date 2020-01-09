@@ -1,5 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
-import { IParticipationWebsocketService, Participation, StudentParticipation } from 'app/entities/participation';
+import { Participation } from 'app/entities/participation';
+import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Exercise } from 'app/entities/exercise';
 import { Result } from 'app/entities/result';
 

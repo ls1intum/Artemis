@@ -16,7 +16,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
