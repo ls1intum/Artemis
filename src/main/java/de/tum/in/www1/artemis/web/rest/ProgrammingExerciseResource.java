@@ -465,16 +465,16 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:id : get the "id" programmingExercise.
+     * GET /programming-exercises/:exerciseId : get the "exerciseId" programmingExercise.
      *
-     * @param id the id of the programmingExercise to retrieve
+     * @param exerciseId the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable Long id) {
-        log.debug("REST request to get ProgrammingExercise : {}", id);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
+        log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -486,18 +486,18 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises-with-participations/:id : get the "id" programmingExercise.
+     * GET /programming-exercises-with-participations/:exerciseId : get the "exerciseId" programmingExercise.
      *
-     * @param id the id of the programmingExercise to retrieve
+     * @param exerciseId the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable Long id) {
-        log.debug("REST request to get ProgrammingExercise : {}", id);
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable long exerciseId) {
+        log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(id);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourse();
@@ -530,7 +530,7 @@ public class ProgrammingExerciseResource {
     @DeleteMapping(Endpoints.PROGRAMMING_EXERCISE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable("id") Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
@@ -550,7 +550,7 @@ public class ProgrammingExerciseResource {
     /**
      * Combine all commits into one in the template repository of a given exercise.
      *
-     * @param id of the exercise
+     * @param exerciseId of the exercise
      * @return the ResponseEntity with status
      *              200 (OK) if combine has been successfully executed
      *              403 (Forbidden) if the user is not admin and course instructor or
@@ -559,10 +559,10 @@ public class ProgrammingExerciseResource {
     @PutMapping(value = Endpoints.COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable Long id) {
-        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
+    public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
+        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
 
-        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(exerciseId);
         if (programmingExerciseOptional.isEmpty()) {
             return notFound();
         }
@@ -596,7 +596,7 @@ public class ProgrammingExerciseResource {
     @PostMapping(Endpoints.EXPORT_SUBMISSIONS_BY_STUDENT)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable("id") Long exerciseId, @PathVariable String studentIds,
+    public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String studentIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -651,7 +651,7 @@ public class ProgrammingExerciseResource {
     @PostMapping(Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable("id") Long exerciseId, @PathVariable String participationIds,
+    public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
 
@@ -694,22 +694,18 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises/{id}/generate-tests : Makes a call to StructureOracleGenerator to generate the structure oracle aka the test.json file
+     * PUT /programming-exercises/{exerciseId}/generate-tests : Makes a call to StructureOracleGenerator to generate the structure oracle aka the test.json file
      *
-     * @param id The ID of the programming exercise for which the structure oracle should get generated
+     * @param exerciseId The ID of the programming exercise for which the structure oracle should get generated
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
     @GetMapping(value = Endpoints.GENERATE_TESTS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable Long id) {
-        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
+    public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
+        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
 
-        if (id == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "programmingExerciseNotFound", "The programming exercise does not exist"))
-                    .body(null);
-        }
-        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(exerciseId);
         if (programmingExerciseOptional.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "programmingExerciseNotFound", "The programming exercise does not exist"))
                     .body(null);
@@ -768,7 +764,7 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping(Endpoints.TEST_CASE_STATE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable("id") Long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable long exerciseId) {
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
         if (programmingExercise.isEmpty()) {
             return notFound();
@@ -812,7 +808,7 @@ public class ProgrammingExerciseResource {
 
         public static final String PROBLEM = "/programming-exercises-problem";
 
-        public static final String PROGRAMMING_EXERCISE = PROGRAMMING_EXERCISES + "/{id}";
+        public static final String PROGRAMMING_EXERCISE = PROGRAMMING_EXERCISES + "/{exerciseId}";
 
         public static final String PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/with-participations";
 
