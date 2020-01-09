@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
@@ -16,7 +17,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.ProblemStatementUpdate;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
 
@@ -85,13 +86,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement() throws Exception {
-        String newProblem = "a new problem statement";
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
-        ProblemStatementUpdate problemStatementUpdate = new ProblemStatementUpdate();
-        problemStatementUpdate.setExerciseId(programmingExerciseId);
-        problemStatementUpdate.setProblemStatement(newProblem);
-        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody("/api/programming-exercises-problem", problemStatementUpdate, ProgrammingExercise.class,
-                HttpStatus.OK);
+        final var newProblem = "a new problem statement";
+        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", programmingExerciseId + "");
+        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
 

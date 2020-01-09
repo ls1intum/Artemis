@@ -414,18 +414,18 @@ public class ProgrammingExerciseResource {
     /**
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
-     * @param problemStatementUpdate the programmingExercise to update with the new problemStatement
+     * @param updatedProblemStatement The new problemStatement
      * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
-    @PatchMapping(Endpoints.PROBLEM)
+    @PatchMapping(value = Endpoints.PROBLEM)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@RequestBody ProblemStatementUpdate problemStatementUpdate,
+    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update ProgrammingExercise with new problem statement: {}", problemStatementUpdate);
+        log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
         ProgrammingExercise updatedProgrammingExercise;
         try {
-            updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(problemStatementUpdate.getExerciseId(), problemStatementUpdate.getProblemStatement());
+            updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(exerciseId, updatedProblemStatement);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
@@ -806,9 +806,9 @@ public class ProgrammingExerciseResource {
 
         public static final String IMPORT = PROGRAMMING_EXERCISES + "/import/{sourceExerciseId}";
 
-        public static final String PROBLEM = "/programming-exercises-problem";
-
         public static final String PROGRAMMING_EXERCISE = PROGRAMMING_EXERCISES + "/{exerciseId}";
+
+        public static final String PROBLEM = PROGRAMMING_EXERCISE + "/problem-statement";
 
         public static final String PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/with-participations";
 
