@@ -14,7 +14,7 @@
         </jhi-exercise-details-student-actions>
 
         <!-- TODO: this is quite some duplicated code from course-exercise-row.component.html that we should unify in one component -->
-        <div class="col d-flex justify-content-end" style="flex-grow: 4" [ngSwitch]="exercise.participationStatus">
+        <div class="col d-flex justify-content-end flex-grow-0 w-auto" style="flex-basis: auto" [ngSwitch]="exercise.participationStatus">
             <div class="d-none d-sm-inline">
                 <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
                 <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
