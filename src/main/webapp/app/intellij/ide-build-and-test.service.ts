@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingExercise } from '../entities/programming-exercise';
-import { ProgrammingSubmissionService } from '../programming-submission';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { Participation } from '../entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from '../entities/result';

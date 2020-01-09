@@ -7,7 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
 import { Result, ResultService } from 'app/entities/result';
-import { ParticipationService } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';

@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared';
 import {
-    ProgrammingExerciseComponent,
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
     ProgrammingExerciseImportComponent,
@@ -37,6 +36,7 @@ import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
+import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 

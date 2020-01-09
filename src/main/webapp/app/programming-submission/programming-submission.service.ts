@@ -11,8 +11,6 @@ import { SubmissionType } from 'app/entities/submission';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import * as moment from 'moment';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.

@@ -5,7 +5,6 @@ import { Observable, Subscription, throwError } from 'rxjs';
 import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import {
     Participation,
-    ParticipationService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
@@ -17,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ButtonSize } from 'app/shared/components';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 
 export enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',

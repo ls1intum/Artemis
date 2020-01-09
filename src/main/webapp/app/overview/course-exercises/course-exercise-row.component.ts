@@ -2,7 +2,8 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { ParticipationService, StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
