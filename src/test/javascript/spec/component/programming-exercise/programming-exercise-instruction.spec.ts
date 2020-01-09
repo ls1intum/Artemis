@@ -17,7 +17,7 @@ import { ArtemisSharedModule } from 'src/main/webapp/app/shared';
 import { Result, ResultDetailComponent, ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
@@ -34,6 +34,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionTaskStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { triggerChanges } from '../../utils/general.utils';
 import { LocalStorageService } from 'ngx-webstorage';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 
 chai.use(sinonChai);
 const expect = chai.expect;
