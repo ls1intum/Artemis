@@ -349,8 +349,6 @@ describe('GuidedTourService', () => {
                 const httpResponse2 = { body: studentParticipation2 } as HttpResponse<StudentParticipation>;
                 course1.exercises.push(exercise3);
 
-                // spyOn(router, 'navigate').and.callFake(() => {});
-
                 function prepareParticipation(exercise: Exercise, studentParticipation: StudentParticipation, httpResponse: HttpResponse<StudentParticipation>) {
                     exercise.course = course1;
                     exercise.studentParticipations = [studentParticipation];
