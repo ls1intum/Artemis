@@ -47,6 +47,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Long countByGroupsIsContaining(Set<String> groups);
 
+    @EntityGraph(attributePaths = { "groups" })
     List<User> findAllByGroups(String group);
 
     @EntityGraph(attributePaths = { "groups" })
@@ -57,6 +58,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("Update User user set user.lastNotificationRead = utc_timestamp where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId);
 
+    @EntityGraph(attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member user.groups and user not in :#{#ignoredUsers}")
     List<User> findAllByGroupsContainingAndNotIn(String groupName, Set<User> ignoredUsers);
 }
