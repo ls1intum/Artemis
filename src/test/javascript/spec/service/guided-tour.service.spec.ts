@@ -252,7 +252,7 @@ describe('GuidedTourService', () => {
             const guidedTourMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: 'git' } } as GuidedTourMapping;
             const exercise1 = { id: 1, shortName: 'git', type: ExerciseType.PROGRAMMING } as Exercise;
             const exercise2 = { id: 2, shortName: 'test', type: ExerciseType.PROGRAMMING } as Exercise;
-            const exercise3 = { id: 3, title: 'git', type: ExerciseType.MODELING } as Exercise;
+            const exercise3 = { id: 3, shortName: 'git', type: ExerciseType.MODELING } as Exercise;
             const course1 = { id: 1, shortName: 'tutorial', exercises: [exercise2, exercise1] } as Course;
             const course2 = { id: 2, shortName: 'test' } as Course;
 
@@ -347,7 +347,7 @@ describe('GuidedTourService', () => {
                 const studentParticipation2 = { id: 2, student: { id: 1 }, exercise: exercise3, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
                 const httpResponse1 = { body: studentParticipation1 } as HttpResponse<StudentParticipation>;
                 const httpResponse2 = { body: studentParticipation2 } as HttpResponse<StudentParticipation>;
-                course1.exercises.push(exercise3);
+                const exercise4 = { id: 4, title: 'git', type: ExerciseType.MODELING } as Exercise;
 
                 function prepareParticipation(exercise: Exercise, studentParticipation: StudentParticipation, httpResponse: HttpResponse<StudentParticipation>) {
                     exercise.course = course1;
@@ -362,6 +362,8 @@ describe('GuidedTourService', () => {
                 }
 
                 it('should find and delete the student participation for exercise', () => {
+                    course1.exercises.push(exercise4);
+
                     prepareParticipation(exercise1, studentParticipation1, httpResponse1);
                     guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
                     guidedTourService.restartTour();
@@ -370,13 +372,16 @@ describe('GuidedTourService', () => {
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
                     expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
 
-                    prepareParticipation(exercise3, studentParticipation2, httpResponse2);
-                    guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise);
+                    prepareParticipation(exercise4, studentParticipation2, httpResponse2);
+                    guidedTourService.enableTourForExercise(exercise4, tourWithCourseAndExercise);
                     guidedTourService.restartTour();
-                    expect(findParticipationStub).to.have.been.calledOnceWithExactly(3);
+                    expect(findParticipationStub).to.have.been.calledOnceWithExactly(4);
                     expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(2, { deleteBuildPlan: false, deleteRepository: false });
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
                     expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
+
+                    const index = course1.exercises.findIndex(exercise => (exercise.id = exercise4.id));
+                    course1.exercises.splice(index, 1);
                 });
             });
         });
