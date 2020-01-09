@@ -282,10 +282,10 @@ describe('GuidedTourComponent', () => {
 
         it('should apply the right transformation', () => {
             guidedTourComponent.currentTourStep!.orientation = Orientation.TOP;
-            expect(guidedTourComponent['transform']).to.equal('translateY(-100%)');
+            expect(guidedTourComponent.transform).to.equal('translateY(-100%)');
 
             guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
-            expect(guidedTourComponent['transform']).to.equal('');
+            expect(guidedTourComponent.transform).to.equal('');
         });
 
         it('should calculate the right max width adjustment', () => {

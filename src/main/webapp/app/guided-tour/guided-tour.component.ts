@@ -487,7 +487,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Transform position of tour steps which are shown on top of the highlighted element
      * @return {string} '' or 'translateY(-100%)'
      */
-    private get transform(): string | null {
+    public get transform(): string | null {
         if (
             this.currentTourStep &&
             ((!this.currentTourStep.orientation && this.currentTourStep.highlightSelector) ||
