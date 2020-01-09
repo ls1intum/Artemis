@@ -252,17 +252,17 @@ describe('GuidedTourComponent', () => {
         });
 
         it('should determine if the tour step has bottom orientation', () => {
-            expect(guidedTourComponent['isBottom']).to.be.false;
+            expect(guidedTourComponent['isBottom']()).to.be.false;
 
             guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
-            expect(guidedTourComponent['isBottom']).to.be.true;
+            expect(guidedTourComponent['isBottom']()).to.be.true;
         });
 
         it('should determine the highlight padding of the tour step', () => {
-            expect(guidedTourComponent['getHighlightPadding']).to.equal(0);
+            expect(guidedTourComponent['getHighlightPadding']()).to.equal(0);
 
             guidedTourComponent.currentTourStep = tourStepWithHighlightPadding;
-            expect(guidedTourComponent['getHighlightPadding']).to.equal(10);
+            expect(guidedTourComponent['getHighlightPadding']()).to.equal(10);
         });
 
         it('should calculate the top position of the tour step', () => {
