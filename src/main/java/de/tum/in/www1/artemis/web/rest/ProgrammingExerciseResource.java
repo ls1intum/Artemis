@@ -414,6 +414,7 @@ public class ProgrammingExerciseResource {
     /**
      * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
      *
+     * @param exerciseId The ID of the exercise for which to change the problem statement
      * @param updatedProblemStatement The new problemStatement
      * @param notificationText to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
