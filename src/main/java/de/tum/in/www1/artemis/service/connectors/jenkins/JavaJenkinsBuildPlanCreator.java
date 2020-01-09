@@ -71,8 +71,8 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
                 artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
 
-        final var xmlFile = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath).getFile();
-        return XmlFileUtils.readXmlFile(xmlFile, replacements);
+        final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
+        return XmlFileUtils.readXmlFile(xmlResource, replacements);
     }
 
     @Override
