@@ -586,12 +586,12 @@ public class ParticipationResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // Only allow USER's and TA's to delete their own StudentParticipations
-        if (!user.getId().equals(participation.getStudent().getId())) {
-            checkAccessPermissionAtLeastInstructor(participation, user);
+        // Allow USER's and TA's to delete their own StudentParticipations
+        if (user.getId().equals(participation.getStudent().getId())) {
+            checkAccessPermissionAtLeastStudent(participation, user);
         }
         else {
-            checkAccessPermissionAtLeastStudent(participation, user);
+            checkAccessPermissionAtLeastInstructor(participation, user);
         }
 
         String username = participation.getStudent().getFirstName();
