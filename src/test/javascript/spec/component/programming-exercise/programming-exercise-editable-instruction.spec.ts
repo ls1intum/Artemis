@@ -13,7 +13,7 @@ import { Participation, TemplateProgrammingExerciseParticipation } from 'src/mai
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result, ResultService } from 'src/main/webapp/app/entities/result';
 import { MockResultService } from '../../mocks';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-exercise';
 import { MockParticipationWebsocketService } from '../../mocks';
 import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
@@ -23,6 +23,7 @@ import {
     ProgrammingExerciseInstructionAnalysisComponent,
 } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { triggerChanges } from '../../utils/general.utils';
+import { ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 
 chai.use(sinonChai);
 const expect = chai.expect;
