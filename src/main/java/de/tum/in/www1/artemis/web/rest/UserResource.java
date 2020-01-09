@@ -69,7 +69,7 @@ public class UserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.external-user-management:false}")
+    @Value("${artemis.external-user-management:true}")
     private boolean EXTERNAL_USER_MANAGEMENT;
 
     private final UserRepository userRepository;
