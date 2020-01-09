@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from 'app/entities/course/course.service';

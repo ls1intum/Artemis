@@ -2,7 +2,9 @@ import { CodeEditorContainer } from 'app/code-editor/code-editor-mode-container.
 import { OnDestroy, OnInit } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise';
 import { Observable, Subscription, throwError } from 'rxjs';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import {
     Participation,
     ProgrammingExerciseStudentParticipation,

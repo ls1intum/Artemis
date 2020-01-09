@@ -42,7 +42,8 @@ import {
 import { Result, ResultService } from 'app/entities/result';
 import { Participation, StudentParticipation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';

@@ -6,12 +6,9 @@ import {
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
     ProgrammingExerciseImportComponent,
-    ProgrammingExerciseParticipationService,
     ProgrammingExercisePopupComponent,
     programmingExercisePopupRoute,
-    ProgrammingExercisePopupService,
     programmingExerciseRoute,
-    ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
 } from './';
 import { SortByModule } from 'app/components/pipes';
@@ -85,6 +82,5 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseImportComponent,
     ],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
-    providers: [ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
 })
 export class ArtemisProgrammingExerciseModule {}

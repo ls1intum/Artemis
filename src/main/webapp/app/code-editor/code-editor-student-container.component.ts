@@ -13,7 +13,8 @@ import { Feedback } from 'app/entities/feedback';
 
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorFileService, CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions';
 import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';

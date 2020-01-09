@@ -42,7 +42,9 @@ import {
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockRouter } from '../../mocks/mock-router.service';

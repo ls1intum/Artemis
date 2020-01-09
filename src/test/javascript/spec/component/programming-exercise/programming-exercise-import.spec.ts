@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ProgrammingExercise, ProgrammingExerciseImportComponent, ProgrammingExercisePagingService, ProgrammingLanguage } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingExerciseImportComponent, ProgrammingLanguage } from 'app/entities/programming-exercise';
+import { ProgrammingExercisePagingService } from 'app/entities/programming-exercise/services/programming-exercise-paging.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { Course } from 'app/entities/course';
