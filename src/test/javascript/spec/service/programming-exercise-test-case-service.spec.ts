@@ -6,7 +6,7 @@ import { tap } from 'rxjs/operators';
 import * as sinonChai from 'sinon-chai';
 import { Participation } from '../../../../main/webapp/app/entities/participation';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { IWebsocketService } from '../../../../main/webapp/app/core';
+import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
 import { Result } from '../../../../main/webapp/app/entities/result';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise';
 import { MockHttpService } from '../mocks/mock-http.service';
