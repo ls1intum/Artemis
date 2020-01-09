@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  * REST controller for managing Participation.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(ParticipationResource.Endpoints.ROOT)
 @PreAuthorize("hasRole('ADMIN')")
 public class ParticipationResource {
 
@@ -137,7 +137,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
-    @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
+    @PostMapping(Endpoints.START_PARTICIPATION)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
@@ -656,4 +656,13 @@ public class ParticipationResource {
         return ResponseEntity.ok(submissions);
     }
 
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String START_PARTICIPATION = "/courses/{courseId}/exercises/{exerciseId}/participations";
+
+        private Endpoints() {
+        }
+    }
 }
