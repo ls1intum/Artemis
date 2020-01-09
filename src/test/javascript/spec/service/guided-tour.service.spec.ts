@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { CookieService } from 'ngx-cookie';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +28,9 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
-import { InitializationState, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, StudentParticipation, ParticipationService } from 'app/entities/participation';
+import { SinonStub, stub } from 'sinon';
+import { HttpResponse } from '@angular/common/http';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -110,9 +112,14 @@ describe('GuidedTourService', () => {
     describe('Guided tour methods', () => {
         let guidedTourComponent: GuidedTourComponent;
         let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
-
-        let guidedTourService: GuidedTourService;
         let router: Router;
+        let guidedTourService: GuidedTourService;
+        let participationService: ParticipationService;
+
+        let findParticipationStub: SinonStub;
+        let deleteParticipationStub: SinonStub;
+        let deleteGuidedTourSettingStub: SinonStub;
+        let navigationStub: SinonStub;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -146,8 +153,15 @@ describe('GuidedTourService', () => {
                     const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
                     const navBarComponent = navBarComponentFixture.componentInstance;
 
-                    guidedTourService = TestBed.get(GuidedTourService);
                     router = TestBed.get(Router);
+                    guidedTourService = TestBed.get(GuidedTourService);
+                    participationService = TestBed.get(ParticipationService);
+
+                    findParticipationStub = stub(participationService, 'findParticipation');
+                    deleteParticipationStub = stub(participationService, 'delete');
+                    // @ts-ignore
+                    deleteGuidedTourSettingStub = stub(guidedTourService, 'deleteGuidedTourSetting');
+                    navigationStub = stub(router, 'navigateByUrl');
                 });
         });
 
@@ -237,10 +251,10 @@ describe('GuidedTourService', () => {
         describe('Tour for a certain course and exercise', () => {
             const guidedTourMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: 'git' } } as GuidedTourMapping;
             const exercise1 = { id: 1, shortName: 'git', type: ExerciseType.PROGRAMMING } as Exercise;
-            const exercise2 = { id: 1, shortName: 'test', type: ExerciseType.PROGRAMMING } as Exercise;
-            const exercise3 = { id: 1, shortName: 'git', type: ExerciseType.MODELING } as Exercise;
+            const exercise2 = { id: 2, shortName: 'test', type: ExerciseType.PROGRAMMING } as Exercise;
+            const exercise3 = { id: 3, title: 'git', type: ExerciseType.MODELING } as Exercise;
             const course1 = { id: 1, shortName: 'tutorial', exercises: [exercise2, exercise1] } as Course;
-            const course2 = { id: 1, shortName: 'test' } as Course;
+            const course2 = { id: 2, shortName: 'test' } as Course;
 
             function resetCurrentTour(): void {
                 guidedTourService.currentTour = completedTour;
@@ -329,16 +343,42 @@ describe('GuidedTourService', () => {
             });
 
             describe('Tour with student participation', () => {
-                const studentParticipation = { id: 1, student: { id: 1 }, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
+                const studentParticipation1 = { id: 1, student: { id: 1 }, exercise: exercise1, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
+                const studentParticipation2 = { id: 2, student: { id: 1 }, exercise: exercise3, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
+                const httpResponse1 = { body: studentParticipation1 } as HttpResponse<StudentParticipation>;
+                const httpResponse2 = { body: studentParticipation2 } as HttpResponse<StudentParticipation>;
+                course1.exercises.push(exercise3);
 
-                it('should delete the student participation', () => {
-                    exercise1.course = course1;
-                    studentParticipation.exercise = exercise1;
-                    exercise1.studentParticipations = [studentParticipation];
+                // spyOn(router, 'navigate').and.callFake(() => {});
 
+                function prepareParticipation(exercise: Exercise, studentParticipation: StudentParticipation, httpResponse: HttpResponse<StudentParticipation>) {
+                    exercise.course = course1;
+                    exercise.studentParticipations = [studentParticipation];
+                    findParticipationStub.reset();
+                    deleteParticipationStub.reset();
+                    deleteGuidedTourSettingStub.reset();
+                    navigationStub.reset();
+                    findParticipationStub.returns(Observable.of(httpResponse));
+                    deleteParticipationStub.returns(Observable.of(null));
+                    deleteGuidedTourSettingStub.returns(Observable.of(null));
+                }
+
+                it('should find and delete the student participation for exercise', () => {
+                    prepareParticipation(exercise1, studentParticipation1, httpResponse1);
                     guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
                     guidedTourService.restartTour();
-                    // TODO: check if participations are correctly deleted
+                    expect(findParticipationStub).to.have.been.calledOnceWithExactly(1);
+                    expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(1, { deleteBuildPlan: true, deleteRepository: true });
+                    expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
+                    expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
+
+                    prepareParticipation(exercise3, studentParticipation2, httpResponse2);
+                    guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise);
+                    guidedTourService.restartTour();
+                    expect(findParticipationStub).to.have.been.calledOnceWithExactly(3);
+                    expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(2, { deleteBuildPlan: false, deleteRepository: false });
+                    expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
+                    expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
                 });
             });
         });
