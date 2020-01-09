@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -662,13 +661,11 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    @Transactional  // needed for adding values to persistent hash set (submissions)
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
-        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
         submission.setParticipation(participation);
         programmingSubmissionRepo.save(submission);
-        participationRepo.save(participation);
         return submission;
     }
 
