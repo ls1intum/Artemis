@@ -4,10 +4,7 @@ import static org.gitlab4j.api.models.AccessLevel.GUEST;
 import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
 
 import java.net.URL;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -129,18 +126,18 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
         processedUsers.addAll(oldInstructors);
 
-        final var oldTeachingAssistants = userRepository.findAllByGroupsContainingAndNotIn(oldTeachingAssistantGroup, new HashSet<>(oldInstructors));
+        final var oldTeachingAssistants = userService.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
         updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
-        final var remainingInstructors = userRepository.findAllByGroupsContainingAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
+        final var remainingInstructors = userService.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
         remainingInstructors.forEach(user -> {
             final var userId = getUserId(user.getLogin());
             addUserToGroups(userId, exercises, MAINTAINER);
         });
         processedUsers.addAll(remainingInstructors);
-        final var remainingTeachingAssistants = userRepository.findAllByGroupsContainingAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
+        final var remainingTeachingAssistants = userService.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         remainingTeachingAssistants.forEach(user -> {
             final var userId = getUserId(user.getLogin());
             addUserToGroups(userId, exercises, GUEST);

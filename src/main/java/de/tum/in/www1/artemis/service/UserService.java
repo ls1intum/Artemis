@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -556,5 +553,21 @@ public class UserService {
             guidedTourSettingsRepository.save(setting);
         }
         return userRepository.save(loggedInUser);
+    }
+
+    /**
+     * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
+     *
+     * @param groupName The group by which all users should get filtered
+     * @param excludedUsers The users that should get ignored/excluded
+     * @return A list of filtered users
+     */
+    public List<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
+        // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists
+        if (!excludedUsers.isEmpty()) {
+            return userRepository.findAllByGroupsContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
+        }
+
+        return userRepository.findAllByGroups(groupName);
     }
 }
