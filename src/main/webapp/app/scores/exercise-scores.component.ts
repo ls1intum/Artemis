@@ -250,6 +250,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.paramSub.unsubscribe();
-        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise.id);
+        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
     }
 }

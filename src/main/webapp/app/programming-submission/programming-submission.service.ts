@@ -11,6 +11,8 @@ import { SubmissionType } from 'app/entities/submission';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import * as moment from 'moment';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -42,8 +44,8 @@ export interface IProgrammingSubmissionService {
     triggerBuild: (participationId: number) => Observable<Object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
-    unsubscribeAllWebsocketTopics: (exerciseId: number) => void;
-    unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
+    unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
+    unsubscribeForLatestSubmissionOfParticipation: (participationId: number, exercise: Exercise) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -528,19 +530,19 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * unsubscribe from all websocket topics so that these are not kept after leaving a page who has subscribed before
-     * @param exerciseId
+     * @param exercise
      */
-    public unsubscribeAllWebsocketTopics(exerciseId: number) {
+    public unsubscribeAllWebsocketTopics(exercise: Exercise) {
         // TODO: we only should unsubscribe for submissions that belong to the given exerciseId
         Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
         this.resultSubscriptions = {};
         Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
         this.resultTimerSubscriptions = {};
         this.submissionTopicsSubscribed.forEach((topic, _) => this.websocketService.unsubscribe(topic));
-        this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId));
+        this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();
         this.submissionSubjects = {};
-        this.exerciseBuildStateSubjects.delete(exerciseId);
+        this.exerciseBuildStateSubjects.delete(exercise.id);
     }
 
     /**
@@ -548,7 +550,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId
      */
     public unsubscribeForLatestSubmissionOfParticipation(participationId: number) {
-        if (!this.submissionTopicsSubscribed.get(participationId)) {
+        if (this.submissionTopicsSubscribed.get(participationId)) {
             const newSubmissionTopic = this.SUBMISSION_TEMPLATE_TOPIC.replace('%participationId%', participationId.toString());
             this.websocketService.unsubscribe(newSubmissionTopic);
             this.resultTimerSubjects.delete(participationId);

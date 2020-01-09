@@ -75,7 +75,7 @@ export class IdeBuildAndTestService {
                     } else {
                         this.forwardBuildLogs(participationId);
                     }
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId);
+                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise);
                 }),
             )
             .subscribe();

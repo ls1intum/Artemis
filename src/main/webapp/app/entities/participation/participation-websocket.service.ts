@@ -7,6 +7,8 @@ import { Exercise } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import * as moment from 'moment';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';
@@ -16,7 +18,7 @@ export interface IParticipationWebsocketService {
     getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
     subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result | null>;
-    unsubscribeForLatestResultOfParticipation: (participationId: number) => void;
+    unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -196,10 +198,20 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     /**
      * Unsubscribe from the result
      * @param participationId
+     * @param exercise The exercise to which the participationId belongs to. Needed for deciding whether to unsubscribe from the websocket
      */
-    public unsubscribeForLatestResultOfParticipation(participationId: number): void {
-        const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
-        this.jhiWebsocketService.unsubscribe(participationResultTopic);
-        this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);
+    public unsubscribeForLatestResultOfParticipation(participationId: number, exercise: Exercise): void {
+        // Only unsubscribe from websocket, if the exercise is not active any more
+        let isInactiveProgrammingExercise = false;
+        if (exercise instanceof ProgrammingExercise) {
+            const programmingExercise = exercise as ProgrammingExercise;
+            isInactiveProgrammingExercise =
+                !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment());
+        }
+        if (isInactiveProgrammingExercise || (exercise.dueDate && moment(exercise.dueDate).isBefore(moment()))) {
+            const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
+            this.jhiWebsocketService.unsubscribe(participationResultTopic);
+            this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);
+        }
     }
 }
