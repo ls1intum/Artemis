@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { SinonStub, stub } from 'sinon';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';

@@ -12,7 +12,6 @@ import {
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
-    ProgrammingExerciseService,
     ProgrammingExerciseTestCaseService,
     ProgrammingExerciseUpdateComponent,
 } from './';
@@ -86,6 +85,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseImportComponent,
     ],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
-    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
+    providers: [ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
 })
 export class ArtemisProgrammingExerciseModule {}

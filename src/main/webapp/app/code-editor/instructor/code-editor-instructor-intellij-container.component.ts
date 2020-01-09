@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
 import { ParticipationService } from 'app/entities/participation';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { CodeEditorFileService, CodeEditorSessionService, DomainService } from 'app/code-editor/service';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';

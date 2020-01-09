@@ -11,7 +11,7 @@ import {
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { CodeEditorFileService, CodeEditorSessionService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';

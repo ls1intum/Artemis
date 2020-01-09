@@ -38,7 +38,6 @@ import {
 import { Result, ResultService } from 'app/entities/result';
 import {
     ParticipationService,
-    ParticipationWebsocketService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
@@ -52,6 +51,9 @@ import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-pr
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { CourseExerciseService } from 'app/entities/course/course.service';
+import { MockCourseExerciseService } from '../../mocks/mock-course-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -109,6 +111,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
