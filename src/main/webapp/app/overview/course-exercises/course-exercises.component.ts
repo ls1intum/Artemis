@@ -125,7 +125,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     /**
      * Filters all displayed exercises by applying the selected activeFilters
      * @param filters The filters which should be applied
-     * @param active Should the activeFilters be active or inactive
      */
     toggleFilters(filters: ExerciseFilter[]) {
         filters.forEach(filter => (this.activeFilters.has(filter) ? this.activeFilters.delete(filter) : this.activeFilters.add(filter)));
