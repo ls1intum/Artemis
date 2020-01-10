@@ -5,7 +5,8 @@ import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';

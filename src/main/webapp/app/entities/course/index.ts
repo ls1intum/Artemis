@@ -1,5 +1,4 @@
 export * from './course.model';
-export * from './course.service';
 export * from './course-update.component';
 export * from './course-detail.component';
 export * from './course.component';
