@@ -248,7 +248,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (this.isRight()) {
             sideOffset = width + left > window.innerWidth;
         } else if (this.isLeft()) {
-            sideOffset = left - width < window.innerWidth;
+            sideOffset = left - width < window.screenLeft;
         }
 
         if (this.isBottom()) {
