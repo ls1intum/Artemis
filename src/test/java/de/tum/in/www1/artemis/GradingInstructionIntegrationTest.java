@@ -64,7 +64,7 @@ public class GradingInstructionIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(0, 10, 1);
+        database.addUsers(1, 2, 1);
         database.addCourseWithOneTextExercise();
         long courseID = courseRepository.findAllActive().get(0).getId();
         exercise = exerciseRepository.findByCourseId(courseID).get(0);
@@ -79,6 +79,16 @@ public class GradingInstructionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void createGradingInstruction_asTutor_forbidden() throws Exception {
+        while (iterator.hasNext()) {
+            GradingInstruction gradingInstruction = iterator.next();
+            request.post("/api/grading-instructions", gradingInstruction, HttpStatus.FORBIDDEN);
+        }
+        assertThat(gradingInstructionRepository.findAll().isEmpty()).isTrue();
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createGradingInstruction() throws Exception {
         while (iterator.hasNext()) {
@@ -86,8 +96,9 @@ public class GradingInstructionIntegrationTest {
             gradingInstruction = request.postWithResponseBody("/api/grading-instructions", gradingInstruction, GradingInstruction.class);
             assertThat(gradingInstruction).isNotNull();
             assertThat(gradingInstruction.getId()).isNotNull();
+            assertThat(gradingInstruction.getInstructionDescription()).isNotNull();
         }
-
+        assertThat(gradingInstructionSet.size()).isEqualTo(2);
     }
 
     @Test
@@ -102,8 +113,20 @@ public class GradingInstructionIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void deleteGradingInstruction_asTutor_forbidden() throws Exception {
+        while (iterator.hasNext()) {
+            GradingInstruction gradingInstruction = iterator.next();
+            GradingInstruction savedGradingInstruction = gradingInstructionRepository.save(gradingInstruction);
+            request.delete("/api/grading-instructions/" + savedGradingInstruction.getId(), HttpStatus.FORBIDDEN);
+        }
+        assertThat(gradingInstructionRepository.findAll().isEmpty()).isFalse();
+        assertThat(gradingInstructionRepository.findAll().size()).isEqualTo(2);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
-    public void getAllGradingInstructionsOfExerciseAsStudent() throws Exception {
+    public void getAllGradingInstructionsOfExercise_asStudent_forbidden() throws Exception {
         while (iterator.hasNext()) {
             GradingInstruction gradingInstruction = iterator.next();
             gradingInstructionRepository.save(gradingInstruction);
@@ -111,4 +134,42 @@ public class GradingInstructionIntegrationTest {
         request.getList("/api/exercises/" + exercise.getId() + "/grading-instructions", HttpStatus.FORBIDDEN, GradingInstruction.class);
     }
 
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void getAllGradingInstructionsOfExercise() throws Exception {
+        while (iterator.hasNext()) {
+            GradingInstruction gradingInstruction = iterator.next();
+            gradingInstructionRepository.save(gradingInstruction);
+        }
+        request.getList("/api/exercises/" + exercise.getId() + "/grading-instructions", HttpStatus.OK, GradingInstruction.class);
+        assertThat(gradingInstructionRepository.findAll().isEmpty()).isFalse();
+        assertThat(gradingInstructionRepository.findAll().size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateGradingInstruction() throws Exception {
+        while (iterator.hasNext()) {
+            GradingInstruction gradingInstruction = iterator.next();
+            gradingInstructionRepository.save(gradingInstruction);
+            gradingInstruction = request.putWithResponseBody("/api/grading-instructions", gradingInstruction, GradingInstruction.class, HttpStatus.OK);
+            assertThat(gradingInstruction).isNotNull();
+            assertThat(gradingInstruction.getId()).isNotNull();
+            assertThat(gradingInstruction.getInstructionDescription()).isNotNull();
+        }
+        assertThat(gradingInstructionSet.size()).isEqualTo(2);
+        assertThat(gradingInstructionRepository.findAll().isEmpty()).isFalse();
+        assertThat(gradingInstructionRepository.findAll().size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void updateGradingInstruction_asTutor_forbidden() throws Exception {
+        while (iterator.hasNext()) {
+            GradingInstruction gradingInstruction = iterator.next();
+            gradingInstructionRepository.save(gradingInstruction);
+            request.putWithResponseBody("/api/grading-instructions", gradingInstruction, GradingInstruction.class, HttpStatus.FORBIDDEN);
+        }
+        assertThat(gradingInstructionRepository.findAll().size()).isEqualTo(2);
+    }
 }
