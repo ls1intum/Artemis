@@ -48,7 +48,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Long countByGroupsIsContaining(Set<String> groups);
 
     @EntityGraph(attributePaths = { "groups" })
-    List<User> findAllByGroups(String group);
+    @Query("select user from User user where :#{#groupName} member user.groups")
+    List<User> findAllInGroup(String groupName);
 
     @EntityGraph(attributePaths = { "groups" })
     @Query("select user from User user")
@@ -60,5 +61,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member user.groups and user not in :#{#ignoredUsers}")
-    List<User> findAllByGroupsContainingAndNotIn(String groupName, Set<User> ignoredUsers);
+    List<User> findAllInGroupContainingAndNotIn(String groupName, Set<User> ignoredUsers);
 }

@@ -526,7 +526,7 @@ public class UserService {
      * @return list of tutors for given course
      */
     public List<User> getTutors(Course course) {
-        return userRepository.findAllByGroups(course.getTeachingAssistantGroupName());
+        return userRepository.findAllInGroup(course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -536,7 +536,7 @@ public class UserService {
      * @return A list of all users that have the role of instructor in the course
      */
     public List<User> getInstructors(Course course) {
-        return userRepository.findAllByGroups(course.getInstructorGroupName());
+        return userRepository.findAllInGroup(course.getInstructorGroupName());
     }
 
     /**
@@ -565,9 +565,9 @@ public class UserService {
     public List<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
         // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists
         if (!excludedUsers.isEmpty()) {
-            return userRepository.findAllByGroupsContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
+            return userRepository.findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
         }
 
-        return userRepository.findAllByGroups(groupName);
+        return userRepository.findAllInGroup(groupName);
     }
 }

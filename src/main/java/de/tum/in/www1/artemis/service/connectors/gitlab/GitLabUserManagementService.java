@@ -4,7 +4,10 @@ import static org.gitlab4j.api.models.AccessLevel.GUEST;
 import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
 
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -122,7 +125,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
         final var processedUsers = new HashSet<User>();
 
-        final var oldInstructors = userRepository.findAllByGroups(oldInstructorGroup);
+        final var oldInstructors = userRepository.findAllInGroup(oldInstructorGroup);
         updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
         processedUsers.addAll(oldInstructors);
 
@@ -180,6 +183,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 // other group is just below the current one, e.g. if the other group is TA and the current group is instructor
                 continue;
             }
+
             exercises.forEach(exercise -> {
                 try {
                     if (newAccessLevel.isPresent()) {
