@@ -28,9 +28,10 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
-import { InitializationState, StudentParticipation, ParticipationService } from 'app/entities/participation';
+import { InitializationState, StudentParticipation } from 'app/entities/participation';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
