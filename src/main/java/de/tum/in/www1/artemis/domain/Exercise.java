@@ -665,13 +665,31 @@ public abstract class Exercise implements Serializable {
         }
 
         if (submissionsWithRatedResult.size() > 0) {
-            return submissionsWithRatedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            if (submissionsWithRatedResult.size() == 1) {
+                return submissionsWithRatedResult.get(0);
+            }
+            else { // this means with have more than one submission, we want the one with the last submission date
+                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            }
         }
         else if (submissionsWithUnratedResult.size() > 0) {
-            return submissionsWithUnratedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            if (submissionsWithUnratedResult.size() == 1) {
+                return submissionsWithUnratedResult.get(0);
+            }
+            else { // this means with have more than one submission, we want the one with the last submission date
+                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            }
         }
         else if (submissionsWithoutResult.size() > 0) {
-            return submissionsWithoutResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            if (submissionsWithoutResult.size() == 1) {
+                return submissionsWithoutResult.get(0);
+            }
+            else { // this means with have more than one submission, we want the one with the last submission date
+                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            }
         }
         return null;
     }

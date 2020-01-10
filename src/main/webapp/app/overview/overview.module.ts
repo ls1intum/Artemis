@@ -15,7 +15,6 @@ import {
     CourseLectureDetailsComponent,
     CourseLecturesComponent,
     CourseOverviewComponent,
-    CourseScoreCalculationService,
     CourseStatisticsComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,
@@ -69,6 +68,5 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     ],
     entryComponents: [],
     exports: [ExerciseActionButtonComponent],
-    providers: [CourseScoreCalculationService],
 })
 export class ArtemisOverviewModule {}

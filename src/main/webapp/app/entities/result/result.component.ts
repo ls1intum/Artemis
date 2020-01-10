@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { getExercise, isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz, Participation, ParticipationService } from 'app/entities/participation';
+import { getExercise, isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz, Participation } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';

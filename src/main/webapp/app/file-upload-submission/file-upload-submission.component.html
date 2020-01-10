@@ -9,7 +9,9 @@
         </div>
 
         <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-result [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-result></div>
+            <div *ngIf="participation">
+                <jhi-updating-result [exercise]="fileUploadExercise" [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result>
+            </div>
             <br />
             <jhi-button
                 [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"

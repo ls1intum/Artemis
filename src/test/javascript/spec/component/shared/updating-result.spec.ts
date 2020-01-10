@@ -16,7 +16,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { Result, ResultComponent, UpdatingResultComponent } from 'app/entities/result';
 import { ArtemisSharedModule } from 'app/shared';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
