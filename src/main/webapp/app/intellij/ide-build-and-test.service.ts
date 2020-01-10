@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingExercise } from '../entities/programming-exercise';
-import { ProgrammingSubmissionService } from '../programming-submission';
-import { Participation, ParticipationWebsocketService } from '../entities/participation';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { Participation } from '../entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from '../entities/result';
 import { filter, first, map, tap } from 'rxjs/operators';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
@@ -75,7 +76,7 @@ export class IdeBuildAndTestService {
                     } else {
                         this.forwardBuildLogs(participationId);
                     }
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId);
+                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise);
                 }),
             )
             .subscribe();
