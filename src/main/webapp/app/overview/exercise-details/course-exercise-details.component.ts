@@ -89,7 +89,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
             if (this.studentParticipation) {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!!);
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!);
             }
         }
     }
