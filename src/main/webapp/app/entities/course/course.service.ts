@@ -295,7 +295,6 @@ export class CourseExerciseService {
                 exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
                 exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
                 exercise.studentParticipations = [participation];
-                return participation;
             }
             this.participationWebsocketService.addParticipation(participation);
         }
