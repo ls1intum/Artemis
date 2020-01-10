@@ -18,6 +18,7 @@ import { LectureService } from 'app/entities/lecture/lecture.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -203,7 +204,7 @@ export class CourseService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
     // exercise specific calls
 
@@ -294,8 +295,8 @@ export class CourseExerciseService {
                 exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
                 exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
                 exercise.studentParticipations = [participation];
-                return participation;
             }
+            this.participationWebsocketService.addParticipation(participation);
         }
         return participation;
     }

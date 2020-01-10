@@ -7,7 +7,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TutorGroupService } from './tutor-group.service';
 import { User } from 'app/core';
 import { UserService } from 'app/core/user/user.service';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { TutorGroup } from 'app/entities/tutor-group';
 
 @Component({
