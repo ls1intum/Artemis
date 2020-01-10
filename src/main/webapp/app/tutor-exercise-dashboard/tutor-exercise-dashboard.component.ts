@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService } from '../entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { User } from '../core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

@@ -2,20 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared';
-import {
-    ProgrammingExerciseComponent,
-    ProgrammingExerciseDetailComponent,
-    ProgrammingExerciseDialogComponent,
-    ProgrammingExerciseImportComponent,
-    ProgrammingExerciseParticipationService,
-    ProgrammingExercisePopupComponent,
-    programmingExercisePopupRoute,
-    ProgrammingExercisePopupService,
-    programmingExerciseRoute,
-    ProgrammingExerciseService,
-    ProgrammingExerciseTestCaseService,
-    ProgrammingExerciseUpdateComponent,
-} from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
@@ -38,6 +24,12 @@ import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
+import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
+import { ProgrammingExerciseDialogComponent, ProgrammingExercisePopupComponent } from 'app/entities/programming-exercise/programming-exercise-dialog.component';
+import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
+import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exercise/programming-exercise-detail.component';
+import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { programmingExercisePopupRoute, programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -86,6 +78,5 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseImportComponent,
     ],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
-    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
 })
 export class ArtemisProgrammingExerciseModule {}

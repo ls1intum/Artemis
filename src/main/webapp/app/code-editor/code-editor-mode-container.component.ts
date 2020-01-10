@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import Interactable from '@interactjs/core/Interactable';
 
 import { ComponentCanDeactivate } from 'app/shared';
-import { ParticipationService } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { AnnotationArray } from 'app/entities/ace-editor';
 import { JhiAlertService } from 'ng-jhipster';

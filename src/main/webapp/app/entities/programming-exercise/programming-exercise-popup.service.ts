@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { DatePipe } from '@angular/common';
-import { CourseService } from '../course';
+import { CourseService } from 'app/entities/course/course.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePopupService {

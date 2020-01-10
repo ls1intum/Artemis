@@ -346,6 +346,7 @@ public class QuizScheduleService {
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         var user = participation.getStudent().getLogin();
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
+        // TODO: use a proper result here
         messagingTemplate.convertAndSendToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
     }
 

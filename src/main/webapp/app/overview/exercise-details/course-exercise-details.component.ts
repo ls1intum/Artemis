@@ -2,13 +2,15 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, participationStatus } from 'app/entities/exercise';
-import { CourseService } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { User } from 'app/core';
-import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
@@ -87,7 +89,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
             if (this.studentParticipation) {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id);
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!);
             }
         }
     }
@@ -101,17 +103,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         // * the student questions
         // * the hints
         // --> The retrieved data then needs to be passed correctly into the sub components
-        if (this.studentParticipation) {
-            // we only need to update the exercise itself, because we have already have the latest participation
-            this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.handleNewExercise(exerciseResponse.body!);
-            });
-        } else {
-            // we do not have a participation, so we need to load it with the exercise
-            this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.handleNewExercise(exerciseResponse.body!);
-            });
-        }
+        this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.handleNewExercise(exerciseResponse.body!);
+        });
     }
 
     handleNewExercise(newExercise: Exercise) {
@@ -197,8 +191,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
                 }
             }
-        } else {
-            this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
