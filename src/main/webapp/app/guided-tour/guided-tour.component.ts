@@ -118,6 +118,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             if (!this.currentTourStep) {
                 return;
             }
+
+            if (this.currentTourStep.orientation) {
+                this.orientation = this.currentTourStep.orientation;
+            }
+
             if (this.hasUserPermissionForCurrentTourStep()) {
                 this.scrollToAndSetElement();
                 this.handleTransition();
@@ -173,7 +178,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Scroll to and set highlighted element
      */
     private scrollToAndSetElement(): void {
-        this.orientation = this.currentTourStep.orientation;
         this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), false);
         this.observeSelectedRectPosition();
 
@@ -200,7 +204,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             // Set timeout to allow things to render in order to update the orientation if necessary
             setTimeout(() => {
                 if (!this.isTourOnScreen()) {
-                    this.updateOrientation();
+                    this.flipOrientation();
                 }
             }, 300);
         }, 0);
@@ -274,9 +278,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    private updateOrientation(): void {
+    private flipOrientation(): void {
         if (this.isLeft()) {
-            switch (this.orientation) {
+            switch (this.currentTourStep.orientation) {
                 case Orientation.LEFT: {
                     this.orientation = Orientation.RIGHT;
                     break;
@@ -291,7 +295,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 }
             }
         } else if (this.isRight()) {
-            switch (this.orientation) {
+            switch (this.currentTourStep.orientation) {
                 case Orientation.RIGHT: {
                     this.orientation = Orientation.LEFT;
                     break;
