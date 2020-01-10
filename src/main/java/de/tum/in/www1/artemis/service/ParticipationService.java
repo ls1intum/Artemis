@@ -184,7 +184,6 @@ public class ParticipationService {
     public StudentParticipation startExercise(Exercise exercise, User user) {
         // common for all exercises
         // Check if participation already exists
-        var username = user.getLogin();
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
