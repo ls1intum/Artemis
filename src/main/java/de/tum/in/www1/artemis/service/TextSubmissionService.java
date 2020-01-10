@@ -100,9 +100,6 @@ public class TextSubmissionService extends SubmissionService {
 
         if (textSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
-
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
         }
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {

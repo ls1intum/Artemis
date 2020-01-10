@@ -11,16 +11,17 @@ import { SinonStub, spy, stub } from 'sinon';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
-import { Participation, ParticipationWebsocketService } from 'src/main/webapp/app/entities/participation';
+import { Participation } from 'src/main/webapp/app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ArtemisSharedModule } from 'src/main/webapp/app/shared';
 import { Result, ResultDetailComponent, ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
+import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-exercise';
 import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
-import { MockExerciseHintService, MockParticipationWebsocketService } from '../../mocks';
+import { MockExerciseHintService, MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
@@ -32,6 +33,8 @@ import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionTaskStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { triggerChanges } from '../../utils/general.utils';
+import { LocalStorageService } from 'ngx-webstorage';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -63,6 +66,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 ProgrammingExerciseTaskExtensionWrapper,
                 ProgrammingExercisePlantUmlExtensionWrapper,
                 ProgrammingExerciseInstructionService,
+                { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },

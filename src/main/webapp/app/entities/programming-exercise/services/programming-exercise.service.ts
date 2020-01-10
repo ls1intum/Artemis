@@ -74,7 +74,7 @@ export class ProgrammingExerciseService {
     updateProblemStatement(programmingExerciseId: number, problemStatement: string, req?: any) {
         const options = createRequestOption(req);
         return this.http
-            .patch<ProgrammingExercise>(`${this.resourceUrl}-problem`, { exerciseId: programmingExerciseId, problemStatement }, { params: options, observe: 'response' })
+            .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, problemStatement, { params: options, observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 

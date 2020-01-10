@@ -1,7 +1,8 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -28,6 +29,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -92,6 +95,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Autowired
     ResultRepository resultRepository;
 
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -100,14 +106,17 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private List<Long> participationIds;
 
+    private ProgrammingExercise exercise;
+
     @BeforeEach
-    void reset() throws Exception {
+    void setUp() {
         doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
+        bambooRequestMockProvider.enableMockingOfRequests();
 
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
@@ -122,6 +131,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        bambooRequestMockProvider.reset();
     }
 
     /**
@@ -342,16 +352,17 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
-        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
-        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
+        URL repositoryUrl = (programmingParticipation).getRepositoryUrlAsUrl();
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
         triggerBuild(participationType, 0, HttpStatus.OK);
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(1);
         ProgrammingSubmission submission = submissions.get(0);
-        assertThat(submission.getCommitHash()).isEqualTo(objectId.getName());
+        assertThat(submission.getCommitHash()).isEqualTo(COMMIT_HASH_OBJECT_ID.getName());
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
 
@@ -381,8 +392,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         // Set buildAndTestAfterDueDate in future.
         setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
         Long participationId = getParticipationIdByType(participationType, 0);
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
-        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
+        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
+        ObjectId objectId = COMMIT_HASH_OBJECT_ID;
         doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
         triggerInstructorBuild(participationType, 0, HttpStatus.OK);
 
@@ -417,6 +430,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
@@ -516,7 +531,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
      */
     private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationNumber);
-        postResult("TEST201904BPROGRAMMINGEXERCISE6-" + buildPlanStudentId, expectedStatus, additionalCommit);
+        postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
     @SuppressWarnings("unchecked")
