@@ -211,10 +211,6 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> getCompassStatisticForExercise(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAdmin()) {
-            throw new AccessForbiddenException("Insufficient permission for exercise: " + modelingExercise);
-        }
-
         compassService.printStatistic(modelingExercise.getId());
 
         // TODO: In the future, this endpoint should return the statistics to the client as well.
