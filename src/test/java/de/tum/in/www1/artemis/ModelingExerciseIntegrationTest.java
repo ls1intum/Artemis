@@ -27,6 +27,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
 
     @BeforeEach
     public void initTestCase() throws Exception {
+        database.addUsers(1, 1, 1);
         database.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
     }
@@ -58,5 +59,18 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(roles = "ADMIN")
     public void getCompassStatistic_asAdmin_Success() throws Exception {
         request.getNullable("/api/exercises/" + classExercise.getId() + "/compass-statistic", HttpStatus.OK, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteModelingExercise_asInstructor() throws Exception {
+        request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteModelingExercise_asTutor_Forbidden() throws Exception {
+        request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN);
     }
 }
