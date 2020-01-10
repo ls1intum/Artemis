@@ -62,6 +62,18 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetModelingExercise_asStudent() throws Exception {
+        request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetModelingExercise_asTA() throws Exception {
+        request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteModelingExercise_asInstructor() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
