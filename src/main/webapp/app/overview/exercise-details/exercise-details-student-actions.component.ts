@@ -3,7 +3,7 @@ import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, 
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';

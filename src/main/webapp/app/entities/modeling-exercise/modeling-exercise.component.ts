@@ -7,7 +7,7 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
-import { CourseService } from '../course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/utils/global.utils';
