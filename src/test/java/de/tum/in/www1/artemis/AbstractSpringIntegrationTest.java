@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis;
 
+import de.tum.in.www1.artemis.service.CourseService;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.mock.mockito.SpyBeans;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -42,4 +44,7 @@ public abstract class AbstractSpringIntegrationTest {
 
     @SpyBean
     protected WebsocketMessagingService websocketMessagingService;
+
+    @SpyBean
+    protected CourseService courseService;
 }
