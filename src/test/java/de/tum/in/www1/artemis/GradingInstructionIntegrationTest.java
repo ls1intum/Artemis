@@ -69,7 +69,7 @@ public class GradingInstructionIntegrationTest {
         long courseID = courseRepository.findAllActive().get(0).getId();
         exercise = exerciseRepository.findByCourseId(courseID).get(0);
 
-        gradingInstructionSet = database.addGradingInstructionsToExercise(exercise).getStructuredGradingInstructions();
+        gradingInstructionSet = database.addGradingInstructionsToExercise(exercise);
         iterator = gradingInstructionSet.iterator();
     }
 

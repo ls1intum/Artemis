@@ -432,14 +432,14 @@ public class DatabaseUtilService {
         return result;
     }
 
-    public Exercise addGradingInstructionsToExercise(Exercise exercise) {
+    public Set<GradingInstruction> addGradingInstructionsToExercise(Exercise exercise) {
         GradingInstruction gradingInstruction1 = new GradingInstruction();
         gradingInstruction1.instructionDescription("(1)just for testing purpose").setExercise(exercise);
         exercise.addStructuredGradingInstructions(gradingInstruction1);
         GradingInstruction gradingInstruction2 = new GradingInstruction();
         gradingInstruction2.instructionDescription("(2)just for testing purpose").setExercise(exercise);
         exercise.addStructuredGradingInstructions(gradingInstruction2);
-        return exercise;
+        return exercise.getStructuredGradingInstructions();
     }
 
     public void addCourseWithOneModelingExercise() {
