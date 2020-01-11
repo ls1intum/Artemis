@@ -12,6 +12,6 @@ export class SubmissionResultStatusComponent {
     @Input() exercise: Exercise;
     @Input() studentParticipation: StudentParticipation | null;
     @Input() updatingResultClass: string;
-    @Input() showGradedBadge = true;
+    @Input() showGradedBadge = false;
     @Input() short = false;
 }

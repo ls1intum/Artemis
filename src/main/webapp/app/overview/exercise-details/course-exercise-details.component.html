@@ -12,7 +12,8 @@
         <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult !== null">
         </jhi-exercise-details-student-actions>
-        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2"></jhi-submission-result-status>
+        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">
+        </jhi-submission-result-status>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
