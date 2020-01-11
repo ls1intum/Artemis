@@ -33,7 +33,7 @@ public class GradingInstructionResource {
     private static final String ENTITY_NAME = "gradingInstruction";
 
     @Value("${jhipster.clientApp.name}")
-    private String applicationName;
+    private String APPLICATION_NAME;
 
     private final GradingInstructionService gradingInstructionService;
 
@@ -80,14 +80,14 @@ public class GradingInstructionResource {
         log.debug("REST request to save GradingInstruction : {}", gradingInstruction);
         if (gradingInstruction.getId() != null) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new gradingInstruction cannot already have an ID")).body(null);
+                    .headers(HeaderUtil.createFailureAlert(APPLICATION_NAME, true, ENTITY_NAME, "idexists", "A new gradingInstruction cannot already have an ID")).body(null);
         }
 
         // fetch exercise from database to make sure client didn't change groups
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (exercise == null) {
             return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
+                    HeaderUtil.createFailureAlert(APPLICATION_NAME, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
                     .body(null);
         }
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
@@ -95,7 +95,7 @@ public class GradingInstructionResource {
         }
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
         return ResponseEntity.created(new URI("/api/grading-instructions/" + gradingInstruction.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
+                .headers(HeaderUtil.createEntityCreationAlert(APPLICATION_NAME, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
 
     }
 
@@ -119,7 +119,7 @@ public class GradingInstructionResource {
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
         if (exercise == null) {
             return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
+                    HeaderUtil.createFailureAlert(APPLICATION_NAME, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
                     .body(null);
         }
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
@@ -127,7 +127,7 @@ public class GradingInstructionResource {
         }
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(APPLICATION_NAME, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
     }
 
     /**
@@ -150,6 +150,6 @@ public class GradingInstructionResource {
             gradingInstructionService.delete(gradingInstruction);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, gradingInstructionId.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(APPLICATION_NAME, true, ENTITY_NAME, gradingInstructionId.toString())).build();
     }
 }
