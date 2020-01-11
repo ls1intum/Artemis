@@ -12,6 +12,10 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
+import java.util.List;
+
+import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
+
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
@@ -63,7 +67,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
 
     @Test
     @WithMockUser(username = "user1", roles = "USER")
-    public void testGetModelingExercise_asStudent() throws Exception {
+    public void testGetModelingExercise_asStudent_Forbidden() throws Exception {
         request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
     }
 
@@ -71,6 +75,23 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetModelingExercise_asTA() throws Exception {
         request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetModelingExerciseForCourse_asTA() throws Exception {
+        request.get("/api/courses/" + classExercise.getCourse().getId() + "/modeling-exercises", HttpStatus.OK, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetModelingExerciseStatistics_asTA() throws Exception {
+        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
+        request.get("/api/modeling-exercises/" + classExercise.getId() + 1 + "/statistics", HttpStatus.NOT_FOUND, String.class);
+
+        classExercise.setDiagramType(CommunicationDiagram);
+        exerciseRepo.save(classExercise);
+        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
