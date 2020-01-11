@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.SingleUserNotification;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class NotificationResourceIntegrationTest {
+public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationTest {
 
     private Notification notification;
 
@@ -30,7 +30,7 @@ public class NotificationResourceIntegrationTest {
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR")
-    public void testCreateNotification_as() throws Exception {
+    public void testCreateNotification_asInstructor() throws Exception {
         request.post("/api/notifications", notification, HttpStatus.CREATED);
     }
 }
