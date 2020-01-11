@@ -165,7 +165,7 @@ public class TextAssessmentUtilityService {
      * @param textCluster text textCluster for which the average score should be computed
      * @return {Optional<Double>} Optional which contains the average scores or empty if there are none
      */
-    public Optional<Double> calculateAverage(TextCluster textCluster) {
+    public OptionalDouble calculateAverage(TextCluster textCluster) {
         if (textCluster != null) {
 
             final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
@@ -177,10 +177,10 @@ public class TextAssessmentUtilityService {
                 return 0.0;
             }).sum();
 
-            return Optional.of(scoringSum / (double) allBlocksInCluster.size());
+            return OptionalDouble.of(scoringSum / (double) allBlocksInCluster.size());
         }
 
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 
     /**
@@ -214,7 +214,7 @@ public class TextAssessmentUtilityService {
             Arrays.sort(textBlockArray);
 
             if (textBlockArray.length > 0) {
-                return OptionalDouble.of(textBlockArray[textBlockArray.length / 2]);
+                return OptionalDouble.of(textBlockArray[(textBlockArray.length / 2) - 1]);
             }
         }
         catch (NoSuchElementException exception) {

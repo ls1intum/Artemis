@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 import java.util.*;
 
@@ -33,11 +35,10 @@ public class TextAssessmentUtilitiesTest {
 
     private static TextCluster textCluster;
 
-    private static Map<String, Feedback> feedback;
+    private static Map<String, Feedback> mockFeedback = new HashMap<>();
 
     @BeforeAll
     public static void init() {
-        Map<String, Feedback> mockFeedback = new HashMap<>();
         initializeTextClusters(10);
         // Generate 5 feedback items with a score of 2.0
         for (int i = 0; i < 5; i++) {
@@ -60,7 +61,6 @@ public class TextAssessmentUtilitiesTest {
             feedback.setId((long) i);
             mockFeedback.put("" + i, feedback);
         }
-        feedback = mockFeedback;
     }
 
     @Test
@@ -68,8 +68,27 @@ public class TextAssessmentUtilitiesTest {
         TextBlock textBlock = new TextBlock();
         textBlock.setCluster(textCluster);
         textBlock.setId("1");
-        Mockito.when(feedbackService.getFeedbackForTextExerciseInCluster(textCluster)).thenReturn(feedback);
-        assertThat(textAssessmentUtilityService.getCreditsOfTextBlock(textBlock).equals(OptionalDouble.of(feedback.get("1").getCredits())));
+        Mockito.when(feedbackService.getFeedbackForTextExerciseInCluster(textCluster)).thenReturn(mockFeedback);
+        assertThat(textAssessmentUtilityService.getCreditsOfTextBlock(textBlock), is(OptionalDouble.of(mockFeedback.get("1").getCredits())));
+    }
+
+    @Test
+    public void validateClusterScores() {
+        Mockito.when(feedbackService.getFeedbackForTextExerciseInCluster(textCluster)).thenReturn(mockFeedback);
+        assertThat(textAssessmentUtilityService.getMaxScore(textCluster), is(OptionalDouble.of(2.0)));
+        assertThat(textAssessmentUtilityService.getMinimumScore(textCluster), is(OptionalDouble.of(0.0)));
+        assertThat(textAssessmentUtilityService.getMedianScore(textCluster), is(OptionalDouble.of(1.0)));
+        assertThat(textAssessmentUtilityService.calculateAverage(textCluster), is(OptionalDouble.of(1.3)));
+    }
+
+    @Test
+    public void validateCoveragePercentage() {
+        Mockito.when(feedbackService.getFeedbackForTextExerciseInCluster(textCluster)).thenReturn(mockFeedback);
+        TextBlock textBlock = new TextBlock();
+        textBlock.setCluster(textCluster);
+        textBlock.setId("1");
+        assertThat(textAssessmentUtilityService.calculateScoreCoveragePercentage(textBlock), is(OptionalDouble.of(0.5)));
+        assertThat(textAssessmentUtilityService.calculateCoveragePercentage(textCluster), is(OptionalDouble.of(1.0)));
     }
 
     private static ArrayList<TextBlock> generateTextBlocks(int count) {
