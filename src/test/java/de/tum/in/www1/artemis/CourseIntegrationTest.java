@@ -50,7 +50,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 5, 1);
     }
 
     @AfterEach
@@ -211,7 +211,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
             long numberOfSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
             assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
-            assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+            assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
                     isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);

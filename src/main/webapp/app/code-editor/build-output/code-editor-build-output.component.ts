@@ -1,4 +1,5 @@
-import { hasParticipationChanged, Participation, ParticipationWebsocketService } from '../../entities/participation';
+import { hasParticipationChanged, Participation } from '../../entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';

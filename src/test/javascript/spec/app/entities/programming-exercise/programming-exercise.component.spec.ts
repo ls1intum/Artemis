@@ -6,7 +6,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ArtemisTestModule } from '../../../test.module';
 import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 describe('Component Tests', () => {
     describe('ProgrammingExercise Management Component', () => {

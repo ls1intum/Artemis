@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;

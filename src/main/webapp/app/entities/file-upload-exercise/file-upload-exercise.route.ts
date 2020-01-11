@@ -11,7 +11,8 @@ import { Injectable } from '@angular/core';
 import { filter, map } from 'rxjs/operators';
 import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
 import { FileUploadExerciseUpdateComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-update.component';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {

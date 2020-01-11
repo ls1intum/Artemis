@@ -1,21 +1,23 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.ProblemStatementUpdate;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 
 class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
 
@@ -46,10 +48,10 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
-        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())).thenReturn(true);
-        when(versionControlService.repositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl())).thenReturn(true);
-        when(continuousIntegrationService.buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId())).thenReturn(true);
-        when(versionControlService.repositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl())).thenReturn(true);
+        doReturn(true).when(continuousIntegrationService).buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId());
+        doReturn(true).when(versionControlService).repositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl());
+        doReturn(true).when(continuousIntegrationService).buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId());
+        doReturn(true).when(versionControlService).repositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl());
 
         ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
@@ -84,13 +86,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement() throws Exception {
-        String newProblem = "a new problem statement";
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
-        ProblemStatementUpdate problemStatementUpdate = new ProblemStatementUpdate();
-        problemStatementUpdate.setExerciseId(programmingExerciseId);
-        problemStatementUpdate.setProblemStatement(newProblem);
-        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody("/api/programming-exercises-problem", problemStatementUpdate, ProgrammingExercise.class,
-                HttpStatus.OK);
+        final var newProblem = "a new problem statement";
+        final var endpoint = "/api" + ProgrammingExerciseResource.Endpoints.PROBLEM.replace("{exerciseId}", programmingExerciseId + "");
+        ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
 

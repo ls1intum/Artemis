@@ -7,7 +7,8 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizQuestion } from '../quiz-question';
-import { Course, CourseService } from '../course';
+import { Course } from '../course';
+import { CourseService } from 'app/entities/course/course.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',

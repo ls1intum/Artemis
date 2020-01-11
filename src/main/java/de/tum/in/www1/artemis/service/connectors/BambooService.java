@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import com.appfire.bamboo.cli.BambooClient;
-import com.appfire.common.cli.Base;
 import com.appfire.common.cli.CliClient;
-import com.appfire.common.cli.Settings;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,8 +14,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -25,6 +21,7 @@ import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
@@ -34,9 +31,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -75,10 +70,12 @@ public class BambooService implements ContinuousIntegrationService {
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final BambooBuildPlanService bambooBuildPlanService;
     private final RestTemplate restTemplate;
+    private final BambooClient bambooClient;
 
     public BambooService(GitService gitService, ResultRepository resultRepository,
                          ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
-                         Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, RestTemplate restTemplate) {
+                         Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService,
+                         @Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooClient bambooClient) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -86,41 +83,12 @@ public class BambooService implements ContinuousIntegrationService {
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.restTemplate = restTemplate;
+        this.bambooClient = bambooClient;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, VcsUtil.getRepositorySlugFromUrl(repositoryURL), VcsUtil.getRepositorySlugFromUrl(testRepositoryURL));
-    }
-
-    private Base createBase() {
-        // we override the out stream to prevent unnecessary log statements in our log files
-        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-        var out = new PrintStream(outContent);
-        var settings = new Settings();
-        settings.setOut(out);
-        settings.setOverrideOut(out);
-        settings.setDebugOut(out);
-        settings.setErr(out);
-        return new Base(settings);
-    }
-
-    /**
-     * Create a BambooClient for communication with the Bamboo server.
-     *
-     * @return BambooClient instance for the Bamboo server that is defined in the environment yml files.
-     */
-    private BambooClient createBambooClient() {
-        final BambooClient bambooClient = new BambooClient(createBase());
-        //setup the Bamboo Client to use the correct username and password
-        String[] args = new String[]{
-            "-s", BAMBOO_SERVER_URL.toString(),
-            "--user", BAMBOO_USER,
-            "--password", BAMBOO_PASSWORD,
-        };
-
-        bambooClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
-        return bambooClient;
     }
 
     /**
@@ -142,12 +110,12 @@ public class BambooService implements ContinuousIntegrationService {
         String planProject = getProjectKeyFromBuildPlanId(buildPlanId);
         String planKey = participation.getBuildPlanId();
         updatePlanRepository(
-            planProject,
-            planKey,
-            ASSIGNMENT_REPO_NAME,
-            getProjectKeyFromUrl(repositoryUrl),
-            repositoryUrl.toString(),
-            Optional.empty()
+                planProject,
+                planKey,
+                ASSIGNMENT_REPO_NAME,
+                getProjectKeyFromUrl(repositoryUrl),
+                repositoryUrl.toString(),
+                Optional.empty()
         );
         enablePlan(planProject, planKey);
     }
@@ -205,10 +173,10 @@ public class BambooService implements ContinuousIntegrationService {
         HttpEntity<?> entity = new HttpEntity<>(headers);
         try {
             restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/queue/" + buildPlan,
-                HttpMethod.POST,
-                entity,
-                Map.class);
+                    BAMBOO_SERVER_URL + "/rest/api/latest/queue/" + buildPlan,
+                    HttpMethod.POST,
+                    entity,
+                    Map.class);
         } catch (RestClientException e) {
             log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
             throw new HttpException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());
@@ -239,7 +207,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.info("Delete project " + projectKey);
             //TODO: use Bamboo REST API: DELETE "/rest/api/latest/project/{projectKey}"
-            String message = createBambooClient().getProjectHelper().deleteProject(projectKey);
+            String message = bambooClient.getProjectHelper().deleteProject(projectKey);
             log.info("Delete project was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage());
@@ -298,7 +266,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.debug("Clone build plan " + sourcePlanKey + " to " + targetPlanKey);
             //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = createBambooClient().getPlanHelper().clonePlan(sourcePlanKey, targetPlanKey, cleanPlanName, "", targetProjectName, true);
+            String message = bambooClient.getPlanHelper().clonePlan(sourcePlanKey, targetPlanKey, cleanPlanName, "", targetProjectName, true);
             log.info("Clone build plan " + sourcePlanKey + " was successful: " + message);
         } catch (CliClient.ClientException clientException) {
             if (clientException.getMessage().contains("already exists")) {
@@ -342,7 +310,7 @@ public class BambooService implements ContinuousIntegrationService {
             final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
             if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
                 final var errorMessage = "Unable to give permissions to project " + projectKey + "; error body: " + response.getBody() +
-                    "; headers: " + response.getHeaders() + "; status code: " + response.getStatusCode();
+                        "; headers: " + response.getHeaders() + "; status code: " + response.getStatusCode();
                 log.error(errorMessage);
                 throw new BambooException(errorMessage);
             }
@@ -364,7 +332,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.debug("Enable build plan " + planKey);
             //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = createBambooClient().getPlanHelper().enablePlan(planKey, true);
+            String message = bambooClient.getPlanHelper().enablePlan(planKey, true);
             log.info("Enable build plan " + planKey + " was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
@@ -391,7 +359,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.info("Delete build plan " + planKey);
             //TODO use REST API DELETE "/rest/api/latest/clone/{projectKey}-{buildKey}"
-            String message = createBambooClient().getPlanHelper().deletePlan(planKey);
+            String message = bambooClient.getPlanHelper().deletePlan(planKey);
             log.info("Delete build plan was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage());
@@ -586,9 +554,9 @@ public class BambooService implements ContinuousIntegrationService {
                 List<Map<String, Object>> errors = (List<Map<String, Object>>) errorsMap.get("error");
 
                 final String errorMessageString = errors.stream()
-                    .map(error -> (String) error.get("message"))
-                    .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
-                    .reduce("", String::concat);
+                        .map(error -> (String) error.get("message"))
+                        .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
+                        .reduce("", String::concat);
 
                 createAutomaticFeedback(result, methodName, false, errorMessageString);
             }
@@ -611,10 +579,10 @@ public class BambooService implements ContinuousIntegrationService {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             // Splitting string at the first linebreak to only get the first line of the Exception
             return message.split("\\n", 2)[0]
-                //junit 4
-                .replace("java.lang.AssertionError: ", "")
-                //junit 5
-                .replace("org.opentest4j.AssertionFailedError: ", "");
+                    //junit 4
+                    .replace("java.lang.AssertionError: ", "")
+                    //junit 5
+                    .replace("org.opentest4j.AssertionFailedError: ", "");
         }
 
         return message;
@@ -656,7 +624,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs;
             final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise())
-                .getProgrammingLanguage();
+                    .getProgrammingLanguage();
 
             for (Map<String, Object> job : castedJobs) {
 
@@ -667,8 +635,8 @@ public class BambooService implements ContinuousIntegrationService {
 
                     List<String> errors = (List<String>) failedTest.get("errors");
                     final String errorMessageString = errors.stream()
-                        .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
-                        .reduce("", String::concat);
+                            .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
+                            .reduce("", String::concat);
 
                     log.debug("errorMSGString is {}", errorMessageString);
 
@@ -765,10 +733,10 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
-                HttpMethod.GET,
-                entity,
-                Map.class);
+                    BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
         } catch (Exception e) {
             log.error("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ": " + e.getMessage());
         }
@@ -803,8 +771,8 @@ public class BambooService implements ContinuousIntegrationService {
 
             //search for version control information
 //            if (response.getBody().containsKey("vcsRevisions")) {
-                //TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
-                // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
+            //TODO: in case we have multiple commits here, we should expose this to the calling method so that this can potentially match this.
+            // In the following example, the tests commit has is stored in vcsRevisionKey, but we might be interested in the assignment commit
 //                "vcsRevisionKey":"20253bd4c2783aa5314efeee98d3503e4d25e668",
 //                    "vcsRevisions":{
 //                    "size":2,
@@ -878,10 +846,10 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=250",
-                HttpMethod.GET,
-                entity,
-                Map.class);
+                    BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=250",
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
         } catch (Exception e) {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
@@ -904,12 +872,12 @@ public class BambooService implements ContinuousIntegrationService {
 
                 //filter unnecessary logs
                 if ((logString.startsWith("[INFO]") && !logString.contains("error")) ||
-                    logString.startsWith("[WARNING]") ||
-                    logString.startsWith("[ERROR] [Help 1]") ||
-                    logString.startsWith("[ERROR] For more information about the errors and possible solutions") ||
-                    logString.startsWith("[ERROR] Re-run Maven using") ||
-                    logString.startsWith("[ERROR] To see the full stack trace of the errors") ||
-                    logString.startsWith("[ERROR] -> [Help 1]")
+                        logString.startsWith("[WARNING]") ||
+                        logString.startsWith("[ERROR] [Help 1]") ||
+                        logString.startsWith("[ERROR] For more information about the errors and possible solutions") ||
+                        logString.startsWith("[ERROR] Re-run Maven using") ||
+                        logString.startsWith("[ERROR] To see the full stack trace of the errors") ||
+                        logString.startsWith("[ERROR] -> [Help 1]")
                 ) {
                     continue;
                 }
@@ -961,10 +929,10 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey,
-                HttpMethod.GET,
-                entity,
-                Map.class);
+                    BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
             log.warn("Bamboo project " + projectKey + " already exists");
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         } catch (HttpClientErrorException e) {
@@ -972,10 +940,10 @@ public class BambooService implements ContinuousIntegrationService {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 //only if this is the case, we additionally check that the project name is unique
                 response = restTemplate.exchange(
-                    BAMBOO_SERVER_URL + "/rest/api/latest/search/projects?searchTerm=" + projectName,
-                    HttpMethod.GET,
-                    entity,
-                    Map.class);
+                        BAMBOO_SERVER_URL + "/rest/api/latest/search/projects?searchTerm=" + projectName,
+                        HttpMethod.GET,
+                        entity,
+                        Map.class);
                 if ((Integer) response.getBody().get("size") != 0) {
                     List<Object> ciProjects = (List<Object>) response.getBody().get("searchResults");
                     for (Object ciProject : ciProjects) {
@@ -1044,10 +1012,10 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json",
-                HttpMethod.GET,
-                entity,
-                Map.class);
+                    BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json",
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
         } catch (Exception e) {
             log.error("Bamboo HttpError '" + e.getMessage() + "' while retrieving build status for plan " + planKey, e);
         }
@@ -1075,10 +1043,10 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(),
-                HttpMethod.GET,
-                entity,
-                Map.class);
+                    BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(),
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
         } catch (Exception e) {
             return false;
         }
