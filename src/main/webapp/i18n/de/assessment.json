@@ -45,6 +45,7 @@
                 "minutes": "Minuten",
                 "actions": {
                     "open": "Bewertung öffnen",
+                    "cancel": "Bewertung abbrechen",
                     "assess": "Abgabe bewerten"
                 }
             }

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -21,6 +22,8 @@ abstract class AssessmentService {
 
     private final ComplaintRepository complaintRepository;
 
+    protected final FeedbackRepository feedbackRepository;
+
     protected final ResultRepository resultRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -29,10 +32,12 @@ abstract class AssessmentService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+    public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
+            AuthorizationCheckService authCheckService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
+        this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
@@ -94,12 +99,13 @@ abstract class AssessmentService {
      *
      * @param submission the submission for which the current assessment should be canceled
      */
+    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
         participation.removeResult(result);
-        studentParticipationRepository.save(participation);
+        feedbackRepository.deleteByResult_Id(result.getId());
         resultRepository.deleteById(result.getId());
     }
 
