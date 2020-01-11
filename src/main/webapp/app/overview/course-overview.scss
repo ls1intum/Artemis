@@ -29,6 +29,15 @@ Course Info Bar
     }
 }
 
+.tab-bar-exercise-details {
+    // switch from two column to one column layout for very small devices
+    @media (max-width: 600px) {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-top: 10px;
+    }
+}
+
 .back-button {
     cursor: pointer;
 }
