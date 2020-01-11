@@ -8,7 +8,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.atlassian.bamboo.specs.util.BambooServer;
 
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.*;
