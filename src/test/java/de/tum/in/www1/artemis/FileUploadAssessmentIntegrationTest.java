@@ -133,6 +133,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
+        database.addFeedbacksToResult(fileUploadSubmission.getResult());
         request.put("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
