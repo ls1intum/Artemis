@@ -1,13 +1,9 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
