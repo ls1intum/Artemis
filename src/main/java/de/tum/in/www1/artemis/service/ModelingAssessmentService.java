@@ -16,10 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -37,10 +34,10 @@ public class ModelingAssessmentService extends AssessmentService {
     private final CompassService compassService;
 
     public ModelingAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, CompassService compassService,
-            ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
-            ModelingSubmissionService modelingSubmissionService) {
-        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
+            ModelingSubmissionRepository modelingSubmissionRepository, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
+            AuthorizationCheckService authCheckService, ModelingSubmissionService modelingSubmissionService) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.userService = userService;
         this.compassService = compassService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
