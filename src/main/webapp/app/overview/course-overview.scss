@@ -32,10 +32,11 @@ Course Info Bar
 .tab-bar-exercise-details {
     // switch from two column to one column layout for small devices
     // 3 buttons have to fit in one row e.g. for programming exercises
-    @media (max-width: 750px) {
+    @media (max-width: 1000px) {
         flex-direction: column;
         align-items: flex-start;
         padding-top: 10px;
+        padding-bottom: 5px;
     }
 }
 
@@ -129,4 +130,11 @@ Course Info Bar
 
 canvas#complete-chart {
     z-index: 99;
+}
+
+@media (max-width: 540px) {
+    .shrink-on-mobile {
+        transform: scale(0.75);
+        transform-origin: 0;
+    }
 }
