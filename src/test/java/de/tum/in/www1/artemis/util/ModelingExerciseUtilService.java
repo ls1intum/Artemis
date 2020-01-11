@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.util;
 
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Service
 public class ModelingExerciseUtilService {

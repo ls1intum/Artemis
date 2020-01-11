@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
+import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,13 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-
-import java.util.List;
-
-import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
