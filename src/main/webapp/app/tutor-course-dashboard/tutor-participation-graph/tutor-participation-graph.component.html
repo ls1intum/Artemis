@@ -12,23 +12,37 @@
         >
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
-        <li [ngbTooltip]="'artemisApp.tutorCourseDashboard.numberOfOpenComplaints' | translate">
-            {{ numberOfOpenComplaints }}
-        </li>
-
         <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
             <div class="progress position-relative" [ngbTooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
                 <div
                     class="progress-bar"
                     role="progressbar"
-                    [ngClass]="calculateProgressBarClass()"
+                    [ngClass]="calculateProgressBarClass(percentageAssessmentProgress)"
                     [style.width]="percentageAssessmentProgress + '%'"
                     attr.aria-valuenow="{{ percentageAssessmentProgress }}"
                     aria-valuemin="0"
                     aria-valuemax="100"
                 >
-                    <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="chooseProgressBarTextColor()">
+                    <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="chooseProgressBarTextColor(percentageAssessmentProgress)">
                         {{ numberOfAssessments }} / {{ numberOfParticipations }} ({{ percentageAssessmentProgress + '%' }})
+                    </span>
+                </div>
+            </div>
+        </li>
+        <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
+            <div class="progress position-relative" [ngbTooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
+                <div
+                    class="progress-bar"
+                    role="progressbar"
+                    [ngClass]="calculateProgressBarClass(percentageComplaintsProgress)"
+                    [style.width]="percentageComplaintsProgress + '%'"
+                    attr.aria-valuenow="{{ percentageComplaintsProgress }}"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                >
+                    <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="chooseProgressBarTextColor(percentageComplaintsProgress)">
+                        {{ this.numberOfComplaints - this.numberOfOpenComplaints + (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests) }} /
+                        {{ numberOfComplaints + numberOfMoreFeedbackRequests }} ({{ percentageComplaintsProgress + '%' }})
                     </span>
                 </div>
             </div>

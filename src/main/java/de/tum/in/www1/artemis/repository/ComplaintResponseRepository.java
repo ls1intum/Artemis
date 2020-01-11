@@ -33,7 +33,6 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to exercise exerciseId
      */
-    // TODO: Hanya check @Param("id"), Result_Participation
     long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(@Param("id") Long exerciseId, ComplaintType complaintType);
 
     /**

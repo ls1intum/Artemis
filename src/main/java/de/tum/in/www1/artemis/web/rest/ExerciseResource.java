@@ -217,10 +217,16 @@ public class ExerciseResource {
 
         Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
-        // TODO: Hanya, complaints about your own assessment must be taken into consideration
+
         long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
                 ComplaintType.COMPLAINT);
+        // TODO: Hanya, maybe complaints about your own assessment (numberOfTutorComplaints) should be taken into consideration
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
+                ComplaintType.MORE_FEEDBACK);
+        // TODO: Hanya, maybe feedback about your own assessment (numberOfTutorMoreFeedbackRequests) should be taken into consideration
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);

@@ -16,6 +16,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public numberOfAssessments: number;
     @Input() public numberOfComplaints: number;
     @Input() public numberOfOpenComplaints: number;
+    @Input() public numberOfMoreFeedbackRequests: number;
+    @Input() public numberOfOpenMoreFeedbackRequests: number;
     @Input() exercise: Exercise;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
@@ -27,6 +29,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
     percentageAssessmentProgress = 0;
+    percentageComplaintsProgress = 0;
 
     routerLink: string;
 
@@ -44,6 +47,13 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         if (this.numberOfParticipations !== 0) {
             this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
         }
+        if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
+            this.percentageComplaintsProgress = Math.round(
+                ((this.numberOfComplaints - this.numberOfOpenComplaints + (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests)) /
+                    (this.numberOfComplaints + this.numberOfMoreFeedbackRequests)) *
+                    100,
+            );
+        }
     }
 
     navigate() {
@@ -60,6 +70,13 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (this.numberOfParticipations !== 0) {
             this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
+        }
+        if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
+            this.percentageComplaintsProgress = Math.round(
+                ((this.numberOfComplaints - this.numberOfOpenComplaints + (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests)) /
+                    (this.numberOfComplaints + this.numberOfMoreFeedbackRequests)) *
+                    100,
+            );
         }
     }
 
@@ -96,9 +113,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         return '';
     }
 
-    calculateProgressBarClass(): string {
-        const percentage = this.percentageAssessmentProgress;
-
+    calculateProgressBarClass(percentage: number): string {
         if (percentage < 50) {
             return 'bg-danger';
         } else if (percentage < 100) {
@@ -108,8 +123,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         return 'bg-success';
     }
 
-    chooseProgressBarTextColor() {
-        if (this.percentageAssessmentProgress < 100) {
+    chooseProgressBarTextColor(percentage: number) {
+        if (percentage < 100) {
             return 'text-dark';
         }
 
@@ -121,7 +136,11 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             return 'opaque';
         }
 
-        if (this.tutorParticipationStatus === this.COMPLETED || this.numberOfParticipations === this.numberOfAssessments) {
+        if (
+            this.tutorParticipationStatus === this.COMPLETED ||
+            this.numberOfParticipations === this.numberOfAssessments ||
+            this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
+        ) {
             return 'active';
         }
 

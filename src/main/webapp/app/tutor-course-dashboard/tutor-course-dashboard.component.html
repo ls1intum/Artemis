@@ -60,12 +60,6 @@
                 {{ 'artemisApp.tutorCourseDashboard.showFinishedExercises' | translate }}
             </label>
         </div>
-        <div class="form-check col-6 align-baseline">
-            <input type="checkbox" name="showOpenComplaints" id="field_showOpenComplaints" [ngModel]="showOpenComplaints" (ngModelChange)="triggerOpenComplaints()" />
-            <label class="form-check-label" for="field_showOpenComplaints">
-                {{ 'artemisApp.tutorCourseDashboard.showOpenComplaints' | translate }}
-            </label>
-        </div>
         <table class="table exercise-table" [hidden]="exercises.length === 0">
             <thead>
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
@@ -110,6 +104,8 @@
                             [numberOfAssessments]="exercise.numberOfAssessments"
                             [numberOfComplaints]="exercise.numberOfComplaints"
                             [numberOfOpenComplaints]="exercise.numberOfOpenComplaints"
+                            [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests"
+                            [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests"
                         >
                         </jhi-tutor-participation-graph>
                     </td>
