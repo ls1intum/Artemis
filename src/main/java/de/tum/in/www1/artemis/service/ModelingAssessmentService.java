@@ -110,6 +110,7 @@ public class ModelingAssessmentService extends AssessmentService {
      *
      * @param modelingSubmission the modeling submission for which the current assessment should be canceled
      */
+    @Transactional // NOTE: As we use delete methods with underscores in the super method, we need a transactional context here!
     public void cancelAssessmentOfSubmission(ModelingSubmission modelingSubmission) {
         super.cancelAssessmentOfSubmission(modelingSubmission);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
