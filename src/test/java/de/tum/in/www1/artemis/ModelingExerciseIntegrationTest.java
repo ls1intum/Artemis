@@ -6,10 +6,12 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 
+import de.tum.in.www1.artemis.service.CourseService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -32,6 +34,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
 
     @Autowired
     ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @SpyBean
+    CourseService courseService;
 
     private ModelingExercise classExercise;
 

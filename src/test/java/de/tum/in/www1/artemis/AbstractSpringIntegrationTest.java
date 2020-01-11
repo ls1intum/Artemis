@@ -43,7 +43,4 @@ public abstract class AbstractSpringIntegrationTest {
 
     @SpyBean
     protected WebsocketMessagingService websocketMessagingService;
-
-    @SpyBean
-    protected CourseService courseService;
 }
