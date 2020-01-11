@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 import java.util.List;
 
 import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -26,6 +28,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
 
     @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    ModelingExerciseUtilService modelingExerciseUtilService;
 
     private ModelingExercise classExercise;
 
@@ -92,6 +97,33 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         classExercise.setDiagramType(CommunicationDiagram);
         exerciseRepo.save(classExercise);
         request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateModelingExercise_asInstructor() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.CREATED);
+
+        modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId(), 1L);
+        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
+
+        modelingExercise = modelingExerciseUtilService.createModelingExercise(2L);
+        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateModelingExercise_asInstructor() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+
+        ModelingExercise modelingExerciseWithSubmission = modelingExerciseUtilService.addExampleSubmission(createdModelingExercise);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExerciseWithSubmission, ModelingExercise.class, HttpStatus.OK);
+        assertThat(returnedModelingExercise.getExampleSubmissions().size()).isEqualTo(1);
+
+        modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId(), classExercise.getId());
+        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.OK);
     }
 
     @Test
