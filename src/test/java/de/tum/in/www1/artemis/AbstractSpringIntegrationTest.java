@@ -6,12 +6,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.atlassian.bamboo.specs.util.BambooServer;
+
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.BambooService;
-import de.tum.in.www1.artemis.service.connectors.BitbucketService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -31,6 +30,9 @@ public abstract class AbstractSpringIntegrationTest {
     // TODO: we should not really mock BitbucketService, but only the API calls to Bitbucket (e.g. based on the used RestTemplate)
     @SpyBean
     protected BitbucketService versionControlService;
+
+    @SpyBean
+    protected BambooServer bambooServer;
 
     @SpyBean
     protected GitService gitService;

@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
 import { SinonStub, stub } from 'sinon';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
@@ -24,6 +24,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../mocks/mock-account.service';
 import * as moment from 'moment';
 import { QuizExercise } from 'app/entities/quiz-exercise';
+import { MockCourseService } from '../../../mocks/mock-course.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,9 +42,10 @@ describe('CourseExerciseRowComponent', () => {
             providers: [
                 DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: CourseService, useClass: MockCourseService },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
-                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
             ],
         })
