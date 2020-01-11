@@ -31,6 +31,7 @@ import { ArtemisCourseRegistrationSelector } from 'app/components/course-registr
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { SubmissionResultStatusModule } from 'app/submission-result-status/submission-result-status.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -50,6 +51,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         IntellijModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
+        SubmissionResultStatusModule,
     ],
     declarations: [
         OverviewComponent,
