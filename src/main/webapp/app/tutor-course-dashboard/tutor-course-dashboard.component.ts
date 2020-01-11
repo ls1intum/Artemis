@@ -32,7 +32,6 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfTutorMoreFeedbackRequests = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
-    showOpenComplaints = false;
 
     stats = new StatsForDashboard();
 
@@ -117,7 +116,6 @@ export class TutorCourseDashboardComponent implements OnInit {
             this.exercises = this.unfinishedExercises.concat(this.finishedExercises);
         } else {
             this.exercises = this.unfinishedExercises;
-            this.showOpenComplaints = false;
         }
     }
 
