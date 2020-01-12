@@ -43,6 +43,16 @@
             "easy": "Leicht",
             "medium": "Mittel",
             "hard": "Schwer",
+            "mode": "Modus",
+            "modes": {
+                "individual": "Individuell",
+                "team": "Team"
+            },
+            "teamScope": "Team Geltungsbereich",
+            "teamScopes": {
+                "exercise": "Übung",
+                "course": "Kurs"
+            },
             "categories": "Kategorien",
             "participations": "Teilnahmen",
             "exportNames": "Namen exportieren",

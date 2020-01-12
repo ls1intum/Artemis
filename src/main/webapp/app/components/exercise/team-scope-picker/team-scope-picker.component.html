@@ -1,0 +1,8 @@
+<div class="btn-group">
+    <div class="btn" [ngClass]="{ 'btn-secondary': exercise.teamScope === EXERCISE, 'btn-default': exercise.teamScope !== EXERCISE }" (click)="setTeamScope(EXERCISE)">
+        {{ 'artemisApp.exercise.teamScopes.exercise' | translate }}
+    </div>
+    <div class="btn btn-default" [ngClass]="{ 'btn-secondary': exercise.teamScope === COURSE, 'btn-default': exercise.teamScope !== COURSE }" (click)="setTeamScope(COURSE)">
+        {{ 'artemisApp.exercise.teamScopes.course' | translate }}
+    </div>
+</div>

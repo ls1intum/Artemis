@@ -66,8 +66,8 @@ export abstract class Exercise implements BaseEntity {
     public maxScore: number;
     public assessmentType: AssessmentType;
     public difficulty: DifficultyLevel | null;
-    public mode: ExerciseMode;
-    public teamScope: TeamScope | null;
+    public mode: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
+    public teamScope: TeamScope | null; // relevant if mode == ExerciseMode.TEAM
     public categories: string[];
     public type: ExerciseType;
 
