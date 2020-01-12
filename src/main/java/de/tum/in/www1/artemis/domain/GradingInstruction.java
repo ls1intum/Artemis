@@ -23,9 +23,11 @@ public class GradingInstruction implements Serializable {
     @ManyToOne
     private Exercise exercise;
 
+    // the score students get if this grading instruction is applicable
     @Column(name = "credits")
     private double credits;
 
+    // describes the level of performance (e.g. "poor" or "average" )
     @Column(name = "grading_scale")
     private String gradingScale;
 
@@ -37,6 +39,8 @@ public class GradingInstruction implements Serializable {
     @Lob
     private String feedback;
 
+    // how often points for this grading instruction should be calculated if the criteria is applicable more than once for the same submission (e.g. to prevent consequential
+    // errors)
     @Column(name = "usage_count")
     private int usageCount;
 

@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -25,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Structured Grading Instructions.
  */
 @RestController
-@RequestMapping({ "/api" })
+@RequestMapping({ GradingInstructionResource.Endpoints.ROOT })
 public class GradingInstructionResource {
 
     private final Logger log = LoggerFactory.getLogger(GradingInstructionResource.class);
@@ -53,9 +52,9 @@ public class GradingInstructionResource {
      * @param exerciseId the id of the exercise to retrieve its grading instructions
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/grading-instructions")
+    @GetMapping(Endpoints.GRADING_INSTRUCTIONS_OF_EXERCISE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable Long exerciseId) {
+    public ResponseEntity<Set<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -74,7 +73,7 @@ public class GradingInstructionResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new gradingInstruction, or with status 400 (Bad Request) if the gradingInstruction has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/grading-instructions")
+    @PostMapping(Endpoints.GRADING_INSTRUCTIONS)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingInstruction> createGradingInstruction(@RequestBody GradingInstruction gradingInstruction) throws URISyntaxException {
         log.debug("REST request to save GradingInstruction : {}", gradingInstruction);
@@ -89,7 +88,7 @@ public class GradingInstructionResource {
             return forbidden();
         }
         gradingInstruction = gradingInstructionService.save(gradingInstruction);
-        return ResponseEntity.created(new URI("/api/grading-instructions/" + gradingInstruction.getId()))
+        return ResponseEntity.created(new URI(Endpoints.ROOT + Endpoints.GRADING_INSTRUCTIONS + "/" + gradingInstruction.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(APPLICATION_NAME, true, ENTITY_NAME, gradingInstruction.getId().toString())).body(gradingInstruction);
 
     }
@@ -102,7 +101,7 @@ public class GradingInstructionResource {
      * (Internal Server Error) if the gradingInstruction couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/grading-instructions")
+    @PutMapping(Endpoints.GRADING_INSTRUCTIONS)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingInstruction> updateGradingInstruction(@RequestBody GradingInstruction gradingInstruction) throws URISyntaxException {
         log.debug("REST request to update GradingInstruction : {}", gradingInstruction);
@@ -126,20 +125,37 @@ public class GradingInstructionResource {
      * @param gradingInstructionId the id of the gradingInstruction to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/grading-instructions/{gradingInstructionId}")
+    @DeleteMapping(Endpoints.GRADING_INSTRUCTION)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteGradingInstruction(@PathVariable Long gradingInstructionId) {
+    public ResponseEntity<Void> deleteGradingInstruction(@PathVariable long gradingInstructionId) {
         log.debug("REST request to delete GradingInstruction : {}", gradingInstructionId);
 
         GradingInstruction gradingInstruction = gradingInstructionService.findOne(gradingInstructionId);
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
-        if (Optional.ofNullable(gradingInstruction).isPresent()) {
-            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-                return forbidden();
-            }
-            gradingInstructionService.delete(gradingInstruction);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return forbidden();
+        }
+        gradingInstructionService.delete(gradingInstruction);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(APPLICATION_NAME, true, ENTITY_NAME, gradingInstructionId + "")).build();
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String GRADING_INSTRUCTIONS = "/grading-instructions";
+
+        public static final String GRADING_INSTRUCTION = GRADING_INSTRUCTIONS + "/{gradingInstructionId}";
+
+        public static final String EXERCISES = "/exercises";
+
+        public static final String EXERCISE = EXERCISES + "/{exerciseId}";
+
+        public static final String GRADING_INSTRUCTIONS_OF_EXERCISE = EXERCISE + GRADING_INSTRUCTIONS;
+
+        private Endpoints() {
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(APPLICATION_NAME, true, ENTITY_NAME, gradingInstructionId.toString())).build();
     }
 }

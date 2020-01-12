@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +55,8 @@ public class GradingInstructionService {
      */
 
     public GradingInstruction findOne(long gradingInstructionId) {
-        Optional<GradingInstruction> gradingInstruction = gradingInstructionRepository.findById(gradingInstructionId);
-        if (gradingInstruction.isEmpty()) {
-            throw new EntityNotFoundException("Grading Instruction with gradingInstructionId " + gradingInstructionId + " does not exist!");
-        }
-        return gradingInstruction.get();
+        return gradingInstructionRepository.findById(gradingInstructionId)
+                .orElseThrow(() -> new EntityNotFoundException("Grading Instruction with gradingInstructionId  " + gradingInstructionId + " does not exist!"));
     }
 
     /**
