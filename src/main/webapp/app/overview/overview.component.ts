@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';

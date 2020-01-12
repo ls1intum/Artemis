@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';

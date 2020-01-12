@@ -112,11 +112,6 @@ public class TextExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -151,11 +146,6 @@ public class TextExerciseResource {
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();

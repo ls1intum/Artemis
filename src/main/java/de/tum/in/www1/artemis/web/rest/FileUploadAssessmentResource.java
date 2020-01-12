@@ -158,8 +158,14 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        if (!userService.getUser().getId().equals(fileUploadSubmission.getResult().getAssessor().getId())) {
-            // you cannot cancel the assessment of other tutors
+        User user = userService.getUserWithGroupsAndAuthorities();
+        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
+        FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
+        checkAuthorization(fileUploadExercise, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
+        if (!(isAtLeastInstructor || userService.getUser().getId().equals(fileUploadSubmission.getResult().getAssessor().getId()))) {
+            // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }
         fileUploadAssessmentService.cancelAssessmentOfSubmission(fileUploadSubmission);

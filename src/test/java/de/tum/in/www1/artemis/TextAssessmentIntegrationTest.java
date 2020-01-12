@@ -44,7 +44,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 2, 0);
+        database.addUsers(1, 2, 1);
         database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
     }
@@ -178,5 +178,36 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
         assertThat(participation.getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        database.addFeedbacksToResult(textSubmission.getResult());
+        request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void cancelOwnAssessmentAsStudent() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cancelOwnAssessmentAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
     }
 }
