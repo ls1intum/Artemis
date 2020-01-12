@@ -219,8 +219,11 @@ entity CourseTeam {          //extends Team
 
 }
 
-entity TeamStudent {
-
+entity TeamStudent {          //membership of student in team
+    created_by String,
+    created_date Instant,
+    last_modified_by String,
+    last_modified_date Instant
 }
 
 entity ExerciseTeamStudent {          //extends TeamStudent

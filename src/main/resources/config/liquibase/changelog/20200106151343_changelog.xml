@@ -34,6 +34,14 @@
             </column>
             <column name="exercise_id" type="BIGINT"/>
             <column name="course_id" type="BIGINT"/>
+            <column name="created_by" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="CURRENT_TIMESTAMP" name="created_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_by" type="VARCHAR(50)"/>
+            <column name="last_modified_date" type="TIMESTAMP"/>
         </createTable>
         <createIndex indexName="fk_participation_team_id" tableName="participation">
             <column name="team_id"/>

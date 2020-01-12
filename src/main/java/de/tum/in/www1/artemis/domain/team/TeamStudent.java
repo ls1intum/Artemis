@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
@@ -13,7 +14,7 @@ import de.tum.in.www1.artemis.domain.User;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "TS")
-public abstract class TeamStudent implements Serializable {
+public abstract class TeamStudent extends AbstractAuditingEntity implements Serializable {
 
     @EmbeddedId
     private TeamStudentId id;
@@ -30,9 +31,9 @@ public abstract class TeamStudent implements Serializable {
     }
 
     public TeamStudent(Team team, User student) {
+        this.id = new TeamStudentId(team.getId(), student.getId());
         this.team = team;
         this.student = student;
-        this.id = new TeamStudentId(team.getId(), student.getId());
     }
 
     public TeamStudentId getId() {
