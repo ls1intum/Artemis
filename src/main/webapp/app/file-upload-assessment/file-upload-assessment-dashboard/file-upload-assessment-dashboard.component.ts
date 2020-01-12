@@ -3,6 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 
 import { DifferencePipe } from 'ngx-moment';
+import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 
 import { ExerciseService } from 'app/entities/exercise/exercise.service';
@@ -11,6 +12,8 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-uploa
 import { FileUploadSubmission } from 'app/entities/file-upload-submission/file-upload-submission.model';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { Submission } from 'app/entities/submission';
+import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
@@ -23,13 +26,19 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
 
+    private cancelConfirmationText: string;
+
     constructor(
         private route: ActivatedRoute,
         private accountService: AccountService,
         private exerciseService: ExerciseService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
+        private fileUploadAssessmentsService: FileUploadAssessmentsService,
         private momentDiff: DifferencePipe,
-    ) {}
+        private translateService: TranslateService,
+    ) {
+        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+    }
 
     /**
      * Get Submissions for exercise id.
@@ -106,6 +115,18 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                     resolve();
                 });
         });
+    }
+
+    /**
+     * Cancel the current assessment and reload the submissions to reflect the change.
+     */
+    cancelAssessment(submission: Submission) {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.fileUploadAssessmentsService.cancelAssessment(submission.id).subscribe(() => {
+                this.getSubmissions(this.exercise.id);
+            });
+        }
     }
 
     private static verifyFileUploadExercise(exercise: Exercise): void {
