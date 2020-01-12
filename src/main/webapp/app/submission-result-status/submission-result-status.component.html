@@ -23,7 +23,7 @@
     <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus)">
         <jhi-updating-result
             [exercise]="exercise"
-            [participation]="studentParticipation || exercise.studentParticipations[0]"
+            [participation]="participation"
             [class]="updatingResultClass"
             [showGradedBadge]="showGradedBadge"
             [short]="short"

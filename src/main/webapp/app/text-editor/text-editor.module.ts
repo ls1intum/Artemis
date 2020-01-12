@@ -10,12 +10,21 @@ import { ArtemisComplaintsModule } from 'app/complaints';
 import { TextResultComponent } from './text-result/text-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { MomentModule } from 'ngx-moment';
+import { SubmissionResultStatusModule } from 'app/submission-result-status/submission-result-status.module';
 
 const ENTITY_STATES = [...textEditorRoute];
 
 @NgModule({
     declarations: [TextEditorComponent, TextEditorScoreCardComponent, TextResultComponent],
     entryComponents: [TextEditorComponent],
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisResultModule, ArtemisComplaintsModule, ArtemisSharedComponentModule, MomentModule],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisResultModule,
+        ArtemisComplaintsModule,
+        ArtemisSharedComponentModule,
+        MomentModule,
+        SubmissionResultStatusModule,
+    ],
 })
 export class ArtemisTextModule {}
