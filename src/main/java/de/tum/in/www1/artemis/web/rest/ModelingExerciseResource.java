@@ -89,11 +89,12 @@ public class ModelingExerciseResource {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new modelingExercise cannot already have an ID")).body(null);
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new modeling exercise cannot already have an ID")).body(null);
         }
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null)
+        if (responseFailure != null) {
             return responseFailure;
+        }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
@@ -105,12 +106,7 @@ public class ModelingExerciseResource {
     private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist"))
-                    .body(null);
-        }
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
         return null;
@@ -135,8 +131,9 @@ public class ModelingExerciseResource {
         }
 
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null)
+        if (responseFailure != null) {
             return responseFailure;
+        }
 
         // As persisting is cascaded for example submissions we have to set the reference to the exercise in the
         // example submissions. Otherwise the connection between exercise and example submissions would be lost.
