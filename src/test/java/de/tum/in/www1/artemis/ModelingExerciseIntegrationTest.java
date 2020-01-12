@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import java.util.List;
 
@@ -10,13 +9,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -34,9 +31,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
 
     @Autowired
     ModelingExerciseUtilService modelingExerciseUtilService;
-
-    @SpyBean
-    CourseService courseService;
 
     private ModelingExercise classExercise;
 
@@ -122,15 +116,16 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        // The PUT request basically forwards to POST in case the modeling exercise id is not yet set.
         ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
 
         ModelingExercise modelingExerciseWithSubmission = modelingExerciseUtilService.addExampleSubmission(createdModelingExercise);
         ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExerciseWithSubmission, ModelingExercise.class, HttpStatus.OK);
         assertThat(returnedModelingExercise.getExampleSubmissions().size()).isEqualTo(1);
 
-        when(courseService.findOne(classExercise.getCourse().getId())).thenReturn(null);
-        modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId(), classExercise.getId());
-        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
+        // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
+        modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
+        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
     }
 
     @Test
