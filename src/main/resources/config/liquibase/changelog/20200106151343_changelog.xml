@@ -37,9 +37,6 @@
             <column name="team_id"/>
         </createIndex>
         <addPrimaryKey columnNames="team_id, student_id" tableName="team_student"/>
-        <addUniqueConstraint columnNames="team_id, student_id" constraintName="UC_TEAM_STUDENT_TEAM_ID_STUDENT_ID_COLS" tableName="team_student"/>
-        <addUniqueConstraint columnNames="team_id, course_id" constraintName="UC_TEAM_STUDENT_TEAM_ID_COURSE_ID_COLS" tableName="team_student"/>
-        <addUniqueConstraint columnNames="team_id, exercise_id" constraintName="UC_TEAM_STUDENT_TEAM_ID_EXERCISE_ID_COLS" tableName="team_student"/>
         <addUniqueConstraint columnNames="student_id, exercise_id" constraintName="UC_TEAM_STUDENT_STUDENT_ID_EXERCISE_ID_COLS" tableName="team_student"/>
         <addUniqueConstraint columnNames="student_id, course_id" constraintName="UC_TEAM_STUDENT_STUDENT_ID_COURSE_ID_COLS" tableName="team_student"/>
         <addUniqueConstraint columnNames="team_id, exercise_id, initialization_state" constraintName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation"/>

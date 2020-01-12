@@ -8,7 +8,8 @@ import javax.persistence.*;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
-@Table(name = "team_student", uniqueConstraints = @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }))
+@Table(name = "team_student", uniqueConstraints = { @UniqueConstraint(columnNames = { "student_id", "exercise_id" }),
+        @UniqueConstraint(columnNames = { "student_id", "course_id" }) })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "TS")
