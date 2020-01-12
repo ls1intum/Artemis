@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -31,7 +31,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
-    @MockBean
+    @SpyBean
     ProgrammingSubmissionService programmingSubmissionService;
 
     @Autowired
