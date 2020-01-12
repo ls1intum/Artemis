@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GroupNotification;
-import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import java.util.List;
+
+import javax.swing.*;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,13 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GroupNotification;
 import de.tum.in.www1.artemis.domain.Notification;
-import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-
-import javax.swing.*;
-import java.util.List;
-
+import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -49,7 +49,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1,1,1);
+        database.addUsers(1, 1, 1);
         database.addCourseWithOneTextExercise();
         exercise = exerciseRepo.findAll().get(0);
     }
@@ -103,7 +103,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         groupNotification.setId(2L);
-        request.put("/api/notifications",groupNotification, HttpStatus.FORBIDDEN);
+        request.put("/api/notifications", groupNotification, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -114,7 +114,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         Notification notification = request.postWithResponseBody("/api/notifications", groupNotification, Notification.class, HttpStatus.CREATED);
         request.put("/api/notifications", notification, HttpStatus.OK);
-        request.get("/api/notifications/" + notification.getId() , HttpStatus.OK, Notification.class);
+        request.get("/api/notifications/" + notification.getId(), HttpStatus.OK, Notification.class);
         request.get("/api/notifications/" + notification.getId() + 1, HttpStatus.NOT_FOUND, Notification.class);
     }
 
