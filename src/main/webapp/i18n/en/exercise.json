@@ -44,11 +44,13 @@
             "medium": "Medium",
             "hard": "Hard",
             "mode": "Mode",
+            "modeTooltip": "The solving mode of an exercise determines whether students work alone on it or in teams.",
             "modes": {
                 "individual": "Individual",
                 "team": "Team"
             },
             "teamScope": "Team Scope",
+            "teamScopeTooltip": "If the team scope is \"Exercise\", new teams will be formed specifically for this exercise. If the team scope is \"Course\", the teams for the whole course will be used for this exercise.",
             "teamScopes": {
                 "exercise": "Exercise",
                 "course": "Course"
