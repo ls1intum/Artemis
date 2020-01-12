@@ -85,11 +85,6 @@ public class GradingInstructionResource {
 
         // fetch exercise from database to make sure client didn't change groups
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
-        if (exercise == null) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(APPLICATION_NAME, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
@@ -117,11 +112,6 @@ public class GradingInstructionResource {
 
         // fetch exercise from database to make sure client didn't change groups
         Exercise exercise = exerciseService.findOne(gradingInstruction.getExercise().getId());
-        if (exercise == null) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(APPLICATION_NAME, true, ENTITY_NAME, "exerciseNotFound", "The exercise belonging to this grading instruction does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }

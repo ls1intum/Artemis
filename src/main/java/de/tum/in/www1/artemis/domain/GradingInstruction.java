@@ -79,7 +79,7 @@ public class GradingInstruction implements Serializable {
         return exercise;
     }
 
-    public GradingInstruction result(Exercise exercise) {
+    public GradingInstruction exercise(Exercise exercise) {
         this.exercise = exercise;
         return this;
     }

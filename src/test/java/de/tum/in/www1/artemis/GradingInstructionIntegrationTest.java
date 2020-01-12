@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Iterator;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -60,8 +59,6 @@ public class GradingInstructionIntegrationTest {
 
     private Set<GradingInstruction> gradingInstructionSet;
 
-    private Iterator<GradingInstruction> iterator;
-
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 2, 1);
@@ -70,7 +67,6 @@ public class GradingInstructionIntegrationTest {
         exercise = exerciseRepository.findByCourseId(courseID).get(0);
 
         gradingInstructionSet = database.addGradingInstructionsToExercise(exercise);
-        iterator = gradingInstructionSet.iterator();
     }
 
     @AfterEach
@@ -166,6 +162,9 @@ public class GradingInstructionIntegrationTest {
             assertThat(gradingInstruction.getUsageCount()).isEqualTo(0);
 
             request.putWithResponseBody("/api/grading-instructions", null, GradingInstruction.class, HttpStatus.BAD_REQUEST);
+
+            gradingInstruction.getExercise().setId(0l);
+            request.putWithResponseBody("/api/grading-instructions", gradingInstruction, GradingInstruction.class, HttpStatus.NOT_FOUND);
         }
         assertThat(gradingInstructionSet.size()).isEqualTo(2);
         assertThat(gradingInstructionRepository.findAll().isEmpty()).isFalse();
