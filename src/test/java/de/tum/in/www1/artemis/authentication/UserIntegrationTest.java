@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -42,6 +43,9 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private List<User> users;
 
     private User student;
@@ -50,6 +54,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
     public void setUp() {
         users = database.addUsers(1, 1, 1);
         student = users.get(0);
+        users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }
 
     @AfterEach
@@ -145,9 +150,10 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
         student.setId(null);
         student.setEmail("batman@invalid.tum");
+        student.setLogin("batman");
         student.setPassword(null);
 
-        final var response = request.postWithResponseBody("/api/users", student, User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userRepository.findById(response.getId()).get();
 
