@@ -19,6 +19,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * Service Implementation for managing Course.
  */
@@ -126,6 +128,7 @@ public class CourseService {
      * @param courseId the id of the entity
      * @return the entity
      */
+    @NotNull
     public Course findOne(Long courseId) {
         log.debug("Request to get Course : {}", courseId);
         return courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
