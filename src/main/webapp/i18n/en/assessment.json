@@ -45,6 +45,7 @@
                 "minutes": "minutes",
                 "actions": {
                     "open": "Open assessment",
+                    "cancel": "Cancel assessment",
                     "assess": "Assess Submission"
                 }
             }
