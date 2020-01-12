@@ -84,8 +84,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
-        // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
-        User user = getOrCreateUser(authentication, null, null, null, false);
+        User user = getOrCreateUser(authentication, false);
 
         // load additional details if the ldap service is available and the registration number is not available and if the user follows the TUM pattern
         if (ldapUserService.isPresent() && user.getRegistrationNumber() == null && TUM_USERNAME_PATTERN.matcher(user.getLogin()).matches()) {
@@ -99,8 +98,13 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, Boolean skipPasswordCheck) {
+        // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
+        return getOrCreateUser(authentication, skipPasswordCheck);
+    }
+
+    @SuppressWarnings("unchecked")
+    private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
         HttpEntity<Principal> entity = new HttpEntity<>(
