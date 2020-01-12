@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -311,5 +312,16 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(auditEvent.getData().get("course")).as("Correct Event Data").isEqualTo(course1.getTitle());
 
         request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void updateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+
+        request.put("/api/courses", course, HttpStatus.OK);
+
+        verifyNoInteractions(versionControlService);
     }
 }
