@@ -29,7 +29,7 @@ export const hasExerciseDueDatePassed = (exercise: Exercise): boolean => {
     if (exercise.dueDate == null) {
         return false;
     }
-    return moment(exercise.dueDate).isBefore();
+    return exercise.dueDate.isBefore();
 };
 
 /**

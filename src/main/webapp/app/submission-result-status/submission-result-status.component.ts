@@ -21,15 +21,4 @@ export class SubmissionResultStatusComponent {
     @Input() updatingResultClass: string;
     @Input() showGradedBadge = false;
     @Input() short = false;
-
-    /**
-     * If a student participation is supplied explicitly (even if null), use that one.
-     * Otherwise, use the first student participation on the exercise.
-     */
-    get participation() {
-        if (this.studentParticipation !== undefined) {
-            return this.studentParticipation;
-        }
-        return this.exercise.studentParticipations[0];
-    }
 }
