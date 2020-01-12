@@ -1,19 +1,23 @@
 package de.tum.in.www1.artemis;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
 
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.service.NotificationService;
+import de.tum.in.www1.artemis.service.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import static org.mockito.Mockito.*;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GroupNotification;
-import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
@@ -26,11 +30,13 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     Exercise exercise;
 
+    User user;
+
     @Autowired
     ExerciseRepository exerciseRepo;
 
     @Autowired
-    UserRepository userRepo;
+    UserService userService;
 
     @Autowired
     DatabaseUtilService database;
@@ -45,11 +51,14 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     UserRepository userRepository;
 
     @Autowired
+    NotificationService notificationService;
+
+    @Autowired
     SystemNotificationRepository systemNotificationRepository;
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 1, 1);
+        user = database.addUsers(1, 1, 1).get(0);
         database.addCourseWithOneTextExercise();
         exercise = exerciseRepo.findAll().get(0);
     }
@@ -78,12 +87,9 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR")
-    public void testGetAllSystemNotifications_asInstructor() throws Exception {
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), "Title", "Notification Text", null, type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        request.get("/notifications/for-user", HttpStatus.NOT_FOUND, List.class);
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetNotifications_asUser() throws Exception {
+        request.get("/api/notifications", HttpStatus.OK, List.class);
     }
 
     @Test
