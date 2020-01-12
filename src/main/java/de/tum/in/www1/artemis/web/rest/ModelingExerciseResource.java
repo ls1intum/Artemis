@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -211,10 +210,6 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> getCompassStatisticForExercise(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAdmin()) {
-            throw new AccessForbiddenException("Insufficient permission for exercise: " + modelingExercise);
-        }
-
         compassService.printStatistic(modelingExercise.getId());
 
         // TODO: In the future, this endpoint should return the statistics to the client as well.

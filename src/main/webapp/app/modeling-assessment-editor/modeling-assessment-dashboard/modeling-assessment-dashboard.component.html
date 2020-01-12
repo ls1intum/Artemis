@@ -156,7 +156,7 @@
                                 routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
                                 [disabled]="busy"
                                 [queryParams]="{ optimal: false, hideBackButton: true }"
-                                class="btn btn-outline-secondary btn-sm"
+                                class="btn btn-outline-secondary btn-sm mb-1"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.modelingAssessment.dashboard.actions.assess' | translate }}
                             </button>
@@ -166,10 +166,20 @@
                             routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
                             [disabled]="busy"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
-                            class="btn btn-outline-secondary btn-sm"
+                            class="btn btn-outline-secondary btn-sm mb-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
                         </button>
+                        <span *ngIf="modelingExercise.isAtLeastInstructor">
+                            <button
+                                *ngIf="submission && submission.result && !submission.result.completionDate"
+                                (click)="cancelAssessment(submission)"
+                                [disabled]="busy"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                            </button>
+                        </span>
                     </td>
                 </tr>
             </tbody>

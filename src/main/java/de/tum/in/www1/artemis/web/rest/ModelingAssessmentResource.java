@@ -301,8 +301,14 @@ public class ModelingAssessmentResource extends AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        if (!userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId())) {
-            // you cannot cancel the assessment of other tutors
+        User user = userService.getUserWithGroupsAndAuthorities();
+        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise, user);
+        if (!(isAtLeastInstructor || userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId()))) {
+            // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }
         modelingAssessmentService.cancelAssessmentOfSubmission(modelingSubmission);
