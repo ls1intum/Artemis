@@ -66,6 +66,7 @@ entity Exercise (exercise) {        //abstract
     assessmentType AssessmentType,
     difficulty DifficultyLevel,
     mode ExerciseMode,
+    teamScope TeamScope,
     categories String               //List<String>, similar to User --> groups
 }
 
@@ -78,6 +79,11 @@ enum DifficultyLevel {
 enum ExerciseMode {
 	INDIVIDUAL,
     TEAM
+}
+
+enum TeamScope {
+	EXERCISE,
+    COURSE
 }
 
 entity TextExercise {               //extends Exercise
@@ -557,7 +563,7 @@ relationship ManyToOne {
 }
 
 relationship ManyToMany {
-    Team{students} to User,    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
+    Team{students} to User,    //Note: there should be a constraint that per exercise/course (depending on team scope) a student can only be in one team at the same time
     TutorGroup{students} to User,    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption,
 	TutorParticipation{trainedExampleSubmissions} to ExampleSubmission{tutorParticipations},
