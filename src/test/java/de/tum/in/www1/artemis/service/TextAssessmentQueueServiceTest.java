@@ -1,16 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.TextBlock;
@@ -18,26 +17,34 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private TextAssessmentQueueService textAssessmentQueueService;
 
-    @SpyBean
-    private ParticipationService participationService;
+    @Autowired
+    private StudentParticipationRepository participationRepository;
 
-    @SpyBean
+    @Autowired
     private TextSubmissionService textSubmissionService;
 
-    // TODO: this mock and the spies above increase the test execution time by ~30s, because the whole application needs to restart twice.
-    @MockBean
+    @Autowired
+    private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
     private TextClusterRepository textClusterRepository;
+
+    @Autowired
+    private TextBlockRepository textBlockRepository;
 
     private Random random;
 
     private Percentage errorRate;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
 
     @BeforeEach
     public void init() {
@@ -56,20 +63,24 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
         assertThat(textBlocks.get(1).getAddedDistance()).isCloseTo(1 - 0.1 + 1 - 0.4 + 1 - 0.5, errorRate);
         assertThat(textBlocks.get(2).getAddedDistance()).isCloseTo(1 - 0.2 + 1 - 0.4 + 1 - 0.6, errorRate);
         assertThat(textBlocks.get(3).getAddedDistance()).isCloseTo(1 - 0.3 + 1 - 0.5 + 1 - 0.6, errorRate);
-
     }
 
     @Test
+    // Note: this transaction is necessary, because the method call textSubmissionService.getTextSubmissionsByExerciseId does not eagerly load the text blocks that are
+    // evaluated in the call textAssessmentQueueService.calculateSmallerClusterPercentageBatch
+    // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case
+    @Transactional(readOnly = true)
     public void calculateSmallerClusterPercentageTest() {
         int submissionCount = 5;
         int submissionSize = 4;
         int[] clusterSizes = new int[] { 4, 5, 10, 1 };
         ArrayList<TextBlock> textBlocks = generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = createSampleTextExercise(textBlocks, submissionCount, submissionSize);
+        textBlocks.forEach(TextBlock::computeId);
+        List<TextCluster> clusters = addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+        textClusterRepository.saveAll(clusters);
+        textBlockRepository.saveAll(textBlocks);
         List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
-        List<TextCluster> clusters = addTextBlocksToCluster(textBlocks, clusterSizes);
-        // TODO: can we not just save the text clusters into the database here?
-        doReturn(clusters).when(textClusterRepository).findAllByExercise(textExercise);
         HashMap<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
         textBlocks.forEach(textBlock -> {
             if (textBlock.getCluster() == clusters.get(0)) {
@@ -106,7 +117,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
         return clusters;
     }
 
-    private List<TextCluster> addTextBlocksToCluster(List<TextBlock> textBlocks, int[] clusterSizes) {
+    private List<TextCluster> addTextBlocksToCluster(List<TextBlock> textBlocks, int[] clusterSizes, TextExercise textExercise) {
 
         if (Arrays.stream(clusterSizes).sum() != textBlocks.size()) {
             throw new IllegalArgumentException("The clusterSizes sum has to be equal to the number of textBlocks");
@@ -115,7 +126,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
         // Create clusters
         ArrayList<TextCluster> clusters = new ArrayList<>();
         for (int i = 0; i < clusterSizes.length; i++) {
-            clusters.add(new TextCluster());
+            clusters.add(new TextCluster().exercise(textExercise));
         }
         // Add all textblocks to a random cluster
 
@@ -131,33 +142,28 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
         return clusters;
     }
 
-    private TextExercise createSampleTextExercise(ArrayList<TextBlock> textBlocks, int submissionCount, int submissionSize) {
+    private TextExercise createSampleTextExercise(List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
         if (textBlocks.size() != submissionCount * submissionSize) {
             throw new IllegalArgumentException("number of textBlocks must be eqaul to submissionCount * submissionSize");
         }
         TextExercise textExercise = new TextExercise();
-        textExercise.setId(random.nextLong());
-        TextSubmission[] submissions = new TextSubmission[submissionCount];
-        StudentParticipation[] studentParticipations = new StudentParticipation[submissionCount];
+        textExercise = textExerciseRepository.save(textExercise);
 
         // submissions.length must be equal to studentParticipations.length;
-        for (int i = 0; i < submissions.length; i++) {
+        for (int i = 0; i < submissionCount; i++) {
             TextSubmission submission = new TextSubmission();
             StudentParticipation studentParticipation = new StudentParticipation();
-
+            studentParticipation.setExercise(textExercise);
+            studentParticipation = participationRepository.save(studentParticipation);
             submission.setParticipation(studentParticipation);
             submission.setBlocks(textBlocks.subList(i * submissionSize, (i + 1) * submissionSize));
+            submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
             textBlocks.subList(i * submissionSize, (i + 1) * submissionSize).forEach(textBlock -> textBlock.setSubmission(submission));
 
             studentParticipation.addSubmissions(submission);
-            studentParticipation.setExercise(textExercise);
-            submissions[i] = submission;
-            studentParticipations[i] = studentParticipation;
-
+            textSubmissionRepository.save(submission);
         }
-        // TODO: why do we actually need this? Can we not just normally use these service methods and save the data to the database before?
-        doReturn(Arrays.asList(studentParticipations)).when(participationService).findByExerciseId(textExercise.getId());
-        doReturn(Arrays.asList(submissions)).when(textSubmissionService).getTextSubmissionsByExerciseId(textExercise.getId(), true);
         return textExercise;
     }
 
