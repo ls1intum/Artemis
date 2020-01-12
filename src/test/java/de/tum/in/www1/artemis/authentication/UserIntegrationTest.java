@@ -90,6 +90,18 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
+        student.setPassword(null);
+        final var oldPassword = userRepository.findById(student.getId()).get().getPassword();
+
+        request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
+        final var userInDB = userRepository.findById(student.getId()).get();
+
+        assertThat(oldPassword).as("Password did not change").isEqualTo(userInDB.getPassword());
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void updateUser_asInstructor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.FORBIDDEN);
@@ -107,6 +119,39 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
 
         verifyNoInteractions(versionControlService);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_isSuccessful() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        final var response = request.postWithResponseBody("/api/users", student, User.class, HttpStatus.CREATED);
+        assertThat(response).isNotNull();
+        final var userInDB = userRepository.findById(response.getId()).get();
+        userInDB.setPassword(userService.decryptPasswordByLogin(userInDB.getLogin()).get());
+        student.setId(response.getId());
+        response.setPassword("foobar");
+
+        assertThat(student).as("New user is equal to request response").isEqualTo(response);
+        assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
+        student.setId(null);
+        student.setEmail("batman@invalid.tum");
+        student.setPassword(null);
+
+        final var response = request.postWithResponseBody("/api/users", student, User.class, HttpStatus.CREATED);
+        assertThat(response).isNotNull();
+        final var userInDB = userRepository.findById(response.getId()).get();
+
+        assertThat(userInDB.getPassword()).isNotBlank();
     }
 
     @Test
