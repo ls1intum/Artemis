@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -127,11 +128,11 @@ public class TextAssessmentQueueService {
         if (textSubmissionList.isEmpty()) {
             return result;
         }
-        StudentParticipation studentParticipation = (StudentParticipation) textSubmissionList.get(0).getParticipation();
-        TextExercise currentExercise = (TextExercise) studentParticipation.getExercise();
+        Participation participation = textSubmissionList.get(0).getParticipation();
+        TextExercise currentExercise = (TextExercise) participation.getExercise();
         List<TextCluster> clusters = textClusterRepository.findAllByExercise(currentExercise);
 
-        if (textSubmissionList.stream().map(submission -> ((StudentParticipation) submission.getParticipation()).getExercise()).anyMatch(elem -> elem != currentExercise)) {
+        if (textSubmissionList.stream().map(submission -> submission.getParticipation().getExercise()).anyMatch(elem -> elem != currentExercise)) {
             throw new IllegalArgumentException("All TextSubmissions have to be from the same Exercise");
         }
         textSubmissionList.forEach(textSubmission -> {
