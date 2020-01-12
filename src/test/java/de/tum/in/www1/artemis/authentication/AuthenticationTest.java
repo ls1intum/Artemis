@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.authentication;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.hibernate.resource.beans.container.internal.NoSuchBeanException;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -17,7 +17,7 @@ public class AuthenticationTest extends AbstractSpringIntegrationTest {
 
     @Test
     public void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
-        assertThatExceptionOfType(NoSuchBeanException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
                 .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
     }
 }
