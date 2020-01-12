@@ -751,7 +751,7 @@ public abstract class Exercise implements Serializable {
         return "Exercise{" + "id=" + getId() + ", problemStatement='" + getProblemStatement() + "'" + ", gradingInstructions='" + getGradingInstructions() + "'" + ", title='"
                 + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", dueDate='" + getDueDate() + "'"
                 + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", mode='" + getMode() + "'"
-                + ", categories='" + getCategories() + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
+                + ", teamScope='" + getTeamScope() + "'" + ", categories='" + getCategories() + "'" + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
