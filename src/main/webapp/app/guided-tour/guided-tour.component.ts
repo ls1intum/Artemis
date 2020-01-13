@@ -218,7 +218,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep) {
             return false;
         }
-        return !this.currentTourStep.highlightSelector || (this.elementInViewport(this.getSelectedElement(), direction) && this.elementInViewport(this.tourStep.nativeElement, direction));
+        return (
+            !this.currentTourStep.highlightSelector ||
+            (this.elementInViewport(this.getSelectedElement(), direction) && this.elementInViewport(this.tourStep.nativeElement, direction))
+        );
     }
 
     /**
@@ -261,9 +264,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 }
 
                 if (this.isBottom()) {
-                    elementInViewPort = top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight + window.pageYOffset;
+                    elementInViewPort =
+                        top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight + window.pageYOffset;
                 } else {
-                    elementInViewPort = top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight + window.pageYOffset;
+                    elementInViewPort =
+                        top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight + window.pageYOffset;
                 }
                 break;
             }

@@ -43,5 +43,5 @@ export enum UserInteractionEvent {
 
 export enum Direction {
     VERTICAL = 'vertical',
-    HORIZONTAL = 'horizontal'
+    HORIZONTAL = 'horizontal',
 }
