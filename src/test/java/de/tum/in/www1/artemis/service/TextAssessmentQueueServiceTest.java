@@ -5,12 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import de.tum.in.www1.artemis.repository.*;
 import org.assertj.core.data.Percentage;
-import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.TextBlock;
@@ -18,7 +17,7 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import org.springframework.transaction.annotation.Transactional;
+import de.tum.in.www1.artemis.repository.*;
 
 public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTest {
 
