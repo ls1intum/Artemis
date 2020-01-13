@@ -140,7 +140,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             // Check if the Person class is correct
             case personUML.name: {
                 const nameAttribute = this.elementWithAttribute(personUML.attribute, umlModel);
-                // const emptyMethod = this.elementWithMethod('', umlModel);
                 const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id : false;
                 this.guidedTourService.updateModelingResult(umlName, personClassCorrect);
                 break;

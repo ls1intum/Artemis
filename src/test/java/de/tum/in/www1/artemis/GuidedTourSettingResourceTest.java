@@ -39,7 +39,7 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest
         database.resetDatabase();
     }
 
-    public Set<GuidedTourSetting> createMockSettings() {
+    public Set<GuidedTourSetting> createGuidedTourSettings() {
         Set<GuidedTourSetting> guidedTourSettingSet = new HashSet<>();
 
         GuidedTourSetting guidedTourSetting1 = new GuidedTourSetting();
@@ -67,7 +67,7 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1")
     public void updateGuidedTourSettings() throws Exception {
-        Set<GuidedTourSetting> guidedTourSettingSet = this.createMockSettings();
+        Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         Set serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).isNotNull();
         assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
@@ -82,7 +82,7 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1")
     public void deleteGuidedTourSetting() throws Exception {
-        Set<GuidedTourSetting> guidedTourSettingSet = this.createMockSettings();
+        Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);
 
