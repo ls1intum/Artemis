@@ -241,10 +241,6 @@ public class ComplaintResource {
         // Filtering by courseId
         Course course = courseService.findOne(courseId);
 
-        if (course == null) {
-            throw new BadRequestAlertException("The requested course does not exist", ENTITY_NAME, "wrongCourseId");
-        }
-
         User user = userService.getUserWithGroupsAndAuthorities();
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
