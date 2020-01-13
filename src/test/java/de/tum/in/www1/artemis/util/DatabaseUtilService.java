@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -168,26 +167,50 @@ public class DatabaseUtilService {
      * @param numberOfTutors
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
-        LinkedList<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, numberOfStudents);
-        LinkedList<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, numberOfTutors);
-        LinkedList<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, numberOfInstructors);
-        LinkedList<User> usersToAdd = new LinkedList<>();
+        List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, numberOfStudents);
+        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, numberOfTutors);
+        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, numberOfInstructors);
+        User admin = ModelFactory.generateActivatedUser("admin");
+        admin.setGroups(Set.of("admin"));
+        List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
         usersToAdd.addAll(instructors);
+        usersToAdd.add(admin);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors);
+        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
-        final var users = new LinkedList<>(students);
+        final var users = new ArrayList<>(students);
         users.addAll(tutors);
         users.addAll(instructors);
+        users.add(admin);
         return users;
     }
 
-    public Result addParticipationWithResultForExercise(Exercise exercise, String login) {
-        StudentParticipation participation = addParticipationForExercise(exercise, login);
-        return addResultToParticipation(participation);
+    public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
+        var storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        final StudentParticipation studentParticipation;
+        if (storedParticipation.isEmpty()) {
+            final var user = getUserByLogin(login);
+            final var participation = new ProgrammingExerciseStudentParticipation();
+            final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
+            final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setStudent(user);
+            participation.setBuildPlanId(buildPlanId);
+            participation.setProgrammingExercise(exercise);
+            participation.setInitializationState(InitializationState.INITIALIZED);
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+            programmingExerciseStudentParticipationRepo.save(participation);
+            storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+            assertThat(storedParticipation).isPresent();
+            studentParticipation = studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
+        }
+        else {
+            studentParticipation = storedParticipation.get();
+        }
+        return addResultToParticipation(studentParticipation);
     }
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
@@ -196,7 +219,7 @@ public class DatabaseUtilService {
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
-    public List<Course> createCoursesWithExercises() throws Exception {
+    public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -228,13 +251,24 @@ public class DatabaseUtilService {
         programmingExercise.getCategories().add("Quiz");
         course1.addExercises(quizExercise);
 
+        Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        lecture1.addAttachments(attachment1);
+        course1.addLectures(lecture1);
+
+        Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        Attachment attachment2 = ModelFactory.generateAttachment(pastTimestamp, lecture2);
+        lecture2.addAttachments(attachment2);
+        course1.addLectures(lecture2);
+
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
 
-        Lecture lecture = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        lecture = lectureRepo.save(lecture);
-        Attachment attachment = ModelFactory.generateAttachment(pastTimestamp, lecture);
-        attachmentRepo.save(attachment);
+        lectureRepo.save(lecture1);
+        lectureRepo.save(lecture2);
+
+        attachmentRepo.save(attachment1);
+        attachmentRepo.save(attachment2);
 
         modelingExercise = exerciseRepo.save(modelingExercise);
         textExercise = exerciseRepo.save(textExercise);
@@ -242,13 +276,23 @@ public class DatabaseUtilService {
         programmingExercise = exerciseRepo.save(programmingExercise);
         quizExercise = exerciseRepo.save(quizExercise);
 
-        String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
-        var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
-        exampleSubmission.assessmentExplanation("exp");
-        var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor1"));
-        exampleSubmission.addTutorParticipations(tutorParticipation);
-        tutorParticipationRepo.save(tutorParticipation);
-        exampleSubmissionRepo.save(exampleSubmission);
+        // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
+        var tutorParticipations = new ArrayList<TutorParticipation>();
+        for (int i = 1; i < 6; i++) {
+            var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i));
+            tutorParticipationRepo.save(tutorParticipation);
+            tutorParticipations.add(tutorParticipation);
+        }
+
+        for (int i = 0; i < 5; i++) {
+            String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
+            var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
+            exampleSubmission.assessmentExplanation("exp");
+            for (var tutorParticipation : tutorParticipations) {
+                exampleSubmission.addTutorParticipations(tutorParticipation);
+            }
+            exampleSubmissionRepo.save(exampleSubmission);
+        }
 
         User user = (userRepo.findOneByLogin("student1")).get();
         StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
@@ -295,54 +339,58 @@ public class DatabaseUtilService {
      */
     public StudentParticipation addParticipationForExercise(Exercise exercise, String login) {
         Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
-        if (storedParticipation.isPresent()) {
-            return storedParticipation.get();
+        if (storedParticipation.isEmpty()) {
+            User user = getUserByLogin(login);
+            StudentParticipation participation = new StudentParticipation();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setStudent(user);
+            participation.setExercise(exercise);
+            studentParticipationRepo.save(participation);
+            storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+            assertThat(storedParticipation).isPresent();
         }
-        User user = getUserByLogin(login);
-        StudentParticipation participation = new StudentParticipation();
-        participation.setInitializationDate(ZonedDateTime.now());
-        participation.setStudent(user);
-        participation.setExercise(exercise);
-        studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
-        assertThat(storedParticipation).isPresent();
         return studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
     }
 
-    @Transactional
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
-        Optional<ProgrammingExerciseStudentParticipation> existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(),
-                login);
+        final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
         }
-        User user = getUserByLogin(login);
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+
+        final var user = getUserByLogin(login);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        participation.setInitializationDate(ZonedDateTime.now());
         participation.setStudent(user);
-        participation.setExercise(exercise);
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-" + login.toUpperCase());
+        participation.setBuildPlanId(buildPlanId);
+        participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
-        return studentParticipationRepo.save(participation);
+        participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+        participation = programmingExerciseStudentParticipationRepo.save(participation);
+
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(participation.getId()).get();
     }
 
-    @Transactional
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
+        final var repoName = (exercise.getProjectKey() + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-BASE");
-        participation.setRepositoryUrl("http://nadnasidni.sgiinssdgdg-exercise.git");
+        participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.TEMPLATE.getName());
+        participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.save(exercise);
     }
 
-    @Transactional
     public ProgrammingExercise addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
+        final var repoName = (exercise.getProjectKey() + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
-        participation.setBuildPlanId("TEST201904BPROGRAMMINGEXERCISE6-SOLUTION");
-        participation.setRepositoryUrl("http://nadnasidni.sgiinssdgdg-solution.git");
+        participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.SOLUTION.getName());
+        participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
@@ -464,6 +512,7 @@ public class DatabaseUtilService {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
+        programmingExercise.setShortName("TSTEXC");
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
@@ -474,7 +523,6 @@ public class DatabaseUtilService {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle("Test Exercise");
-        programmingExercise.setShortName("TSTEXC");
         programmingExercise.setAllowOnlineEditor(true);
         programmingExercise.setPackageName("de.test");
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
@@ -483,10 +531,10 @@ public class DatabaseUtilService {
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.sgiinssdgdg-tests.git");
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-        courseRepo.save(course);
-        programmingExerciseRepository.save(programmingExercise);
+        course = courseRepo.save(course);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
-        courseRepo.save(course);
+        course = courseRepo.save(course);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -504,10 +552,9 @@ public class DatabaseUtilService {
         return course;
     }
 
-    @Transactional
     public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
-        course = courseRepo.findById(course.getId()).get();
+        course = courseRepo.findOneWithEagerExercises(course.getId());
         ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
@@ -522,10 +569,9 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
-    @Transactional
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
-        course = courseRepo.findById(course.getId()).get();
+        course = courseRepo.findOneWithEagerExercises(course.getId());
         ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
@@ -596,16 +642,16 @@ public class DatabaseUtilService {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = modelSubmissionService.save(submission, exercise, login);
         Result result = new Result();
+        result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setResult(result);
         participation.addResult(result);
-        resultRepo.save(result);
         studentParticipationRepo.save(participation);
-        modelingSubmissionRepo.save(submission);
+        submission = modelingSubmissionRepo.save(submission);
+        result = resultRepo.save(result);
         return submission;
     }
 
-    @Transactional
     public ModelingSubmission addModelingSubmission(ModelingExercise exercise, ModelingSubmission submission, String login) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
@@ -615,13 +661,11 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    @Transactional
     public ProgrammingSubmission addProgrammingSubmission(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
-        participation.addSubmissions(submission);
+        submission.setParticipation(participation);
         submission.setParticipation(participation);
         programmingSubmissionRepo.save(submission);
-        participationRepo.save(participation);
         return submission;
     }
 
@@ -634,20 +678,20 @@ public class DatabaseUtilService {
      * @param login of the user to identify the corresponding student participation.
      * @return the updated programming submission that is linked to all related entities.
      */
-    @Transactional
     public ProgrammingSubmission addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
-        Result result = resultRepo.save(new Result().participation(participation).submission(submission));
+        Result result = resultRepo.save(new Result().participation(participation));
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
         submission.setResult(result);
-        programmingSubmissionRepo.save(submission);
+        submission = programmingSubmissionRepo.save(submission);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
         participation.addResult(result);
         participationRepo.save(participation);
         return submission;
     }
 
-    @Transactional
     public ProgrammingSubmission addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, Result result, String login) {
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(exercise, login);
         participation.addSubmissions(submission);
@@ -659,20 +703,20 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    @Transactional
     public ProgrammingSubmission addProgrammingSubmissionWithResultAndAssessor(ProgrammingExercise exercise, ProgrammingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
-        result.setSubmission(submission);
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setScore(50L);
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
-        programmingSubmissionRepo.save(submission);
-        resultRepo.save(result);
+        submission = programmingSubmissionRepo.save(submission);
+        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
     }
@@ -694,41 +738,40 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    @Transactional
     public ModelingSubmission addModelingSubmissionWithResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
-        result.setSubmission(submission);
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
-        modelingSubmissionRepo.save(submission);
-        resultRepo.save(result);
+        submission = modelingSubmissionRepo.save(submission);
+        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
     }
 
-    @Transactional
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
-        result.setSubmission(submission);
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
-        modelingSubmissionRepo.save(submission);
-        resultRepo.save(result);
+        submission = modelingSubmissionRepo.save(submission);
+        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
     }
 
-    @Transactional
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
         participation.addSubmissions(fileUploadSubmission);
@@ -738,56 +781,54 @@ public class DatabaseUtilService {
         return fileUploadSubmission;
     }
 
-    @Transactional
     public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin, List<Feedback> feedbacks) {
         StudentParticipation participation = addParticipationForExercise(fileUploadExercise, login);
         participation.addSubmissions(fileUploadSubmission);
         Result result = new Result();
-        result.setSubmission(fileUploadSubmission);
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
         result.setCompletionDate(fileUploadExercise.getReleaseDate());
         result.setFeedbacks(feedbacks);
+        result = resultRepo.save(result);
+        result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.setResult(result);
         fileUploadSubmission.getParticipation().addResult(result);
-        fileUploadSubmissionRepo.save(fileUploadSubmission);
-        resultRepo.save(result);
+        fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
+        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return fileUploadSubmission;
     }
 
-    @Transactional
     public FileUploadSubmission addFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin) {
         return addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<Feedback>());
     }
 
-    @Transactional
     public TextSubmission addTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         submission.setParticipation(participation);
-        textSubmissionRepo.save(submission);
+        submission = textSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
         return submission;
     }
 
-    @Transactional
     public TextSubmission addTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = addParticipationForExercise(exercise, login);
         participation.addSubmissions(submission);
         Result result = new Result();
-        result.setSubmission(submission);
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100L);
         result.setCompletionDate(exercise.getReleaseDate());
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.setResult(result);
         submission.getParticipation().addResult(result);
-        textSubmissionRepo.save(submission);
-        resultRepo.save(result);
+        submission = textSubmissionRepo.save(submission);
+        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
     }
@@ -897,26 +938,22 @@ public class DatabaseUtilService {
         hints.add(exerciseHint1);
         hints.add(exerciseHint2);
         hints.add(exerciseHint3);
+        exercise.setExerciseHints(hints);
         exerciseHintRepository.saveAll(hints);
 
         return hints;
     }
 
-    @Transactional
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences() {
         final var lazyExercise = programmingExerciseRepository.findAll().get(0);
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise);
     }
 
-    @Transactional
     public <T extends Exercise> T addHintsToProblemStatement(T exercise) {
         final var statement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement();
-        exercise = (T) exerciseRepo.findById(exercise.getId()).get();
         final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining(", ", "{", "}"));
         exercise.setProblemStatement(statement + hintsInStatement);
-        exerciseRepo.save(exercise);
-
-        return exercise;
+        return exerciseRepo.save(exercise);
     }
 
     /**

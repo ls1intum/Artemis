@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,6 +45,8 @@ public class TextExerciseResource {
 
     private final TextExerciseService textExerciseService;
 
+    private final ExerciseService exerciseService;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final UserService userService;
@@ -65,7 +68,7 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            Optional<TextClusteringScheduleService> textClusteringScheduleService) {
+            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -77,6 +80,7 @@ public class TextExerciseResource {
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.textClusteringScheduleService = textClusteringScheduleService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -108,11 +112,6 @@ public class TextExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -147,11 +146,6 @@ public class TextExerciseResource {
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -223,25 +217,28 @@ public class TextExerciseResource {
     /**
      * DELETE /text-exercises/:id : delete the "id" textExercise.
      *
-     * @param id the id of the textExercise to delete
+     * @param exerciseId the id of the textExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/text-exercises/{id}")
+    @DeleteMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteTextExercise(@PathVariable Long id) {
-        log.debug("REST request to delete TextExercise : {}", id);
-        Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
-        if (textExercise.isPresent()) {
-            Course course = textExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-                return forbidden();
-            }
-            textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise.get()));
-            textExerciseService.delete(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+    public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
+        log.info("REST request to delete TextExercise : {}", exerciseId);
+        Optional<TextExercise> textExercise = textExerciseRepository.findById(exerciseId);
+        if (textExercise.isEmpty()) {
+            return notFound();
         }
-        return ResponseEntity.notFound().build();
+        Course course = textExercise.get().getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+        textClusteringScheduleService.ifPresent(service -> service.cancelScheduledClustering(textExercise.get()));
+        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        exerciseService.logDeletion(textExercise.get(), course, user);
+        exerciseService.delete(exerciseId, false, false);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.get().getTitle())).build();
+
     }
 
     /**

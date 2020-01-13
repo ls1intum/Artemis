@@ -50,6 +50,8 @@ public class ModelFactory {
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setPackageName("de.test");
         return programmingExercise;
     }
 
@@ -89,8 +91,8 @@ public class ModelFactory {
         return exercise;
     }
 
-    public static LinkedList<User> generateActivatedUsers(String loginPrefix, String[] groups, int amount) {
-        LinkedList<User> generatedUsers = new LinkedList<>();
+    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, int amount) {
+        List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
             User student = ModelFactory.generateActivatedUser(loginPrefix + i);
             if (groups != null) {

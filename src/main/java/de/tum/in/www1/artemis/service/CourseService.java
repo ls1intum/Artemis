@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,6 +128,7 @@ public class CourseService {
      * @param courseId the id of the entity
      * @return the entity
      */
+    @NotNull
     public Course findOne(Long courseId) {
         log.debug("Request to get Course : {}", courseId);
         return courseRepository.findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
@@ -134,9 +140,14 @@ public class CourseService {
      * @param courseId the id of the entity
      * @return the entity
      */
-    public Course findOneWithExercises(Long courseId) {
+    public Course findOneWithExercises(long courseId) {
         log.debug("Request to get Course : {}", courseId);
         return courseRepository.findOneWithEagerExercises(courseId);
+    }
+
+    public Course findOneWithExercisesAndLectures(long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findOneWithEagerExercisesAndLectures(courseId);
     }
 
     /**

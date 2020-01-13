@@ -47,7 +47,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @BeforeEach
     public void init() {
-        database.addUsers(10, 1, 1);
+        database.addUsers(10, 5, 1);
     }
 
     @AfterEach
@@ -207,7 +207,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     private QuizExercise createQuizOnServer() throws Exception {
-        List<Course> courses = database.createCoursesWithExercises();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
 
         QuizExercise quizExercise = createQuiz(course);

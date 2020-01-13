@@ -50,7 +50,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 5, 1);
     }
 
     @AfterEach
@@ -59,7 +59,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         request.post("/api/courses", course, HttpStatus.CREATED);
@@ -72,9 +72,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
-        List<Course> courses = database.createCoursesWithExercises();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
         for (Course course : courses) {
             request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
         }
@@ -116,7 +116,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCoursesWithPermission() throws Exception {
-        database.createCoursesWithExercises();
+        database.createCoursesWithExercisesAndLectures();
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("All courses are available").isEqualTo(2);
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -128,7 +128,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllCoursesForDashboard() throws Exception {
-        database.createCoursesWithExercises();
+        database.createCoursesWithExercisesAndLectures();
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
@@ -184,7 +184,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercises();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
@@ -211,7 +211,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
             long numberOfSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
             assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
-            assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+            assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
                     isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
@@ -241,7 +241,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercises();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
         for (Course testCourse : testCourses) {
             Course courseWithExercisesAndRelevantParticipations = request.get("/api/courses/" + testCourse.getId() + "/with-exercises-and-relevant-participations", HttpStatus.OK,
                     Course.class);
@@ -278,7 +278,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCategoriesInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercises();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         Set<String> categories1 = request.get("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, Set.class);

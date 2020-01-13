@@ -13,17 +13,14 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class TextAssessmentService extends AssessmentService {
 
-    private final FeedbackRepository feedbackRepository;
-
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final UserService userService;
 
-    public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
-            ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
+    public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
+            FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
             StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
-        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
-        this.feedbackRepository = feedbackRepository;
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
     }
@@ -77,6 +74,9 @@ public class TextAssessmentService extends AssessmentService {
 
         User user = userService.getUser();
         result.setAssessor(user);
+
+        // TODO: how can the result be connected with the submission, if the result is newly created?
+        // TODO: where is the relationship between result and participation established?
 
         if (result.getSubmission() instanceof TextSubmission && result.getSubmission().getResult() == null) {
             TextSubmission textSubmission = (TextSubmission) result.getSubmission();

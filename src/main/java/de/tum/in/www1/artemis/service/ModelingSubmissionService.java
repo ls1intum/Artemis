@@ -193,7 +193,6 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param username           the name of the corresponding user
      * @return the saved modelingSubmission entity
      */
-    @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
                 username);
@@ -219,14 +218,13 @@ public class ModelingSubmissionService extends SubmissionService {
         participation.addSubmissions(modelingSubmission);
 
         if (modelingSubmission.isSubmitted()) {
-            notifyCompass(modelingSubmission, modelingExercise);
+            try {
+                notifyCompass(modelingSubmission, modelingExercise);
+            }
+            catch (Exception ex) {
+                log.error(ex.getMessage(), ex);
+            }
             participation.setInitializationState(InitializationState.FINISHED);
-            // We remove all unfinished results here as they should not be sent to the client. Note, that the reference to the unfinished results will not get removed in the
-            // database by saving the participation to the DB below since the results are not persisted with the participation.
-            participation.setResults(
-                    participation.getResults().stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toSet()));
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
         }
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
@@ -307,7 +305,7 @@ public class ModelingSubmissionService extends SubmissionService {
         result.setSubmission(submission);
         submission.setResult(result);
         if (submission.getParticipation() != null) {
-            submission.getParticipation().addResult(result);
+            result.setParticipation(submission.getParticipation());
         }
         result = resultRepository.save(result);
         modelingSubmissionRepository.save(submission);

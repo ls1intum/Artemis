@@ -166,7 +166,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         result.setSubmission(submission);
         submission.setResult(result);
         if (submission.getParticipation() != null) {
-            submission.getParticipation().addResult(result);
+            result.setParticipation(submission.getParticipation());
         }
         result = resultRepository.save(result);
         fileUploadSubmissionRepository.save(submission);
@@ -222,9 +222,6 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         if (fileUploadSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
-
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
         }
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (fileUploadSubmission.getId() == null) {

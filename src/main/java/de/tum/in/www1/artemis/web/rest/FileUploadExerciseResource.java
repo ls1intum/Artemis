@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -38,7 +39,7 @@ public class FileUploadExerciseResource {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    private final FileUploadExerciseService fileUploadExerciseService;
+    private final ExerciseService exerciseService;
 
     private final UserService userService;
 
@@ -49,13 +50,13 @@ public class FileUploadExerciseResource {
     private final GroupNotificationService groupNotificationService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, FileUploadExerciseService fileUploadExerciseService) {
+            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
-        this.fileUploadExerciseService = fileUploadExerciseService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -74,12 +75,6 @@ public class FileUploadExerciseResource {
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -107,12 +102,6 @@ public class FileUploadExerciseResource {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -176,14 +165,19 @@ public class FileUploadExerciseResource {
     @DeleteMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete FileUploadExercise : {}", exerciseId);
+        log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
+        if (fileUploadExercise.isEmpty()) {
+            return notFound();
+        }
         Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        fileUploadExerciseService.delete(exerciseId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
+        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        exerciseService.logDeletion(fileUploadExercise.get(), course, user);
+        exerciseService.delete(exerciseId, false, false);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, fileUploadExercise.get().getTitle())).build();
     }
 }

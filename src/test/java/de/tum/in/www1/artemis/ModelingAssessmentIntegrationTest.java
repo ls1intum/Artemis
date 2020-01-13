@@ -83,7 +83,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(6, 1, 0);
+        database.addUsers(6, 2, 1);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
@@ -160,6 +160,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -175,6 +176,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -190,6 +192,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -220,6 +223,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
@@ -243,6 +247,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     // region Automatic Assessment Tests
@@ -743,5 +748,37 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json",
                 "tutor1", submitAssessment);
+    }
+
+    private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
+        modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
+        modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json",
+                "tutor1", false);
+        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void cancelOwnAssessmentAsStudent() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cancelOwnAssessmentAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
     }
 }
