@@ -110,25 +110,6 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         return '';
     }
-
-    calculateProgressBarClass(percentage: number): string {
-        if (percentage < 50) {
-            return 'bg-danger';
-        } else if (percentage < 100) {
-            return 'bg-warning';
-        }
-
-        return 'bg-success';
-    }
-
-    chooseProgressBarTextColor(percentage: number) {
-        if (percentage < 100) {
-            return 'text-dark';
-        }
-
-        return 'text-white';
-    }
-
     calculateClassProgressBar() {
         if (this.tutorParticipationStatus !== this.TRAINED && this.tutorParticipationStatus !== this.COMPLETED) {
             return 'opaque';
