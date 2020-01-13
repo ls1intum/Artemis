@@ -47,6 +47,10 @@
                     "open": "Open assessment",
                     "cancel": "Cancel assessment",
                     "assess": "Assess Submission"
+                },
+                "filters": {
+                    "showAll": "Show all",
+                    "showLocked": "Show locked"
                 }
             }
         }
