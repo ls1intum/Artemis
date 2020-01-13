@@ -43,19 +43,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         if (courseId && exerciseId) {
             this.routerLink = `/course/${courseId}/exercise/${exerciseId}/tutor-dashboard`;
         }
-
-        if (this.numberOfParticipations !== 0) {
-            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
-        }
-        if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
-            this.percentageComplaintsProgress = Math.round(
-                ((this.numberOfComplaints -
-                this.numberOfOpenComplaints + // nr of evaluated complaints
-                    (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests)) / // nr of evaluated more feedback requests
-                    (this.numberOfComplaints + this.numberOfMoreFeedbackRequests)) * // total nr of complaints and feedback requests
-                    100,
-            );
-        }
+        this.calculatePercentageAssessmentProgress();
+        this.calculatePercentageComplaintsProgress();
     }
 
     navigate() {
@@ -69,10 +58,16 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             this.tutorParticipation = changes.tutorParticipation.currentValue;
             this.tutorParticipationStatus = this.tutorParticipation.status;
         }
+        this.calculatePercentageAssessmentProgress();
+        this.calculatePercentageComplaintsProgress();
+    }
 
+    calculatePercentageAssessmentProgress() {
         if (this.numberOfParticipations !== 0) {
             this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
         }
+    }
+    calculatePercentageComplaintsProgress() {
         if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
             this.percentageComplaintsProgress = Math.round(
                 ((this.numberOfComplaints -
@@ -83,7 +78,6 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             );
         }
     }
-
     /**
      * Calculates the classes for the steps (circles) in the tutor participation graph
      * @param step for which the class should be calculated for (NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED)
