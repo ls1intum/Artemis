@@ -31,8 +31,17 @@ export enum OverlayPosition {
 }
 
 export enum UserInteractionEvent {
+    // @ts-ignore
     CLICK = 'click',
+    // @ts-ignore
     ACE_EDITOR = 'ace-editor',
+    // @ts-ignore
     WAIT_FOR_SELECTOR = 'wait-for-selector',
+    // @ts-ignore
     MODELING = 'modeling',
+}
+
+export enum Direction {
+    VERTICAL = 'vertical',
+    HORIZONTAL = 'horizontal'
 }

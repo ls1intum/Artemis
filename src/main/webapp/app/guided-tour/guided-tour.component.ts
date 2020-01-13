@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChil
 import { fromEvent, Subscription } from 'rxjs';
 import { take } from 'rxjs/internal/operators';
 
-import { Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
+import { Orientation, OverlayPosition, UserInteractionEvent, Direction } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
@@ -183,27 +183,27 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
         // Set timeout to allow things to render in order to scroll to the correct location
         setTimeout(() => {
-            if (this.isTourOnScreen()) {
+            if (this.isTourOnScreen(Direction.VERTICAL) && this.isTourOnScreen(Direction.HORIZONTAL)) {
                 return;
             }
-            const topPosition = this.getTopScrollingPosition();
-            try {
-                window.scrollTo({
-                    left: 0,
-                    top: topPosition,
-                    behavior: 'smooth',
-                });
-            } catch (err) {
-                if (err instanceof TypeError) {
-                    window.scroll(0, topPosition);
-                } else {
-                    throw err;
+            if (!this.isTourOnScreen(Direction.VERTICAL)) {
+                const topPosition = this.getTopScrollingPosition();
+                try {
+                    window.scrollTo({
+                        left: 0,
+                        top: topPosition,
+                        behavior: 'smooth',
+                    });
+                } catch (err) {
+                    if (err instanceof TypeError) {
+                        window.scroll(0, topPosition);
+                    } else {
+                        throw err;
+                    }
                 }
             }
-
-            // Set timeout to allow things to render in order to update the orientation if necessary
             setTimeout(() => {
-                if (!this.isTourOnScreen()) {
+                if (!this.isTourOnScreen(Direction.HORIZONTAL)) {
                     this.flipOrientation();
                 }
             }, 300);
@@ -214,48 +214,62 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Check if the tour step element would be visible on screen
      * @return true if tour step is visible on screen, otherwise false
      */
-    private isTourOnScreen(): boolean {
+    private isTourOnScreen(direction: Direction): boolean {
         if (!this.currentTourStep) {
             return false;
         }
-        return !this.currentTourStep.highlightSelector || (this.elementInViewport(this.getSelectedElement()) && this.elementInViewport(this.tourStep.nativeElement));
+        return !this.currentTourStep.highlightSelector || (this.elementInViewport(this.getSelectedElement(), direction) && this.elementInViewport(this.tourStep.nativeElement, direction));
     }
 
     /**
      * Define if HTMLElement is visible in current viewport
      * Modified from https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
      * @param element that should be checked
+     * @param direction it should be checked if the tour step is horizontally or vertically in the viewport
      * @return true if element is in viewport, otherwise false
      */
-    private elementInViewport(element: HTMLElement | null): boolean {
+    private elementInViewport(element: HTMLElement | null, direction: Direction): boolean {
         if (!element) {
             return false;
         }
+
+        let elementInViewPort = false;
         let top = element.offsetTop;
-        let sideOffset = false;
         const height = element.offsetHeight;
         const width = element.offsetWidth;
         const left = element.offsetLeft;
 
-        while (element.offsetParent) {
-            element = element.offsetParent as HTMLElement;
-            top += element.offsetTop;
+        console.log('element: ', element);
+        console.log('direction: ', direction);
+
+        switch (direction) {
+            case Direction.HORIZONTAL: {
+                if (this.isRight()) {
+                    elementInViewPort = width + left < window.innerWidth;
+                } else if (this.isLeft()) {
+                    elementInViewPort = left - width > window.screenLeft;
+                }
+                break;
+            }
+            case Direction.VERTICAL: {
+                const scrollAdjustment = this.currentTourStep && this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
+                const stepScreenAdjustment = this.getStepScreenAdjustment();
+
+                while (element.offsetParent) {
+                    element = element.offsetParent as HTMLElement;
+                    top += element.offsetTop;
+                }
+
+                if (this.isBottom()) {
+                    elementInViewPort = top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight + window.pageYOffset;
+                } else {
+                    elementInViewPort = top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight + window.pageYOffset;
+                }
+                break;
+            }
         }
 
-        const scrollAdjustment = this.currentTourStep && this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
-        const stepScreenAdjustment = this.getStepScreenAdjustment();
-
-        if (this.isRight()) {
-            sideOffset = width + left > window.innerWidth;
-        } else if (this.isLeft()) {
-            sideOffset = left - width < window.screenLeft;
-        }
-
-        if (this.isBottom()) {
-            return top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight && !sideOffset;
-        } else {
-            return top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight && !sideOffset;
-        }
+        return elementInViewPort;
     }
 
     public isVideoTourStep(): boolean {
@@ -279,6 +293,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     private flipOrientation(): void {
+        console.log('flip orientation');
         if (this.isLeft()) {
             switch (this.currentTourStep.orientation) {
                 case Orientation.LEFT: {
