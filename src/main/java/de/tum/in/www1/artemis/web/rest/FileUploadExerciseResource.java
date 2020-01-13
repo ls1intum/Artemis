@@ -75,12 +75,6 @@ public class FileUploadExerciseResource {
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
@@ -108,12 +102,6 @@ public class FileUploadExerciseResource {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();

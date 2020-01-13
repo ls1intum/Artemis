@@ -156,12 +156,6 @@ public class ProgrammingExerciseResource {
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this programming exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -212,10 +206,6 @@ public class ProgrammingExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The course belonging to this programming exercise does not exist", "courseNotFound")).body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -386,10 +376,6 @@ public class ProgrammingExerciseResource {
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -714,10 +700,6 @@ public class ProgrammingExerciseResource {
 
         ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
