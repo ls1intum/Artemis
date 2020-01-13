@@ -5,6 +5,7 @@ import { Component, Input } from '@angular/core';
     templateUrl: './progress-bar.component.html',
 })
 export class ProgressBarComponent {
+    @Input() public tooltip: string;
     @Input() public percentage: number;
     @Input() public numerator: number;
     @Input() public denominator: number;

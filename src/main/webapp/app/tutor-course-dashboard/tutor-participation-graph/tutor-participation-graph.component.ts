@@ -125,4 +125,11 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         return 'orange';
     }
+    // returns the total nr of evaluated complaints and feedback requests
+    calculateComplaintsNumerator() {
+        return this.numberOfComplaints - this.numberOfOpenComplaints + (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests);
+    }
+    calculateComplaintsDenominator() {
+        return this.numberOfComplaints + this.numberOfMoreFeedbackRequests;
+    }
 }

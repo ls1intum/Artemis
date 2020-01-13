@@ -13,13 +13,20 @@
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
         <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
-            <jhi-progress-bar [percentage]="percentageAssessmentProgress" [numerator]="numberOfAssessments" [denominator]="numberOfParticipations"></jhi-progress-bar>
+            <jhi-progress-bar
+                [tooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate"
+                [percentage]="percentageAssessmentProgress"
+                [numerator]="numberOfAssessments"
+                [denominator]="numberOfParticipations"
+            >
+            </jhi-progress-bar>
         </li>
         <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
             <jhi-progress-bar
+                [tooltip]="'artemisApp.tutorCourseDashboard.evaluateStudentsComplaints' | translate"
                 [percentage]="percentageComplaintsProgress"
-                [numerator]="numberOfComplaints - numberOfOpenComplaints + (numberOfMoreFeedbackRequests - numberOfOpenMoreFeedbackRequests)"
-                [denominator]="numberOfComplaints + numberOfMoreFeedbackRequests"
+                [numerator]="calculateComplaintsNumerator()"
+                [denominator]="calculateComplaintsDenominator()"
             >
             </jhi-progress-bar>
         </li>
