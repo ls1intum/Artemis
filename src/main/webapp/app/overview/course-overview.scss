@@ -131,10 +131,3 @@ Course Info Bar
 canvas#complete-chart {
     z-index: 99;
 }
-
-@media (max-width: 540px) {
-    .shrink-on-mobile {
-        transform: scale(0.75);
-        transform-origin: 0;
-    }
-}

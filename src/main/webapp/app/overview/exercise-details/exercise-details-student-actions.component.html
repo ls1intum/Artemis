@@ -154,7 +154,7 @@
 <!-- PROGRAMMING EXERCISE ACTIONS START -->
 <div *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <!-- ACTION START -->
-    <div class="btn-group shrink-on-mobile">
+    <div class="btn-group">
         <button
             class="start-exercise"
             jhi-exercise-action-button
@@ -240,16 +240,6 @@
             }}</a>
             <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
         </ng-template>
-        <button
-            jhi-exercise-action-button
-            buttonIcon="external-link-alt"
-            [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="publishBuildPlanUrl() && buildPlanActive()"
-            (click)="goToBuildPlan(exercise.studentParticipations[0])"
-        ></button>
     </div>
     <!-- ACTION END -->
 </div>
