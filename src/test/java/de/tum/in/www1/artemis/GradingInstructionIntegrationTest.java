@@ -94,7 +94,7 @@ public class GradingInstructionIntegrationTest {
             assertThat(gradingInstruction.getInstructionDescription()).isNotNull();
         }
         assertThat(gradingInstructionSet.size()).isEqualTo(2);
-        GradingInstruction gradingInstruction = new GradingInstruction();
+        var gradingInstruction = new GradingInstruction();
         gradingInstruction.setId(1l);
         request.postWithResponseBody(ROOT + GRADING_INSTRUCTIONS, gradingInstruction, GradingInstruction.class, HttpStatus.BAD_REQUEST);
         assertThat(gradingInstructionRepository.findAll()).as("Grading instruction has not been stored").size().isEqualTo(2);
