@@ -117,6 +117,12 @@ public class TextAssessmentService extends AssessmentService {
         return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }
 
+    /**
+     * Finds the example result for the given submission ID. The submission has to be an example submission
+     *
+     * @param submissionId The ID of the submission for which the result should be fetched
+     * @return
+     */
     public Result getExampleResult(long submissionId) {
         return textSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist")).getResult();
