@@ -8,17 +8,16 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
@@ -84,10 +83,12 @@ public class ParticipationResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final GuidedTourConfiguration guidedTourConfiguration;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository) {
+                                 CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+                                 Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
+                                 ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -100,6 +101,7 @@ public class ParticipationResource {
         this.resultService = resultService;
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
+        this.guidedTourConfiguration = guidedTourConfiguration;
     }
 
     /**
@@ -587,9 +589,12 @@ public class ParticipationResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // Allow USER's and TA's to delete their own StudentParticipations
+        // Allow USER's and TA's to delete their own StudentParticipations if it's for a tutorial
         if (user.getId().equals(participation.getStudent().getId())) {
             checkAccessPermissionAtLeastStudent(participation, user);
+            if (!guidedTourConfiguration.isExerciseForTutorial(participation.getExercise())) {
+                return forbidden();
+            }
         }
         else {
             checkAccessPermissionAtLeastInstructor(participation, user);
