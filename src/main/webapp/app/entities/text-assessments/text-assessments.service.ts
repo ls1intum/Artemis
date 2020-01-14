@@ -59,8 +59,8 @@ export class TextAssessmentsService {
         );
     }
 
-    public getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/exampleAssessment`);
+    public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
+        return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
     }
 
     getParticipationForSubmissionWithoutAssessment(exerciseId: number) {
