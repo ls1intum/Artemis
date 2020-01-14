@@ -6,6 +6,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.Exercise.StatsForTutorDashboard;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -50,9 +55,21 @@ public class ExerciseService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final TextSubmissionService textSubmissionService;
+
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    private final FileUploadSubmissionService fileUploadSubmissionService;
+
+    private final ResultService resultService;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository) {
+                           ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
+                           TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService, FileUploadSubmissionService fileUploadSubmissionService, ResultService resultService, ComplaintService complaintService, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -62,6 +79,12 @@ public class ExerciseService {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.auditEventRepository = auditEventRepository;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
+        this.fileUploadSubmissionService = fileUploadSubmissionService;
+        this.resultService = resultService;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
     }
 
     /**
@@ -304,4 +327,40 @@ public class ExerciseService {
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
+    public  StatsForTutorDashboard calculateStatsForTutorDashboard(Exercise exercise) {
+        final var stats = new StatsForTutorDashboard();
+        // TODO: This could be 1 repository method as the exercise id is provided anyway.
+        long numberOfSubmissions = 0L;
+        if (exercise instanceof TextExercise) {
+            numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof ModelingExercise) {
+            numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+        }
+
+        long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+            long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.COMPLAINT);
+            // TODO: Hanya, subtract nr of open (unevaluated) complaints about your own assessment from nrOfOpenComplaints
+            stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+        stats.setNumberOfComplaints(numberOfComplaints);
+
+            long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+            long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.MORE_FEEDBACK);
+            // TODO: Hanya, subtract nr of open (unevaluated) feedback requests about your own assessment from nrOfOpenFeedbackRequests
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        stats.setNumberOfParticipations(numberOfSubmissions);
+        stats.setNumberOfAssessments(numberOfAssessments);
+        return stats;
+        }
 }

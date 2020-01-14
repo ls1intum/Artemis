@@ -137,23 +137,7 @@ public abstract class Exercise implements Serializable {
     // variable names must be different from Getter name,
     // so that Jackson ignores the @Transient annotation,
     // but Hibernate still respects it
-    @Transient
-    private Long numberOfParticipationsTransient;
 
-    @Transient
-    private Long numberOfAssessmentsTransient;
-
-    @Transient
-    private Long numberOfComplaintsTransient;
-
-    @Transient
-    private Long numberOfOpenComplaintsTransient;
-
-    @Transient
-    private Long numberOfMoreFeedbackRequestsTransient;
-
-    @Transient
-    private Long numberOfOpenMoreFeedbackRequestsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -736,53 +720,7 @@ public abstract class Exercise implements Serializable {
         this.tutorParticipations = tutorParticipations;
     }
 
-    public Long getNumberOfParticipations() {
-        return numberOfParticipationsTransient;
-    }
 
-    public void setNumberOfParticipations(Long numberOfParticipations) {
-        this.numberOfParticipationsTransient = numberOfParticipations;
-    }
-
-    public Long getNumberOfAssessments() {
-        return numberOfAssessmentsTransient;
-    }
-
-    public void setNumberOfAssessments(Long numberOfAssessments) {
-        this.numberOfAssessmentsTransient = numberOfAssessments;
-    }
-
-    public Long getNumberOfComplaints() {
-        return numberOfComplaintsTransient;
-    }
-
-    public void setNumberOfComplaints(Long numberOfComplaints) {
-        this.numberOfComplaintsTransient = numberOfComplaints;
-    }
-
-    public Long getNumberOfOpenComplaints() {
-        return numberOfOpenComplaintsTransient;
-    }
-
-    public void setNumberOfOpenComplaints(Long numberOfOpenComplaintsTransient) {
-        this.numberOfOpenComplaintsTransient = numberOfOpenComplaintsTransient;
-    }
-
-    public Long getNumberOfMoreFeedbackRequests() {
-        return numberOfMoreFeedbackRequestsTransient;
-    }
-
-    public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
-        this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
-    }
-
-    public Long getNumberOfOpenMoreFeedbackRequests() {
-        return numberOfOpenMoreFeedbackRequestsTransient;
-    }
-
-    public void setNumberOfOpenMoreFeedbackRequests(Long numberOfOpenMoreFeedbackRequests) {
-        this.numberOfOpenMoreFeedbackRequestsTransient = numberOfOpenMoreFeedbackRequests;
-    }
 
     public boolean isReleased() {
         ZonedDateTime releaseDate = getReleaseDate();
@@ -795,5 +733,74 @@ public abstract class Exercise implements Serializable {
 
     public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
         this.presentationScoreEnabled = presentationScoreEnabled;
+    }
+
+    public static final class StatsForTutorDashboard{
+        @Transient
+        private long numberOfParticipationsTransient;
+
+        @Transient
+        private long numberOfAssessmentsTransient;
+
+        @Transient
+        private long numberOfComplaintsTransient;
+
+        @Transient
+        private long numberOfOpenComplaintsTransient;
+
+        @Transient
+        private long numberOfMoreFeedbackRequestsTransient;
+
+        @Transient
+        private long numberOfOpenMoreFeedbackRequestsTransient;
+
+        public long getNumberOfParticipations() {
+            return numberOfParticipationsTransient;
+        }
+
+        public void setNumberOfParticipations(Long numberOfParticipations) {
+            this.numberOfParticipationsTransient = numberOfParticipations;
+        }
+
+        public long getNumberOfAssessments() {
+            return numberOfAssessmentsTransient;
+        }
+
+        public void setNumberOfAssessments(long numberOfAssessments) {
+            this.numberOfAssessmentsTransient = numberOfAssessments;
+        }
+
+        public long getNumberOfComplaints() {
+            return numberOfComplaintsTransient;
+        }
+
+        public void setNumberOfComplaints(long numberOfComplaints) {
+            this.numberOfComplaintsTransient = numberOfComplaints;
+        }
+
+        public long getNumberOfOpenComplaints() {
+            return numberOfOpenComplaintsTransient;
+        }
+
+        public void setNumberOfOpenComplaints(long numberOfOpenComplaintsTransient) {
+            this.numberOfOpenComplaintsTransient = numberOfOpenComplaintsTransient;
+        }
+
+        public long getNumberOfMoreFeedbackRequests() {
+            return numberOfMoreFeedbackRequestsTransient;
+        }
+
+        public void setNumberOfMoreFeedbackRequests(long numberOfMoreFeedbackRequests) {
+            this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
+        }
+
+        public long getNumberOfOpenMoreFeedbackRequests() {
+            return numberOfOpenMoreFeedbackRequestsTransient;
+        }
+
+        public void setNumberOfOpenMoreFeedbackRequests(long numberOfOpenMoreFeedbackRequests) {
+            this.numberOfOpenMoreFeedbackRequestsTransient = numberOfOpenMoreFeedbackRequests;
+        }
+
     }
 }
