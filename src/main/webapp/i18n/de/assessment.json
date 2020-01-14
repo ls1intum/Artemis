@@ -47,6 +47,10 @@
                     "open": "Bewertung öffnen",
                     "cancel": "Bewertung abbrechen",
                     "assess": "Abgabe bewerten"
+                },
+                "filters": {
+                    "showAll": "Alle anzeigen",
+                    "showLocked": "Nur gesperrte anzeigen"
                 }
             }
         }
