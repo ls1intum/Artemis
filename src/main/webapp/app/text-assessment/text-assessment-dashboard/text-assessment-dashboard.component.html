@@ -1,5 +1,6 @@
 <div *ngIf="exercise; else loading">
     <h4 jhiTranslate="artemisApp.textAssessment.dashboard.heading" [translateValues]="{ exerciseTitle: exercise.title }"></h4>
+    <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
     <ng-container *ngIf="!busy; else loading"></ng-container>
     <div class="table-responsive" *ngIf="submissions && submissions.length > 0; else emptyTable">
         <table class="table table-striped exercise-table">
@@ -33,7 +34,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of submissions | sortBy: predicate:reverse; let i = index">
+                <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of filteredSubmissions | sortBy: predicate:reverse; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                     <td>
