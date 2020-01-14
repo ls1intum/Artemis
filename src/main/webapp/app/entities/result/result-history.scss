@@ -10,6 +10,8 @@ $result-element-size: 25px;
         flex: 2;
 
         .result-score {
+            width: $result-element-size;
+
             .result-score-icon {
                 display: flex;
                 align-items: center;
@@ -39,6 +41,7 @@ $result-element-size: 25px;
                 align-items: center;
                 margin-left: -32px;
                 margin-right: -32px;
+                margin-top: 5px;
             }
         }
 

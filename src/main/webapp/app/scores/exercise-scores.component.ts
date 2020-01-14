@@ -6,7 +6,8 @@ import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { areManualResultsAllowed, Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
@@ -15,7 +16,7 @@ import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { FeatureToggle } from 'app/feature-toggle';
-import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 
 enum FilterProp {
     ALL = 'all',
@@ -250,6 +251,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.paramSub.unsubscribe();
-        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise.id);
+        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
     }
 }

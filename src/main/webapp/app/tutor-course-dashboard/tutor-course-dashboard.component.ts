@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course, CourseService } from '../entities/course';
+import { Course } from '../entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core';
 import { AccountService } from 'app/core/auth/account.service';

@@ -10,4 +10,6 @@
 # Unless a later match takes precedence, @krusche and @jpbernius will be
 # requested for review when someone opens a pull request.
 
-*   @krusche @jpbernius
+*    @krusche @jpbernius
+
+src/ @krusche @jpbernius @ls1intum/artemis

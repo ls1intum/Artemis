@@ -240,16 +240,6 @@
             }}</a>
             <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
         </ng-template>
-        <button
-            jhi-exercise-action-button
-            buttonIcon="external-link-alt"
-            [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | translate"
-            [buttonLoading]="exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="publishBuildPlanUrl() && buildPlanActive()"
-            (click)="goToBuildPlan(exercise.studentParticipations[0])"
-        ></button>
     </div>
     <!-- ACTION END -->
 </div>

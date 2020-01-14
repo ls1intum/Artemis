@@ -5,7 +5,7 @@ import { ProgrammingSubmissionService } from 'app/programming-submission/program
 import { SubmissionType } from 'app/entities/submission';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
