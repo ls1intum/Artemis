@@ -376,7 +376,7 @@ public class CourseResource {
 
             long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
-            courseService.calculateNrOfOpenComplaints(interestingExercises);
+            exerciseService.calculateNrOfOpenComplaints(exercise);
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);

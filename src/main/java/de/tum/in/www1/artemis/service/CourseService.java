@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -189,24 +188,5 @@ public class CourseService {
     public long countNumberOfTutorsForCourse(Course course) {
         String groupName = course.getTeachingAssistantGroupName();
         return userRepository.countByGroupsIsContaining(Collections.singleton(groupName));
-    }
-
-    public void calculateNrOfOpenComplaints(Set<Exercise> interestingExercises) {
-
-        for (Exercise exercise : interestingExercises) {
-            long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.COMPLAINT);
-            // TODO: Hanya, subtract nr of open (unevaluated) complaints about your own assessment from nrOfOpenComplaints
-            exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-            exercise.setNumberOfComplaints(numberOfComplaints);
-
-            long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.MORE_FEEDBACK);
-            // TODO: Hanya, subtract nr of open (unevaluated) feedback requests about your own assessment from nrOfOpenFeedbackRequests
-            exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        }
     }
 }
