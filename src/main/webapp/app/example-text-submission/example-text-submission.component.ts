@@ -201,7 +201,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         });
     }
 
-    upsertExampleTextSubmission() {
+    createUpdateExampleTextSubmission() {
         this.textSubmission.exampleSubmission = true;
         if (this.isNewSubmission) {
             this.createNewExampleTextSubmission();
