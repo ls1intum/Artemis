@@ -54,8 +54,7 @@ export class ModelingSubmissionService {
         return this.http.get<ModelingSubmission>(`api/modeling-submissions/${submissionId}`);
     }
 
-    // TODO CZ: change name + change URL?
-    getLatestSubmisisonForModelingEditor(participationId: number): Observable<ModelingSubmission> {
+    getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
         return this.http.get<ModelingSubmission>(`api/participations/${participationId}/latest-submission`, { responseType: 'json' });
     }
 

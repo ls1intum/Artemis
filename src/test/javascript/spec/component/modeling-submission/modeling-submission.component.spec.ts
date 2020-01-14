@@ -91,7 +91,7 @@ describe('Component Tests', () => {
         it('Should call load getDataForModelingEditor on init', () => {
             // GIVEN
             const fake = sinon.fake.returns(of(submission));
-            sinon.replace(service, 'getDataForModelingEditor', fake);
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', fake);
 
             // WHEN
             comp.ngOnInit();
@@ -103,7 +103,7 @@ describe('Component Tests', () => {
 
         it('should allow to submit when exercise due date not set', () => {
             // GIVEN
-            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             // WHEN
             comp.isLoading = false;
@@ -120,7 +120,7 @@ describe('Component Tests', () => {
         it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
             submission.participation.initializationDate = moment().subtract(2, 'days');
             (<StudentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
-            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
 
@@ -132,7 +132,7 @@ describe('Component Tests', () => {
         it('should allow to submit after the deadline if the initialization date is after the due date', () => {
             submission.participation.initializationDate = moment().add(1, 'days');
             (<StudentParticipation>submission.participation).exercise.dueDate = moment();
-            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
 
@@ -144,7 +144,7 @@ describe('Component Tests', () => {
 
         it('should not allow to submit if there is a result and no due date', () => {
             comp.result = result;
-            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
 
@@ -155,7 +155,7 @@ describe('Component Tests', () => {
 
         it('should get inactive as soon as the due date passes the current date', () => {
             (<StudentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
-            sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
+            sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
             comp.participation.initializationDate = moment();
