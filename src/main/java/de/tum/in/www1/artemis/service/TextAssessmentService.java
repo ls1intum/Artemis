@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
@@ -17,12 +18,15 @@ public class TextAssessmentService extends AssessmentService {
 
     private final UserService userService;
 
+    private final ResultService resultService;
+
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService, ResultService resultService1) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
+        this.resultService = resultService1;
     }
 
     /**
@@ -111,5 +115,10 @@ public class TextAssessmentService extends AssessmentService {
     // good for text exercises?
     private Double calculateTotalScore(List<Feedback> assessments) {
         return assessments.stream().mapToDouble(Feedback::getCredits).sum();
+    }
+
+    public Result getExampleResult(long submissionId) {
+        return textSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist")).getResult();
     }
 }

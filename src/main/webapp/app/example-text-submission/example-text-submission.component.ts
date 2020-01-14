@@ -191,7 +191,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 return;
             }
 
-            this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
+            this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id).subscribe(result => {
                 this.result = result;
                 this.assessments = this.result.feedbacks || [];
                 this.areNewAssessments = this.assessments.length <= 0;
@@ -239,42 +239,24 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     private createNewExampleTextSubmission() {
-        const newSubmission = this.textSubmission;
-        newSubmission.exampleSubmission = true;
+        const newExampleSubmission = new ExampleSubmission();
+        newExampleSubmission.submission = this.textSubmission;
+        newExampleSubmission.exercise = this.exercise;
 
-        this.textSubmissionService.create(newSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body!;
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+            this.exampleSubmission = exampleSubmissionResponse.body!;
+            this.exampleSubmission.exercise = this.exercise;
+            this.exampleSubmissionId = this.exampleSubmission.id;
+            this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+            this.isNewSubmission = false;
 
-            const newExampleSubmission = this.exampleSubmission;
-            newExampleSubmission.submission = this.textSubmission;
-            newExampleSubmission.exercise = this.exercise;
+            // Update the url with the new id, without reloading the page, to make the history consistent
+            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
+            this.location.go(newUrl);
 
-            let bothCompleted = false;
-
-            this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
-                this.result = result;
-                this.assessments = this.result.feedbacks || [];
-                this.checkScoreBoundaries();
-
-                if (bothCompleted) {
-                    this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-                }
-                bothCompleted = true;
-            }, this.onError);
-
-            this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.exampleSubmissionId = this.exampleSubmission.id;
-                this.isNewSubmission = false;
-
-                // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
-                this.location.go(newUrl);
-
-                if (bothCompleted) {
-                    this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-                }
-                bothCompleted = true;
+            this.resultService.createNewExampleResult(this.textSubmission.id).subscribe((response: HttpResponse<Result>) => {
+                this.result = response.body!;
+                this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
             }, this.onError);
         }, this.onError);
     }
