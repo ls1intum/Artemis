@@ -26,7 +26,7 @@ public class TextAssessmentService extends AssessmentService {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
-        this.resultService = resultService1;
+        this.resultService = resultService;
     }
 
     /**
