@@ -3,15 +3,15 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 abstract class AssessmentService {
@@ -118,7 +118,7 @@ abstract class AssessmentService {
      */
     public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
         return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
-            .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
@@ -146,7 +146,6 @@ abstract class AssessmentService {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
-
 
     /**
      * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
