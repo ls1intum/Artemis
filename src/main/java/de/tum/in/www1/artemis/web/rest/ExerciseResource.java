@@ -190,7 +190,44 @@ public class ExerciseResource {
     private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
         Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
-        final var statsForExercise= exerciseService.calculateStatsForTutorDashboard(exercise);
+
+        long numberOfSubmissions = 0L;
+        if (exercise instanceof TextExercise) {
+            numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof ModelingExercise) {
+            numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+        }
+        stats.setNumberOfSubmissions(numberOfSubmissions);
+
+        Long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAssessments(numberOfAssessments);
+
+        Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
+
+        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        stats.setNumberOfComplaints(numberOfComplaints);
+
+        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
+                ComplaintType.COMPLAINT);
+        // TODO: Hanya, subtract nr of open (unevaluated) complaints about your own assessment from nrOfOpenComplaints
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
+                ComplaintType.MORE_FEEDBACK);
+        // TODO: Hanya, subtract nr of open (unevaluated) feedback requests about your own assessment from nrOfOpenMoreFeedbackRequests
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 

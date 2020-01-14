@@ -359,7 +359,27 @@ public class CourseResource {
 
         for (Exercise exercise : interestingExercises) {
 
-            exerciseService.calculateStatsForTutorDashboard(exercise);
+            // TODO: This could be 1 repository method as the exercise id is provided anyway.
+            long numberOfSubmissions = 0L;
+            if (exercise instanceof TextExercise) {
+                numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else if (exercise instanceof ModelingExercise) {
+                numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else if (exercise instanceof FileUploadExercise) {
+                numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+            }
+            else if (exercise instanceof ProgrammingExercise) {
+                numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+            }
+
+            long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+
+            courseService.calculateNrOfOpenComplaints(interestingExercises);
+
+            exercise.setNumberOfParticipations(numberOfSubmissions);
+            exercise.setNumberOfAssessments(numberOfAssessments);
 
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment
