@@ -12,7 +12,7 @@ import { TextSubmission, TextSubmissionService } from 'app/entities/text-submiss
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
-import { Result } from 'app/entities/result';
+import { Result, ResultService } from 'app/entities/result';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
@@ -67,6 +67,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private router: Router,
         private location: Location,
         private artemisMarkdown: ArtemisMarkdown,
+        private resultService: ResultService,
         private $window: WindowRef,
     ) {}
 
@@ -201,6 +202,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     upsertExampleTextSubmission() {
+        this.textSubmission.exampleSubmission = true;
         if (this.isNewSubmission) {
             this.createNewExampleTextSubmission();
         } else {
@@ -262,28 +264,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     private updateExampleTextSubmission() {
-        this.textSubmission.exampleSubmission = true;
-
-        let hasOneFinished = false;
-
-        this.textSubmissionService.update(this.textSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body!;
-
-            if (hasOneFinished) {
-                this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-            } else {
-                hasOneFinished = true;
-            }
-        }, this.onError);
-
         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
 
-            if (hasOneFinished) {
-                this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-            } else {
-                hasOneFinished = true;
-            }
+            this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
         }, this.onError);
     }
 
