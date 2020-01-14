@@ -314,9 +314,10 @@ public class TextAssessmentResource extends AssessmentResource {
      * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
      *
      * @param exerciseId   the id of the exercise
-     * @param submissionId the id of the submission
-     * @return the result linked to the submission
+     * @param submissionId the id of the submission which must be connected to an example submission
+     * @return the example result linked to the submission
      */
+    //TODO: we should move this method up because it is independent of the exercise type
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/example-result")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
@@ -324,19 +325,18 @@ public class TextAssessmentResource extends AssessmentResource {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final var textExercise = textExerciseService.findOne(exerciseId);
 
-        // If the user is not an instructor, and this is not an example submission used for tutorial,
-        // do not provide the results
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!isAtLeastInstructor) {
-            return forbidden();
-        }
-
         // If the user is not at least a tutor for this exercise, return error
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return forbidden();
         }
+        Submission submission = textAssessmentService.getSubmissionOfExampleSubmissionWithResult(submissionId);
 
-        return ResponseEntity.ok(textAssessmentService.getExampleResult(submissionId));
+        // If the user is not an instructor, and this is not an example submission used for tutorial, do not provide the results
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        if (!submission.isExampleSubmission() && !isAtLeastInstructor) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(submission.getResult());
     }
 
     @Override

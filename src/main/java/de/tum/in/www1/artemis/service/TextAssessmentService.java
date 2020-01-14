@@ -20,8 +20,9 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+        SubmissionRepository submissionRepository) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService, submissionRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
     }
@@ -99,16 +100,5 @@ public class TextAssessmentService extends AssessmentService {
 
     public List<Feedback> getAssessmentsForResult(Result result) {
         return this.feedbackRepository.findByResult(result);
-    }
-
-    /**
-     * Finds the example result for the given submission ID. The submission has to be an example submission
-     *
-     * @param submissionId The ID of the submission for which the result should be fetched
-     * @return The example result, which is linked to the submission
-     */
-    public Result getExampleResult(long submissionId) {
-        return textSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist")).getResult();
     }
 }

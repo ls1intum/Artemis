@@ -3,16 +3,14 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -32,9 +30,11 @@ abstract class AssessmentService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final SubmissionRepository submissionRepository;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, SubmissionRepository submissionRepository) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -42,6 +42,7 @@ abstract class AssessmentService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
+        this.submissionRepository = submissionRepository;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -107,6 +108,17 @@ abstract class AssessmentService {
         participation.removeResult(result);
         feedbackRepository.deleteByResult_Id(result.getId());
         resultRepository.deleteById(result.getId());
+    }
+
+    /**
+     * Finds the example result for the given submission ID. The submission has to be an example submission
+     *
+     * @param submissionId The ID of the submission for which the result should be fetched
+     * @return The example result, which is linked to the submission
+     */
+    public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
+        return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
+            .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**

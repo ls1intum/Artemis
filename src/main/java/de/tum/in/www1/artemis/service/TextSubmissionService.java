@@ -37,18 +37,15 @@ public class TextSubmissionService extends SubmissionService {
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
