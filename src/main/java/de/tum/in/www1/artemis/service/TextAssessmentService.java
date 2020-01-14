@@ -18,15 +18,12 @@ public class TextAssessmentService extends AssessmentService {
 
     private final UserService userService;
 
-    private final ResultService resultService;
-
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService, ResultService resultService) {
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
-        this.resultService = resultService;
     }
 
     /**
@@ -43,7 +40,6 @@ public class TextAssessmentService extends AssessmentService {
     public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
         Result result = saveAssessment(resultId, textAssessment, textExercise);
         Double calculatedScore = calculateTotalScore(textAssessment);
-
         return submitResult(result, textExercise, calculatedScore);
     }
 
@@ -103,18 +99,6 @@ public class TextAssessmentService extends AssessmentService {
 
     public List<Feedback> getAssessmentsForResult(Result result) {
         return this.feedbackRepository.findByResult(result);
-    }
-
-    /**
-     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
-     *
-     * @param assessments the List of Feedback
-     * @return the total score
-     */
-    // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of feedback credits) apart from rounding, but maybe also
-    // good for text exercises?
-    private Double calculateTotalScore(List<Feedback> assessments) {
-        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }
 
     /**

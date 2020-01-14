@@ -134,4 +134,15 @@ abstract class AssessmentService {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
     }
+
+
+    /**
+     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
+     *
+     * @param assessments the List of Feedback
+     * @return the total score
+     */
+    protected Double calculateTotalScore(List<Feedback> assessments) {
+        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
+    }
 }
