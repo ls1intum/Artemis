@@ -482,8 +482,7 @@ public class ResultResource {
     public ResponseEntity<Result> createExampleResult(@PathVariable long submissionId,
             @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
         log.debug("REST request to create a new example result for submission: {}", submissionId);
-        final var result = resultService.createNewExampleResult(submissionId, isProgrammingExerciseWithFeedback);
-
+        final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 }

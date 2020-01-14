@@ -431,11 +431,11 @@ public class ResultService {
     /**
      * Create a new example result for the provided submission ID.
      *
-     * @param submissionId The ID of the example submission for which a result should get created
+     * @param submissionId The ID of the submission (that is connected to an example submission) for which a result should get created
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
      * @return The newly created (and empty) example result
      */
-    public Result createNewExampleResult(long submissionId, boolean isProgrammingExerciseWithFeedback) {
+    public Result createNewExampleResultForSubmissionWithExampleSubmission(long submissionId, boolean isProgrammingExerciseWithFeedback) {
         final var submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("No example submission with ID " + submissionId + " found!"));
         if (!submission.isExampleSubmission()) {
