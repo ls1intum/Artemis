@@ -376,19 +376,7 @@ public class CourseResource {
 
             long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
-            long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.COMPLAINT);
-            // TODO: Hanya, subtract nr of open (unevaluated) complaints about your own assessment from nrOfOpenComplaints
-            exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-            exercise.setNumberOfComplaints(numberOfComplaints);
-
-            long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
-                    ComplaintType.MORE_FEEDBACK);
-            // TODO: Hanya, subtract nr of open (unevaluated) feedback requests about your own assessment from nrOfOpenFeedbackRequests
-            exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+            courseService.calculateNrOfOpenComplaints(interestingExercises);
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);

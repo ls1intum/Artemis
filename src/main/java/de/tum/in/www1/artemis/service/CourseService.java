@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,16 +36,22 @@ public class CourseService {
 
     private final ExerciseService exerciseService;
 
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
 
     private final LectureService lectureService;
 
-    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService) {
+    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+                         LectureService lectureService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
@@ -180,5 +189,23 @@ public class CourseService {
     public long countNumberOfTutorsForCourse(Course course) {
         String groupName = course.getTeachingAssistantGroupName();
         return userRepository.countByGroupsIsContaining(Collections.singleton(groupName));
+    }
+    public void calculateNrOfOpenComplaints(Set<Exercise> interestingExercises){
+
+        for (Exercise exercise : interestingExercises) {
+            long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+            long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.COMPLAINT);
+            // TODO: Hanya, subtract nr of open (unevaluated) complaints about your own assessment from nrOfOpenComplaints
+            exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+            exercise.setNumberOfComplaints(numberOfComplaints);
+
+            long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+            long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.MORE_FEEDBACK);
+            // TODO: Hanya, subtract nr of open (unevaluated) feedback requests about your own assessment from nrOfOpenFeedbackRequests
+            exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+        }
     }
 }
