@@ -121,7 +121,7 @@ public class TextAssessmentService extends AssessmentService {
      * Finds the example result for the given submission ID. The submission has to be an example submission
      *
      * @param submissionId The ID of the submission for which the result should be fetched
-     * @return
+     * @return The example result, which is linked to the submission
      */
     public Result getExampleResult(long submissionId) {
         return textSubmissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId)
