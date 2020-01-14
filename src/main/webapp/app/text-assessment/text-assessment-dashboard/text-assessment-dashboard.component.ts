@@ -17,6 +17,7 @@ import { Submission } from 'app/entities/submission';
 export class TextAssessmentDashboardComponent implements OnInit {
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
+    filteredSubmissions: TextSubmission[] = [];
     busy = false;
     predicate = 'id';
     reverse = false;
@@ -69,8 +70,13 @@ export class TextAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
+                this.filteredSubmissions = submissions;
                 this.busy = false;
             });
+    }
+
+    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
+        this.filteredSubmissions = filteredSubmissions as TextSubmission[];
     }
 
     public durationString(completionDate: Date, initializationDate: Date) {
