@@ -350,6 +350,7 @@ public class ProgrammingExerciseService {
 
         // Give appropriate permissions for CI projects
         continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
+
         giveCIProjectPermissions(programmingExercise);
 
         // save to get the id required for the webhook
@@ -964,7 +965,9 @@ public class ProgrammingExerciseService {
 
         continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup),
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
-        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
+        if (teachingAssistantGroup != null) {
+            continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
+        }
     }
 
     /**
