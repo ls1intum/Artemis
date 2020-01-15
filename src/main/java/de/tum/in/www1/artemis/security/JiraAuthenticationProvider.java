@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -56,27 +57,24 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Value("${artemis.jira.url}")
     private URL JIRA_URL;
 
-    @Value("${artemis.jira.user}")
-    private String JIRA_USER;
-
-    @Value("${artemis.jira.password}")
-    private String JIRA_PASSWORD;
-
     private final UserService userService;
 
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
 
+    private final RestTemplate restTemplate;
+
     private final Optional<LdapUserService> ldapUserService;
 
     private final AuditEventRepository auditEventRepository;
 
-    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository, Optional<LdapUserService> ldapUserService,
-            AuditEventRepository auditEventRepository) {
+    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository,
+            @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -107,12 +105,17 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
-        HttpEntity<Principal> entity = new HttpEntity<>(
-                !skipPasswordCheck ? HeaderUtil.createAuthorization(username, password) : HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD));
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> authenticationResponse = null;
         try {
-            authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups", HttpMethod.GET, entity, Map.class);
+            final var path = JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups";
+            final HttpEntity<Principal> entity;
+            if (skipPasswordCheck) {
+                authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, Map.class);
+            }
+            else {
+                entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
+                authenticationResponse = new RestTemplate().exchange(path, HttpMethod.GET, entity, Map.class);
+            }
         }
         catch (HttpStatusCodeException e) {
             if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
@@ -213,10 +216,9 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Override
     public void addUserToGroup(String username, String group) throws ArtemisAuthenticationException {
         log.info("Add user " + username + " to group " + group + " in JIRA");
-        HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        HttpEntity<?> entity = new HttpEntity<>(body);
         RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(JIRA_URL + "/rest/api/2/group/user?groupname=" + group, HttpMethod.POST, entity, Map.class);
@@ -233,11 +235,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     @Override
     public boolean isGroupAvailable(String group) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
-            ResponseEntity<Map> response = restTemplate.exchange(JIRA_URL + "/rest/api/2/group/member?groupname=" + group, HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(JIRA_URL + "/rest/api/2/group/member?groupname=" + group, HttpMethod.GET, null, Map.class);
             if (response.getStatusCode().equals(HttpStatus.OK)) {
                 return true;
             }
@@ -283,12 +282,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
      */
     @Override
     public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
-        HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
         try {
-            ResponseEntity<ArrayList> authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, entity,
-                    ArrayList.class);
+            ResponseEntity<ArrayList> authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null, ArrayList.class);
 
             var results = authenticationResponse.getBody();
             if (results == null || results.size() == 0) {
