@@ -79,6 +79,13 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
         addUserToGroup(user, group);
     }
 
+    @Override
+    public void removeUserFromGroup(String username, String group) {
+        final var user = userService.getUserWithGroupsByLogin(username).get();
+        user.getGroups().remove(group);
+        userRepository.save(user);
+    }
+
     private void addUserToGroup(User user, String group) {
         log.info("Add user " + user.getLogin() + " to group " + group);
         user.getGroups().add(group);

@@ -15,7 +15,10 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.ProviderNotFoundException;
@@ -28,6 +31,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
@@ -230,6 +234,19 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             }
             log.error("Could not add user " + username + " to JIRA group " + group + ". Error: " + e.getMessage());
             throw new ArtemisAuthenticationException("Error while adding " + username + " to JIRA group " + group, e);
+        }
+    }
+
+    @Override
+    public void removeUserFromGroup(String username, String group) {
+        log.info("Remove user {} from group {}", username, group);
+        final var path = UriComponentsBuilder.fromPath(JIRA_URL + "/rest/api/2/group/user").queryParam("groupname", group).queryParam("username", username).build().toUri();
+        try {
+            restTemplate.delete(path);
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Could not delete user {} from group {}; Error: {}", username, group, e.getMessage());
+            throw new ArtemisAuthenticationException(String.format("Error while deleting user %s from Jira group %s", username, group), e);
         }
     }
 

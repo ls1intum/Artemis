@@ -32,6 +32,14 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     void addUserToGroup(String username, String group);
 
     /**
+     * Removes a user from the specified group
+     *
+     * @param username The login of the user
+     * @param group The groupname the user should get added to
+     */
+    void removeUserFromGroup(String username, String group);
+
+    /**
      * Searches for a user with the given email address.
      *
      * @param email The email address to search for
