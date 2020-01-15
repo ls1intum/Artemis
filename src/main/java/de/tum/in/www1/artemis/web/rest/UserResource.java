@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.LoginAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -113,6 +114,9 @@ public class UserResource {
         else if (userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
         }
+        else if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
+            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
+        }
         else {
             User newUser = userService.createUser(managedUserVM);
 
@@ -147,6 +151,9 @@ public class UserResource {
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
+        if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
+            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
+        }
 
         User updatedUser = null;
         if (existingUser.isPresent()) {
@@ -160,6 +167,7 @@ public class UserResource {
             }
             final var login = updatedUser.getLogin();
             removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(login, group));
+            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(login, group));
         }
 
         final var responseDTO = Optional.ofNullable(updatedUser != null ? new UserDTO(updatedUser) : null);

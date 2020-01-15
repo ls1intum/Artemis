@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.security;
 
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.*;
@@ -223,7 +224,6 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
         HttpEntity<?> entity = new HttpEntity<>(body);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(JIRA_URL + "/rest/api/2/group/user?groupname=" + group, HttpMethod.POST, entity, Map.class);
         }
@@ -240,11 +240,12 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Override
     public void removeUserFromGroup(String username, String group) {
         log.info("Remove user {} from group {}", username, group);
-        final var path = UriComponentsBuilder.fromPath(JIRA_URL + "/rest/api/2/group/user").queryParam("groupname", group).queryParam("username", username).build().toUri();
         try {
+            final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/group/user").queryParam("groupname", group).queryParam("username", username).build()
+                    .toUri();
             restTemplate.delete(path);
         }
-        catch (HttpClientErrorException e) {
+        catch (HttpClientErrorException | URISyntaxException e) {
             log.error("Could not delete user {} from group {}; Error: {}", username, group, e.getMessage());
             throw new ArtemisAuthenticationException(String.format("Error while deleting user %s from Jira group %s", username, group), e);
         }
