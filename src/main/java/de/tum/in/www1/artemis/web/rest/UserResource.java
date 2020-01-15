@@ -24,6 +24,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.UserService;
@@ -151,12 +152,14 @@ public class UserResource {
         if (existingUser.isPresent()) {
             final var oldGroups = existingUser.get().getGroups();
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
+            final var updatedGroups = updatedUser.getGroups();
+            final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
+            final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
             if (optionalVcsUserManagementService.isPresent()) {
-                final var updatedGroups = updatedUser.getGroups();
-                final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
-                final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
                 optionalVcsUserManagementService.get().updateUser(updatedUser, removedGroups, addedGroups);
             }
+            final var login = updatedUser.getLogin();
+            removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(login, group));
         }
 
         final var responseDTO = Optional.ofNullable(updatedUser != null ? new UserDTO(updatedUser) : null);

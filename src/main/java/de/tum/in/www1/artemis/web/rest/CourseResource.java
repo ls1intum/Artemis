@@ -60,9 +60,6 @@ public class CourseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.external-user-management:true}")
-    private boolean EXTERNAL_USER_MANAGEMENT;
-
     private final Environment env;
 
     private final UserService userService;
@@ -205,9 +202,7 @@ public class CourseResource {
                 final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
                 final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
                 Course result = courseService.save(updatedCourse);
-                if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
-                    vcsUserManagementService.get().updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup);
-                }
+                vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
                 return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
             }
             catch (ArtemisAuthenticationException ex) {
