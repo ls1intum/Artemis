@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.config;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 @Component
 @EnableConfigurationProperties
@@ -25,7 +26,9 @@ public class GuidedTourConfiguration {
 
     }
 
-    public List<HashMap<String, String>> getTours() { return this.tours; }
+    public List<HashMap<String, String>> getTours() {
+        return this.tours;
+    }
 
     public void setTours(List<HashMap<String, String>> tours) {
         this.tours = tours;

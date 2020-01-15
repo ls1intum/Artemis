@@ -61,8 +61,10 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         database.addUsers(2, 2, 2);
         database.addCourseWithModelingAndTextExercise();
         course = courseRepo.findAll().get(0);
-        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         textExercise = (TextExercise) exerciseRepo.findAll().get(1);
+        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        modelingExercise.setTitle("UML Class Diagram");
+        exerciseRepo.save(modelingExercise);
     }
 
     @AfterEach
@@ -183,7 +185,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void deleteParticipation_forbidden_student() throws Exception {
+    public void deleteParticipation_student() throws Exception {
+        // Allow students to delete their own participation if it belongs to a guided tour
         StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
         request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
@@ -194,7 +197,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void deleteParticipation_forbidden_tutor() throws Exception {
+    public void deleteParticipation_tutor() throws Exception {
+        // Allow tutors to delete their own participation if it belongs to a guided tour
         StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "tutor1");
         request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
