@@ -26,7 +26,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
@@ -34,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
 @Profile("bitbucket")
-public class BitbucketService extends AbstractVersionControlService implements VcsUserManagementService {
+public class BitbucketService extends AbstractVersionControlService {
 
     private static final int MAX_FORK_RETRIES = 5;
 
@@ -312,30 +315,6 @@ public class BitbucketService extends AbstractVersionControlService implements V
             throw new BitbucketException("Could not check if user exists");
         }
         return true;
-    }
-
-    @Override
-    public void createUser(User user) {
-        // Not needed for now, since Bitbucket works in conjunction with Jira
-        // TODO: If we implement an extensive user management system using Artemis, we might want to also implement this method in this case
-    }
-
-    @Override
-    public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups) {
-        // Not needed for now, since Bitbucket works in conjunction with Jira
-        // TODO: If we implement an extensive user management system using Artemis, we might want to also implement this method in this case
-    }
-
-    @Override
-    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
-        // Not needed for now, since Bitbucket works in conjunction with Jira
-        // TODO: If we implement an extensive user management system using Artemis, we might want to also implement this method in this case
-    }
-
-    @Override
-    public void deleteUser(String login) {
-        // Not needed for now, since Bitbucket works in conjunction with Jira
-        // TODO: If we implement an extensive user management system using Artemis, we might want to also implement this method in this case
     }
 
     /**

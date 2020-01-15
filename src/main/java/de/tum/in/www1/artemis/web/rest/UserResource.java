@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -69,26 +68,22 @@ public class UserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.external-user-management:true}")
-    private boolean EXTERNAL_USER_MANAGEMENT;
-
     private final UserRepository userRepository;
 
     private final UserService userService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
-    private final Optional<VcsUserManagementService> vcsUserManagementService;
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final MailService mailService;
 
-    public UserResource(UserRepository userRepository, UserService userService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VcsUserManagementService> vcsUserManagementService, MailService mailService) {
-
+    public UserResource(UserRepository userRepository, UserService userService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, MailService mailService) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.continuousIntegrationService = continuousIntegrationService;
-        this.vcsUserManagementService = vcsUserManagementService;
+        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.mailService = mailService;
     }
 
@@ -121,9 +116,9 @@ public class UserResource {
             User newUser = userService.createUser(managedUserVM);
 
             // If user management is done by Artemis, we have to also create the user in the CI and VCS systems
-            if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
-                vcsUserManagementService.get().createUser(newUser);
-            }
+            optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.createUser(newUser));
+
+            managedUserVM.getGroups().forEach(group -> artemisAuthenticationProvider.addUserToGroup(managedUserVM.getLogin(), group));
 
             mailService.sendCreationEmail(newUser);
             return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
@@ -156,11 +151,11 @@ public class UserResource {
         if (existingUser.isPresent()) {
             final var oldGroups = existingUser.get().getGroups();
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
-            if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
+            if (optionalVcsUserManagementService.isPresent()) {
                 final var updatedGroups = updatedUser.getGroups();
                 final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
                 final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-                vcsUserManagementService.get().updateUser(updatedUser, removedGroups, addedGroups);
+                optionalVcsUserManagementService.get().updateUser(updatedUser, removedGroups, addedGroups);
             }
         }
 
@@ -212,9 +207,7 @@ public class UserResource {
     @Secured(AuthoritiesConstants.ADMIN)
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
-        if (!EXTERNAL_USER_MANAGEMENT && vcsUserManagementService.isPresent()) {
-            vcsUserManagementService.get().deleteUser(login);
-        }
+        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
         userService.deleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
     }
