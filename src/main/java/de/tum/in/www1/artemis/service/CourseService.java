@@ -35,22 +35,15 @@ public class CourseService {
 
     private final ExerciseService exerciseService;
 
-    private final ComplaintRepository complaintRepository;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
 
     private final LectureService lectureService;
 
-    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService) {
+    public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
-        this.complaintRepository = complaintRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;

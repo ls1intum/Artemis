@@ -315,6 +315,11 @@ public class ExerciseService {
         log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
 
+    /**
+     * Calculates the number of unevaluated complaints and feedback requests for tutor dashboard participation graph
+     *
+     * @param exercise the exercise for which the number of unevaluated complaints should be calculated
+     */
     public void calculateNrOfOpenComplaints(Exercise exercise) {
 
         long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
