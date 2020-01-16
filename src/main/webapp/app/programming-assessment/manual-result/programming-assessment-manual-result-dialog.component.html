@@ -144,8 +144,11 @@
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary" *ngIf="!result?.completionDate">
             <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-danger" *ngIf="result?.completionDate && canOverride">
+            <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
         </button>
     </div>
 </form>

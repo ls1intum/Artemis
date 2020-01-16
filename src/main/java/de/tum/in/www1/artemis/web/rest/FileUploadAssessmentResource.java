@@ -98,6 +98,12 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
 
+        // TODO: this method is used for the normal submit and for override. I guess we should distinguish these cases, because not every tutor can override
+        // The logic should be:
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        // final var isBeforeAssessmentDueDate = exercise.assessmentDueDate && now().isBefore(exercise.assessmentDueDate);
+        // final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+
         Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks, fileUploadExercise);
         if (submit) {
             result = fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());

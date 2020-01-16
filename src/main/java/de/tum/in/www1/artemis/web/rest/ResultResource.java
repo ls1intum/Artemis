@@ -161,6 +161,12 @@ public class ResultResource {
         if (updatedResult.getSubmission() == null) {
             throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
         }
+
+        // TODO: this method is used for the normal submit and for override.
+        // The logic should be: tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        // final var isBeforeAssessmentDueDate = exercise.assessmentDueDate && now().isBefore(exercise.assessmentDueDate);
+        // final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+
         final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {

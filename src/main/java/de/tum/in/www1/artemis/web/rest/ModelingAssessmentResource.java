@@ -186,6 +186,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise, user);
 
+        // TODO: this method is used for the normal submit and for override. I guess we should distinguish these cases, because not every tutor can override
+        // The logic should be:
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        // final var isBeforeAssessmentDueDate = exercise.assessmentDueDate && now().isBefore(exercise.assessmentDueDate);
+        // final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
 
         if (submit) {

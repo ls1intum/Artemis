@@ -39,6 +39,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     isOpenForSubmission = false;
     userId: number;
     isAssessor: boolean;
+    canOverride = false;
+    isAtLeastInstructor = false;
+
     complaint: Complaint;
     resultModified: boolean;
 
@@ -62,6 +65,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             return;
         }
         this.initializeForResultCreation();
+        this.checkPermissions();
     }
 
     initializeForResultUpdate() {
@@ -94,6 +98,15 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         this.isLoading = true;
         this.result = this.manualResultService.generateInitialManualResult();
         this.getParticipation();
+    }
+
+    private checkPermissions(): void {
+        this.isAtLeastInstructor = this.exercise && this.exercise.course
+            ? this.accountService.isAtLeastInstructorInCourse(this.exercise.course)
+            : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     getParticipation() {

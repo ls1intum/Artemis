@@ -58,17 +58,13 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ExampleSubmissionService exampleSubmissionService;
-
-    private final ResultRepository resultRepository;
-
     private final WebsocketMessagingService messagingService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService, ExampleSubmissionService exampleSubmissionService,
+            UserService userService, TextSubmissionService textSubmissionService,
             WebsocketMessagingService messagingService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(authCheckService, userService);
 
@@ -78,9 +74,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
-        this.exampleSubmissionService = exampleSubmissionService;
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
@@ -124,6 +118,12 @@ public class TextAssessmentResource extends AssessmentResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
+
+        // TODO: this method is used for the normal submit and for override. I guess we should distinguish these cases, because not every tutor can override
+        // The logic should be:
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        // final var isBeforeAssessmentDueDate = exercise.assessmentDueDate && now().isBefore(exercise.assessmentDueDate);
+        // final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
