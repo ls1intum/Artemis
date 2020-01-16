@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.util.ModelFactory.generateTextSubmission;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
@@ -8,8 +7,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -231,10 +230,11 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllSubmissionsOfExercise_assessedByTutor() throws Exception {
-        List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
+        List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK,
+                ModelingSubmission.class);
         assertThat(submissions).as("does not have a modeling submission assessed by the tutor").isEmpty();
 
-        database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, "student1","tutor1");
+        database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, "student1", "tutor1");
         submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
         assertThat(submissions).as("has a modeling submission assessed by the tutor").hasSizeGreaterThanOrEqualTo(1);
     }
@@ -438,7 +438,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(value = "student1")
-    public void getSubmissionForModelingEditor_badRequest()  throws Exception {
+    public void getSubmissionForModelingEditor_badRequest() throws Exception {
         User user = database.getUserByLogin("student1");
         StudentParticipation participation = new StudentParticipation();
         participation.setStudent(user);
@@ -453,7 +453,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(value = "student1")
-    public void getSubmissionForModelingEditor_emptySubmission()  throws Exception {
+    public void getSubmissionForModelingEditor_emptySubmission() throws Exception {
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
         ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
@@ -494,7 +494,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(value = "student1")
-    public void getSubmissionForModelingEditor_unfinishedAssessment()  throws Exception {
+    public void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
         database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
 

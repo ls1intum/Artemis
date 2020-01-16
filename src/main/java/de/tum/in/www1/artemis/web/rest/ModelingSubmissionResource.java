@@ -342,7 +342,8 @@ public class ModelingSubmissionResource {
 
             // make sure sensitive information are not sent to the client
             modelingExercise.filterSensitiveInformation();
-        } else {
+        }
+        else {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
                     .body(null);
