@@ -9,9 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -175,7 +173,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(value = "student2")
-    public void updateModelSubmissionAfterSubmit() throws Exception {
+    public void updateModelSubmission() throws Exception {
         database.addParticipationForExercise(classExercise, "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
@@ -185,6 +183,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        modelingSubmissionRepo.save(submission);
+        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+        assertThat(returnedSubmission.getParticipation().getResults()).isEmpty();
+        assertThat(returnedSubmission.getParticipation().getSubmissions()).isEmpty();
     }
 
     @Test
@@ -214,8 +218,17 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
+    }
 
-        request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllSubmissionsOfExercise_assessedByTutor() throws Exception {
+        List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(submissions).as("does not have a modeling submission assessed by the tutor").isEmpty();
+
+        database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, "student1","tutor1");
+        submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(submissions).as("has a modeling submission assessed by the tutor").hasSizeGreaterThanOrEqualTo(1);
     }
 
     @Test
