@@ -75,23 +75,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return (this.exercise as ProgrammingExercise).allowOnlineEditor;
     }
 
-    publishBuildPlanUrl(): boolean {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
-    }
-
-    buildPlanActive(): boolean {
-        return (
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
-    }
-
-    goToBuildPlan(participation: Participation) {
-        // TODO: get the continuous integration URL as a client constant during the management info call
-        window.open('https://bamboobruegge.in.tum.de/browse/' + (participation as ProgrammingExerciseStudentParticipation).buildPlanId);
-    }
-
     onCopyFailure() {
         console.log('copy fail!');
     }

@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { User } from 'app/core';
-import { InitializationState, Participation, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,6 +18,7 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -266,5 +267,23 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             latestResult.participation = this.studentParticipation;
         }
         return latestResult;
+    }
+
+    publishBuildPlanUrl(): boolean {
+        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
+    }
+
+    buildPlanActive(): boolean {
+        return (
+            !!this.exercise &&
+            this.exercise.studentParticipations &&
+            this.exercise.studentParticipations.length > 0 &&
+            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
+        );
+    }
+
+    goToBuildPlan(participation: Participation) {
+        // TODO: get the continuous integration URL as a client constant during the management info call
+        window.open('https://bamboobruegge.in.tum.de/browse/' + (participation as ProgrammingExerciseStudentParticipation).buildPlanId);
     }
 }
