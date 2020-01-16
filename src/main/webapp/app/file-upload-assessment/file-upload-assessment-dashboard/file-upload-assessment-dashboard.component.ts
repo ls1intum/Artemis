@@ -22,6 +22,7 @@ import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessmen
 export class FileUploadAssessmentDashboardComponent implements OnInit {
     exercise: FileUploadExercise;
     submissions: FileUploadSubmission[] = [];
+    filteredSubmissions: FileUploadSubmission[] = [];
     busy = false;
     predicate = 'id';
     reverse = false;
@@ -88,9 +89,14 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 )
                 .subscribe((submissions: FileUploadSubmission[]) => {
                     this.submissions = submissions;
+                    this.filteredSubmissions = submissions;
                     submissions.length > 0 ? resolve() : reject();
                 });
         });
+    }
+
+    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
+        this.filteredSubmissions = filteredSubmissions as FileUploadSubmission[];
     }
 
     /**

@@ -18,14 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -65,6 +58,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final ExampleSubmissionService exampleSubmissionService;
+
     private final ResultRepository resultRepository;
 
     private final WebsocketMessagingService messagingService;
@@ -73,8 +68,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
+            ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService, ExampleSubmissionService exampleSubmissionService,
+            WebsocketMessagingService messagingService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
         super(authCheckService, userService);
 
         this.resultService = resultService;
@@ -85,6 +80,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
+        this.exampleSubmissionService = exampleSubmissionService;
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
@@ -151,7 +147,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return the updated result
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/text-submission/{submissionId}/assessment-after-complaint")
+    @PutMapping("/text-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
@@ -318,47 +314,29 @@ public class TextAssessmentResource extends AssessmentResource {
      * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
      *
      * @param exerciseId   the id of the exercise
-     * @param submissionId the id of the submission
-     * @return the result linked to the submission
+     * @param submissionId the id of the submission which must be connected to an example submission
+     * @return the example result linked to the submission
      */
-    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/exampleAssessment")
+    // TODO: we should move this method up because it is independent of the exercise type
+    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/example-result")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
-        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        if (textSubmission.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
-                    .body(null);
-        }
-
-        // If the user is not an instructor, and this is not an example submission used for tutorial,
-        // do not provide the results
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!textSubmission.get().isExampleSubmission() && !isAtLeastInstructor) {
-            return forbidden();
-        }
+        final var textExercise = textExerciseService.findOne(exerciseId);
 
         // If the user is not at least a tutor for this exercise, return error
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return forbidden();
         }
+        Submission submission = textAssessmentService.getSubmissionOfExampleSubmissionWithResult(submissionId);
 
-        Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
-        Result result = databaseResult.orElseGet(() -> {
-            Result newResult = new Result();
-            newResult.setSubmission(textSubmission.get());
-            newResult.setExampleResult(true);
-            resultService.createNewManualResult(newResult, false);
-            return newResult;
-        });
-
-        List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-        result.setFeedbacks(assessments);
-
-        return ResponseEntity.ok(result);
+        // If the user is not an instructor, and this is not an example submission used for tutorial, do not provide the results
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        if (!submission.isExampleSubmission() && !isAtLeastInstructor) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(submission.getResult());
     }
 
     @Override

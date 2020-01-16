@@ -97,7 +97,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
-        Result updatedResult = request.putWithResponseBody("/api/text-assessments/text-submission/" + textSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+        Result updatedResult = request.putWithResponseBody("/api/text-assessments/text-submissions/" + textSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();

@@ -38,6 +38,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     // all available submissions
     submissions: ModelingSubmission[];
+    filteredSubmissions: ModelingSubmission[];
     optimalSubmissions: ModelingSubmission[];
     // non optimal submissions
     otherSubmissions: ModelingSubmission[];
@@ -67,6 +68,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.reverse = false;
         this.predicate = 'id';
         this.submissions = [];
+        this.filteredSubmissions = [];
         this.optimalSubmissions = [];
         this.otherSubmissions = [];
         this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
@@ -115,9 +117,15 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     submission.participation.results = [submission.result];
                 }
             });
+            this.filteredSubmissions = this.submissions;
             this.filterSubmissions(forceReload);
             this.assessedSubmissions = this.submissions.filter(submission => submission.result && submission.result.completionDate && submission.result.score).length;
         });
+    }
+
+    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
+        this.filteredSubmissions = filteredSubmissions as ModelingSubmission[];
+        this.applyFilter();
     }
 
     /**
@@ -151,10 +159,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.nextOptimalSubmissionIds.includes(submission.id) &&
                 (!(submission.result && submission.result.assessor) || (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
-        this.optimalSubmissions = this.submissions.filter(submission => {
+        this.optimalSubmissions = this.filteredSubmissions.filter(submission => {
             return submission.optimal;
         });
-        this.otherSubmissions = this.submissions.filter(submission => {
+        this.otherSubmissions = this.filteredSubmissions.filter(submission => {
             return !submission.optimal;
         });
     }
