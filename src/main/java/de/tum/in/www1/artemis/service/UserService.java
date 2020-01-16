@@ -30,9 +30,11 @@ import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -63,13 +65,20 @@ public class UserService {
 
     private final Optional<LdapUserService> ldapUserService;
 
+    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
+        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -318,6 +327,12 @@ public class UserService {
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         userRepository.save(user);
+
+        // If user management is done by Artemis, we have to also create the user in the CI and VCS systems
+        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.createUser(user));
+
+        userDTO.getGroups().forEach(group -> artemisAuthenticationProvider.addUserToGroup(userDTO.getLogin(), group));
+
         log.debug("Created Information for User: {}", user);
         return user;
     }
@@ -351,6 +366,7 @@ public class UserService {
      * @return updated user
      */
     public User updateUser(User user, ManagedUserVM updatedUserDTO) {
+        final var oldGroups = user.getGroups();
         this.clearUserCaches(user);
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
@@ -368,8 +384,21 @@ public class UserService {
         updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
         user = userRepository.save(user);
         this.clearUserCaches(user);
+
+        forwardUserUpdates(user, oldGroups);
+
         log.debug("Changed Information for User: {}", user);
         return user;
+    }
+
+    private void forwardUserUpdates(User user, Set<String> oldGroups) {
+        final var updatedGroups = user.getGroups();
+        final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
+        final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
+        final var login = user.getLogin();
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, removedGroups, addedGroups));
+        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(login, group));
+        addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(login, group));
     }
 
     /**
@@ -377,6 +406,7 @@ public class UserService {
      * @param login user login string
      */
     public void deleteUser(String login) {
+        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
         userRepository.findOneByLogin(login).ifPresent(user -> {
             userRepository.delete(user);
             this.clearUserCaches(user);

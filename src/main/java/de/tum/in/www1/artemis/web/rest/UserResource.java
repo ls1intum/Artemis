@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -28,7 +27,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
@@ -74,19 +72,15 @@ public class UserResource {
 
     private final UserService userService;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+    private final MailService mailService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final MailService mailService;
-
-    public UserResource(UserRepository userRepository, UserService userService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, MailService mailService) {
+    public UserResource(UserRepository userRepository, UserService userService, MailService mailService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.mailService = mailService;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -120,11 +114,6 @@ public class UserResource {
         else {
             User newUser = userService.createUser(managedUserVM);
 
-            // If user management is done by Artemis, we have to also create the user in the CI and VCS systems
-            optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.createUser(newUser));
-
-            managedUserVM.getGroups().forEach(group -> artemisAuthenticationProvider.addUserToGroup(managedUserVM.getLogin(), group));
-
             mailService.sendCreationEmail(newUser);
             return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", newUser.getLogin())).body(newUser);
@@ -157,17 +146,7 @@ public class UserResource {
 
         User updatedUser = null;
         if (existingUser.isPresent()) {
-            final var oldGroups = existingUser.get().getGroups();
             updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
-            final var updatedGroups = updatedUser.getGroups();
-            final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
-            final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-            if (optionalVcsUserManagementService.isPresent()) {
-                optionalVcsUserManagementService.get().updateUser(updatedUser, removedGroups, addedGroups);
-            }
-            final var login = updatedUser.getLogin();
-            removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(login, group));
-            addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(login, group));
         }
 
         final var responseDTO = Optional.ofNullable(updatedUser != null ? new UserDTO(updatedUser) : null);
@@ -218,7 +197,6 @@ public class UserResource {
     @Secured(AuthoritiesConstants.ADMIN)
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
-        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
         userService.deleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
     }
