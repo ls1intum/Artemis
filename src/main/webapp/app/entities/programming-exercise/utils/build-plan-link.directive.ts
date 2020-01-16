@@ -19,7 +19,7 @@ export class BuildPlanLinkDirective implements OnInit {
     @HostBinding('attr.rel')
     readonly rel = 'noopener noreferrer';
 
-    constructor(private profileService: ProfileService, private el: ElementRef, private renderer: Renderer2) {}
+    constructor(private profileService: ProfileService) {}
 
     ngOnInit(): void {
         this.profileService
