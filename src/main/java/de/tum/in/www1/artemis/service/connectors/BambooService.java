@@ -435,6 +435,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
             final var hasArtifact = (boolean) buildMap.get("artifact");
             programmingSubmission.setBuildArtifact(hasArtifact);
+            programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
             programmingSubmissionRepository.save(programmingSubmission);
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
@@ -716,6 +717,7 @@ public class BambooService implements ContinuousIntegrationService {
         result = resultRepository.save(result);
 
         submission.setBuildArtifact(buildResults.containsKey("artifact"));
+        submission.setBuildFailed(result.getResultString().equals("No tests found"));
         programmingSubmissionRepository.save(submission);
 
         return Optional.of(result);
