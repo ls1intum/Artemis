@@ -17,6 +17,7 @@ import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Value("${artemis.version-control.secret}")
     private String GITLAB_PRIVATE_TOKEN;
 
-    private final UserService userService;
+    private UserService userService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -49,10 +50,14 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private GitLabApi gitlab;
 
-    public GitLabUserManagementService(UserService userService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
-        this.userService = userService;
+    public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
+    }
+
+    @Autowired
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     @PostConstruct

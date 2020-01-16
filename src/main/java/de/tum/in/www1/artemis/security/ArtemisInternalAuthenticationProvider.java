@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,16 +28,20 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    private final UserService userService;
+    private UserService userService;
 
     private final UserRepository userRepository;
 
     private final AuditEventRepository auditEventRepository;
 
-    public ArtemisInternalAuthenticationProvider(UserService userService, UserRepository userRepository, AuditEventRepository auditEventRepository) {
-        this.userService = userService;
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, AuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
+    }
+
+    @Autowired
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     @Override

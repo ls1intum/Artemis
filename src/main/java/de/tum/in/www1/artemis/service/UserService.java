@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
@@ -65,19 +66,26 @@ public class UserService {
 
     private final Optional<LdapUserService> ldapUserService;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+    private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
+    }
+
+    @Autowired
+    public void setOptionalVcsUserManagementService(Optional<VcsUserManagementService> optionalVcsUserManagementService) {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+    }
+
+    @Autowired
+    public void setArtemisAuthenticationProvider(ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
