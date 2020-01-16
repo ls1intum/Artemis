@@ -432,8 +432,10 @@ public class BambooService implements ContinuousIntegrationService {
                 // In this case we don't know the submission time, so we use the result completion time as a fallback.
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 // Save to avoid TransientPropertyValueException.
-                programmingSubmissionRepository.save(programmingSubmission);
             }
+            final var hasArtifact = (boolean) buildMap.get("artifact");
+            programmingSubmission.setBuildArtifact(hasArtifact);
+            programmingSubmissionRepository.save(programmingSubmission);
             result.setSubmission(programmingSubmission);
             result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
             // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
@@ -497,7 +499,6 @@ public class BambooService implements ContinuousIntegrationService {
 
         result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
         result.setScore(calculateScoreForResult(result, (int) testSummary.get("skippedCount")));
-        result.setBuildArtifact((Boolean) buildMap.get("artifact"));
         result.setParticipation((Participation) participation);
 
         return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
@@ -708,12 +709,14 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
         result.setScore(calculateScoreForResult(result, (int) buildResults.get("skippedTests")));
-        result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation((Participation) participation);
         result.setSubmission(submission);
 
         addFeedbackToResult(result, buildResults);
         result = resultRepository.save(result);
+
+        submission.setBuildArtifact(buildResults.containsKey("artifact"));
+        programmingSubmissionRepository.save(submission);
 
         return Optional.of(result);
     }

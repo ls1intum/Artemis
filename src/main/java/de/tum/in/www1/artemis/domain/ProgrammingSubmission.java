@@ -22,6 +22,9 @@ public class ProgrammingSubmission extends Submission implements Serializable {
     @Column(name = "build_failed")
     private boolean buildFailed;
 
+    @Column(name = "build_artifact")
+    private boolean buildArtifact;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getCommitHash() {
@@ -50,6 +53,14 @@ public class ProgrammingSubmission extends Submission implements Serializable {
         this.buildFailed = buildFailed;
     }
 
+    public boolean isBuildArtifact() {
+        return buildArtifact;
+    }
+
+    public void setBuildArtifact(boolean buildArtifact) {
+        this.buildArtifact = buildArtifact;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -59,16 +70,16 @@ public class ProgrammingSubmission extends Submission implements Serializable {
         if (!super.equals(o))
             return false;
         ProgrammingSubmission that = (ProgrammingSubmission) o;
-        return buildFailed == that.buildFailed && commitHash.equals(that.commitHash);
+        return buildFailed == that.buildFailed && buildArtifact == that.buildArtifact && commitHash.equals(that.commitHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), commitHash, buildFailed);
+        return Objects.hash(super.hashCode(), commitHash, buildFailed, buildArtifact);
     }
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + '}';
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
     }
 }
