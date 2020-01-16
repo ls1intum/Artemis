@@ -107,6 +107,14 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(value = "student1")
+    public void createModelingSubmission_badRequest() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        modelingSubmissionRepo.save(submission);
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_classDiagram() throws Exception {
         database.addParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
