@@ -70,7 +70,7 @@ public class ProgrammingSubmission extends Submission implements Serializable {
         if (!super.equals(o))
             return false;
         ProgrammingSubmission that = (ProgrammingSubmission) o;
-        return buildFailed == that.buildFailed && buildArtifact == that.buildArtifact && commitHash.equals(that.commitHash);
+        return buildFailed == that.buildFailed && buildArtifact == that.buildArtifact && Objects.equals(commitHash, that.commitHash);
     }
 
     @Override

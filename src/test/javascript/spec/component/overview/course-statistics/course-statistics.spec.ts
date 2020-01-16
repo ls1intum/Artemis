@@ -18,6 +18,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { MockSyncStorage } from '../../../mocks';
 import { Result } from 'app/entities/result';
 import { CourseScoreCalculationService } from 'app/overview';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -211,9 +212,11 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should transform results correctly', () => {
+        const buildFailedsubmission = { id: 42, buildFailed: true } as ProgrammingSubmission;
         const result1 = { resultString: '9 of 26 failed' } as Result;
         expect(comp.absoluteResult(result1)).to.be.null;
         const result2 = { resultString: 'No tests found' } as Result;
+        result2.submission = buildFailedsubmission;
         expect(comp.absoluteResult(result2)).to.be.null;
         const result3 = {} as Result;
         expect(comp.absoluteResult(result3)).to.equal(0);
