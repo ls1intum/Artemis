@@ -214,6 +214,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
+
+        request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
     }
 
     @Test
@@ -380,28 +382,16 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission() throws Exception {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, "student1");
+    public void getAllModelingSubmissions() throws Exception {
+        createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
+        ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(useCaseExercise, newSubmission, "student1");
+        database.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-
-        assertThat(optimalSubmissionIds).as("optimal submission was found").containsExactly(submission.getId());
-
-        classExercise.setDiagramType(DiagramType.CommunicationDiagram);
-        exerciseRepo.save(classExercise);
-        database.addModelingSubmission(classExercise, submission, "student1");
-        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission_lockLimitReached() throws Exception {
-        createTenLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(useCaseExercise, submission, "student2");
-
-        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
+        ModelingSubmission storedSubmission = request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
+                ModelingSubmission.class);
+        assertThat(storedSubmission).as("submission was found").isNotNull();
+        request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
 
     @Test
@@ -447,6 +437,32 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(studentParticipation.getSubmissions()).isEmpty();
         ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
         assertThat(returnedSubmission).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getNextOptimalModelSubmission() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(classExercise, submission, "student1");
+
+        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+
+        assertThat(optimalSubmissionIds).as("optimal submission was found").containsExactly(submission.getId());
+
+        classExercise.setDiagramType(DiagramType.CommunicationDiagram);
+        exerciseRepo.save(classExercise);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getNextOptimalModelSubmission_lockLimitReached() throws Exception {
+        createTenLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(useCaseExercise, submission, "student2");
+
+        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
     }
 
     @Test
