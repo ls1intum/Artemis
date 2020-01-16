@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -51,6 +52,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @Component
 @Profile("jira")
+@Primary
 @ComponentScan("de.tum.in.www1.artemis.*")
 public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider {
 
