@@ -83,7 +83,9 @@ public class BitbucketRequestMockProvider {
 
         mockGrantGroupPermissionToProject(exercise, ADMIN_GROUP_NAME, "PROJECT_ADMIN");
         mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN");
-        mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE");
+        if (exercise.getCourse().getTeachingAssistantGroupName() != null) {
+            mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE");
+        }
     }
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, String permission) throws URISyntaxException {
