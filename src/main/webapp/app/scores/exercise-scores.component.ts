@@ -17,6 +17,8 @@ import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { FeatureToggle } from 'app/feature-toggle';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { SubmissionExerciseType } from 'app/entities/submission';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 enum FilterProp {
     ALL = 'all',
@@ -138,8 +140,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
             case FilterProp.BUILD_FAILED:
-                // TODO: A boolean flag {buildFailed} on the result coming from the backend would be better
-                return result.resultString === 'No tests found';
+                return (
+                    result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed
+                );
             case FilterProp.MANUAL:
                 return result.assessmentType === AssessmentType.MANUAL;
             case FilterProp.AUTOMATIC:

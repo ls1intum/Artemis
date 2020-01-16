@@ -11,7 +11,6 @@ export class Result implements BaseEntity {
     public resultString: string;
     public completionDate: Moment | null;
     public successful = false; // default value
-    public buildArtifact = false; // default value (whether the result includes a build artifact or not, only used in programming exercises)
     public hasFeedback: boolean;
     public score: number;
     public assessmentType: AssessmentType;
