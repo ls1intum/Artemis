@@ -479,6 +479,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void deleteNextOptimalModelSubmission() throws Exception {
+        request.delete("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.NO_CONTENT);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void getSubmissionForModelingEditor_unfinishedAssessment()  throws Exception {
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
