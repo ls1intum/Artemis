@@ -193,9 +193,14 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         submission = ModelFactory.generateModelingSubmission(validModel, true);
         modelingSubmissionRepo.save(submission);
+
         returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
-        assertThat(returnedSubmission.getParticipation().getResults()).isEmpty();
-        assertThat(returnedSubmission.getParticipation().getSubmissions()).isEmpty();
+        StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
+        assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
+        assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
+        assertThat(studentParticipation.getStudent()).as("sensitive information (student) is hidden").isNull();
+        assertThat(studentParticipation.getExercise().getGradingInstructions()).as("sensitive information (grading instructions) is hidden").isNull();
+        assertThat(returnedSubmission.getResult()).as("sensitive information (exercise result) is hidden").isNull();
     }
 
     @Test
@@ -457,7 +462,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
         ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
-        assertThat(returnedSubmission).isNotNull();
+        assertThat(returnedSubmission).as("new submission is created").isNotNull();
     }
 
     @Test
@@ -499,7 +504,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
 
         ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
-        assertThat(returnedSubmission.getResult()).isNull();
+        assertThat(returnedSubmission.getResult()).as("the result is not sent to the client if the assessment is not finished").isNull();
     }
 
     @Test
