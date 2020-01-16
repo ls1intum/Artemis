@@ -19,6 +19,10 @@ import { CourseScoreCalculationService } from 'app/overview';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { take, tap } from 'rxjs/operators';
+import { ProfileInfo } from 'app/layouts';
+import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -60,6 +64,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private sourceTreeService: SourceTreeService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
     ) {}
 
@@ -283,7 +288,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     goToBuildPlan(participation: Participation) {
-        // TODO: get the continuous integration URL as a client constant during the management info call
-        window.open('https://bamboobruegge.in.tum.de/browse/' + (participation as ProgrammingExerciseStudentParticipation).buildPlanId);
+        const planId = (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+        const projectKey = (this.exercise as ProgrammingExercise).projectKey!;
+        this.profileService
+            .getProfileInfo()
+            .pipe(
+                take(1),
+                tap((info: ProfileInfo) => {
+                    const linkToBuildPlan = createBuildPlanUrl(info.buildPlanURLTemplate, projectKey, planId);
+                    window.open(linkToBuildPlan);
+                }),
+            )
+            .subscribe();
     }
 }
