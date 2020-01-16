@@ -199,6 +199,10 @@ public class CourseResource {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
                 checkIfGroupsExists(updatedCourse);
+
+                // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
+                // We need the old instructors and TAs, so that the VCS user management service can determine which
+                // users no longer have TA or instructor rights in the related exercise repositories.
                 final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
                 final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
                 Course result = courseService.save(updatedCourse);
