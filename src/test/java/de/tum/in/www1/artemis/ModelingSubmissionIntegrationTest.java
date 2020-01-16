@@ -10,6 +10,7 @@ import java.util.List;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -386,6 +387,11 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
 
         assertThat(optimalSubmissionIds).as("optimal submission was found").containsExactly(submission.getId());
+
+        classExercise.setDiagramType(DiagramType.CommunicationDiagram);
+        exerciseRepo.save(classExercise);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
     }
 
     @Test
