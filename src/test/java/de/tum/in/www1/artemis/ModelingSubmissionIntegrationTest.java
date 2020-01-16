@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.util.ModelFactory.generateTextSubmission;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
@@ -7,6 +8,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +39,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     UserRepository userRepo;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     RequestUtilService request;
@@ -71,6 +78,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     private String validModel;
 
+    private TextExercise textExercise;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 1);
@@ -87,6 +96,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
+
+        database.addCourseWithOneTextExercise();
+        textExercise = (TextExercise) exerciseRepo.findAll().get(5);
     }
 
     @AfterEach
@@ -400,6 +412,45 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
+
+        // students can only see their own models
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(classExercise, submission, "student2");
+        request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getSubmissionForModelingEditor_badRequest()  throws Exception {
+        User user = database.getUserByLogin("student1");
+        StudentParticipation participation = new StudentParticipation();
+        participation.setStudent(user);
+        participation.setExercise(null);
+        StudentParticipation studentParticipation = studentParticipationRepository.save(participation);
+        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+
+        participation.setExercise(textExercise);
+        studentParticipation = studentParticipationRepository.save(participation);
+        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getSubmissionForModelingEditor_emptySubmission()  throws Exception {
+        StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
+        assertThat(studentParticipation.getSubmissions()).isEmpty();
+        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        assertThat(returnedSubmission).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getSubmissionForModelingEditor_unfinishedAssessment()  throws Exception {
+        StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
+        database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
+
+        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        assertThat(returnedSubmission.getResult()).isNull();
     }
 
     @Test
