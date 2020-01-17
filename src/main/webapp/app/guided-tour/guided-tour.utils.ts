@@ -96,7 +96,8 @@ export function isElementInViewPortHorizontally(orientation: Orientation, left: 
         case Orientation.BOTTOMLEFT: {
             elementInViewPort = left + width + tourStepWidth < window.innerWidth;
             break;
-        } case Orientation.LEFT: {
+        }
+        case Orientation.LEFT: {
             elementInViewPort = left - tourStepWidth > window.screenLeft;
             break;
         }
