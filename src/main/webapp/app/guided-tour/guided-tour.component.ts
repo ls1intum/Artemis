@@ -7,7 +7,7 @@ import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
-import { calculateOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
+import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -305,7 +305,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         switch (direction) {
             case Direction.HORIZONTAL: {
                 const width = element.offsetWidth;
-                const left = calculateOffset(element, element.offsetLeft);
+                const left = calculateLeftOffset(element);
                 const tourStepWidth = this.tourStep.nativeElement.offsetWidth;
                 elementInViewPort = isElementInViewPortHorizontally(this.currentTourStep.orientation, left, width, tourStepWidth);
                 break;
@@ -313,7 +313,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             case Direction.VERTICAL: {
                 const scrollAdjustment = this.currentTourStep && this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
                 const stepScreenAdjustment = this.getStepScreenAdjustment();
-                const top = calculateOffset(element, element.offsetTop);
+                const top = calculateTopOffset(element);
                 const height = element.offsetHeight;
 
                 if (this.isBottom()) {

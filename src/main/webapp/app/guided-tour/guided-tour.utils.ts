@@ -11,12 +11,30 @@ export function clickOnElement(selector: string): void {
     }
 }
 
-export function calculateOffset(element: HTMLElement, offset: number): number {
+/**
+ * Helper function that calculates the top position of the given element
+ * @param element
+ */
+export function calculateTopOffset(element: HTMLElement): number {
+    let topOffset = element.offsetTop;
     while (element.offsetParent) {
         element = element.offsetParent as HTMLElement;
-        offset += offset;
+        topOffset += element.offsetTop;
     }
-    return offset;
+    return topOffset;
+}
+
+/**
+ * Helper function that calculates the left position of the given element
+ * @param element
+ */
+export function calculateLeftOffset(element: HTMLElement): number {
+    let leftOffset = element.offsetLeft;
+    while (element.offsetParent) {
+        element = element.offsetParent as HTMLElement;
+        leftOffset += element.offsetLeft;
+    }
+    return leftOffset;
 }
 
 /**
