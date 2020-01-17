@@ -62,9 +62,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         // If there already is a manual result, update it instead of creating a new one.
         if (this.result) {
             this.initializeForResultUpdate();
-            return;
+        } else {
+            this.initializeForResultCreation();
         }
-        this.initializeForResultCreation();
         this.checkPermissions();
     }
 
@@ -214,8 +214,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
 
     /**
      * the dialog is readonly if there is a complaint that was accepted or rejected
+     * and if the person cannot override the result
      */
     readOnly() {
-        return this.complaint !== undefined && this.complaint.accepted !== undefined;
+        return !this.canOverride && this.complaint !== undefined && this.complaint.accepted !== undefined;
     }
 }
