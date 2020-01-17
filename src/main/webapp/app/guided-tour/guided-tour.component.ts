@@ -7,6 +7,7 @@ import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
+import { calculateOffset, isElementInViewPortHorizontally, flipOrientation, isBottom, isTop } from 'app/guided-tour/guided-tour.utils';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -189,11 +190,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             if (!this.isTourOnScreen(Direction.VERTICAL)) {
                 const topPosition = this.getTopScrollingPosition();
                 try {
-                    window.scrollTo({
-                        left: 0,
-                        top: topPosition,
-                        behavior: 'smooth',
-                    });
+                    window.scrollTo({ left: 0, top: topPosition, behavior: 'smooth' });
                 } catch (err) {
                     if (err instanceof TypeError) {
                         window.scroll(0, topPosition);
@@ -204,7 +201,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
             setTimeout(() => {
                 if (!this.isTourOnScreen(Direction.HORIZONTAL)) {
-                    this.flipOrientation();
+                    flipOrientation();
                 }
             }, 300);
         }, 0);
@@ -218,10 +215,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep) {
             return false;
         }
-        return (
-            !this.currentTourStep.highlightSelector ||
-            (this.elementInViewport(this.getSelectedElement(), direction) && this.elementInViewport(this.tourStep.nativeElement, direction))
-        );
+        switch (direction) {
+            case Direction.HORIZONTAL: {
+                return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
+            }
+            case Direction.VERTICAL: {
+                return (
+                    !this.currentTourStep.highlightSelector ||
+                    (this.elementInViewport(this.getSelectedElement(), direction) && this.elementInViewport(this.tourStep.nativeElement, direction))
+                );
+            }
+        }
     }
 
     /**
@@ -236,34 +240,23 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             return false;
         }
 
-        let elementInViewPort = false;
-        let top = element.offsetTop;
-        const height = element.offsetHeight;
-        const width = element.offsetWidth;
-        const left = element.offsetLeft;
-
-        console.log('element: ', element);
-        console.log('direction: ', direction);
+        let elementInViewPort = true;
 
         switch (direction) {
             case Direction.HORIZONTAL: {
-                if (this.isRight()) {
-                    elementInViewPort = width + left < window.innerWidth;
-                } else if (this.isLeft()) {
-                    elementInViewPort = left - width > window.screenLeft;
-                }
+                const width = element.offsetWidth;
+                const left = calculateOffset(element, element.offsetLeft);
+                const tourStepWidth = this.tourStep.nativeElement.offsetWidth;
+                elementInViewPort = isElementInViewPortHorizontally(this.currentTourStep.orientation, left, width, tourStepWidth);
                 break;
             }
             case Direction.VERTICAL: {
                 const scrollAdjustment = this.currentTourStep && this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
                 const stepScreenAdjustment = this.getStepScreenAdjustment();
+                const top = calculateOffset(element, element.offsetTop);
+                const height = element.offsetHeight;
 
-                while (element.offsetParent) {
-                    element = element.offsetParent as HTMLElement;
-                    top += element.offsetTop;
-                }
-
-                if (this.isBottom()) {
+                if (isBottom()) {
                     elementInViewPort =
                         top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight + window.pageYOffset;
                 } else {
@@ -273,7 +266,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 break;
             }
         }
-
         return elementInViewPort;
     }
 
@@ -297,101 +289,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    private flipOrientation(): void {
-        console.log('flip orientation');
-        if (this.isLeft()) {
-            switch (this.currentTourStep.orientation) {
-                case Orientation.LEFT: {
-                    this.orientation = Orientation.RIGHT;
-                    break;
-                }
-                case Orientation.TOPLEFT: {
-                    this.orientation = Orientation.TOPRIGHT;
-                    break;
-                }
-                case Orientation.BOTTOMLEFT: {
-                    this.orientation = Orientation.BOTTOMRIGHT;
-                    break;
-                }
-            }
-        } else if (this.isRight()) {
-            switch (this.currentTourStep.orientation) {
-                case Orientation.RIGHT: {
-                    this.orientation = Orientation.LEFT;
-                    break;
-                }
-                case Orientation.TOPRIGHT: {
-                    this.orientation = Orientation.TOPLEFT;
-                    break;
-                }
-                case Orientation.BOTTOMRIGHT: {
-                    this.orientation = Orientation.BOTTOMLEFT;
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Check if the current tour step has a bottom orientation
-     * @return true if the current tour step orientation is bottom, otherwise false
-     */
-    private isBottom(): boolean {
-        if (this.currentTourStep && this.currentTourStep.orientation) {
-            return (
-                this.currentTourStep.orientation === Orientation.BOTTOM ||
-                this.currentTourStep.orientation === Orientation.BOTTOMLEFT ||
-                this.currentTourStep.orientation === Orientation.BOTTOMRIGHT
-            );
-        }
-        return false;
-    }
-
-    /**
-     * Check if the current tour step has a top orientation
-     * @return true if the current tour step orientation is bottom, otherwise false
-     */
-    private isTop(): boolean {
-        if (this.currentTourStep && this.currentTourStep.orientation) {
-            return (
-                this.currentTourStep.orientation === Orientation.TOP ||
-                this.currentTourStep.orientation === Orientation.TOPLEFT ||
-                this.currentTourStep.orientation === Orientation.TOPRIGHT
-            );
-        }
-        return false;
-    }
-
-    /**
-     * Check if the current tour step has a left orientation
-     * @return true if the current tour step orientation is left, otherwise false
-     */
-    private isLeft(): boolean {
-        if (this.currentTourStep && this.currentTourStep.orientation) {
-            return (
-                this.currentTourStep.orientation === Orientation.LEFT ||
-                this.currentTourStep.orientation === Orientation.TOPLEFT ||
-                this.currentTourStep.orientation === Orientation.BOTTOMLEFT
-            );
-        }
-        return false;
-    }
-
-    /**
-     * Check if the current tour step has a right orientation
-     * @return true if the current tour step orientation is right, otherwise false
-     */
-    private isRight(): boolean {
-        if (this.currentTourStep && this.currentTourStep.orientation) {
-            return (
-                this.currentTourStep.orientation === Orientation.RIGHT ||
-                this.currentTourStep.orientation === Orientation.TOPRIGHT ||
-                this.currentTourStep.orientation === Orientation.BOTTOMRIGHT
-            );
-        }
-        return false;
-    }
-
     /* ==========     Tour step calculation methods     ========== */
 
     /**
@@ -412,7 +309,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep || !this.selectedElementRect) {
             return null;
         }
-        if (this.isBottom()) {
+        if (isBottom()) {
             const paddingAdjustment = this.getHighlightPadding();
             return this.selectedElementRect.top + this.selectedElementRect.height + paddingAdjustment;
         }
@@ -445,10 +342,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (this.selectedElementRect && this.currentTourStep) {
             const scrollAdjustment = this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
             const stepScreenAdjustment = this.getStepScreenAdjustment();
-            const positionAdjustment = this.isBottom()
+            const positionAdjustment = isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = this.isTop() ? this.tourStep.nativeElement.getBoundingClientRect().top - 15 : this.selectedElementRect.bottom + positionAdjustment;
+            topPosition = isTop() ? this.tourStep.nativeElement.getBoundingClientRect().top - 15 : this.selectedElementRect.bottom + positionAdjustment;
         }
         return topPosition;
     }
