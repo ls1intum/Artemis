@@ -84,6 +84,9 @@ public class DatabaseUtilService {
     TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
+    TextBlockRepository textBlockRepo;
+
+    @Autowired
     FileUploadSubmissionRepository fileUploadSubmissionRepo;
 
     @Autowired
@@ -830,6 +833,14 @@ public class DatabaseUtilService {
         submission = textSubmissionRepo.save(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
+        return submission;
+    }
+
+    public TextSubmission addTextBlocksToTextSubmission(List<TextBlock> blocks, TextSubmission submission) {
+        blocks.forEach(block -> block.setSubmission(submission));
+        submission.setBlocks(blocks);
+        textBlockRepo.saveAll(blocks);
+        textSubmissionRepo.save(submission);
         return submission;
     }
 
