@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
@@ -169,5 +170,15 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         participationRepository.save(afterDueDateParticipation);
 
         request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteTextSubmissionWithTextBlocks() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 9), ModelFactory.generateTextBlock(10, 19), ModelFactory.generateTextBlock(20, 29));
+        database.addTextBlocksToTextSubmission(blocks, textSubmission);
+
+        request.delete("/api/submissions/" + textSubmission.getId(), HttpStatus.OK);
     }
 }
