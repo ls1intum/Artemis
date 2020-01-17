@@ -101,9 +101,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     private checkPermissions(): void {
-        this.isAtLeastInstructor = this.exercise && this.exercise.course
-            ? this.accountService.isAtLeastInstructorInCourse(this.exercise.course)
-            : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor =
+            this.exercise && this.exercise.course
+                ? this.accountService.isAtLeastInstructorInCourse(this.exercise.course)
+                : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;

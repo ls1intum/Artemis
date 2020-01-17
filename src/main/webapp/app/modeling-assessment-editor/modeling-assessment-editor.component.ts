@@ -213,7 +213,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private checkPermissions(): void {
         this.isAssessor = this.result != null && this.result.assessor && this.result.assessor.id === this.userId;
-        this.isAtLeastInstructor = this.modelingExercise && this.modelingExercise.course
+        this.isAtLeastInstructor =
+            this.modelingExercise && this.modelingExercise.course
                 ? this.accountService.isAtLeastInstructorInCourse(this.modelingExercise.course)
                 : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && moment().isBefore(this.modelingExercise.assessmentDueDate);
