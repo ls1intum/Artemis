@@ -167,19 +167,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
-    goToBuildPlan(result: Result) {
-        const planId = (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
-        const projectKey = (this.exercise as ProgrammingExercise).projectKey!;
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                take(1),
-                tap((info: ProfileInfo) => {
-                    const linkToBuildPlan = createBuildPlanUrl(info.buildPlanURLTemplate, projectKey, planId);
-                    window.open(linkToBuildPlan);
-                }),
-            )
-            .subscribe();
+    buildPlanId(result: Result): string {
+        return (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+    }
+
+    projectKey(): string {
+        return (this.exercise as ProgrammingExercise).projectKey!;
     }
 
     goToRepository(result: Result) {

@@ -287,18 +287,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         );
     }
 
-    goToBuildPlan(participation: Participation) {
-        const planId = (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
-        const projectKey = (this.exercise as ProgrammingExercise).projectKey!;
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                take(1),
-                tap((info: ProfileInfo) => {
-                    const linkToBuildPlan = createBuildPlanUrl(info.buildPlanURLTemplate, projectKey, planId);
-                    window.open(linkToBuildPlan);
-                }),
-            )
-            .subscribe();
+    projectKey(): string {
+        return (this.exercise as ProgrammingExercise).projectKey!;
+    }
+
+    buildPlanId(participation: Participation): string {
+        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
 }
