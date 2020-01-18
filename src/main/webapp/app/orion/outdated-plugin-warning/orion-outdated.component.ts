@@ -7,13 +7,13 @@ import { ProfileInfo } from 'app/layouts';
 @Component({
     selector: 'jhi-orion-outdated',
     template: `
-        <h2 class="text-danger font-weight-bold">The version of Orion you are currently using is outdated!</h2>
+        <h2 class="text-danger font-weight-bold" jhiTranslate="artemisApp.orion.version.outdated">The version of Orion you are currently using is outdated!</h2>
         <div class="font-weight-bold ">
-            You are using version <span class="badge badge-pill badge-danger">{{ versionString }}</span
+            {{ 'artemisApp.orion.version.usedVersion' | translate }}<span class="badge badge-pill badge-danger">{{ versionString }}</span
             >!
         </div>
         <div>
-            The allowed version range is <span class="badge badge-pill badge-info">{{ allowedVersionStart }}</span> -
+            {{ 'artemisApp.orion.version.allowedVersion' | translate }}<span class="badge badge-pill badge-info">{{ allowedVersionStart }}</span> -
             <span class="badge badge-pill badge-info">{{ allowedVersionEnd }}</span>
         </div>
     `,
