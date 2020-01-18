@@ -121,7 +121,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     importIntoIntelliJ() {
         const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
-        this.javaBridge.workOnExercise(repo, stringifyCricular(this.exercise));
+        this.javaBridge.workOnExercise(repo, stringifyCircular(this.exercise));
     }
 
     /**
