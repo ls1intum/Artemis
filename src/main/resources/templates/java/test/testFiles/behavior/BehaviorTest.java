@@ -55,7 +55,7 @@ public abstract class BehaviorTest {
 
     /**
      * Instantiate an object of a given class by its qualified name and the constructor arguments, if applicable.
-     * @param qualifiedClassName: The qualified name of the class that needs to get retrieved (package.classname)
+     * @param clazz: new instance of which is required
      * @param constructorArgs: Parameter instances of the constructor of the class, that it has to get instantiated with. Do not include, if the constructor has no arguments.
      * @return The instance of this class.
      */
