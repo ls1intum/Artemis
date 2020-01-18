@@ -94,7 +94,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                     this.router.navigate([redirect]);
                 }
 
-                // Log in to IntelliJ
+                // Log in to Orion
                 if (isOrion) {
                     const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
                     modalRef.componentInstance.text = 'login.ide.confirmation';

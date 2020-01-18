@@ -13,16 +13,16 @@ import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service
 import { OrionState } from 'app/orion/orion';
 
 @Component({
-    selector: 'jhi-code-editor-instructor-intellij',
-    templateUrl: './code-editor-instructor-intellij-container.component.html',
-    styles: ['.instructions-intellij { height: 700px }'],
+    selector: 'jhi-code-editor-instructor-orion',
+    templateUrl: './code-editor-instructor-orion-container.component.html',
+    styles: ['.instructions-orion { height: 700px }'],
 })
-export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
-    intellijState: OrionState;
+export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
+    orionState: OrionState;
 
     constructor(
         private javaBridge: OrionConnectorService,
-        private intellijBuildAndTestService: OrionBuildAndTestService,
+        private orionBuildAndTestService: OrionBuildAndTestService,
         router: Router,
         exerciseService: ProgrammingExerciseService,
         courseExerciseService: CourseExerciseService,
@@ -52,7 +52,7 @@ export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorIn
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe(state => (this.intellijState = state));
+        this.javaBridge.state().subscribe(state => (this.orionState = state));
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
@@ -77,22 +77,22 @@ export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorIn
     }
 
     /**
-     * Submits the code of the selected repository and tells IntelliJ to listen to any new test results for the selected repo.
+     * Submits the code of the selected repository and tells Orion to listen to any new test results for the selected repo.
      * Submitting means committing all changes and pushing them to the remote.
      */
     submit(): void {
         this.javaBridge.submitChanges();
         if (this.selectedRepository !== REPOSITORY.TEST) {
-            this.intellijState.building = true;
-            this.intellijBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);
+            this.orionState.building = true;
+            this.orionBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);
         }
     }
 
     /**
-     * Tells IntelliJ to build and test the selected repository locally instead of committing and pushing the code to the remote
+     * Tells Orion to build and test the selected repository locally instead of committing and pushing the code to the remote
      */
     buildLocally(): void {
         this.javaBridge.buildAndTestLocally();
-        this.intellijState.building = true;
+        this.orionState.building = true;
     }
 }

@@ -147,7 +147,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         comp.exercise = progExercise;
         comp.courseId = 456;
 
-        comp.importIntoIntelliJ();
+        comp.importIntoIDE();
         expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', exerciseJson);
     });
 

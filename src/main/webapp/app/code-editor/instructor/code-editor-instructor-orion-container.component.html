@@ -73,18 +73,18 @@
                 [btnSize]="ButtonSize.MEDIUM"
             ></jhi-programming-exercise-student-trigger-build-button>
             <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
-            <jhi-ide-button class="ml-1" [buttonLoading]="intellijState.building" buttonLabel="{{ 'artemisApp.editor.submit' | translate }}" (click)="submit()"> </jhi-ide-button>
+            <jhi-ide-button class="ml-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | translate }}" (click)="submit()"> </jhi-ide-button>
             <jhi-ide-button
                 *ngIf="selectedRepository !== REPOSITORY.TEST"
                 class="ml-1"
-                [buttonLoading]="intellijState.building"
+                [buttonLoading]="orionState.building"
                 buttonLabel="{{ 'artemisApp.editor.intellij.testLocally' | translate }}"
                 (click)="buildLocally()"
             ></jhi-ide-button>
         </div>
         <jhi-programming-exercise-editable-instructions
             *ngIf="exercise"
-            class="instructions-intellij"
+            class="instructions-orion"
             [(exercise)]="exercise"
             [(participation)]="selectedParticipation"
             [templateParticipation]="exercise.templateParticipation"

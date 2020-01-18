@@ -16,7 +16,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     styleUrls: ['course-overview.scss'],
 })
 export class CourseOverviewComponent implements OnInit {
-    readonly isIntelliJ = isOrion;
+    readonly isOrion = isOrion;
     CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;

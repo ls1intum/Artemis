@@ -97,7 +97,7 @@ export class OrionConnectorService implements ArtemisClientConnector, JavaConnec
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
-     * @param view The ExerciseView which is currently open in IntelliJ (instructor vs. student)
+     * @param view The ExerciseView which is currently open in the IDE (instructor vs. student)
      */
     onExerciseOpened(opened: number, view: string): void {
         const inInstructorView = view === ExerciseView.INSTRUCTOR;
@@ -175,7 +175,7 @@ export class OrionConnectorService implements ArtemisClientConnector, JavaConnec
     }
 
     /**
-     * Edit the given exercise in IntelliJ as an instructor. This will trigger the import of the exercise
+     * Edit the given exercise in the IDE as an instructor. This will trigger the import of the exercise
      * (if it is not already imported) and opens the created project afterwards.
      *
      * @param exercise The exercise to be imported
@@ -186,7 +186,7 @@ export class OrionConnectorService implements ArtemisClientConnector, JavaConnec
     }
 
     /**
-     * Selects an instructor repository in IntelliJ. The selected repository will be used for all future actions
+     * Selects an instructor repository in the IDE. The selected repository will be used for all future actions
      * that reference an instructor repo s.a. submitting the code.
      *
      * @param repository The repository to be selected for all future interactions

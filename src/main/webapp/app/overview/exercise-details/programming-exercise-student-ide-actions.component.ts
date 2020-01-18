@@ -119,7 +119,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     /**
      * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
      */
-    importIntoIntelliJ() {
+    importIntoIDE() {
         const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
         this.javaBridge.workOnExercise(repo, this.exercise as ProgrammingExercise);
     }

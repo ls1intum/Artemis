@@ -27,9 +27,9 @@ import { stringifyCircular } from 'app/shared/util/utils';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    readonly isIntelliJ = isOrion;
+    readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
-    intelliJState: OrionState;
+    orionState: OrionState;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -51,7 +51,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe(state => (this.intelliJState = state));
+        this.javaBridge.state().subscribe(state => (this.orionState = state));
     }
 
     protected loadExercises(): void {
@@ -119,11 +119,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
-    editIntIntelliJ(programmingExercise: ProgrammingExercise) {
+    editInIDE(programmingExercise: ProgrammingExercise) {
         this.javaBridge.editExercise(programmingExercise);
     }
 
-    openIntelliJEditor(exercise: ProgrammingExercise) {
+    openOrionEditor(exercise: ProgrammingExercise) {
         try {
             this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation.id]);
         } catch (e) {

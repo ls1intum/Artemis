@@ -96,7 +96,7 @@
                     <td>{{ programmingExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ programmingExercise.dueDate | date: 'medium' }}</td>
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
-                    <td *ngIf="!isIntelliJ" class="d-flex flex-column">
+                    <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl"
                                 ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
@@ -147,24 +147,24 @@
                     <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
                         <jhi-ide-button
                             *ngIf="
-                                intelliJState.inInstructorView &&
-                                    intelliJState.opened === programmingExercise.id &&
+                                orionState.inInstructorView &&
+                                    orionState.opened === programmingExercise.id &&
                                     programmingExercise.isAtLeastInstructor &&
                                     programmingExercise.templateParticipation;
                                 else importAsInstructor
                             "
                             buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | translate }}"
                             [smallButton]="false"
-                            (click)="openIntelliJEditor(programmingExercise)"
+                            (click)="openOrionEditor(programmingExercise)"
                         >
                         </jhi-ide-button>
                         <ng-template #importAsInstructor>
                             <jhi-ide-button
                                 *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
                                 [buttonLabel]="'entity.action.editInIntelliJ' | translate"
-                                [buttonLoading]="intelliJState.cloning"
+                                [buttonLoading]="orionState.cloning"
                                 [smallButton]="false"
-                                (click)="editIntIntelliJ(programmingExercise)"
+                                (click)="editInIDE(programmingExercise)"
                             >
                             </jhi-ide-button>
                         </ng-template>

@@ -39,7 +39,7 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { CodeEditorInstructorIntellijContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-intellij-container.component';
+import { CodeEditorInstructorOrionContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-orion-container.component';
 import { OrionModule } from 'app/orion/orion.module';
 import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
 
@@ -76,11 +76,11 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
-        CodeEditorInstructorIntellijContainerComponent,
+        CodeEditorInstructorOrionContainerComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     entryComponents: [
-        CodeEditorInstructorIntellijContainerComponent,
+        CodeEditorInstructorOrionContainerComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserDeleteComponent,
