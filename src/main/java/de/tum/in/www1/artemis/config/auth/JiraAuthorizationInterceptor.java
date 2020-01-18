@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
 @Profile("jira")
 public class JiraAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
-    @Value("${artemis.jira.user}")
+    @Value("${artemis.user-management.external.user}")
     private String JIRA_USER;
 
-    @Value("${artemis.jira.password}")
+    @Value("${artemis.user-management.external.password}")
     private String JIRA_PASSWORD;
 
     @NotNull

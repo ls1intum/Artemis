@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 
 @Component
-@ConditionalOnProperty(value = "artemis.external-user-management", havingValue = "false")
+@ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
 public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticationProvider {
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);

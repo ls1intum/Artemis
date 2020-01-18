@@ -58,10 +58,10 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
-    @Value("${artemis.jira.admin-group-name}")
+    @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
-    @Value("${artemis.jira.url}")
+    @Value("${artemis.user-management.external.url}")
     private URL JIRA_URL;
 
     private final UserService userService;
