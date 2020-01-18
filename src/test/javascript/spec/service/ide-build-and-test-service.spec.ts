@@ -13,7 +13,6 @@ import { Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { BehaviorSubject, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { buildLogs } from '../sample/build-logs';
 
 chai.use(sinonChai);
 const expect = chai.expect;

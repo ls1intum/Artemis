@@ -17,8 +17,10 @@ export type AllowedOrionVersionRange = {
     providedIn: 'root',
 })
 export class OrionVersionValidator {
+    isOrion = isOrion;
     private minVersion: string;
     private maxVersion: string;
+    private isValidVersion: boolean;
 
     constructor(private profileService: ProfileService, private window: WindowRef, private router: Router) {}
 
@@ -29,7 +31,7 @@ export class OrionVersionValidator {
      * to an error page if the installed version is incompatible.
      */
     validateOrionVersion(): Observable<boolean | undefined> {
-        if (isOrion) {
+        if (this.isOrion) {
             return this.validate();
         } else {
             return of(true);
@@ -37,18 +39,19 @@ export class OrionVersionValidator {
     }
 
     private validate(): Observable<boolean | undefined> {
+        if (this.isValidVersion !== undefined) {
+            return of(this.isValidVersion);
+        }
+
         const userAgent = this.window.nativeWindow.navigator.userAgent;
         const orionVersionArray = this.extractVersionFromUserAgent(userAgent);
         if (orionVersionArray.length === 2) {
             const usedVersion = orionVersionArray[1];
-            if (this.minVersion !== undefined) {
-                return of(this.versionInBounds(usedVersion));
-            } else {
-                return this.fetchProfileInfoAndCompareVersions(usedVersion);
-            }
+            return this.fetchProfileInfoAndCompareVersions(usedVersion);
         } else {
             this.router.navigateByUrl(`/orionOutdated?versionString=soOldThatThereIsNoVersion`);
-            return of(false);
+            this.isValidVersion = false;
+            return of(this.isValidVersion);
         }
     }
 
@@ -62,7 +65,8 @@ export class OrionVersionValidator {
                 map((info: ProfileInfo) => {
                     this.minVersion = info.allowedOrionVersions.from;
                     this.maxVersion = info.allowedOrionVersions.to;
-                    return this.versionInBounds(usedVersion);
+                    this.isValidVersion = this.versionInBounds(usedVersion);
+                    return this.isValidVersion;
                 }),
             )
             .subscribe(valid => validationSubject.next(valid));
@@ -73,7 +77,7 @@ export class OrionVersionValidator {
     private extractVersionFromUserAgent(userAgent: string): string[] {
         return userAgent
             .split(' ')
-            .find((spec: string) => spec.includes('Orion'))!!
+            .find((spec: string) => spec.includes('Orion') || spec.includes('IntelliJ'))!!
             .split('/');
     }
 
