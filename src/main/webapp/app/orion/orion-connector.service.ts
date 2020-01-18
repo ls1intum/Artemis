@@ -170,7 +170,7 @@ export class OrionConnectorService implements ArtemisClientConnector, JavaConnec
      * @param courseId
      * @param exerciseId
      */
-    startedBuildInIntelliJ(courseId: number, exerciseId: number) {
+    startedBuildInOrion(courseId: number, exerciseId: number) {
         this.router.navigateByUrl(`/overview/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
     }
 

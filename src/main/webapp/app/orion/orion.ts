@@ -54,7 +54,7 @@ export interface ArtemisClientConnector {
     onExerciseOpened(opened: number, view: string): void;
     isCloning(cloning: boolean): void;
     isBuilding(building: boolean): void;
-    startedBuildInIntelliJ(courseId: number, exerciseId: number): void;
+    startedBuildInOrion(courseId: number, exerciseId: number): void;
 }
 
 export interface Window {
@@ -64,4 +64,4 @@ export interface Window {
     artemisClientConnector: ArtemisClientConnector;
 }
 
-export const isOrion = window.navigator.userAgent.includes('IntelliJ');
+export const isOrion = window.navigator.userAgent.includes('Orion');
