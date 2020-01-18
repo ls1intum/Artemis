@@ -17,6 +17,10 @@ import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { FeatureToggle } from 'app/feature-toggle';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProfileInfo } from 'app/layouts';
+import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
 
 enum FilterProp {
     ALL = 'all',
@@ -61,6 +65,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private resultService: ResultService,
+        private profileService: ProfileService,
         private programmingSubmissionService: ProgrammingSubmissionService,
     ) {
         this.resultCriteria = {
@@ -162,9 +167,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
-    goToBuildPlan(result: Result) {
-        // TODO: get the continuous integration URL as a client constant during the management info call
-        window.open('https://bamboobruegge.in.tum.de/browse/' + (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId);
+    buildPlanId(result: Result): string {
+        return (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+    }
+
+    projectKey(): string {
+        return (this.exercise as ProgrammingExercise).projectKey!;
     }
 
     goToRepository(result: Result) {
