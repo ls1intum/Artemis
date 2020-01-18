@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { isOrion } from 'app/intellij/orion';
+import { isOrion } from 'app/orion/orion';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';

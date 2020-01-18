@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { ErrorComponent } from './error.component';
-import { OrionOutdatedComponent } from 'app/intellij/outdated-plugin-warning/orion-outdated.component';
+import { OrionOutdatedComponent } from 'app/orion/outdated-plugin-warning/orion-outdated.component';
 
 export const errorRoute: Routes = [
     {

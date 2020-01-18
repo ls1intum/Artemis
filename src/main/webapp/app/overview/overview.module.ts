@@ -28,7 +28,7 @@ import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.mod
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
-import { OrionModule } from 'app/intellij/orion.module';
+import { OrionModule } from 'app/orion/orion.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 

@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ExerciseView, OrionState, ArtemisClientConnector, JavaConnectorFacade } from 'app/intellij/orion';
+import { ExerciseView, OrionState, ArtemisClientConnector, JavaConnectorFacade } from 'app/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';

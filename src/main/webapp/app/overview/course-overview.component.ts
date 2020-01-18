@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { CachingStrategy } from 'app/shared';
 import { CourseScoreCalculationService } from 'app/overview';
-import { isOrion } from 'app/intellij/orion';
+import { isOrion } from 'app/orion/orion';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 

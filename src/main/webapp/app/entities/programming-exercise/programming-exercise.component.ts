@@ -16,8 +16,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { FeatureToggle } from 'app/feature-toggle';
-import { OrionState, isOrion } from 'app/intellij/orion';
-import { OrionConnectorService } from 'app/intellij/orion-connector.service';
+import { OrionState, isOrion } from 'app/orion/orion';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { stringifyCircular } from 'app/shared/util/utils';
 
 @Component({

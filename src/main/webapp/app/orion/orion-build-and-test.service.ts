@@ -5,7 +5,7 @@ import { Participation } from '../entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from '../entities/result';
 import { filter, first, map, tap } from 'rxjs/operators';
-import { OrionConnectorService } from 'app/intellij/orion-connector.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { BuildLogEntryArray } from 'app/entities/build-log';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';

@@ -7,9 +7,9 @@ import { StateStorageService, User } from '../core';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { OrionConnectorService } from 'app/intellij/orion-connector.service';
-import { isOrion } from 'app/intellij/orion';
-import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
+import { isOrion } from 'app/orion/orion';
+import { ModalConfirmAutofocusComponent } from 'app/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 

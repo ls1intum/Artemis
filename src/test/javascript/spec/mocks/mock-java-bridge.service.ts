@@ -1,4 +1,4 @@
-import { OrionState, ArtemisClientConnector } from 'app/intellij/orion';
+import { OrionState, ArtemisClientConnector } from 'app/orion/orion';
 import { Observable, of } from 'rxjs';
 
 export class MockJavaBridgeService implements ArtemisClientConnector {

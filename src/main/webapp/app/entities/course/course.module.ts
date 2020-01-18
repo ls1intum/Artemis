@@ -15,7 +15,7 @@ import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { SortByModule } from 'app/components/pipes';
 import { MomentModule } from 'ngx-moment';
-import { OrionModule } from 'app/intellij/orion.module';
+import { OrionModule } from 'app/orion/orion.module';
 
 const ENTITY_STATES = [...courseRoute];
 

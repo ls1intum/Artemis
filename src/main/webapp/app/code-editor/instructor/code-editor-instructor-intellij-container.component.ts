@@ -8,9 +8,9 @@ import { CodeEditorFileService, CodeEditorSessionService, DomainService } from '
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
-import { OrionConnectorService } from 'app/intellij/orion-connector.service';
-import { OrionBuildAndTestService } from 'app/intellij/orion-build-and-test.service';
-import { OrionState } from 'app/intellij/orion';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
+import { OrionState } from 'app/orion/orion';
 
 @Component({
     selector: 'jhi-code-editor-instructor-intellij',

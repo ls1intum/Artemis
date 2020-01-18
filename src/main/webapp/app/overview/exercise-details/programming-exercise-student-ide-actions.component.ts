@@ -4,9 +4,9 @@ import { InitializationState, Participation, ProgrammingExerciseStudentParticipa
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { OrionState } from 'app/intellij/orion';
-import { OrionConnectorService } from 'app/intellij/orion-connector.service';
-import { OrionBuildAndTestService } from 'app/intellij/orion-build-and-test.service';
+import { OrionState } from 'app/orion/orion';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/feature-toggle';

@@ -12,7 +12,7 @@ import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview';
-import { isOrion } from 'app/intellij/orion';
+import { isOrion } from 'app/orion/orion';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 

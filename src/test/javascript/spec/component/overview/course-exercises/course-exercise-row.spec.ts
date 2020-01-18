@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { OrionConnectorService } from 'app/intellij/orion-connector.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
 import { SinonStub, stub } from 'sinon';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
