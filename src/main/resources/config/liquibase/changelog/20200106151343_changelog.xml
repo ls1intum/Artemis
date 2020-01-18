@@ -5,7 +5,6 @@
             <column name="mode" defaultValue="INDIVIDUAL" type="varchar(255)" afterColumn="difficulty">
                 <constraints nullable="false"/>
             </column>
-            <column name="team_scope" type="varchar(255)" afterColumn="mode"/>
         </addColumn>
         <addColumn tableName="participation">
             <column name="team_id" type="BIGINT" afterColumn="student_id"/>
@@ -18,43 +17,24 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="exercise_id" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
             <column name="name" type="varchar(255)"/>
             <column name="image" type="varchar(255)"/>
         </createTable>
         <createTable tableName="team_student">
-            <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
-            </column>
             <column name="team_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <column name="student_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="exercise_id" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
-            <column name="created_by" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column defaultValueComputed="CURRENT_TIMESTAMP" name="created_date" type="TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
-            <column name="last_modified_by" type="VARCHAR(50)"/>
-            <column name="last_modified_date" type="TIMESTAMP"/>
         </createTable>
         <createIndex indexName="fk_participation_team_id" tableName="participation">
             <column name="team_id"/>
         </createIndex>
         <addPrimaryKey columnNames="team_id, student_id" tableName="team_student"/>
-        <addUniqueConstraint columnNames="student_id, exercise_id" constraintName="UC_TEAM_STUDENT_STUDENT_ID_EXERCISE_ID_COLS" tableName="team_student"/>
-        <addUniqueConstraint columnNames="student_id, course_id" constraintName="UC_TEAM_STUDENT_STUDENT_ID_COURSE_ID_COLS" tableName="team_student"/>
         <addUniqueConstraint columnNames="team_id, exercise_id, initialization_state" constraintName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation"/>
         <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="team_student" constraintName="fk_team_student_team_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="team"/>
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="team_student" constraintName="fk_team_student_student_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="team_student" constraintName="fk_team_student_course_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="team_student" constraintName="fk_team_student_exercise_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="team" constraintName="fk_team_course_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="team" constraintName="fk_team_exercise_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
         <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="participation" constraintName="fk_participation_team_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="team"/>
     </changeSet>

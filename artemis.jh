@@ -205,29 +205,6 @@ entity Team {
     image String
 }
 
-entity ExerciseTeam {          //extends Team
-
-}
-
-entity CourseTeam {          //extends Team
-
-}
-
-entity TeamStudent {          //membership of student in team
-    created_by String,
-    created_date Instant,
-    last_modified_by String,
-    last_modified_date Instant
-}
-
-entity ExerciseTeamStudent {          //extends TeamStudent
-
-}
-
-entity CourseTeamStudent {          //extends TeamStudent
-
-}
-
 entity Participation (participation) {
     repositoryUrl String,
     buildPlanId String,
@@ -549,12 +526,7 @@ relationship OneToOne {
 
 relationship ManyToOne {
     TutorGroup{tutor} to User,
-    ExerciseTeam{exercise} to Exercise,
-    CourseTeam{course} to Course,
-    ExerciseTeamStudent{team} to ExerciseTeam,
-    CourseTeamStudent{team} to CourseTeam,
-    ExerciseTeamStudent{exercise} to Exercise,
-    CourseTeamStudent{course} to Course,
+    Team{exercise} to Exercise,
     Participation{student} to User,
     Participation{team} to Team,
     LtiOutcomeUrl{user} to User,
