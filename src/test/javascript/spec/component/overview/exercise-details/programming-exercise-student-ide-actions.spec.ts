@@ -70,8 +70,8 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
                 forwardBuildSpy = spy(ideBuildService, 'listenOnBuildOutputAndForwardChanges');
-                cloneSpy = spy(javaBridge, 'clone');
-                submitSpy = spy(javaBridge, 'submit');
+                cloneSpy = spy(javaBridge, 'workOnExercise');
+                submitSpy = spy(javaBridge, 'submitChanges');
                 ideStateStub = stub(javaBridge, 'state');
             });
     });
