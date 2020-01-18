@@ -98,10 +98,6 @@ public abstract class Exercise implements Serializable {
     @Column(name = "mode")
     private ExerciseMode mode;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "team_scope")
-    private TeamScope teamScope;
-
     @Nullable
     @Column(name = "presentation_score_enabled")
     private Boolean presentationScoreEnabled = false;
@@ -314,19 +310,6 @@ public abstract class Exercise implements Serializable {
 
     public void setMode(ExerciseMode mode) {
         this.mode = mode;
-    }
-
-    public TeamScope getTeamScope() {
-        return teamScope;
-    }
-
-    public Exercise teamScope(TeamScope teamScope) {
-        this.teamScope = teamScope;
-        return this;
-    }
-
-    public void setTeamScope(TeamScope teamScope) {
-        this.teamScope = teamScope;
     }
 
     public Set<String> getCategories() {
@@ -751,7 +734,7 @@ public abstract class Exercise implements Serializable {
         return "Exercise{" + "id=" + getId() + ", problemStatement='" + getProblemStatement() + "'" + ", gradingInstructions='" + getGradingInstructions() + "'" + ", title='"
                 + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", dueDate='" + getDueDate() + "'"
                 + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", mode='" + getMode() + "'"
-                + ", teamScope='" + getTeamScope() + "'" + ", categories='" + getCategories() + "'" + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
+                + ", categories='" + getCategories() + "'" + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
     }
 
     public Set<TutorParticipation> getTutorParticipations() {

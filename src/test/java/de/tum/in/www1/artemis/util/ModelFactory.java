@@ -87,7 +87,6 @@ public class ModelFactory {
         exercise.setCourse(course);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
-        exercise.setTeamScope(null);
         exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
@@ -223,7 +222,6 @@ public class ModelFactory {
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());
         toBeImported.setMode(template.getMode());
-        toBeImported.setTeamScope(template.getTeamScope());
         toBeImported.setAssessmentType(template.getAssessmentType());
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());

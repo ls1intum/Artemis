@@ -19,11 +19,6 @@ export const enum ExerciseMode {
     TEAM = 'TEAM',
 }
 
-export const enum TeamScope {
-    EXERCISE = 'EXERCISE',
-    COURSE = 'COURSE',
-}
-
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum ExerciseType {
     PROGRAMMING = 'programming',
@@ -67,7 +62,6 @@ export abstract class Exercise implements BaseEntity {
     public assessmentType: AssessmentType;
     public difficulty: DifficultyLevel | null;
     public mode: ExerciseMode;
-    public teamScope: TeamScope | null;
     public categories: string[];
     public type: ExerciseType;
 

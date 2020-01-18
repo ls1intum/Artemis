@@ -49,11 +49,6 @@
             "fieldValues": "INDIVIDUAL,TEAM"
         },
         {
-            "fieldName": "teamScope",
-            "fieldType": "TeamScope",
-            "fieldValues": "EXERCISE,COURSE"
-        },
-        {
             "fieldName": "categories",
             "fieldType": "String"
         }
