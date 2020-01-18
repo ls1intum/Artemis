@@ -7,7 +7,7 @@ import { CodeEditorBuildLogService } from 'app/code-editor';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../mocks/mock-programming-submission.service';
 import { MockCodeEditorBuildLogService, MockParticipationWebsocketService } from '../mocks';
-import { MockJavaBridgeService } from '../mocks/mock-java-bridge.service';
+import { MockOrionConnectorService } from '../mocks/mock-orion-connector.service';
 import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
 import { Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
@@ -42,7 +42,7 @@ describe('IdeBuildAndTestService', () => {
     beforeEach(() => {
         submissionService = new MockProgrammingSubmissionService();
         participationService = new MockParticipationWebsocketService();
-        javaBridge = new MockJavaBridgeService();
+        javaBridge = new MockOrionConnectorService();
         buildLogService = new MockCodeEditorBuildLogService();
 
         ideBuildAndTestService = new OrionBuildAndTestService(submissionService, participationService, javaBridge, buildLogService);

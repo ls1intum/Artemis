@@ -9,7 +9,7 @@ import { ParticipationWebsocketService } from 'app/entities/participation/partic
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
+import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
@@ -45,7 +45,7 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: OrionConnectorService, useClass: MockJavaBridgeService },
+                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
                 { provide: JhiAlertService, useClass: MockAlertService },
             ],
         })

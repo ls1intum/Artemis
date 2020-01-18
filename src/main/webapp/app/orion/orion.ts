@@ -38,7 +38,7 @@ export interface JavaConnectorFacade {
     login(username: string, password: string): void;
     log(message: string): void;
     editExercise(exercise: ProgrammingExercise): void;
-    workOnExercise(repositoryUrl: string, exercise: ProgrammingExercise): void;
+    importParticipation(repositoryUrl: string, exercise: ProgrammingExercise): void;
     submitChanges(): void;
 
     selectRepository(repository: REPOSITORY): void;

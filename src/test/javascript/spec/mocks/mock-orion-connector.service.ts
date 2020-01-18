@@ -1,10 +1,11 @@
 import { OrionState, ArtemisClientConnector } from 'app/orion/orion';
 import { Observable, of } from 'rxjs';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
-export class MockJavaBridgeService implements ArtemisClientConnector {
+export class MockOrionConnectorService implements ArtemisClientConnector {
     onExerciseOpened = (exerciseId: number) => of();
-    clone = (repository: string, exerciseName: string, exerciseId: number, courseId: number) => of();
-    submit = () => of();
+    importParticipation = (repository: string, exercise: ProgrammingExercise) => of();
+    submitChanges = () => of();
     state = () => Observable.of({} as OrionState);
     onBuildFinished = () => of();
     onBuildStarted = () => of();

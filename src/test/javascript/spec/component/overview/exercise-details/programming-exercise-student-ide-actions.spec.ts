@@ -10,7 +10,7 @@ import { InitializationState, ProgrammingExerciseStudentParticipation, StudentPa
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
+import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
 import { OrionState } from 'app/orion/orion';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -53,7 +53,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
             declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent)],
             providers: [
                 { provide: OrionBuildAndTestService, useClass: MockIdeBuildAndTestService },
-                { provide: OrionConnectorService, useClass: MockJavaBridgeService },
+                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
@@ -70,7 +70,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
                 forwardBuildSpy = spy(ideBuildService, 'listenOnBuildOutputAndForwardChanges');
-                cloneSpy = spy(javaBridge, 'workOnExercise');
+                cloneSpy = spy(javaBridge, 'importParticipation');
                 submitSpy = spy(javaBridge, 'submitChanges');
                 ideStateStub = stub(javaBridge, 'state');
             });
@@ -143,12 +143,11 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
         const progExercise = { id: 42, title: 'Test Title' } as Exercise;
         progExercise.studentParticipations = [participation];
-        const exerciseJson = stringifyCircular(progExercise);
         comp.exercise = progExercise;
         comp.courseId = 456;
 
         comp.importIntoIDE();
-        expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', exerciseJson);
+        expect(cloneSpy).to.have.been.calledOnceWithExactly('testUrl', progExercise);
     });
 
     it('should submit the changes and then forward the build results on submit', () => {
