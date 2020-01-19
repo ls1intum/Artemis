@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,11 @@ public abstract class AuthenticationIntegrationTest {
         final var adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
         final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test

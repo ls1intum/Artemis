@@ -34,17 +34,17 @@ public class JiraLtiAuthenticationIntegationTest extends AuthenticationIntegrati
     @Autowired
     private ApplicationContext applicationContext;
 
-    @Test
-    public void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
-        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
-                .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
-    }
-
     @Override
     @BeforeEach
     public void setUp() {
         super.setUp();
         jiraRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @Test
+    public void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
+                .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
     }
 
     @Override

@@ -126,6 +126,12 @@ public class DatabaseUtilService {
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
+    private LtiUserIdRepository ltiUserIdRepository;
+
+    @Autowired
+    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+
+    @Autowired
     ObjectMapper mapper;
 
     @Autowired
@@ -148,6 +154,7 @@ public class DatabaseUtilService {
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
+        ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
@@ -156,6 +163,7 @@ public class DatabaseUtilService {
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
+        ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();

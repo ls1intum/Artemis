@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGr
 @Profile("jira")
 public class JiraRequestMockProvider {
 
-    @Value("${artemis.jira.url}")
+    @Value("${artemis.user-management.external.url}")
     private URL JIRA_URL;
 
     private final RestTemplate restTemplate;

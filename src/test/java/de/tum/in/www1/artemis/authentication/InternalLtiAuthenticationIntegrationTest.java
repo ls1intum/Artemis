@@ -27,9 +27,9 @@ public class InternalLtiAuthenticationIntegrationTest extends AuthenticationInte
     @Override
     @BeforeEach
     public void setUp() {
+        database.addUsers(1, 0, 0);
         super.setUp();
 
-        database.addUsers(1, 0, 0);
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1").get();
         final var encrPassword = userService.passwordEncoder().encode("0000");
         student.setPassword(encrPassword);
