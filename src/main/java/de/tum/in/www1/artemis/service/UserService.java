@@ -534,7 +534,7 @@ public class UserService {
      * @return existing user with given login string or null
      */
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
-        return userRepository.findOneWithAuthoritiesAndGroupsByLogin(login);
+        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
     }
 
     /**
