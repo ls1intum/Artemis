@@ -69,9 +69,11 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
         }
         else {
             user = optionalUser.get();
-            final var storedPassword = userService.decryptPasswordByLogin(user.getLogin()).get();
-            if (!skipPasswordCheck && !password.equals(storedPassword)) {
-                throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
+            if (!skipPasswordCheck) {
+                final var storedPassword = userService.decryptPasswordByLogin(user.getLogin()).get();
+                if (!password.equals(storedPassword)) {
+                    throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
+                }
             }
         }
 

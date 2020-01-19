@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 
 @ActiveProfiles({ "artemis", "jira" })
-public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationTest {
+public class JiraLtiAuthenticationIntegationTest extends AuthenticationIntegrationTest {
 
     @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
