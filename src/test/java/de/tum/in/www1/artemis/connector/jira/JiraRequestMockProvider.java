@@ -54,7 +54,8 @@ public class JiraRequestMockProvider {
         mockServer.expect(ExpectedCount.twice(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockAddUserToGroup(Set<String> groups) {
+    public void mockAddUserToGroup(Set<String> groups) throws URISyntaxException {
+        mockIsGroupAvailable(groups);
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")");
 
