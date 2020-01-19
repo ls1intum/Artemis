@@ -174,13 +174,6 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     }
 
     /**
-     * Flattens the given given set of group maps into a list of strings.
-     */
-    private Set<String> getGroupStrings(List<Map> groups) {
-        return groups.stream().parallel().map(group -> (String) group.get("name")).collect(Collectors.toSet());
-    }
-
-    /**
      * Builds the authorities list from the groups: group contains configured instructor group name -> instructor role otherwise -> student role
      */
     private Set<Authority> buildAuthoritiesFromGroups(Set<String> groups) {
