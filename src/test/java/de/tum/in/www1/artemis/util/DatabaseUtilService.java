@@ -132,6 +132,9 @@ public class DatabaseUtilService {
     private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
+    private AuthorityRepository authorityRepository;
+
+    @Autowired
     ObjectMapper mapper;
 
     @Autowired
@@ -165,6 +168,7 @@ public class DatabaseUtilService {
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
+        authorityRepository.deleteAll();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
     }
