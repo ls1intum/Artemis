@@ -226,6 +226,10 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Override
     public void addUserToGroup(String username, String group) throws ArtemisAuthenticationException {
         log.info("Add user " + username + " to group " + group + " in JIRA");
+        if (!isGroupAvailable(group)) {
+            throw new IllegalArgumentException("Jira does not have a group: " + group);
+        }
+
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
         HttpEntity<?> entity = new HttpEntity<>(body);
