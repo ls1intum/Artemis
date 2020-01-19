@@ -1,19 +1,23 @@
 package de.tum.in.www1.artemis.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 
 @ActiveProfiles({ "artemis", "jira" })
@@ -31,11 +35,14 @@ public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationT
     @Autowired
     private JiraRequestMockProvider jiraRequestMockProvider;
 
-    // @Test
-    // public void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
-    // assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
-    // .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
-    // }
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    public void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
+                .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
+    }
 
     @Override
     @BeforeEach

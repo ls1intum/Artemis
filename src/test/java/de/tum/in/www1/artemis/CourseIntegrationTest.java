@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -45,6 +46,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     CustomAuditEventRepository auditEventRepo;
+
+    @Autowired
+    private JiraRequestMockProvider jiraRequestMockProvider;
 
     @Autowired
     UserRepository userRepo;
@@ -291,6 +295,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "ab123cd")
     public void testRegisterForCourse() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
         User student = ModelFactory.generateActivatedUser("ab123cd");
         userRepo.save(student);
 
@@ -302,6 +307,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course1.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course2.getStudentGroupName()));
 
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
