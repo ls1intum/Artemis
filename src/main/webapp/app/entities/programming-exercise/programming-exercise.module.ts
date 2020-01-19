@@ -30,6 +30,7 @@ import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exe
 import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exercise/programming-exercise-detail.component';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { programmingExercisePopupRoute, programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
+import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
@@ -57,6 +58,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
         IntellijModule,
+        ProgrammingExerciseUtilsModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
