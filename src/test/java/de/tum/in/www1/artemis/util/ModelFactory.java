@@ -50,6 +50,8 @@ public class ModelFactory {
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setPackageName("de.test");
         return programmingExercise;
     }
 
@@ -264,5 +266,18 @@ public class ModelFactory {
         result.setRated(rated);
         result.setScore(score);
         return result;
+    }
+
+    public static TextBlock generateTextBlock(int startIndex, int endIndex, String text) {
+        final TextBlock textBlock = new TextBlock();
+        textBlock.setStartIndex(startIndex);
+        textBlock.setEndIndex(endIndex);
+        textBlock.setText(text);
+        textBlock.computeId();
+        return textBlock;
+    }
+
+    public static TextBlock generateTextBlock(int startIndex, int endIndex) {
+        return generateTextBlock(startIndex, endIndex, "");
     }
 }

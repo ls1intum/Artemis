@@ -1,6 +1,7 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { catchError, map, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';

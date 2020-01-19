@@ -9,7 +9,8 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExercisePopupService } from './programming-exercise-popup.service';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
-import { Course, CourseService } from '../course';
+import { Course } from '../course';
+import { CourseService } from 'app/entities/course/course.service';
 
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';

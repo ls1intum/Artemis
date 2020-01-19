@@ -326,16 +326,6 @@ public class QuizExerciseService {
     }
 
     /**
-     * Check if the current user is allowed to see the given exercise
-     * 
-     * @param quizExercise the exercise to check permissions for
-     * @return true, if the user has the required permissions, false otherwise
-     */
-    public boolean userIsAllowedToSeeExercise(QuizExercise quizExercise) {
-        return authCheckService.isAllowedToSeeExercise(quizExercise, null);
-    }
-
-    /**
      * get the view for students in the given quiz
      * 
      * @param quizExercise the quiz to get the view for

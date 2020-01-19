@@ -13,17 +13,16 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class TextAssessmentService extends AssessmentService {
 
-    private final FeedbackRepository feedbackRepository;
-
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final UserService userService;
 
-    public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, FeedbackRepository feedbackRepository,
-            ComplaintRepository complaintRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
-        super(complaintResponseService, complaintRepository, resultRepository, studentParticipationRepository, resultService, authCheckService);
-        this.feedbackRepository = feedbackRepository;
+    public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
+            FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            SubmissionRepository submissionRepository) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService,
+                submissionRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
     }
@@ -42,7 +41,6 @@ public class TextAssessmentService extends AssessmentService {
     public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) throws BadRequestAlertException {
         Result result = saveAssessment(resultId, textAssessment, textExercise);
         Double calculatedScore = calculateTotalScore(textAssessment);
-
         return submitResult(result, textExercise, calculatedScore);
     }
 
@@ -102,17 +100,5 @@ public class TextAssessmentService extends AssessmentService {
 
     public List<Feedback> getAssessmentsForResult(Result result) {
         return this.feedbackRepository.findByResult(result);
-    }
-
-    /**
-     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
-     *
-     * @param assessments the List of Feedback
-     * @return the total score
-     */
-    // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of feedback credits) apart from rounding, but maybe also
-    // good for text exercises?
-    private Double calculateTotalScore(List<Feedback> assessments) {
-        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }

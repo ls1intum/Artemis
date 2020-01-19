@@ -38,12 +38,13 @@ import {
 import { Result, ResultService } from 'app/entities/result';
 import {
     ParticipationService,
-    ParticipationWebsocketService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockRouter } from '../../mocks/mock-router.service';
@@ -52,6 +53,9 @@ import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-pr
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { CourseExerciseService } from 'app/entities/course/course.service';
+import { MockCourseExerciseService } from '../../mocks/mock-course-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -109,6 +113,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },

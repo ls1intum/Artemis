@@ -5,6 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { ModelingSubmission } from './modeling-submission.model';
 import { createRequestOption } from 'app/shared';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
@@ -26,7 +27,8 @@ export class ModelingSubmissionService {
     update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
         return this.http
-            .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
+            .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, stringifyCircular(copy), {
+                headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
