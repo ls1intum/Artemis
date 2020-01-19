@@ -208,7 +208,8 @@ public class BitbucketService extends AbstractVersionControlService {
                         return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
                     }
                     else {
-                        log.warn("Invalid response code from Bitbucket while trying to fork repository {}: {}", sourceRepositoryName, response.getStatusCode());
+                        log.warn("Invalid response code from Bitbucket while trying to fork repository {}: {}. Body from Bitbucket: {}", sourceRepositoryName,
+                                response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()));
                     }
                 }
                 catch (HttpServerErrorException.InternalServerError e) {
