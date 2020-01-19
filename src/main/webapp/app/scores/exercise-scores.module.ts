@@ -14,6 +14,7 @@ import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/p
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/components/data-table/data-table.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 
 const ENTITY_STATES = [
     {
@@ -40,6 +41,7 @@ const ENTITY_STATES = [
         ArtemisDataTableModule,
         ArtemisProgrammingAssessmentModule,
         FeatureToggleModule,
+        ProgrammingExerciseUtilsModule,
     ],
     declarations: [ExerciseScoresComponent],
     entryComponents: [ExerciseScoresComponent],
