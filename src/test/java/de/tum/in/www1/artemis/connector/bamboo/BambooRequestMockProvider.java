@@ -111,13 +111,16 @@ public class BambooRequestMockProvider {
 
     public void mockGiveProjectPermissions(ProgrammingExercise exercise) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getInstructorGroupName());
-        final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getTeachingAssistantGroupName());
 
+        final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getInstructorGroupName());
         mockServer.expect(ExpectedCount.once(), requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
                 .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
-        mockServer.expect(ExpectedCount.once(), requestTo(tutorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("READ"))))
-                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        if (exercise.getCourse().getTeachingAssistantGroupName() != null) {
+            final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourse().getTeachingAssistantGroupName());
+            mockServer.expect(ExpectedCount.once(), requestTo(tutorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("READ"))))
+                    .andRespond(withStatus(HttpStatus.NO_CONTENT));
+        }
     }
 
     private URI buildGivePermissionsURIFor(String projectKey, String groupName) throws URISyntaxException {

@@ -12,7 +12,7 @@ import { TextSubmission, TextSubmissionService } from 'app/entities/text-submiss
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
-import { Result } from 'app/entities/result';
+import { Result, ResultService } from 'app/entities/result';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
@@ -67,6 +67,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private router: Router,
         private location: Location,
         private artemisMarkdown: ArtemisMarkdown,
+        private resultService: ResultService,
         private $window: WindowRef,
     ) {}
 
@@ -191,7 +192,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 return;
             }
 
-            this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
+            this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id).subscribe(result => {
                 this.result = result;
                 this.assessments = this.result.feedbacks || [];
                 this.areNewAssessments = this.assessments.length <= 0;
@@ -200,7 +201,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         });
     }
 
-    upsertExampleTextSubmission() {
+    createUpdateExampleTextSubmission() {
+        this.textSubmission.exampleSubmission = true;
         if (this.isNewSubmission) {
             this.createNewExampleTextSubmission();
         } else {
@@ -239,69 +241,33 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     private createNewExampleTextSubmission() {
-        const newSubmission = this.textSubmission;
-        newSubmission.exampleSubmission = true;
+        const newExampleSubmission = new ExampleSubmission();
+        newExampleSubmission.submission = this.textSubmission;
+        newExampleSubmission.exercise = this.exercise;
 
-        this.textSubmissionService.create(newSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body!;
+        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+            this.exampleSubmission = exampleSubmissionResponse.body!;
+            this.exampleSubmission.exercise = this.exercise;
+            this.exampleSubmissionId = this.exampleSubmission.id;
+            this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+            this.isNewSubmission = false;
 
-            const newExampleSubmission = this.exampleSubmission;
-            newExampleSubmission.submission = this.textSubmission;
-            newExampleSubmission.exercise = this.exercise;
+            // Update the url with the new id, without reloading the page, to make the history consistent
+            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
+            this.location.go(newUrl);
 
-            let bothCompleted = false;
-
-            this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
-                this.result = result;
-                this.assessments = this.result.feedbacks || [];
-                this.checkScoreBoundaries();
-
-                if (bothCompleted) {
-                    this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-                }
-                bothCompleted = true;
-            }, this.onError);
-
-            this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.exampleSubmissionId = this.exampleSubmission.id;
-                this.isNewSubmission = false;
-
-                // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
-                this.location.go(newUrl);
-
-                if (bothCompleted) {
-                    this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
-                }
-                bothCompleted = true;
+            this.resultService.createNewExampleResult(this.textSubmission.id).subscribe((response: HttpResponse<Result>) => {
+                this.result = response.body!;
+                this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');
             }, this.onError);
         }, this.onError);
     }
 
     private updateExampleTextSubmission() {
-        this.textSubmission.exampleSubmission = true;
-
-        let hasOneFinished = false;
-
-        this.textSubmissionService.update(this.textSubmission, this.exerciseId).subscribe((submissionResponse: HttpResponse<TextSubmission>) => {
-            this.textSubmission = submissionResponse.body!;
-
-            if (hasOneFinished) {
-                this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-            } else {
-                hasOneFinished = true;
-            }
-        }, this.onError);
-
         this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
 
-            if (hasOneFinished) {
-                this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
-            } else {
-                hasOneFinished = true;
-            }
+            this.jhiAlertService.success('artemisApp.exampleSubmission.saveSuccessful');
         }, this.onError);
     }
 

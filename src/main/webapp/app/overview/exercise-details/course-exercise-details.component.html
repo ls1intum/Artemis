@@ -8,13 +8,13 @@
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
-    <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
+    <div class="tab-bar tab-bar-exercise-details pl-2 pr-2 mb-2 justify-content-between">
         <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult !== null">
         </jhi-exercise-details-student-actions>
 
         <!-- TODO: this is quite some duplicated code from course-exercise-row.component.html that we should unify in one component -->
-        <div class="col-auto" [ngSwitch]="exercise.participationStatus">
+        <div class="submission-result-status col d-flex justify-content-end" [ngSwitch]="exercise.participationStatus">
             <div class="d-none d-sm-inline">
                 <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
                 <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
@@ -33,20 +33,14 @@
                 <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
                 <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
             </div>
-            <span *ngSwitchCase="'initialized'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
-            <span *ngSwitchCase="'inactive'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
-            <span *ngSwitchCase="'quiz-finished'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
-            <span *ngSwitchCase="'exercise-submitted'">
-                <jhi-updating-result class="mr-2" [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
-            </span>
+            <div class="my-2">
+                <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus)">
+                    <jhi-updating-result [exercise]="exercise" [participation]="studentParticipation" [showGradedBadge]="true"></jhi-updating-result>
+                </span>
+            </div>
             <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
                 <jhi-programming-exercise-student-trigger-build-button
+                    class="ml-2"
                     [exercise]="exercise"
                     [participation]="exercise.studentParticipations[0]"
                     [triggerLastGraded]="true"
@@ -54,7 +48,7 @@
             </ng-container>
         </div>
 
-        <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
+        <div class="instructor-actions col-auto d-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
                 <div class="btn btn-outline-primary" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/dashboard">
@@ -74,6 +68,18 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
+                <button
+                    class="mb-2"
+                    jhi-exercise-action-button
+                    jhiBuildPlanButton
+                    buttonIcon="external-link-alt"
+                    [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | translate"
+                    [buttonLoading]="exercise.loading"
+                    [hideLabelMobile]="false"
+                    [projectKey]="projectKey()"
+                    [buildPlanId]="buildPlanId(exercise.studentParticipations[0])"
+                    *ngIf="publishBuildPlanUrl() && buildPlanActive()"
+                ></button>
                 <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.studentParticipations && exercise.studentParticipations[0]">
                 </jhi-programming-exercise-instructions>
             </div>

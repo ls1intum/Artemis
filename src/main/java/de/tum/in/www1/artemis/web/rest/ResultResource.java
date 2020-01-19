@@ -469,4 +469,20 @@ public class ResultResource {
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
         return ResponseUtil.wrapOrNotFound(result);
     }
+
+    /**
+     * Creates a new example result for the provided example submission ID.
+     *
+     * @param submissionId The submission ID for which an example result should get created
+     * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
+     * @return The newly created result
+     */
+    @PostMapping("/submissions/{submissionId}/example-result")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createExampleResult(@PathVariable long submissionId,
+            @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
+        log.debug("REST request to create a new example result for submission: {}", submissionId);
+        final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
 }
