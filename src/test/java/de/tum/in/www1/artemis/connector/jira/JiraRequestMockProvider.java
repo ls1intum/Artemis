@@ -7,10 +7,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -28,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
+import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupsDTO;
 
 @Component
@@ -84,7 +82,15 @@ public class JiraRequestMockProvider {
         final var mapper = new ObjectMapper();
         final var response = new JiraUserDTO();
         final var groupsResponse = new JiraUserGroupsDTO();
-        groupsResponse.setItems(groups);
+        final var groupDTOs = new HashSet<JiraUserGroupDTO>();
+        for (final var group : groups) {
+            final var groupDTO = new JiraUserGroupDTO();
+            groupDTO.setName(group);
+            groupDTO.setSelf(new URL("http://localhost:8080/" + group));
+            groupDTOs.add(groupDTO);
+        }
+        groupsResponse.setSize(groups.size());
+        groupsResponse.setItems(groupDTOs);
         response.setName(username);
         response.setDisplayName(firstName);
         response.setEmailAddress(email);

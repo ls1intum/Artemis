@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +16,11 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
+import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -48,8 +49,11 @@ public abstract class AuthenticationIntegrationTest {
     @Autowired
     protected LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
+    @Autowired
+    protected AuthorityRepository authorityRepository;
+
     @SpyBean
-    private LtiService ltiService;
+    protected LtiService ltiService;
 
     protected ProgrammingExercise programmingExercise;
 
@@ -63,6 +67,12 @@ public abstract class AuthenticationIntegrationTest {
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         setupDefaultLtiLaunchRequest();
         doReturn(true).when(ltiService).verifyRequest(any());
+
+        final var userAuthority = new Authority(AuthoritiesConstants.USER);
+        final var instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
+        final var adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
+        final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
     }
 
     @Test

@@ -11,26 +11,22 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 
 @ActiveProfiles({ "artemis", "jira" })
 public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationTest {
+
+    @Value("${artemis.user-management.external.admin-group-name}")
+    private String ADMIN_GROUP_NAME;
 
     @Value("${artemis.user-management.external.user}")
     private String JIRA_USER;
 
     @Value("${artemis.user-management.external.password}")
     private String JIRA_PASSWORD;
-
-    @Autowired
-    private AuthorityRepository authorityRepository;
 
     @Autowired
     private JiraRequestMockProvider jiraRequestMockProvider;
@@ -49,9 +45,6 @@ public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationT
     public void setUp() {
         super.setUp();
         jiraRequestMockProvider.enableMockingOfRequests();
-
-        final var userAuthority = new Authority(AuthoritiesConstants.USER);
-        authorityRepository.save(userAuthority);
     }
 
     @Override
@@ -60,17 +53,17 @@ public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationT
         final var username = "mrrobot";
         final var email = ltiLaunchRequest.getLis_person_contact_email_primary();
         final var firstName = "Elliot";
-        final var groups = Set.of("allsec", "security");
+        final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
         jiraRequestMockProvider.mockGetUsernameForEmail(email, username);
         jiraRequestMockProvider.mockGetOrCreateUser(JIRA_USER, JIRA_PASSWORD, username, email, firstName, groups);
         jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
         super.launchLtiRequest_authViaEmail_success();
 
-        final var user = userRepository.findAllWithGroups(Pageable.unpaged()).iterator().next();
-        assertThat(user.getLogin()).isEqualTo(username);
+        final var user = userRepository.findOneWithAuthoritiesAndGroupsByLogin(username).get();
         assertThat(user.getEmail()).isEqualTo(email);
         assertThat(user.getFirstName()).isEqualTo(firstName);
         assertThat(user.getGroups()).containsAll(groups);
         assertThat(user.getGroups()).contains(course.getStudentGroupName());
+        assertThat(user.getAuthorities()).containsAll(authorityRepository.findAll());
     }
 }

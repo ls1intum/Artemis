@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jira.dto;
 
+import java.net.URL;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -50,14 +51,48 @@ public class JiraUserDTO {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class JiraUserGroupsDTO {
 
-        private Set<String> items;
+        private int size;
 
-        public Set<String> getItems() {
+        private Set<JiraUserGroupDTO> items;
+
+        public int getSize() {
+            return size;
+        }
+
+        public void setSize(int size) {
+            this.size = size;
+        }
+
+        public Set<JiraUserGroupDTO> getItems() {
             return items;
         }
 
-        public void setItems(Set<String> items) {
+        public void setItems(Set<JiraUserGroupDTO> items) {
             this.items = items;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static final class JiraUserGroupDTO {
+
+        private String name;
+
+        private URL self;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public URL getSelf() {
+            return self;
+        }
+
+        public void setSelf(URL self) {
+            this.self = self;
         }
     }
 }

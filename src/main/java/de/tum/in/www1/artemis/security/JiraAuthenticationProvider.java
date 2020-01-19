@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
+import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -147,7 +148,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             final var login = content.getName();
             final var emailAddress = content.getEmailAddress();
             final var user = userRepository.findOneByLogin(login).orElseGet(() -> userService.createUser(login, password, content.getDisplayName(), "", emailAddress, null, "en"));
-            final var groupStrings = content.getGroups().getItems();
+            final var groupStrings = content.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
 
             user.setEmail(emailAddress);
             user.setGroups(groupStrings);
