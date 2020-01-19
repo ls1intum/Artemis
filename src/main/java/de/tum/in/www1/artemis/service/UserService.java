@@ -431,13 +431,20 @@ public class UserService {
         user = userRepository.save(user);
         this.clearUserCaches(user);
 
-        forwardUserUpdates(user, oldGroups);
+        updateUserInConnectorsAndAuthProvider(user, oldGroups);
 
         log.debug("Changed Information for User: {}", user);
         return user;
     }
 
-    private void forwardUserUpdates(User user, Set<String> oldGroups) {
+    /**
+     * Updates the user in all connected systems (like GitLab) if necessary. Also updates the user in the used authentication
+     * provider (like {@link de.tum.in.www1.artemis.security.JiraAuthenticationProvider}.
+     *
+     * @param user The updated user in Artemis
+     * @param oldGroups The old groups of the user before the update
+     */
+    private void updateUserInConnectorsAndAuthProvider(User user, Set<String> oldGroups) {
         final var updatedGroups = user.getGroups();
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
