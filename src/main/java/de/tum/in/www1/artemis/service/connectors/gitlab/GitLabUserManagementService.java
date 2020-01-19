@@ -128,23 +128,31 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
 
         final var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
+        // All users that we already updated
         final var processedUsers = new HashSet<User>();
 
+        // Update the old instructors of the course
         final var oldInstructors = userRepository.findAllInGroup(oldInstructorGroup);
+        // doUpgrade=false, because these users already are instructors.
         updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
         processedUsers.addAll(oldInstructors);
 
+        // Update the old teaching assistant of the group
         final var oldTeachingAssistants = userService.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
+        // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
         updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
+        // Find all NEW instructors, that did not belong to the old TAs or instructors
         final var remainingInstructors = userService.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
         remainingInstructors.forEach(user -> {
             final var userId = getUserId(user.getLogin());
             addUserToGroups(userId, exercises, MAINTAINER);
         });
         processedUsers.addAll(remainingInstructors);
+
+        // Find all NEW TAs that did not belong to the old TAs or instructors
         final var remainingTeachingAssistants = userService.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         remainingTeachingAssistants.forEach(user -> {
             final var userId = getUserId(user.getLogin());
@@ -176,25 +184,41 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             boolean doUpgrade) {
         for (final var user : users) {
             final var userId = getUserId(user.getLogin());
+            /*
+             * Contains the access level of the other group, to which the user currently does NOT belong, IF the user could be in that group E.g. user1(groups=[foo,bar]),
+             * oldInstructorGroup=foo, oldTAGroup=bar; newInstructorGroup=instr newTAGroup=bar So, while the instructor group changed, the TA group stayed the same. user1 was part
+             * of the old instructor group, but isn't any more. BUT he could be a TA according to the new groups, so the alternative access level would be the level of the TA
+             * group, i.e. GUEST
+             */
             final Optional<AccessLevel> newAccessLevel;
             if (user.getGroups().contains(alternativeGroupName)) {
                 newAccessLevel = Optional.of(alternativeAccessLevel);
             }
             else {
+                // No alternative access level, if the user does not belong to ANY of the new groups (i.e. TA or instructor)
                 newAccessLevel = Optional.empty();
             }
-            if (user.getGroups().contains(newGroupName) && (!doUpgrade || newAccessLevel.isEmpty())) {
-                // One of the user's groups is still valid for the current level AND an upgrade is not possible or the
-                // other group is just below the current one, e.g. if the other group is TA and the current group is instructor
+            // The user still is in the TA or instructor group
+            final var userStillInRelevantGroup = user.getGroups().contains(newGroupName);
+            // We cannot upgrade the user (i.e. from TA to instructor) if the alternative group would be below the current
+            // one (i.e. instructor down to TA), or if the user is not eligible for the new access level:
+            // TA to instructor, BUT the user does not belong to the new instructor group.
+            final var cannotUpgrade = !doUpgrade || newAccessLevel.isEmpty();
+            if (userStillInRelevantGroup && cannotUpgrade) {
                 continue;
             }
 
             exercises.forEach(exercise -> {
                 try {
+                    /*
+                     * Update the user, if 1. The user can be upgraded: TA -> instructor 2. We have to downgrade the user (instructor -> TA), if he only belongs to the new TA
+                     * group, but not to the instructor group any more
+                     */
                     if (newAccessLevel.isPresent()) {
                         gitlab.getGroupApi().updateMember(exercise.getProjectKey(), userId, newAccessLevel.get());
                     }
                     else {
+                        // Remove the user from the all groups, if he no longer is a TA, or instructor
                         gitlab.getGroupApi().removeMember(exercise.getProjectKey(), userId);
                     }
                 }
