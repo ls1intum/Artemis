@@ -11,13 +11,16 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
+import de.tum.in.www1.artemis.security.JiraAuthenticationProvider;
+import de.tum.in.www1.artemis.service.UserService;
 
 @ActiveProfiles({ "artemis", "jira" })
-public class JiraLtiAuthenticationIntegationTest extends AuthenticationIntegrationTest {
+public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationTest {
 
     @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
@@ -33,6 +36,12 @@ public class JiraLtiAuthenticationIntegationTest extends AuthenticationIntegrati
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private JiraAuthenticationProvider jiraAuthenticationProvider;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     @BeforeEach
@@ -56,6 +65,7 @@ public class JiraLtiAuthenticationIntegationTest extends AuthenticationIntegrati
         final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
         jiraRequestMockProvider.mockGetUsernameForEmail(email, username);
         jiraRequestMockProvider.mockGetOrCreateUser(JIRA_USER, JIRA_PASSWORD, username, email, firstName, groups);
+        jiraRequestMockProvider.mockGetOrCreateUser(username, "", username, email, firstName, groups);
         jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
         super.launchLtiRequest_authViaEmail_success();
 
@@ -65,5 +75,12 @@ public class JiraLtiAuthenticationIntegationTest extends AuthenticationIntegrati
         assertThat(user.getGroups()).containsAll(groups);
         assertThat(user.getGroups()).contains(course.getStudentGroupName());
         assertThat(user.getAuthorities()).containsAll(authorityRepository.findAll());
+
+        final var password = userService.encryptor().decrypt(user.getPassword());
+        final var auth = new TestingAuthenticationToken(username, password);
+        final var responseAuth = jiraAuthenticationProvider.authenticate(auth);
+
+        assertThat(responseAuth.getPrincipal()).isEqualTo(username);
+        assertThat(responseAuth.getCredentials()).isEqualTo(user.getPassword());
     }
 }

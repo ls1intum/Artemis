@@ -124,7 +124,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             }
             else {
                 final var entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
-                authenticationResponse = new RestTemplate().exchange(path, HttpMethod.GET, entity, JiraUserDTO.class);
+                authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, entity, JiraUserDTO.class);
             }
         }
         catch (HttpStatusCodeException e) {

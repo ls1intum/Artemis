@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -24,7 +25,9 @@ public class JiraAuthorizationInterceptor implements ClientHttpRequestIntercepto
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, ClientHttpRequestExecution execution) throws IOException {
-        request.getHeaders().setBasicAuth(JIRA_USER, JIRA_PASSWORD);
+        if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+            request.getHeaders().setBasicAuth(JIRA_USER, JIRA_PASSWORD);
+        }
 
         return execution.execute(request, body);
     }
