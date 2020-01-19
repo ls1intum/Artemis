@@ -90,7 +90,7 @@ public class TutorLeaderboardService {
 
     @NotNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(List<User> tutors, List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments,
-            List<TutorLeaderboardComplaintsView> tutorLeaderboardAcceptedComplaints, List<TutorLeaderboardMoreFeedbackRequestsView> tutorLeaderboardNotAnsweredMoreFeedbackRequests,
+            List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints, List<TutorLeaderboardMoreFeedbackRequestsView> tutorLeaderboardNotAnsweredMoreFeedbackRequests,
             List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses,
             List<TutorLeaderboardAnsweredMoreFeedbackRequestsView> tutorLeaderboardAnsweredMoreFeedbackRequests) {
 
@@ -118,16 +118,16 @@ public class TutorLeaderboardService {
                 }
             }
 
-            for (TutorLeaderboardComplaintsView acceptedComplaintsView : tutorLeaderboardAcceptedComplaints) {
-                if (tutor.getId().equals(acceptedComplaintsView.getUserId())) {
-                    numberOfTutorComplaints = acceptedComplaintsView.getAllComplaints();
-                    numberOfAcceptedComplaints += acceptedComplaintsView.getAcceptedComplaints();
+            for (TutorLeaderboardComplaintsView complaintsView : tutorLeaderboardComplaints) {
+                if (tutor.getId().equals(complaintsView.getUserId())) {
+                    numberOfTutorComplaints = complaintsView.getAllComplaints();
+                    numberOfAcceptedComplaints += complaintsView.getAcceptedComplaints();
                     // accepted complaints count 2x negatively
-                    if (acceptedComplaintsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the accepted complaints
-                        points -= 2 * acceptedComplaintsView.getPoints();
+                    if (complaintsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the accepted complaints
+                        points -= 2 * complaintsView.getPoints();
                     }
                     else {
-                        points -= 2 * acceptedComplaintsView.getAcceptedComplaints();
+                        points -= 2 * complaintsView.getAcceptedComplaints();
                     }
                 }
             }
