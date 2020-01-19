@@ -459,7 +459,9 @@ public class UserService {
      * @param login user login string
      */
     public void deleteUser(String login) {
+        // Delete the user in the connected VCS if necessary (e.g. for GitLab)
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
+        // Delete the user in the local Artemis database
         userRepository.findOneByLogin(login).ifPresent(user -> {
             userRepository.delete(user);
             this.clearUserCaches(user);
