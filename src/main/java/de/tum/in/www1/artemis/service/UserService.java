@@ -19,6 +19,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -280,17 +281,52 @@ public class UserService {
      * @param langKey   user language
      * @return newly created user
      */
-    public User createUser(String login, String password, String firstName, String lastName, String email, String imageUrl, String langKey) {
+    public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, String imageUrl, String langKey) {
+        return createUser(login, password, new HashSet<>(), firstName, lastName, email, imageUrl, langKey);
+    }
 
+    /**
+     * Create user
+     * @param login     user login string
+     * @param groups The groups the user should belong to
+     * @param firstName first name of user
+     * @param lastName  last name of the user
+     * @param email     email of the user
+     * @param imageUrl  user image url
+     * @param langKey   user language
+     * @return newly created user
+     */
+    public User createUser(String login, Set<String> groups, String firstName, String lastName, String email, String imageUrl, String langKey) {
+        return createUser(login, null, groups, firstName, lastName, email, imageUrl, langKey);
+    }
+
+    /**
+     * Create user
+     * @param login     user login string
+     * @param password  user password
+     * @param groups The groups the user should belong to
+     * @param firstName first name of user
+     * @param lastName  last name of the user
+     * @param email     email of the user
+     * @param imageUrl  user image url
+     * @param langKey   user language
+     * @return newly created user
+     */
+    public User createUser(String login, @Nullable String password, Set<String> groups, String firstName, String lastName, String email, String imageUrl, String langKey) {
         User newUser = new User();
-        Authority authority = authorityRepository.findById(AuthoritiesConstants.USER).get();
-        Set<Authority> authorities = new HashSet<>();
+
+        // Set random password for null passwords
+        if (password == null) {
+            password = RandomUtil.generatePassword();
+        }
         String encryptedPassword = passwordEncoder().encode(password);
-        newUser.setLogin(login);
         // new user gets initially a generated password
         newUser.setPassword(encryptedPassword);
+
+        newUser.setLogin(login);
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
+        newUser.setGroups(groups);
         newUser.setEmail(email);
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
@@ -298,10 +334,12 @@ public class UserService {
         newUser.setActivated(false);
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
-        authorities.add(authority);
-        newUser.setAuthorities(authorities);
+
+        final var authority = authorityRepository.findById(AuthoritiesConstants.USER).get();
+        newUser.setAuthorities(Set.of(authority));
+
         userRepository.save(newUser);
-        log.debug("Created Information for User: {}", newUser);
+        log.debug("Created user: {}", newUser);
         return newUser;
     }
 

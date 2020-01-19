@@ -21,7 +21,7 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
      * @param skipPasswordCheck whether the password against the by the user management system provided user should be skipped
      * @return The Artemis user identified by the provided credentials
      */
-    User getOrCreateUser(Authentication authentication, @Nullable String firstName, @Nullable String lastName, @Nullable String email, Boolean skipPasswordCheck);
+    User getOrCreateUser(Authentication authentication, @Nullable String firstName, @Nullable String lastName, @Nullable String email, boolean skipPasswordCheck);
 
     /**
      * Adds a user to the specified group

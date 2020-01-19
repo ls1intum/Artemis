@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,6 +42,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -103,25 +103,25 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     }
 
     @Override
-    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, Boolean skipPasswordCheck) {
+    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
         return getOrCreateUser(authentication, skipPasswordCheck);
     }
 
+    // TODO this method is way too long, split it up
     @SuppressWarnings("unchecked")
     private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
-        ResponseEntity<Map> authenticationResponse = null;
+        ResponseEntity<JiraUserDTO> authenticationResponse = null;
         try {
             final var path = JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups";
-            final HttpEntity<Principal> entity;
             if (skipPasswordCheck) {
-                authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, Map.class);
+                authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
             }
             else {
-                entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
-                authenticationResponse = new RestTemplate().exchange(path, HttpMethod.GET, entity, Map.class);
+                final var entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
+                authenticationResponse = new RestTemplate().exchange(path, HttpMethod.GET, entity, JiraUserDTO.class);
             }
         }
         catch (HttpStatusCodeException e) {
@@ -142,14 +142,14 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             }
         }
 
-        if (authenticationResponse != null) {
-            Map content = authenticationResponse.getBody();
-            final String login = (String) content.get("name");
-            final String emailAddress = (String) content.get("emailAddress");
-            User user = userRepository.findOneByLogin(login).orElseGet(() -> userService.createUser(login, "", (String) content.get("displayName"), "", emailAddress, null, "en"));
-            user.setEmail(emailAddress);
+        if (authenticationResponse != null && authenticationResponse.getBody() != null) {
+            final var content = authenticationResponse.getBody();
+            final var login = content.getName();
+            final var emailAddress = content.getEmailAddress();
+            final var user = userRepository.findOneByLogin(login).orElseGet(() -> userService.createUser(login, password, content.getDisplayName(), "", emailAddress, null, "en"));
+            final var groupStrings = content.getGroups().getItems();
 
-            final Set<String> groupStrings = getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"));
+            user.setEmail(emailAddress);
             user.setGroups(groupStrings);
             user.setAuthorities(buildAuthoritiesFromGroups(groupStrings));
 

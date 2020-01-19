@@ -60,7 +60,7 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
     }
 
     @Override
-    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, Boolean skipPasswordCheck) {
+    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         final var password = authentication.getCredentials().toString();
         final var optionalUser = userService.getUserByLogin(authentication.getName().toLowerCase());
         final User user;
