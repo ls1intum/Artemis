@@ -117,6 +117,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         ResponseEntity<JiraUserDTO> authenticationResponse = null;
         try {
             final var path = JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups";
+            // If we want to skip the password check, we can just use the ADMIN auth, which is already injected in the default restTemplate
+            // Otherwise, we create our own authorization and use the credentials of the user.
             if (skipPasswordCheck) {
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
             }
