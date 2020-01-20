@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,11 +36,9 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
-            StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
@@ -49,7 +46,6 @@ public class ModelingSubmissionService extends SubmissionService {
         this.compassService = compassService;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -62,7 +58,7 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();

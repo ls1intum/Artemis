@@ -368,7 +368,6 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise
      */
-    @Transactional
     public void initParticipations(ProgrammingExercise programmingExercise) {
 
         Participation solutionParticipation = programmingExercise.getSolutionParticipation();
@@ -477,7 +476,6 @@ public class ProgrammingExerciseService {
      * @param repository The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
-    @Transactional
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
@@ -512,7 +510,6 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      * @param user the user who has initiated the generation of the programming exercise
      */
-    @Transactional
     public void commitAndPushRepository(Repository repository, String templateName, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, templateName + "-Template pushed by Artemis", user);
@@ -525,7 +522,6 @@ public class ProgrammingExerciseService {
      * @param participation The template participation
      * @return The ProgrammingExercise where the given Participation is the template Participation
      */
-    @Transactional
     public ProgrammingExercise getExercise(TemplateProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
     }
@@ -536,7 +532,6 @@ public class ProgrammingExerciseService {
      * @param participation The solution participation
      * @return The ProgrammingExercise where the given Participation is the solution Participation
      */
-    @Transactional
     public ProgrammingExercise getExercise(SolutionProgrammingExerciseParticipation participation) {
         return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
@@ -547,7 +542,6 @@ public class ProgrammingExerciseService {
      * @param participation The solution or template participation
      * @return The ProgrammingExercise where the given Participation is the solution or template Participation
      */
-    @Transactional
     public Optional<ProgrammingExercise> getExerciseForSolutionOrTemplateParticipation(Participation participation) {
         return programmingExerciseRepository.findOneByTemplateParticipationIdOrSolutionParticipationId(participation.getId());
     }
@@ -559,9 +553,8 @@ public class ProgrammingExerciseService {
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
-    @Transactional
     public ProgrammingExercise findById(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -605,16 +598,15 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Find a programming exercise by its id, including all test cases
+     * Find a programming exercise by its exerciseId, including all test cases, also perform security checks
      *
-     * @param id of the programming exercise.
+     * @param exerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      * @throws IllegalAccessException  the retriever does not have the permissions to fetch information related to the programming exercise.
      */
-    @Transactional
-    public ProgrammingExercise findByIdWithTestCases(Long id) throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithTestCases(id);
+    public ProgrammingExercise findWithTestCasesById(Long exerciseId) throws EntityNotFoundException, IllegalAccessException {
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -633,7 +625,6 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programming exercise for which the participations should get saved
      */
-    @Transactional
     public void saveParticipations(ProgrammingExercise programmingExercise) {
         SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
@@ -649,7 +640,6 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
-    @Transactional
     public void combineAllCommitsOfRepositoryIntoOne(URL repoUrl) throws InterruptedException, GitAPIException {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
         gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
@@ -664,9 +654,8 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      * @throws IllegalAccessException if the user does not have permissions to access the ProgrammingExercise.
      */
-    @Transactional
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement) throws EntityNotFoundException, IllegalAccessException {
-        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
         if (programmingExerciseOpt.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise not found with id: " + programmingExerciseId);
         }
@@ -676,7 +665,7 @@ public class ProgrammingExerciseService {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
         programmingExercise.setProblemStatement(problemStatement);
-        return programmingExercise;
+        return programmingExerciseRepository.save(programmingExercise);
     }
 
     /**
@@ -693,7 +682,6 @@ public class ProgrammingExerciseService {
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
      */
-    @Transactional
     public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
@@ -764,7 +752,7 @@ public class ProgrammingExerciseService {
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
         if (deleteBaseReposBuildPlans) {
 
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
@@ -1091,25 +1079,24 @@ public class ProgrammingExerciseService {
     /**
      * Get participations of coding exercises of a requested list of students packed together in one zip file.
      *
-     * @param exerciseId the id of the exercise entity
+     * @param programmingExerciseId the id of the exercise entity
      * @param participations participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
      * @return a zip file containing all requested participations
      */
-    @Transactional(readOnly = true)
-    public java.io.File exportStudentRepositories(Long exerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
+    public java.io.File exportStudentRepositories(Long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
         // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
         String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
 
         if (repositoryExportOptions.isExportAllStudents()) {
-            log.info("Request to export all student repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "'");
+            log.info("Request to export all student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "'");
         }
         else {
-            log.info("Request to export the repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "' of the following students: "
-                    + participations.stream().map(p -> p.getStudent().getLogin()).collect(Collectors.joining(", ")));
+            log.info("Request to export the repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle()
+                    + "' of the following students: " + participations.stream().map(p -> p.getStudent().getLogin()).collect(Collectors.joining(", ")));
         }
 
         List<Path> zippedRepoFiles = new ArrayList<>();
@@ -1186,7 +1173,7 @@ public class ProgrammingExerciseService {
                     programmingExercise.getCourse().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
             createZipFile(zipFilePath, zippedRepoFiles);
             scheduleForDeletion(zipFilePath, 15);
-            log.info("Export student repositories of programming exercise " + exerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
+            log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
             return new java.io.File(zipFilePath.toString());
         }
         catch (IOException ex) {

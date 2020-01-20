@@ -1,27 +1,19 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { JhiHealthService } from 'app/admin';
+import { HealthKey, HealthDetails } from './health.service';
 
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
 })
-export class JhiHealthModalComponent {
-    currentHealth: any;
+export class HealthModalComponent {
+    health?: { key: HealthKey; value: HealthDetails };
 
-    constructor(private healthService: JhiHealthService, public activeModal: NgbActiveModal) {}
-
-    baseName(name: string) {
-        return this.healthService.getBaseName(name);
-    }
-
-    subSystemName(name: string) {
-        return this.healthService.getSubSystemName(name);
-    }
+    constructor(public activeModal: NgbActiveModal) {}
 
     readableValue(value: number) {
-        if (this.currentHealth.name === 'diskSpace') {
+        if (this.health && this.health.key === 'diskSpace') {
             // Should display storage space in an human readable unit
             const val = value / 1073741824;
             if (val > 1) {
@@ -37,5 +29,9 @@ export class JhiHealthModalComponent {
         } else if (value) {
             return value.toString();
         }
+    }
+
+    dismiss(): void {
+        this.activeModal.dismiss();
     }
 }
