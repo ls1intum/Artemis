@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { User } from 'app/core';
-import { InitializationState, Participation, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,6 +18,11 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { take, tap } from 'rxjs/operators';
+import { ProfileInfo } from 'app/layouts';
+import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -59,6 +64,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private sourceTreeService: SourceTreeService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
     ) {}
 
@@ -266,5 +272,26 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             latestResult.participation = this.studentParticipation;
         }
         return latestResult;
+    }
+
+    publishBuildPlanUrl(): boolean {
+        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
+    }
+
+    buildPlanActive(): boolean {
+        return (
+            !!this.exercise &&
+            this.exercise.studentParticipations &&
+            this.exercise.studentParticipations.length > 0 &&
+            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
+        );
+    }
+
+    projectKey(): string {
+        return (this.exercise as ProgrammingExercise).projectKey!;
+    }
+
+    buildPlanId(participation: Participation): string {
+        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
 }

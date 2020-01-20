@@ -267,4 +267,17 @@ public class ModelFactory {
         result.setScore(score);
         return result;
     }
+
+    public static TextBlock generateTextBlock(int startIndex, int endIndex, String text) {
+        final TextBlock textBlock = new TextBlock();
+        textBlock.setStartIndex(startIndex);
+        textBlock.setEndIndex(endIndex);
+        textBlock.setText(text);
+        textBlock.computeId();
+        return textBlock;
+    }
+
+    public static TextBlock generateTextBlock(int startIndex, int endIndex) {
+        return generateTextBlock(startIndex, endIndex, "");
+    }
 }

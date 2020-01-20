@@ -8,7 +8,7 @@
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
-    <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
+    <div class="tab-bar tab-bar-exercise-details pl-2 pr-2 mb-2 justify-content-between">
         <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult !== null">
         </jhi-exercise-details-student-actions>
@@ -34,6 +34,18 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
+                <button
+                    class="mb-2"
+                    jhi-exercise-action-button
+                    jhiBuildPlanButton
+                    buttonIcon="external-link-alt"
+                    [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | translate"
+                    [buttonLoading]="exercise.loading"
+                    [hideLabelMobile]="false"
+                    [projectKey]="projectKey()"
+                    [buildPlanId]="buildPlanId(exercise.studentParticipations[0])"
+                    *ngIf="publishBuildPlanUrl() && buildPlanActive()"
+                ></button>
                 <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.studentParticipations && exercise.studentParticipations[0]">
                 </jhi-programming-exercise-instructions>
             </div>
