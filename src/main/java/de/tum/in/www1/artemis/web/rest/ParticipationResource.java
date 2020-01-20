@@ -512,7 +512,7 @@ public class ParticipationResource {
         if (!quizExercise.isStarted()) {
             // Quiz hasn't started yet => no Result, only quizExercise without questions
             quizExercise.filterSensitiveInformation();
-            StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
+            StudentParticipation participation = (StudentParticipation) new StudentParticipation().exercise(quizExercise);
             return new MappingJacksonValue(participation);
         }
         else if (quizExercise.isSubmissionAllowed()) {
