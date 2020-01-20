@@ -8,21 +8,12 @@ import { ArtemisComplaintsModule } from 'app/complaints';
 import { MomentModule } from 'ngx-moment';
 import { FileUploadResultComponent } from 'app/file-upload-submission/file-upload-result/file-upload-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { SubmissionResultStatusModule } from 'app/submission-result-status';
 
 const ENTITY_STATES = [...fileUploadSubmissionRoute];
 
 @NgModule({
     declarations: [FileUploadSubmissionComponent, FileUploadResultComponent],
-    imports: [
-        ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        ArtemisResultModule,
-        ArtemisComplaintsModule,
-        MomentModule,
-        ArtemisSharedComponentModule,
-        SubmissionResultStatusModule,
-    ],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisResultModule, ArtemisComplaintsModule, MomentModule, ArtemisSharedComponentModule],
     providers: [],
 })
 export class ArtemisFileUploadSubmissionModule {}

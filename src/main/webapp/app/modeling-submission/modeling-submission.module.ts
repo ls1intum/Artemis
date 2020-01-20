@@ -10,7 +10,6 @@ import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-asses
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { MomentModule } from 'ngx-moment';
-import { SubmissionResultStatusModule } from 'app/submission-result-status/submission-result-status.module';
 
 const ENTITY_STATES = [...modelingSubmissionRoute];
 
@@ -26,7 +25,6 @@ const ENTITY_STATES = [...modelingSubmissionRoute];
         ArtemisComplaintsModule,
         ArtemisSharedComponentModule,
         MomentModule,
-        SubmissionResultStatusModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })

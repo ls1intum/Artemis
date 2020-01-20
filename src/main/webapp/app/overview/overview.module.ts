@@ -32,7 +32,6 @@ import { IntellijModule } from 'app/intellij/intellij.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
-import { SubmissionResultStatusModule } from 'app/submission-result-status/submission-result-status.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -53,7 +52,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArtemisComplaintsModule,
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
-        SubmissionResultStatusModule,
     ],
     declarations: [
         OverviewComponent,
