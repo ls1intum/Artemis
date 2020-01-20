@@ -255,7 +255,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
-        getExampleResultForTutor(HttpStatus.FORBIDDEN, false);
+        getExampleResultForTutor(HttpStatus.NOT_FOUND, false);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
