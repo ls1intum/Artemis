@@ -9,12 +9,14 @@ import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Submission } from 'app/entities/submission';
+import * as moment from 'moment';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
     styles: [],
 })
 export class TextAssessmentDashboardComponent implements OnInit {
+    currentDate: moment.MomentInput;
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
     filteredSubmissions: TextSubmission[] = [];

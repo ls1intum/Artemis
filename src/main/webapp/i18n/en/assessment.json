@@ -29,6 +29,7 @@
                 "updateAfterComplaintFailed": "Updating the assessment failed."
             },
             "dashboard": {
+                "warning": "Note, the due date has not passed yet",
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading..",
                 "columns": {
