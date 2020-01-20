@@ -60,6 +60,7 @@
                         <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }} (lock)</span>
                     </td>
                     <td>
+                        <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
                         <button
                             *ngIf="
                                 (submission.optimal && !(submission.result && submission.result.assessor)) ||
@@ -151,6 +152,7 @@
                         <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }}</span>
                     </td>
                     <td>
+                        <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <button
                                 *ngIf="modelingExercise.type === MODELING && submission && !submission.result"
@@ -161,7 +163,6 @@
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.modelingAssessment.dashboard.actions.assess' | translate }}
                             </button>
-                            <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
                         </span>
                         <button
                             *ngIf="modelingExercise.type === MODELING && submission && submission.result"
