@@ -14,21 +14,18 @@ import { FileUploadSubmissionService } from 'app/entities/file-upload-submission
 import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/entities/submission';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import * as moment from 'moment';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
     styles: [],
 })
 export class FileUploadAssessmentDashboardComponent implements OnInit {
-    currentDate: moment.MomentInput;
     exercise: FileUploadExercise;
     submissions: FileUploadSubmission[] = [];
     filteredSubmissions: FileUploadSubmission[] = [];
     busy = false;
     predicate = 'id';
     reverse = false;
-    isBeforeDueDate = false;
 
     private cancelConfirmationText: string;
     constructor(
@@ -57,10 +54,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 const exercise = this.submissions[0].participation.exercise!;
                 FileUploadAssessmentDashboardComponent.verifyFileUploadExercise(exercise);
                 this.exercise = exercise as FileUploadExercise;
-                const dueDate = this.exercise.dueDate;
-                if (dueDate != null) {
-                    this.isBeforeDueDate = dueDate.isAfter(this.currentDate);
-                }
             })
             // No Submissions found. Need extra call to get exercise.
             .catch(async () => await this.getExercise(exerciseId));

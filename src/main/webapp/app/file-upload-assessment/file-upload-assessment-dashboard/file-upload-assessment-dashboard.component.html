@@ -69,14 +69,7 @@
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
                             </button>
-                            <fa-icon
-                                *ngIf="this.isBeforeDueDate"
-                                icon="exclamation-triangle"
-                                size="2x"
-                                class="text-warning"
-                                placement="bottom"
-                                ngbTooltip="{{ 'artemisApp.assessment.dashboard.warning' | translate }}"
-                            ></fa-icon>
+                            <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
                         </span>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <button

@@ -1,0 +1,8 @@
+<fa-icon
+    *ngIf="this.isBeforeDueDate"
+    icon="exclamation-triangle"
+    size="2x"
+    class="text-warning"
+    placement="bottom"
+    ngbTooltip="{{ 'artemisApp.assessment.dashboard.warning' | translate }}"
+></fa-icon>

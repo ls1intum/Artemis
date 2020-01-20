@@ -161,14 +161,7 @@
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.modelingAssessment.dashboard.actions.assess' | translate }}
                             </button>
-                            <fa-icon
-                                *ngIf="modelingExercise.dueDate.isAfter(currentDate)"
-                                icon="exclamation-triangle"
-                                size="2x"
-                                class="text-warning"
-                                placement="bottom"
-                                ngbTooltip="{{ 'artemisApp.assessment.dashboard.warning' | translate }}"
-                            ></fa-icon>
+                            <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
                         </span>
                         <button
                             *ngIf="modelingExercise.type === MODELING && submission && submission.result"

@@ -16,7 +16,6 @@ import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission } from 'app/entities/submission';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -24,7 +23,6 @@ import * as moment from 'moment';
     providers: [JhiAlertService, ModelingAssessmentService],
 })
 export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
-    currentDate: moment.MomentInput;
     // make constants available to html for comparison
     readonly MODELING = ExerciseType.MODELING;
     readonly CLASS_DIAGRAM = UMLDiagramType.ClassDiagram;
