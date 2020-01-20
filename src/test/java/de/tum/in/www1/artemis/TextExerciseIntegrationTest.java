@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -75,5 +76,75 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         database.addTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise() throws Exception {
+        final Course course = database.addCourseWithOneTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        String title = "New Text Exercise";
+        DifficultyLevel difficulty = DifficultyLevel.HARD;
+
+        textExercise.setId(null);
+        textExercise.setTitle(title);
+        textExercise.setDifficulty(difficulty);
+
+        request.post("/api/text-exercises/", textExercise, HttpStatus.CREATED);
+
+        TextExercise newTextExercise = textExerciseRepository.findByCourseId(course.getId()).get(1);
+
+        assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
+        assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise() throws Exception {
+        final Course course = database.addCourseWithOneTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        String title = "Updated Text Exercise";
+        DifficultyLevel difficulty = DifficultyLevel.HARD;
+
+        textExercise.setTitle(title);
+        textExercise.setDifficulty(difficulty);
+
+        request.put("/api/text-exercises/", textExercise, HttpStatus.OK);
+
+        TextExercise updatedTextExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
+        assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getAllTextExercisesForCourse() throws Exception {
+        final Course course = database.addCourseWithOneTextExercise();
+
+        List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class);
+
+        assertThat(textExercises.size()).as("text exercises for course were retrieved").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextExerciseAsTutor() throws Exception {
+        final Course course = database.addCourseWithOneTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+
+        assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getTextExerciseAsStudent() throws Exception {
+        final Course course = database.addCourseWithOneTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
     }
 }
