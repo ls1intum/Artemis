@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.jdbc.Sql;
 
 import de.tum.in.www1.artemis.domain.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
+@Sql({ "/h2/custom-functions.sql" })
 public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
