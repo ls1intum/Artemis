@@ -42,11 +42,10 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     List<ProgrammingSubmission> findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(Long participationId);
 
     @EntityGraph(attributePaths = "result")
-    @Query("select distinct s from Submission s where s.id = :#{#submissionId}")
-    ProgrammingSubmission findByIdWithEagerResult(@Param("submissionId") Long submissionId);
+    Optional<ProgrammingSubmission> findWithEagerResultById(Long submissionId);
 
-    @Query("select distinct submission from ProgrammingSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<ProgrammingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") long submissionId);
+    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor" })
+    Optional<ProgrammingSubmission> findWithEagerResultAssessorFeedbackById(long submissionId);
 
     Optional<ProgrammingSubmission> findByResultId(long resultId);
 }

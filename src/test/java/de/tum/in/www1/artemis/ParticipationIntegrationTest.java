@@ -59,8 +59,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
-        database.addCourseWithModelingAndTextExercise();
-        course = courseRepo.findAll().get(0);
+        course = database.addCourseWithModelingAndTextExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         textExercise = (TextExercise) exerciseRepo.findAll().get(1);
     }
