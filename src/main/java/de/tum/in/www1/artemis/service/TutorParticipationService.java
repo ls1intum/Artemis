@@ -30,17 +30,14 @@ public class TutorParticipationService {
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
-    private final UserService userService;
-
     private final ExampleSubmissionService exampleSubmissionService;
 
     private static final float scoreRangePercentage = 10;
 
-    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, UserService userService,
+    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExampleSubmissionService exampleSubmissionService) {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.userService = userService;
         this.exampleSubmissionService = exampleSubmissionService;
     }
 
