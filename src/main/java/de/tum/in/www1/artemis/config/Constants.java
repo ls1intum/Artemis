@@ -107,6 +107,8 @@ public final class Constants {
 
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
+    public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
+
     private Constants() {
     }
 }
