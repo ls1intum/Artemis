@@ -71,12 +71,14 @@
                 <button
                     class="mb-2"
                     jhi-exercise-action-button
+                    jhiBuildPlanButton
                     buttonIcon="external-link-alt"
                     [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | translate"
                     [buttonLoading]="exercise.loading"
                     [hideLabelMobile]="false"
+                    [projectKey]="projectKey()"
+                    [buildPlanId]="buildPlanId(exercise.studentParticipations[0])"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
-                    (click)="goToBuildPlan(exercise.studentParticipations[0])"
                 ></button>
                 <jhi-programming-exercise-instructions *ngIf="exercise" [exercise]="exercise" [participation]="exercise.studentParticipations && exercise.studentParticipations[0]">
                 </jhi-programming-exercise-instructions>
