@@ -624,7 +624,7 @@ public class DatabaseUtilService {
         course.addExercises(modelingExercise);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         course.addExercises(textExercise);
-        courseRepo.save(course);
+        course = courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
         return course;
