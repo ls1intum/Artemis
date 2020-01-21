@@ -265,6 +265,7 @@
                 </table>
 
                 <ng-template #noSubmissions>
+                    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
                     <div class="alert alert-info">
                         {{ 'artemisApp.tutorExerciseDashboard.noSubmissions' | translate }}
                     </div>

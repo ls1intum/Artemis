@@ -20,6 +20,7 @@ import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/t
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
@@ -40,6 +41,7 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingAssessmentModule,
         ArtemisResultModule,
+        ArtemisAssessmentSharedModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
