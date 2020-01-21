@@ -26,7 +26,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Commit;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
@@ -204,6 +207,10 @@ public class BitbucketService extends AbstractVersionControlService {
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                         return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
                     }
+                    else {
+                        log.warn("Invalid response code from Bitbucket while trying to fork repository {}: {}. Body from Bitbucket: {}", sourceRepositoryName,
+                                response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()));
+                    }
                 }
                 catch (HttpServerErrorException.InternalServerError e) {
 
@@ -250,7 +257,7 @@ public class BitbucketService extends AbstractVersionControlService {
             throw new BitbucketException("Error while forking repository", emAll);
         }
 
-        return null;
+        throw new BitbucketException("Max retries for forking reached. Could not fork repository " + sourceRepositoryName + " to " + targetRepositoryName);
     }
 
     /**

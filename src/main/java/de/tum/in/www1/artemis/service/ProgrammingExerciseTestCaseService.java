@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -27,14 +26,11 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final FeedbackRepository feedbackRepository;
-
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            FeedbackRepository feedbackRepository, ProgrammingSubmissionService programmingSubmissionService) {
+            ProgrammingSubmissionService programmingSubmissionService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -69,7 +65,7 @@ public class ProgrammingExerciseTestCaseService {
     @Transactional
     public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
             throws EntityNotFoundException, IllegalAccessException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTestCasesById(exerciseId);
         Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
 
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();

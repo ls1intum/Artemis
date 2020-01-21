@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -28,15 +26,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp left join fetch tp.results as tpr left join fetch sp.results as spr where pe.course.id = :#{#courseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) and (spr.id = (select max(id) from sp.results) or spr.id = null)")
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") Long courseId);
 
-    // Override to automatically fetch the templateParticipation and solutionParticipation
-    @Override
-    @NotNull
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(attributePaths = { "templateParticipation", "solutionParticipation" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationAndSolutionParticipationById(Long exerciseId);
 
     @EntityGraph(attributePaths = "testCases")
-    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findByIdWithTestCases(@Param("exerciseId") Long id);
+    Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
 
     // Get an a programmingExercise with template and solution participation, each with the latest result and feedbacks.
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp "
