@@ -47,7 +47,7 @@
             "complaintNotEvaluated": "The complaint still needs to be evaluated",
             "moreFeedback": "More Feedback Requests",
             "noMoreFeedbackRequests": "There are no requests at this moment.",
-            "noMoreFeedbackRequestsDisplayed": "There are no requests at this moment, excluding request about your own assessment",
+            "noMoreFeedbackRequestsDisplayed": "There are no requests at this moment (excluding request about your own assessment)",
             "evaluateMoreFeedbackRequest": "Evaluate the request",
             "moreFeedbackRequestEvaluated": "More Feedback Request has already been evaluated",
             "moreFeedbackRequestNotEvaluated": "More Feedback Request still needs to be evaluated",
