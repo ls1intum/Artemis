@@ -97,13 +97,13 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get a modeling submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     * Get a modeling submission of the given exercise that still needs to be assessed, assign the automatic result of Compass to it and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param modelingExercise the exercise the submission should belong to
      * @return a locked modeling submission that needs an assessment
      */
     @Transactional
-    public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
+    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
