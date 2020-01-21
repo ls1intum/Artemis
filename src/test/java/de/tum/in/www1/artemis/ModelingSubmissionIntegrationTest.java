@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import de.tum.in.www1.artemis.service.compass.CompassService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -502,8 +502,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.addModelingSubmission(classExercise, submission, "student1");
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
-                ModelingSubmission.class);
+        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
         assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).hasSize(1);
 
         request.delete("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.NO_CONTENT);
