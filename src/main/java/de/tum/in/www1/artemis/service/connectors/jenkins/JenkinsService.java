@@ -204,8 +204,10 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var result = createResultFromBuildResult(report, (Participation) participation);
         final ProgrammingSubmission submission;
         submission = latestPendingSubmission.orElseGet(() -> createFallbackSubmission(participation, report));
+        submission.setBuildFailed(result.getResultString().equals("No tests found"));
         result.setSubmission(submission);
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
+        programmingSubmissionRepository.save(submission);
         // We can't save the result here, because we might later add more feedback items to the result (sequential test runs).
         // This seems like a bug in Hibernate/JPA: https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection.
         return result;
@@ -246,7 +248,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         result.setScore((long) calculateResultScore(report, testSum));
         result.setParticipation(participation);
         addFeedbackToResult(result, report);
-        result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "Build Error");
+        result.setResultString(result.getHasFeedback() ? report.getSuccessful() + " of " + testSum + " passed" : "No tests found");
 
         return result;
     }
@@ -314,6 +316,9 @@ public class JenkinsService implements ContinuousIntegrationService {
         final var result = createResultFromBuildResult(report, (Participation) participation);
         result.setRatedIfNotExceeded(report.getRunDate(), submission);
         result.setSubmission(submission);
+
+        submission.setBuildFailed(result.getResultString().equals("No tests found"));
+        programmingSubmissionRepository.save(submission);
 
         return Optional.empty();
     }
