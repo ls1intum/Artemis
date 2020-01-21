@@ -10,6 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { Exercise } from 'app/entities/exercise';
+import { ProgressBarComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/progress-bar/progress-bar.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -21,7 +22,7 @@ describe('TutorParticipationGraphComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot()],
-            declarations: [TutorParticipationGraphComponent],
+            declarations: [TutorParticipationGraphComponent, ProgressBarComponent],
             providers: [JhiLanguageHelper, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
