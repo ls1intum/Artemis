@@ -38,7 +38,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -102,18 +101,15 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
-    private final ExerciseService exerciseService;
-
     @Value("${artemis.repo-download-clone-path}")
     private String REPO_DOWNLOAD_CLONE_PATH;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, @Lazy ExerciseService exerciseService) {
+            ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -129,7 +125,6 @@ public class ProgrammingExerciseService {
         this.authCheckService = authCheckService;
         this.resourceLoader = resourceLoader;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
-        this.exerciseService = exerciseService;
     }
 
     /**
@@ -140,7 +135,6 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The checked out exercise in the repository
      * @param participation The student participation for the student id, which should be added.
      */
-    @Transactional
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
         String studentId = participation.getStudent().getLogin();
 
@@ -150,7 +144,7 @@ public class ProgrammingExerciseService {
         // is Java programming language
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             // Filter all Eclipse .project files
-            List<String> eclipseProjectFiles = allRepoFiles.stream().filter(s -> s.endsWith(".project")).collect(Collectors.toList());
+            List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).collect(Collectors.toList());
 
             for (String eclipseProjectFilePath : eclipseProjectFiles) {
                 File eclipseProjectFile = new File(eclipseProjectFilePath);
@@ -184,7 +178,7 @@ public class ProgrammingExerciseService {
             }
 
             // Filter all pom.xml files
-            List<String> pomFiles = allRepoFiles.stream().filter(s -> s.endsWith("pom.xml")).collect(Collectors.toList());
+            List<String> pomFiles = allRepoFiles.stream().filter(file -> file.endsWith("pom.xml")).collect(Collectors.toList());
             for (String pomFilePath : pomFiles) {
                 File pomFile = new File(pomFilePath);
                 // check if file exists and full file name is pom.xml and not just the file ending.
@@ -571,7 +565,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findByIdWithEagerStudentParticipations(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithEagerParticipations(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
@@ -588,7 +582,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     public ProgrammingExercise findByIdWithEagerStudentParticipationsAndSubmissions(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findByIdWithEagerParticipationsAndSubmissions(programmingExerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExerciseId);
         if (programmingExercise.isPresent()) {
             return programmingExercise.get();
         }
