@@ -9,7 +9,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
@@ -20,7 +19,6 @@ import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
  * This is the default implementation to support SpringBoot Actuator AuditEventRepository
  */
 @Service
-@Transactional
 public class AuditEventService {
 
     private final Logger log = LoggerFactory.getLogger(AuditEventService.class);

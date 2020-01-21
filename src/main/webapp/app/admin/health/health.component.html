@@ -1,34 +1,35 @@
 <div>
     <h2>
         <span id="health-page-heading" jhiTranslate="health.title">Health Checks</span>
+
         <button class="btn btn-primary float-right" (click)="refresh()"><fa-icon [icon]="'sync'"></fa-icon> <span jhiTranslate="health.refresh.button">Refresh</span></button>
     </h2>
     <div class="table-responsive">
-        <table id="healthCheck" class="table table-striped">
+        <table id="healthCheck" class="table table-striped" aria-describedby="health-page-heading">
             <thead>
                 <tr>
-                    <th jhiTranslate="health.table.service">Service Name</th>
-                    <th class="text-center" jhiTranslate="health.table.status">Status</th>
-                    <th class="text-center" jhiTranslate="health.details.details">Details</th>
+                    <th scope="col" jhiTranslate="health.table.service">Service Name</th>
+                    <th scope="col" class="text-center" jhiTranslate="health.table.status">Status</th>
+                    <th scope="col" class="text-center" jhiTranslate="health.details.details">Details</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr *ngFor="let health of healthData">
+            <tbody *ngIf="health">
+                <tr *ngFor="let componentHealth of health.components | keyvalue">
                     <td>
                         <span>
-                            {{ 'health.indicator.' + baseName(health.name) | translate }} {{ subSystemName(health.name) }}
-                            <a *ngIf="health.details.details.url" class="badge badge-info" [href]="health.details.details.url">
-                                {{ health.details.details.url }}
+                            {{ 'health.indicator.' + componentHealth.key | translate }}
+                            <a *ngIf="componentHealth.value.details?.url" class="badge badge-info" [href]="componentHealth.value.details.url">
+                                {{ componentHealth.value.details.url }}
                             </a>
                         </span>
                     </td>
                     <td class="text-center">
-                        <span class="badge" [ngClass]="getBadgeClass(health.status)" jhiTranslate="{{ 'health.status.' + health.status }}">
-                            {{ health.status }}
+                        <span class="badge" [ngClass]="getBadgeClass(componentHealth.value.status)" jhiTranslate="{{ 'health.status.' + componentHealth.value.status }}">
+                            {{ componentHealth.value.status }}
                         </span>
                     </td>
                     <td class="text-center">
-                        <a class="hand" (click)="showHealth(health)" *ngIf="health.details || health.error">
+                        <a class="hand" (click)="showHealth(componentHealth)" *ngIf="componentHealth.value.details">
                             <fa-icon [icon]="'eye'"></fa-icon>
                         </a>
                     </td>
