@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -72,14 +71,11 @@ public class UserResource {
 
     private final UserService userService;
 
-    private final MailService mailService;
-
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserResource(UserRepository userRepository, UserService userService, MailService mailService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.mailService = mailService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
@@ -114,7 +110,8 @@ public class UserResource {
         else {
             User newUser = userService.createUser(managedUserVM);
 
-            mailService.sendCreationEmail(newUser);
+            // NOTE: Mail service is NOT active at the moment
+            // mailService.sendCreationEmail(newUser);
             return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", newUser.getLogin())).body(newUser);
         }
@@ -136,7 +133,7 @@ public class UserResource {
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
         }
-        existingUser = userRepository.findOneWithAuthoritiesAndGroupsByLogin(managedUserVM.getLogin().toLowerCase());
+        existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }

@@ -5,8 +5,8 @@ import { ArtemisSharedModule } from 'app/shared';
 import {
     AuditsComponent,
     JhiConfigurationComponent,
-    JhiHealthCheckComponent,
-    JhiHealthModalComponent,
+    HealthComponent,
+    HealthModalComponent,
     JhiMetricsMonitoringComponent,
     JhiTrackerComponent,
     LogsComponent,
@@ -45,12 +45,12 @@ const ENTITY_STATES = [...adminState];
         NotificationMgmtUpdateComponent,
         LogsComponent,
         JhiConfigurationComponent,
-        JhiHealthCheckComponent,
-        JhiHealthModalComponent,
+        HealthComponent,
+        HealthModalComponent,
         JhiTrackerComponent,
         JhiMetricsMonitoringComponent,
         AdminFeatureToggleComponent,
     ],
-    entryComponents: [JhiHealthModalComponent],
+    entryComponents: [HealthModalComponent],
 })
 export class ArtemisAdminModule {}

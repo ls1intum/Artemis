@@ -69,7 +69,7 @@ public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationT
         jiraRequestMockProvider.mockAddUserToGroup(Set.of(course.getStudentGroupName()));
         super.launchLtiRequest_authViaEmail_success();
 
-        final var user = userRepository.findOneWithAuthoritiesAndGroupsByLogin(username).get();
+        final var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).get();
         assertThat(user.getEmail()).isEqualTo(email);
         assertThat(user.getFirstName()).isEqualTo(firstName);
         assertThat(user.getGroups()).containsAll(groups);

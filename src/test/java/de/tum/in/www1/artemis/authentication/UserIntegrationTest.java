@@ -94,7 +94,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
         jiraRequestMockProvider.mockAddUserToGroup(newGroups);
 
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findOneWithAuthoritiesAndGroupsByLogin(student.getLogin()).get();
+        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
         updatedUserIndDB.setPassword(userService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
 
         assertThat(response).isNotNull();
@@ -148,7 +148,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
         jiraRequestMockProvider.mockIsGroupAvailable(student.getGroups());
         jiraRequestMockProvider.mockAddUserToGroup(student.getGroups());
 
-        final var response = request.postWithResponseBody("/api/users", student, User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userRepository.findById(response.getId()).get();
         userInDB.setPassword(userService.decryptPasswordByLogin(userInDB.getLogin()).get());

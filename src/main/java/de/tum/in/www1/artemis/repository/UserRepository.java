@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -32,20 +31,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findOneByLogin(String login);
 
-    @Query("select distinct user from User user left join fetch user.groups left join fetch user.authorities where user.login = :#{#login}")
-    Optional<User> findOneWithGroupsAndAuthoritiesByLogin(@Param("login") String login);
+    @EntityGraph(attributePaths = { "groups" })
+    Optional<User> findOneWithGroupsByLogin(String login);
 
-    @Query("select distinct user from User user left join fetch user.groups left join fetch user.authorities left join fetch user.guidedTourSettings where user.login = :#{#login}")
-    Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(@Param("login") String login);
+    @EntityGraph(attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByLogin(String login);
 
-    @Query("select distinct user from User user left join fetch user.groups where user.login = :#{#login}")
-    Optional<User> findOneWithGroupsByLogin(@Param("login") String login);
+    @EntityGraph(attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
-    @Query("select distinct user from User user left join fetch user.authorities left join fetch user.groups where user.login = :#{#login}")
-    @Cacheable(cacheNames = USERS_CACHE)
-    Optional<User> findOneWithAuthoritiesAndGroupsByLogin(@Param("login") String login);
+    @EntityGraph(attributePaths = { "groups", "authorities", "guidedTourSettings" })
+    Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
-    Long countByGroupsIsContaining(Set<String> groups);
+    Long countByGroupsIsContaining(String group);
 
     @EntityGraph(attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member user.groups")
