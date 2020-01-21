@@ -9,13 +9,29 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "SP")
-public class StudentParticipation extends ParticipantParticipation {
+public class StudentParticipation extends Participation {
 
     private static final long serialVersionUID = 1L;
+
+    @Column(name = "presentation_score")
+    private Integer presentationScore;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private User student;
+
+    public Integer getPresentationScore() {
+        return presentationScore;
+    }
+
+    public StudentParticipation presentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
+        return this;
+    }
+
+    public void setPresentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
+    }
 
     public User getStudent() {
         return student;
@@ -30,11 +46,23 @@ public class StudentParticipation extends ParticipantParticipation {
         this.student = user;
     }
 
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public StudentParticipation exercise(Exercise exercise) {
+        this.exercise = exercise;
+        return this;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
     /**
      * Removes the student from the participation, can be invoked to make sure that sensitive information is not sent to the client.
      * E.g. tutors should not see information about the student.
      */
-    @Override
     public void filterSensitiveInformation() {
         setStudent(null);
     }
