@@ -35,6 +35,7 @@ export class GuidedTourService {
     private availableTourForComponent: GuidedTour | null;
     private onResizeMessage = false;
     private modelingResultCorrect = false;
+    public restartIsLoading = false;
 
     /** Current course and exercise */
     private currentCourse: Course | null = null;
@@ -613,6 +614,7 @@ export class GuidedTourService {
         if (!this.availableTourForComponent) {
             return;
         }
+        this.restartIsLoading = true;
         if (this.currentCourse && this.currentExercise) {
             const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
             this.participationService
@@ -627,6 +629,7 @@ export class GuidedTourService {
                 .subscribe(() => {
                     this.router.navigateByUrl(`/overview/${this.currentCourse!.id}/exercises`).then(() => {
                         location.reload();
+                        this.restartIsLoading = false;
                     });
                 });
         } else {
