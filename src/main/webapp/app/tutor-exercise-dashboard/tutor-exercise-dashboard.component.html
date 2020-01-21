@@ -383,7 +383,7 @@
                         <div *ngIf="numberOfMoreFeedbackRequests === 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequests' | translate }}
                         </div>
-                        <div *ngIf="numberOfMoreFeedbackRequests != 0" class="alert alert-info">
+                        <div *ngIf="numberOfMoreFeedbackRequests !== 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequestsDisplayed' | translate }}
                         </div>
                     </ng-template>
