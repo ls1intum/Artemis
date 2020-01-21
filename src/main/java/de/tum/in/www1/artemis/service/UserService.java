@@ -250,7 +250,6 @@ public class UserService {
         authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         userRepository.save(newUser);
-        this.clearUserCaches(newUser);
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
@@ -336,9 +335,11 @@ public class UserService {
         newUser.setActivationKey(RandomUtil.generateActivationKey());
 
         final var authority = authorityRepository.findById(AuthoritiesConstants.USER).get();
-        newUser.setAuthorities(Set.of(authority));
+        final var authorities = new HashSet<>(Set.of(authority));
+        newUser.setAuthorities(authorities);
 
         userRepository.save(newUser);
+        clearUserCaches(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -592,7 +593,7 @@ public class UserService {
     }
 
     private void clearUserCaches(User user) {
-        cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
+        cacheManager.getCache(User.class.getName()).evict(user.getLogin());
     }
 
     /**

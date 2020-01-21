@@ -162,7 +162,7 @@ public class LtiService {
      */
     public void onSuccessfulLtiAuthentication(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
         // Auth was successful
-        User user = userService.getUser();
+        User user = userService.getUserWithGroupsAndAuthorities();
 
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise.getCourse());
@@ -235,11 +235,14 @@ public class LtiService {
     private Optional<Authentication> createNewUserFromLaunchRequest(LtiLaunchRequestDTO launchRequest, String email, String username, String fullname) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
+            final var groups = new HashSet<String>();
             if (TUMX.equals(launchRequest.getContext_label())) {
-                newUser = userService.createUser(username, Set.of(USER_GROUP_NAME_EDX), USER_GROUP_NAME_EDX, fullname, email, null, "en");
+                groups.add(USER_GROUP_NAME_EDX);
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_EDX, fullname, email, null, "en");
             }
             else if (U4I.equals(launchRequest.getContext_label())) {
-                newUser = userService.createUser(username, Set.of(USER_GROUP_NAME_U4I), USER_GROUP_NAME_U4I, fullname, email, null, "en");
+                groups.add(USER_GROUP_NAME_U4I);
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I, fullname, email, null, "en");
             }
             else {
                 throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
@@ -362,7 +365,6 @@ public class LtiService {
      * @return True if the request is valid, otherwise false
      */
     public Boolean verifyRequest(HttpServletRequest request) {
-
         LtiVerifier ltiVerifier = new LtiOauthVerifier();
         Boolean success = false;
         try {
