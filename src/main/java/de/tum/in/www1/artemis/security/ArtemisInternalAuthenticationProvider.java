@@ -65,7 +65,8 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
         final var optionalUser = userService.getUserByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, "en");
+            // Use "" as the password, so that we don't store the credentials of Jira users in the Artemis DB
+            user = userService.createUser(authentication.getName(), "", firstName, lastName, email, null, "en");
         }
         else {
             user = optionalUser.get();
