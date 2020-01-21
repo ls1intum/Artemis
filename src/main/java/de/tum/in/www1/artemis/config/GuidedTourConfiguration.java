@@ -50,8 +50,6 @@ public class GuidedTourConfiguration {
      */
     public boolean isExerciseForTutorial(Exercise exercise) {
         String exerciseIdentifier = exercise instanceof ProgrammingExercise ? exercise.getShortName() : exercise.getTitle();
-        return tours.stream()
-                .flatMap(tour -> tour.values().stream())
-                .anyMatch(tourIdentifier -> tourIdentifier.equals(exerciseIdentifier));
+        return tours.stream().flatMap(tour -> tour.values().stream()).anyMatch(tourIdentifier -> tourIdentifier.equals(exerciseIdentifier));
     }
 }

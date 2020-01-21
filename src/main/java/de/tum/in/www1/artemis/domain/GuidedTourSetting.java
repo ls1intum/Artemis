@@ -91,12 +91,7 @@ public class GuidedTourSetting implements Serializable {
 
     @Override
     public String toString() {
-        return "GuidedTourSetting{" +
-                "id=" + id +
-                ", guidedTourKey='" + guidedTourKey + '\'' +
-                ", guidedTourStep=" + guidedTourStep +
-                ", guidedTourState=" + guidedTourState +
-                ", user=" + user +
-                '}';
+        return "GuidedTourSetting{" + "id=" + id + ", guidedTourKey='" + guidedTourKey + '\'' + ", guidedTourStep=" + guidedTourStep + ", guidedTourState=" + guidedTourState
+                + ", user=" + user + '}';
     }
 }
