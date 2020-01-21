@@ -24,6 +24,7 @@ import { omit } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { participationStatus } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -105,6 +106,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
 
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
+                        this.modelingExercise.studentParticipations = [this.participation];
+                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
