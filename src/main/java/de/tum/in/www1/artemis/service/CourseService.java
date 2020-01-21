@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -142,12 +141,12 @@ public class CourseService {
      */
     public Course findOneWithExercises(long courseId) {
         log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findOneWithEagerExercises(courseId);
+        return courseRepository.findWithEagerExercisesById(courseId);
     }
 
     public Course findOneWithExercisesAndLectures(long courseId) {
         log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findOneWithEagerExercisesAndLectures(courseId);
+        return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
     }
 
     /**
@@ -168,7 +167,7 @@ public class CourseService {
      */
     public long countNumberOfStudentsForCourse(Course course) {
         String groupName = course.getStudentGroupName();
-        return userRepository.countByGroupsIsContaining(Collections.singleton(groupName));
+        return userRepository.countByGroupsIsContaining(groupName);
     }
 
     /**
@@ -179,6 +178,6 @@ public class CourseService {
      */
     public long countNumberOfTutorsForCourse(Course course) {
         String groupName = course.getTeachingAssistantGroupName();
-        return userRepository.countByGroupsIsContaining(Collections.singleton(groupName));
+        return userRepository.countByGroupsIsContaining(groupName);
     }
 }

@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.SingleUserNotification;
@@ -13,7 +12,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 
 @Service
-@Transactional
 public class SingleUserNotificationService {
 
     private SingleUserNotificationRepository singleUserNotificationRepository;
@@ -53,5 +51,4 @@ public class SingleUserNotificationService {
     public List<Notification> findAllRecentNewNotificationsForRecipientWithLogin(String login) {
         return this.singleUserNotificationRepository.findAllRecentNewNotificationsForRecipientWithLogin(login);
     }
-
 }
