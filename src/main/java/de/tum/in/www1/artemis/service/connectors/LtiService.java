@@ -214,7 +214,11 @@ public class LtiService {
         // 3. Case: Lookup user with the LTI email address. Sign in as this user.
         // Check if lookup by email is enabled
         if (launchRequest.getCustom_lookup_user_by_email()) {
-            return loginUserByEmail(email, fullname);
+            // check if an user with this email address exists
+            final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
+            if (usernameLookupByEmail.isPresent()) {
+                return loginUserByEmail(usernameLookupByEmail.get(), email, fullname);
+            }
         }
 
         // 4. Case: Create new user
@@ -254,20 +258,12 @@ public class LtiService {
                 .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
     }
 
-    private Optional<Authentication> loginUserByEmail(String email, String fullname) {
-        // check if an user with this email address exists
-        final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
+    private Optional<Authentication> loginUserByEmail(String username, String email, String fullname) {
+        log.info("Signing in as {}", username);
+        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), USER_GROUP_NAME_EDX, fullname, email, true);
 
-        if (usernameLookupByEmail.isPresent()) {
-            log.info("Signing in as {}", usernameLookupByEmail.get());
-            final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(usernameLookupByEmail.get(), ""), USER_GROUP_NAME_EDX, fullname,
-                    email, true);
-
-            return Optional.of(
-                    new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
-        }
-
-        return Optional.empty();
+        return Optional
+                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
     }
 
     @NotNull
