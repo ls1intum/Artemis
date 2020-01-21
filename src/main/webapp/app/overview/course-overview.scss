@@ -5,9 +5,12 @@ Course Info Bar
 ========================================================================== */
 .tab-bar {
     display: flex;
-    min-height: 60px;
     align-items: center;
+    min-height: 60px;
     margin: 0 -1.25rem;
+    $padding-y: 11px;
+    padding-top: $padding-y;
+    padding-bottom: $padding-y;
     border-bottom: 1px solid $border-color;
 
     .tab-item {
@@ -16,6 +19,54 @@ Course Info Bar
 
         &.active {
             box-shadow: 0 2px 0 $artemis-dark;
+        }
+    }
+}
+
+.tab-bar-course-overview {
+    // ensure enough vertical space below for absolutely positioned exercise controls
+    // when tab bar is shown on course overview page
+    @media (max-width: 690px) {
+        min-height: 100px;
+        padding-bottom: 40px;
+    }
+}
+
+.tab-bar-exercise-details {
+    .submission-result-status {
+        width: auto;
+        flex-basis: auto;
+        flex-grow: 0;
+    }
+
+    // switch from two column to one column layout for small devices
+    // 2 buttons have to fit in one row e.g. for programming exercises
+    @media (max-width: 640px) {
+        flex-direction: column;
+
+        .submission-result-status {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+    }
+
+    @media (max-width: 1000px) {
+        flex-wrap: wrap;
+
+        // prevent result status from breaking due to flex wrap
+        .submission-result-status {
+            flex-basis: 0;
+            flex-grow: 1;
+        }
+
+        // move instructor actions onto their own line for small/medium devices
+        .instructor-actions {
+            width: 100%;
+            flex-basis: 100%;
+            justify-content: flex-end;
+            margin-top: 10px;
         }
     }
 }

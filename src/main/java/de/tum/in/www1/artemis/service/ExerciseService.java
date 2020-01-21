@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -252,7 +253,9 @@ public class ExerciseService {
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
-        for (ExampleSubmission exampleSubmission : exercise.getExampleSubmissions()) {
+        // to avoid a ConcurrentModificationException, we need to use a copy of the set
+        var exampleSubmissions = new HashSet<ExampleSubmission>(exercise.getExampleSubmissions());
+        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             exampleSubmissionService.deleteById(exampleSubmission.getId());
         }
         // make sure tutor participations are deleted before the exercise is deleted

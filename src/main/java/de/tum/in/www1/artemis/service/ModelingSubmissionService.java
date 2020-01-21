@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,11 +36,9 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
-            StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
@@ -49,7 +46,6 @@ public class ModelingSubmissionService extends SubmissionService {
         this.compassService = compassService;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -62,7 +58,7 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
@@ -193,7 +189,6 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param username           the name of the corresponding user
      * @return the saved modelingSubmission entity
      */
-    @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
                 username);
@@ -219,14 +214,13 @@ public class ModelingSubmissionService extends SubmissionService {
         participation.addSubmissions(modelingSubmission);
 
         if (modelingSubmission.isSubmitted()) {
-            notifyCompass(modelingSubmission, modelingExercise);
+            try {
+                notifyCompass(modelingSubmission, modelingExercise);
+            }
+            catch (Exception ex) {
+                log.error(ex.getMessage(), ex);
+            }
             participation.setInitializationState(InitializationState.FINISHED);
-            // We remove all unfinished results here as they should not be sent to the client. Note, that the reference to the unfinished results will not get removed in the
-            // database by saving the participation to the DB below since the results are not persisted with the participation.
-            participation.setResults(
-                    participation.getResults().stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toSet()));
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
         }
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);

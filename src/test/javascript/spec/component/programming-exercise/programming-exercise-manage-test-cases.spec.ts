@@ -11,14 +11,7 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { CookieService } from 'ngx-cookie';
 import { JhiAlertService } from 'ng-jhipster';
 import * as chai from 'chai';
-import {
-    EditableField,
-    ProgrammingExercise,
-    ProgrammingExerciseManageTestCasesComponent,
-    ProgrammingExerciseService,
-    ProgrammingExerciseTestCaseService,
-    ProgrammingExerciseTestCaseStateDTO,
-} from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockActivatedRoute, MockCookieService, MockProgrammingExerciseService, MockSyncStorage } from '../../mocks';
@@ -33,6 +26,8 @@ import { ProgrammingBuildRunService } from 'app/programming-submission/programmi
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
+import { EditableField, ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
+import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseStateDTO } from 'app/entities/programming-exercise/services';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,8 +68,6 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final ConflictingResultService conflictingResultService;
 
     private final AuthorizationCheckService authCheckService;
@@ -81,8 +78,7 @@ public class ParticipationService {
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService,
-            AuthorizationCheckService authCheckService) {
+            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -98,7 +94,6 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.messagingTemplate = messagingTemplate;
         this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
     }
@@ -178,13 +173,13 @@ public class ParticipationService {
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
      * @param exercise the exercise which is started
-     * @param username the name of the user who starts the exercise
+     * @param user the user who starts the exercise
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, String username) {
+    public StudentParticipation startExercise(Exercise exercise, User user) {
         // common for all exercises
         // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), username);
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -196,11 +191,8 @@ public class ParticipationService {
             }
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
+            participation.setStudent(user);
 
-            Optional<User> user = userService.getUserByLogin(username);
-            if (user.isPresent()) {
-                participation.setStudent(user.get());
-            }
             participation = save(participation);
         }
         else {
@@ -240,13 +232,7 @@ public class ParticipationService {
                 initializeSubmission(participation, exercise);
             }
         }
-
         participation = save(participation);
-
-        if (optionalStudentParticipation.isEmpty()) {
-            // only send a new participation to the client over websocket
-            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
-        }
 
         return participation;
     }
