@@ -40,7 +40,7 @@
             "noSubmissions": "Es gibt derzeit keine Abgaben, die du bewerten kannst.",
             "complaints": "Beschwerden",
             "noComplaints": "Es gibt keine Beschwerde.",
-            "noComplaintsDisplayed": "Es gibt keine Beschwerde, exklusive Beschwerde über eigene Korrektur",
+            "noComplaintsDisplayed": "Es gibt keine Beschwerden (abgesehen von Beschwerden über deine Bewertungen)",
             "evaluateComplaint": "Auswertung der Beschwerde.",
             "showComplaint": "Beschwerde anzeigen",
             "complaintEvaluated": "Beschwerde wurde bereits bewertet",
