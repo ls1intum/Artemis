@@ -611,7 +611,7 @@ public class ParticipationResource {
     @DeleteMapping("guided-tour/participations/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-                                                    @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
+            @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
         if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
@@ -626,7 +626,8 @@ public class ParticipationResource {
             if (!guidedTourConfiguration.isExerciseForTutorial(participation.getExercise())) {
                 return forbidden();
             }
-        } else {
+        }
+        else {
             return forbidden();
         }
 
