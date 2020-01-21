@@ -7,6 +7,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { TeamParticipation } from 'app/entities/participation/team-participation.model';
 
 export const enum InitializationState {
     UNINITIALIZED = 'UNINITIALIZED',
@@ -22,6 +23,7 @@ export const enum InitializationState {
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Participation.java
 export enum ParticipationType {
     STUDENT = 'student',
+    TEAM = 'team',
     PROGRAMMING = 'programming',
     TEMPLATE = 'template',
     SOLUTION = 'solution',
@@ -49,6 +51,8 @@ export const getExercise = (participation: Participation): Exercise => {
             return (participation as ProgrammingExerciseStudentParticipation).exercise;
         case ParticipationType.STUDENT:
             return (participation as StudentParticipation).exercise;
+        case ParticipationType.TEAM:
+            return (participation as TeamParticipation).exercise;
         case ParticipationType.SOLUTION:
             return (participation as SolutionProgrammingExerciseParticipation).programmingExercise;
         case ParticipationType.TEMPLATE:

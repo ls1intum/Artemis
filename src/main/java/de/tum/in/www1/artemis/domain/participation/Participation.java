@@ -21,7 +21,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  * A Participation.
  */
 @Entity
-@Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }))
+@Table(name = "participation", uniqueConstraints = { @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }),
+        @UniqueConstraint(columnNames = { "team_id", "exercise_id", "initialization_state" }) })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "P")
@@ -29,8 +30,9 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = StudentParticipation.class, name = "student"),
+@JsonSubTypes({ @JsonSubTypes.Type(value = StudentParticipation.class, name = "student"), @JsonSubTypes.Type(value = TeamParticipation.class, name = "team"),
         @JsonSubTypes.Type(value = ProgrammingExerciseStudentParticipation.class, name = "programming"),
+        @JsonSubTypes.Type(value = ProgrammingExerciseTeamParticipation.class, name = "programming"),
         @JsonSubTypes.Type(value = TemplateProgrammingExerciseParticipation.class, name = "template"),
         @JsonSubTypes.Type(value = SolutionProgrammingExerciseParticipation.class, name = "solution"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
