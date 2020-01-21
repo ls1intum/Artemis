@@ -9,9 +9,11 @@ import java.net.URI;
 import java.util.List;
 
 import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
+import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +44,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
     LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
-    UserRepository userRepository;
+    LtiUserIdRepository ltiUserIdRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -79,7 +81,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(value = "student1", roles = "USER")
     void launchAsNewStudent() throws Exception {
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourse().getId();
@@ -102,15 +104,14 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "tutor1")
+    @WithMockUser(value = "tutor1", roles = "TA")
     void exerciseLtiConfiguration() throws Exception {
-        // TODO
-        // request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
-        // request.get("/api/lti/configuration/" + programmingExercise.getId() + 1, HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
+        request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
+        request.get("/api/lti/configuration/" + programmingExercise.getId() + 1, HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(value = "student1", roles = "USER")
     void createLtiOutcomeUrl() throws Exception {
         List<LtiOutcomeUrl> returnedLtiOutcomeUrlList = ltiOutcomeUrlRepository.findAll();
         assertThat(returnedLtiOutcomeUrlList).isEmpty();
@@ -125,7 +126,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(value = "student1", roles = "USER")
     void updateLtiOutcomeUrl() throws Exception {
         LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
         LtiOutcomeUrl returnedLtiOutcomeUrl = request.putWithResponseBody("/api/lti-outcome-urls", ltiOutcomeUrl, LtiOutcomeUrl.class, HttpStatus.CREATED);
@@ -134,7 +135,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(value = "student1", roles = "USER")
     void getAllLtiOutcomeUrls() throws Exception {
         List<LtiOutcomeUrl> ltiOutcomeUrlList = request.getList("/api/lti-outcome-urls", HttpStatus.OK, LtiOutcomeUrl.class);
         assertThat(ltiOutcomeUrlList).as("List of LtiOutcomeUrl is empty").isEmpty();
@@ -145,7 +146,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(value = "student1", roles = "USER")
     void getLtiOutcomeUrl() throws Exception {
         LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
         request.postWithoutLocation("/api/lti-outcome-urls", ltiOutcomeUrl, HttpStatus.CREATED, new HttpHeaders());
@@ -156,7 +157,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1")
+    @WithMockUser(value = "student1", roles = "USER")
     void deleteLtiOutcomeUrl() throws Exception {
         LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
         request.postWithoutLocation("/api/lti-outcome-urls", ltiOutcomeUrl, HttpStatus.CREATED, new HttpHeaders());
@@ -164,5 +165,55 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
 
         request.delete("/api/lti-outcome-urls/" + savedLtiOutcomeUrl.getId(), HttpStatus.OK);
         request.delete("/api/lti-outcome-urls/" + savedLtiOutcomeUrl.getId(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(ltiOutcomeUrlRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    void createLtiUserId() throws Exception {
+        List<LtiUserId> returnedLtiUserList = ltiUserIdRepository.findAll();
+        assertThat(returnedLtiUserList).isEmpty();
+
+        LtiUserId ltiUserId = new LtiUserId();
+        request.postWithoutLocation("/api/lti-user-ids", ltiUserId, HttpStatus.CREATED, new HttpHeaders());
+        returnedLtiUserList = ltiUserIdRepository.findAll();
+        assertThat(returnedLtiUserList).hasSize(1);
+
+        ltiUserId.setId(1L);
+        request.postWithoutLocation("/api/lti-user-ids", ltiUserId, HttpStatus.BAD_REQUEST, new HttpHeaders());
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    void updateLtiUserId() throws Exception {
+        LtiUserId ltiUserId = new LtiUserId();
+        LtiUserId returnedLtiUserId = request.putWithResponseBody("/api/lti-user-ids", ltiUserId, LtiUserId.class, HttpStatus.CREATED);
+
+        request.putWithResponseBody("/api/lti-user-ids", returnedLtiUserId, LtiUserId.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    void getLtiUserId() throws Exception {
+        LtiUserId ltiUserId = new LtiUserId();
+        request.putWithResponseBody("/api/lti-user-ids", ltiUserId, LtiUserId.class, HttpStatus.CREATED);
+        LtiUserId savedLtiUserId = ltiUserIdRepository.findAll().get(0);
+
+        request.get("/api/lti-user-ids/" + savedLtiUserId.getId(), HttpStatus.OK, LtiUserId.class);
+        request.get("/api/lti-user-ids/" + savedLtiUserId.getId() + 1, HttpStatus.NOT_FOUND, LtiUserId.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    void deleteLtiUserId() throws Exception {
+        LtiUserId ltiUserId = new LtiUserId();
+        request.putWithResponseBody("/api/lti-user-ids", ltiUserId, LtiUserId.class, HttpStatus.CREATED);
+        LtiUserId savedLtiUserId = ltiUserIdRepository.findAll().get(0);
+
+        request.delete("/api/lti-user-ids/" + savedLtiUserId.getId(), HttpStatus.OK);
+        request.delete("/api/lti-user-ids/" + savedLtiUserId.getId() + 1, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(ltiUserIdRepository.findAll()).isEmpty();
     }
 }

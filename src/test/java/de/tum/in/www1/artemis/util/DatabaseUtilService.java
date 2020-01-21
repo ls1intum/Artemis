@@ -157,6 +157,9 @@ public class DatabaseUtilService {
     @Autowired
     LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
+    @Autowired
+    LtiUserIdRepository ltiUserIdRepository;
+
     public void resetDatabase() {
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
@@ -188,6 +191,8 @@ public class DatabaseUtilService {
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
         ltiOutcomeUrlRepository.deleteAll();
+        ltiUserIdRepository.deleteAll();
+
     }
 
     /**
