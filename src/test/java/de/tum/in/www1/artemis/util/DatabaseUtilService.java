@@ -154,6 +154,9 @@ public class DatabaseUtilService {
     @Autowired
     private TextClusterRepository textClusterRepository;
 
+    @Autowired
+    LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+
     public void resetDatabase() {
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
@@ -184,6 +187,7 @@ public class DatabaseUtilService {
         authorityRepo.deleteAll();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
+        ltiOutcomeUrlRepository.deleteAll();
     }
 
     /**
