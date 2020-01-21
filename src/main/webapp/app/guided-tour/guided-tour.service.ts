@@ -4,7 +4,7 @@ import { NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { filter, map, flatMap } from 'rxjs/operators';
+import { filter, map, flatMap, switchMap, tap } from 'rxjs/operators';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -603,12 +603,11 @@ export class GuidedTourService {
                     flatMap(participation =>
                         this.participationService.delete(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
                     ),
+                    switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
                 )
                 .subscribe(() => {
-                    this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
-                        this.router.navigateByUrl(`/overview/${this.currentCourse!.id}/exercises`).then(() => {
-                            location.reload();
-                        });
+                    this.router.navigateByUrl(`/overview/${this.currentCourse!.id}/exercises`).then(() => {
+                        location.reload();
                     });
                 });
         } else {

@@ -562,7 +562,6 @@ public class UserService {
         for (GuidedTourSetting setting : guidedTourSettings) {
             if (setting.getGuidedTourKey().equals(guidedTourSettingsKey)) {
                 loggedInUser.removeGuidedTourSetting(setting);
-                guidedTourSettingsRepository.save(setting);
                 break;
             }
         }
