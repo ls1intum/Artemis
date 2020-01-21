@@ -92,16 +92,16 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
-        final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
-        final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
-        planKey = exercise.getProjectKey() + "-" + planKey;
-
         try {
+            final var configBuilder = buildPlanCreatorProvider.builderFor(exercise.getProgrammingLanguage());
+            final var jobConfig = configBuilder.buildBasicConfig(testRepositoryURL, repositoryURL);
+            planKey = exercise.getProjectKey() + "-" + planKey;
+
             jenkinsServer.createJob(folder(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), true);
             job(exercise.getProjectKey(), planKey).build(true);
         }
         catch (IOException e) {
-            throw new JenkinsException("Unable to create new build plan :" + planKey);
+            throw new JenkinsException("Unable to create new build plan :" + planKey, e);
         }
     }
 
