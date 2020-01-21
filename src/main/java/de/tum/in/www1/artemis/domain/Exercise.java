@@ -602,7 +602,7 @@ public abstract class Exercise implements Serializable {
         if (participation == null && this instanceof QuizExercise) {
             QuizSubmission submission = QuizScheduleService.getQuizSubmission(getId(), username);
             if (submission.getSubmissionDate() != null) {
-                participation = (StudentParticipation) new StudentParticipation().exercise(this);
+                participation = new StudentParticipation().exercise(this);
                 participation.initializationState(InitializationState.INITIALIZED);
             }
         }
