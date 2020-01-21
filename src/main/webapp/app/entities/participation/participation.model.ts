@@ -8,6 +8,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { TeamParticipation } from 'app/entities/participation/team-participation.model';
+import { ProgrammingExerciseTeamParticipation } from 'app/entities/participation/programming-exercise-team-participation.model';
 
 export const enum InitializationState {
     UNINITIALIZED = 'UNINITIALIZED',
@@ -25,6 +26,7 @@ export enum ParticipationType {
     STUDENT = 'student',
     TEAM = 'team',
     PROGRAMMING = 'programming',
+    PROGRAMMING_TEAM = 'programming-team',
     TEMPLATE = 'template',
     SOLUTION = 'solution',
 }
@@ -49,6 +51,8 @@ export const getExercise = (participation: Participation): Exercise => {
     switch (participation.type) {
         case ParticipationType.PROGRAMMING:
             return (participation as ProgrammingExerciseStudentParticipation).exercise;
+        case ParticipationType.PROGRAMMING_TEAM:
+            return (participation as ProgrammingExerciseTeamParticipation).exercise;
         case ParticipationType.STUDENT:
             return (participation as StudentParticipation).exercise;
         case ParticipationType.TEAM:
