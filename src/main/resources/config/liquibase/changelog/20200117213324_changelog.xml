@@ -15,11 +15,8 @@
                 and id in (
                     select submission_id
                     from result
-                    where build_artifact
+                    where build_artifact = true
                 )
         </sql>
-    </changeSet>
-    <changeSet id="20200117213324-3" author="ungar">
-        <dropColumn tableName="result" columnName="build_artifact" />
     </changeSet>
 </databaseChangeLog>

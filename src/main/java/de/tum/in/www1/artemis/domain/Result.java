@@ -59,6 +59,10 @@ public class Result implements Serializable {
     @JsonView(QuizView.After.class)
     private Boolean successful;
 
+    @Column(name = "build_artifact")
+    @JsonView(QuizView.Before.class)
+    private Boolean buildArtifact;
+
     /**
      * Relative score in %
      */
@@ -196,6 +200,19 @@ public class Result implements Serializable {
 
     public void setSuccessful(Boolean successful) {
         this.successful = successful;
+    }
+
+    public Boolean isBuildArtifact() {
+        return buildArtifact;
+    }
+
+    public Result buildArtifact(Boolean buildArtifact) {
+        this.buildArtifact = buildArtifact;
+        return this;
+    }
+
+    public void setBuildArtifact(Boolean buildArtifact) {
+        this.buildArtifact = buildArtifact;
     }
 
     public Long getScore() {
@@ -531,10 +548,9 @@ public class Result implements Serializable {
 
     @Override
     public String toString() {
-        return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
-                + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", submission=" + submission + ", feedbacks=" + feedbacks + ", participation=" + participation
-                + ", assessor=" + assessor + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", exampleResult=" + exampleResult + ", submissionCount="
-                + submissionCount + '}';
+        return "Result{" + "id=" + getId() + ", resultString='" + getResultString() + "'" + ", completionDate='" + getCompletionDate() + "'" + ", successful='" + isSuccessful()
+                + "'" + ", buildArtifact='" + isBuildArtifact() + "'" + ", score=" + getScore() + ", rated='" + isRated() + "'" + ", hasFeedback='" + getHasFeedback() + "'"
+                + ", hasComplaint='" + hasComplaint() + "'" + "}";
     }
 
     /**
