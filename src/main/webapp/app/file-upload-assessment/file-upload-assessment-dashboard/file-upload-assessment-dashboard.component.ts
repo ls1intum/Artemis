@@ -28,6 +28,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     reverse = false;
 
     private cancelConfirmationText: string;
+
     constructor(
         private route: ActivatedRoute,
         private accountService: AccountService,

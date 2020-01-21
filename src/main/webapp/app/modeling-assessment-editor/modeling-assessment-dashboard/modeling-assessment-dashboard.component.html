@@ -3,6 +3,7 @@
         {{ 'modelingAssessment.dashboard.heading' | translate: { title: modelingExercise.title } }}
     </h4>
     <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
+    <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
     <div>
         <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
         <div class="button-toolbar float-right" *ngIf="modelingExercise.automaticAssessmentSupported">
@@ -60,7 +61,6 @@
                         <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }} (lock)</span>
                     </td>
                     <td>
-                        <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
                         <button
                             *ngIf="
                                 (submission.optimal && !(submission.result && submission.result.assessor)) ||
@@ -152,7 +152,6 @@
                         <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }}</span>
                     </td>
                     <td>
-                        <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <button
                                 *ngIf="modelingExercise.type === MODELING && submission && !submission.result"

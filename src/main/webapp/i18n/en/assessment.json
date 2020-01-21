@@ -29,7 +29,7 @@
                 "updateAfterComplaintFailed": "Updating the assessment failed."
             },
             "dashboard": {
-                "warning": "Note, the due date has not passed yet",
+                "warning": "Warning: the due date is not over yet and students are still allowed to submit their solutions.Please do not start with the assessment yet!",
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading..",
                 "columns": {
