@@ -159,7 +159,7 @@ describe('GuidedTourService', () => {
                     participationService = TestBed.get(ParticipationService);
 
                     findParticipationStub = stub(participationService, 'findParticipation');
-                    deleteParticipationStub = stub(participationService, 'delete');
+                    deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');
                     // @ts-ignore
                     deleteGuidedTourSettingStub = stub(guidedTourService, 'deleteGuidedTourSetting');
                     navigationStub = stub(router, 'navigateByUrl');

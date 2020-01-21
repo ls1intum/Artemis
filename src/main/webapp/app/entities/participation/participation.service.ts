@@ -76,6 +76,11 @@ export class ParticipationService {
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
 
+    deleteForGuidedTour(participationId: number, req?: any): Observable<HttpResponse<any>> {
+        const options = createRequestOption(req);
+        return this.http.delete<void>(`api/guided-tour/participations/${participationId}`, { params: options, observe: 'response' });
+    }
+
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http

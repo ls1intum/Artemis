@@ -588,15 +588,46 @@ public class ParticipationResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // Allow USER's and TA's to delete their own StudentParticipations if it's for a tutorial
+        checkAccessPermissionAtLeastInstructor(participation, user);
+
+        String username = participation.getStudent().getFirstName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        auditEventRepository.add(auditEvent);
+        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
+                username, deleteBuildPlan, deleteRepository, principal.getName());
+        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+    }
+
+    /**
+     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tours.
+     *
+     * @param participationId the participationId of the participation to delete
+     * @param deleteBuildPlan True, if the build plan should also get deleted
+     * @param deleteRepository True, if the repository should also get deleted
+     * @param principal The identity of the user accessing this resource
+     * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
+     */
+    @DeleteMapping("guided-tour/participations/{participationId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
+                                                    @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+
+        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
+            return forbidden();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        // Allow all users to delete their own StudentParticipations if it's for a tutorial
         if (user.getId().equals(participation.getStudent().getId())) {
             checkAccessPermissionAtLeastStudent(participation, user);
             if (!guidedTourConfiguration.isExerciseForTutorial(participation.getExercise())) {
                 return forbidden();
             }
-        }
-        else {
-            checkAccessPermissionAtLeastInstructor(participation, user);
+        } else {
+            return forbidden();
         }
 
         String username = participation.getStudent().getFirstName();

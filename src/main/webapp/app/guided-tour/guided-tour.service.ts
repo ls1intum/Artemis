@@ -622,7 +622,7 @@ export class GuidedTourService {
                 .pipe(
                     map((response: HttpResponse<StudentParticipation>) => response.body!),
                     flatMap(participation =>
-                        this.participationService.delete(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
+                        this.participationService.deleteForGuidedTour(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
                     ),
                     switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
                 )

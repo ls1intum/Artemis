@@ -190,11 +190,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     public void deleteParticipation_student() throws Exception {
         // Allow students to delete their own participation if it belongs to a guided tour
         StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
-        request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
+        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if users do not delete their own participation
         StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student2");
-        request.delete("/api/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -202,11 +202,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     public void deleteParticipation_tutor() throws Exception {
         // Allow tutors to delete their own participation if it belongs to a guided tour
         StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "tutor1");
-        request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
+        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
 
         // Returns forbidden if tutors do not delete their own participation
         StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student1");
-        request.delete("/api/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
