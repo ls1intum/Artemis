@@ -1,15 +1,10 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.util.Optional;
-
 import javax.persistence.*;
-
-import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
