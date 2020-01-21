@@ -189,7 +189,7 @@ describe('GuidedTourService', () => {
             // Start course overview tour
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
             guidedTourService['enableTour'](tour);
-            guidedTourService.startTour();
+            guidedTourService['startTour']();
             guidedTourComponentFixture.detectChanges();
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
             expect(guidedTourService.isOnFirstStep).to.be.true;

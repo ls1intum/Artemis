@@ -134,7 +134,7 @@ describe('GuidedTourComponent', () => {
             // Start course overview tour
             expect(guidedTourComponent.currentTourStep).to.not.exist;
             guidedTourService['enableTour'](courseOverviewTour);
-            guidedTourService.startTour();
+            guidedTourService['startTour']();
             expect(guidedTourComponent.currentTourStep).to.exist;
 
             // Check highlight (current) dot and small dot

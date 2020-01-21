@@ -414,6 +414,10 @@ export class GuidedTourService {
             return 0;
         }
         const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
+        if (tourSetting.length === 1) {
+            const lastSeenTourStep = tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
+            return lastSeenTourStep !== 0 ? lastSeenTourStep : -1;
+        }
         return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep - 1 : 0;
     }
 
@@ -561,9 +565,24 @@ export class GuidedTourService {
     }
 
     /**
+     * Start or restart the guided tour based on the last seen tour step
+     */
+    public initGuidedTour(): void {
+        switch (this.getLastSeenTourStepIndex()) {
+            case -1: {
+                this.restartTour();
+                break;
+            }
+            default: {
+                this.startTour();
+            }
+        }
+    }
+
+    /**
      * Start guided tour for given guided tour
      */
-    public startTour(): void {
+    private startTour(): void {
         if (!this.availableTourForComponent) {
             return;
         }
