@@ -8,12 +8,6 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
-import de.tum.in.www1.artemis.domain.LtiUserId;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
-import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,10 +18,16 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
+import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
 public class LtiIntegrationTest extends AbstractSpringIntegrationTest {
 
