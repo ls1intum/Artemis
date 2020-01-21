@@ -347,7 +347,7 @@ public class CourseResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions = 0L;
+            long numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = programmingExerciseService.countSubmissions(exercise.getId());
             }
@@ -474,7 +474,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions = 0L;
+            long numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = programmingExerciseService.countSubmissions(exercise.getId());
             }

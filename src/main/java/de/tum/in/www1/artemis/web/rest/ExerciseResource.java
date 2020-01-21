@@ -183,7 +183,7 @@ public class ExerciseResource {
         final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfSubmissions = 0L;
+        long numberOfSubmissions;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = programmingExerciseService.countSubmissions(exerciseId);

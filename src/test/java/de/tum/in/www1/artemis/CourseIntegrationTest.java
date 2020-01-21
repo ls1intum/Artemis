@@ -159,7 +159,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
                         // Test that the correct modeling submission was filtered.
                         if (submission instanceof ModelingSubmission) {
                             ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model2");
+                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
                         }
                     }
                 }
@@ -190,8 +190,12 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
             for (Exercise exercise : course.getExercises()) {
                 assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
-                // Mock data contains exactly one participation for the modeling and text exercise
-                if (exercise instanceof ModelingExercise || exercise instanceof TextExercise) {
+                // Mock data contains exactly two participations for the modeling exercise
+                if (exercise instanceof ModelingExercise) {
+                    assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(2);
+                }
+                // Mock data contains exactly one participation for the text exercise
+                if (exercise instanceof TextExercise) {
                     assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(1);
                 }
                 // Mock data contains no participations for the file upload and programming exercise
