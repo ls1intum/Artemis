@@ -329,18 +329,16 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
-        if (participation == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
-        }
         ModelingExercise modelingExercise;
+
+        if (participation.getExercise() == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                    .body(null);
+        }
+
         if (participation.getExercise() instanceof ModelingExercise) {
             modelingExercise = (ModelingExercise) participation.getExercise();
-            if (modelingExercise == null) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                        .body(null);
-            }
 
             // make sure sensitive information are not sent to the client
             modelingExercise.filterSensitiveInformation();
