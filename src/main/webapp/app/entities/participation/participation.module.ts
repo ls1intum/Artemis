@@ -11,6 +11,7 @@ import { ArtemisDataTableModule } from 'app/components/data-table/data-table.mod
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ParticipationComponent } from 'app/entities/participation/participation.component';
 import { participationRoute } from 'app/entities/participation/participation.route';
+import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 
 const ENTITY_STATES = [...participationRoute];
 
@@ -25,6 +26,7 @@ const ENTITY_STATES = [...participationRoute];
         NgxDatatableModule,
         ArtemisDataTableModule,
         FeatureToggleModule,
+        ProgrammingExerciseUtilsModule,
     ],
 
     declarations: [ParticipationComponent],

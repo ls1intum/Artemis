@@ -311,7 +311,9 @@ public class ProgrammingSubmissionService {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);
         }
         catch (EntityNotFoundException ex) {
-            throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
+            var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
+            log.warn(message);
+            throw new IllegalStateException(message);
         }
         return lastCommitHash;
     }
@@ -561,7 +563,7 @@ public class ProgrammingSubmissionService {
      * @return a list of programming submissions for the given exercise id
      */
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<ProgrammingSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true
@@ -597,7 +599,7 @@ public class ProgrammingSubmissionService {
      * @return the programming submission with the given id
      */
     public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
-        return programmingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+        return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 
