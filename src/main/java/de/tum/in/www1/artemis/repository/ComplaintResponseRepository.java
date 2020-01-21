@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
@@ -24,6 +25,15 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @return number of complaints response associated to course courseId
      */
     long countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(Long courseId, ComplaintType complaintType);
+
+    /**
+     * This magic method counts the number of complaints responses by complaint type associated to a exercise id
+     *
+     * @param exerciseId      - the id of the exercise we want to filter by
+     * @param complaintType - complaint type we want to filter by
+     * @return number of complaints response associated to exercise exerciseId
+     */
+    long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(@Param("id") long exerciseId, ComplaintType complaintType);
 
     /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation
