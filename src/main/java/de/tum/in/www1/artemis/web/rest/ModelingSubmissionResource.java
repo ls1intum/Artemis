@@ -289,15 +289,15 @@ public class ModelingSubmissionResource {
         }
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
-            final List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId())
-                    .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+            var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
             if (submissionsWithoutResult.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
             }
 
-            Random r = new Random();
-            return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())).getId() });
+            Random random = new Random();
+            return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())).getId() });
         }
     }
 
@@ -354,16 +354,16 @@ public class ModelingSubmissionResource {
             return forbidden();
         }
 
-        Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         ModelingSubmission modelingSubmission;
-        if (optionalModelingSubmission.isEmpty()) {
+        if (optionalSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
             modelingSubmission.setParticipation(participation);
         }
         else {
             // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = optionalModelingSubmission.get();
+            modelingSubmission = (ModelingSubmission) optionalSubmission.get();
         }
 
         // make sure only the latest submission and latest result is sent to the client
