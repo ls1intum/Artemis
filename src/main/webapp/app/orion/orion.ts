@@ -18,7 +18,7 @@ export interface OrionCoreConnector {
     login(username: string, password: string): void;
     log(message: string): void;
     editExercise(exerciseJson: string): void;
-    workOnExercise(repository: string, exerciseJson: string): void;
+    importParticipation(repository: string, exerciseJson: string): void;
     submitChanges(): void;
 }
 

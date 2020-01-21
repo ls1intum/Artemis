@@ -63,7 +63,7 @@ export class OrionConnectorService implements ArtemisClientConnector, JavaConnec
      * @param exercise The exercise for which the repository should get cloned.
      */
     importParticipation(repository: string, exercise: ProgrammingExercise) {
-        this.window.nativeWindow.orionCoreConnector.workOnExercise(repository, stringifyCircular(exercise));
+        this.window.nativeWindow.orionCoreConnector.importParticipation(repository, stringifyCircular(exercise));
     }
 
     /**
