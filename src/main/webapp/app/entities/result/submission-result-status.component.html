@@ -13,6 +13,8 @@
     <!-- On mobile -->
     <div class="d-sm-none">
         <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | translate }}</span>
+        <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadlineShort' | translate }}</span>
+        <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort' | translate }}</span>
         <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | translate }}</span>
         <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuizShort' | translate }}</span>
         <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
