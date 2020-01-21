@@ -2,8 +2,13 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
+import java.net.FileNameMap;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -293,6 +298,20 @@ public class FileResource {
             return ResponseEntity.status(403).body(errorMessage);
         }
         return buildFileResponse(Constants.LECTURE_ATTACHMENT_FILEPATH + optionalLecture.get().getId(), filename);
+    }
+
+    @GetMapping(value = "files/public/images/{filename}", produces = MediaType.IMAGE_PNG_VALUE)
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<byte[]> getPublicStaticImage(@PathVariable final String filename) throws IOException {
+        log.debug("REST request to fetch public static image: " + filename);
+        return new ResponseEntity<>(fileService.getPublicStaticFile(Path.of("images", File.separator, filename)), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "files/public/content/{filename}", produces = MediaType.TEXT_HTML_VALUE)
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<String> getPublicStaticHtml(@PathVariable final String filename) throws IOException {
+        log.debug("REST request to fetch public static HTML: " + filename);
+        return new ResponseEntity<>(new String(fileService.getPublicStaticFile(Path.of("html", File.separator, filename)), StandardCharsets.UTF_8), HttpStatus.OK);
     }
 
     /**

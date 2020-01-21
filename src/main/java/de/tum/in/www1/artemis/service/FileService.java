@@ -616,4 +616,8 @@ public class FileService {
 
         return Charset.forName(charsetName);
     }
+
+    public byte[] getPublicStaticFile(final Path pathToFile) throws IOException {
+        return Files.readAllBytes(Constants.PUBLIC_STATIC_FILES.resolve(pathToFile));
+    }
 }

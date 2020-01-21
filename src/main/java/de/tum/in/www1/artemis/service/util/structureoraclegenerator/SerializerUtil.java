@@ -32,7 +32,7 @@ class SerializerUtil {
             else if (javaMember instanceof JavaField) {
                 // interface attributes are always public, static and final, however the qdox framework does not report this when parsing the Java source file
                 modifiers.add("public");
-                modifiers.add("static");
+                modifiers.add("assets");
                 modifiers.add("final");
             }
         }
