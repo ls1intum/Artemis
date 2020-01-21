@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import de.tum.in.www1.artemis.service.compass.CompassService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
+
+    @Autowired
+    CompassService compassService;
 
     private ModelingExercise classExercise;
 
@@ -494,7 +498,16 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void deleteNextOptimalModelSubmission() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+                ModelingSubmission.class);
+        assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).hasSize(1);
+
         request.delete("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.NO_CONTENT);
+        assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).isEmpty();
     }
 
     @Test
