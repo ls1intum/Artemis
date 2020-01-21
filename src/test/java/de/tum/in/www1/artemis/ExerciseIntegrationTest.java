@@ -199,7 +199,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
                     assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
                     assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
-                    assertThat(modelingExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(1);
+                    assertThat(modelingExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(2);
                 }
                 if (exerciseWithDetails instanceof ProgrammingExercise) {
                     ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exerciseWithDetails;
@@ -222,7 +222,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                 if (exerciseWithDetails instanceof TextExercise) {
                     TextExercise textExercise = (TextExercise) exerciseWithDetails;
                     assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
-                    assertThat(textExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(2);
+                    assertThat(textExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(1);
                 }
             }
         }
@@ -283,7 +283,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
@@ -315,7 +315,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
