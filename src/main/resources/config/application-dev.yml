@@ -127,4 +127,4 @@ info:
             - programming_exercise_success_tour: 'test'
     orion-versions:
         from: 1.0.0-rc.1
-        to: 1.0.1-rc.1
+        to: 1.0.0-rc.1
