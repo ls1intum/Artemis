@@ -449,13 +449,13 @@ public class GitService {
      * Stager Task #6: Combine all commits after last instructor commit
      *
      * @param repository Local Repository Object.
-     * @param exercise   ProgrammingExercise associated with this repo.
+     * @param programmingExercise   ProgrammingExercise associated with this repo.
      */
-    public void combineAllStudentCommits(Repository repository, ProgrammingExercise exercise) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(exercise.getTemplateRepositoryUrlAsUrl());
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getTemplateRepositoryUrlAsUrl());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
