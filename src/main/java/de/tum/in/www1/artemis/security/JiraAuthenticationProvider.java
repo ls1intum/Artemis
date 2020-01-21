@@ -149,7 +149,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             final var content = authenticationResponse.getBody();
             final var login = content.getName();
             final var emailAddress = content.getEmailAddress();
-            final var user = userRepository.findOneByLogin(login).orElseGet(() -> userService.createUser(login, password, content.getDisplayName(), "", emailAddress, null, "en"));
+            // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
+            final var user = userRepository.findOneByLogin(login).orElseGet(() -> userService.createUser(login, "", content.getDisplayName(), "", emailAddress, null, "en"));
             final var groupStrings = content.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
 
             user.setEmail(emailAddress);
