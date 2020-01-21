@@ -47,7 +47,7 @@
             "complaintNotEvaluated": "Beschwerde muss noch bewertet werden",
             "moreFeedback": "Weiteres Feedback anfragen",
             "noMoreFeedbackRequests": "Es gibt keine Feedbackanfragen zu zeigen",
-            "noMoreFeedbackRequestsDisplayed": "Es gibt keine Feedbackanfragen zu zeigen, exklusive Feedbackanfragen über eigene Korrektur",
+            "noMoreFeedbackRequestsDisplayed": "Es gibt keine Feedbackanfragen (abgesehen von Feedbackanfragen über deine Bewertungen)",
             "evaluateMoreFeedbackRequest": "Auswertung der Feedbackanfragen",
             "moreFeedbackRequestEvaluated": "Die Feedbackanfragen wurden bereits ausgewertet",
             "moreFeedbackRequestNotEvaluated": "Es müssen noch weitere Feedbackanfragen bewertet werden",
