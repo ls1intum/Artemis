@@ -143,8 +143,8 @@ public class TextSubmissionService extends SubmissionService {
         }
         Random random = new Random();
         var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId());
-        var submissionsWithoutResult = participations.stream()
-                .map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();

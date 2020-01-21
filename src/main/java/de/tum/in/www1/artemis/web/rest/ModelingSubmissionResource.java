@@ -290,7 +290,8 @@ public class ModelingSubmissionResource {
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
             var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
-            var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                    .collect(Collectors.toList());
 
             if (submissionsWithoutResult.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
