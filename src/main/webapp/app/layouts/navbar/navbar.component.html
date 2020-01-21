@@ -170,11 +170,7 @@
                             <h6 class="dropdown-header" jhiTranslate="global.menu.guidedTutorial">Guided Tutorial</h6>
                         </li>
                         <li>
-                            <a
-                                class="dropdown-item guided-tour"
-                                [jhiTranslate]=this.guidedTourInitLabel()
-                                (click)="this.guidedTourService.initGuidedTour()"
-                            >Start tutorial</a>
+                            <a class="dropdown-item guided-tour" [jhiTranslate]="this.guidedTourInitLabel()" (click)="this.guidedTourService.initGuidedTour()">Start tutorial</a>
                         </li>
                     </ng-template>
                     <!-- only display guided tour to ADMIN for now -->
