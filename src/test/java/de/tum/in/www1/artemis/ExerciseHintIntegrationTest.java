@@ -167,9 +167,9 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteHintAsInstructor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
-        request.delete("/api/exercise-hints/"+ 0l,HttpStatus.NOT_FOUND);
+        request.delete("/api/exercise-hints/" + 0l, HttpStatus.NOT_FOUND);
         request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
-        request.delete("/api/exercise-hints/"+ exerciseHints.get(0).getId(),HttpStatus.NO_CONTENT);
+        request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
     }
 }
