@@ -1218,6 +1218,22 @@ public class ProgrammingExerciseService {
         }
     }
 
+    /**
+     * @param exerciseId the exercise we are interested in
+     * @return the number of programming submissions which should be assessed
+     */
+    public long countSubmissions(Long exerciseId) {
+        return programmingExerciseRepository.countSubmissions(exerciseId);
+    }
+
+    /**
+     * @param courseId the course we are interested in
+     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
+     */
+    public long countSubmissionsToAssessByCourseId(Long courseId) {
+        return programmingExerciseRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
     private Map<Path, ScheduledFuture> futures = new HashMap<>();
 
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());

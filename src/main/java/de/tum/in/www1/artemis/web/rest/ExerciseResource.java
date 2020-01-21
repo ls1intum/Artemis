@@ -68,9 +68,12 @@ public class ExerciseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService) {
+            SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseService programmingExerciseService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -81,6 +84,7 @@ public class ExerciseResource {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.tutorLeaderboardService = tutorLeaderboardService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -176,7 +180,14 @@ public class ExerciseResource {
         final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+        final long numberOfSubmissions = 0L;
+
+        if (exercise instanceof ProgrammingExercise) {
+            numberOfSubmissions = programmingExerciseService.countSubmissions();
+        }
+        else {
+            numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+        }
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);

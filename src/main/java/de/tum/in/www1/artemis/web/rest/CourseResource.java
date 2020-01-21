@@ -93,6 +93,8 @@ public class CourseResource {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final AuditEventRepository auditEventRepository;
@@ -102,7 +104,7 @@ public class CourseResource {
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, SubmissionRepository submissionRepository, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ExampleSubmissionRepository exampleSubmissionRepository,
-            AuditEventRepository auditEventRepository) {
+            ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -120,6 +122,7 @@ public class CourseResource {
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
+        this.programmingExerciseService = programmingExerciseService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.auditEventRepository = auditEventRepository;
     }
@@ -348,8 +351,13 @@ public class CourseResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
-
-            final long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+            long numberOfSubmissions = 0L;
+            if (exercise instanceof ProgrammingExercise) {
+                numberOfSubmissions = programmingExerciseService.countSubmissions(exercise.getId());
+            }
+            else {
+                numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+            }
             final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
@@ -391,7 +399,7 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId) + programmingExerciseService.countSubmissionsToAssessByCourseId();
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         final long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -469,7 +477,13 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            final long numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+            long numberOfSubmissions = 0L;
+            if (exercise instanceof ProgrammingExercise) {
+                numberOfSubmissions = programmingExerciseService.countSubmissions(exercise.getId());
+            }
+            else {
+                numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+            }
             final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
@@ -521,7 +535,7 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId) + programmingExerciseService.countSubmissionsToAssessByCourseId();
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
