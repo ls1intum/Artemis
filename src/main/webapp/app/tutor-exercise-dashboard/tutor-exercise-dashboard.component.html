@@ -321,7 +321,7 @@
                         <div *ngIf="numberOfTutorComplaints === 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}
                         </div>
-                        <div *ngIf="numberOfTutorComplaints != 0" class="alert alert-info">
+                        <div *ngIf="numberOfTutorComplaints !== 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noComplaintsDisplayed' | translate }}
                         </div>
                     </ng-template>
