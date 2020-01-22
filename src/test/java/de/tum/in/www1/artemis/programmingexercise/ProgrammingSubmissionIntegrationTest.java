@@ -6,9 +6,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -19,12 +17,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -250,5 +251,42 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         bambooRequestMockProvider.mockQueryLatestBuildResultFromBambooServer(participation.getBuildPlanId());
 
         request.postWithoutLocation("/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getAlllProgrammingSubmissions_asUser_forbidden() throws Exception {
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllProgramminSubmissions_asInstructor_allSubmissionsReturned() throws Exception {
+        final var submissions = new LinkedList<ProgrammingSubmission>();
+        for (int i = 1; i < 4; i++) {
+            final var submission = ModelFactory.generateProgrammingSubmission(true);
+            submissions.add(submission);
+            database.addProgrammingSubmission(exercise, submission, "student" + i);
+        }
+
+        final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class);
+
+        assertThat(responseSubmissions).containsExactly(submissions.toArray(new ProgrammingSubmission[0]));
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllProgrammingSubmissions_assessedByTutor_allSubmissionsReturned() throws Exception {
+        database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
+        var assessedSubmission = ModelFactory.generateProgrammingSubmission(true);
+        assessedSubmission = database.addProgrammingSubmission(exercise, assessedSubmission, "student2");
+        final var tutor = database.getUserByLogin("tutor1");
+        database.addResultToSubmission(assessedSubmission, AssessmentType.MANUAL, tutor);
+
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        paramMap.add("assessedByTutor", "true");
+        final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
+
+        assertThat(responseSubmissions).containsExactly(assessedSubmission);
     }
 }
