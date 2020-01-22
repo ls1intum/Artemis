@@ -38,7 +38,7 @@ public class BitbucketRequestMockProvider {
     @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER_URL;
 
-    @Value("${artemis.jira.admin-group-name}")
+    @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
     private final RestTemplate restTemplate;

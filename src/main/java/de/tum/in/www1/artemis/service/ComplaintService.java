@@ -179,4 +179,5 @@ public class ComplaintService {
         }
         return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusWeeks(MAX_COMPLAINT_TIME_WEEKS));
     }
+
 }
