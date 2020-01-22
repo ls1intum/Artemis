@@ -94,22 +94,30 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             @RequestBody List<Feedback> feedbacks) {
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        User user = userService.getUserWithGroupsAndAuthorities();
         long exerciseId = studentParticipation.getExercise().getId();
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
 
-        // TODO: this method is used for the normal submit and for override. I guess we should distinguish these cases, because not every tutor can override
-        // The logic should be:
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        // final var isBeforeAssessmentDueDate = exercise.assessmentDueDate && now().isBefore(exercise.assessmentDueDate);
-        // final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise);
+        final var existingResult = fileUploadSubmission.getResult();
+        if (existingResult != null) {
+            final var isAssessor = user.equals(existingResult.getAssessor());
+            var assessmentDueDate = fileUploadExercise.getAssessmentDueDate();
+            final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+            final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+            // TODO: this method is used for the normal submit and for override. I guess we should distinguish these cases, because not every tutor can override
+            if (!canOverride) {
+                forbidden();
+            }
+        }
 
         Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks, fileUploadExercise);
         if (submit) {
             result = fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
         }
         // remove information about the student for tutors to ensure double-blind assessment
-        if (!authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
+        if (!isAtLeastInstructor) {
             ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
