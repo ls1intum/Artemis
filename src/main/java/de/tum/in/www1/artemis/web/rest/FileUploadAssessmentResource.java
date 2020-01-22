@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -99,16 +100,17 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
 
+        // TODO: we could move this method into the service into the save and/or submit method
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise);
         final var existingResult = fileUploadSubmission.getResult();
-        if (existingResult != null) {
+        if (existingResult != null && existingResult.getCompletionDate() != null) {
             final var isAssessor = user.equals(existingResult.getAssessor());
             var assessmentDueDate = fileUploadExercise.getAssessmentDueDate();
             final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
             final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
             // TODO: this method is used for the normal submit and for override. I guess we should distinguish these cases, because not every tutor can override
             if (!canOverride) {
-                forbidden();
+                throw new BadRequestAlertException("The assessment due date is already over.", "assessment", "assessmentDueDateOver");
             }
         }
 
