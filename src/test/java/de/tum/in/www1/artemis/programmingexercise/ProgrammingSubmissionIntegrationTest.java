@@ -6,7 +6,10 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -288,5 +291,42 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var responseSubmissions = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
 
         assertThat(responseSubmissions).containsExactly(assessedSubmission);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getProgrammingSubmissionWithoutAssessment_asTutorWithOneAvailable_returnsSubmission() throws Exception {
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
+        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+
+        final var responseSubmission = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, ProgrammingSubmission.class);
+
+        assertThat(responseSubmission).isEqualTo(submission);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getProgrammingSubmissionWithoutAssessment_dueDateNotPassedYet_notFound() throws Exception {
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
+        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+
+        request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getProgrammingSubmissionWithoutAssessment_alreadyAssessed_noFound() throws Exception {
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        var submission = ModelFactory.generateProgrammingSubmission(true);
+        submission = database.addProgrammingSubmission(exercise, submission, "student1");
+        final var tutor = database.getUserByLogin("tutor1");
+        database.addResultToSubmission(submission, AssessmentType.MANUAL, tutor);
+
+        request.get("/api/exercises" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.NOT_FOUND, String.class);
     }
 }
