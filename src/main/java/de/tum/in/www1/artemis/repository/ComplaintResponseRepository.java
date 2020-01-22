@@ -26,6 +26,15 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     long countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(Long courseId, ComplaintType complaintType);
 
     /**
+     * This magic method counts the number of complaints responses by complaint type associated to a exercise id
+     *
+     * @param exerciseId      - the id of the exercise we want to filter by
+     * @param complaintType - complaint type we want to filter by
+     * @return number of complaints response associated to exercise exerciseId
+     */
+    long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(long exerciseId, ComplaintType complaintType);
+
+    /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation
      * @param participationId the Id of the participation where the complaint response should be deleted
      */

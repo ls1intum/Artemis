@@ -21,7 +21,9 @@
             "notReleased": "Not released",
             "readGradingInstructions": "Read grading instructions",
             "trainOnExampleSubmissions": "Train on example submissions",
-            "assessStudentsSubmissions": "Assess students' submissions"
+            "assessStudentsSubmissions": "Assess students' submissions",
+            "evaluateStudentsComplaints": "Evaluate students' complaints and feedback requests",
+            "numberOfOpenComplaints": "Number of open complaints"
         }
     }
 }

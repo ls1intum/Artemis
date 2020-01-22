@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -42,9 +45,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Long countByGroupsIsContaining(String group);
 
-    List<User> findAllByGroups(String group);
+    @EntityGraph(attributePaths = { "groups" })
+    @Query("select user from User user where :#{#groupName} member user.groups")
+    List<User> findAllInGroup(String groupName);
+
+    @EntityGraph(attributePaths = { "groups" })
+    @Query("select user from User user")
+    Page<User> findAllWithGroups(Pageable pageable);
 
     @Modifying
     @Query("Update User user set user.lastNotificationRead = utc_timestamp where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId);
+
+    @EntityGraph(attributePaths = { "groups" })
+    @Query("select user from User user where :#{#groupName} member user.groups and user not in :#{#ignoredUsers}")
+    List<User> findAllInGroupContainingAndNotIn(String groupName, Set<User> ignoredUsers);
 }
