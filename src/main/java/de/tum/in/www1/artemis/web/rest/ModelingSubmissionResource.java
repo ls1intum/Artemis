@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -110,7 +109,6 @@ public class ModelingSubmissionResource {
      * @param modelingSubmission the modelingSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission, or with status 400 (Bad Request) if the modelingSubmission is not valid, or
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -239,8 +237,7 @@ public class ModelingSubmissionResource {
 
         final ModelingSubmission modelingSubmission;
         if (lockSubmission) {
-            // TODO rename this, because if Compass is activated we pass a submission with a partial automatic result
-            modelingSubmission = modelingSubmissionService.getLockedModelingSubmissionWithoutResult((ModelingExercise) exercise);
+            modelingSubmission = modelingSubmissionService.lockModelingSubmissionWithoutResult((ModelingExercise) exercise);
         }
         else {
             final Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionService.getModelingSubmissionWithoutManualResult((ModelingExercise) exercise);
@@ -289,15 +286,16 @@ public class ModelingSubmissionResource {
         }
         else {
             // otherwise get a random (non-optimal) submission that is not assessed
-            final List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId())
-                    .stream().map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+            var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                    .collect(Collectors.toList());
 
             if (submissionsWithoutResult.isEmpty()) {
                 return ResponseEntity.ok(new Long[] {}); // empty
             }
 
-            Random r = new Random();
-            return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())).getId() });
+            Random random = new Random();
+            return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())).getId() });
         }
     }
 
@@ -329,18 +327,16 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
-        if (participation == null) {
-            return ResponseEntity.notFound()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();
-        }
         ModelingExercise modelingExercise;
+
+        if (participation.getExercise() == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                    .body(null);
+        }
+
         if (participation.getExercise() instanceof ModelingExercise) {
             modelingExercise = (ModelingExercise) participation.getExercise();
-            if (modelingExercise == null) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                        .body(null);
-            }
 
             // make sure sensitive information are not sent to the client
             modelingExercise.filterSensitiveInformation();
@@ -356,16 +352,16 @@ public class ModelingSubmissionResource {
             return forbidden();
         }
 
-        Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         ModelingSubmission modelingSubmission;
-        if (optionalModelingSubmission.isEmpty()) {
+        if (optionalSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
             modelingSubmission.setParticipation(participation);
         }
         else {
             // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = optionalModelingSubmission.get();
+            modelingSubmission = (ModelingSubmission) optionalSubmission.get();
         }
 
         // make sure only the latest submission and latest result is sent to the client
