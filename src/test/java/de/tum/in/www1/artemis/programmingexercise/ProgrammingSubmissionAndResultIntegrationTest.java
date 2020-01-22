@@ -1,7 +1,8 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -28,6 +29,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -37,7 +40,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -92,6 +94,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Autowired
     ResultRepository resultRepository;
 
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -100,14 +105,17 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private List<Long> participationIds;
 
+    private ProgrammingExercise exercise;
+
     @BeforeEach
-    void reset() throws Exception {
+    void setUp() {
         doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
+        bambooRequestMockProvider.enableMockingOfRequests();
 
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
@@ -122,6 +130,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        bambooRequestMockProvider.reset();
     }
 
     /**
@@ -154,8 +163,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
         // Needs to be set for using a custom repository method, known spring bug.
-        SecurityUtils.setAuthorizationObject();
-        Participation updatedParticipation = participationRepository.getOneWithEagerSubmissions(participationId);
+        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participationId).get();
         assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
         assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
 
@@ -193,9 +201,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(feedbacks).hasSize(3);
         assertThat(createdResult.getAssessor()).isNull();
         // Needs to be set for using a custom repository method, known spring bug.
-        SecurityUtils.setAuthorizationObject();
-        var updatedParticipation = participationRepository.getOneWithEagerSubmissions(participation.getId());
-        submission = submissionRepository.findByIdWithEagerResult(submission.getId());
+        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
+        submission = submissionRepository.findWithEagerResultById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
         assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
         assertThat(updatedParticipation.getSubmissions()).hasSize(1);
@@ -225,9 +232,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
         // Needs to be set for using a custom repository method, known spring bug.
-        SecurityUtils.setAuthorizationObject();
-        Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
-        submission = submissionRepository.findByIdWithEagerResult(submission.getId());
+        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
+        submission = submissionRepository.findWithEagerResultById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
         assertThat(submission.getResult().getId()).isEqualTo(createdResult.getId());
         assertThat(participation.getSubmissions()).hasSize(1);
@@ -261,9 +267,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         // Make sure there are now 2 submission: 1 that was created on submit and 1 when the second result came in.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(2);
-        SecurityUtils.setAuthorizationObject();
-        ProgrammingSubmission submission1 = submissionRepository.findByIdWithEagerResult(submissions.get(0).getId());
-        ProgrammingSubmission submission2 = submissionRepository.findByIdWithEagerResult(submissions.get(1).getId());
+        ProgrammingSubmission submission1 = submissionRepository.findWithEagerResultById(submissions.get(0).getId()).get();
+        ProgrammingSubmission submission2 = submissionRepository.findWithEagerResultById(submissions.get(1).getId()).get();
 
         // There should be 1 result linked to each submission.
         List<Result> results = resultRepository.findAll();
@@ -315,8 +320,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Long participationId = getParticipationIdByType(participationType, 0);
         postResult(participationType, 0, HttpStatus.OK, false);
 
-        SecurityUtils.setAuthorizationObject();
-        Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
+        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
@@ -342,21 +346,21 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
-        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
-        doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
-        triggerBuild(participationType, 0, HttpStatus.OK);
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
+        URL repositoryUrl = (programmingParticipation).getRepositoryUrlAsUrl();
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(repositoryUrl);
+        triggerBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(1);
         ProgrammingSubmission submission = submissions.get(0);
-        assertThat(submission.getCommitHash()).isEqualTo(objectId.getName());
+        assertThat(submission.getCommitHash()).isEqualTo(COMMIT_HASH_OBJECT_ID.getName());
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
 
-        SecurityUtils.setAuthorizationObject();
-        Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
+        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
 
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -381,10 +385,12 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         // Set buildAndTestAfterDueDate in future.
         setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
         Long participationId = getParticipationIdByType(participationType, 0);
-        URL repositoryUrl = ((ProgrammingExerciseParticipation) participationRepository.findById(participationId).get()).getRepositoryUrlAsUrl();
-        ObjectId objectId = ObjectId.fromString("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingParticipation);
+        URL repositoryUrl = programmingParticipation.getRepositoryUrlAsUrl();
+        ObjectId objectId = COMMIT_HASH_OBJECT_ID;
         doReturn(objectId).when(gitService).getLastCommitHash(repositoryUrl);
-        triggerInstructorBuild(participationType, 0, HttpStatus.OK);
+        triggerInstructorBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
@@ -394,8 +400,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(submission.isSubmitted()).isTrue();
 
-        SecurityUtils.setAuthorizationObject();
-        Participation participation = participationRepository.getOneWithEagerSubmissions(participationId);
+        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
 
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -417,13 +422,14 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
+        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
+        bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>();
-        SecurityUtils.setAuthorizationObject();
-        participations.add(participationRepository.getOneWithEagerSubmissions(solutionParticipationId));
+        participations.add(participationRepository.findWithEagerSubmissionsById(solutionParticipationId).get());
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         // We only create submissions for the solution participation after a push to the test repository.
         assertThat(submissions).hasSize(1);
@@ -501,12 +507,12 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         }
     }
 
-    private void triggerBuild(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
+    private void triggerBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
         Long id = getParticipationIdByType(participationType, participationNumber);
         request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
     }
 
-    private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus) throws Exception {
+    private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
         Long id = getParticipationIdByType(participationType, participationNumber);
         request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
     }
@@ -516,7 +522,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
      */
     private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationNumber);
-        postResult("TEST201904BPROGRAMMINGEXERCISE6-" + buildPlanStudentId, expectedStatus, additionalCommit);
+        postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
     @SuppressWarnings("unchecked")
@@ -545,8 +551,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private String getStudentLoginFromParticipation(int participationNumber) {
-        SecurityUtils.setAuthorizationObject();
-        StudentParticipation participation = studentParticipationRepository.findByIdWithStudent(participationIds.get(participationNumber)).get();
+        StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationNumber)).get();
         return participation.getStudent().getLogin();
     }
 
@@ -562,7 +567,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(exerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId).get();
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExerciseRepository.save(programmingExercise);
     }

@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
@@ -43,7 +45,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
-    @Value("${artemis.jira.admin-group-name}")
+    @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
     @Value("${artemis.version-control.url}")
@@ -68,7 +70,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate restTemplate;
 
-    public BitbucketService(UserService userService, RestTemplate restTemplate) {
+    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate) {
         this.userService = userService;
         this.restTemplate = restTemplate;
     }
@@ -115,28 +117,14 @@ public class BitbucketService extends AbstractVersionControlService {
         log.debug("Setting up branch protection for repository " + repositorySlug);
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
-        HashMap<String, Object> matcher = new HashMap<>();
-
+        final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
         // A wildcard (*) ist used to protect all branches
-        matcher.put("displayId", "*");
-        matcher.put("id", "*");
-        HashMap<String, Object> type = new HashMap<>();
-        type.put("id", "PATTERN");
-        type.put("name", "Pattern");
-        matcher.put("type", type);
-        matcher.put("active", true);
-
-        HashMap<String, Object> fastForwardOnlyType = new HashMap<>();
-        fastForwardOnlyType.put("type", "fast-forward-only"); // Prevent force-pushes
-        fastForwardOnlyType.put("matcher", matcher);
-
-        HashMap<String, Object> noDeletesType = new HashMap<>();
-        noDeletesType.put("type", "no-deletes"); // Prevent deletion of branches
-        noDeletesType.put("matcher", matcher);
-
-        List<Object> body = new ArrayList<>();
-        body.add(fastForwardOnlyType);
-        body.add(noDeletesType);
+        final var matcher = new BitbucketBranchProtectionDTO.MatcherDTO("*", "*", type, true);
+        // Prevent force-pushes
+        final var fastForwardOnlyProtection = new BitbucketBranchProtectionDTO("fast-forward-only", matcher);
+        // Prevent deletion of branches
+        final var noDeletesProtection = new BitbucketBranchProtectionDTO("no-deletes", matcher);
+        final var body = List.of(fastForwardOnlyProtection, noDeletesProtection);
 
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type manually as required by Bitbucket
@@ -219,6 +207,10 @@ public class BitbucketService extends AbstractVersionControlService {
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
                         return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
                     }
+                    else {
+                        log.warn("Invalid response code from Bitbucket while trying to fork repository {}: {}. Body from Bitbucket: {}", sourceRepositoryName,
+                                response.getStatusCode(), new ObjectMapper().writeValueAsString(response.getBody()));
+                    }
                 }
                 catch (HttpServerErrorException.InternalServerError e) {
 
@@ -265,7 +257,7 @@ public class BitbucketService extends AbstractVersionControlService {
             throw new BitbucketException("Error while forking repository", emAll);
         }
 
-        return null;
+        throw new BitbucketException("Max retries for forking reached. Could not fork repository " + sourceRepositoryName + " to " + targetRepositoryName);
     }
 
     /**
@@ -296,11 +288,9 @@ public class BitbucketService extends AbstractVersionControlService {
     public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 3) {
-            String repositorySlug = urlParts[3];
-            if (repositorySlug.endsWith(".git")) {
-                repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-            }
+        if (urlParts[urlParts.length - 1].endsWith(".git")) {
+            String repositorySlug = urlParts[urlParts.length - 1];
+            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
             return repositorySlug;
         }
 
@@ -430,7 +420,12 @@ public class BitbucketService extends AbstractVersionControlService {
                     else {
                         throw e;
                     }
+
+                    // Try again if there was an exception
+                    continue;
                 }
+                // Don't try again if everything went fine
+                break;
             }
         }
         catch (HttpClientErrorException e) {
@@ -532,7 +527,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
             if (programmingExercise.getCourse().getTeachingAssistantGroupName() != null && !programmingExercise.getCourse().getTeachingAssistantGroupName().isEmpty()) {
                 grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
-                                                                                                                                             // write-permissions
+                // write-permissions
             }
         }
         catch (HttpClientErrorException e) {
@@ -622,7 +617,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
         Map<Integer, String> webHooks = new HashMap<>();
 
-        if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
+        if (response.getStatusCode().equals(HttpStatus.OK)) {
             // TODO: BitBucket uses a pagination API to split up the responses, so we might have to check all pages
             List<Map<String, Object>> rawWebHooks = (List<Map<String, Object>>) response.getBody().get("values");
             for (Map<String, Object> rawWebHook : rawWebHooks) {

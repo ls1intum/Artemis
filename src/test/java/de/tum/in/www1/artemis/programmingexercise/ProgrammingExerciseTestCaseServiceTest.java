@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -17,14 +17,15 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -44,6 +45,9 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
+    @Autowired
     DatabaseUtilService database;
 
     private ProgrammingExercise programmingExercise;
@@ -51,19 +55,18 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     private Result result;
 
     @BeforeEach
-    public void reset() {
+    public void setUp() {
         database.addUsers(1, 1, 0);
-
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-
         result = new Result();
-
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        bambooRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        bambooRequestMockProvider.reset();
     }
 
     @Test
@@ -116,18 +119,18 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     public void shouldResetTestWeights() throws Exception {
-        SecurityUtils.setAuthorizationObject();
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
-        database.addParticipationWithResultForExercise(programmingExercise, "student1");
+        database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
         testCaseService.resetWeights(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
@@ -143,10 +146,11 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void shouldUpdateTestWeight() throws Exception {
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
-        database.addParticipationWithResultForExercise(programmingExercise, "student1");
+        database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
 
         ProgrammingExerciseTestCase testCase = testCaseRepository.findAll().get(0);
 
@@ -160,7 +164,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
 
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();

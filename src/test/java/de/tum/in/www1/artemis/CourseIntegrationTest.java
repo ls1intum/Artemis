@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -46,11 +48,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     CustomAuditEventRepository auditEventRepo;
 
     @Autowired
+    private JiraRequestMockProvider jiraRequestMockProvider;
+
+    @Autowired
     UserRepository userRepo;
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 5, 1);
     }
 
     @AfterEach
@@ -211,7 +216,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
             long numberOfSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
             assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
-            assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(1);
+            assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
                     isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
@@ -290,6 +295,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "ab123cd")
     public void testRegisterForCourse() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
         User student = ModelFactory.generateActivatedUser("ab123cd");
         userRepo.save(student);
 
@@ -301,6 +307,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course1.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(course2.getStudentGroupName()));
 
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
@@ -311,5 +319,16 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(auditEvent.getData().get("course")).as("Correct Event Data").isEqualTo(course1.getTitle());
 
         request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void updateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+
+        request.put("/api/courses", course, HttpStatus.OK);
+
+        verifyNoInteractions(versionControlService);
     }
 }

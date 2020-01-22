@@ -11,7 +11,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
 import { VERSION } from 'app/app.constants';
 import * as moment from 'moment';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';

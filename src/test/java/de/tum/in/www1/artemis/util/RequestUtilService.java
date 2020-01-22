@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -58,6 +59,15 @@ public class RequestUtilService {
         }
         assertThat(res.getResponse().containsHeader("location")).isTrue();
         return new URI(res.getResponse().getHeader("location"));
+    }
+
+    public void postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        final var mapper = new ObjectMapper();
+        final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
+        });
+        final var content = new LinkedMultiValueMap<String, String>();
+        content.setAll(jsonMap);
+        final var res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
     }
 
     public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, HttpHeaders httpHeaders) throws Exception {
@@ -102,16 +112,19 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T, R> R patchWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
-                .andExpect(status().is(expectedStatus.value())).andReturn();
+    public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(mediaType).content(body).with(csrf())).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
 
         if (res.getResponse().getStatus() >= 299) {
             return null;
         }
 
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+    public <R> R patchWithResponseBody(String path, Object body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return patchWithResponseBody(path, mapper.writeValueAsString(body), responseType, expectedStatus, MediaType.APPLICATION_JSON);
     }
 
     public <T, R> List<R> putWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {

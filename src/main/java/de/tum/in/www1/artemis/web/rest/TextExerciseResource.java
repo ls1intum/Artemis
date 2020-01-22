@@ -112,11 +112,6 @@ public class TextExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -151,11 +146,6 @@ public class TextExerciseResource {
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
@@ -294,13 +284,13 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         participation.setSubmissions(new HashSet<>());
 
         participation.getExercise().filterSensitiveInformation();
 
-        if (optionalTextSubmission.isPresent()) {
-            TextSubmission textSubmission = optionalTextSubmission.get();
+        if (optionalSubmission.isPresent()) {
+            TextSubmission textSubmission = (TextSubmission) optionalSubmission.get();
 
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);

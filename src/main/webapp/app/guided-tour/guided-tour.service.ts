@@ -295,12 +295,13 @@ export class GuidedTourService {
             return;
         }
 
-        if (this.isCurrentTour(completedTour)) {
-            this.resetTour();
-        }
-
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
+        }
+
+        if (this.isCurrentTour(completedTour)) {
+            this.resetTour();
+            return;
         }
 
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];

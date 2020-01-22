@@ -1,5 +1,6 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -27,7 +29,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -40,7 +41,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     RequestUtilService request;
 
     @Autowired
-    ProgrammingExerciseRepository exerciseRepository;
+    ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
@@ -52,12 +53,12 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addParticipationWithResultForExercise(exercise, "student1");
+        database.addProgrammingParticipationWithResultForExercise(exercise, "student1");
         exercise.setTestCasesChanged(true);
-        exerciseRepository.save(exercise);
+        programmingExerciseRepository.save(exercise);
 
         doNothing().when(continuousIntegrationService).triggerBuild(any());
 
@@ -74,6 +75,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void triggerBuildStudent() throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
@@ -90,6 +92,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
@@ -125,6 +128,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Timeout(5)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExercise_Instructor() throws Exception {
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login1 = "student1";
         String login2 = "student2";
         String login3 = "student3";
@@ -133,7 +137,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.addStudentParticipationForProgrammingExercise(exercise, login3);
         // Set test cases changed to true; after the build run it should be false);
         exercise.setTestCasesChanged(true);
-        exerciseRepository.save(exercise);
+        programmingExerciseRepository.save(exercise);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
         await().until(() -> submissionRepository.count() == 3);
@@ -154,8 +158,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
             verify(continuousIntegrationService).triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
         }
 
-        SecurityUtils.setAuthorizationObject();
-        ProgrammingExercise updatedProgrammingExercise = exerciseRepository.findById(exercise.getId()).get();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId()).get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
@@ -186,6 +189,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         // We only trigger two participations here: 1 and 3.
         List<Long> participationsToTrigger = new ArrayList<>(Arrays.asList(participation1.getId(), participation3.getId()));
 
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build", participationsToTrigger, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();

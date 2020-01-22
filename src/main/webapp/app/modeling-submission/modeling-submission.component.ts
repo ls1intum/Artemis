@@ -2,7 +2,8 @@ import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
-import { ParticipationWebsocketService, StudentParticipation } from '../entities/participation';
+import { StudentParticipation } from '../entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
 import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
@@ -23,6 +24,7 @@ import { omit } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { participationStatus } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -104,6 +106,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
 
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
+                        this.modelingExercise.studentParticipations = [this.participation];
+                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                         if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
                         }
@@ -237,6 +241,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
                     this.submission = response.body!;
+                    // reconnect so that the submission status is displayed correctly in the result.component
+                    this.submission.participation.submissions = [this.submission];
+                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                     this.result = this.submission.result;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                 },
@@ -287,6 +294,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     response => {
                         this.submission = response.body!;
+                        // reconnect so that the submission status is displayed correctly in the result.component
+                        this.submission.participation.submissions = [this.submission];
+                        this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                         this.result = this.submission.result;
                         this.retryStarted = false;
 

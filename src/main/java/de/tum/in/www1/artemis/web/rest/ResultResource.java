@@ -296,7 +296,7 @@ public class ResultResource {
      */
     @GetMapping(value = "exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withSubmissions,
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions,
             @RequestParam(defaultValue = "false") boolean withAssessors) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
@@ -468,5 +468,21 @@ public class ResultResource {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
         return ResponseUtil.wrapOrNotFound(result);
+    }
+
+    /**
+     * Creates a new example result for the provided example submission ID.
+     *
+     * @param submissionId The submission ID for which an example result should get created
+     * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
+     * @return The newly created result
+     */
+    @PostMapping("/submissions/{submissionId}/example-result")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createExampleResult(@PathVariable long submissionId,
+            @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
+        log.debug("REST request to create a new example result for submission: {}", submissionId);
+        final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 }

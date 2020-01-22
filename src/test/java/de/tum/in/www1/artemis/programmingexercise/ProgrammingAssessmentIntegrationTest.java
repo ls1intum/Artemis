@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -66,7 +67,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
+    public void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1");
         Result programmingAssessment = programmingSubmission.getResult();
@@ -99,7 +100,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
+    public void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
         Result programmingAssessment = programmingSubmission.getResult();
@@ -117,7 +118,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
+    public void updateAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
         Result programmingAssessment = programmingSubmission.getResult();
@@ -135,7 +136,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
+    public void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
         Result programmingAssessment = programmingSubmission.getResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 

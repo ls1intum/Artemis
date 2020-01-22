@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Subscription } from 'rxjs';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
@@ -13,6 +14,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { DifferencePipe } from 'ngx-moment';
+import { TranslateService } from '@ngx-translate/core';
+import { Submission } from 'app/entities/submission';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -31,8 +34,11 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
 
+    private cancelConfirmationText: string;
+
     // all available submissions
     submissions: ModelingSubmission[];
+    filteredSubmissions: ModelingSubmission[];
     optimalSubmissions: ModelingSubmission[];
     // non optimal submissions
     otherSubmissions: ModelingSubmission[];
@@ -57,13 +63,16 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
         private accountService: AccountService,
+        private translateService: TranslateService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
         this.submissions = [];
+        this.filteredSubmissions = [];
         this.optimalSubmissions = [];
         this.otherSubmissions = [];
         this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
     }
 
     ngOnInit() {
@@ -108,9 +117,15 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     submission.participation.results = [submission.result];
                 }
             });
+            this.filteredSubmissions = this.submissions;
             this.filterSubmissions(forceReload);
             this.assessedSubmissions = this.submissions.filter(submission => submission.result && submission.result.completionDate && submission.result.score).length;
         });
+    }
+
+    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
+        this.filteredSubmissions = filteredSubmissions as ModelingSubmission[];
+        this.applyFilter();
     }
 
     /**
@@ -144,10 +159,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.nextOptimalSubmissionIds.includes(submission.id) &&
                 (!(submission.result && submission.result.assessor) || (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
-        this.optimalSubmissions = this.submissions.filter(submission => {
+        this.optimalSubmissions = this.filteredSubmissions.filter(submission => {
             return submission.optimal;
         });
-        this.otherSubmissions = this.submissions.filter(submission => {
+        this.otherSubmissions = this.filteredSubmissions.filter(submission => {
             return !submission.optimal;
         });
     }
@@ -209,6 +224,18 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
         this.router.onSameUrlNavigation = 'reload';
         this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
+    }
+
+    /**
+     * Cancel the current assessment and reload the submissions to reflect the change.
+     */
+    cancelAssessment(submission: Submission) {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.modelingAssessmentService.cancelAssessment(submission.id).subscribe(() => {
+                this.refresh();
+            });
+        }
     }
 
     ngOnDestroy() {
