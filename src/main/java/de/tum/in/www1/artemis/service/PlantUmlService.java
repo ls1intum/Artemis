@@ -28,6 +28,13 @@ public class PlantUmlService {
         }
     }
 
+    /**
+     * Generate SVG diagram for given PlantUML commands
+     *
+     * @param plantUml PlantUML command(s)
+     * @return ResponseEntity PNG stream
+     * @throws IOException if generateImage can't create the SVG
+     */
     public String generateSvg(final String plantUml) throws IOException {
         try (final var bos = new ByteArrayOutputStream()) {
             final var reader = new SourceStringReader(plantUml);
