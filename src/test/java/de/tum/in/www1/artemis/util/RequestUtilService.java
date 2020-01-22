@@ -167,6 +167,11 @@ public class RequestUtilService {
         return responseType == String.class ? (T) contentAsString : mapper.readValue(contentAsString, responseType);
     }
 
+    public byte[] getPng(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        final var res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        return res.getResponse().getContentAsByteArray();
+    }
+
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {
         return getList(path, expectedStatus, listElementType, new LinkedMultiValueMap<>());
     }
