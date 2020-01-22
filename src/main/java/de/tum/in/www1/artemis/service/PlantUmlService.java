@@ -17,6 +17,7 @@ public class PlantUmlService {
      * Generate PNG diagram for given PlantUML commands
      *
      * @param plantUml PlantUML command(s)
+     * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
      */
     public byte[] generatePng(final String plantUml) throws IOException {
