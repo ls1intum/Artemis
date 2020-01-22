@@ -577,7 +577,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/participations/{participationId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);

@@ -657,7 +657,8 @@ public class UserService {
         return userRepository.save(loggedInUser);
     }
 
-    /** Finds all users that are part of the specified group, but are not contained in the collection of excluded users
+    /**
+     * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
      *
      * @param groupName The group by which all users should get filtered
      * @param excludedUsers The users that should get ignored/excluded
