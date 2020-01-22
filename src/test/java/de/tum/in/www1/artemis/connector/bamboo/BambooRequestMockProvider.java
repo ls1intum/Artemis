@@ -8,14 +8,16 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -34,13 +36,18 @@ import com.appfire.bamboo.cli.helpers.PlanHelper;
 import com.appfire.bamboo.cli.helpers.RepositoryHelper;
 import com.appfire.bamboo.cli.objects.RemoteRepository;
 import com.appfire.common.cli.CliClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdateProvider;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
+import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.util.Verifiable;
 
 @Component
@@ -63,9 +70,10 @@ public class BambooRequestMockProvider {
     @SpyBean
     private BambooBuildPlanUpdateProvider bambooBuildPlanUpdateProvider;
 
-    private final RestTemplate restTemplate;
+    @Autowired
+    private ObjectMapper mapper;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final RestTemplate restTemplate;
 
     private MockRestServiceServer mockServer;
 
@@ -164,5 +172,83 @@ public class BambooRequestMockProvider {
         final var triggerBuildPath = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/queue/").pathSegment(buildPlan).build().toUri();
 
         mockServer.expect(requestTo(triggerBuildPath)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockQueryLatestBuildResultFromBambooServer(String planKey) throws URISyntaxException, JsonProcessingException {
+        final var response = createBuildResult(planKey);
+        final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
+                .pathSegment("latest.json").queryParam("expand", "testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions").build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
+
+    private BambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException {
+        final var buildResult = new BambooBuildResultDTO();
+        final var testResults = new BambooBuildResultDTO.BambooTestResultsDTO();
+        final var failedTests = new BambooBuildResultDTO.BambooFailedTestsDTO();
+
+        failedTests.setExpand("testResult");
+        failedTests.setSize(3);
+        failedTests.setTestResults(List.of(createFailedTest("test1"), createFailedTest("test2"), createFailedTest("test3")));
+
+        testResults.setAll(3);
+        testResults.setExistingFailed(0);
+        testResults.setFailed(3);
+        testResults.setFixed(0);
+        testResults.setNewFailed(0);
+        testResults.setQuarantined(0);
+        testResults.setSkipped(0);
+        testResults.setSuccessful(0);
+        testResults.setFailedTests(failedTests);
+
+        buildResult.setBuildCompletedDate(ZonedDateTime.now().minusMinutes(1));
+        buildResult.setBuildReason("Initial clean build");
+        buildResult.setBuildState(BambooBuildResultDTO.BuildState.FAILED);
+        buildResult.setBuildTestSummary("3 of 3 failed");
+        buildResult.setVcsRevisionKey(TestConstants.COMMIT_HASH_STRING);
+        buildResult.setTestResults(testResults);
+        final var changesString = "{\n" + "        \"size\": 0,\n" + "        \"expand\": \"change\",\n" + "        \"change\": [],\n" + "        \"start-index\": 0,\n"
+                + "        \"max-result\": 0\n" + "    }";
+        final var artifactsString = "{\n" + "        \"size\": 1,\n" + "        \"start-index\": 0,\n" + "        \"max-result\": 1,\n" + "        \"artifact\": [\n"
+                + "            {\n" + "                \"name\": \"Build log\",\n" + "                \"link\": {\n"
+                + "                    \"href\": \"https://bamboobruegge.in.tum.de/download/" + planKey + "-JOB1/build_logs/somelog-1.log\",\n"
+                + "                    \"rel\": \"self\"\n" + "                },\n" + "                \"producerJobKey\": \"" + planKey + "-JOB1-1\",\n"
+                + "                \"shared\": false\n" + "            }\n" + "        ]\n" + "    }";
+        buildResult.setChanges(mapper.readValue(changesString, new TypeReference<Map<String, Object>>() {
+        }));
+        buildResult.setArtifacts(mapper.readValue(artifactsString, new TypeReference<Map<String, Object>>() {
+        }));
+
+        return buildResult;
+    }
+
+    private BambooBuildResultDTO.BambooTestResultDTO createFailedTest(final String testName) {
+        final var failed = new BambooBuildResultDTO.BambooTestResultDTO();
+        final var resultError = new BambooBuildResultDTO.BambooTestResultErrorsDTO();
+        final var error = new BambooBuildResultDTO.BambooTestErrorDTO();
+
+        error.setMessage("java.lang.AssertionError: Some assertion failed");
+
+        resultError.setMaxResult(1);
+        resultError.setSize(1);
+        resultError.setErrorMessages(List.of(error));
+
+        failed.setClassName("some.package.ClassName");
+        failed.setMethodName(testName);
+        failed.setDuration(2);
+        failed.setDurationInSeconds(120);
+        failed.setStatus("failed");
+        failed.setErrors(resultError);
+
+        return failed;
+    }
+
+    public void mockRetrieveBuildStatus(final String planKey) throws URISyntaxException, JsonProcessingException {
+        final var response = Map.of("isActive", true, "isBuilding", false);
+        final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan").pathSegment(planKey + ".json").build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 }
