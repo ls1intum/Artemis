@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
+import net.sourceforge.plantuml.FileFormat;
+import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
 
 import org.springframework.stereotype.Service;
@@ -22,6 +25,16 @@ public class PlantUmlService {
 
             reader.generateImage(bos);
             return bos.toByteArray();
+        }
+    }
+
+    public String generateSvg(final String plantUml) throws IOException {
+        try (final var bos = new ByteArrayOutputStream()) {
+            final var reader = new SourceStringReader(plantUml);
+
+            reader.generateImage(bos, new FileFormatOption(FileFormat.SVG));
+
+            return new String(bos.toByteArray(), StandardCharsets.UTF_8);
         }
     }
 }

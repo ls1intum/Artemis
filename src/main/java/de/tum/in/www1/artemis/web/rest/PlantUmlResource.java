@@ -1,12 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-import net.sourceforge.plantuml.FileFormat;
-import net.sourceforge.plantuml.FileFormatOption;
-import net.sourceforge.plantuml.SourceStringReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,24 +57,11 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
-    @GetMapping(value = "/plantuml/svg")
+    @GetMapping(Endpoints.GENERATE_SVG)
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml) throws IOException {
+        final var svg = plantUmlService.generateSvg(plantuml);
 
-        // Create SVG output stream
-        ByteArrayOutputStream svgOutputStream = new ByteArrayOutputStream();
-
-        // Create input stream reader
-        SourceStringReader reader = new SourceStringReader(plantuml);
-
-        // Create SVN
-        reader.generateImage(svgOutputStream, new FileFormatOption(FileFormat.SVG));
-        svgOutputStream.close();
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        // The XML is stored into svg
-        final String svg = new String(svgOutputStream.toByteArray(), StandardCharsets.UTF_8);
-
-        return new ResponseEntity<>(svg, responseHeaders, HttpStatus.OK);
+        return new ResponseEntity<>(svg, HttpStatus.OK);
     }
 
     public static final class Endpoints {

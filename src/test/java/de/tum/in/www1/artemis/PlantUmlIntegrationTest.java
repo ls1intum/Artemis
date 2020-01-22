@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.web.rest.PlantUmlResource.Endpoints.GENERATE_PNG;
-import static de.tum.in.www1.artemis.web.rest.PlantUmlResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.PlantUmlResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -37,6 +36,7 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationTest {
     public void setUp() throws IOException {
         database.addUsers(1, 0, 0);
         doReturn(UML_PNG).when(plantUmlService).generatePng(UML_DIAGRAM_STRING);
+        doReturn(UML_SVG).when(plantUmlService).generateSvg(UML_DIAGRAM_STRING);
     }
 
     @AfterEach
@@ -52,5 +52,15 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationTest {
         final var pngResponse = request.getPng(ROOT + GENERATE_PNG, HttpStatus.OK, paramMap);
 
         assertThat(UML_PNG).isEqualTo(pngResponse);
+    }
+
+    @Test
+    @WithMockUser
+    public void generateSvg_asStudent_success() throws Exception {
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
+        final var svgResponse = request.get(ROOT + GENERATE_SVG, HttpStatus.OK, String.class, paramMap);
+
+        assertThat(UML_SVG).isEqualTo(svgResponse);
     }
 }
