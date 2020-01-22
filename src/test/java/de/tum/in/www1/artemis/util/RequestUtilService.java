@@ -164,7 +164,13 @@ public class RequestUtilService {
             return null;
         }
 
-        return responseType == String.class ? (T) contentAsString : mapper.readValue(contentAsString, responseType);
+        if (responseType == String.class) {
+            return (T) contentAsString;
+        }
+        if (responseType == Boolean.class) {
+            return (T) Boolean.valueOf(contentAsString);
+        }
+        return mapper.readValue(contentAsString, responseType);
     }
 
     public byte[] getPng(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
