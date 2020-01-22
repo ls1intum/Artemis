@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -58,6 +59,15 @@ public class RequestUtilService {
         }
         assertThat(res.getResponse().containsHeader("location")).isTrue();
         return new URI(res.getResponse().getHeader("location"));
+    }
+
+    public void postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        final var mapper = new ObjectMapper();
+        final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
+        });
+        final var content = new LinkedMultiValueMap<String, String>();
+        content.setAll(jsonMap);
+        final var res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
     }
 
     public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, HttpHeaders httpHeaders) throws Exception {

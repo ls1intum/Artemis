@@ -13,6 +13,10 @@
                 [tutorParticipation]="tutorParticipation"
                 [numberOfParticipations]="numberOfSubmissions"
                 [numberOfAssessments]="numberOfAssessments"
+                [numberOfComplaints]="numberOfComplaints"
+                [numberOfOpenComplaints]="numberOfOpenComplaints"
+                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
+                [numberOfOpenMoreFeedbackRequests]="numberOfOpenMoreFeedbackRequests"
             >
             </jhi-tutor-participation-graph>
         </div>
@@ -315,8 +319,11 @@
                     </table>
 
                     <ng-template #noComplaints>
-                        <div class="alert alert-info">
+                        <div *ngIf="numberOfTutorComplaints === 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}
+                        </div>
+                        <div *ngIf="numberOfTutorComplaints !== 0" class="alert alert-info">
+                            {{ 'artemisApp.tutorExerciseDashboard.noComplaintsDisplayed' | translate }}
                         </div>
                     </ng-template>
                 </div>
@@ -374,8 +381,11 @@
                     </table>
 
                     <ng-template #noComplaints>
-                        <div class="alert alert-info">
+                        <div *ngIf="numberOfMoreFeedbackRequests === 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequests' | translate }}
+                        </div>
+                        <div *ngIf="numberOfMoreFeedbackRequests !== 0" class="alert alert-info">
+                            {{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequestsDisplayed' | translate }}
                         </div>
                     </ng-template>
                 </div>
