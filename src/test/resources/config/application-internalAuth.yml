@@ -1,0 +1,3 @@
+artemis:
+  user-management:
+    use-external: false
