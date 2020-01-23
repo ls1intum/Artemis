@@ -69,3 +69,7 @@ artemis:
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
         secret: null
+
+info:
+    contact: artemis.in@tum.de
+    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint

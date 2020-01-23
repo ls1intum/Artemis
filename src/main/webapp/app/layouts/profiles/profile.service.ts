@@ -44,6 +44,8 @@ export class ProfileService {
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
+                        profileInfo.imprint = data.imprint;
+                        profileInfo.contact = data.contact;
 
                         return profileInfo;
                     }),
