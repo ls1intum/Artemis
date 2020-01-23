@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -66,6 +67,7 @@ public class ProgrammingExerciseExportService {
         this.gitService = gitService;
     }
 
+    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
     private String REPO_DOWNLOAD_CLONE_PATH;
 
@@ -77,11 +79,8 @@ public class ProgrammingExerciseExportService {
      * @param repositoryExportOptions the options that should be used for the export
      * @return a zip file containing all requested participations
      */
-    public java.io.File exportStudentRepositories(Long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
+    public File exportStudentRepositories(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
-        // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
-        String repoDownloadClonePath = REPO_DOWNLOAD_CLONE_PATH;
-
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
 
         if (repositoryExportOptions.isExportAllStudents()) {
@@ -100,92 +99,158 @@ public class ProgrammingExerciseExportService {
                     log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
                     continue;
                 }
-                repo = gitService.getOrCheckoutRepository(participation, repoDownloadClonePath);
-                gitService.resetToOriginMaster(repo); // start with clean state
-
-                if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
-                    log.debug("Filter late submissions for participation {}", participation.toString());
-                    Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                            .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(repositoryExportOptions.getFilterLateSubmissionsDate()))
-                            .max(Comparator.comparing(Submission::getSubmissionDate));
-
-                    gitService.filterLateSubmissions(repo, lastValidSubmission, repositoryExportOptions.getFilterLateSubmissionsDate());
-                }
-
-                if (repositoryExportOptions.isAddStudentName()) {
-                    log.debug("Adding student name to participation {}", participation.toString());
-                    addStudentIdToProjectName(repo, programmingExercise, participation);
-                }
-
-                if (repositoryExportOptions.isCombineStudentCommits()) {
-                    log.debug("Combining commits for participation {}", participation.toString());
-                    gitService.combineAllStudentCommits(repo, programmingExercise);
-                }
-
-                if (repositoryExportOptions.isNormalizeCodeStyle()) {
-                    try {
-                        log.debug("Normalizing code style for participation {}", participation.toString());
-                        fileService.normalizeLineEndingsDirectory(repo.getLocalPath().toString());
-                        fileService.convertToUTF8Directory(repo.getLocalPath().toString());
-                    }
-                    catch (Exception ex) {
-                        log.warn("Cannot normalize code style in the repo " + repo.getLocalPath() + " due to the following exception: " + ex.getMessage());
-                    }
-                }
-
-                log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-                Path zippedRepoFile = gitService.zipRepository(repo, repoDownloadClonePath);
-                zippedRepoFiles.add(zippedRepoFile);
+                repo = zipRepositoryForParticipation(programmingExercise, participation, repositoryExportOptions, zippedRepoFiles);
             }
             catch (IOException | GitException | GitAPIException | InterruptedException ex) {
                 log.error("export student repository " + participation.getRepositoryUrlAsUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
                         + ex.getMessage());
             }
             finally {
-                // we do some cleanup here to prevent future errors with file handling
-                // We can always delete the repository as it won't be used by the student (separate path)
-                if (repo != null) {
-                    try {
-                        log.debug("Delete temporary repository " + repo.getLocalPath().toString());
-                        gitService.deleteLocalRepository(participation, repoDownloadClonePath);
-                    }
-                    catch (Exception ex) {
-                        log.warn("Could not delete temporary repository " + repo.getLocalPath().toString() + ": " + ex.getMessage());
-                    }
-                }
+                deleteTempLocalRepository(participation, repo);
             }
         }
+
         if (zippedRepoFiles.isEmpty()) {
             log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
             return null;
         }
+
         try {
             // create a large zip file with all zipped repos and provide it for download
-            log.debug("Create zip file for all repositories");
-            Path zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(),
-                    programmingExercise.getCourse().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
-            createZipFile(zipFilePath, zippedRepoFiles);
-            scheduleForDeletion(zipFilePath, 15);
-            log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
-            return new java.io.File(zipFilePath.toString());
+            return createZipWithAllRepositories(programmingExercise, zippedRepoFiles);
         }
         catch (IOException ex) {
             log.error("Export students repositories for exercise '" + programmingExercise.getTitle() + "' did not work as expected: " + ex.getMessage());
         }
         finally {
             // we do some cleanup here to prevent future errors with file handling
-            log.debug("Delete all temporary zip repo files");
-            // delete the temporary zipped repo files
-            for (Path zippedRepoFile : zippedRepoFiles) {
-                try {
-                    Files.delete(zippedRepoFile);
-                }
-                catch (Exception ex) {
-                    log.warn("Could not delete file " + zippedRepoFile + ". Error message: " + ex.getMessage());
-                }
+            deleteTempZipRepoFiles(zippedRepoFiles);
+        }
+
+        return null;
+    }
+
+    /**
+     * Delete all temporary zipped repositories created during export
+     *
+     * @param pathsToZipeedRepos A list of all paths to the zip files, that should be deleted
+     */
+    private void deleteTempZipRepoFiles(List<Path> pathsToZipeedRepos) {
+        log.debug("Delete all temporary zip repo files");
+        // delete the temporary zipped repo files
+        for (Path zippedRepoFile : pathsToZipeedRepos) {
+            try {
+                Files.delete(zippedRepoFile);
+            }
+            catch (Exception ex) {
+                log.warn("Could not delete file " + zippedRepoFile + ". Error message: " + ex.getMessage());
             }
         }
-        return null;
+    }
+
+    /**
+     * Checks out the repository fo the given participation, zips it and adds the path to the given list of already
+     * zipped repos.
+     *
+     * @param programmingExercise The programming exercise for the participation
+     * @param participation The participation, for which the repository should get zipped
+     * @param repositoryExportOptions The options, that should get applied to the zipeed repo
+     * @param pathsToZippedRepos A list of already zipped repos. The path of the newly zip file will get added to this list
+     * @return The checked out and zipeed repository
+     * @throws GitAPIException If something went wrong checking out the repo
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private Repository zipRepositoryForParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
+            final RepositoryExportOptionsDTO repositoryExportOptions, List<Path> pathsToZippedRepos) throws GitAPIException, InterruptedException, IOException {
+        final var repo = gitService.getOrCheckoutRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
+        gitService.resetToOriginMaster(repo); // start with clean state
+
+        if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
+            filterLateSubmissions(repositoryExportOptions.getFilterLateSubmissionsDate(), participation, repo);
+        }
+
+        if (repositoryExportOptions.isAddStudentName()) {
+            log.debug("Adding student name to participation {}", participation.toString());
+            addStudentIdToProjectName(repo, programmingExercise, participation);
+        }
+
+        if (repositoryExportOptions.isCombineStudentCommits()) {
+            log.debug("Combining commits for participation {}", participation.toString());
+            gitService.combineAllStudentCommits(repo, programmingExercise);
+        }
+
+        if (repositoryExportOptions.isNormalizeCodeStyle()) {
+            try {
+                log.debug("Normalizing code style for participation {}", participation.toString());
+                fileService.normalizeLineEndingsDirectory(repo.getLocalPath().toString());
+                fileService.convertToUTF8Directory(repo.getLocalPath().toString());
+            }
+            catch (Exception ex) {
+                log.warn("Cannot normalize code style in the repo " + repo.getLocalPath() + " due to the following exception: " + ex.getMessage());
+            }
+        }
+
+        log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
+        Path zippedRepoFile = gitService.zipRepository(repo, REPO_DOWNLOAD_CLONE_PATH);
+        pathsToZippedRepos.add(zippedRepoFile);
+
+        return repo;
+    }
+
+    /**
+     * Creates one single zip archive containing all zipped repositories found under the given paths
+     *
+     * @param programmingExercise The programming exercise to which all repos belong to
+     * @param pathsToZippedRepos The paths to all zipped repositories
+     * @return
+     * @throws IOException
+     */
+    private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos) throws IOException {
+        log.debug("Create zip file for all repositories");
+        final var programmingExerciseId = programmingExercise.getId();
+        Path zipFilePath = Paths.get(pathsToZippedRepos.get(0).getParent().toString(),
+                programmingExercise.getCourse().getShortName() + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + ".zip");
+        createZipFile(zipFilePath, pathsToZippedRepos);
+        scheduleForDeletion(zipFilePath, 15);
+        log.info("Export student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "' was successful.");
+
+        return new File(zipFilePath.toString());
+    }
+
+    /**
+     * Deletes the locally checked out repository.
+     *
+     * @param participation The participation related to the repository
+     * @param repo The repository that should get deleted
+     */
+    private void deleteTempLocalRepository(ProgrammingExerciseStudentParticipation participation, Repository repo) {
+        // we do some cleanup here to prevent future errors with file handling
+        // We can always delete the repository as it won't be used by the student (separate path)
+        if (repo != null) {
+            try {
+                log.debug("Delete temporary repository " + repo.getLocalPath().toString());
+                gitService.deleteLocalRepository(participation, REPO_DOWNLOAD_CLONE_PATH);
+            }
+            catch (Exception ex) {
+                log.warn("Could not delete temporary repository " + repo.getLocalPath().toString() + ": " + ex.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Filters out all late commits of submissions from the checked out repository of a participation
+     *
+     * @param submissionDate The submission date (inclusive), after which all submissions should get filtered out
+     * @param participation The participation related to the repository
+     * @param repo The repository for which to filter all late submissions
+     */
+    private void filterLateSubmissions(ZonedDateTime submissionDate, ProgrammingExerciseStudentParticipation participation, Repository repo) {
+        log.debug("Filter late submissions for participation {}", participation.toString());
+        Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
+                .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(submissionDate)).max(Comparator.comparing(Submission::getSubmissionDate));
+
+        gitService.filterLateSubmissions(repo, lastValidSubmission, submissionDate);
     }
 
     /**
@@ -231,72 +296,13 @@ public class ProgrammingExerciseExportService {
             List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).collect(Collectors.toList());
 
             for (String eclipseProjectFilePath : eclipseProjectFiles) {
-                File eclipseProjectFile = new File(eclipseProjectFilePath);
-                // Check if file exists and full file name is .project and not just the file ending.
-                if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
-                    continue;
-                }
-
-                try {
-                    // 1- Build the doc from the XML file
-                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(eclipseProjectFile.getPath()));
-                    doc.setXmlStandalone(true);
-
-                    // 2- Find the node with xpath
-                    XPath xPath = XPathFactory.newInstance().newXPath();
-                    Node nameNode = (Node) xPath.compile("/projectDescription/name").evaluate(doc, XPathConstants.NODE);
-
-                    // 3- Append Student Id to Project Name
-                    if (nameNode != null) {
-                        nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
-                    }
-
-                    // 4- Save the result to a new XML doc
-                    Transformer xformer = TransformerFactory.newInstance().newTransformer();
-                    xformer.transform(new DOMSource(doc), new StreamResult(new File(eclipseProjectFile.getPath())));
-
-                }
-                catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-                    log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
-                }
+                addStudentIdToEclipseProjectName(repo, studentId, eclipseProjectFilePath);
             }
 
             // Filter all pom.xml files
             List<String> pomFiles = allRepoFiles.stream().filter(file -> file.endsWith("pom.xml")).collect(Collectors.toList());
             for (String pomFilePath : pomFiles) {
-                File pomFile = new File(pomFilePath);
-                // check if file exists and full file name is pom.xml and not just the file ending.
-                if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
-                    continue;
-                }
-
-                try {
-                    // 1- Build the doc from the XML file
-                    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(pomFile.getPath()));
-                    doc.setXmlStandalone(true);
-
-                    // 2- Find the relevant nodes with xpath
-                    XPath xPath = XPathFactory.newInstance().newXPath();
-                    Node nameNode = (Node) xPath.compile("/project/name").evaluate(doc, XPathConstants.NODE);
-                    Node artifactIdNode = (Node) xPath.compile("/project/artifactId").evaluate(doc, XPathConstants.NODE);
-
-                    // 3- Append Student Id to Project Names
-                    if (nameNode != null) {
-                        nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
-                    }
-                    if (artifactIdNode != null) {
-                        String artifactId = (artifactIdNode.getTextContent() + "-" + studentId).replaceAll(" ", "-").toLowerCase();
-                        artifactIdNode.setTextContent(artifactId);
-                    }
-
-                    // 4- Save the result to a new XML doc
-                    Transformer xformer = TransformerFactory.newInstance().newTransformer();
-                    xformer.transform(new DOMSource(doc), new StreamResult(new File(pomFile.getPath())));
-
-                }
-                catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-                    log.error("Cannot rename pom.xml file in " + repo.getLocalPath() + " due to the following exception: " + ex);
-                }
+                addStudentIdToMavenProjectName(repo, studentId, pomFilePath);
             }
         }
 
@@ -306,6 +312,73 @@ public class ProgrammingExerciseExportService {
         }
         catch (GitAPIException ex) {
             log.error("Cannot stage or commit to the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    private void addStudentIdToMavenProjectName(Repository repo, String studentId, String pomFilePath) {
+        File pomFile = new File(pomFilePath);
+        // check if file exists and full file name is pom.xml and not just the file ending.
+        if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
+            return;
+        }
+
+        try {
+            // 1- Build the doc from the XML file
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(pomFile.getPath()));
+            doc.setXmlStandalone(true);
+
+            // 2- Find the relevant nodes with xpath
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            Node nameNode = (Node) xPath.compile("/project/name").evaluate(doc, XPathConstants.NODE);
+            Node artifactIdNode = (Node) xPath.compile("/project/artifactId").evaluate(doc, XPathConstants.NODE);
+
+            // 3- Append Student Id to Project Names
+            if (nameNode != null) {
+                nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+            }
+            if (artifactIdNode != null) {
+                String artifactId = (artifactIdNode.getTextContent() + "-" + studentId).replaceAll(" ", "-").toLowerCase();
+                artifactIdNode.setTextContent(artifactId);
+            }
+
+            // 4- Save the result to a new XML doc
+            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            xformer.transform(new DOMSource(doc), new StreamResult(new File(pomFile.getPath())));
+
+        }
+        catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
+            log.error("Cannot rename pom.xml file in " + repo.getLocalPath() + " due to the following exception: " + ex);
+        }
+    }
+
+    private void addStudentIdToEclipseProjectName(Repository repo, String studentId, String eclipseProjectFilePath) {
+        File eclipseProjectFile = new File(eclipseProjectFilePath);
+        // Check if file exists and full file name is .project and not just the file ending.
+        if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
+            return;
+        }
+
+        try {
+            // 1- Build the doc from the XML file
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(eclipseProjectFile.getPath()));
+            doc.setXmlStandalone(true);
+
+            // 2- Find the node with xpath
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            Node nameNode = (Node) xPath.compile("/projectDescription/name").evaluate(doc, XPathConstants.NODE);
+
+            // 3- Append Student Id to Project Name
+            if (nameNode != null) {
+                nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+            }
+
+            // 4- Save the result to a new XML doc
+            Transformer xformer = TransformerFactory.newInstance().newTransformer();
+            xformer.transform(new DOMSource(doc), new StreamResult(new File(eclipseProjectFile.getPath())));
+
+        }
+        catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
+            log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
         }
     }
 
