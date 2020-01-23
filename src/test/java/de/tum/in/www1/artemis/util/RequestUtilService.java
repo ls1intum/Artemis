@@ -89,7 +89,7 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T> File postWithResponseBodyFile(String path, T body, HttpStatus expectedStatus) throws Exception {
+    public File postWithResponseBodyFile(String path, Object body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(
                 MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).accept(MediaType.APPLICATION_OCTET_STREAM).with(csrf()))
