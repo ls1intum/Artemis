@@ -14,6 +14,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -22,7 +23,8 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
-@ActiveProfiles({ "artemis", "internalAuth" })
+@ActiveProfiles("artemis")
+@TestPropertySource(properties = "artemis.user-management.use-external=false")
 public class InternalAuthenticationIntegrationTest extends AuthenticationIntegrationTest {
 
     @Autowired
