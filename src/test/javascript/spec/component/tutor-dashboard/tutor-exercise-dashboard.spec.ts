@@ -58,7 +58,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 ArtemisResultModule,
                 RouterModule,
                 TranslateModule.forRoot(),
-                ArtemisAssessmentSharedModule
+                ArtemisAssessmentSharedModule,
             ],
             declarations: [
                 TutorExerciseDashboardComponent,
