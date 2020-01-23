@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +26,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -105,56 +112,93 @@ public class ProgrammingExerciseService {
      *     <li>Bamboo build plans</li>
      * </ul>
      *
+     * The exercise gets set up in the following order:
+     * <ol>
+     *     <li>Create all repositories for the new exercise</li>
+     *     <li>Setup template and push it to the repositories</li>
+     *     <li>Setup new build plans for exercise</li>
+     *     <li>Add all webhooks</li>
+     *     <li>Init scheduled jobs for exercise maintenance</li>
+     * </ol>
+     *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
      * @throws Exception If anything goes wrong
      */
     @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
-        User user = userService.getUser();
         programmingExercise.generateAndSetProjectKey();
-        String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var user = userService.getUser();
+        final var projectKey = programmingExercise.getProjectKey();
+        final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
+        final var testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
+        final var solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
-        // Create VCS repositories
-        versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, exerciseRepoName, null); // Create template repository
-        versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
-        versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
-
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-        if (templateParticipation == null) {
-            templateParticipation = new TemplateProgrammingExerciseParticipation();
-            programmingExercise.setTemplateParticipation(templateParticipation);
-        }
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-        if (solutionParticipation == null) {
-            solutionParticipation = new SolutionProgrammingExerciseParticipation();
-            programmingExercise.setSolutionParticipation(solutionParticipation);
-        }
-
+        createRepositoriesForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
         initParticipations(programmingExercise);
+        setURLsAndBuildPlanIDsForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
 
-        String templatePlanName = BuildPlanType.TEMPLATE.getName();
-        String solutionPlanName = BuildPlanType.SOLUTION.getName();
+        // Save participations to get the ids required for the webhooks
+        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+
+        setupExerciseTemplate(programmingExercise, user, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+
+        // save to get the id required for the webhook
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // The creation of the webhooks must occur after the initial push, because the participation is
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
+        versionControlService.get().addWebHooksForExercise(programmingExercise);
+
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    private void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
+        String projectKey = programmingExercise.getProjectKey();
+        continuousIntegrationService.get().createProjectForExercise(programmingExercise);
+        // template build plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl);
+        // solution build plan
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl);
+
+        // Give appropriate permissions for CI projects
+        continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
+
+        giveCIProjectPermissions(programmingExercise);
+    }
+
+    private void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
+        final var templateParticipation = programmingExercise.getTemplateParticipation();
+        final var solutionParticipation = programmingExercise.getSolutionParticipation();
+        templateParticipation.setProgrammingExercise(programmingExercise);
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+    }
+
+    private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise, String exerciseRepoName, String testRepoName, String solutionRepoName) {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var templateParticipation = programmingExercise.getTemplateParticipation();
+        final var solutionParticipation = programmingExercise.getSolutionParticipation();
+        final var templatePlanName = TEMPLATE.getName();
+        final var solutionPlanName = SOLUTION.getName();
+
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    }
 
-        // Save participations to get the ids required for the webhooks
-        templateParticipation.setProgrammingExercise(programmingExercise);
-        solutionParticipation.setProgrammingExercise(programmingExercise);
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-
-        URL exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
-        URL testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
-        URL solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
-
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
+            throws IOException, InterruptedException, GitAPIException {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
         String templatePath = "classpath:templates/" + programmingLanguage;
@@ -187,29 +231,14 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(testRepo, "Empty Setup by Artemis", user);
             gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", user);
         }
+    }
 
-        continuousIntegrationService.get().createProjectForExercise(programmingExercise);
-        // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, templatePlanName, exerciseRepoUrl, testsRepoUrl);
-        // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, solutionPlanName, solutionRepoUrl, testsRepoUrl);
-
-        // Give appropriate permissions for CI projects
-        continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
-
-        giveCIProjectPermissions(programmingExercise);
-
-        // save to get the id required for the webhook
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
-        versionControlService.get().addWebHooksForExercise(programmingExercise);
-
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
-
-        return programmingExercise;
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise, String templateRepoName, String testRepoName, String solutionRepoName) {
+        final var projectKey = programmingExercise.getProjectKey();
+        versionControlService.get().createProjectForExercise(programmingExercise); // Create project
+        versionControlService.get().createRepository(projectKey, templateRepoName, null); // Create template repository
+        versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
+        versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
     }
 
     /**
@@ -231,14 +260,23 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This methods sets the values (initialization date and initialization state) of the template and solution participation
+     * This methods sets the values (initialization date and initialization state) of the template and solution participation.
+     * If either participation is null, a new one will be created.
      *
      * @param programmingExercise The programming exercise
      */
     public void initParticipations(ProgrammingExercise programmingExercise) {
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
+        var templateParticipation = programmingExercise.getTemplateParticipation();
 
-        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
-        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+        if (templateParticipation == null) {
+            templateParticipation = new TemplateProgrammingExerciseParticipation();
+            programmingExercise.setTemplateParticipation(templateParticipation);
+        }
+        if (solutionParticipation == null) {
+            solutionParticipation = new SolutionProgrammingExerciseParticipation();
+            programmingExercise.setSolutionParticipation(solutionParticipation);
+        }
 
         solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
         templateParticipation.setInitializationState(InitializationState.INITIALIZED);
