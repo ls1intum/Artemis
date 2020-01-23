@@ -11,6 +11,7 @@ import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficult
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 const ENTITY_STATES = [...modelingExerciseRoute];
 
@@ -25,6 +26,7 @@ const ENTITY_STATES = [...modelingExerciseRoute];
         ArtemisDifficultyPickerModule,
         ArtemisPresentationScoreModule,
         ArtemisModelingEditorModule,
+        ArtemisAssessmentSharedModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     entryComponents: [ModelingExerciseComponent, DeleteDialogComponent],

@@ -1,61 +1,74 @@
-<div *ngIf="modelingExercise">
-    <h2><span jhiTranslate="artemisApp.modelingExercise.detail.title">Modeling Exercise</span> {{ modelingExercise.id }}</h2>
-    <hr />
-    <jhi-alert-error></jhi-alert-error>
-    <dl class="row-md jh-entity-details markdown-preview">
-        <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
-        <dd>
-            <span>{{ modelingExercise.title }}</span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
-        <dd>
-            <span>{{ modelingExercise.releaseDate | date: 'medium' }}</span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
-        <dd>
-            <span>{{ modelingExercise.dueDate | date: 'medium' }}</span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
-        <dd>
-            <span>{{ modelingExercise.maxScore }}</span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
-        <dd>
-            <span *ngIf="modelingExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-            <span *ngIf="!modelingExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>
-        <dd>
-            <span jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
-        <dd>
-            <div *ngIf="modelingExercise.course">
-                <a [routerLink]="['/course', modelingExercise.course?.id]">{{ modelingExercise.course?.title }}</a>
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="modelingExercise">
+            <h2><span jhiTranslate="artemisApp.modelingExercise.detail.title">Modeling Exercise</span> {{ modelingExercise.id }}</h2>
+            <hr />
+            <jhi-alert></jhi-alert>
+            <jhi-alert-error></jhi-alert-error>
+            <div class="text-right">
+                <jhi-external-submission [exercise]="modelingExercise"></jhi-external-submission>
             </div>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
-        <dd class="editor-outline-background">
-            <span [innerHTML]="problemStatement"></span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
-        <dd class="editor-outline-background">
-            <jhi-modeling-editor *ngIf="sampleSolutionUML" [readOnly]="true" [diagramType]="modelingExercise.diagramType" [umlModel]="sampleSolutionUML!"> </jhi-modeling-editor>
-        </dd>
-        <dd class="editor-outline-background">
-            <span [innerHTML]="sampleSolution"></span>
-        </dd>
-        <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
-        <dd class="editor-outline-background">
-            <span [innerHTML]="gradingInstructions"></span>
-        </dd>
-    </dl>
+            <dl class="row-md jh-entity-details markdown-preview">
+                <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
+                <dd>
+                    <span>{{ modelingExercise.title }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
+                <dd>
+                    <span>{{ modelingExercise.releaseDate | date: 'medium' }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
+                <dd>
+                    <span>{{ modelingExercise.dueDate | date: 'medium' }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
+                <dd>
+                    <span>{{ modelingExercise.maxScore }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
+                <dd>
+                    <span *ngIf="modelingExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
+                    <span *ngIf="!modelingExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>
+                <dd>
+                    <span jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
+                <dd>
+                    <div *ngIf="modelingExercise.course">
+                        <a [routerLink]="['/course', modelingExercise.course?.id]">{{ modelingExercise.course?.title }}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
+                <dd class="editor-outline-background">
+                    <span [innerHTML]="problemStatement"></span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
+                <dd class="editor-outline-background">
+                    <jhi-modeling-editor
+                        *ngIf="sampleSolutionUML"
+                        [readOnly]="true"
+                        [diagramType]="modelingExercise.diagramType"
+                        [umlModel]="sampleSolutionUML!"
+                    ></jhi-modeling-editor>
+                </dd>
+                <dd class="editor-outline-background">
+                    <span [innerHTML]="sampleSolution"></span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+                <dd class="editor-outline-background">
+                    <span [innerHTML]="gradingInstructions"></span>
+                </dd>
+            </dl>
 
-    <button type="submit" (click)="previousState()" class="btn btn-info">
-        <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
-    </button>
+            <button type="submit" (click)="previousState()" class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
 
-    <button type="button" [routerLink]="['/modeling-exercise', modelingExercise.id, 'edit']" replaceUrl="true" queryParamsHandling="merge" class="btn btn-primary">
-        <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-    </button>
+            <button type="button" [routerLink]="['/modeling-exercise', modelingExercise.id, 'edit']" replaceUrl="true" queryParamsHandling="merge" class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
 </div>

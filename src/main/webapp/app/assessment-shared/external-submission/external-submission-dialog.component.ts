@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { Complaint } from 'app/entities/complaint/complaint.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { Exercise } from 'app/entities/exercise';
 import { ExternalSubmissionService } from 'app/assessment-shared/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 
@@ -19,7 +19,7 @@ import { SCORE_PATTERN } from 'app/app.constants';
 export class ExternalSubmissionDialogComponent implements OnInit {
     readonly SCORE_PATTERN = SCORE_PATTERN;
 
-    @Input() exercise: ProgrammingExercise;
+    @Input() exercise: Exercise;
 
     result: Result;
     feedbacks: Feedback[] = [];

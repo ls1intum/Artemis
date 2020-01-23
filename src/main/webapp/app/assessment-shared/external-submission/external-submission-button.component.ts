@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { Exercise } from 'app/entities/exercise';
 import { ExternalSubmissionDialogComponent } from 'app/assessment-shared/external-submission/external-submission-dialog.component';
 
 @Component({
@@ -20,7 +20,7 @@ export class ExternalSubmissionButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() exercise: ProgrammingExercise;
+    @Input() exercise: Exercise;
 
     constructor(private modalService: NgbModal) {}
 
