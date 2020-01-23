@@ -60,6 +60,7 @@ public class AssessmentService {
      * complaint. The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
      *
      * @param originalResult   the original assessment that was complained about
+     * @param exercise         the exercise to which the result belongs
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
