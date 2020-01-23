@@ -14,7 +14,14 @@
             <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
         </div>
         <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.result.resultString">Result Text</h4>
+            <h4 class="control-label" jhiTranslate="artemisApp.result.studentLogin">Student login</h4>
+            <input type="text" required class="form-control" name="studentLogin" id="studentLogin" [(ngModel)]="student.login" #studentLogin="ngModel" />
+            <span class="text-danger" *ngIf="studentLogin?.invalid && studentLogin?.errors?.required" jhiTranslate="artemisApp.result.studentLoginRequired">
+                Student login is required.
+            </span>
+        </div>
+        <div class="form-group">
+            <h4 class="control-label" jhiTranslate="artemisApp.result.resultString">Result</h4>
             <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
             <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired">
                 Result text is required.
@@ -71,10 +78,16 @@
                 </div>
             </div>
         </div>
-        <div class="form-group mb-0" *ngIf="feedbacks.length > 0">
+        <div class="form-group mb-2" *ngIf="feedbacks.length > 0">
             <a (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">More feedback</a>
             &nbsp;
             <a (click)="popFeedback()" jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</a>
+        </div>
+        <div class="form-group">
+            <h4 class="control-label" jhiTranslate="artemisApp.result.rated">Rated</h4>
+            <label class="artemis-label">
+                <input type="checkbox" required name="resultRated" id="resultRated" [(ngModel)]="result.rated" #resultRated="ngModel" />
+            </label>
         </div>
     </div>
     <div class="modal-footer">

@@ -34,6 +34,8 @@
             "viewManual": "Manuelles Ergebnis anzeigen",
             "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl zwischen 0 und 100 sein.",
             "resultStringRequired": "Ein Ergebnis Text ist erforderlich.",
+            "studentLogin": "Studenten Login",
+            "studentLoginRequired": "Studenten Login ist erforderlich.",
             "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
             "studentOverride": "Das Abgabedatum dieser Aufgabe ist noch nicht erreicht. Der Student könnte das manuelle Ergebnise noch mit einer neuen Lösung überschreiben.",
             "addFeedback": "Neues Feedback hinzufügen",

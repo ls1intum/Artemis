@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -23,11 +24,13 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -59,6 +62,8 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserService userService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
@@ -70,13 +75,15 @@ public class ResultResource {
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserService userService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, ResultRepository resultRepository,
+            WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingService = messagingService;
@@ -484,5 +491,35 @@ public class ResultResource {
         log.debug("REST request to create a new example result for submission: {}", submissionId);
         final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
+            throws URISyntaxException {
+        log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
+
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
+        Course course = exercise.getCourse();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No student found for " + studentLogin + " in exercise " + exerciseId);
+        }
+        if (exercise instanceof QuizExercise) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported for Quiz exercises.");
+        }
+
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmission(exercise, student.get());
+        result.setParticipation(participation);
+        result.setSubmission(participation.getSubmissions().iterator().next());
+        resultService.createNewManualResult(result, exercise instanceof ProgrammingExercise, result.isRated());
+
+        return ResponseEntity.created(new URI("/api/results/" + +result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 }

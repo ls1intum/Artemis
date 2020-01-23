@@ -237,6 +237,36 @@ public class ParticipationService {
         return participation;
     }
 
+    public StudentParticipation createParticipationWithEmptySubmission(Exercise exercise, User user) {
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
+        StudentParticipation participation;
+        if (optionalStudentParticipation.isEmpty()) {
+            // create a new participation only if no participation can be found
+            if (exercise instanceof ProgrammingExercise) {
+                participation = new ProgrammingExerciseStudentParticipation();
+            }
+            else {
+                participation = new StudentParticipation();
+            }
+            participation.setInitializationState(FINISHED);
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setExercise(exercise);
+            participation.setStudent(user);
+        }
+        else {
+            // make sure participation and exercise are connected
+            participation = optionalStudentParticipation.get();
+            participation.setExercise(exercise);
+        }
+        if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
+            // initialize a programming, modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
+            initializeSubmission(participation, exercise, true);
+        }
+        participation = save(participation);
+
+        return participation;
+    }
+
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
      * database.
@@ -244,13 +274,16 @@ public class ParticipationService {
      * @param participation the participation for which the submission should be initialized
      * @param exercise      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
      */
-    private void initializeSubmission(Participation participation, Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise) {
+    private void initializeSubmission(Participation participation, Exercise exercise, boolean allowProgrammingExercise) {
+        if ((!allowProgrammingExercise && exercise instanceof ProgrammingExercise) || exercise instanceof QuizExercise) {
             return;
         }
 
         Submission submission;
-        if (exercise instanceof ModelingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
             submission = new ModelingSubmission();
         }
         else if (exercise instanceof TextExercise) {
@@ -263,6 +296,10 @@ public class ParticipationService {
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         participation.addSubmissions(submission);
+    }
+
+    private void initializeSubmission(Participation participation, Exercise exercise) {
+        initializeSubmission(participation, exercise, false);
     }
 
     /**

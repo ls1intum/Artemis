@@ -11,6 +11,7 @@ import { Complaint } from 'app/entities/complaint/complaint.model';
 import { Exercise } from 'app/entities/exercise';
 import { ExternalSubmissionService } from 'app/assessment-shared/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
+import { User } from 'app/core';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
@@ -21,6 +22,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
 
     @Input() exercise: Exercise;
 
+    student: User = new User();
     result: Result;
     feedbacks: Feedback[] = [];
     isSaving = false;
@@ -54,7 +56,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
-        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.result));
+        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.student, this.result));
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
