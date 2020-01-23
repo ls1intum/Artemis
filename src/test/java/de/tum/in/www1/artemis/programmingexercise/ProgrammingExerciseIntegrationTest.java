@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
@@ -60,12 +61,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
-        
-        repoFile = File.createTempFile("tempRepo", null);
+
+        repoFile = Files.createTempDirectory("repo").toFile();
         git = Git.init().setDirectory(repoFile).call();
-        // create one empty commit
+
         // TODO use setupProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
         // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
+
+        // create one empty commit
         git.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
         var repository = gitService.getRepositoryByLocalPath(repoFile.toPath());
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
