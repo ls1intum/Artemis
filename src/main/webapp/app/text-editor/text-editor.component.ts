@@ -17,6 +17,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ComponentCanDeactivate } from 'app/shared';
 import { Observable } from 'rxjs/Observable';
 import { ButtonType } from 'app/shared/components';
+import { participationStatus } from 'app/entities/exercise';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -62,6 +63,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             (data: StudentParticipation) => {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
+                this.textExercise.studentParticipations = [this.participation];
+                this.textExercise.participationStatus = participationStatus(this.textExercise);
                 this.checkIfSubmitAlwaysEnabled();
                 this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
 

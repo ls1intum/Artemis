@@ -15,9 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
@@ -50,9 +53,14 @@ public class ExerciseService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository) {
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -62,6 +70,8 @@ public class ExerciseService {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.auditEventRepository = auditEventRepository;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
     }
 
     /**
@@ -303,5 +313,27 @@ public class ExerciseService {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
+    }
+
+    /**
+     * Calculates the number of unevaluated complaints and feedback requests for tutor dashboard participation graph
+     *
+     * @param exercise the exercise for which the number of unevaluated complaints should be calculated
+     */
+    public void calculateNrOfOpenComplaints(Exercise exercise) {
+
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.COMPLAINT);
+
+        exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+        exercise.setNumberOfComplaints(numberOfComplaints);
+
+        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.MORE_FEEDBACK);
+
+        exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+        exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
     }
 }
