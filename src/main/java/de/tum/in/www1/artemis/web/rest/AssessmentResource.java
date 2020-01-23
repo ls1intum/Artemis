@@ -43,7 +43,9 @@ public abstract class AssessmentResource {
     abstract String getEntityName();
 
     /**
-     * @param exercise exercise to check privileges for
+     * checks that the given user has at least tutor rights for the given exercise
+     *
+     * @param exercise the exercise for which the authorization should be checked
      * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
      * @throws BadRequestAlertException if no course is associated to the given exercise
      */
@@ -62,8 +64,8 @@ public abstract class AssessmentResource {
     }
 
     /**
-     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date or if an
-     * instructor overrides it.
+     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
+     * or if an instructor overrides it.
      *
      * If the result does not yet exist or is not yet submitted, this method returns true
      *
