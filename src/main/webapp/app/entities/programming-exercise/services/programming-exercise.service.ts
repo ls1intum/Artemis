@@ -26,13 +26,6 @@ export class ProgrammingExerciseService {
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
-    create(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convertDataFromClient(programmingExercise);
-        return this.http
-            .post<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.convertDataFromClient(programmingExercise);
         return this.http

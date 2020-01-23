@@ -46,6 +46,10 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
 
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
+
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
+
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
 
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]*";
