@@ -187,7 +187,7 @@ public class GitService {
      * @param localPath to git repo on server.
      * @return the git repository in the localPath or null if it does not exist on the server.
      */
-    private Repository getRepositoryByLocalPath(Path localPath) {
+    public Repository getRepositoryByLocalPath(Path localPath) {
         // Check if there is a folder with the provided path of the git repository.
         if (!Files.exists(localPath)) {
             // In this case we should remove the repository if cached, because it can't exist anymore.
