@@ -25,14 +25,13 @@ import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
-import { ProgrammingExerciseDialogComponent, ProgrammingExercisePopupComponent } from 'app/entities/programming-exercise/programming-exercise-dialog.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
 import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exercise/programming-exercise-detail.component';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
-import { programmingExercisePopupRoute, programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
+import { programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
 import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 
-const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
+const ENTITY_STATES = [...programmingExerciseRoute];
 
 @NgModule({
     imports: [
@@ -64,8 +63,6 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseComponent,
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseUpdateComponent,
-        ProgrammingExerciseDialogComponent,
-        ProgrammingExercisePopupComponent,
         ProgrammingExerciseImportComponent,
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         // Form components
@@ -74,9 +71,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
-        ProgrammingExerciseDialogComponent,
         ProgrammingExerciseUpdateComponent,
-        ProgrammingExercisePopupComponent,
         ProgrammingExerciseImportComponent,
     ],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
