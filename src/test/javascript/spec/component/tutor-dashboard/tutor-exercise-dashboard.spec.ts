@@ -31,6 +31,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -57,6 +58,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 ArtemisResultModule,
                 RouterModule,
                 TranslateModule.forRoot(),
+                ArtemisAssessmentSharedModule
             ],
             declarations: [
                 TutorExerciseDashboardComponent,
