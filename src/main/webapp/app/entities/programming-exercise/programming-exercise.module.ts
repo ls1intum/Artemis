@@ -69,11 +69,7 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ProgrammingExerciseLifecycleComponent,
         ProgrammingExerciseTestScheduleDatePickerComponent,
     ],
-    entryComponents: [
-        ProgrammingExerciseComponent,
-        ProgrammingExerciseUpdateComponent,
-        ProgrammingExerciseImportComponent,
-    ],
+    entryComponents: [ProgrammingExerciseComponent, ProgrammingExerciseUpdateComponent, ProgrammingExerciseImportComponent],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
 })
 export class ArtemisProgrammingExerciseModule {}
