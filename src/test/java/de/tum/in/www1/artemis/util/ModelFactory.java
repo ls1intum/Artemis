@@ -91,14 +91,15 @@ public class ModelFactory {
         return exercise;
     }
 
-    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, int amount) {
+    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
-            User student = ModelFactory.generateActivatedUser(loginPrefix + i);
+            User user = ModelFactory.generateActivatedUser(loginPrefix + i);
             if (groups != null) {
-                student.setGroups(Set.of(groups));
+                user.setGroups(Set.of(groups));
+                user.setAuthorities(authorities);
             }
-            generatedUsers.add(student);
+            generatedUsers.add(user);
         }
         return generatedUsers;
     }
@@ -279,5 +280,12 @@ public class ModelFactory {
 
     public static TextBlock generateTextBlock(int startIndex, int endIndex) {
         return generateTextBlock(startIndex, endIndex, "");
+    }
+
+    public static SystemNotification generateSystemNotification(ZonedDateTime expireDate, ZonedDateTime notificationDate) {
+        SystemNotification systemNotification = new SystemNotification();
+        systemNotification.setExpireDate(expireDate);
+        systemNotification.setNotificationDate(notificationDate);
+        return systemNotification;
     }
 }

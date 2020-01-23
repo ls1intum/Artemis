@@ -14,6 +14,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfParticipations: number;
     @Input() public numberOfAssessments: number;
+    @Input() public numberOfComplaints: number;
+    @Input() public numberOfOpenComplaints: number;
+    @Input() public numberOfMoreFeedbackRequests: number;
+    @Input() public numberOfOpenMoreFeedbackRequests: number;
     @Input() exercise: Exercise;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
@@ -25,6 +29,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
     percentageAssessmentProgress = 0;
+    percentageComplaintsProgress = 0;
 
     routerLink: string;
 
@@ -38,10 +43,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         if (courseId && exerciseId) {
             this.routerLink = `/course/${courseId}/exercise/${exerciseId}/tutor-dashboard`;
         }
-
-        if (this.numberOfParticipations !== 0) {
-            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
-        }
+        this.calculatePercentageAssessmentProgress();
+        this.calculatePercentageComplaintsProgress();
     }
 
     navigate() {
@@ -55,12 +58,26 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
             this.tutorParticipation = changes.tutorParticipation.currentValue;
             this.tutorParticipationStatus = this.tutorParticipation.status;
         }
+        this.calculatePercentageAssessmentProgress();
+        this.calculatePercentageComplaintsProgress();
+    }
 
+    calculatePercentageAssessmentProgress() {
         if (this.numberOfParticipations !== 0) {
             this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
         }
     }
-
+    calculatePercentageComplaintsProgress() {
+        if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
+            this.percentageComplaintsProgress = Math.round(
+                ((this.numberOfComplaints -
+                this.numberOfOpenComplaints + // nr of evaluated complaints
+                    (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests)) / // nr of evaluated more feedback requests
+                    (this.numberOfComplaints + this.numberOfMoreFeedbackRequests)) * // total nr of complaints and feedback requests
+                    100,
+            );
+        }
+    }
     /**
      * Calculates the classes for the steps (circles) in the tutor participation graph
      * @param step for which the class should be calculated for (NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED)
@@ -93,36 +110,26 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         return '';
     }
-
-    calculateProgressBarClass(): string {
-        const percentage = this.percentageAssessmentProgress;
-
-        if (percentage < 50) {
-            return 'bg-danger';
-        } else if (percentage < 100) {
-            return 'bg-warning';
-        }
-
-        return 'bg-success';
-    }
-
-    chooseProgressBarTextColor() {
-        if (this.percentageAssessmentProgress < 100) {
-            return 'text-dark';
-        }
-
-        return 'text-white';
-    }
-
     calculateClassProgressBar() {
         if (this.tutorParticipationStatus !== this.TRAINED && this.tutorParticipationStatus !== this.COMPLETED) {
             return 'opaque';
         }
 
-        if (this.tutorParticipationStatus === this.COMPLETED || this.numberOfParticipations === this.numberOfAssessments) {
+        if (
+            this.tutorParticipationStatus === this.COMPLETED ||
+            this.numberOfParticipations === this.numberOfAssessments ||
+            this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
+        ) {
             return 'active';
         }
 
         return 'orange';
+    }
+    // returns the total nr of evaluated complaints and feedback requests
+    calculateComplaintsNumerator() {
+        return this.numberOfComplaints - this.numberOfOpenComplaints + (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests);
+    }
+    calculateComplaintsDenominator() {
+        return this.numberOfComplaints + this.numberOfMoreFeedbackRequests;
     }
 }

@@ -23,12 +23,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.LoginAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -70,13 +71,12 @@ public class UserResource {
 
     private final UserService userService;
 
-    private final MailService mailService;
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserResource(UserRepository userRepository, UserService userService, MailService mailService) {
-
+    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.mailService = mailService;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -104,9 +104,14 @@ public class UserResource {
         else if (userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
         }
+        else if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
+            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
+        }
         else {
             User newUser = userService.createUser(managedUserVM);
-            mailService.sendCreationEmail(newUser);
+
+            // NOTE: Mail service is NOT active at the moment
+            // mailService.sendCreationEmail(newUser);
             return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", newUser.getLogin())).body(newUser);
         }
@@ -128,13 +133,21 @@ public class UserResource {
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
         }
-        existingUser = userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase());
+        existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
-        Optional<UserDTO> updatedUser = userService.updateUser(managedUserVM);
+        if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
+            throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
+        }
 
-        return ResponseUtil.wrapOrNotFound(updatedUser, HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin()));
+        User updatedUser = null;
+        if (existingUser.isPresent()) {
+            updatedUser = userService.updateUser(existingUser.get(), managedUserVM);
+        }
+
+        final var responseDTO = Optional.ofNullable(updatedUser != null ? new UserDTO(updatedUser) : null);
+        return ResponseUtil.wrapOrNotFound(responseDTO, HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin()));
     }
 
     /**
