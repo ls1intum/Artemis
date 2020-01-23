@@ -54,14 +54,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     Git git;
 
     @BeforeEach
-    void initTestCase() throws GitAPIException, InterruptedException {
+    void initTestCase() throws GitAPIException, InterruptedException, IOException {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
-
-        repoFile = new File(System.getProperty("java.io.tmpdir") + File.separator + "tempRepo");
+        
+        repoFile = File.createTempFile("tempRepo", null);
         git = Git.init().setDirectory(repoFile).call();
         // create one empty commit
         // TODO use setupProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
