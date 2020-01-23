@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -127,21 +129,26 @@ public class ProgrammingExerciseImportService {
     public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
-        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
-        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
-        final var templateKey = templateExercise.getProjectKey();
-        final var targetKey = newExercise.getProjectKey();
-        final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
 
         // Clone all build plans, enable them and setup the initial participations, i.e. setting the correct repo URLs and
         // running the plan for the first time
-        continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
-        continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
-        programmingExerciseService.giveCIProjectPermissions(newExercise);
-        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
-        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
+        cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
+        updateBaseBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey);
+
+        try {
+            continuousIntegrationService.get().triggerBuild(templateParticipation);
+            continuousIntegrationService.get().triggerBuild(solutionParticipation);
+        }
+        catch (HttpException e) {
+            log.error("Unable to trigger imported build plans", e);
+            throw e;
+        }
+    }
+
+    private void updateBaseBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
+            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey) {
         // update 2 repositories for the template (BASE) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTemplateRepositoryUrl(), Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
@@ -153,15 +160,23 @@ public class ProgrammingExerciseImportService {
                 newExercise.getSolutionRepositoryUrl(), Optional.empty());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTestRepositoryUrl(), Optional.empty());
+    }
 
-        try {
-            continuousIntegrationService.get().triggerBuild(templateParticipation);
-            continuousIntegrationService.get().triggerBuild(solutionParticipation);
-        }
-        catch (HttpException e) {
-            log.error("Unable to trigger imported build plans", e);
-            throw e;
-        }
+    private void cloneAndEnableAllBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) {
+        final var templateParticipation = newExercise.getTemplateParticipation();
+        final var solutionParticipation = newExercise.getSolutionParticipation();
+        final var targetExerciseProjectKey = newExercise.getProjectKey();
+        final var templatePlanName = BuildPlanType.TEMPLATE.getName();
+        final var solutionPlanName = BuildPlanType.SOLUTION.getName();
+        final var templateKey = templateExercise.getProjectKey();
+        final var targetKey = newExercise.getProjectKey();
+        final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
+
+        continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
+        continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
+        programmingExerciseService.giveCIProjectPermissions(newExercise);
+        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
+        continuousIntegrationService.get().enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
     }
 
     /**
