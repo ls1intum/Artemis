@@ -98,9 +98,10 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        File file = new File(System.getProperty("java.io.tmpdir") + File.separator + res.getResponse().getHeader("filename"));
-        Files.write(file.toPath(), res.getResponse().getContentAsByteArray());
-        return file;
+        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
+        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+
+        return tmpFile;
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType) throws Exception {
