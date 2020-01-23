@@ -272,6 +272,7 @@ public class ResultService {
      *
      * @param result newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
+     * @param ratedResult override value for rated property of result
      *
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
