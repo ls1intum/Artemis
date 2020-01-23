@@ -215,7 +215,8 @@
             "registerForCourse": "Register For Course",
             "exercise": "Exercises",
             "scores": "Scores",
-            "manageHints": "Manage Hints"
+            "manageHints": "Manage Hints",
+            "addExternalSubmission": "Add External Submission"
         },
         "detail": {
             "field": "Field",

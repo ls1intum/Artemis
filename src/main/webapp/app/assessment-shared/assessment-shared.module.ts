@@ -11,9 +11,12 @@ import { AssessmentGeneralFeedbackComponent } from './assessment-general-feedbac
 import { ScoreDisplayComponent } from './score-display/score-display.component';
 import { AssessmentDetailComponent } from './assessment-detail/assessment-detail.component';
 import { AssessmentFiltersComponent } from 'app/assessment-shared/assessment-filters/assessment-filters.component';
+import { ExternalSubmissionButtonComponent, ExternalSubmissionDialogComponent } from 'app/assessment-shared/external-submission';
+import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule],
+    imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule, ArtemisSharedComponentModule],
     declarations: [
         AssessmentHeaderComponent,
         AssessmentLayoutComponent,
@@ -22,8 +25,18 @@ import { AssessmentFiltersComponent } from 'app/assessment-shared/assessment-fil
         ScoreDisplayComponent,
         AssessmentDetailComponent,
         AssessmentFiltersComponent,
+        ExternalSubmissionButtonComponent,
+        ExternalSubmissionDialogComponent,
     ],
-    exports: [AssessmentLayoutComponent, AssessmentGeneralFeedbackComponent, ScoreDisplayComponent, AssessmentDetailComponent, AssessmentFiltersComponent],
-    providers: [JhiAlertService],
+    entryComponents: [ExternalSubmissionDialogComponent],
+    exports: [
+        AssessmentLayoutComponent,
+        AssessmentGeneralFeedbackComponent,
+        ScoreDisplayComponent,
+        AssessmentDetailComponent,
+        AssessmentFiltersComponent,
+        ExternalSubmissionButtonComponent,
+    ],
+    providers: [JhiAlertService, ExampleSubmissionService],
 })
 export class ArtemisAssessmentSharedModule {}
