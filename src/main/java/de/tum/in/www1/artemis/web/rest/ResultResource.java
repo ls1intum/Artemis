@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -69,9 +70,11 @@ public class ResultResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final UserService userService;
+
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -82,6 +85,7 @@ public class ResultResource {
         this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.userService = userService;
     }
 
     /**
@@ -155,17 +159,13 @@ public class ResultResource {
     public ResponseEntity<Result> updateProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result updatedResult) throws URISyntaxException {
         log.debug("REST request to update Result : {}", updatedResult);
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         // make sure that the participation cannot be manipulated on the client side
         updatedResult.setParticipation(participation);
         // TODO: we should basically set the submission here to prevent possible manipulation of the submission
         if (updatedResult.getSubmission() == null) {
             throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
         }
-
-        // TODO: this method is used for the normal submit and for override.
-        // The logic should be: tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        // final var isBeforeAssessmentDueDate = exercise.assessmentDueDate && now().isBefore(exercise.assessmentDueDate);
-        // final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
 
         final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
@@ -176,8 +176,31 @@ public class ResultResource {
             return createProgrammingExerciseManualResult(participationId, updatedResult);
         }
 
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+        if (!isAllowedToOverrideExistingResult(updatedResult.getSubmission(), exercise, user, isAtLeastInstructor)) {
+            throw new BadRequestAlertException("The user is not allowed to save the assessment", "assessment", "assessmentSaveNotAllowed");
+        }
+
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
+    }
+
+    // TODO: this is duplicated code from AssessmentResource. Move it to a place, where all clients can invoke it
+    protected boolean isAllowedToOverrideExistingResult(Submission submission, Exercise exercise, User user, boolean isAtLeastInstructor) {
+        final var existingResult = submission.getResult();
+        if (existingResult == null) {
+            // if there is no result yet, we can always save, submit and potentially "override"
+            return true;
+        }
+        final var isAssessor = user.equals(existingResult.getAssessor());
+        if (existingResult.getCompletionDate() != null) {
+            // if the result exists, but was not yet submitted, the tutor and the instructor can override, independent of the assessment due date
+            return isAssessor || isAtLeastInstructor;
+        }
+        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        var assessmentDueDate = exercise.getAssessmentDueDate();
+        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
     /**

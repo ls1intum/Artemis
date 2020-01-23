@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -63,9 +64,9 @@ public class TextAssessmentResource extends AssessmentResource {
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
-        super(authCheckService, userService);
+            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository) {
+        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
@@ -93,6 +94,11 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
 
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
+            throw new BadRequestAlertException("The user is not allowed to save the assessment", "assessment", "assessmentSaveNotAllowed");
+        }
+
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
@@ -118,11 +124,10 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
 
-        // TODO: this method is used for the normal submit and for override. I guess we should distinguish these cases, because not every tutor can override
-        // The logic should be:
-        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
-        // final var isBeforeAssessmentDueDate = exercise.assessmentDueDate && now().isBefore(exercise.assessmentDueDate);
-        // final var canOverride = (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
+            throw new BadRequestAlertException("The user is not allowed to submit the assessment", "assessment", "assessmentSubmitNotAllowed");
+        }
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
@@ -177,23 +182,8 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
-        TextSubmission submission = textSubmissionService.findOneWithEagerResultAndAssessor(submissionId);
-        if (submission.getResult() == null) {
-            // if there is no result everything is fine
-            return ResponseEntity.ok().build();
-        }
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getResult().getAssessor().getId()))) {
-            // tutors cannot cancel the assessment of other tutors (only instructors can)
-            return forbidden();
-        }
-        textAssessmentService.cancelAssessmentOfSubmission(submission);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        return super.cancelAssessment(submissionId);
     }
 
     /**

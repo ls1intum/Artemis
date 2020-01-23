@@ -22,10 +22,9 @@ public class FileUploadAssessmentService extends AssessmentService {
 
     public FileUploadAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
-            FileUploadSubmissionService fileUploadSubmissionService, SubmissionRepository submissionRepository) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService,
-                submissionRepository);
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
+            SubmissionRepository submissionRepository) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.userService = userService;
@@ -49,10 +48,6 @@ public class FileUploadAssessmentService extends AssessmentService {
         return resultRepository.save(result);
     }
 
-    public List<Feedback> getAssessmentsForResult(Result result) {
-        return this.feedbackRepository.findByResult(result);
-    }
-
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database.
@@ -66,10 +61,6 @@ public class FileUploadAssessmentService extends AssessmentService {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
             result = fileUploadSubmissionService.setNewResult(fileUploadSubmission);
-        }
-        // check the assessment due date if the user tries to override an existing submitted result
-        if (result.getCompletionDate() != null) {
-            checkAssessmentDueDate(fileUploadExercise);
         }
         final long generalFeedbackCount = fileUploadAssessment.stream().filter(feedback -> feedback.getCredits() == 0).count();
         if (generalFeedbackCount > 1) {

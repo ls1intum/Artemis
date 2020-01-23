@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,7 +15,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
-abstract class AssessmentService {
+@Service
+public class AssessmentService {
 
     private final ComplaintResponseService complaintResponseService;
 
@@ -28,20 +30,17 @@ abstract class AssessmentService {
 
     private final ResultService resultService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final SubmissionRepository submissionRepository;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            AuthorizationCheckService authCheckService, SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
-        this.authCheckService = authCheckService;
         this.submissionRepository = submissionRepository;
     }
 
@@ -130,15 +129,6 @@ abstract class AssessmentService {
         final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
         if (generalFeedbackCount > 1) {
             throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
-        }
-    }
-
-    /**
-     * Tutors are not allowed to override an assessment after the assessment due date. Instructors can submit assessments at any time.
-     */
-    void checkAssessmentDueDate(Exercise exercise) {
-        if (exercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new BadRequestAlertException("The assessment due date is already over.", "assessment", "assessmentDueDateOver");
         }
     }
 
