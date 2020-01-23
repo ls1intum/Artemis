@@ -19,6 +19,7 @@ import org.imsglobal.lti.launch.LtiVerificationException;
 import org.imsglobal.lti.launch.LtiVerificationResult;
 import org.imsglobal.lti.launch.LtiVerifier;
 import org.imsglobal.pox.IMSPOXRequest;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import io.github.jhipster.security.RandomUtil;
 
 @Service
 @Transactional
@@ -83,24 +82,22 @@ public class LtiService {
 
     private final ResultRepository resultRepository;
 
-    private final PasswordEncoder passwordEncoder;
-
-    private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
+    // Ok, Spring actually injects the response for the current context using a proxy
+    // TODO Although this works, this is a bad design practice and we should move all response related code to the controller
     private final HttpServletResponse response;
 
     public final HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
     public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
-            PasswordEncoder passwordEncoder, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository,
-            HttpServletResponse response) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.resultRepository = resultRepository;
-        this.passwordEncoder = passwordEncoder;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
         this.response = response;
@@ -165,7 +162,7 @@ public class LtiService {
      */
     public void onSuccessfulLtiAuthentication(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
         // Auth was successful
-        User user = userService.getUser();
+        User user = userService.getUserWithGroupsAndAuthorities();
 
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise.getCourse());
@@ -186,7 +183,6 @@ public class LtiService {
      * @throws AuthenticationException
      */
     private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws ArtemisAuthenticationException, AuthenticationException {
-
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (SecurityUtils.isAuthenticated()) {
@@ -200,8 +196,81 @@ public class LtiService {
             throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
         }
 
-        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary()
+        final var email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary()
                 : launchRequest.getUser_id() + "@lti.artemis.ase.in.tum.de";
+        final var username = createUsernameFromLaunchRequest(launchRequest);
+        final var fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+
+        // 2. Case: Existing mapping for LTI user id
+        // Check if there is an existing mapping for the user ID
+        final var optionalLtiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
+        if (optionalLtiUserId.isPresent()) {
+            final var user = optionalLtiUserId.get().getUser();
+            // Authenticate
+            return Optional.of(
+                    new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+        }
+
+        // 3. Case: Lookup user with the LTI email address. Sign in as this user.
+        // Check if lookup by email is enabled
+        if (launchRequest.getCustom_lookup_user_by_email()) {
+            // check if an user with this email address exists
+            final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
+            if (usernameLookupByEmail.isPresent()) {
+                return loginUserByEmail(usernameLookupByEmail.get(), email, fullname);
+            }
+        }
+
+        // 4. Case: Create new user
+        // Check if an existing user is required
+        if (!launchRequest.getCustom_require_existing_user()) {
+            return createNewUserFromLaunchRequest(launchRequest, email, username, fullname);
+        }
+
+        return Optional.empty();
+
+    }
+
+    @NotNull
+    private Optional<Authentication> createNewUserFromLaunchRequest(LtiLaunchRequestDTO launchRequest, String email, String username, String fullname) {
+        final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
+            final User newUser;
+            final var groups = new HashSet<String>();
+            if (TUMX.equals(launchRequest.getContext_label())) {
+                groups.add(USER_GROUP_NAME_EDX);
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_EDX, fullname, email, null, "en");
+            }
+            else if (U4I.equals(launchRequest.getContext_label())) {
+                groups.add(USER_GROUP_NAME_U4I);
+                newUser = userService.createUser(username, groups, USER_GROUP_NAME_U4I, fullname, email, null, "en");
+            }
+            else {
+                throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
+            }
+
+            return newUser;
+        });
+
+        // Make sure the user is activated
+        if (!user.getActivated()) {
+            userService.activateRegistration(user.getActivationKey());
+        }
+
+        log.debug("Signing in as {}", username);
+        return Optional
+                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+    }
+
+    private Optional<Authentication> loginUserByEmail(String username, String email, String fullname) {
+        log.info("Signing in as {}", username);
+        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), USER_GROUP_NAME_EDX, fullname, email, true);
+
+        return Optional
+                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+    }
+
+    @NotNull
+    private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         final String username;
         if (TUMX.equals(launchRequest.getContext_label())) {
             username = this.USER_PREFIX_EDX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
@@ -212,79 +281,8 @@ public class LtiService {
         else {
             throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
         }
-        String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
-        // Check if there is an existing mapping for the user ID
-        Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
-
-        if (ltiUserId.isPresent()) {
-            // 2. Case: Existing mapping for LTI user id
-            User user = ltiUserId.get().getUser();
-            // Authenticate
-            return Optional.of(
-                    new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
-        }
-
-        // Check if lookup by email is enabled
-        if (launchRequest.getCustom_lookup_user_by_email()) {
-
-            // 3. Case: Lookup user with the LTI email address. Sign in as this user.
-
-            // check if an user with this email address exists
-            Optional<String> usernameLookupByEmail = artemisAuthenticationProvider.get().getUsernameForEmail(email);
-
-            if (usernameLookupByEmail.isPresent()) {
-                log.info("Signing in as {}", usernameLookupByEmail.get());
-                User user = artemisAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(usernameLookupByEmail.get(), ""), true);
-
-                return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(),
-                        Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
-            }
-        }
-        // Check if an existing user is required
-        if (!launchRequest.getCustom_require_existing_user()) {
-
-            // 4. Case: Create new user
-            User user = userRepository.findOneByLogin(username).orElseGet(() -> {
-                final User newUser;
-                if (TUMX.equals(launchRequest.getContext_label())) {
-                    newUser = userService.createUser(username, "", USER_GROUP_NAME_EDX, fullname, email, null, "en");
-                    // add user to edx group
-                    newUser.setGroups(new HashSet<>(Collections.singleton(USER_GROUP_NAME_EDX)));
-                }
-                else if (U4I.equals(launchRequest.getContext_label())) {
-                    newUser = userService.createUser(username, "", USER_GROUP_NAME_U4I, fullname, email, null, "en");
-                    // add user to u4i group
-                    newUser.setGroups(new HashSet<>(Collections.singleton(USER_GROUP_NAME_U4I)));
-                }
-                else {
-                    throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
-                }
-
-                // set random password
-                String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
-                newUser.setPassword(randomEncryptedPassword);
-
-                userRepository.save(newUser);
-
-                log.info("Created user {}", username);
-
-                return newUser;
-            });
-
-            // Make sure the user is activated
-            if (!user.getActivated()) {
-                userService.activateRegistration(user.getActivationKey());
-            }
-
-            log.debug("Signing in as {}", username);
-            return Optional.of(
-                    new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
-
-        }
-
-        return Optional.empty();
-
+        return username;
     }
 
     /**
@@ -304,7 +302,7 @@ public class LtiService {
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)
                 try {
-                    artemisAuthenticationProvider.get().addUserToGroup(user.getLogin(), courseStudentGroupName);
+                    artemisAuthenticationProvider.addUserToGroup(user.getLogin(), courseStudentGroupName);
                 }
                 catch (ArtemisAuthenticationException e) {
                     /*
@@ -367,7 +365,6 @@ public class LtiService {
      * @return True if the request is valid, otherwise false
      */
     public Boolean verifyRequest(HttpServletRequest request) {
-
         LtiVerifier ltiVerifier = new LtiOauthVerifier();
         Boolean success = false;
         try {

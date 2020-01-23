@@ -26,7 +26,7 @@
         "@fortawesome/free-regular-svg-icons": "5.12.0",
         "@fortawesome/free-solid-svg-icons": "5.12.0",
         "@ls1intum/apollon": "2.0.5",
-        "@ng-bootstrap/ng-bootstrap": "5.1.5",
+        "@ng-bootstrap/ng-bootstrap": "5.2.0",
         "@nguniversal/express-engine": "8.2.6",
         "@ngx-translate/core": "11.0.1",
         "@ngx-translate/http-loader": "4.0.0",
@@ -41,7 +41,7 @@
         "core-js": "3.6.4",
         "dompurify": "2.0.7",
         "franc-min": "4.1.1",
-        "interactjs": "1.7.3",
+        "interactjs": "1.8.1",
         "jest": "24.9.0",
         "jest-preset-angular": "8.0.0",
         "jquery": "3.4.1",
@@ -60,7 +60,7 @@
         "ngx-clipboard": "12.3.0",
         "ngx-cookie": "4.1.2",
         "ngx-device-detector": "1.3.20",
-        "ngx-image-cropper": "2.1.2",
+        "ngx-image-cropper": "3.0.1",
         "ngx-infinite-scroll": "8.0.1",
         "ngx-moment": "3.5.0",
         "ngx-treeview": "6.0.2",
@@ -91,7 +91,7 @@
         "@types/chai": "4.2.7",
         "@types/chai-as-promised": "7.1.2",
         "@types/chai-string": "1.4.2",
-        "@types/chart.js": "2.9.10",
+        "@types/chart.js": "2.9.11",
         "@types/dompurify": "2.0.1",
         "@types/jasmine": "3.5.1",
         "@types/jest": "24.9.0",
@@ -122,10 +122,10 @@
         "friendly-errors-webpack-plugin": "1.7.0",
         "html-loader": "0.5.5",
         "html-webpack-plugin": "3.2.0",
-        "husky": "4.0.10",
+        "husky": "4.1.0",
         "jasmine-core": "3.5.0",
         "jest-junit": "10.0.0",
-        "lint-staged": "10.0.0",
+        "lint-staged": "10.0.1",
         "merge-jsons-webpack-plugin": "1.0.20",
         "mini-css-extract-plugin": "0.9.0",
         "mocha": "7.0.0",
@@ -147,7 +147,7 @@
         "to-string-loader": "1.1.6",
         "ts-loader": "6.2.1",
         "ts-node": "8.6.2",
-        "tslint": "5.20.1",
+        "tslint": "6.0.0",
         "tslint-config-prettier": "1.18.0",
         "tslint-loader": "3.6.0",
         "typescript": "3.5.3",
@@ -165,14 +165,8 @@
         "yarn": ">=1.17.3"
     },
     "lint-staged": {
-        "src/{main/webapp,test}/**/*.{json,ts,css,scss,html}": [
-            "prettier --write",
-            "git add"
-        ],
-        "src/{main,test}/java/**/*.java": [
-            "bash ./linting.sh",
-            "git add"
-        ]
+        "src/{main/webapp,test}/**/*.{json,ts,css,scss,html}": "prettier --write",
+        "src/{main,test}/java/**/*.java": "bash ./linting.sh"
     },
     "scripts": {
         "prettier:format": "prettier --write 'src/{main/webapp,test}/**/*.{json,ts,css,scss,html}'",

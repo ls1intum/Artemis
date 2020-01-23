@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise';
 import { StudentParticipation } from 'app/entities/participation';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Result, UpdatingResultComponent } from 'app/entities/result';
+import { Result, SubmissionResultStatusComponent } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -46,7 +46,7 @@ describe('TableEditableFieldComponent', () => {
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
-                MockComponent(UpdatingResultComponent),
+                MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsComponent),

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.vm;
 
 import javax.validation.constraints.Size;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 
 /**
@@ -18,6 +19,10 @@ public class ManagedUserVM extends UserDTO {
 
     public ManagedUserVM() {
         // Empty constructor needed for Jackson.
+    }
+
+    public ManagedUserVM(User user) {
+        super(user);
     }
 
     public String getPassword() {

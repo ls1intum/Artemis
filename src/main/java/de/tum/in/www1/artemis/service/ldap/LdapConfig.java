@@ -13,13 +13,13 @@ import org.springframework.ldap.core.support.LdapContextSource;
 @EnableLdapRepositories
 public class LdapConfig {
 
-    @Value("${artemis.ldap.url}")
+    @Value("${artemis.user-management.ldap.url}")
     private String ldapUrl;
 
-    @Value("${artemis.ldap.user-dn}")
+    @Value("${artemis.user-management.ldap.user-dn}")
     private String ldapUserDn;
 
-    @Value("${artemis.ldap.password}")
+    @Value("${artemis.user-management.ldap.password}")
     private String ldapPassword;
 
     @Bean

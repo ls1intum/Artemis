@@ -87,7 +87,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
 
     @Test
     void shouldExecuteScheduledBuildAndTestAfterDueDate() throws Exception {
-        long delayMS = 600;
+        long delayMS = 800;
         final var dueDateDelayMS = 200;
         programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(dueDateDelayMS)));
