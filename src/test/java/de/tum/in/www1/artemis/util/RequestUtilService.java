@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -85,6 +87,21 @@ public class RequestUtilService {
             return null;
         }
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+    public File postWithResponseBodyFile(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = mvc.perform(
+                MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).accept(MediaType.APPLICATION_OCTET_STREAM).with(csrf()))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
+        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+
+        return tmpFile;
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType) throws Exception {
