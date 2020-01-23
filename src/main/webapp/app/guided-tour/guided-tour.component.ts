@@ -318,10 +318,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
                 if (this.isBottom()) {
                     elementInViewPort =
-                        top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight + window.pageYOffset;
+                        top >= (window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment) &&
+                        (top + height) <= (window.innerHeight + window.pageYOffset);
                 } else {
                     elementInViewPort =
-                        top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight + window.pageYOffset;
+                        top >= (window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment) &&
+                        (top + height + scrollAdjustment) <= (window.innerHeight + window.pageYOffset);
                 }
                 break;
             }
