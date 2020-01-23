@@ -107,7 +107,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("The user is not allowed to save the assessment", "assessment", "assessmentSaveNotAllowed");
         }
 
-        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks, fileUploadExercise);
+        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks);
         if (submit) {
             result = fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
         }

@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -39,6 +40,7 @@ public class FileUploadAssessmentService extends AssessmentService {
      * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
+    @Transactional
     public Result submitAssessment(long resultId, FileUploadExercise fileUploadExercise, ZonedDateTime submissionDate) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
@@ -54,10 +56,10 @@ public class FileUploadAssessmentService extends AssessmentService {
      *
      * @param fileUploadSubmission the file upload submission to which the feedback belongs to
      * @param fileUploadAssessment the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param fileUploadExercise the file upload exercise for which assessment due date is checked
      * @return result that was saved in the database
      */
-    public Result saveAssessment(FileUploadSubmission fileUploadSubmission, List<Feedback> fileUploadAssessment, FileUploadExercise fileUploadExercise) {
+    @Transactional
+    public Result saveAssessment(FileUploadSubmission fileUploadSubmission, List<Feedback> fileUploadAssessment) {
         Result result = fileUploadSubmission.getResult();
         if (result == null) {
             result = fileUploadSubmissionService.setNewResult(fileUploadSubmission);

@@ -83,7 +83,7 @@ public abstract class AssessmentResource {
     }
 
     protected boolean isAllowedToOverrideExistingResult(long resultId, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final var existingResult = resultRepository.findById(resultId);
+        final var existingResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(resultId);
         if (existingResult.isEmpty()) {
             // if there is no result yet, we can always save, submit and potentially "override"
             return true;
@@ -92,7 +92,8 @@ public abstract class AssessmentResource {
     }
 
     protected boolean isAllowedToOverrideExistingResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final var isAssessor = user.equals(existingResult.getAssessor());
+        // if the assessor is null, the user can save / submit / override the existing result
+        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
         if (existingResult.getCompletionDate() != null) {
             // if the result exists, but was not yet submitted, the tutor and the instructor can override, independent of the assessment due date
             return isAssessor || isAtLeastInstructor;
