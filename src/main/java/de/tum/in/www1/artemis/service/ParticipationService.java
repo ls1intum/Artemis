@@ -237,7 +237,7 @@ public class ParticipationService {
         return participation;
     }
 
-    public StudentParticipation createParticipationWithEmptySubmission(Exercise exercise, User user) {
+    public StudentParticipation createParticipationWithEmptySubmission(Exercise exercise, User user, SubmissionType submissionType) {
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
@@ -252,6 +252,8 @@ public class ParticipationService {
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setStudent(user);
+
+            participation = save(participation);
         }
         else {
             // make sure participation and exercise are connected
@@ -260,7 +262,7 @@ public class ParticipationService {
         }
         if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
             // initialize a programming, modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-            initializeSubmission(participation, exercise, true);
+            initializeSubmission(participation, exercise, true, submissionType);
         }
         participation = save(participation);
 
@@ -271,10 +273,12 @@ public class ParticipationService {
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
      * database.
      *
-     * @param participation the participation for which the submission should be initialized
-     * @param exercise      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param participation                 the participation for which the submission should be initialized
+     * @param exercise                      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param allowProgrammingExercise      whether to explicitly allow the submission initialization for programming exercises
+     * @param submissionType                type for the submission to be initialized
      */
-    private void initializeSubmission(Participation participation, Exercise exercise, boolean allowProgrammingExercise) {
+    private void initializeSubmission(Participation participation, Exercise exercise, boolean allowProgrammingExercise, SubmissionType submissionType) {
         if ((!allowProgrammingExercise && exercise instanceof ProgrammingExercise) || exercise instanceof QuizExercise) {
             return;
         }
@@ -293,13 +297,20 @@ public class ParticipationService {
             submission = new FileUploadSubmission();
         }
 
+        if (submissionType != null) {
+            submission.setType(submissionType);
+        }
+        if (submissionType == SubmissionType.EXTERNAL) {
+            submission.setSubmitted(true);
+        }
+
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         participation.addSubmissions(submission);
     }
 
     private void initializeSubmission(Participation participation, Exercise exercise) {
-        initializeSubmission(participation, exercise, false);
+        initializeSubmission(participation, exercise, false, null);
     }
 
     /**

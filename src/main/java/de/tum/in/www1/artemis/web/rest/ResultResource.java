@@ -514,12 +514,24 @@ public class ResultResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported for Quiz exercises.");
         }
 
-        StudentParticipation participation = participationService.createParticipationWithEmptySubmission(exercise, student.get());
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmission(exercise, student.get(), SubmissionType.EXTERNAL);
         result.setParticipation(participation);
-        result.setSubmission(participation.getSubmissions().iterator().next());
+
+        participation = (StudentParticipation) participationService.findOneWithEagerSubmissions(participation.getId());
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+        if (optionalSubmission.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Submission for " + studentLogin + " in exercise " + exerciseId + " was neither found nor could be created");
+        }
+        result.setSubmission(optionalSubmission.get());
+        Result existingResult = optionalSubmission.get().getResult();
+        if (existingResult != null) {
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "A result already exists for this submission", "resultAlreadyExists")).body(existingResult);
+        }
+
         resultService.createNewManualResult(result, exercise instanceof ProgrammingExercise, result.isRated());
 
-        return ResponseEntity.created(new URI("/api/results/" + +result.getId()))
+        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 }
