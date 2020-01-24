@@ -61,7 +61,7 @@ public abstract class BehaviorTest {
      */
     protected Object newInstance(Class<?> clazz, Object... constructorArgs) {
         Class<?>[] constructorArgTypes = getParameterTypes(constructorArgs);
-        String failMessage = "Could not instantiate the class '" + clazz + "' because";
+        String failMessage = "Could not instantiate the " + clazz + " because";
 
         try {
             Constructor<?> constructor = clazz.getDeclaredConstructor(constructorArgTypes);
@@ -97,8 +97,8 @@ public abstract class BehaviorTest {
      * @return The instance of this class.
      */
     protected Object newInstance(Constructor<?> constructor, Object... constructorArgs) {
-        String failMessage = "Could not instantiate the class '"
-                + constructor.getDeclaringClass() + "' because";
+        String failMessage = "Could not instantiate the "
+                + constructor.getDeclaringClass() + " because";
 
         try {
             return constructor.newInstance(constructorArgs);
@@ -136,8 +136,8 @@ public abstract class BehaviorTest {
      */
     protected Object valueForAttribute(Object object, String attributeName) {
         requireNonNull(object, "receiver must not be null");
-        String failMessage = "Could not retrieve the attribute '" + attributeName + "' from the class '"
-            + object.getClass() + "' because";
+        String failMessage = "Could not retrieve the attribute '" + attributeName + "' from the "
+            + object.getClass() + " because";
 
         try {
             return object.getClass().getDeclaredField(attributeName).get(object);
@@ -174,10 +174,10 @@ public abstract class BehaviorTest {
      */
     protected Method getMethod(Class<?> declaringClass, String methodName, Class<?>... parameterTypes) {
         String failMessage = "Could not find the method '" + methodName + "' with the parameters: "
-            + getParameterTypesAsString(parameterTypes) + " from the class " + declaringClass + " because";
+            + getParameterTypesAsString(parameterTypes) + " from the " + declaringClass + " because";
 
         if (parameterTypes == null || parameterTypes.length == 0) {
-            failMessage = "Could not find the method '" + methodName + "' from the class " + declaringClass.getSimpleName() + " because";
+            failMessage = "Could not find the method '" + methodName + "' from the " + declaringClass + " because";
         }
 
         try {
@@ -203,7 +203,7 @@ public abstract class BehaviorTest {
     protected Object invokeMethod(Object object, Method method, Object... params) {
         // NOTE: object can be null, if method is static
         String failMessage = "Could not invoke the method '" + method.getName()
-                + "' in the class '" + method.getDeclaringClass() + "' because";
+                + "' in the " + method.getDeclaringClass() + " because";
         try {
             return method.invoke(object, params);
         } catch (IllegalAccessException iae) {
@@ -228,7 +228,7 @@ public abstract class BehaviorTest {
     protected Object invokeMethodRethrowing(Object object, Method method, Object... params) throws Throwable {
         // NOTE: object can be null, if method is static
         String failMessage = "Could not invoke the method '" + method.getName()
-                + "' in the class '" + method.getDeclaringClass() + "' because";
+                + "' in the " + method.getDeclaringClass() + " because";
         try {
             return method.invoke(object, params);
         } catch (IllegalAccessException iae) {
@@ -264,10 +264,10 @@ public abstract class BehaviorTest {
     protected Constructor<?> getConstructor(Class<?> declaringClass, Class<?>... parameterTypes) {
         String failMessage = "Could not find the constructor with the parameters: "
                 + getParameterTypesAsString(parameterTypes)
-                + " from the class " + declaringClass + " because";
+                + " from the " + declaringClass + " because";
 
         if (parameterTypes == null || parameterTypes.length == 0) {
-            failMessage = "Could not find the constructor from the class " + declaringClass + " because";
+            failMessage = "Could not find the constructor from the " + declaringClass + " because";
         }
 
         try {
