@@ -417,14 +417,14 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises-with-participations/:exerciseId : get the "exerciseId" programmingExercise.
+     * GET /programming-exercises/:exerciseId/with-participations/ : get the "exerciseId" programmingExercise.
      *
      * @param exerciseId the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable long exerciseId) {
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -432,17 +432,14 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourse();
-
+            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+                return forbidden();
+            }
             Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
                     user.getId());
             Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);
             programmingExercise.setStudentParticipations(participations);
-
-            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-                return forbidden();
-            }
-
             return ResponseEntity.ok(programmingExercise);
         }
         else {

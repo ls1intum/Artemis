@@ -234,4 +234,8 @@ public class RequestUtilService {
     public void delete(String path, HttpStatus expectedStatus) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
     }
+
+    public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+    }
 }
