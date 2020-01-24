@@ -5,6 +5,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -37,7 +38,6 @@ import com.appfire.bamboo.cli.helpers.RepositoryHelper;
 import com.appfire.bamboo.cli.objects.RemoteRepository;
 import com.appfire.common.cli.CliClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -45,8 +45,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooBuildPlanUpdateProvider;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.util.Verifiable;
 
@@ -174,7 +173,7 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(triggerBuildPath)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockQueryLatestBuildResultFromBambooServer(String planKey) throws URISyntaxException, JsonProcessingException {
+    public void mockQueryLatestBuildResultFromBambooServer(String planKey) throws URISyntaxException, JsonProcessingException, MalformedURLException {
         final var response = createBuildResult(planKey);
         final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/result").pathSegment(planKey.toUpperCase() + "-JOB1")
                 .pathSegment("latest.json").queryParam("expand", "testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions").build().toUri();
@@ -183,10 +182,14 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
-    private BambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException {
+    private BambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
         final var buildResult = new BambooBuildResultDTO();
         final var testResults = new BambooBuildResultDTO.BambooTestResultsDTO();
         final var failedTests = new BambooBuildResultDTO.BambooFailedTestsDTO();
+        final var changes = new BambooChangesDTO();
+        final var artifacts = new BambooArtifactsDTO();
+        final var buildArtifact = new BambooArtifactsDTO.BambooArtifactDTO();
+        final var buildLink = new BambooArtifactsDTO.BambooArtifactLinkDTO();
 
         failedTests.setExpand("testResult");
         failedTests.setSize(3);
@@ -208,25 +211,29 @@ public class BambooRequestMockProvider {
         buildResult.setBuildTestSummary("3 of 3 failed");
         buildResult.setVcsRevisionKey(TestConstants.COMMIT_HASH_STRING);
         buildResult.setTestResults(testResults);
-        final var changesString = "{\n" + "        \"size\": 0,\n" + "        \"expand\": \"change\",\n" + "        \"change\": [],\n" + "        \"start-index\": 0,\n"
-                + "        \"max-result\": 0\n" + "    }";
-        final var artifactsString = "{\n" + "        \"size\": 1,\n" + "        \"start-index\": 0,\n" + "        \"max-result\": 1,\n" + "        \"artifact\": [\n"
-                + "            {\n" + "                \"name\": \"Build log\",\n" + "                \"link\": {\n"
-                + "                    \"href\": \"https://bamboobruegge.in.tum.de/download/" + planKey + "-JOB1/build_logs/somelog-1.log\",\n"
-                + "                    \"rel\": \"self\"\n" + "                },\n" + "                \"producerJobKey\": \"" + planKey + "-JOB1-1\",\n"
-                + "                \"shared\": false\n" + "            }\n" + "        ]\n" + "    }";
-        buildResult.setChanges(mapper.readValue(changesString, new TypeReference<Map<String, Object>>() {
-        }));
-        buildResult.setArtifacts(mapper.readValue(artifactsString, new TypeReference<Map<String, Object>>() {
-        }));
+
+        changes.setSize(0);
+        changes.setExpand("change");
+        changes.setChanges(new LinkedList<>());
+        buildResult.setChanges(changes);
+
+        buildLink.setLinkToArtifact(new URL("https://bamboobruegge.in.tum.de/download/"));
+        buildLink.setRel("self");
+        buildArtifact.setLink(buildLink);
+        buildArtifact.setName("Build log");
+        buildArtifact.setProducerJobKey(planKey + "-JOB-1");
+        buildArtifact.setShared(false);
+        artifacts.setArtifacts(List.of(buildArtifact));
+        artifacts.setSize(1);
+        buildResult.setArtifacts(artifacts);
 
         return buildResult;
     }
 
-    private BambooBuildResultDTO.BambooTestResultDTO createFailedTest(final String testName) {
-        final var failed = new BambooBuildResultDTO.BambooTestResultDTO();
-        final var resultError = new BambooBuildResultDTO.BambooTestResultErrorsDTO();
-        final var error = new BambooBuildResultDTO.BambooTestErrorDTO();
+    private BambooTestResultDTO createFailedTest(final String testName) {
+        final var failed = new BambooTestResultDTO();
+        final var resultError = new BambooTestResultDTO.BambooTestResultErrorsDTO();
+        final var error = new BambooTestResultDTO.BambooTestErrorDTO();
 
         error.setMessage("java.lang.AssertionError: Some assertion failed");
 

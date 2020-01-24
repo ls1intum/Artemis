@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BambooBuildResultDTO {
@@ -22,10 +24,9 @@ public class BambooBuildResultDTO {
 
     private String vcsRevisionKey;
 
-    // TODO add proper DTOs for the following two attributes
-    private Map<String, Object> changes;
+    private BambooChangesDTO changes;
 
-    private Map<String, Object> artifacts;
+    private BambooArtifactsDTO artifacts;
 
     public String getVcsRevisionKey() {
         return vcsRevisionKey;
@@ -35,19 +36,19 @@ public class BambooBuildResultDTO {
         this.vcsRevisionKey = vcsRevisionKey;
     }
 
-    public Map<String, Object> getChanges() {
+    public BambooChangesDTO getChanges() {
         return changes;
     }
 
-    public void setChanges(Map<String, Object> changes) {
+    public void setChanges(BambooChangesDTO changes) {
         this.changes = changes;
     }
 
-    public Map<String, Object> getArtifacts() {
+    public BambooArtifactsDTO getArtifacts() {
         return artifacts;
     }
 
-    public void setArtifacts(Map<String, Object> artifacts) {
+    public void setArtifacts(BambooArtifactsDTO artifacts) {
         this.artifacts = artifacts;
     }
 
@@ -218,117 +219,6 @@ public class BambooBuildResultDTO {
         }
     }
 
-    public static final class BambooTestResultDTO {
-
-        private String className;
-
-        private String methodName;
-
-        private String status;
-
-        private int duration;
-
-        private int durationInSeconds;
-
-        private BambooTestResultErrorsDTO errors;
-
-        public String getClassName() {
-            return className;
-        }
-
-        public void setClassName(String className) {
-            this.className = className;
-        }
-
-        public String getMethodName() {
-            return methodName;
-        }
-
-        public void setMethodName(String methodName) {
-            this.methodName = methodName;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public void setStatus(String status) {
-            this.status = status;
-        }
-
-        public int getDuration() {
-            return duration;
-        }
-
-        public void setDuration(int duration) {
-            this.duration = duration;
-        }
-
-        public int getDurationInSeconds() {
-            return durationInSeconds;
-        }
-
-        public void setDurationInSeconds(int durationInSeconds) {
-            this.durationInSeconds = durationInSeconds;
-        }
-
-        public BambooTestResultErrorsDTO getErrors() {
-            return errors;
-        }
-
-        public void setErrors(BambooTestResultErrorsDTO errors) {
-            this.errors = errors;
-        }
-    }
-
-    public static final class BambooTestResultErrorsDTO {
-
-        private int size;
-
-        @JsonProperty("max-result")
-        private int maxResult;
-
-        @JsonProperty("error")
-        private List<BambooTestErrorDTO> errorMessages;
-
-        public int getSize() {
-            return size;
-        }
-
-        public void setSize(int size) {
-            this.size = size;
-        }
-
-        public int getMaxResult() {
-            return maxResult;
-        }
-
-        public void setMaxResult(int maxResult) {
-            this.maxResult = maxResult;
-        }
-
-        public List<BambooTestErrorDTO> getErrorMessages() {
-            return errorMessages;
-        }
-
-        public void setErrorMessages(List<BambooTestErrorDTO> errorMessages) {
-            this.errorMessages = errorMessages;
-        }
-    }
-
-    public static final class BambooTestErrorDTO {
-
-        private String message;
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-    }
-
     public enum BuildState {
 
         SUCCESS("Successful"), FAILED("Failed");
@@ -339,6 +229,13 @@ public class BambooBuildResultDTO {
             this.state = state;
         }
 
+        @JsonCreator
+        public static BuildState fromState(String state) {
+            return Arrays.stream(values()).filter(buildState -> buildState.getState().equals(state)).findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("No BuildState with state String " + state));
+        }
+
+        @JsonValue
         public String getState() {
             return state;
         }
