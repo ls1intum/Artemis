@@ -15,13 +15,12 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.env.Environment;
 
-import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import io.github.jhipster.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
 
 @SpringBootApplication
-@EnableConfigurationProperties({ LiquibaseProperties.class, ApplicationProperties.class })
+@EnableConfigurationProperties(LiquibaseProperties.class)
 public class ArtemisApp implements InitializingBean {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
