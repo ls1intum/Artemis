@@ -302,6 +302,7 @@ public class ParticipationService {
         }
         if (submissionType == SubmissionType.EXTERNAL) {
             submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
         }
 
         submission.setParticipation(participation);
