@@ -516,19 +516,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This method saves the template and solution participations of the programming exercise
-     *
-     * @param programmingExercise The programming exercise for which the participations should get saved
-     */
-    public void saveParticipations(ProgrammingExercise programmingExercise) {
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-    }
-
-    /**
      * Combine all commits of the given repository into one.
      * 
      * @param repoUrl of the repository to combine.
@@ -601,11 +588,12 @@ public class ProgrammingExerciseService {
         Path structureOraclePath = Paths.get(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
 
         String structureOracleJSON = OracleGenerator.generateStructureOracleJSON(solutionRepositoryPath, exerciseRepositoryPath);
+        return saveAndPushStructuralOracle(user, testRepository, structureOraclePath, structureOracleJSON);
+    }
 
-        // If the oracle file does not already exist, then save the generated string to
-        // the file.
-        // If it does, check if the contents of the existing file are the same as the
-        // generated one.
+    private boolean saveAndPushStructuralOracle(User user, Repository testRepository, Path structureOraclePath, String structureOracleJSON) throws IOException {
+        // If the oracle file does not already exist, then save the generated string to the file.
+        // If it does, check if the contents of the existing file are the same as the generated one.
         // If they are, do not push anything and inform the user about it.
         // If not, then update the oracle file by rewriting it and push the changes.
         if (!Files.exists(structureOraclePath)) {
