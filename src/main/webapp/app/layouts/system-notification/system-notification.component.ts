@@ -27,8 +27,8 @@ export class SystemNotificationComponent implements OnInit {
 
     ngOnInit() {
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+            this.loadActiveNotification();
             if (user) {
-                this.loadActiveNotification();
                 // maybe use connectedPromise as a set function
                 setTimeout(() => {
                     this.jhiWebsocketService.bind('connect', () => {
