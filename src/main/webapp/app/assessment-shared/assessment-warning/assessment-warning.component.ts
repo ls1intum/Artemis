@@ -7,11 +7,17 @@ if the due date is not over yet as they are allowed to assess submissions there
  */
 @Component({
     selector: 'jhi-assessment-warning',
-    templateUrl: './assessment-warning.component.html',
+    template: `
+        <h6>
+            <div class="card-header" *ngIf="this.isBeforeDueDate">
+                <fa-icon icon="exclamation-triangle" size="2x" class="text-warning" placement="bottom"></fa-icon>
+                {{ 'artemisApp.assessment.dashboard.warning' | translate }}
+            </div>
+        </h6>
+    `,
 })
 export class AssessmentWarningComponent implements OnChanges {
-    @Input()
-    exercise: Exercise;
+    @Input() exercise: Exercise;
     currentDate: moment.MomentInput;
     isBeforeDueDate = false;
 
