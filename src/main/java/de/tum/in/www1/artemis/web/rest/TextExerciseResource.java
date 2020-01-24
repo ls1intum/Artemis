@@ -284,13 +284,13 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         participation.setSubmissions(new HashSet<>());
 
         participation.getExercise().filterSensitiveInformation();
 
-        if (optionalTextSubmission.isPresent()) {
-            TextSubmission textSubmission = optionalTextSubmission.get();
+        if (optionalSubmission.isPresent()) {
+            TextSubmission textSubmission = (TextSubmission) optionalSubmission.get();
 
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);

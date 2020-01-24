@@ -99,9 +99,9 @@ public class TextSubmissionService extends SubmissionService {
         }
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
-            Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
+            Optional<Submission> optionalTextSubmission = savedParticipation.findLatestSubmission();
             if (optionalTextSubmission.isPresent()) {
-                textSubmission = optionalTextSubmission.get();
+                textSubmission = (TextSubmission) optionalTextSubmission.get();
             }
         }
 
@@ -141,14 +141,16 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        Random r = new Random();
-        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId()).stream()
-                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        Random random = new Random();
+        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        var submissionWithoutResult = (TextSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        return Optional.of(submissionWithoutResult);
     }
 
     /**
@@ -199,11 +201,11 @@ public class TextSubmissionService extends SubmissionService {
      * @return a list of text submissions for the given exercise id
      */
     public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
         for (StudentParticipation participation : participations) {
-            Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
+            Optional<Submission> optionalTextSubmission = participation.findLatestSubmission();
 
             if (optionalTextSubmission.isEmpty()) {
                 continue;
@@ -213,7 +215,7 @@ public class TextSubmissionService extends SubmissionService {
                 continue;
             }
 
-            textSubmissions.add(optionalTextSubmission.get());
+            textSubmissions.add((TextSubmission) optionalTextSubmission.get());
         }
         return textSubmissions;
     }

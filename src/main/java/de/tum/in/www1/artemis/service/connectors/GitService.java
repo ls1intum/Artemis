@@ -187,7 +187,7 @@ public class GitService {
      * @param localPath to git repo on server.
      * @return the git repository in the localPath or null if it does not exist on the server.
      */
-    private Repository getRepositoryByLocalPath(Path localPath) {
+    public Repository getRepositoryByLocalPath(Path localPath) {
         // Check if there is a folder with the provided path of the git repository.
         if (!Files.exists(localPath)) {
             // In this case we should remove the repository if cached, because it can't exist anymore.
@@ -449,13 +449,13 @@ public class GitService {
      * Stager Task #6: Combine all commits after last instructor commit
      *
      * @param repository Local Repository Object.
-     * @param exercise   ProgrammingExercise associated with this repo.
+     * @param programmingExercise   ProgrammingExercise associated with this repo.
      */
-    public void combineAllStudentCommits(Repository repository, ProgrammingExercise exercise) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(exercise.getTemplateRepositoryUrlAsUrl());
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getTemplateRepositoryUrlAsUrl());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen

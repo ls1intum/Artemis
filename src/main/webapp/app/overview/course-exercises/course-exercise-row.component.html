@@ -12,45 +12,7 @@
             <div class="col-sm col">
                 <h4>{{ exercise.title }}</h4>
             </div>
-            <div class="col-auto" [ngSwitch]="exercise.participationStatus">
-                <div class="d-none d-sm-inline">
-                    <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipated' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipating' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | translate }}</span>
-                </div>
-                <div class="d-sm-none">
-                    <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuizShort' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipatedShort' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | translate }}</span>
-                    <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | translate }}</span>
-                </div>
-                <span *ngSwitchCase="'initialized'">
-                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.studentParticipations[0]" short="true"></jhi-updating-result>
-                </span>
-                <span *ngSwitchCase="'inactive'">
-                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.studentParticipations[0]" short="true"></jhi-updating-result>
-                </span>
-                <span *ngSwitchCase="'quiz-finished'">
-                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.studentParticipations[0]" short="true"></jhi-updating-result>
-                </span>
-                <span *ngSwitchCase="'exercise-submitted'">
-                    <jhi-updating-result [exercise]="exercise" [participation]="exercise.studentParticipations[0]" short="true"></jhi-updating-result>
-                </span>
-                <ng-container *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
-                    <jhi-programming-exercise-student-trigger-build-button
-                        [exercise]="exercise"
-                        [participation]="exercise.studentParticipations[0]"
-                        [triggerLastGraded]="true"
-                    ></jhi-programming-exercise-student-trigger-build-button>
-                </ng-container>
-            </div>
+            <jhi-submission-result-status [exercise]="exercise" [short]="true"></jhi-submission-result-status>
         </div>
         <div class="row">
             <jhi-exercise-details-student-actions

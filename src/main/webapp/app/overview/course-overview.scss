@@ -33,7 +33,7 @@ Course Info Bar
 }
 
 .tab-bar-exercise-details {
-    .submission-result-status {
+    jhi-submission-result-status {
         width: auto;
         flex-basis: auto;
         flex-grow: 0;
@@ -44,7 +44,7 @@ Course Info Bar
     @media (max-width: 640px) {
         flex-direction: column;
 
-        .submission-result-status {
+        jhi-submission-result-status {
             width: 100%;
             display: flex;
             justify-content: flex-end;
@@ -56,7 +56,7 @@ Course Info Bar
         flex-wrap: wrap;
 
         // prevent result status from breaking due to flex wrap
-        .submission-result-status {
+        jhi-submission-result-status {
             flex-basis: 0;
             flex-grow: 1;
         }

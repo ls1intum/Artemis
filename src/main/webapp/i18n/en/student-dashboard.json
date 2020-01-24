@@ -53,6 +53,8 @@
                 "userParticipating": "You are currently participating in this quiz.",
                 "userSubmitted": "You have already submitted. Wait for the quiz to end to see results.",
                 "userNotStartedExerciseShort": "Not yet started.",
+                "exerciseNotSubmittedShort": "No Submission",
+                "exerciseMissedDeadlineShort": "Deadline missed.",
                 "quizNotStartedShort": "Not yet started.",
                 "userNotStartedQuizShort": "Not yet started.",
                 "userNotParticipatedShort": "Not participated.",
