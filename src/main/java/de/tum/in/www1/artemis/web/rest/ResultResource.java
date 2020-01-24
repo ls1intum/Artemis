@@ -508,7 +508,7 @@ public class ResultResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No student found for " + studentLogin + " in exercise " + exerciseId);
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No student found for " + studentLogin + " in course " + course.getTitle());
         }
         if (exercise instanceof QuizExercise) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported for Quiz exercises.");
