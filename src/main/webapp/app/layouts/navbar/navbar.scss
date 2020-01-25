@@ -64,14 +64,13 @@ Logo styles
 ========================================================================== */
 .navbar-brand {
     &.logo {
-        padding: 15px 15px;
+        padding: 10px 15px;
         .logo-img {
-            height: 25px;
-            width: 48px;
-            display: inline-block;
+            height: 30px;
+            //display: inline-block;
             vertical-align: middle;
-            background: no-repeat center center;
-            background-size: contain;
+            //background: no-repeat center center;
+            //background-size: contain;
         }
     }
 }

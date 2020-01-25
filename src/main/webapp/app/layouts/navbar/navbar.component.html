@@ -13,7 +13,7 @@
             <fa-icon [icon]="'bars'"></fa-icon>
         </a>
         <a class="navbar-brand logo float-left" routerLink="/" (click)="collapseNavbar()">
-            <span class="logo-img" [style.background-image]="'url(' + SERVER_API_URL + 'api/files/public/images/logo_tum.png)'"></span>
+            <img class="logo-img" [src]="SERVER_API_URL + 'api/files/public/images/logo_tum.png'" />
             <span>&nbsp;&nbsp;&nbsp;</span>
             <span jhiTranslate="global.title" class="navbar-title">Artemis</span>&nbsp;&nbsp;&nbsp;<span class="navbar-version">{{ version }}</span>
         </a>
