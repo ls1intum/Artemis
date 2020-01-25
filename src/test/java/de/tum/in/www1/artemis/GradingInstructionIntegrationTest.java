@@ -54,7 +54,7 @@ public class GradingInstructionIntegrationTest extends AbstractSpringIntegration
         database.addCourseWithOneTextExercise();
         long courseID = courseRepository.findAllActive().get(0).getId();
         exercise = exerciseRepository.findByCourseId(courseID).get(0);
-
+        exercise = exerciseRepository.findByIdWithEagerGradingInstructions(exercise.getId()).get();
         gradingInstructions = database.addGradingInstructionsToExercise(exercise);
     }
 

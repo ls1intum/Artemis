@@ -15,4 +15,6 @@ public interface GradingInstructionRepository extends JpaRepository<GradingInstr
 
     List<GradingInstruction> findByExerciseId(long exerciseId);
 
+    List<GradingInstruction> findByGradingCriteriaId(long gradingCriteriaId);
+
 }

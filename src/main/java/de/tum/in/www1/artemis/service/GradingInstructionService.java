@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingCriteria;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -68,5 +69,16 @@ public class GradingInstructionService {
 
     public List<GradingInstruction> findAllForExercise(Exercise exercise) {
         return gradingInstructionRepository.findByExerciseId(exercise.getId());
+    }
+
+    /**
+     * Finds all Grading Instructions for a given GradingCriteria
+     *
+     * @param gradingCriteria corresponding criteria
+     * @return a List of all Grading Instructions for the given criteria
+     */
+
+    public List<GradingInstruction> findAllForCriteria(GradingCriteria gradingCriteria) {
+        return gradingInstructionRepository.findByGradingCriteriaId(gradingCriteria.getId());
     }
 }
