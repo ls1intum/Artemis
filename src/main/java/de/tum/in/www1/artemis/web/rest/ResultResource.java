@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -70,11 +69,14 @@ public class ResultResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final AssessmentService assessmentService;
+
     private final UserService userService;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService) {
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService,
+            AssessmentService assessmentService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -85,6 +87,7 @@ public class ResultResource {
         this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.assessmentService = assessmentService;
         this.userService = userService;
     }
 
@@ -177,7 +180,7 @@ public class ResultResource {
         }
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-        if (!isAllowedToOverrideExistingResult(updatedResult.getSubmission(), exercise, user, isAtLeastInstructor)) {
+        if (!isAllowedToOverrideExistingResult(updatedResult, exercise, user, isAtLeastInstructor)) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -185,22 +188,12 @@ public class ResultResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
     }
 
-    // TODO: this is duplicated code from AssessmentResource. Move it to a place, where all clients can invoke it
-    protected boolean isAllowedToOverrideExistingResult(Submission submission, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final var existingResult = submission.getResult();
+    protected boolean isAllowedToOverrideExistingResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
         if (existingResult == null) {
             // if there is no result yet, we can always save, submit and potentially "override"
             return true;
         }
-        final var isAssessor = user.equals(existingResult.getAssessor());
-        if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted, the tutor and the instructor can override, independent of the assessment due date
-            return isAssessor || isAtLeastInstructor;
-        }
-        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
-        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+        return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
 
     /**

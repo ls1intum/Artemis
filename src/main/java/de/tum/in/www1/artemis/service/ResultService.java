@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static java.util.Arrays.asList;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -284,6 +285,7 @@ public class ResultService {
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
+        result.setCompletionDate(ZonedDateTime.now());
 
         // manual feedback is always rated
         result.setRated(true);

@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.time.ZonedDateTime;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -81,29 +79,28 @@ public abstract class AssessmentResource {
             // if there is no result yet, we can always save, submit and potentially "override"
             return true;
         }
-        return isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
+        return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
 
+    /**
+     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
+     * or if an instructor overrides it.
+     *
+     * If the result does not yet exist or is not yet submitted, this method returns true
+     *
+     * @param resultId the id of a potentially existing result in case the result is updated (submitted or overridden)
+     * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
+     * @param user the user who initiates a request
+     * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
+     * @return true of the the given user can override a potentially existing result
+     */
     protected boolean isAllowedToOverrideExistingResult(long resultId, Exercise exercise, User user, boolean isAtLeastInstructor) {
         final var existingResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(resultId);
         if (existingResult.isEmpty()) {
             // if there is no result yet, we can always save, submit and potentially "override"
             return true;
         }
-        return isAllowedToOverrideExistingResult(existingResult.get(), exercise, user, isAtLeastInstructor);
-    }
-
-    protected boolean isAllowedToOverrideExistingResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        // if the assessor is null, the user can save / submit / override the existing result
-        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
-        if (existingResult.getCompletionDate() == null) {
-            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
-            return isAssessor || isAtLeastInstructor;
-        }
-        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
-        var assessmentDueDate = exercise.getAssessmentDueDate();
-        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
-        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+        return assessmentService.isAllowedToOverrideExistingResult(existingResult.get(), exercise, user, isAtLeastInstructor);
     }
 
     protected ResponseEntity<Void> cancelAssessment(long submissionId) {

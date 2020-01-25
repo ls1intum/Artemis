@@ -746,6 +746,7 @@ public class DatabaseUtilService {
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setScore(50L);
+        result.setCompletionDate(ZonedDateTime.now());
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);

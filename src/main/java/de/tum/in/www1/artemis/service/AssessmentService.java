@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,6 +94,31 @@ public class AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(originalResult);
+    }
+
+    /**
+     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
+     * or if an instructor overrides it.
+     *
+     * If the result does not yet exist or is not yet submitted, this method returns true
+     *
+     * @param existingResult the existing result in case the result is updated (submitted or overridden)
+     * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
+     * @param user the user who initiates a request
+     * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
+     * @return true of the the given user can override a potentially existing result
+     */
+    public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+        // if the assessor is null, the user can save / submit / override the existing result
+        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
+        if (existingResult.getCompletionDate() == null) {
+            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+            return isAssessor || isAtLeastInstructor;
+        }
+        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        var assessmentDueDate = exercise.getAssessmentDueDate();
+        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
     /**
