@@ -258,9 +258,9 @@ dependencies {
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.assertj:assertj-core:3.14.0"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.6.0"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.0"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.0'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.0'
     testImplementation "org.mockito:mockito-core:3.2.4"
@@ -319,7 +319,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.1"
+    gradleVersion = "6.1.1"
 }
 
 task stage(dependsOn: "bootWar") {
