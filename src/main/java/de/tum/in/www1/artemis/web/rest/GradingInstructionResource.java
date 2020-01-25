@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.GradingInstructionService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,12 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingInstruction;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.GradingInstructionService;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing Structured Grading Instructions.
@@ -54,7 +53,7 @@ public class GradingInstructionResource {
      */
     @GetMapping(Endpoints.GRADING_INSTRUCTIONS_OF_EXERCISE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable long exerciseId) {
+    public ResponseEntity<List<GradingInstruction>> getGradingInstructionsByExerciseId(@PathVariable long exerciseId) {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -62,7 +61,7 @@ public class GradingInstructionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-        Set<GradingInstruction> gradingInstructions = exercise.getStructuredGradingInstructions();
+        List<GradingInstruction> gradingInstructions = gradingInstructionService.findAllForExercise(exercise);
         return ResponseEntity.ok(gradingInstructions);
     }
 

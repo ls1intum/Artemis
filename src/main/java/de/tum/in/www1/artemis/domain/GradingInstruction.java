@@ -44,6 +44,9 @@ public class GradingInstruction implements Serializable {
     @Column(name = "usage_count")
     private int usageCount;
 
+    @ManyToOne
+    private GradingCriteria gradingCriteria;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -129,6 +132,19 @@ public class GradingInstruction implements Serializable {
 
     public void setFeedback(String feedback) {
         this.feedback = feedback;
+    }
+
+    public GradingCriteria getGradingCriteria() {
+        return gradingCriteria;
+    }
+
+    public GradingInstruction gradingCriteria(GradingCriteria gradingCriteria) {
+        this.gradingCriteria = gradingCriteria;
+        return this;
+    }
+
+    public void setGradingCriteria(GradingCriteria gradingCriteria) {
+        this.gradingCriteria = gradingCriteria;
     }
 
     @Override

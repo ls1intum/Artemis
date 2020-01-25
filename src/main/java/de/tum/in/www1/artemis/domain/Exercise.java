@@ -104,10 +104,11 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Course course;
 
-    @OneToMany(mappedBy = "exercise", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderColumn
+    @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exercise")
-    private Set<GradingInstruction> structuredGradingInstructions = new HashSet<>();
+    private List< GradingInstruction > structuredGradingInstructions = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -802,11 +803,11 @@ public abstract class Exercise implements Serializable {
         this.presentationScoreEnabled = presentationScoreEnabled;
     }
 
-    public Set<GradingInstruction> getStructuredGradingInstructions() {
+    public List<GradingInstruction> getStructuredGradingInstructions() {
         return structuredGradingInstructions;
     }
 
-    public Exercise structuredGradingInstructions(Set<GradingInstruction> structuredGradingInstructions) {
+    public Exercise structuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
         return this;
     }
@@ -823,7 +824,7 @@ public abstract class Exercise implements Serializable {
         return this;
     }
 
-    public void setStructuredGradingInstructions(Set<GradingInstruction> structuredGradingInstructions) {
+    public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
     }
 }

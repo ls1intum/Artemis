@@ -472,7 +472,7 @@ public class DatabaseUtilService {
         return result;
     }
 
-    public Set<GradingInstruction> addGradingInstructionsToExercise(Exercise exercise) {
+    public List<GradingInstruction> addGradingInstructionsToExercise(Exercise exercise) {
         GradingInstruction gradingInstruction1 = new GradingInstruction();
         gradingInstruction1.instructionDescription("(1)just for testing purpose").setExercise(exercise);
         exercise.addStructuredGradingInstructions(gradingInstruction1);
