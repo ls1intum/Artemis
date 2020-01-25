@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -54,6 +55,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    ResultRepository resultRepo;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -246,5 +250,118 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_saveInstructorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        // should be possible because the original result was not yet submitted
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        // should be possible because the original result was not yet submitted
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
+    }
+
+    private void assessmentDueDatePassed() {
+        database.updateAssessmentDueDate(textExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+    }
+
+    private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Test123", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, student, originalAssessor);
+        textSubmission.getResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
+        resultRepo.save(textSubmission.getResult());
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", submit);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        var path = "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + textSubmission.getResult().getId();
+        if (submit.equals("true")) {
+            path = path + "/submit";
+        }
+        request.putWithResponseBodyAndParams(path, feedbacks, Result.class, httpStatus, params);
     }
 }
