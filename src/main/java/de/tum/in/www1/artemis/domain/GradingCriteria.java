@@ -1,14 +1,16 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * A  Grading Criteria that consists of structured grading instructions.
@@ -26,7 +28,7 @@ public class GradingCriteria implements Serializable {
     @OrderColumn
     @JsonIgnoreProperties(value = "gradingCriteria", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List< GradingInstruction > structuredGradingInstructions = new ArrayList<>();
+    private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
 
     @Column(name = "title")
     private String title;
@@ -52,6 +54,7 @@ public class GradingCriteria implements Serializable {
     public void setTitle(String title) {
         this.title = title;
     }
+
     public List<GradingInstruction> getStructuredGradingInstructions() {
         return structuredGradingInstructions;
     }
@@ -76,6 +79,7 @@ public class GradingCriteria implements Serializable {
     public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -98,6 +102,6 @@ public class GradingCriteria implements Serializable {
 
     @Override
     public String toString() {
-        return "GradingCriteria{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", GradingInstructions='" + getStructuredGradingInstructions()+  '}';
+        return "GradingCriteria{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", GradingInstructions='" + getStructuredGradingInstructions() + '}';
     }
 }
