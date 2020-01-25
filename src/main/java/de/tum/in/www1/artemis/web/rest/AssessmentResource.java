@@ -96,8 +96,8 @@ public abstract class AssessmentResource {
     protected boolean isAllowedToOverrideExistingResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
         // if the assessor is null, the user can save / submit / override the existing result
         final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
-        if (existingResult.getCompletionDate() != null) {
-            // if the result exists, but was not yet submitted, the tutor and the instructor can override, independent of the assessment due date
+        if (existingResult.getCompletionDate() == null) {
+            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
             return isAssessor || isAtLeastInstructor;
         }
         // if the result was already submitted, the tutor can only override before a potentially existing assessment due date

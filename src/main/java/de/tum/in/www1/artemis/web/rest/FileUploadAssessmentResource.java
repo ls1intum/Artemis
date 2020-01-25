@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -102,9 +101,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
 
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise);
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
         if (!isAllowedToOverrideExistingResult(fileUploadSubmission, fileUploadExercise, user, isAtLeastInstructor)) {
-            throw new BadRequestAlertException("The user is not allowed to save the assessment", "assessment", "assessmentSaveNotAllowed");
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks);

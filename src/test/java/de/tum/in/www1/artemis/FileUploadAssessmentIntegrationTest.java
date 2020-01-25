@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +24,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
+
+    public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
 
     @Autowired
     CourseRepository courseRepo;
@@ -49,6 +52,9 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     @Autowired
+    FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
     ResultRepository resultRepo;
 
     @Autowired
@@ -73,7 +79,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void updateFileUploadAssessmentAfterComplaint_studentHidden() throws Exception {
+    public void testUpdateFileUploadAssessmentAfterComplaint_studentHidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         Result fileUploadAssessment = fileUploadSubmission.getResult();
@@ -86,7 +92,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
 
-        Result updatedResult = request.putWithResponseBody("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+        Result updatedResult = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
@@ -96,12 +102,11 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void saveFileUploadAssessment_studentHidden() throws Exception {
+    public void testSaveFileUploadAssessment_studentHidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
-        Result result = request.putWithResponseBody("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class,
-                HttpStatus.OK);
+        Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", new ArrayList<String>(), Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(result.isRated()).isNull();
@@ -110,7 +115,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void submitFileUploadAssessment_studentHidden() throws Exception {
+    public void testSubmitFileUploadAssessment_studentHidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
@@ -118,7 +123,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         params.add("submit", "true");
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
 
-        Result result = request.putWithResponseBodyAndParams("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
+        Result result = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK,
                 params);
 
         assertThat(result).as("submitted result found").isNotNull();
@@ -130,34 +135,129 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
+        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_saveInstructorPossible() throws Exception {
+        saveAssessment("student1", "tutor1", HttpStatus.OK, "false");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorPossible() throws Exception {
+        saveAssessment("student1", "tutor1", HttpStatus.OK, "false");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
+        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorPossible() throws Exception {
+        saveAssessment("student1", "tutor1", HttpStatus.OK, "true");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
+        saveAssessment("student1", "tutor1", HttpStatus.OK, "true");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+        saveAssessment("student1", "tutor1", HttpStatus.OK, "false");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+        saveAssessment("student1", "tutor1", HttpStatus.OK, "true");
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
+        fileUploadExerciseRepository.save(fileUploadExercise);
+        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true");
+    }
+
+    private void saveAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit) throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, student, originalAssessor);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", submit);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, httpStatus, params);
+    }
+
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         database.addFeedbacksToResult(fileUploadSubmission.getResult());
-        request.put("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+        request.put(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void cancelOwnAssessmentAsStudent() throws Exception {
+    public void testCancelOwnAssessmentAsStudent() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void cancelOwnAssessmentAsTutor() throws Exception {
+    public void testCancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+    public void testCancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+    public void testCancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 }
