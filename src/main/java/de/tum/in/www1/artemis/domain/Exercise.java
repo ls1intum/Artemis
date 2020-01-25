@@ -108,7 +108,7 @@ public abstract class Exercise implements Serializable {
     @OrderColumn
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List< GradingInstruction > structuredGradingInstructions = new ArrayList<>();
+    private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
