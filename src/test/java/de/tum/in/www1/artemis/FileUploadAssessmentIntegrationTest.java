@@ -52,9 +52,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     @Autowired
-    FileUploadExerciseRepository fileUploadExerciseRepository;
-
-    @Autowired
     ResultRepository resultRepo;
 
     @Autowired
@@ -138,103 +135,117 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
-        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false");
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_saveInstructorPossible() throws Exception {
-        saveAssessment("student1", "tutor1", HttpStatus.OK, "false");
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testOverrideAssessment_saveSameTutorPossible() throws Exception {
-        saveAssessment("student1", "tutor1", HttpStatus.OK, "false");
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
-        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true");
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_submitInstructorPossible() throws Exception {
-        saveAssessment("student1", "tutor1", HttpStatus.OK, "true");
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
-        saveAssessment("student1", "tutor1", HttpStatus.OK, "true");
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
-        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false");
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
-        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-        saveAssessment("student1", "tutor1", HttpStatus.OK, "false");
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
-        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false");
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        // should be possible because the original result was not yet submitted
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", false);
     }
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
-        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true");
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
-        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-        saveAssessment("student1", "tutor1", HttpStatus.OK, "true");
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
-        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusSeconds(10));
-        fileUploadExerciseRepository.save(fileUploadExercise);
-        saveAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true");
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
-    private void saveAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit) throws Exception {
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        // should be possible because the original result was not yet submitted
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
+    }
+
+    private void assessmentDueDatePassed() {
+        database.updateAssessmentDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+    }
+
+    private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, student, originalAssessor);
-
+        fileUploadSubmission.getResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
+        resultRepo.save(fileUploadSubmission.getResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
-
         request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, httpStatus, params);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
-        database.addFeedbacksToResult(fileUploadSubmission.getResult());
-        request.put(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(true);
+        submission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, submission, "student1", "tutor1");
+        database.addFeedbacksToResult(submission.getResult());
+        request.put(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
     @Test

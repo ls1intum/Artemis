@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -189,7 +188,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
         if (!isAllowedToOverrideExistingResult(modelingSubmission, modelingExercise, user, isAtLeastInstructor)) {
-            throw new BadRequestAlertException("The user is not allowed to save the assessment", "assessment", "assessmentSaveNotAllowed");
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);

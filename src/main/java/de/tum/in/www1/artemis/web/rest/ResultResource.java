@@ -178,7 +178,7 @@ public class ResultResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
         if (!isAllowedToOverrideExistingResult(updatedResult.getSubmission(), exercise, user, isAtLeastInstructor)) {
-            throw new BadRequestAlertException("The user is not allowed to save the assessment", "assessment", "assessmentSaveNotAllowed");
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
@@ -193,7 +193,7 @@ public class ResultResource {
             return true;
         }
         final var isAssessor = user.equals(existingResult.getAssessor());
-        if (existingResult.getCompletionDate() != null) {
+        if (existingResult.getCompletionDate() == null) {
             // if the result exists, but was not yet submitted, the tutor and the instructor can override, independent of the assessment due date
             return isAssessor || isAtLeastInstructor;
         }

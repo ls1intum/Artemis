@@ -96,7 +96,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
         if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
-            throw new BadRequestAlertException("The user is not allowed to save the assessment", "assessment", "assessmentSaveNotAllowed");
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
@@ -126,7 +126,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
         if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
-            throw new BadRequestAlertException("The user is not allowed to submit the assessment", "assessment", "assessmentSubmitNotAllowed");
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
