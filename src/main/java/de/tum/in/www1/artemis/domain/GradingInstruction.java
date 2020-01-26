@@ -169,7 +169,8 @@ public class GradingInstruction implements Serializable {
 
     @Override
     public String toString() {
-        return "GradingInstruction{" + "id=" + getId() + ", exercise='" + getExercise() +", criteria='" + getGradingCriteria() + "'" + ", credits='" + getCredits() + "'" + ", gradingScale='" + getGradingScale() + "'"
-                + ", instructionDescription='" + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'" + ", usageCount='" + getUsageCount() + "'" + '}';
+        return "GradingInstruction{" + "id=" + getId() + ", exercise='" + getExercise() + ", criteria='" + getGradingCriteria() + "'" + ", credits='" + getCredits() + "'"
+                + ", gradingScale='" + getGradingScale() + "'" + ", instructionDescription='" + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'"
+                + ", usageCount='" + getUsageCount() + "'" + '}';
     }
 }

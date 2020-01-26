@@ -1,16 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingInstruction;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriteria;
 import de.tum.in.www1.artemis.repository.GradingCriteriaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-
-import java.util.List;
 
 /**
  * Service Implementation for managing Grading Criteria.
@@ -59,6 +58,7 @@ public class GradingCriteriaService {
         return gradingCriteriaRepository.findById(gradingCriteriaId)
                 .orElseThrow(() -> new EntityNotFoundException("Grading Criteria with gradingCriteriaId  " + gradingCriteriaId + " does not exist!"));
     }
+
     /**
      * Finds all Grading Criteria for a given Exercise
      *
