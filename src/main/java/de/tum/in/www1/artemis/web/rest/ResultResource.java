@@ -500,6 +500,7 @@ public class ResultResource {
      * @param studentLogin The student login (username) for which a result should get created
      * @param result The result to be created
      * @return The newly created result
+     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
