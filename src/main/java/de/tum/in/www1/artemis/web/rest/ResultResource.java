@@ -493,6 +493,14 @@ public class ResultResource {
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
+    /**
+     * Creates a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
+     *
+     * @param exerciseId The exercise ID for which a result should get created
+     * @param studentLogin The student login (username) for which a result should get created
+     * @param result The result to be created
+     * @return The newly created result
+     */
     @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
@@ -514,24 +522,24 @@ public class ResultResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported for Quiz exercises.");
         }
 
-        StudentParticipation participation = participationService.createParticipationWithEmptySubmission(exercise, student.get(), SubmissionType.EXTERNAL);
+        // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, studentLogin);
+        Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
+        if (optionalResult.isPresent()) {
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "A result already exists for this submission", "resultAlreadyExists"))
+                    .body(optionalResult.get());
+        }
+
+        // Create a participation and a submitted empty submission if they do not exist yet
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
+        Submission submission = participationService.findOneWithEagerSubmissions(participation.getId()).findLatestSubmission().get();
         result.setParticipation(participation);
+        result.setSubmission(submission);
 
-        participation = (StudentParticipation) participationService.findOneWithEagerSubmissions(participation.getId());
-        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
-        if (optionalSubmission.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Submission for " + studentLogin + " in exercise " + exerciseId + " was neither found nor could be created");
-        }
-        result.setSubmission(optionalSubmission.get());
-        Result existingResult = optionalSubmission.get().getResult();
-        if (existingResult != null) {
-            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "A result already exists for this submission", "resultAlreadyExists")).body(existingResult);
-        }
+        // Create a new manual result which can be rated or unrated depending on what was specified in the create form
+        Result savedResult = resultService.createNewManualResult(result, exercise instanceof ProgrammingExercise, result.isRated());
 
-        resultService.createNewManualResult(result, exercise instanceof ProgrammingExercise, result.isRated());
-
-        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
     }
 }

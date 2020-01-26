@@ -237,7 +237,17 @@ public class ParticipationService {
         return participation;
     }
 
-    public StudentParticipation createParticipationWithEmptySubmission(Exercise exercise, User user, SubmissionType submissionType) {
+    /**
+     * This method checks whether a participation exists for a given exercise and user. If not, it creates such a participation with initialization state FINISHED.
+     * If the participation had to be newly created or there were no submissions yet for the existing participation, a new submission is created with the given submission type.
+     * For external submissions, the submission is assumed to be submitted immediately upon creation.
+     *
+     * @param exercise the exercise for which to create a participation and submission
+     * @param user the user for which to create a participation and submission
+     * @param submissionType the type of submission to create if none exist yet
+     * @return the participation connecting the given exercise and user
+     */
+    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, User user, SubmissionType submissionType) {
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
@@ -252,19 +262,20 @@ public class ParticipationService {
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setStudent(user);
-
-            participation = save(participation);
         }
         else {
             // make sure participation and exercise are connected
             participation = optionalStudentParticipation.get();
             participation.setExercise(exercise);
         }
-        if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
-            // initialize a programming, modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-            initializeSubmission(participation, exercise, true, submissionType);
-        }
         participation = save(participation);
+
+        // initialize a programming, modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
+        if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
+            participation = (StudentParticipation) findOneWithEagerSubmissions(participation.getId());
+            initializeSubmission(participation, exercise, true, submissionType);
+            participation = save(participation);
+        }
 
         return participation;
     }
