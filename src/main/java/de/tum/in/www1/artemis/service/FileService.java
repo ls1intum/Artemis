@@ -616,15 +616,4 @@ public class FileService {
 
         return Charset.forName(charsetName);
     }
-
-    public byte[] getPublicStaticFile(final Path pathToFile) throws IOException {
-        final var publicPath = Constants.PUBLIC_STATIC_FILES.resolve(pathToFile);
-        if (!publicPath.toFile().getCanonicalPath().startsWith(Constants.PUBLIC_STATIC_FILES.toString())) {
-            final var errorMessage = "ILLEGAL ATTEMPT TO ACCESS FILE OUTSIDE OF THE PUBLIC PATH!: " + publicPath.toString();
-            log.error(errorMessage);
-            throw new SecurityException(errorMessage);
-        }
-
-        return Files.readAllBytes(publicPath);
-    }
 }
