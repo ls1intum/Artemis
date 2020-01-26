@@ -294,20 +294,18 @@ public class GitService {
      * Pulls from remote repository. Does not throw any exceptions when pulling, e.g. CheckoutConflictException or WrongRepositoryStateException.
      *
      * @param repo Local Repository Object.
-     * @return The PullResult which contains FetchResult and MergeResult.
      */
-    public PullResult pullIgnoreConflicts(Repository repo) {
+    public void pullIgnoreConflicts(Repository repo) {
         try {
             Git git = new Git(repo);
             // flush cache of files
             repo.setContent(null);
-            return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
-        return null;
     }
 
     /**
