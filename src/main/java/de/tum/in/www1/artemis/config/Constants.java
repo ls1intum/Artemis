@@ -31,7 +31,7 @@ public final class Constants {
 
     public static final String FILE_UPLOAD_EXERCISES_FILEPATH = "uploads" + File.separator + "file-upload-exercises" + File.separator;
 
-    public static final Path PUBLIC_STATIC_FILES = Path.of("public-assets");
+    public static final Path PUBLIC_STATIC_FILES = Path.of(System.getProperty("user.dir"), "public-assets");
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
