@@ -61,7 +61,7 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
 
-    @Value("${artemis.version-control.health-token}")
+    @Value("${artemis.version-control.health-api-token}")
     private String HEALTH_API_TOKEN;
 
     private String BASE_API;
