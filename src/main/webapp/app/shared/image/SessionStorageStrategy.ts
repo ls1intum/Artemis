@@ -1,5 +1,5 @@
 import { IStorageStrategy } from 'ngx-cacheable';
-import { GlobalCacheConfig, ICachePair } from 'ngx-cacheable/common';
+import { GlobalCacheConfig, ICachePair } from 'ngx-cacheable';
 
 /**
  * This is the same as the DOMStorageStrategy, only using the sessionStorage instead of the localStorage: https://github.com/angelnikolov/ngx-cacheable/blob/master/common/DOMStorageStrategy.ts
