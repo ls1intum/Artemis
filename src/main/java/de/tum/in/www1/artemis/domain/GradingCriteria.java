@@ -30,6 +30,9 @@ public class GradingCriteria implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
 
+    @ManyToOne
+    private Exercise exercise;
+
     @Column(name = "title")
     private String title;
 
@@ -78,6 +81,19 @@ public class GradingCriteria implements Serializable {
 
     public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public GradingCriteria exercise(Exercise exercise) {
+        this.exercise = exercise;
+        return this;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
     @Override

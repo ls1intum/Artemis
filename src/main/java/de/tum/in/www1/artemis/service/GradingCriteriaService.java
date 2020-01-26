@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,8 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.GradingCriteria;
 import de.tum.in.www1.artemis.repository.GradingCriteriaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+
+import java.util.List;
 
 /**
  * Service Implementation for managing Grading Criteria.
@@ -54,6 +58,16 @@ public class GradingCriteriaService {
     public GradingCriteria findOne(long gradingCriteriaId) {
         return gradingCriteriaRepository.findById(gradingCriteriaId)
                 .orElseThrow(() -> new EntityNotFoundException("Grading Criteria with gradingCriteriaId  " + gradingCriteriaId + " does not exist!"));
+    }
+    /**
+     * Finds all Grading Criteria for a given Exercise
+     *
+     * @param exercise corresponding exercise
+     * @return a List of all Grading Criteria for the given exercise
+     */
+
+    public List<GradingCriteria> findAllForExercise(Exercise exercise) {
+        return gradingCriteriaRepository.findByExerciseId(exercise.getId());
     }
 
 }

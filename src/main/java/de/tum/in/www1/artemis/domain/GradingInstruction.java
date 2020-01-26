@@ -44,7 +44,7 @@ public class GradingInstruction implements Serializable {
     @Column(name = "usage_count")
     private int usageCount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private GradingCriteria gradingCriteria;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -169,7 +169,7 @@ public class GradingInstruction implements Serializable {
 
     @Override
     public String toString() {
-        return "GradingInstruction{" + "id=" + getId() + ", exercise='" + getExercise() + "'" + ", credits='" + getCredits() + "'" + ", gradingScale='" + getGradingScale() + "'"
+        return "GradingInstruction{" + "id=" + getId() + ", exercise='" + getExercise() +", criteria='" + getGradingCriteria() + "'" + ", credits='" + getCredits() + "'" + ", gradingScale='" + getGradingScale() + "'"
                 + ", instructionDescription='" + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'" + ", usageCount='" + getUsageCount() + "'" + '}';
     }
 }

@@ -6,6 +6,8 @@
                 <constraints primaryKey="true"/>
             </column>
             <column name="title" type="VARCHAR(255)"/>
+            <column name="exercise_id" type="BIGINT"/>
         </createTable>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="grading_criteria" constraintName="fk_grading_criteria_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise"/>
     </changeSet>
 </databaseChangeLog>
