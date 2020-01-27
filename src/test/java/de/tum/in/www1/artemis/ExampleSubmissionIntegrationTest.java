@@ -88,6 +88,30 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationT
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateExampleModelingSubmission() throws Exception {
+        exampleSubmission = database.generateExampleSubmission(emptyModel, modelingExercise, false);
+        ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+        ExampleSubmission updateExistingExampleSubmission = request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions",
+                returnedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+
+        database.checkModelingSubmissionCorrectlyStored(updateExistingExampleSubmission.getSubmission().getId(), emptyModel);
+        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(updateExistingExampleSubmission.getSubmission().getId());
+        assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
+        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+
+        ExampleSubmission updatedExampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
+        ExampleSubmission returnedUpdatedExampleSubmission = request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions",
+                updatedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+
+        database.checkModelingSubmissionCorrectlyStored(returnedUpdatedExampleSubmission.getSubmission().getId(), validModel);
+        storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
+        assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
+        assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createAndDeleteExampleModelingSubmission() throws Exception {
         exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,

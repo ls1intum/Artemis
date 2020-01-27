@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -15,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
@@ -28,15 +27,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp left join fetch tp.results as tpr left join fetch sp.results as spr where pe.course.id = :#{#courseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) and (spr.id = (select max(id) from sp.results) or spr.id = null)")
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") Long courseId);
 
-    // Override to automatically fetch the templateParticipation and solutionParticipation
-    @Override
-    @NotNull
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(attributePaths = { "templateParticipation", "solutionParticipation" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationAndSolutionParticipationById(Long exerciseId);
 
     @EntityGraph(attributePaths = "testCases")
-    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findByIdWithTestCases(@Param("exerciseId") Long id);
+    Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
 
     // Get an a programmingExercise with template and solution participation, each with the latest result and feedbacks.
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp "
@@ -48,19 +43,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
+    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
+    List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
+
     @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation")
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
 
     @EntityGraph(attributePaths = "studentParticipations")
-    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
+    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
 
     @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
-    @Query("select distinct pe from ProgrammingExercise pe where pe.id = :#{#exerciseId}")
-    Optional<ProgrammingExercise> findByIdWithEagerParticipationsAndSubmissions(@Param("exerciseId") Long exerciseId);
-
-    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
-    List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
+    Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
 
@@ -111,4 +104,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("SELECT COUNT (DISTINCT participation) FROM ProgrammingExerciseStudentParticipation participation WHERE participation.exercise.course.id = :#{#courseId} AND (participation.exercise.dueDate IS NULL OR EXISTS (SELECT submission FROM ProgrammingSubmission submission WHERE submission.participation.id = participation.id AND submission.submissionDate IS NOT NULL AND submission.submitted = TRUE AND submission.submissionDate < participation.exercise.dueDate))")
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") Long courseId);
+
+    List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
+
+    List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
+
+    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.course.instructorGroupName IN :#{#groupNames} OR pe.course.teachingAssistantGroupName IN :#{#groupNames}")
+    List<ProgrammingExercise> findAllByInstructorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
+
+    List<ProgrammingExercise> findAllByCourse(Course course);
 }

@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -42,7 +41,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     RequestUtilService request;
 
     @Autowired
-    ProgrammingExerciseRepository exerciseRepository;
+    ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
@@ -54,12 +53,12 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = exerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addProgrammingParticipationWithResultForExercise(exercise, "student1");
         exercise.setTestCasesChanged(true);
-        exerciseRepository.save(exercise);
+        programmingExerciseRepository.save(exercise);
 
         doNothing().when(continuousIntegrationService).triggerBuild(any());
 
@@ -138,7 +137,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.addStudentParticipationForProgrammingExercise(exercise, login3);
         // Set test cases changed to true; after the build run it should be false);
         exercise.setTestCasesChanged(true);
-        exerciseRepository.save(exercise);
+        programmingExerciseRepository.save(exercise);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
         await().until(() -> submissionRepository.count() == 3);
@@ -159,8 +158,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
             verify(continuousIntegrationService).triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
         }
 
-        SecurityUtils.setAuthorizationObject();
-        ProgrammingExercise updatedProgrammingExercise = exerciseRepository.findById(exercise.getId()).get();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId()).get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);

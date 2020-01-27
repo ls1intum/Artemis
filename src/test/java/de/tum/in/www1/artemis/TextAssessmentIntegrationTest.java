@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,14 +17,15 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
 public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -41,13 +44,32 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @Autowired
     ObjectMapper mapper;
 
+    @Autowired
+    private TextClusterRepository textClusterRepository;
+
+    @Autowired
+    private TextBlockRepository textBlockRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
     private TextExercise textExercise;
+
+    private Course course;
 
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(1, 2, 1);
-        database.addCourseWithOneTextExerciseDueDateReached();
+        database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
+        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exerciseRepo.save(textExercise);
     }
 
     @AfterEach
@@ -131,8 +153,23 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getResultWithPredefinedTextblocks_studentHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        int submissionCount = 5;
+        int submissionSize = 4;
+        int[] clusterSizes = new int[] { 4, 5, 10, 1 };
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
+        textBlocks.forEach(TextBlock::computeId);
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+        textClusterRepository.saveAll(clusters);
+        textBlockRepository.saveAll(textBlocks);
+
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmissionRepository.findAll().get(0).getParticipation();
+
+        // connect it with the user
+        User user = database.getUserByLogin("tutor1");
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
+        studentParticipation.setStudent(user);
+        studentParticipationRepository.save(studentParticipation);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");

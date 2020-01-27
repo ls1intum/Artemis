@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 
@@ -34,6 +35,22 @@ public class DatabaseUtilService {
     private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
     private static ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    private static Authority userAuthority = new Authority(AuthoritiesConstants.USER);
+
+    private static Authority tutorAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+
+    private static Authority instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
+
+    private static Authority adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
+
+    private static Set<Authority> studentAuthorities = Set.of(userAuthority);
+
+    private static Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
+
+    private static Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority);
+
+    private static Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
     CourseRepository courseRepo;
@@ -126,10 +143,22 @@ public class DatabaseUtilService {
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
+    private LtiUserIdRepository ltiUserIdRepository;
+
+    @Autowired
+    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+
+    @Autowired
+    private AuthorityRepository authorityRepository;
+
+    @Autowired
     ObjectMapper mapper;
 
     @Autowired
     GroupNotificationRepository groupNotificationRepository;
+
+    @Autowired
+    private TextClusterRepository textClusterRepository;
 
     public void resetDatabase() {
         conflictRepo.deleteAll();
@@ -143,11 +172,13 @@ public class DatabaseUtilService {
         exampleSubmissionRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
         textSubmissionRepo.deleteAll();
+        textClusterRepository.deleteAll();
         fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
+        ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
@@ -156,7 +187,9 @@ public class DatabaseUtilService {
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
+        ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
+        authorityRepository.deleteAll();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
     }
@@ -170,9 +203,12 @@ public class DatabaseUtilService {
      * @param numberOfTutors
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
-        List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, numberOfStudents);
-        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, numberOfTutors);
-        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, numberOfInstructors);
+
+        authorityRepository.saveAll(adminAuthorities);
+
+        List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, studentAuthorities, numberOfStudents);
+        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
+        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
         User admin = ModelFactory.generateActivatedUser("admin");
         admin.setGroups(Set.of("admin"));
         List<User> usersToAdd = new ArrayList<>();
@@ -208,7 +244,7 @@ public class DatabaseUtilService {
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
-            studentParticipation = studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
+            studentParticipation = studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
         }
         else {
             studentParticipation = storedParticipation.get();
@@ -217,7 +253,7 @@ public class DatabaseUtilService {
     }
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
-        var instructor = ModelFactory.generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, 1).get(0);
+        var instructor = ModelFactory.generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1).get(0);
         instructor = userRepo.save(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
@@ -352,10 +388,11 @@ public class DatabaseUtilService {
             storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
         }
-        return studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId()).get();
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
+
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
@@ -373,7 +410,7 @@ public class DatabaseUtilService {
         participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(participation.getId()).get();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
@@ -450,7 +487,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
         assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
-        assertThat(courseRepo.findOneWithEagerExercises(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
+        assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return course;
@@ -513,6 +550,7 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneProgrammingExercise() {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().programmingLanguage(ProgrammingLanguage.JAVA).course(course);
         programmingExercise.setShortName("TSTEXC");
@@ -534,10 +572,8 @@ public class DatabaseUtilService {
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.sgiinssdgdg-tests.git");
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-        course = courseRepo.save(course);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
-        course = courseRepo.save(course);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -557,7 +593,7 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
-        course = courseRepo.findOneWithEagerExercises(course.getId());
+        course = courseRepo.findWithEagerExercisesById(course.getId());
         ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
@@ -574,7 +610,8 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneProgrammingExerciseAndTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
-        course = courseRepo.findOneWithEagerExercises(course.getId());
+
+        course = courseRepo.findWithEagerExercisesById(course.getId());
         ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
@@ -589,20 +626,16 @@ public class DatabaseUtilService {
         return courseRepo.findById(course.getId()).get();
     }
 
-    public void addCourseWithModelingAndTextExercise() {
+    public Course addCourseWithModelingAndTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         course.addExercises(textExercise);
-        courseRepo.save(course);
+        course = courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
-        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(2);
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
-        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+        return course;
     }
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
@@ -901,7 +934,7 @@ public class DatabaseUtilService {
     }
 
     public User getUserByLogin(String login) {
-        return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login does not exist in database"));
+        return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login does not exist in database"));
     }
 
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {
