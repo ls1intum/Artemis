@@ -359,11 +359,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     break;
                 }
                 case Orientation.TOPRIGHT: {
-                    this.currentTourStep.orientation = Orientation.TOPLEFT;
+                    this.orientation = Orientation.TOPLEFT;
                     break;
                 }
                 case Orientation.BOTTOMRIGHT: {
-                    this.currentTourStep.orientation = Orientation.BOTTOMLEFT;
+                    this.orientation = Orientation.BOTTOMLEFT;
                     break;
                 }
             }
