@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared';
-import { User } from './../../core';
+import { User } from 'app/core/user/user.model';
 import { Exercise } from '../exercise';
 
 export class LtiOutcomeUrl implements BaseEntity {

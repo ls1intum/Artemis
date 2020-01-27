@@ -64,14 +64,10 @@ Logo styles
 ========================================================================== */
 .navbar-brand {
     &.logo {
-        padding: 15px 15px;
+        padding: 10px 15px;
         .logo-img {
-            height: 25px;
-            width: 48px;
-            display: inline-block;
+            height: 30px;
             vertical-align: middle;
-            background: url('../../../content/images/logo_tum.png') no-repeat center center;
-            background-size: contain;
         }
     }
 }

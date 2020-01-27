@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Course } from '../entities/course';
 import { CourseService } from 'app/entities/course/course.service';
 import { Exercise, ExerciseType } from '../entities/exercise';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';

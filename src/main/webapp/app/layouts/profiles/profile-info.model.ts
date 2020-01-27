@@ -9,4 +9,6 @@ export class ProfileInfo {
     features: ActiveFeatureToggles;
     guidedTourMapping?: GuidedTourMapping;
     buildPlanURLTemplate: string;
+    imprint: string;
+    contact: string;
 }
