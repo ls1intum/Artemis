@@ -265,7 +265,7 @@ public class ResultService {
             List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
             result.setFeedbacks(savedFeedbackItems);
         }
-        return createNewManualResult(result, true);
+        return createNewRatedManualResult(result, true);
     }
 
     /**
@@ -273,10 +273,11 @@ public class ResultService {
      *
      * @param result newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
+     * @param ratedResult override value for rated property of result
      *
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
-    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
@@ -287,8 +288,8 @@ public class ResultService {
         result.setAssessor(user);
         result.setCompletionDate(ZonedDateTime.now());
 
-        // manual feedback is always rated
-        result.setRated(true);
+        // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
+        result.setRated(ratedResult);
 
         result.getFeedbacks().forEach(feedback -> {
             feedback.setResult(result);
@@ -313,6 +314,10 @@ public class ResultService {
             websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
         }
         return savedResult;
+    }
+
+    public Result createNewRatedManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+        return createNewManualResult(result, isProgrammingExerciseWithFeedback, true);
     }
 
     /**
@@ -447,6 +452,6 @@ public class ResultService {
         final var newResult = new Result();
         newResult.setSubmission(submission);
         newResult.setExampleResult(true);
-        return createNewManualResult(newResult, isProgrammingExerciseWithFeedback);
+        return createNewRatedManualResult(newResult, isProgrammingExerciseWithFeedback);
     }
 }
