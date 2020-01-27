@@ -258,16 +258,14 @@ public class ParticipationService {
             else {
                 participation = new StudentParticipation();
             }
-            participation.setInitializationState(FINISHED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setStudent(user);
         }
         else {
-            // make sure participation and exercise are connected
             participation = optionalStudentParticipation.get();
-            participation.setExercise(exercise);
         }
+        participation.setInitializationState(FINISHED);
         participation = save(participation);
 
         // initialize a programming, modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
@@ -308,9 +306,8 @@ public class ParticipationService {
             submission = new FileUploadSubmission();
         }
 
-        if (submissionType != null) {
-            submission.setType(submissionType);
-        }
+        submission.setType(submissionType);
+
         if (submissionType == SubmissionType.EXTERNAL) {
             submission.setSubmitted(true);
             submission.setSubmissionDate(ZonedDateTime.now());
