@@ -11,7 +11,6 @@ import { AssessmentGeneralFeedbackComponent } from './assessment-general-feedbac
 import { ScoreDisplayComponent } from './score-display/score-display.component';
 import { AssessmentDetailComponent } from './assessment-detail/assessment-detail.component';
 import { AssessmentFiltersComponent } from 'app/assessment-shared/assessment-filters/assessment-filters.component';
-import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExternalSubmissionDialogComponent } from 'app/assessment-shared/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionButtonComponent } from 'app/assessment-shared/external-submission/external-submission-button.component';
@@ -38,6 +37,6 @@ import { ExternalSubmissionButtonComponent } from 'app/assessment-shared/externa
         AssessmentFiltersComponent,
         ExternalSubmissionButtonComponent,
     ],
-    providers: [JhiAlertService, ExampleSubmissionService],
+    providers: [JhiAlertService],
 })
 export class ArtemisAssessmentSharedModule {}
