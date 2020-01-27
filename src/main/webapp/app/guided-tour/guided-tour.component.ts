@@ -277,14 +277,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
         switch (direction) {
             case Direction.HORIZONTAL: {
-                return !this.currentTourStep.highlightSelector ||
-                    (this.elementInViewport(this.getSelectedElement(), direction) &&
-                    this.elementInViewport(this.tourStep.nativeElement, direction));
+                return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
             }
             case Direction.VERTICAL: {
                 return (
-                    !this.currentTourStep.highlightSelector ||
-                    this.elementInViewport(this.getSelectedElement(), direction)
+                    !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction)
                 );
             }
             default: {
@@ -341,7 +338,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private flipOrientation(): void {
         if (this.isLeft()) {
-            switch (this.orientation) {
+            switch (this.currentTourStep.orientation) {
                 case Orientation.LEFT: {
                     this.orientation = Orientation.RIGHT;
                     break;
@@ -362,11 +359,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     break;
                 }
                 case Orientation.TOPRIGHT: {
-                    this.orientation = Orientation.TOPLEFT;
+                    this.currentTourStep.orientation = Orientation.TOPLEFT;
                     break;
                 }
                 case Orientation.BOTTOMRIGHT: {
-                    this.orientation = Orientation.BOTTOMLEFT;
+                    this.currentTourStep.orientation = Orientation.BOTTOMLEFT;
                     break;
                 }
             }
