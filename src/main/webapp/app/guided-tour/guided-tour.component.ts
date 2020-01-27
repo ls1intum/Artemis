@@ -199,11 +199,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     }
                 }
             }
-            setTimeout(() => {
-                if (!this.isTourOnScreen(Direction.HORIZONTAL)) {
-                    this.flipOrientation();
-                }
-            }, 300);
+            if (!this.isTourOnScreen(Direction.HORIZONTAL)) {
+                this.flipOrientation();
+            }
         }, 0);
     }
 
