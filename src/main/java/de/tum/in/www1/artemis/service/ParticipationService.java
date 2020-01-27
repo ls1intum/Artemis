@@ -229,7 +229,7 @@ public class ParticipationService {
 
             if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-                initializeSubmission(participation, exercise);
+                initializeSubmission(participation, exercise, null);
             }
         }
         participation = save(participation);
@@ -268,11 +268,23 @@ public class ParticipationService {
         participation.setInitializationState(FINISHED);
         participation = save(participation);
 
-        // initialize a programming, modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-        if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
-            participation = (StudentParticipation) findOneWithEagerSubmissions(participation.getId());
-            initializeSubmission(participation, exercise, true, submissionType);
+        // Take the latest submission or initialize a new empty submission
+        participation = (StudentParticipation) findOneWithEagerSubmissions(participation.getId());
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+        Submission submission;
+        if (optionalSubmission.isPresent()) {
+            submission = optionalSubmission.get();
+        }
+        else {
+            submission = initializeSubmission(participation, exercise, submissionType).get();
             participation = save(participation);
+        }
+
+        // If the submission has not yet been submitted, submit it now
+        if (!submission.isSubmitted()) {
+            submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
+            submissionRepository.save(submission);
         }
 
         return participation;
@@ -284,12 +296,11 @@ public class ParticipationService {
      *
      * @param participation                 the participation for which the submission should be initialized
      * @param exercise                      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
-     * @param allowProgrammingExercise      whether to explicitly allow the submission initialization for programming exercises
      * @param submissionType                type for the submission to be initialized
      */
-    private void initializeSubmission(Participation participation, Exercise exercise, boolean allowProgrammingExercise, SubmissionType submissionType) {
-        if ((!allowProgrammingExercise && exercise instanceof ProgrammingExercise) || exercise instanceof QuizExercise) {
-            return;
+    private Optional<Submission> initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
+        if (exercise instanceof QuizExercise) {
+            return Optional.empty();
         }
 
         Submission submission;
@@ -307,19 +318,10 @@ public class ParticipationService {
         }
 
         submission.setType(submissionType);
-
-        if (submissionType == SubmissionType.EXTERNAL) {
-            submission.setSubmitted(true);
-            submission.setSubmissionDate(ZonedDateTime.now());
-        }
-
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         participation.addSubmissions(submission);
-    }
-
-    private void initializeSubmission(Participation participation, Exercise exercise) {
-        initializeSubmission(participation, exercise, false, null);
+        return Optional.of(submission);
     }
 
     /**
