@@ -66,7 +66,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(1, 2, 1);
-        database.addCourseWithOneTextExercise();
+        course = database.addCourseWithOneTextExerciseDueDateReached();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepo.save(textExercise);
