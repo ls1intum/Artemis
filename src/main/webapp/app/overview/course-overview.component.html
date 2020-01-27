@@ -24,7 +24,7 @@
         <div class="tab-item exercises" routerLink="exercises" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
         </div>
-        <div *ngIf="course.lectures" jhiIdeFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
+        <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
             <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
         </div>
         <div jhiOrionFilter [showInOrionWindow]="false" class="tab-item statistics" routerLink="statistics" routerLinkActive="active">
