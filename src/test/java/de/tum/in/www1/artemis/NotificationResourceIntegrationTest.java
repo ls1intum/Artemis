@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
 import de.tum.in.www1.artemis.service.NotificationService;
+import de.tum.in.www1.artemis.service.SystemNotificationService;
 import de.tum.in.www1.artemis.service.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +59,9 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     SystemNotificationRepository systemNotificationRepository;
 
+    @Autowired
+    SystemNotificationService systemNotificationService;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         user = database.addUsers(1, 1, 1).get(0);
@@ -88,8 +94,18 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetNotifications_asUser() throws Exception {
+    public void testGetNotifications_asInstructor() throws Exception {
         request.get("/api/notifications", HttpStatus.OK, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetSystemNotifications_asInstructor() throws Exception {
+        SystemNotification systemNotification = new SystemNotification();
+        systemNotification.type(SystemNotificationType.INFO);
+        systemNotification.setExpireDate(null);
+        systemNotificationRepository.save(systemNotification);
+        request.get("/api/notifications/for-user", HttpStatus.OK, List.class);
     }
 
     @Test
