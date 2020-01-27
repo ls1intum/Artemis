@@ -332,8 +332,7 @@ public class ResultResource {
      */
     @GetMapping(value = "exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions,
-            @RequestParam(defaultValue = "false") boolean withAssessors) {
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
@@ -345,17 +344,9 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
 
-        List<StudentParticipation> participations;
-        if (withAssessors) {
-            participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
-        }
-        else {
-            participations = participationService.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
-        }
-
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
         for (StudentParticipation participation : participations) {
             // Filter out participations without Students
-            // These participations are used e.g. to store template and solution build plans in programming exercises
             if (participation.getStudent() == null) {
                 continue;
             }

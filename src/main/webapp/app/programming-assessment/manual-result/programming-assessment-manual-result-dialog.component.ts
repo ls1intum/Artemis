@@ -18,6 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -37,7 +38,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     isLoading = false;
     isSaving = false;
     isOpenForSubmission = false;
-    userId: number;
+    user: User;
     isAssessor: boolean;
     canOverride = false;
     isAtLeastInstructor = false;
@@ -60,20 +61,19 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
 
     ngOnInit() {
         // If there already is a manual result, update it instead of creating a new one.
-        if (this.result) {
-            this.initializeForResultUpdate();
-        } else {
-            this.initializeForResultCreation();
-        }
-        this.checkPermissions();
+        this.accountService.identity().then(user => {
+            // Used to check if the assessor is the current user
+            this.user = user!;
+            if (this.result) {
+                this.initializeForResultUpdate();
+            } else {
+                this.initializeForResultCreation();
+            }
+            this.checkPermissions();
+        });
     }
 
     initializeForResultUpdate() {
-        // Used to check if the assessor is the current user
-        this.accountService.identity().then(user => {
-            this.userId = user!.id!;
-            this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
-        });
         if (this.result.feedbacks) {
             this.feedbacks = this.result.feedbacks;
         } else {
@@ -90,17 +90,19 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        // TODO: the participation needs additional information
         this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
     }
 
     initializeForResultCreation() {
         this.isLoading = true;
         this.result = this.manualResultService.generateInitialManualResult();
+        this.result.assessor = this.user;
+        // TODO: is this call really necessary?
         this.getParticipation();
     }
 
     private checkPermissions(): void {
+        this.isAssessor = this.result.assessor && this.result.assessor.id === this.user.id;
         this.isAtLeastInstructor =
             this.exercise && this.exercise.course
                 ? this.accountService.isAtLeastInstructorInCourse(this.exercise.course)
@@ -217,10 +219,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     /**
-     * the dialog is readonly if there is a complaint that was accepted or rejected
-     * and if the person cannot override the result
+     * the dialog is readonly if the user is not allowed to override the result
+     * and if there is a complaint that was accepted or rejected
      */
     readOnly() {
-        return !this.canOverride && this.complaint !== undefined && this.complaint.accepted !== undefined;
+        return !this.canOverride || (this.complaint !== undefined && this.complaint.accepted !== undefined);
     }
 }

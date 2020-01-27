@@ -53,7 +53,9 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
             this.latestResultSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.participationId)
                 .pipe(filter((result: Result) => result && result.assessmentType === AssessmentType.MANUAL))
-                .subscribe(manualResult => (this.latestResult = manualResult));
+                .subscribe(manualResult => {
+                    this.latestResult = manualResult;
+                });
         }
     }
 
