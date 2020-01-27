@@ -283,7 +283,7 @@ public class TextAssessmentResource extends AssessmentResource {
             result = new Result();
             result.setParticipation(participation);
             result.setSubmission(textSubmission);
-            resultService.createNewManualResult(result, false);
+            resultService.createNewRatedManualResult(result, false);
         }
 
         // Set Submissions and Results of Participation to include requested only

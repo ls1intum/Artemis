@@ -264,7 +264,7 @@ public class ResultService {
             List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
             result.setFeedbacks(savedFeedbackItems);
         }
-        return createNewManualResult(result, true);
+        return createNewRatedManualResult(result, true);
     }
 
     /**
@@ -314,7 +314,7 @@ public class ResultService {
         return savedResult;
     }
 
-    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public Result createNewRatedManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         return createNewManualResult(result, isProgrammingExerciseWithFeedback, true);
     }
 
@@ -450,6 +450,6 @@ public class ResultService {
         final var newResult = new Result();
         newResult.setSubmission(submission);
         newResult.setExampleResult(true);
-        return createNewManualResult(newResult, isProgrammingExerciseWithFeedback);
+        return createNewRatedManualResult(newResult, isProgrammingExerciseWithFeedback);
     }
 }

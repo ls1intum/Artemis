@@ -142,7 +142,7 @@ public class ResultResource {
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
         newResult.setSubmission(submission);
-        newResult = resultService.createNewManualResult(newResult, true);
+        newResult = resultService.createNewRatedManualResult(newResult, true);
 
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId() + "/manual-results/" + newResult.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
