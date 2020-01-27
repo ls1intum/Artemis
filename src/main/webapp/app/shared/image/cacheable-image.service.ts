@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { DOMStorageStrategy } from 'ngx-cacheable/common/DOMStorageStrategy';
+import { DOMStorageStrategy } from 'ngx-cacheable';
 import { Cacheable } from 'ngx-cacheable';
 import { HttpClient } from '@angular/common/http';
 import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';

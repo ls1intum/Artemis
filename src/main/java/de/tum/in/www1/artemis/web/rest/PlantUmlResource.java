@@ -1,12 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-import net.sourceforge.plantuml.FileFormat;
-import net.sourceforge.plantuml.FileFormatOption;
-import net.sourceforge.plantuml.SourceStringReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,16 +14,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.service.PlantUmlService;
+
 /**
  * Created by Josias Montag on 14.12.16.
  */
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(PlantUmlResource.Endpoints.ROOT)
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class PlantUmlResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
+
+    private final PlantUmlService plantUmlService;
+
+    public PlantUmlResource(PlantUmlService plantUmlService) {
+        this.plantUmlService = plantUmlService;
+    }
 
     /**
      * Generate PNG diagram for given PlantUML commands
@@ -38,23 +40,14 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
-    @GetMapping(value = "/plantuml/png")
+    @GetMapping(value = Endpoints.GENERATE_PNG)
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml) throws IOException {
+        final var png = plantUmlService.generatePng(plantuml);
+        final var responseHeaders = new HttpHeaders();
 
-        // Create PNG output stream
-        ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
-
-        // Create input stream reader
-        SourceStringReader reader = new SourceStringReader(plantuml);
-
-        // Create PNG
-        reader.generateImage(pngOutputStream);
-        pngOutputStream.close();
-
-        HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.IMAGE_PNG);
 
-        return new ResponseEntity<>(pngOutputStream.toByteArray(), responseHeaders, HttpStatus.OK);
+        return new ResponseEntity<>(png, responseHeaders, HttpStatus.OK);
     }
 
     /**
@@ -64,23 +57,19 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
-    @GetMapping(value = "/plantuml/svg")
+    @GetMapping(Endpoints.GENERATE_SVG)
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml) throws IOException {
+        final var svg = plantUmlService.generateSvg(plantuml);
 
-        // Create SVG output stream
-        ByteArrayOutputStream svgOutputStream = new ByteArrayOutputStream();
+        return new ResponseEntity<>(svg, HttpStatus.OK);
+    }
 
-        // Create input stream reader
-        SourceStringReader reader = new SourceStringReader(plantuml);
+    public static final class Endpoints {
 
-        // Create SVN
-        reader.generateImage(svgOutputStream, new FileFormatOption(FileFormat.SVG));
-        svgOutputStream.close();
+        public static final String ROOT = "/api/plantuml";
 
-        HttpHeaders responseHeaders = new HttpHeaders();
-        // The XML is stored into svg
-        final String svg = new String(svgOutputStream.toByteArray(), StandardCharsets.UTF_8);
+        public static final String GENERATE_PNG = "/png";
 
-        return new ResponseEntity<>(svg, responseHeaders, HttpStatus.OK);
+        public static final String GENERATE_SVG = "/svg";
     }
 }
