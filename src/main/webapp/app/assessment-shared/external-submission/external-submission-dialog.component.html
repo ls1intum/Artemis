@@ -1,0 +1,101 @@
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span jhiTranslate="artemisApp.submission.createExternal">Create external submission</span>
+            ({{ exercise.title }})
+        </h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <jhi-alert></jhi-alert>
+        <div class="form-group" *ngIf="exercise.gradingInstructions">
+            <h3 for="id" jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</h3>
+            <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
+        </div>
+        <div class="form-group">
+            <h4 class="control-label" jhiTranslate="artemisApp.result.studentLogin">Student login</h4>
+            <input type="text" required class="form-control" name="studentLogin" id="studentLogin" [(ngModel)]="student.login" #studentLogin="ngModel" />
+            <span class="text-danger" *ngIf="studentLogin?.invalid && studentLogin?.errors?.required" jhiTranslate="artemisApp.result.studentLoginRequired">
+                Student login is required.
+            </span>
+        </div>
+        <div class="form-group">
+            <h4 class="control-label" jhiTranslate="artemisApp.result.resultString">Result</h4>
+            <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
+            <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired">
+                Result text is required.
+            </span>
+        </div>
+        <div class="form-group row align-items-end">
+            <div class="col-md-6">
+                <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</h4>
+                <input
+                    type="number"
+                    [pattern]="SCORE_PATTERN"
+                    required
+                    class="form-control"
+                    name="score"
+                    id="field_score"
+                    [(ngModel)]="result.score"
+                    (ngModelChange)="result.score === 100 ? (result.successful = true) : (result.successful = false)"
+                    #score="ngModel"
+                />
+                <span class="text-danger" *ngIf="score.dirty && score.invalid" jhiTranslate="artemisApp.result.invalidScore">Score is required and should be a number.</span>
+            </div>
+            <div class="checkbox col-md-6">
+                <label class="artemis-label">
+                    <input type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />&nbsp;<span jhiTranslate="artemisApp.result.successful"
+                        >Successful</span
+                    >
+                </label>
+            </div>
+        </div>
+        <div class="form-group mb-2">
+            <a [hidden]="feedbacks.length > 0" (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">Add feedback</a>
+        </div>
+        <div *ngIf="feedbacks.length > 0">
+            <div *ngFor="let feedback of feedbacks; let i = index">
+                <div class="form-group">
+                    <label class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }"> Feedback #{{ i + 1 }} Text </label>
+                    <input type="text" class="form-control" name="feedbackText{{ i }}" required [(ngModel)]="feedback.text" #feedbackText="ngModel" />
+                    <span class="text-danger" *ngIf="feedbackText?.invalid && feedbackText?.errors?.required" jhiTranslate="artemisApp.result.feedbackTextRequired">
+                        Feedback text is required.
+                    </span>
+                </div>
+                <div class="form-group row align-items-end">
+                    <div class="col-md-6">
+                        <label class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }">
+                            Feedback #{{ i + 1 }} Detail Text
+                        </label>
+                        <textarea type="text" class="form-control" id="feedbackErrorText" name="feedbackErrorText{{ i }}" [(ngModel)]="feedback.detailText"></textarea>
+                    </div>
+                    <div class="checkbox col-md-6">
+                        <label class="artemis-label">
+                            <input type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />&nbsp;<span jhiTranslate="artemisApp.result.positive">Positive</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group mb-2" *ngIf="feedbacks.length > 0">
+            <a (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">More feedback</a>
+            &nbsp;
+            <a (click)="popFeedback()" jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</a>
+        </div>
+        <div class="form-group">
+            <h4 class="control-label" jhiTranslate="artemisApp.result.rated">Rated</h4>
+            <label class="artemis-label">
+                <input type="checkbox" name="resultRated" id="resultRated" [(ngModel)]="result.rated" #resultRated="ngModel" />
+            </label>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+    </div>
+</form>
