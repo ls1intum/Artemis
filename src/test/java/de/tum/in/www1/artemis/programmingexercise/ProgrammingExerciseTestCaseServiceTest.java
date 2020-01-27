@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -120,7 +119,6 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     public void shouldResetTestWeights() throws Exception {
-        SecurityUtils.setAuthorizationObject();
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
@@ -132,7 +130,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCaseService.resetWeights(programmingExercise.getId());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
         verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_NOTIFICATION);
@@ -150,7 +148,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     public void shouldUpdateTestWeight() throws Exception {
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
 
@@ -166,7 +164,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
         testCaseService.update(programmingExercise.getId(), programmingExerciseTestCaseDTOS);
 
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
 
         assertThat(testCaseRepository.findById(testCase.getId()).get().getWeight()).isEqualTo(400);
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();

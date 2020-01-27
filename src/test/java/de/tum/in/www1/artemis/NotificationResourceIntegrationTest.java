@@ -28,12 +28,11 @@ import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationTest {
 
     Exercise exercise;
-
-    User user;
 
     @Autowired
     ExerciseRepository exerciseRepo;
@@ -64,7 +63,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        user = database.addUsers(1, 1, 1).get(0);
+        database.addUsers(1, 1, 1).get(0);
         database.addCourseWithOneTextExercise();
         exercise = exerciseRepo.findAll().get(0);
     }
@@ -99,12 +98,11 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetSystemNotifications_asInstructor() throws Exception {
-        SystemNotification systemNotification = new SystemNotification();
-        systemNotification.type(SystemNotificationType.INFO);
-        systemNotification.setExpireDate(null);
-        systemNotificationRepository.save(systemNotification);
+    @WithMockUser(roles = "USER")
+    public void testGetSystemNotifications() throws Exception {
+        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().minusDays(1));
+        when(systemNotificationService.findActiveSystemNotification()).thenReturn(systemNotification);
+        // systemNotificationRepository.save(systemNotification);
         request.get("/api/notifications/for-user", HttpStatus.OK, List.class);
     }
 

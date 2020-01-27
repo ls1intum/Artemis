@@ -18,6 +18,7 @@
             "diskSpace": "Festplattenspeicher",
             "mail": "Email",
             "db": "Datenbank",
+            "ping": "Ping",
             "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
             "versionControlServer": "Versionskontrollserver"
         },

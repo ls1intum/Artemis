@@ -10,6 +10,7 @@ import { AssessmentComplaintAlertComponent } from './assessment-complaint-alert/
 import { AssessmentGeneralFeedbackComponent } from './assessment-general-feedback/assessment-general-feedback.component';
 import { ScoreDisplayComponent } from './score-display/score-display.component';
 import { AssessmentDetailComponent } from './assessment-detail/assessment-detail.component';
+import { AssessmentFiltersComponent } from 'app/assessment-shared/assessment-filters/assessment-filters.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule],
@@ -20,8 +21,9 @@ import { AssessmentDetailComponent } from './assessment-detail/assessment-detail
         AssessmentGeneralFeedbackComponent,
         ScoreDisplayComponent,
         AssessmentDetailComponent,
+        AssessmentFiltersComponent,
     ],
-    exports: [AssessmentLayoutComponent, AssessmentGeneralFeedbackComponent, ScoreDisplayComponent, AssessmentDetailComponent],
+    exports: [AssessmentLayoutComponent, AssessmentGeneralFeedbackComponent, ScoreDisplayComponent, AssessmentDetailComponent, AssessmentFiltersComponent],
     providers: [JhiAlertService],
 })
 export class ArtemisAssessmentSharedModule {}

@@ -9,7 +9,7 @@
         </div>
         <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
             <div *ngIf="participation">
-                <jhi-updating-result [exercise]="modelingExercise" [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result>
+                <jhi-submission-result-status [exercise]="modelingExercise" [studentParticipation]="isAfterAssessmentDueDate ? participation : null"></jhi-submission-result-status>
             </div>
             <br />
             <jhi-button

@@ -170,3 +170,4 @@ repos-download/
 .v8flags.*.json
 /.cache-loader
 /src/main/generated
+/coverage

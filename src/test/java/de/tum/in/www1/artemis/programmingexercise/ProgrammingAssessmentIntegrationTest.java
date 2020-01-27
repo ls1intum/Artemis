@@ -67,7 +67,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
+    public void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1");
         Result programmingAssessment = programmingSubmission.getResult();
@@ -100,7 +100,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
+    public void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
         Result programmingAssessment = programmingSubmission.getResult();
@@ -118,7 +118,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
+    public void updateAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
         Result programmingAssessment = programmingSubmission.getResult();
@@ -136,7 +136,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
+    public void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
         Result programmingAssessment = programmingSubmission.getResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 

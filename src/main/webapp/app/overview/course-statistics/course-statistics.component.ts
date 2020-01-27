@@ -13,6 +13,8 @@ import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { InitializationState } from 'app/entities/participation';
 import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/overview';
+import { SubmissionExerciseType } from 'app/entities/submission';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -362,7 +364,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (result.resultString && result.resultString.indexOf('passed') !== -1) {
             return null;
         }
-        if (result.resultString && result.resultString.indexOf('No tests found') !== -1) {
+        if (result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed) {
             return null;
         }
         if (result.resultString.indexOf('of') === -1) {

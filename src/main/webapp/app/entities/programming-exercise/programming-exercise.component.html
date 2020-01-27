@@ -132,12 +132,15 @@
                         </div>
                     </td>
                     <td jhiIdeFilter [showInIDE]="false">
-                        <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                         <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
-                            ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.templateParticipation.buildPlanId }}" target="_blank">Template</a></span
+                            ><a jhiBuildPlanLink [projectKey]="programmingExercise.projectKey" [buildPlanId]="programmingExercise.templateParticipation.buildPlanId"
+                                >Template</a
+                            ></span
                         ><br />
                         <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
-                            ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.solutionParticipation.buildPlanId }}" target="_blank">Solution</a></span
+                            ><a jhiBuildPlanLink [projectKey]="programmingExercise.projectKey" [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId"
+                                >Solution</a
+                            ></span
                         ><br />
                     </td>
 

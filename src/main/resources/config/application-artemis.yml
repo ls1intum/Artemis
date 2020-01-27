@@ -6,16 +6,18 @@ artemis:
     repo-clone-path: ./repos/
     repo-download-clone-path: ./repos-download/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
-    ldap:
-        url: <url>
-        user-dn: <user-dn>
-        password: <password>
-        base: <base>
-    jira:
-        url: https://jira.ase.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
-        admin-group-name: tumuser
+    user-management:
+        use-external: true
+        external:
+            url: https://jira.ase.in.tum.de
+            user: <username>    # e.g. ga12abc
+            password: <password>
+            admin-group-name: tumuser
+        ldap:
+            url: <url>
+            user-dn: <user-dn>
+            password: <password>
+            base: <base>
     version-control:
         url: https://bitbucket.ase.in.tum.de
         user: <username>    # e.g. ga12abc

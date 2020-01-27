@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-12 col-lg-8">
         <div class="mt-3 position-relative" *ngIf="course">
-            <div class="exercise-controls flex d-sm-block" *ngIf="course?.exercises.length > 0">
-                <div class="d-none d-sm-flex align-items-center mr-2">
+            <div class="exercise-controls" *ngIf="course?.exercises.length > 0">
+                <div class="d-flex align-items-center mr-2">
                     <label class="d-flex align-items-center mb-0 mr-2">
                         <input type="checkbox" [checked]="activeFilters.has(filterType.OVERDUE)" (change)="toggleFilters([filterType.OVERDUE])" />
                         <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>

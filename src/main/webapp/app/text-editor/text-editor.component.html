@@ -8,7 +8,9 @@
         </div>
 
         <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation"><jhi-updating-result [exercise]="textExercise" [participation]="isAfterAssessmentDueDate ? participation : null"></jhi-updating-result></div>
+            <div *ngIf="participation">
+                <jhi-submission-result-status [exercise]="textExercise" [studentParticipation]="isAfterAssessmentDueDate ? participation : null"></jhi-submission-result-status>
+            </div>
             <br />
             <jhi-button
                 [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"

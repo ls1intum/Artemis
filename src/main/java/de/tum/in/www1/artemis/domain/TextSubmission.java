@@ -22,7 +22,7 @@ public class TextSubmission extends Submission implements Serializable {
     @Lob
     private String text;
 
-    @OneToMany(mappedBy = "submission")
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties("submission")
     private List<TextBlock> blocks = new ArrayList<>();
 

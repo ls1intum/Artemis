@@ -19,11 +19,8 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
-
-    public LectureService(LectureRepository lectureRepository, UserService userService, AuthorizationCheckService authCheckService) {
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService) {
         this.lectureRepository = lectureRepository;
-        this.userService = userService;
         this.authCheckService = authCheckService;
     }
 

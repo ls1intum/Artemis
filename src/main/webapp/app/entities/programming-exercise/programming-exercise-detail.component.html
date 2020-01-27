@@ -84,12 +84,10 @@
                         ><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">{{ programmingExercise.testRepositoryUrl }}</a></span
                     >
                 </dd>
-
-                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
-                        ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.templateParticipation.buildPlanId }}" target="_blank">{{
+                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.templateParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey">{{
                             programmingExercise.templateParticipation.buildPlanId
                         }}</a></span
                     >
@@ -97,7 +95,7 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
-                        ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.solutionParticipation.buildPlanId }}" target="_blank">{{
+                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey">{{
                             programmingExercise.solutionParticipation.buildPlanId
                         }}</a></span
                     >

@@ -4,13 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.lang.Nullable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,6 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -60,10 +64,22 @@ public class RequestUtilService {
         return new URI(res.getResponse().getHeader("location"));
     }
 
-    public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, HttpHeaders httpHeaders) throws Exception {
+    public void postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        final var mapper = new ObjectMapper();
+        final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
+        });
+        final var content = new LinkedMultiValueMap<String, String>();
+        content.setAll(jsonMap);
+        final var res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+    }
+
+    public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).headers(httpHeaders).with(csrf()))
-                .andExpect(status().is(expectedStatus.value())).andReturn();
+        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+        if (httpHeaders != null) {
+            request = request.headers(httpHeaders);
+        }
+        mvc.perform(request.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
@@ -75,6 +91,21 @@ public class RequestUtilService {
             return null;
         }
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+    public File postWithResponseBodyFile(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = mvc.perform(
+                MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).accept(MediaType.APPLICATION_OCTET_STREAM).with(csrf()))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
+        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+
+        return tmpFile;
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType) throws Exception {
@@ -154,7 +185,18 @@ public class RequestUtilService {
             return null;
         }
 
-        return responseType == String.class ? (T) contentAsString : mapper.readValue(contentAsString, responseType);
+        if (responseType == String.class) {
+            return (T) contentAsString;
+        }
+        if (responseType == Boolean.class) {
+            return (T) Boolean.valueOf(contentAsString);
+        }
+        return mapper.readValue(contentAsString, responseType);
+    }
+
+    public byte[] getPng(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        final var res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+        return res.getResponse().getContentAsByteArray();
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {
@@ -191,5 +233,9 @@ public class RequestUtilService {
 
     public void delete(String path, HttpStatus expectedStatus) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+    }
+
+    public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
     }
 }

@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
@@ -36,7 +35,6 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
     void init() {
         database.addUsers(2, 2, 2);
         database.addCourseWithOneProgrammingExercise();
-
         programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
     }
 
@@ -59,26 +57,25 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
         assertThat(updatedProgrammingExercise.getTitle()).isEqualTo(newTitle);
 
-        SecurityUtils.setAuthorizationObject();
         // There should still be only 1 programming exercise.
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
         // The programming exercise in the db should also be updated.
-        ProgrammingExercise fromDb = programmingExerciseRepository.findById(programmingExercise.getId()).get();
-        assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
-        assertThat(fromDb.getTitle()).isEqualTo(newTitle);
+        ProgrammingExercise programmingExerciseFromDb = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        assertThat(programmingExerciseFromDb.getProblemStatement()).isEqualTo(newProblem);
+        assertThat(programmingExerciseFromDb.getTitle()).isEqualTo(newTitle);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseOnce() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExerciseTwice() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findById(programmingExerciseId).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
         updateProgrammingExercise(programmingExercise, "new problem 2", "new title 2");
     }
@@ -92,8 +89,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
 
-        SecurityUtils.setAuthorizationObject();
-        ProgrammingExercise fromDb = programmingExerciseRepository.findById(programmingExerciseId).get();
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
         assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
     }
 

@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,8 +68,6 @@ public class ParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final ConflictingResultService conflictingResultService;
 
     private final AuthorizationCheckService authCheckService;
@@ -81,8 +78,7 @@ public class ParticipationService {
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
             QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService,
-            AuthorizationCheckService authCheckService) {
+            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -98,7 +94,6 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.messagingTemplate = messagingTemplate;
         this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
     }

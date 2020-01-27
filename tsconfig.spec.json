@@ -1,3 +1,4 @@
+
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
@@ -8,6 +9,7 @@
         "allowJs": true,
         "moduleResolution": "node",
         "sourceMap": true,
+        "inlineSourceMap": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "removeComments": false,
