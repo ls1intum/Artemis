@@ -5,11 +5,11 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 
-import { VERSION } from 'app/app.constants';
+import { SERVER_API_URL, VERSION } from 'app/app.constants';
 import * as moment from 'moment';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,6 +22,8 @@ import { LoginService } from 'app/core/login/login.service';
     styleUrls: ['navbar.scss'],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+    readonly SERVER_API_URL = SERVER_API_URL;
+
     inProduction: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
