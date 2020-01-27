@@ -7,8 +7,8 @@ import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course/course.model';
+import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 

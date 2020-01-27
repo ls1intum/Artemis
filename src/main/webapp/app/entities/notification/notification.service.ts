@@ -13,7 +13,7 @@ import { GroupNotification, GroupNotificationType } from 'app/entities/group-not
 import { SystemNotification } from 'app/entities/system-notification';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 type EntityResponseType = HttpResponse<Notification>;
 type EntityArrayResponseType = HttpResponse<Notification[]>;
