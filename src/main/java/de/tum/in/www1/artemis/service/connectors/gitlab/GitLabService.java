@@ -7,7 +7,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -25,9 +24,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -61,17 +61,23 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
 
-    private String BASE_API;
+    @Value("${artemis.version-control.health-api-token}")
+    private String HEALTH_API_TOKEN;
 
-    private final RestTemplate restTemplate;
+    private String BASE_API;
 
     private final UserService userService;
 
+    private final RestTemplate restTemplate;
+
+    private final GitLabUserManagementService gitLabUserManagementService;
+
     private GitLabApi gitlab;
 
-    public GitLabService(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate, UserService userService) {
-        this.restTemplate = restTemplate;
+    public GitLabService(UserService userService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate, GitLabUserManagementService gitLabUserManagementService) {
         this.userService = userService;
+        this.restTemplate = restTemplate;
+        this.gitLabUserManagementService = gitLabUserManagementService;
     }
 
     @PostConstruct
@@ -86,7 +92,7 @@ public class GitLabService extends AbstractVersionControlService {
         if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
             if (!userExists(username)) {
                 final var user = userService.getUserByLogin(username).get();
-                createUser(user);
+                gitLabUserManagementService.importUser(user);
             }
         }
 
@@ -94,20 +100,9 @@ public class GitLabService extends AbstractVersionControlService {
         protectBranch("master", repositoryUrl);
     }
 
-    private org.gitlab4j.api.models.User createUser(User user) {
-        final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
-                .withCanCreateProject(false).withSkipConfirmation(true);
-        try {
-            return gitlab.getUserApi().createUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get(), false);
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);
-        }
-    }
-
     private void addMemberToProject(URL repositoryUrl, String username) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        final var userId = getUserId(username);
+        final var userId = gitLabUserManagementService.getUserId(username);
 
         try {
             gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
@@ -253,18 +248,19 @@ public class GitLabService extends AbstractVersionControlService {
         final var exercisePath = programmingExercise.getProjectKey();
         final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
 
-        final var instructors = userService.getInstructors(programmingExercise.getCourse());
-        final var teachingAssistants = userService.getTutors(programmingExercise.getCourse()).stream().filter(user -> !instructors.contains(user)).collect(Collectors.toList());
-        var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         try {
-            group = gitlab.getGroupApi().addGroup(group);
+            gitlab.getGroupApi().addGroup(group);
+
+            final var instructors = userService.getInstructors(programmingExercise.getCourse());
+            final var teachingAssistants = userService.getTutors(programmingExercise.getCourse());
             for (final var instructor : instructors) {
-                final var userId = getUserIdCreateIfNotExists(instructor);
-                gitlab.getGroupApi().addMember(group.getId(), userId, MAINTAINER);
+                final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
             }
             for (final var ta : teachingAssistants) {
-                final var userId = getUserIdCreateIfNotExists(ta);
-                gitlab.getGroupApi().addMember(group.getId(), userId, GUEST);
+                final var userId = gitLabUserManagementService.getUserId(ta.getLogin());
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
             }
         }
         catch (GitLabApiException e) {
@@ -332,7 +328,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     private void setRepositoryPermission(URL repositoryUrl, String username, AccessLevel accessLevel) {
-        final var userId = getUserId(username);
+        final var userId = gitLabUserManagementService.getUserId(username);
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         try {
             gitlab.getProjectApi().updateMember(repositoryId, userId, accessLevel);
@@ -354,36 +350,24 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
-        return null;
+        try {
+            final var uri = Endpoints.HEALTH.buildEndpoint(GITLAB_SERVER_URL.toString()).queryParam("token", HEALTH_API_TOKEN).build().toUri();
+            final var healthResponse = restTemplate.getForObject(uri, JsonNode.class);
+            final var status = healthResponse.get("status").asText();
+            if (!status.equals("ok")) {
+                return new ConnectorHealth(false, Map.of("status", status, "url", GITLAB_SERVER_URL));
+            }
+            return new ConnectorHealth(true, Map.of("url", GITLAB_SERVER_URL));
+        }
+        catch (Exception emAll) {
+            return new ConnectorHealth(emAll);
+        }
     }
 
     private void defaultExceptionHandling(String message, HttpClientErrorException exception) {
         message = message + "; response was: " + exception.getResponseBodyAsString();
         log.error(message);
         throw new GitLabException(message, exception);
-    }
-
-    private int getUserId(String username) {
-        try {
-            return gitlab.getUserApi().getUser(username).getId();
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabException("Unable to get ID for user " + username, e);
-        }
-    }
-
-    private int getUserIdCreateIfNotExists(User user) {
-        try {
-            var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
-            if (gitlabUser == null) {
-                gitlabUser = createUser(user);
-            }
-
-            return gitlabUser.getId();
-        }
-        catch (GitLabApiException e) {
-            throw new GitLabException("Unable to get ID for user " + user.getLogin(), e);
-        }
     }
 
     private boolean userExists(String username) {
@@ -408,7 +392,7 @@ public class GitLabService extends AbstractVersionControlService {
         PROTECTED_BRANCHES("projects", "<projectId>", "protected_branches"), PROTECTED_BRANCH("projects", "<projectId>", "protected_branches", "<branchName>"),
         GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"), COMMITS("projects", "<projectId>", "repository", "commits"),
         GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"), DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"),
-        GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork");
+        GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork"), HEALTH("-", "liveness");
 
         private List<String> pathSegments;
 

@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -103,13 +104,15 @@ public class CourseResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final Optional<VcsUserManagementService> vcsUserManagementService;
+
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
             FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
-            ExampleSubmissionRepository exampleSubmissionRepository, AuditEventRepository auditEventRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -131,6 +134,7 @@ public class CourseResource {
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.programmingExerciseService = programmingExerciseService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -195,7 +199,14 @@ public class CourseResource {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
                 checkIfGroupsExists(updatedCourse);
+
+                // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
+                // We need the old instructors and TAs, so that the VCS user management service can determine which
+                // users no longer have TA or instructor rights in the related exercise repositories.
+                final var oldInstructorGroup = existingCourse.get().getInstructorGroupName();
+                final var oldTeachingAssistantGroup = existingCourse.get().getTeachingAssistantGroupName();
                 Course result = courseService.save(updatedCourse);
+                vcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
                 return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
             }
             catch (ArtemisAuthenticationException ex) {
@@ -215,19 +226,19 @@ public class CourseResource {
         }
         // only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
         if (course.getInstructorGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
+            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException(
                         "Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
             }
         }
         if (course.getTeachingAssistantGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
+            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getTeachingAssistantGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName()
                         + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
             }
         }
         if (course.getStudentGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
+            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getStudentGroupName())) {
                 throw new ArtemisAuthenticationException(
                         "Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
             }
@@ -375,6 +386,8 @@ public class CourseResource {
             }
 
             long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+
+            exerciseService.calculateNrOfOpenComplaints(exercise);
 
             exercise.setNumberOfParticipations(numberOfSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);

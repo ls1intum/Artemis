@@ -12,23 +12,23 @@
         >
             <fa-icon [icon]="'chalkboard-teacher'"></fa-icon>
         </li>
-
         <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
-            <div class="progress position-relative" [ngbTooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate">
-                <div
-                    class="progress-bar"
-                    role="progressbar"
-                    [ngClass]="calculateProgressBarClass()"
-                    [style.width]="percentageAssessmentProgress + '%'"
-                    attr.aria-valuenow="{{ percentageAssessmentProgress }}"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                >
-                    <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="chooseProgressBarTextColor()">
-                        {{ numberOfAssessments }} / {{ numberOfParticipations }} ({{ percentageAssessmentProgress + '%' }})
-                    </span>
-                </div>
-            </div>
+            <jhi-progress-bar
+                [tooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate"
+                [percentage]="percentageAssessmentProgress"
+                [numerator]="numberOfAssessments"
+                [denominator]="numberOfParticipations"
+            >
+            </jhi-progress-bar>
+        </li>
+        <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
+            <jhi-progress-bar
+                [tooltip]="'artemisApp.tutorCourseDashboard.evaluateStudentsComplaints' | translate"
+                [percentage]="percentageComplaintsProgress"
+                [numerator]="calculateComplaintsNumerator()"
+                [denominator]="calculateComplaintsDenominator()"
+            >
+            </jhi-progress-bar>
         </li>
     </ul>
 </div>

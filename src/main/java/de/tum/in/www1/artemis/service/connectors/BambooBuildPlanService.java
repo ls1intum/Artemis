@@ -60,7 +60,7 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.user}")
     private String BAMBOO_USER;
 
-    @Value("${artemis.jira.admin-group-name}")
+    @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
     @Value("${server.url}")

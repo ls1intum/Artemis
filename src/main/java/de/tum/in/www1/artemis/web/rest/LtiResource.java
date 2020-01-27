@@ -98,7 +98,7 @@ public class LtiResource {
             ltiService.handleLaunchRequest(launchRequest, exercise);
         }
         catch (Exception ex) {
-            log.error("Error during LIT launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest + "\nError: " + ex);
+            log.error("Error during LIT launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest + "\nError: ", ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
             return;
         }

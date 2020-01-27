@@ -21,7 +21,9 @@
             "notReleased": "Nicht freigegeben",
             "readGradingInstructions": "Bewertungsanweisungen lesen",
             "trainOnExampleSubmissions": "Übung zu Beispiel Einreichungen",
-            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten."
+            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten.",
+            "evaluateStudentsComplaints": "Evaluiere die Beschwerden und Feedback Anfragen der Studenten",
+            "numberOfOpenComplaints": "Anzahl an offenen Beschwerden"
         }
     }
 }
