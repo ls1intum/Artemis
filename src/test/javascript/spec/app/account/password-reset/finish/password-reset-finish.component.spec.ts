@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { ElementRef, Renderer } from '@angular/core';
+import { ElementRef, Renderer2 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { ArtemisTestModule } from '../../../../test.module';
@@ -23,7 +23,7 @@ describe('Component Tests', () => {
                         useValue: new MockActivatedRoute({ key: 'XYZPDQ' }),
                     },
                     {
-                        provide: Renderer,
+                        provide: Renderer2,
                         useValue: {
                             invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {},
                         },

@@ -1,11 +1,11 @@
-import { AfterViewInit, Component, ElementRef, OnInit, Renderer } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 
-import { Register } from './register.service';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from '../../shared';
-import { User } from '../../core';
+import { RegisterService } from 'app/account/register/register.service';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-register',
@@ -21,7 +21,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     success: boolean;
     modalRef: NgbModalRef;
 
-    constructor(private languageService: JhiLanguageService, private registerService: Register, private elementRef: ElementRef, private renderer: Renderer) {}
+    constructor(private languageService: JhiLanguageService, private registerService: RegisterService, private elementRef: ElementRef, private renderer: Renderer2) {}
 
     ngOnInit() {
         this.success = false;
@@ -29,7 +29,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this.renderer.invokeElementMethod(this.elementRef.nativeElement.querySelector('#login'), 'focus', []);
+        this.renderer.selectRootElement('#login', true).focus();
     }
 
     /**

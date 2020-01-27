@@ -1,5 +1,5 @@
 import { ComponentFixture, inject, TestBed } from '@angular/core/testing';
-import { ElementRef, Renderer } from '@angular/core';
+import { ElementRef, Renderer2 } from '@angular/core';
 import { of, throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../../test.module';
@@ -18,7 +18,7 @@ describe('Component Tests', () => {
                 declarations: [PasswordResetInitComponent],
                 providers: [
                     {
-                        provide: Renderer,
+                        provide: Renderer2,
                         useValue: {
                             invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {},
                         },

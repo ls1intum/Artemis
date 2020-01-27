@@ -2,8 +2,8 @@
     <div class="col-md-8 offset-md-2 text-center">
         <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
         <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with Individual Feedback</p>
-        <div class="lead" jhiTranslate="home.pleaseSignIn">
-            Please sign in with your TUM account.
+        <div class="lead" [jhiTranslate]="signInMessage">
+            Please sign in with your account.
         </div>
     </div>
 </div>
@@ -42,12 +42,12 @@
                                 name="username"
                                 id="username"
                                 placeholder="{{ 'global.form.username.placeholder' | translate }}"
-                                pattern="^([a-z]{2}\d{2}[a-z]{3})$"
+                                [pattern]="usernameRegexPattern"
                                 [(ngModel)]="username"
                                 #usernameForm="ngModel"
                                 [ngModelOptions]="{ updateOn: 'blur' }"
                             />
-                            <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" jhiTranslate="home.errors.tumWarning">
+                            <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" [jhiTranslate]="errorMesssageUsername">
                                 <p class="text-primary small">
                                     If you are a TUM student, your username should have the format <b>ab12xyz</b>.<br />
                                     Do <b>not</b> include '<b>@mytum.de</b>' or '<b>@tum.de</b>'.
