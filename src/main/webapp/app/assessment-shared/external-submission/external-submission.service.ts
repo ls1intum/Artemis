@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {

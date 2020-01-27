@@ -11,7 +11,7 @@ import { Complaint } from 'app/entities/complaint/complaint.model';
 import { Exercise } from 'app/entities/exercise';
 import { ExternalSubmissionService } from 'app/assessment-shared/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
