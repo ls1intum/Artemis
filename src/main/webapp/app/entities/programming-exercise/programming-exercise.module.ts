@@ -30,6 +30,7 @@ import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exe
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 import { programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
 import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute];
 
@@ -58,6 +59,7 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ArtemisProgrammingAssessmentModule,
         IntellijModule,
         ProgrammingExerciseUtilsModule,
+        ArtemisAssessmentSharedModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
