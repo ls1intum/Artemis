@@ -27,7 +27,7 @@ import { ArtemisSharedModule } from 'app/shared';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService, LocalStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';

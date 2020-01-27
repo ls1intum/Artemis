@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
+import java.net.FileNameMap;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
