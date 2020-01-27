@@ -77,9 +77,6 @@ public class DatabaseUtilService {
     UserRepository userRepo;
 
     @Autowired
-    AuthorityRepository authorityRepo;
-
-    @Autowired
     ResultRepository resultRepo;
 
     @Autowired
@@ -146,6 +143,15 @@ public class DatabaseUtilService {
     ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
+    private LtiUserIdRepository ltiUserIdRepository;
+
+    @Autowired
+    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+
+    @Autowired
+    private AuthorityRepository authorityRepository;
+
+    @Autowired
     ObjectMapper mapper;
 
     @Autowired
@@ -172,6 +178,7 @@ public class DatabaseUtilService {
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
+        ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
         exerciseRepo.deleteAll();
@@ -180,8 +187,9 @@ public class DatabaseUtilService {
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
+        ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
-        authorityRepo.deleteAll();
+        authorityRepository.deleteAll();
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
     }
@@ -196,7 +204,7 @@ public class DatabaseUtilService {
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
 
-        authorityRepo.saveAll(adminAuthorities);
+        authorityRepository.saveAll(adminAuthorities);
 
         List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, studentAuthorities, numberOfStudents);
         List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);

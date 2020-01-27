@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { StudentQuestion, StudentQuestionService } from 'app/entities/student-question';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { StudentQuestionAnswer, StudentQuestionAnswerService } from 'app/entities/student-question-answer';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';

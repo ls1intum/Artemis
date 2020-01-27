@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Notification, NotificationService } from 'app/entities/notification';
 import { HttpResponse } from '@angular/common/http';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
 import { GroupNotification } from 'app/entities/group-notification';

@@ -97,9 +97,10 @@ public class FileUploadSubmissionService extends SubmissionService {
     public List<FileUploadSubmission> getFileUploadSubmissions(Long exerciseId, boolean submittedOnly) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<FileUploadSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestFileUploadSubmission)
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true
-                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add(submission.get()));
+                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
+                .forEach(submission -> submissions.add((FileUploadSubmission) submission.get()));
         return submissions;
     }
 
@@ -140,14 +141,16 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public Optional<FileUploadSubmission> getFileUploadSubmissionWithoutManualResult(FileUploadExercise fileUploadExercise) {
-        Random r = new Random();
-        List<FileUploadSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId()).stream()
-                .map(StudentParticipation::findLatestFileUploadSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        Random random = new Random();
+        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(fileUploadExercise.getId());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        var submissionWithoutResult = (FileUploadSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        return Optional.of(submissionWithoutResult);
     }
 
     /**
@@ -221,9 +224,9 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (fileUploadSubmission.getId() == null) {
-            Optional<FileUploadSubmission> optionalFileUploadSubmission = savedParticipation.findLatestFileUploadSubmission();
-            if (optionalFileUploadSubmission.isPresent()) {
-                fileUploadSubmission = optionalFileUploadSubmission.get();
+            Optional<Submission> optionalSubmission = savedParticipation.findLatestSubmission();
+            if (optionalSubmission.isPresent()) {
+                fileUploadSubmission = (FileUploadSubmission) optionalSubmission.get();
             }
         }
 
