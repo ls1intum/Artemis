@@ -232,7 +232,7 @@ public class TextSubmissionResource {
             textSubmission = textSubmissionService.getLockedTextSubmissionWithoutResult((TextExercise) exercise);
         }
         else {
-            Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+            final Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
             if (optionalTextSubmission.isEmpty()) {
                 return notFound();
             }
@@ -240,7 +240,7 @@ public class TextSubmissionResource {
         }
 
         // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        final StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
         textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(textSubmission);
