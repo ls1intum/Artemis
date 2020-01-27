@@ -73,7 +73,7 @@ public abstract class AssessmentResource {
      * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
      * @return true of the the given user can override a potentially existing result
      */
-    protected boolean isAllowedToOverrideExistingResult(Submission submission, Exercise exercise, User user, boolean isAtLeastInstructor) {
+    protected boolean isAllowedToCreateOrOverrideResult(Submission submission, Exercise exercise, User user, boolean isAtLeastInstructor) {
         final var existingResult = submission.getResult();
         if (existingResult == null) {
             // if there is no result yet, we can always save, submit and potentially "override"

@@ -4,10 +4,13 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -188,12 +191,23 @@ public class ResultResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
     }
 
-    protected boolean isAllowedToOverrideExistingResult(Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        if (existingResult == null) {
-            // if there is no result yet, we can always save, submit and potentially "override"
-            return true;
+    protected boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+
+        // if the assessor is null, the user is allowed to save / submit / override the existing result
+        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
+        if (existingResult.getCompletionDate() == null) {
+            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+            return isAssessor || isAtLeastInstructor;
         }
-        return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
+        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        var assessmentDueDate = exercise.getAssessmentDueDate();
+        // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
+        // and tutors should be able to override the created results when the assessmentDueDate is null
+        final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+
+        // TODO at the moment we use a different logic for migration and compatibility reasons, but basically we should invoke the following method in the future
+        // return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
 
     /**

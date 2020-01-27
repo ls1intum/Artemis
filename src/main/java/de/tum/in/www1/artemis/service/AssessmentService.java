@@ -109,7 +109,7 @@ public class AssessmentService {
      * @return true of the the given user can override a potentially existing result
      */
     public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        // if the assessor is null, the user can save / submit / override the existing result
+        // if the assessor is null, the user is allowed to save / submit / override the existing result
         final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
         if (existingResult.getCompletionDate() == null) {
             // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date

@@ -105,7 +105,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             this.exercise && this.exercise.course
                 ? this.accountService.isAtLeastInstructorInCourse(this.exercise.course)
                 : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        const isBeforeAssessmentDueDate = this.exercise && this.exercise.assessmentDueDate && moment().isBefore(this.exercise.assessmentDueDate);
+        // NOTE: the following line deviates intentionally from other exercises because currently we do not use assessmentDueDate
+        // and tutors should be able to override the created results when the assessmentDueDate is not set (also see ResultResource.isAllowedToOverrideExistingResult)
+        // TODO: make it consistent with other exercises in the future
+        const isBeforeAssessmentDueDate = this.exercise && (!this.exercise.assessmentDueDate || moment().isBefore(this.exercise.assessmentDueDate));
         // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
