@@ -281,4 +281,11 @@ public class ModelFactory {
     public static TextBlock generateTextBlock(int startIndex, int endIndex) {
         return generateTextBlock(startIndex, endIndex, "");
     }
+
+    public static SystemNotification generateSystemNotification(ZonedDateTime expireDate, ZonedDateTime notificationDate) {
+        SystemNotification systemNotification = new SystemNotification();
+        systemNotification.setExpireDate(expireDate);
+        systemNotification.setNotificationDate(notificationDate);
+        return systemNotification;
+    }
 }

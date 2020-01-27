@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service.scheduled;
 import static java.time.Instant.now;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 
 import javax.annotation.PostConstruct;
@@ -15,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.TextClusteringService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
+import io.github.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("automaticText")
@@ -35,6 +35,8 @@ public class TextClusteringScheduleService {
 
     private final TextExerciseService textExerciseService;
 
+    private final Environment env;
+
     private final Map<Long, ScheduledFuture> scheduledClusteringTasks = new HashMap<>();
 
     private final TextClusteringService textClusteringService;
@@ -42,15 +44,22 @@ public class TextClusteringScheduleService {
     private final TaskScheduler scheduler;
 
     public TextClusteringScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseService textExerciseService, TextClusteringService textClusteringService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.textExerciseService = textExerciseService;
         this.textClusteringService = textClusteringService;
         this.scheduler = scheduler;
+        this.env = env;
     }
 
     @PostConstruct
     private void scheduleRunningExercisesOnStartup() {
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            // only execute this on production server, i.e. when the prod profile is active
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            return;
+        }
         List<TextExercise> runningTextExercises = textExerciseService.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
         runningTextExercises.forEach(this::scheduleExerciseForClustering);
         log.info("Scheduled text clustering for " + runningTextExercises.size() + " text exercises with future due dates.");

@@ -24,6 +24,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -58,6 +60,9 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
+
+    @Value("${artemis.version-control.health-api-token}")
+    private String HEALTH_API_TOKEN;
 
     private String BASE_API;
 
@@ -345,7 +350,18 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
-        return null;
+        try {
+            final var uri = Endpoints.HEALTH.buildEndpoint(GITLAB_SERVER_URL.toString()).queryParam("token", HEALTH_API_TOKEN).build().toUri();
+            final var healthResponse = restTemplate.getForObject(uri, JsonNode.class);
+            final var status = healthResponse.get("status").asText();
+            if (!status.equals("ok")) {
+                return new ConnectorHealth(false, Map.of("status", status, "url", GITLAB_SERVER_URL));
+            }
+            return new ConnectorHealth(true, Map.of("url", GITLAB_SERVER_URL));
+        }
+        catch (Exception emAll) {
+            return new ConnectorHealth(emAll);
+        }
     }
 
     private void defaultExceptionHandling(String message, HttpClientErrorException exception) {
@@ -376,7 +392,7 @@ public class GitLabService extends AbstractVersionControlService {
         PROTECTED_BRANCHES("projects", "<projectId>", "protected_branches"), PROTECTED_BRANCH("projects", "<projectId>", "protected_branches", "<branchName>"),
         GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"), COMMITS("projects", "<projectId>", "repository", "commits"),
         GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"), DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"),
-        GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork");
+        GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork"), HEALTH("-", "liveness");
 
         private List<String> pathSegments;
 
