@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from '../entities/course';
 import { CourseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise/exercise.model';

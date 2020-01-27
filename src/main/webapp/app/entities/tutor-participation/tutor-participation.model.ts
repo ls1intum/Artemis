@@ -1,5 +1,5 @@
 import { Exercise } from '../exercise';
-import { User } from './../../core';
+import { User } from 'app/core/user/user.model';
 import { ExampleSubmission } from '../example-submission';
 import { BaseEntity } from 'app/shared';
 
