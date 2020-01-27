@@ -277,13 +277,18 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
         switch (direction) {
             case Direction.HORIZONTAL: {
-                return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
+                return !this.currentTourStep.highlightSelector ||
+                    (this.elementInViewport(this.getSelectedElement(), direction) &&
+                    this.elementInViewport(this.tourStep.nativeElement, direction));
             }
             case Direction.VERTICAL: {
                 return (
                     !this.currentTourStep.highlightSelector ||
-                    (this.elementInViewport(this.getSelectedElement(), direction) && this.elementInViewport(this.tourStep.nativeElement, direction))
+                    this.elementInViewport(this.getSelectedElement(), direction)
                 );
+            }
+            default: {
+                return false;
             }
         }
     }
@@ -442,9 +447,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const scrollAdjustment = this.currentTourStep.scrollAdjustment ? this.currentTourStep.scrollAdjustment : 0;
             const stepScreenAdjustment = this.getStepScreenAdjustment();
             const positionAdjustment = this.isBottom()
-                ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment
-                : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment;
-            topPosition = this.isTop() ? this.tourStep.nativeElement.getBoundingClientRect().top - 15 : this.selectedElementRect.bottom + positionAdjustment;
+                ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment - 10
+                : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment + 5;
+            topPosition = this.isTop() ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15 : window.scrollY + this.selectedElementRect.top + positionAdjustment;
+
         }
         return topPosition;
     }

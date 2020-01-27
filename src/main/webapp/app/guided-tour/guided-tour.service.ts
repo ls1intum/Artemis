@@ -5,7 +5,7 @@ import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
