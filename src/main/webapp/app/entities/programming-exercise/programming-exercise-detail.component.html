@@ -6,7 +6,7 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <div class="text-right">
-                <!--                <div class="btn-group flex-btn-group-container">-->
+                <jhi-external-submission class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
                 <button type="submit" *ngIf="programmingExercise.isAtLeastInstructor" routerLink="/exercise/{{ programmingExercise.id }}/hints" class="btn btn-info btn-sm mr-1">
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
@@ -28,7 +28,6 @@
                 >
                     <fa-icon [icon]="'eraser'"></fa-icon>
                 </button>
-                <!--                </div>-->
             </div>
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>

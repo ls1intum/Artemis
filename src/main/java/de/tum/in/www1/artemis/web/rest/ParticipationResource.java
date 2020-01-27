@@ -339,7 +339,7 @@ public class ParticipationResource {
         Result result = new Result();
         result.setParticipation(participation);
         result.setSubmission(textSubmissionWithoutAssessment.get());
-        resultService.createNewManualResult(result, false);
+        resultService.createNewRatedManualResult(result, false);
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 

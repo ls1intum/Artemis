@@ -4,12 +4,14 @@
         "login": "Login",
         "subtitle": "Interactive Learning with Individual Feedback",
         "please": "Please",
-        "pleaseSignIn": "Please sign in with your TUM account.",
+        "pleaseSignInTUM": "Please sign in with your TUM account.",
+        "pleaseSignIn": "Please sign in with your account.",
         "logged": {
             "message": "You are logged in as user \"{{username}}\"."
         },
         "errors": {
             "failedToLogin": "<span class='bold'>Failed to sign in!</span> Please check your username and password and try again.",
+            "usernameIncorrect": "<p class='text-primary small'>Invalid username</p>",
             "tumWarning": "<p class='text-primary small'>If you are a TUM student, your username should have the format <b>ab12xyz</b>.<br>Do <b>not</b> include '<b>@mytum.de</b>' or '<b>@tum.de</b>'.</p>",
             "jiraWaning": "<span class='bold'>You have entered your password too often incorrectly :-(</span><br>Please go to <a href='https://jira.ase.in.tum.de/login.jsp' target='_blank'>JIRA</a>: <a href='https://jira.ase.in.tum.de/login.jsp' target='_blank'>https://jira.ase.in.tum.de/login.jsp</a>. Sign in with your account there and solve the <a href='https://jira.ase.in.tum.de/login.jsp' target='_blank'>CAPTCHA</a>.<br> After you have solved the <a href='https://jira.ase.in.tum.de/login.jsp' target='_blank'>CAPTCHA</a>, try again here.",
             "loginWarning": "Seems like you are having issues signing in :-( Please go to <a href='https://jira.ase.in.tum.de'>JIRA</a> and try to sign in there.<br>After that, try again here."
