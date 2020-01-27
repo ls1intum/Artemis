@@ -4812,6 +4812,11 @@ expect@^25.1.0:
     jest-message-util "^25.1.0"
     jest-regex-util "^25.1.0"
 
+export-to-csv@0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/export-to-csv/-/export-to-csv-0.2.1.tgz#8f997156feebc1cf995096da16341aa0100cce4e"
+  integrity sha512-KTbrd3CAZ0cFceJEZr1e5uiMasabeCpXq1/5uvVxDl53o4jXJHnltasQoj2NkzrxD8hU9kdwjnMhoir/7nNx/A==
+
 express@^4.17.1:
   version "4.17.1"
   resolved "https://registry.yarnpkg.com/express/-/express-4.17.1.tgz#4491fc38605cf51f8629d39c2b5d026f98a4c134"
@@ -5145,10 +5150,10 @@ forever-agent@~0.6.1:
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
   integrity sha1-+8cfDEGt6zf5bFd60e1C2P2sypE=
 
-fork-ts-checker-webpack-plugin@4.0.2:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-4.0.2.tgz#3adaa4ac911787740a693e0b9e69e62e054e1e7e"
-  integrity sha512-gq47CwlNV8BUkI+kxuvI/rbE9062YWqPb4HkSCnX1ylsfKJIymyiC1RWU6cjcw0PbzRqm8xdrrfC0iO45D//3A==
+fork-ts-checker-webpack-plugin@4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/fork-ts-checker-webpack-plugin/-/fork-ts-checker-webpack-plugin-4.0.3.tgz#958f4e4ec3e7fd9d4ad5a50a4442abce77dca19a"
+  integrity sha512-5hGeMYKg817Hp6rvdc2EOS/T/Cq0JW9LLJDZtVUPlNIojIuP7YbOAdrHEk4Irw1097YQUr56kWIiYhqNPzfNzQ==
   dependencies:
     babel-code-frame "^6.22.0"
     chalk "^2.4.1"
@@ -5179,10 +5184,10 @@ fragment-cache@^0.2.1:
   dependencies:
     map-cache "^0.2.2"
 
-franc-min@4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/franc-min/-/franc-min-4.1.1.tgz#86da3f70a9094694525df6104ed610f5a9bf9d4e"
-  integrity sha512-7xpOX5GymdaT6d0qmSNFpyFuEd6tPuEHVZpL+KIh9DocVCVn59c2OnUvLn+NcWGGi7btqV1VZ5VbjSox5KbZKA==
+franc-min@5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/franc-min/-/franc-min-5.0.0.tgz#5625d0570a18564dcbbfa8330254d23549294d9a"
+  integrity sha512-xy7Iq7uNflbvNU+bkyYWtP+BOHWZle7kT9GM84gEV14b7/7sgq7M7Flf6v1XRflHAuHoshBMveWA6Q+kEXYeHQ==
   dependencies:
     trigram-utils "^1.0.0"
 
@@ -7993,10 +7998,10 @@ mocha-junit-reporter@1.23.3:
     strip-ansi "^4.0.0"
     xml "^1.0.0"
 
-mocha@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/mocha/-/mocha-7.0.0.tgz#c60d14bf3de9601f549b3ff5be657eb8381c54bf"
-  integrity sha512-CirsOPbO3jU86YKjjMzFLcXIb5YiGLUrjrXFHoJ3e2z9vWiaZVCZQ2+gtRGMPWF+nFhN6AWwLM/juzAQ6KRkbA==
+mocha@7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/mocha/-/mocha-7.0.1.tgz#276186d35a4852f6249808c6dd4a1376cbf6c6ce"
+  integrity sha512-9eWmWTdHLXh72rGrdZjNbG3aa1/3NRPpul1z0D979QpEnFdCG0Q5tv834N+94QEN2cysfV72YocQ3fn87s70fg==
   dependencies:
     ansi-colors "3.2.3"
     browser-stdout "1.3.1"
@@ -8203,10 +8208,10 @@ ngx-device-detector@1.3.20:
   dependencies:
     tslib "^1.9.0"
 
-ngx-image-cropper@3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/ngx-image-cropper/-/ngx-image-cropper-3.0.1.tgz#9d03fe39c39f150aef7205155b038932addc7c1a"
-  integrity sha512-7JecIdG+H8L8WPcFcxHkxjBKTubk6/ImgHE4uutnEmVJ35WwUgCion378ToDwsw9CfRRM/vDSe1OjCTi2pFuLA==
+ngx-image-cropper@3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/ngx-image-cropper/-/ngx-image-cropper-3.0.3.tgz#d83856313680d1c63a5fd75f1b080fb9a377ac9e"
+  integrity sha512-mOumX0JAYP4USuR0XgWrKEJL9+K62bTD8YiwOs+T1hVCoWurrJAp//76EIANSbzylc6FRcpdEtFlgPO74S5AJA==
   dependencies:
     tslib "^1.9.0"
 
