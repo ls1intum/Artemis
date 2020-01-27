@@ -326,7 +326,6 @@ public class ResultResource {
      * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
      * @param exerciseId the id of the exercise for which to retrieve the results
-     * @param withAssessors defines if assessors are loaded from the database for the results
      * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
