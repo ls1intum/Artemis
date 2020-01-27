@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 

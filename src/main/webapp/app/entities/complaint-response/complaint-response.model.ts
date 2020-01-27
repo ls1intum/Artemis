@@ -1,6 +1,6 @@
 import { Moment } from 'moment';
 import { Complaint } from '../complaint';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared';
 
 export class ComplaintResponse implements BaseEntity {

@@ -12,7 +12,7 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { NotificationService } from 'app/entities/notification';
 import { LectureService } from 'app/entities/lecture/lecture.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';

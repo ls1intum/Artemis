@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class RegisterService {

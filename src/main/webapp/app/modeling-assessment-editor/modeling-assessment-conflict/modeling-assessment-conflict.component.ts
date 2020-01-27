@@ -3,7 +3,7 @@ import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/mode
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import * as $ from 'jquery';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise';

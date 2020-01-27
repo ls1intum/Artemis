@@ -11,7 +11,7 @@ import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
 import { Mutable } from '../../helpers/mutable';
 import { BehaviorSubject } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mock-account.service';

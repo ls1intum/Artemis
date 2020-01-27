@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course';
 
 export const enum Weekday {

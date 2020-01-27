@@ -1,7 +1,7 @@
 import { Moment } from 'moment';
 import { BaseEntity } from 'app/shared';
 import { StudentQuestion } from 'app/entities/student-question';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 export class StudentQuestionAnswer implements BaseEntity {
     public id: number;

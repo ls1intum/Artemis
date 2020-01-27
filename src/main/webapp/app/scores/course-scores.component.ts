@@ -6,7 +6,7 @@ import { Course } from '../entities/course';
 import { CourseService } from 'app/entities/course/course.service';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { Exercise, ExerciseType } from '../entities/exercise';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { DecimalPipe } from '@angular/common';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

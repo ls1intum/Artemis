@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { StudentQuestion, StudentQuestionService } from 'app/entities/student-question';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
 import { QuestionActionName, StudentQuestionAction } from 'app/student-questions/student-question-row.component';
