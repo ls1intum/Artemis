@@ -280,9 +280,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
             }
             case Direction.VERTICAL: {
-                return (
-                    !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction)
-                );
+                return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
             }
             default: {
                 return false;
@@ -320,12 +318,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
                 if (this.isBottom()) {
                     elementInViewPort =
-                        top >= (window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment) &&
-                        (top + height) <= (window.innerHeight + window.pageYOffset);
+                        top >= window.pageYOffset + this.topOfPageAdjustment + scrollAdjustment + stepScreenAdjustment && top + height <= window.innerHeight + window.pageYOffset;
                 } else {
                     elementInViewPort =
-                        top >= (window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment) &&
-                        (top + height + scrollAdjustment) <= (window.innerHeight + window.pageYOffset);
+                        top >= window.pageYOffset + this.topOfPageAdjustment - stepScreenAdjustment && top + height + scrollAdjustment <= window.innerHeight + window.pageYOffset;
                 }
                 break;
             }
@@ -446,8 +442,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const positionAdjustment = this.isBottom()
                 ? -this.topOfPageAdjustment - scrollAdjustment + stepScreenAdjustment - 10
                 : +this.selectedElementRect.height - window.innerHeight + scrollAdjustment - stepScreenAdjustment + 5;
-            topPosition = this.isTop() ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15 : window.scrollY + this.selectedElementRect.top + positionAdjustment;
-
+            topPosition = this.isTop()
+                ? window.scrollY + this.tourStep.nativeElement.getBoundingClientRect().top - 15
+                : window.scrollY + this.selectedElementRect.top + positionAdjustment;
         }
         return topPosition;
     }
