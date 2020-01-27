@@ -57,7 +57,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @Override
     public void scheduleRunningExercisesOnStartup() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
