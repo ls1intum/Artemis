@@ -57,7 +57,7 @@ Course Info Bar
 
         // prevent result status from breaking due to flex wrap
         jhi-submission-result-status {
-            flex-basis: 0;
+            flex-basis: auto; // needed for Safari and JavaFX
             flex-grow: 1;
         }
 

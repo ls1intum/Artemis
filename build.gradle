@@ -172,7 +172,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.12'
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.14'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r"
@@ -209,7 +209,7 @@ dependencies {
     implementation "org.ehcache:ehcache"
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
-    implementation "org.hibernate.validator:hibernate-validator"
+    implementation "org.hibernate.validator:hibernate-validator:6.1.1.Final"
     implementation "org.liquibase:liquibase-core"
     implementation "org.springframework.boot:spring-boot-loader-tools"
     implementation "org.springframework.boot:spring-boot-starter-mail"
@@ -258,9 +258,9 @@ dependencies {
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.assertj:assertj-core:3.14.0"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.0"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.6.0"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.0'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.0'
     testImplementation "org.mockito:mockito-core:3.2.4"

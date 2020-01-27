@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnInit, Renderer } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
 
-import { StateStorageService, User } from '../core';
+import { StateStorageService } from '../core';
+import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -12,6 +13,10 @@ import { isIntelliJ } from 'app/intellij/intellij';
 import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
+import { TUM_USERNAME_REGEX } from 'app/app.constants';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { filter, tap } from 'rxjs/operators';
+import { ProfileInfo } from 'app/layouts';
 
 @Component({
     selector: 'jhi-home',
@@ -30,6 +35,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
     captchaRequired = false;
     credentials: Credentials;
 
+    usernameRegexPattern = TUM_USERNAME_REGEX; // default, might be overridden in ngOnInit
+    signInMessage = 'home.pleaseSignInTUM'; // default, might be overridden in ngOnInit
+    errorMesssageUsername = 'home.errors.tumWarning'; // default, might be overridden in ngOnInit
+
     isSubmittingLogin = false;
 
     constructor(
@@ -38,14 +47,29 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private loginService: LoginService,
         private stateStorageService: StateStorageService,
         private elementRef: ElementRef,
-        private renderer: Renderer,
+        private renderer: Renderer2,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
         private javaBridge: JavaBridgeService,
         private modalService: NgbModal,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
+        this.profileService
+            .getProfileInfo()
+            .pipe(
+                filter(Boolean),
+                tap((info: ProfileInfo) => {
+                    if (!info.activeProfiles.includes('jira')) {
+                        // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
+                        this.usernameRegexPattern = /^[a-z0-9_-]{3,100}$/;
+                        this.signInMessage = 'home.pleaseSignIn';
+                        this.errorMesssageUsername = 'home.errors.usernameIncorrect';
+                    }
+                }),
+            )
+            .subscribe();
         this.accountService.identity().then(user => {
             this.currentUserCallback(user!);
         });
@@ -61,7 +85,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this.renderer.invokeElementMethod(this.elementRef.nativeElement.querySelector('#username'), 'focus', []);
+        this.renderer.selectRootElement('#username', true).focus();
     }
 
     login() {
@@ -108,11 +132,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
             })
             .catch((error: HttpErrorResponse) => {
-                if (error.headers.get('X-artemisApp-error') === 'CAPTCHA required') {
-                    this.captchaRequired = true;
-                } else {
-                    this.captchaRequired = false;
-                }
+                this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
                 this.authenticationError = true;
                 this.authenticationAttempts++;
             })
