@@ -45,9 +45,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     ComplaintRepository complaintRepo;
 
     @Autowired
-    ResultRepository resultRepo;
-
-    @Autowired
     ObjectMapper mapper;
 
     @Autowired
