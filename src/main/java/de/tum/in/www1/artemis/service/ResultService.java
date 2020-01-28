@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static java.util.Arrays.asList;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -89,17 +90,6 @@ public class ResultService {
     public Result findOne(long id) {
         log.debug("Request to get Result: {}", id);
         return resultRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
-    }
-
-    /**
-     * Get a result from the database by its id together with the associated list of feedback items.
-     *
-     * @param id the id of the result to load from the database
-     * @return the result with feedback list
-     */
-    public Result findOneWithEagerFeedbacks(long id) {
-        log.debug("Request to get Result: {}", id);
-        return resultRepository.findByIdWithEagerFeedbacks(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
     /**
@@ -285,6 +275,7 @@ public class ResultService {
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
+        result.setCompletionDate(ZonedDateTime.now());
 
         // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
         result.setRated(ratedResult);

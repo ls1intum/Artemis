@@ -172,7 +172,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             catch (Exception e) {
                 log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                        + studentParticipation.getId());
+                        + studentParticipation.getId() + ": " + e.getMessage());
                 failedLockOperations.add(programmingExerciseStudentParticipation);
             }
             index++;
