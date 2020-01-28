@@ -262,6 +262,8 @@ public class ParticipationService {
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setStudent(user);
+
+            participation = save(participation);
         }
         else {
             participation = optionalStudentParticipation.get();
