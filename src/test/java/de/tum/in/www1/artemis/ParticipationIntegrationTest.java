@@ -65,6 +65,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
                 textExercise = (TextExercise) exercise;
             }
         }
+        modelingExercise.setTitle("UML Class Diagram");
+        exerciseRepo.save(modelingExercise);
     }
 
     @AfterEach
@@ -185,14 +187,26 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void deleteParticipation_forbidden_student() throws Exception {
-        request.delete("/api/participations/" + 1, HttpStatus.FORBIDDEN);
+    public void deleteParticipation_student() throws Exception {
+        // Allow students to delete their own participation if it belongs to a guided tour
+        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
+        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
+
+        // Returns forbidden if users do not delete their own participation
+        StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student2");
+        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void deleteParticipation_forbidden_tutor() throws Exception {
-        request.delete("/api/participations/" + 1, HttpStatus.FORBIDDEN);
+    public void deleteParticipation_tutor() throws Exception {
+        // Allow tutors to delete their own participation if it belongs to a guided tour
+        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "tutor1");
+        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
+
+        // Returns forbidden if tutors do not delete their own participation
+        StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student1");
+        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
