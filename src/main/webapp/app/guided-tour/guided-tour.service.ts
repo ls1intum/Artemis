@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationStart, NavigationEnd, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { filter, map, flatMap, switchMap, tap } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
+import { filter, map, flatMap, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
@@ -87,7 +87,12 @@ export class GuidedTourService {
 
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
-            if (this.availableTourForComponent && event instanceof NavigationStart) {
+            // Reset currentExercise and currentCourse for every page
+            if (event instanceof NavigationStart) {
+                this.currentExercise = null;
+                this.currentCourse = null;
+            }
+            if (this.availableTourForComponent && event instanceof NavigationEnd) {
                 this.skipTour(false, false);
                 this.guidedTourAvailabilitySubject.next(false);
             }
@@ -430,10 +435,7 @@ export class GuidedTourService {
         if (this.isCurrentTour(cancelTour)) {
             this.updateGuidedTourSettings(cancelTour.settingsKey, 1, GuidedTourState.FINISHED);
         }
-        if (this.isCurrentTour(completedTour)) {
-            this.currentExercise = null;
-            this.currentCourse = null;
-        }
+
         document.body.classList.remove('tour-open');
         this.currentTour = null;
         this.currentTourStepIndex = 0;
@@ -614,8 +616,9 @@ export class GuidedTourService {
         if (!this.availableTourForComponent) {
             return;
         }
-        this.restartIsLoading = true;
+
         if (this.currentCourse && this.currentExercise) {
+            this.restartIsLoading = true;
             const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
             this.participationService
                 .findParticipation(this.currentExercise.id)
@@ -626,15 +629,31 @@ export class GuidedTourService {
                     ),
                     switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
                 )
-                .subscribe(() => {
-                    this.router.navigateByUrl(`/overview/${this.currentCourse!.id}/exercises`).then(() => {
-                        location.reload();
+                .subscribe(
+                    () => { this.navigateToCourseOverview(); },
+                    () => {
+                        // start tour in case the participation was deleted otherwise
                         this.restartIsLoading = false;
-                    });
-                });
+                        this.startTour();
+                    }
+                );
         } else {
             this.startTour();
         }
+    }
+
+    /**
+     * Navigate to course overview after resetting an exercise participation
+     */
+    private navigateToCourseOverview() {
+        this.router.navigateByUrl(`/overview/${this.currentCourse!.id}/exercises`).then(() => {
+            location.reload();
+        });
+
+        // Keep loading icon until the page is being refreshed
+        window.onload = function() {
+            this['restartIsLoading'] = false;
+        };
     }
 
     private getFilteredTourSteps(): TourStep[] {
