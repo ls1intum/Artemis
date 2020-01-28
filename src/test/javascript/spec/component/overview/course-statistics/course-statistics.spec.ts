@@ -11,13 +11,14 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedModule } from 'app/shared';
 import { ActivatedRoute } from '@angular/router';
 import { Attachment } from 'app/entities/attachment';
-import { CourseStatisticsComponent } from 'app/overview';
+import { CourseScoreCalculationService, CourseStatisticsComponent } from 'app/overview';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { MockSyncStorage } from '../../../mocks';
 import { Result } from 'app/entities/result';
-import { CourseScoreCalculationService } from 'app/overview';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { SubmissionExerciseType } from 'app/entities/submission';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -211,9 +212,11 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should transform results correctly', () => {
+        const buildFailedsubmission = { id: 42, buildFailed: true, submissionExerciseType: SubmissionExerciseType.PROGRAMMING } as ProgrammingSubmission;
         const result1 = { resultString: '9 of 26 failed' } as Result;
         expect(comp.absoluteResult(result1)).to.be.null;
         const result2 = { resultString: 'No tests found' } as Result;
+        result2.submission = buildFailedsubmission;
         expect(comp.absoluteResult(result2)).to.be.null;
         const result3 = {} as Result;
         expect(comp.absoluteResult(result3)).to.equal(0);

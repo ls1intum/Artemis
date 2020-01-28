@@ -1,6 +1,6 @@
 import { Moment } from 'moment';
 import { BaseEntity } from 'app/shared';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 export enum NotificationType {
     SYSTEM = 'system',

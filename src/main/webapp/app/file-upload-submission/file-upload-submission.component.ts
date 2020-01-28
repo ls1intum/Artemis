@@ -17,6 +17,7 @@ import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessmen
 import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { participationStatus } from 'app/entities/exercise';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -79,6 +80,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission = submission;
                 this.result = submission.result;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+                this.fileUploadExercise.studentParticipations = [this.participation];
+                this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
 
                 // checks if the student started the exercise after the due date
                 this.isLate =

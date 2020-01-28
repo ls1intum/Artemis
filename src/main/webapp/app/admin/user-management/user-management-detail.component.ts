@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-user-management-detail',

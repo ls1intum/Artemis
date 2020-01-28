@@ -131,7 +131,7 @@ public class CompassService {
             return new ArrayList<>();
         }
 
-        List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
+        List<Long> optimalModelIds = getCalculationEngineModelsWaitingForAssessment(exerciseId);
 
         if (optimalModelIds.size() < OPTIMAL_MODEL_THRESHOLD) {
             List<Long> nextOptimalModelIds = getNextOptimalModels(exerciseId);
@@ -196,7 +196,7 @@ public class CompassService {
         if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
             return;
         }
-        List<Long> optimalModelIds = compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
+        List<Long> optimalModelIds = getCalculationEngineModelsWaitingForAssessment(exerciseId);
         for (long modelSubmissionId : optimalModelIds) {
             compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelSubmissionId, false);
         }
@@ -584,5 +584,14 @@ public class CompassService {
         }
         compassCalculationEngines.get(exerciseId).printStatistic(exerciseId,
                 resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
+    }
+
+    /**
+     * Method to access to the compass calculation engine getModelsWaitingForAssessment() method
+     * @param exerciseId the id of the exercise the models should belong to
+     * @return a list of modelIds that should be assessed next
+     */
+    public List<Long> getCalculationEngineModelsWaitingForAssessment(Long exerciseId) {
+        return compassCalculationEngines.get(exerciseId).getModelsWaitingForAssessment();
     }
 }

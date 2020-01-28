@@ -90,6 +90,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
     public void getHintForAnExerciseAsAnInstructor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
+        request.get("/api/exercise-hints/" + 0l, HttpStatus.NOT_FOUND, ExerciseHint.class);
     }
 
     @Test
@@ -114,9 +115,11 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
     public void createHintAsInstructor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
-
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         assertThat(exerciseHints).hasSize(4);
+
+        exerciseHint.setExercise(null);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -142,7 +145,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
 
         exerciseHint.setContent(newContent);
         request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
-
+        request.put("/api/exercise-hints/" + 0l, exerciseHint, HttpStatus.BAD_REQUEST);
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
     }
@@ -160,4 +163,13 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteHintAsInstructor() throws Exception {
+        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        request.delete("/api/exercise-hints/" + 0l, HttpStatus.NOT_FOUND);
+        request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
+        List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
+        request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
+    }
 }

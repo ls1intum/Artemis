@@ -45,7 +45,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
-    @Value("${artemis.jira.admin-group-name}")
+    @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
     @Value("${artemis.version-control.url}")

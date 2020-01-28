@@ -3,6 +3,7 @@
         {{ 'modelingAssessment.dashboard.heading' | translate: { title: modelingExercise.title } }}
     </h4>
     <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
+    <jhi-assessment-warning [exercise]="modelingExercise"></jhi-assessment-warning>
     <div>
         <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
         <div class="button-toolbar float-right" *ngIf="modelingExercise.automaticAssessmentSupported">
