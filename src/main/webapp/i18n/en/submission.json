@@ -21,7 +21,8 @@
             "result": "Result",
             "participation": "Participation",
             "lockedSubmissionsLimitReached": "You have reached the maximum number of unfinished assessments in this course. Please finish your open assessments before being able to start a new one.",
-            "resultTimeout": "The result for your last submission is not available. Please submit your code again."
+            "resultTimeout": "The result for your last submission is not available. Please submit your code again.",
+            "createExternal": "Create External Submission"
         }
     }
 }

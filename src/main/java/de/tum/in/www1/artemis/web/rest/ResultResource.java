@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -23,11 +24,13 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -59,6 +62,8 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserService userService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
@@ -70,13 +75,15 @@ public class ResultResource {
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserService userService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, ResultRepository resultRepository,
+            WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingService = messagingService;
@@ -135,7 +142,7 @@ public class ResultResource {
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
         newResult.setSubmission(submission);
-        newResult = resultService.createNewManualResult(newResult, true);
+        newResult = resultService.createNewRatedManualResult(newResult, true);
 
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId() + "/manual-results/" + newResult.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
@@ -484,5 +491,56 @@ public class ResultResource {
         log.debug("REST request to create a new example result for submission: {}", submissionId);
         final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /**
+     * Creates a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
+     *
+     * @param exerciseId The exercise ID for which a result should get created
+     * @param studentLogin The student login (username) for which a result should get created
+     * @param result The result to be created
+     * @return The newly created result
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
+            throws URISyntaxException {
+        log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
+
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
+        Course course = exercise.getCourse();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No student found for " + studentLogin + " in course " + course.getTitle());
+        }
+        if (exercise instanceof QuizExercise) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported for Quiz exercises.");
+        }
+
+        // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, studentLogin);
+        Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
+        if (optionalResult.isPresent()) {
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "A result already exists for this submission", "resultAlreadyExists"))
+                    .body(optionalResult.get());
+        }
+
+        // Create a participation and a submitted empty submission if they do not exist yet
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
+        Submission submission = participationService.findOneWithEagerSubmissions(participation.getId()).findLatestSubmission().get();
+        result.setParticipation(participation);
+        result.setSubmission(submission);
+
+        // Create a new manual result which can be rated or unrated depending on what was specified in the create form
+        Result savedResult = resultService.createNewManualResult(result, exercise instanceof ProgrammingExercise, result.isRated());
+
+        return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
     }
 }
