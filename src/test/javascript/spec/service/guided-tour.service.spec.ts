@@ -258,6 +258,8 @@ describe('GuidedTourService', () => {
             const course2 = { id: 2, shortName: 'test' } as Course;
 
             function resetCurrentTour(): void {
+                guidedTourService['currentCourse'] = null;
+                guidedTourService['currentExercise'] = null;
                 guidedTourService.currentTour = completedTour;
                 guidedTourService.resetTour();
             }
@@ -271,6 +273,7 @@ describe('GuidedTourService', () => {
             beforeEach(async () => {
                 guidedTourService.guidedTourMapping = guidedTourMapping;
                 prepareGuidedTour(tourWithCourseAndExercise);
+                resetCurrentTour();
             });
 
             it('should start the tour for the matching course title', () => {

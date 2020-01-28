@@ -630,12 +630,14 @@ export class GuidedTourService {
                     switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
                 )
                 .subscribe(
-                    () => { this.navigateToCourseOverview(); },
+                    () => {
+                        this.navigateToCourseOverview();
+                    },
                     () => {
                         // start tour in case the participation was deleted otherwise
                         this.restartIsLoading = false;
                         this.startTour();
-                    }
+                    },
                 );
         } else {
             this.startTour();
