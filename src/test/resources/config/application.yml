@@ -51,6 +51,16 @@ info:
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
+    guided-tour:
+        courseShortName: 'artemistutorial'
+        tours:
+            -   cancel_tour: ''
+            -   code_editor_tour: 'test'
+            -   course_overview_tour: ''
+            -   course_exercise_overview_tour: 'test'
+            -   modeling_tour: 'UML Class Diagram'
+            -   programming_exercise_fail_tour: 'test'
+            -   programming_exercise_success_tour: 'test'
 
 jhipster:
     clientApp:

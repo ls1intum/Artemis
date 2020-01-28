@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -150,4 +152,66 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
+        overrideAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorPossible() throws Exception {
+        overrideAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
+        overrideAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
+        database.updateAssessmentDueDate(programmingExercise.getId(), null);
+        // TODO: in the future, this should be forbidden, see ResultResource.isAllowedToOverrideExistingResult
+        overrideAssessment(HttpStatus.OK);
+    }
+
+    private void assessmentDueDatePassed() {
+        database.updateAssessmentDueDate(programmingExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+    }
+
+    private void overrideAssessment(HttpStatus httpStatus) throws Exception {
+        var participation = programmingSubmission.getParticipation();
+        var result = programmingSubmission.getResult();
+        result.setScore(75L);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        result.setCompletionDate(ZonedDateTime.now());
+        result.setFeedbacks(feedbacks);
+        result.setParticipation(participation);
+        result.setSubmission(programmingSubmission);
+        request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, httpStatus);
+    }
 }
