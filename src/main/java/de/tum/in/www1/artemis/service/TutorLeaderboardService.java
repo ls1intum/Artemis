@@ -88,7 +88,7 @@ public class TutorLeaderboardService {
 
     @NotNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(List<User> tutors, List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments,
-            List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints, List<TutorLeaderboardMoreFeedbackRequestsView> tutorLeaderboardNotAnsweredMoreFeedbackRequests,
+            List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints, List<TutorLeaderboardMoreFeedbackRequestsView> tutorLeaderboardMoreFeedbackRequests,
             List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses,
             List<TutorLeaderboardAnsweredMoreFeedbackRequestsView> tutorLeaderboardAnsweredMoreFeedbackRequests) {
 
@@ -130,17 +130,17 @@ public class TutorLeaderboardService {
                 }
             }
 
-            for (TutorLeaderboardMoreFeedbackRequestsView notAnsweredMoreFeedbackRequestsView : tutorLeaderboardNotAnsweredMoreFeedbackRequests) {
-                if (tutor.getId().equals(notAnsweredMoreFeedbackRequestsView.getUserId())) {
-                    numberOfNotAnsweredMoreFeedbackRequests += notAnsweredMoreFeedbackRequestsView.getNotAnsweredRequests();
-                    numberOfTutorMoreFeedbackRequests += notAnsweredMoreFeedbackRequestsView.getAllRequests();
+            for (TutorLeaderboardMoreFeedbackRequestsView moreFeedbackRequestsView : tutorLeaderboardMoreFeedbackRequests) {
+                if (tutor.getId().equals(moreFeedbackRequestsView.getUserId())) {
+                    numberOfNotAnsweredMoreFeedbackRequests += moreFeedbackRequestsView.getNotAnsweredRequests();
+                    numberOfTutorMoreFeedbackRequests += moreFeedbackRequestsView.getAllRequests();
                     // not answered requests count only 1x negatively
-                    if (notAnsweredMoreFeedbackRequestsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the not answered
-                                                                                     // requests
-                        points -= notAnsweredMoreFeedbackRequestsView.getPoints();
+                    if (moreFeedbackRequestsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the not answered
+                                                                          // requests
+                        points -= moreFeedbackRequestsView.getPoints();
                     }
                     else {
-                        points -= notAnsweredMoreFeedbackRequestsView.getNotAnsweredRequests();
+                        points -= moreFeedbackRequestsView.getNotAnsweredRequests();
                     }
                 }
             }
