@@ -259,6 +259,7 @@ public class ParticipationService {
             else {
                 participation = new StudentParticipation();
             }
+            participation.setInitializationState(UNINITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setStudent(user);
