@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -40,6 +41,9 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
+
+    @Autowired
+    ProgrammingExerciseImportService programmingExerciseImportService;
 
     @Autowired
     DatabaseUtilService databse;
@@ -191,7 +195,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
         when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
 
-        return programmingExerciseService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
+        return programmingExerciseImportService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
     private ProgrammingExercise createToBeImported() {

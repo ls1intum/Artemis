@@ -7,7 +7,7 @@
     <div
         #tourStep
         *ngIf="currentTourStep"
-        class="tour-step tour-{{ currentTourStep.orientation }}"
+        class="tour-step tour-{{ orientation }}"
         [class.page-tour-step]="!currentTourStep.highlightSelector"
         [class.startFade]="startFade"
         [class.video-tour]="isVideoTourStep()"

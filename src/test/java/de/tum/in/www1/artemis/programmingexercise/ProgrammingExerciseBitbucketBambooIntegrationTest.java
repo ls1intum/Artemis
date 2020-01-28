@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -53,6 +54,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     private Course course;
 
@@ -88,6 +92,19 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         exercise.setId(generated.getId());
         assertThat(exercise).isEqualTo(generated);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_noTutors_created() throws Exception {
+        course.setTeachingAssistantGroupName(null);
+        courseRepository.save(course);
+        final var exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(7), course);
+        mockConnectorRequestsForSetup(exercise);
+
+        request.post(ROOT + SETUP, exercise, HttpStatus.CREATED);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(2);
     }
 
     @Test

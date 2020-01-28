@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacks(@Param("participationId") Long participationId);
+    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId);
 
     @EntityGraph(attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
@@ -44,6 +44,5 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             @Param("participationIds") Collection<Long> participationIds);
 
     @EntityGraph(attributePaths = "student")
-    @Query("select distinct participation from Participation participation where participation.id = :#{#participationId}")
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithStudent(@Param("participationId") Long participationId);
+    Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
 }

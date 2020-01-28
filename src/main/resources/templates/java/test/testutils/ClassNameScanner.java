@@ -228,6 +228,10 @@ public class ClassNameScanner {
                 packageName.lastIndexOf(File.separator + className));
             packageName = packageName.replace(File.separatorChar, '.');
 
+            if (packageName.charAt(0) == '.') {
+                packageName = packageName.substring(1);
+            }
+            
             if(foundTypes.containsKey(className)) {
                 foundTypes.get(className).add(packageName);
             }

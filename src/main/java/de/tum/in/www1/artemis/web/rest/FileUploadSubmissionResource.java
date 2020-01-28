@@ -287,16 +287,16 @@ public class FileUploadSubmissionResource {
             return forbidden();
         }
 
-        Optional<FileUploadSubmission> optionalFileUploadSubmission = participation.findLatestFileUploadSubmission();
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         FileUploadSubmission fileUploadSubmission;
-        if (!optionalFileUploadSubmission.isPresent()) {
+        if (optionalSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.setParticipation(participation);
         }
         else {
             // only try to get and set the file upload if the fileUploadSubmission existed before
-            fileUploadSubmission = optionalFileUploadSubmission.get();
+            fileUploadSubmission = (FileUploadSubmission) optionalSubmission.get();
         }
 
         // make sure only the latest submission and latest result is sent to the client

@@ -38,7 +38,7 @@ public class BitbucketRequestMockProvider {
     @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER_URL;
 
-    @Value("${artemis.jira.admin-group-name}")
+    @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
     private final RestTemplate restTemplate;
@@ -83,7 +83,9 @@ public class BitbucketRequestMockProvider {
 
         mockGrantGroupPermissionToProject(exercise, ADMIN_GROUP_NAME, "PROJECT_ADMIN");
         mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN");
-        mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE");
+        if (exercise.getCourse().getTeachingAssistantGroupName() != null) {
+            mockGrantGroupPermissionToProject(exercise, exercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE");
+        }
     }
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, String permission) throws URISyntaxException {

@@ -147,7 +147,13 @@ public abstract class Exercise implements Serializable {
     private Long numberOfComplaintsTransient;
 
     @Transient
+    private Long numberOfOpenComplaintsTransient;
+
+    @Transient
     private Long numberOfMoreFeedbackRequestsTransient;
+
+    @Transient
+    private Long numberOfOpenMoreFeedbackRequestsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -754,12 +760,28 @@ public abstract class Exercise implements Serializable {
         this.numberOfComplaintsTransient = numberOfComplaints;
     }
 
+    public Long getNumberOfOpenComplaints() {
+        return numberOfOpenComplaintsTransient;
+    }
+
+    public void setNumberOfOpenComplaints(Long numberOfOpenComplaintsTransient) {
+        this.numberOfOpenComplaintsTransient = numberOfOpenComplaintsTransient;
+    }
+
     public Long getNumberOfMoreFeedbackRequests() {
         return numberOfMoreFeedbackRequestsTransient;
     }
 
     public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
         this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
+    }
+
+    public Long getNumberOfOpenMoreFeedbackRequests() {
+        return numberOfOpenMoreFeedbackRequestsTransient;
+    }
+
+    public void setNumberOfOpenMoreFeedbackRequests(Long numberOfOpenMoreFeedbackRequests) {
+        this.numberOfOpenMoreFeedbackRequestsTransient = numberOfOpenMoreFeedbackRequests;
     }
 
     public boolean isReleased() {

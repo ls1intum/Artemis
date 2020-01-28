@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -81,11 +80,11 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+    private final ProgrammingExerciseImportService programmingExerciseImportService;
+
+    private final ProgrammingExerciseExportService programmingExerciseExportService;
 
     private final StudentParticipationRepository studentParticipationRepository;
-
-    private final GroupNotificationService groupNotificationService;
 
     private final String packageNameRegex = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$";
 
@@ -93,8 +92,8 @@ public class ProgrammingExerciseResource {
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, GroupNotificationService groupNotificationService,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, StudentParticipationRepository studentParticipationRepository) {
+            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -103,9 +102,9 @@ public class ProgrammingExerciseResource {
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
         this.programmingExerciseService = programmingExerciseService;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.groupNotificationService = groupNotificationService;
+        this.programmingExerciseImportService = programmingExerciseImportService;
+        this.programmingExerciseExportService = programmingExerciseExportService;
     }
 
     /**
@@ -136,49 +135,6 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
         return null;
-    }
-
-    /**
-     * POST /programming-exercises : Create a new programmingExercise.
-     *
-     * @param programmingExercise the programmingExercise to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the programmingExercise has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping(Endpoints.PROGRAMMING_EXERCISES)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
-        log.debug("REST request to save ProgrammingExercise : {}", programmingExercise);
-        if (programmingExercise.getId() != null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
-        }
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return forbidden();
-        }
-
-        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-        if (errorResponse != null) {
-            return errorResponse;
-        }
-
-        // We need to save the programming exercise BEFORE saving the participations to avoid transient state exceptions.
-        // This is only necessary for linked exercises, however we don't differentiate this with a separate endpoint.
-        programmingExercise.generateAndSetProjectKey();
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        // Only save after checking for errors
-        programmingExerciseService.saveParticipations(programmingExercise);
-
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
-        return ResponseEntity.created(new URI("/api/programming-exercises/" + savedProgrammingExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedProgrammingExercise.getTitle())).body(savedProgrammingExercise);
     }
 
     /**
@@ -282,13 +238,9 @@ public class ProgrammingExerciseResource {
         }
 
         try {
-            ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
-
-            // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
-            programmingExerciseScheduleService.scheduleExerciseIfRequired(result);
-            groupNotificationService.notifyTutorGroupAboutExerciseCreated(result);
-            return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
-                    .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
+                    .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
         catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
@@ -302,11 +254,12 @@ public class ProgrammingExerciseResource {
      *
      * This will import the whole exercise, including all base build plans (template, solution) and repositories
      * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
-     * a new id. For a concrete list of what gets copied and what not have a look at {@link ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
+     * a new id. For a concrete list of what gets copied and what not have a look
+     * at {@link ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
      *
-     * @see ProgrammingExerciseService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
-     * @see ProgrammingExerciseService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
-     * @see ProgrammingExerciseService#importRepositories(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseImportService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param newExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
@@ -334,13 +287,13 @@ public class ProgrammingExerciseResource {
         }
 
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
-        final var importedProgrammingExercise = programmingExerciseService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
+        final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         HttpHeaders responseHeaders;
-        programmingExerciseService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
+        programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
         try {
             // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
             // an import as the source exercise might still have this trigger.
-            programmingExerciseService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
         catch (HttpException e) {
@@ -372,7 +325,7 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() == null) {
-            return createProgrammingExercise(programmingExercise);
+            return badRequest();
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
@@ -387,13 +340,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(savedProgrammingExercise);
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(savedProgrammingExercise, notificationText);
-        }
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExercise, notificationText);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(savedProgrammingExercise);
     }
 
@@ -412,16 +359,13 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
         ProgrammingExercise updatedProgrammingExercise;
         try {
-            updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(exerciseId, updatedProblemStatement);
+            updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(exerciseId, updatedProblemStatement, notificationText);
         }
         catch (IllegalAccessException ex) {
             return forbidden();
         }
         catch (EntityNotFoundException ex) {
             return notFound();
-        }
-        if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
@@ -461,7 +405,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         if (programmingExercise.isPresent()) {
             Course course = programmingExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -473,14 +417,14 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises-with-participations/:exerciseId : get the "exerciseId" programmingExercise.
+     * GET /programming-exercises/:exerciseId/with-participations/ : get the "exerciseId" programmingExercise.
      *
      * @param exerciseId the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAllParticipations(@PathVariable long exerciseId) {
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -488,17 +432,14 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseOpt.isPresent()) {
             ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
             Course course = programmingExercise.getCourse();
-
+            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+                return forbidden();
+            }
             Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
                     user.getId());
             Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);
             programmingExercise.setStudentParticipations(participations);
-
-            if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-                return forbidden();
-            }
-
             return ResponseEntity.ok(programmingExercise);
         }
         else {
@@ -520,7 +461,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         if (programmingExercise.isEmpty()) {
             return notFound();
         }
@@ -549,7 +490,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
 
-        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(exerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOptional.isEmpty()) {
             return notFound();
         }
@@ -670,7 +611,7 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        File zipFile = programmingExerciseService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
+        File zipFile = programmingExerciseExportService.exportStudentRepositories(exerciseId, exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
@@ -692,7 +633,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
 
-        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(exerciseId);
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOptional.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "programmingExerciseNotFound", "The programming exercise does not exist"))
                     .body(null);
@@ -748,7 +689,7 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.TEST_CASE_STATE)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable long exerciseId) {
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         if (programmingExercise.isEmpty()) {
             return notFound();
         }

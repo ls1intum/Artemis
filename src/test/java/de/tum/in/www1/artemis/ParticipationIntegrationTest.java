@@ -12,10 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -59,10 +56,15 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
-        database.addCourseWithModelingAndTextExercise();
-        course = courseRepo.findAll().get(0);
-        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
-        textExercise = (TextExercise) exerciseRepo.findAll().get(1);
+        course = database.addCourseWithModelingAndTextExercise();
+        for (Exercise exercise : course.getExercises()) {
+            if (exercise instanceof ModelingExercise) {
+                modelingExercise = (ModelingExercise) exercise;
+            }
+            if (exercise instanceof TextExercise) {
+                textExercise = (TextExercise) exercise;
+            }
+        }
     }
 
     @AfterEach

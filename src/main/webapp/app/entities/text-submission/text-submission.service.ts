@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { TextSubmission } from './text-submission.model';
 import { createRequestOption } from 'app/shared';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
@@ -23,7 +24,8 @@ export class TextSubmissionService {
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
         return this.http
-            .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
+            .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, stringifyCircular(copy), {
+                headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })
             .map((res: EntityResponseType) => this.convertResponse(res));

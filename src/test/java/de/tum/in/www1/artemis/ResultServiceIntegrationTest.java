@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -54,7 +53,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
     UserRepository userRepo;
@@ -72,8 +71,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
-    private TemplateProgrammingExerciseParticipation templateParticipation;
-
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     private StudentParticipation studentParticipation;
@@ -85,7 +82,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         programmingExercise = programmingExerciseRepository.findAll().get(0);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        templateParticipation = programmingExercise.getTemplateParticipation();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 
         database.addCourseWithOneModelingExercise();

@@ -22,10 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -60,12 +57,14 @@ public class ResultService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     private final ComplaintRepository complaintRepository;
 
     public ResultService(UserService userService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper, ProgrammingExerciseTestCaseService testCaseService,
             ProgrammingSubmissionService programmingSubmissionService, FeedbackRepository feedbackRepository, WebsocketMessagingService websocketMessagingService,
-            ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository) {
+            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ComplaintRepository complaintRepository) {
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -77,6 +76,7 @@ public class ResultService {
         this.feedbackRepository = feedbackRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
     }
 
@@ -264,7 +264,7 @@ public class ResultService {
             List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
             result.setFeedbacks(savedFeedbackItems);
         }
-        return createNewManualResult(result, true);
+        return createNewRatedManualResult(result, true);
     }
 
     /**
@@ -272,10 +272,11 @@ public class ResultService {
      *
      * @param result newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
+     * @param ratedResult override value for rated property of result
      *
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
-    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
@@ -285,8 +286,8 @@ public class ResultService {
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
 
-        // manual feedback is always rated
-        result.setRated(true);
+        // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
+        result.setRated(ratedResult);
 
         result.getFeedbacks().forEach(feedback -> {
             feedback.setResult(result);
@@ -311,6 +312,10 @@ public class ResultService {
             websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
         }
         return savedResult;
+    }
+
+    public Result createNewRatedManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+        return createNewManualResult(result, isProgrammingExerciseWithFeedback, true);
     }
 
     /**
@@ -426,5 +431,25 @@ public class ResultService {
 
     private void notifyNewResult(Result result, Long participationId) {
         websocketMessagingService.sendMessage("/topic/participation/" + participationId + "/newResults", result);
+    }
+
+    /**
+     * Create a new example result for the provided submission ID.
+     *
+     * @param submissionId The ID of the submission (that is connected to an example submission) for which a result should get created
+     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
+     * @return The newly created (and empty) example result
+     */
+    public Result createNewExampleResultForSubmissionWithExampleSubmission(long submissionId, boolean isProgrammingExerciseWithFeedback) {
+        final var submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("No example submission with ID " + submissionId + " found!"));
+        if (!submission.isExampleSubmission()) {
+            throw new IllegalArgumentException("Submission is no example submission! Example results are not allowed!");
+        }
+
+        final var newResult = new Result();
+        newResult.setSubmission(submission);
+        newResult.setExampleResult(true);
+        return createNewRatedManualResult(newResult, isProgrammingExerciseWithFeedback);
     }
 }

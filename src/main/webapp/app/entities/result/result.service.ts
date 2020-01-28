@@ -26,9 +26,9 @@ export interface IResultService {
 
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
-    private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
+    private submissionResourceUrl = SERVER_API_URL + 'api/submissions';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
@@ -65,6 +65,17 @@ export class ResultService implements IResultService {
 
     delete(resultId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
+    }
+
+    /**
+     * Create a new example result for the provided submission ID.
+     *
+     * @param submissionId The ID of the example submission for which a result should get created
+     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
+     * @return The newly created (and empty) example result
+     */
+    createNewExampleResult(submissionId: number, isProgrammingExerciseWithFeedback = false): Observable<HttpResponse<Result>> {
+        return this.http.post<Result>(`${this.submissionResourceUrl}/${submissionId}/example-result`, null, { observe: 'response' });
     }
 
     public convertDateFromClient(result: Result): Result {

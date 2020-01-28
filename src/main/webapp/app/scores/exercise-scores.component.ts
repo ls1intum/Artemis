@@ -17,6 +17,12 @@ import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { FeatureToggle } from 'app/feature-toggle';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProfileInfo } from 'app/layouts';
+import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
+import { SubmissionExerciseType } from 'app/entities/submission';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
 enum FilterProp {
     ALL = 'all',
@@ -61,6 +67,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private resultService: ResultService,
+        private profileService: ProfileService,
         private programmingSubmissionService: ProgrammingSubmissionService,
     ) {
         this.resultCriteria = {
@@ -138,8 +145,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
             case FilterProp.BUILD_FAILED:
-                // TODO: A boolean flag {buildFailed} on the result coming from the backend would be better
-                return result.resultString === 'No tests found';
+                return (
+                    result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed
+                );
             case FilterProp.MANUAL:
                 return result.assessmentType === AssessmentType.MANUAL;
             case FilterProp.AUTOMATIC:
@@ -162,9 +170,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
-    goToBuildPlan(result: Result) {
-        // TODO: get the continuous integration URL as a client constant during the management info call
-        window.open('https://bamboobruegge.in.tum.de/browse/' + (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId);
+    buildPlanId(result: Result): string {
+        return (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+    }
+
+    projectKey(): string {
+        return (this.exercise as ProgrammingExercise).projectKey!;
     }
 
     goToRepository(result: Result) {
