@@ -117,15 +117,16 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     public void testUpdateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
         // The PUT request basically forwards to POST in case the modeling exercise id is not yet set.
-        ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
 
         ModelingExercise modelingExerciseWithSubmission = modelingExerciseUtilService.addExampleSubmission(createdModelingExercise);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExerciseWithSubmission, ModelingExercise.class, HttpStatus.OK);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + createdModelingExercise.getId(), modelingExerciseWithSubmission,
+                ModelingExercise.class, HttpStatus.OK);
         assertThat(returnedModelingExercise.getExampleSubmissions().size()).isEqualTo(1);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
-        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+        request.put("/api/modeling-exercises/" + createdModelingExercise.getId(), modelingExercise, HttpStatus.NOT_FOUND);
     }
 
     @Test
