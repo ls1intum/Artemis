@@ -533,6 +533,9 @@ public class ResultResource {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        if (exercise.getDueDate() == null || exercise.getDueDate().isBefore(ZonedDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported before the exercise due date.");
+        }
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
         Course course = exercise.getCourse();
