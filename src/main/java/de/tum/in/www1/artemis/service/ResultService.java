@@ -93,17 +93,6 @@ public class ResultService {
     }
 
     /**
-     * Get a result from the database by its id together with the associated list of feedback items.
-     *
-     * @param id the id of the result to load from the database
-     * @return the result with feedback list
-     */
-    public Result findOneWithEagerFeedbacks(long id) {
-        log.debug("Request to get Result: {}", id);
-        return resultRepository.findByIdWithEagerFeedbacks(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
-    }
-
-    /**
      * Get a result from the database by its id together with the associated submission and the list of feedback items.
      *
      * @param resultId the id of the result to load from the database

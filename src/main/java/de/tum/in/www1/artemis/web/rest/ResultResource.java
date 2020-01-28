@@ -184,8 +184,8 @@ public class ResultResource {
         if (updatedResult.getId() == null) {
             return createProgrammingExerciseManualResult(participationId, updatedResult);
         }
-        // get the original result for permission checks below, otherwise the client could override the assessor and the check would not make any sense
-        Result originalResult = resultService.findOne(updatedResult.getId());
+        // get the original result with assessor for permission checks below, otherwise the client could override the assessor and the check would not make any sense
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
         if (!isAllowedToOverrideExistingResult(originalResult, exercise, user, isAtLeastInstructor)) {
