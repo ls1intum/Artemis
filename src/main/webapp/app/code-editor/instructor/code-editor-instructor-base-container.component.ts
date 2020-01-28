@@ -2,21 +2,23 @@ import { CodeEditorContainer } from 'app/code-editor/code-editor-mode-container.
 import { OnDestroy, OnInit } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise';
 import { Observable, Subscription, throwError } from 'rxjs';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import {
     Participation,
-    ParticipationService,
     ProgrammingExerciseStudentParticipation,
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { CodeEditorFileService, CodeEditorSessionService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ButtonSize } from 'app/shared/components';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 
 export enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',

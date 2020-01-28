@@ -3,7 +3,7 @@ import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, 
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
@@ -73,23 +73,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     isOnlineEditorAllowed(): boolean {
         return (this.exercise as ProgrammingExercise).allowOnlineEditor;
-    }
-
-    publishBuildPlanUrl(): boolean {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
-    }
-
-    buildPlanActive(): boolean {
-        return (
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
-    }
-
-    goToBuildPlan(participation: Participation) {
-        // TODO: get the continuous integration URL as a client constant during the management info call
-        window.open('https://bamboobruegge.in.tum.de/browse/' + (participation as ProgrammingExerciseStudentParticipation).buildPlanId);
     }
 
     onCopyFailure() {

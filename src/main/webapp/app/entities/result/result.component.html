@@ -24,7 +24,7 @@
                 <span *ngIf="!short"> ({{ result.completionDate! | amTimeAgo }}) </span>
                 <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
             </span>
-            <span *ngIf="result.buildArtifact">
+            <span *ngIf="hasBuildArtifact()">
                 <a (click)="downloadBuildResult(participation.id)">
                     &nbsp; <fa-icon [icon]="'file'"></fa-icon>
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>

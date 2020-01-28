@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,7 +13,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview';
 import { isIntelliJ } from 'app/intellij/intellij';
-import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 
 enum ExerciseFilter {
@@ -124,7 +125,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     /**
      * Filters all displayed exercises by applying the selected activeFilters
      * @param filters The filters which should be applied
-     * @param active Should the activeFilters be active or inactive
      */
     toggleFilters(filters: ExerciseFilter[]) {
         filters.forEach(filter => (this.activeFilters.has(filter) ? this.activeFilters.delete(filter) : this.activeFilters.add(filter)));

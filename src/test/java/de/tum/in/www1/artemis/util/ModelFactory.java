@@ -50,6 +50,8 @@ public class ModelFactory {
         programmingExercise = (ProgrammingExercise) populateExercise(programmingExercise, releaseDate, dueDate, null, course);
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setPackageName("de.test");
         return programmingExercise;
     }
 
@@ -89,14 +91,15 @@ public class ModelFactory {
         return exercise;
     }
 
-    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, int amount) {
+    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
-            User student = ModelFactory.generateActivatedUser(loginPrefix + i);
+            User user = ModelFactory.generateActivatedUser(loginPrefix + i);
             if (groups != null) {
-                student.setGroups(Set.of(groups));
+                user.setGroups(Set.of(groups));
+                user.setAuthorities(authorities);
             }
-            generatedUsers.add(student);
+            generatedUsers.add(user);
         }
         return generatedUsers;
     }
@@ -264,5 +267,25 @@ public class ModelFactory {
         result.setRated(rated);
         result.setScore(score);
         return result;
+    }
+
+    public static TextBlock generateTextBlock(int startIndex, int endIndex, String text) {
+        final TextBlock textBlock = new TextBlock();
+        textBlock.setStartIndex(startIndex);
+        textBlock.setEndIndex(endIndex);
+        textBlock.setText(text);
+        textBlock.computeId();
+        return textBlock;
+    }
+
+    public static TextBlock generateTextBlock(int startIndex, int endIndex) {
+        return generateTextBlock(startIndex, endIndex, "");
+    }
+
+    public static SystemNotification generateSystemNotification(ZonedDateTime expireDate, ZonedDateTime notificationDate) {
+        SystemNotification systemNotification = new SystemNotification();
+        systemNotification.setExpireDate(expireDate);
+        systemNotification.setNotificationDate(notificationDate);
+        return systemNotification;
     }
 }

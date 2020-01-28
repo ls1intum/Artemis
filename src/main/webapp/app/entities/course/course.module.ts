@@ -8,7 +8,7 @@ import { ArtemisModelingExerciseModule } from '../modeling-exercise/modeling-exe
 import { ArtemisFileUploadExerciseModule } from '../file-upload-exercise/file-upload-exercise.module';
 import { ArtemisProgrammingExerciseModule } from '../programming-exercise/programming-exercise.module';
 
-import { CourseComponent, CourseDetailComponent, CourseExerciseService, CourseExercisesOverviewComponent, courseRoute, CourseService, CourseUpdateComponent } from './';
+import { CourseComponent, CourseDetailComponent, CourseExercisesOverviewComponent, courseRoute, CourseUpdateComponent } from './';
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-selector.module';
@@ -38,6 +38,5 @@ const ENTITY_STATES = [...courseRoute];
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],
-    providers: [CourseService, CourseExerciseService],
 })
 export class ArtemisCourseModule {}

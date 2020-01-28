@@ -187,7 +187,7 @@ public class GitService {
      * @param localPath to git repo on server.
      * @return the git repository in the localPath or null if it does not exist on the server.
      */
-    private Repository getRepositoryByLocalPath(Path localPath) {
+    public Repository getRepositoryByLocalPath(Path localPath) {
         // Check if there is a folder with the provided path of the git repository.
         if (!Files.exists(localPath)) {
             // In this case we should remove the repository if cached, because it can't exist anymore.
@@ -294,20 +294,18 @@ public class GitService {
      * Pulls from remote repository. Does not throw any exceptions when pulling, e.g. CheckoutConflictException or WrongRepositoryStateException.
      *
      * @param repo Local Repository Object.
-     * @return The PullResult which contains FetchResult and MergeResult.
      */
-    public PullResult pullIgnoreConflicts(Repository repo) {
+    public void pullIgnoreConflicts(Repository repo) {
         try {
             Git git = new Git(repo);
             // flush cache of files
             repo.setContent(null);
-            return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
-        return null;
     }
 
     /**
@@ -449,13 +447,13 @@ public class GitService {
      * Stager Task #6: Combine all commits after last instructor commit
      *
      * @param repository Local Repository Object.
-     * @param exercise   ProgrammingExercise associated with this repo.
+     * @param programmingExercise   ProgrammingExercise associated with this repo.
      */
-    public void combineAllStudentCommits(Repository repository, ProgrammingExercise exercise) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(exercise.getTemplateRepositoryUrlAsUrl());
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getTemplateRepositoryUrlAsUrl());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen

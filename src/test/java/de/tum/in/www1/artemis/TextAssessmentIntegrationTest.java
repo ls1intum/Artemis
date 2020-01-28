@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,14 +16,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
 public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -40,13 +43,32 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @Autowired
     ObjectMapper mapper;
 
+    @Autowired
+    private TextClusterRepository textClusterRepository;
+
+    @Autowired
+    private TextBlockRepository textBlockRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
     private TextExercise textExercise;
+
+    private Course course;
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 2, 0);
-        database.addCourseWithOneTextExercise();
+        database.addUsers(1, 2, 1);
+        course = database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
+        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exerciseRepo.save(textExercise);
     }
 
     @AfterEach
@@ -97,7 +119,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
 
-        Result updatedResult = request.putWithResponseBody("/api/text-assessments/text-submission/" + textSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
+        Result updatedResult = request.putWithResponseBody("/api/text-assessments/text-submissions/" + textSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
@@ -141,8 +163,23 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getResultWithPredefinedTextblocks_studentHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.addTextSubmission(textExercise, textSubmission, "student1");
+        int submissionCount = 5;
+        int submissionSize = 4;
+        int[] clusterSizes = new int[] { 4, 5, 10, 1 };
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
+        textBlocks.forEach(TextBlock::computeId);
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+        textClusterRepository.saveAll(clusters);
+        textBlockRepository.saveAll(textBlocks);
+
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmissionRepository.findAll().get(0).getParticipation();
+
+        // connect it with the user
+        User user = database.getUserByLogin("tutor1");
+        studentParticipation.setInitializationDate(ZonedDateTime.now());
+        studentParticipation.setStudent(user);
+        studentParticipationRepository.save(studentParticipation);
 
         Participation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,
                 Participation.class);
@@ -178,5 +215,36 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
         assertThat(participation.getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        database.addFeedbacksToResult(textSubmission.getResult());
+        request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void cancelOwnAssessmentAsStudent() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cancelOwnAssessmentAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
     }
 }

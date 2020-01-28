@@ -53,6 +53,8 @@
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
                 "userSubmitted": "Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen.",
                 "userNotStartedExerciseShort": "Noch nicht angefangen.",
+                "exerciseNotSubmittedShort": "Noch nicht abgegeben",
+                "exerciseMissedDeadlineShort": "Abgabefrist abgelaufen",
                 "quizNotStartedShort": "Noch nicht begonnen.",
                 "userNotStartedQuizShort": "Noch nicht begonnen.",
                 "userNotParticipatedShort": "Nicht teilgenommen.",

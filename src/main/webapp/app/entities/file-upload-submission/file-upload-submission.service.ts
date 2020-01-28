@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { FileUploadSubmission } from './file-upload-submission.model';
 import { createRequestOption } from 'app/shared';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
@@ -20,7 +21,7 @@ export class FileUploadSubmissionService {
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
         const copy = this.convert(fileUploadSubmission);
         const formData = new FormData();
-        const submissionBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
+        const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
         formData.append('file', submissionFile);
         formData.append('submission', submissionBlob);
         return this.http

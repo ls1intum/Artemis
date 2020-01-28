@@ -118,9 +118,6 @@ public class LectureResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }

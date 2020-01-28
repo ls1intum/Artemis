@@ -47,7 +47,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @BeforeEach
     public void init() {
-        database.addUsers(10, 1, 1);
+        database.addUsers(10, 5, 1);
     }
 
     @AfterEach

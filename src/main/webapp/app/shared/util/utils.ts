@@ -19,19 +19,19 @@ export const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
 };
 
 /**
- * https://stackoverflow.com/questions/11616630/how-can-i-print-a-circular-structure-in-a-json-like-format
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
  * Stringify a circular JSON structure by omitting keys that would close a circle
  *
- * @param value The object you want to stringify
+ * @param val The object you want to stringify
  */
 export const stringifyCircular = (val: any): string => {
-    const cache: any[] = [];
+    const seen = new WeakSet();
     return JSON.stringify(val, (key, value) => {
         if (typeof value === 'object' && value !== null) {
-            if (cache.indexOf(value) !== -1) {
+            if (seen.has(value)) {
                 return;
             }
-            cache.push(value);
+            seen.add(value);
         }
         return value;
     });

@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisSharedModule } from '../shared';
-import { CourseComponent, CourseService } from '../entities/course';
+import { CourseComponent } from '../entities/course';
 import { ArtemisResultModule } from '../entities/result';
 import { HomeComponent } from '../home';
 import { MomentModule } from 'ngx-moment';
@@ -29,7 +29,7 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
     declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [CourseService, JhiAlertService],
+    providers: [JhiAlertService],
     schemas: [],
 })
 export class ArtemisExampleTextSubmissionModule {}

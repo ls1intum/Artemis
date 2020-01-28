@@ -37,7 +37,7 @@
             <button
                 class="btn btn-danger ml-3"
                 (click)="cancelAssessment()"
-                [disabled]="!isAssessor"
+                [disabled]="!(isAtLeastInstructor || isAssessor)"
                 *ngIf="result && !result.completionDate"
                 jhiTranslate="artemisApp.textAssessment.cancel"
             >

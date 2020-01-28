@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
@@ -10,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 
@@ -50,23 +53,30 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
 
+    private final ResourceLoader resourceLoader;
+
+    public JavaJenkinsBuildPlanCreator(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
+
     @PostConstruct
     public void init() {
         this.artemisNotificationUrl = ARTEMIS_BASE_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
     }
 
     @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) {
+    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) throws IOException {
         final var resourcePath = Path.of("templates", "jenkins", "java", "config.xml");
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
                 artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
 
-        return XmlFileUtils.readXmlFile(resourcePath, replacements);
+        final var xmlResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:" + resourcePath);
+        return XmlFileUtils.readXmlFile(xmlResource, replacements);
     }
 
     @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) {
+    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) throws IOException {
         if (!isSequential) {
             return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
         }

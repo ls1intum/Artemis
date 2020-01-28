@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { IWebsocketService } from '../../../../main/webapp/app/core';
+import { IWebsocketService } from 'app/core/websocket/websocket.service';
 
 export class MockWebsocketService implements IWebsocketService {
     bind(event: string, callback: () => void): void {}

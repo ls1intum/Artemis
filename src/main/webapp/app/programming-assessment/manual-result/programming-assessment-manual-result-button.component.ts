@@ -5,7 +5,7 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
 import { Result } from 'app/entities/result';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { Subscription } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { filter } from 'rxjs/operators';
 import { cloneDeep } from 'lodash';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';

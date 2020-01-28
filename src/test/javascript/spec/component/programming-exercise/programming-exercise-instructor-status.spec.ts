@@ -12,7 +12,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockCookieService, MockSyncStorage } from '../../mocks';
 import { SinonStub, stub } from 'sinon';
 import { Result } from 'app/entities/result';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise/status';
 import { triggerChanges } from '../../utils/general.utils';
 

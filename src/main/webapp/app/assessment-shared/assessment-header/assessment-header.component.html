@@ -27,7 +27,7 @@
             <button class="btn ml-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor">
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
-            <button class="btn ml-2 btn-danger" (click)="cancel.emit()" [disabled]="!isAssessor">
+            <button class="btn ml-2 btn-danger" (click)="cancel.emit()" [disabled]="!(isAtLeastInstructor || isAssessor)">
                 <span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
         </ng-container>

@@ -27,8 +27,8 @@ export class AssessmentInstructionsComponent {
 
     @Input('exercise') set exerciseInput(exercise: Exercise) {
         this.exercise = exercise;
-        this.problemStatement = this.markdownService.htmlForMarkdown(exercise.problemStatement);
-        this.gradingInstructions = this.markdownService.htmlForMarkdown(exercise.gradingInstructions);
+        this.problemStatement = this.markdownService.safeHtmlForMarkdown(exercise.problemStatement);
+        this.gradingInstructions = this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions);
 
         let sampleSolutionMarkdown: string | undefined;
         switch (exercise.type) {
@@ -52,7 +52,7 @@ export class AssessmentInstructionsComponent {
                 this.programmingExercise = exercise as ProgrammingExercise;
         }
         if (sampleSolutionMarkdown) {
-            this.sampleSolution = this.markdownService.htmlForMarkdown(sampleSolutionMarkdown);
+            this.sampleSolution = this.markdownService.safeHtmlForMarkdown(sampleSolutionMarkdown);
         }
     }
 }

@@ -2,20 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared';
-import {
-    ProgrammingExerciseComponent,
-    ProgrammingExerciseDetailComponent,
-    ProgrammingExerciseDialogComponent,
-    ProgrammingExerciseImportComponent,
-    ProgrammingExerciseParticipationService,
-    ProgrammingExercisePopupComponent,
-    programmingExercisePopupRoute,
-    ProgrammingExercisePopupService,
-    programmingExerciseRoute,
-    ProgrammingExerciseService,
-    ProgrammingExerciseTestCaseService,
-    ProgrammingExerciseUpdateComponent,
-} from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
@@ -38,8 +24,15 @@ import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
+import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
+import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
+import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exercise/programming-exercise-detail.component';
+import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
+import { programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
+import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
-const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
+const ENTITY_STATES = [...programmingExerciseRoute];
 
 @NgModule({
     imports: [
@@ -65,27 +58,20 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
         IntellijModule,
+        ProgrammingExerciseUtilsModule,
+        ArtemisAssessmentSharedModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseUpdateComponent,
-        ProgrammingExerciseDialogComponent,
-        ProgrammingExercisePopupComponent,
         ProgrammingExerciseImportComponent,
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         // Form components
         ProgrammingExerciseLifecycleComponent,
         ProgrammingExerciseTestScheduleDatePickerComponent,
     ],
-    entryComponents: [
-        ProgrammingExerciseComponent,
-        ProgrammingExerciseDialogComponent,
-        ProgrammingExerciseUpdateComponent,
-        ProgrammingExercisePopupComponent,
-        ProgrammingExerciseImportComponent,
-    ],
+    entryComponents: [ProgrammingExerciseComponent, ProgrammingExerciseUpdateComponent, ProgrammingExerciseImportComponent],
     exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
-    providers: [ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExercisePopupService, ProgrammingExerciseParticipationService],
 })
 export class ArtemisProgrammingExerciseModule {}

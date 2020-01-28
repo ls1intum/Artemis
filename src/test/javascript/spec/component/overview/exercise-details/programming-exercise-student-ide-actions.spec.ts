@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { Exercise, ParticipationStatus } from 'app/entities/exercise';
 import { InitializationState, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';

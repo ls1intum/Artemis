@@ -88,11 +88,6 @@ public class QuizExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
@@ -133,11 +128,6 @@ public class QuizExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
@@ -389,11 +379,6 @@ public class QuizExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }

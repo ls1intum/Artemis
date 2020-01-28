@@ -84,7 +84,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100">
+                <ngx-datatable-column *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
@@ -93,10 +93,10 @@
                             <fa-icon [icon]="controls.iconForSortPropField('buildPlanId')"></fa-icon>
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="value !== null">
-                            <a href="https://bamboobruegge.in.tum.de/browse/{{ value }}" target="_blank" rel="noopener noreferrer">
-                                {{ value }}
+                    <ng-template ngx-datatable-cell-template let-value="row">
+                        <span *ngIf="value.buildPlanId !== null">
+                            <a jhiBuildPlanLink [buildPlanId]="value.buildPlanId" [projectKey]="value.exercise.projectKey">
+                                {{ value.buildPlanId }}
                             </a>
                         </span>
                     </ng-template>

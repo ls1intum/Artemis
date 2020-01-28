@@ -10,7 +10,6 @@ import { ProgrammingExerciseService } from './services/programming-exercise.serv
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
-import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 
@@ -94,28 +93,5 @@ export const programmingExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [CanDeactivateGuard],
-    },
-];
-
-export const programmingExercisePopupRoute: Routes = [
-    {
-        path: 'course/:courseId/programming-exercise-new',
-        component: ProgrammingExercisePopupComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
-    },
-    {
-        path: 'course/:courseId/programming-exercise/:id/editlink',
-        component: ProgrammingExercisePopupComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];

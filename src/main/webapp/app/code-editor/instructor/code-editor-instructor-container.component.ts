@@ -1,8 +1,9 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProgrammingExerciseParticipationService, ProgrammingExerciseService } from 'app/entities/programming-exercise';
-import { CourseExerciseService } from 'app/entities/course';
-import { ParticipationService } from 'app/entities/participation';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
+import { CourseExerciseService } from 'app/entities/course/course.service';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CodeEditorFileService, DomainService } from 'app/code-editor/service';
 import { JhiAlertService } from 'ng-jhipster';

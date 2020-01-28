@@ -18,6 +18,7 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
     @EntityGraph(attributePaths = { "data" })
     List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
 
+    @EntityGraph(attributePaths = { "data" })
     Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable);
 
     List<PersistentAuditEvent> findByAuditEventDateBefore(Instant before);

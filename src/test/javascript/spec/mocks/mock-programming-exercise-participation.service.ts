@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { IProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
+import { IProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { Result } from 'app/entities/result';
 

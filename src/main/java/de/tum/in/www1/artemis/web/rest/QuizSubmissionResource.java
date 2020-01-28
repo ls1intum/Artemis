@@ -19,10 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -39,6 +36,8 @@ public class QuizSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final UserService userService;
+
     private final QuizExerciseService quizExerciseService;
 
     private final QuizSubmissionService quizSubmissionService;
@@ -49,13 +48,17 @@ public class QuizSubmissionResource {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final AuthorizationCheckService authCheckService;
+
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate, WebsocketMessagingService messagingService) {
+            SimpMessageSendingOperations messagingTemplate, WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
         this.messagingService = messagingService;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -87,7 +90,8 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
-        if (!quizExerciseService.userIsAllowedToSeeExercise(quizExercise)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             return ResponseEntity.status(403)
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
@@ -98,7 +102,7 @@ public class QuizSubmissionResource {
                     .body(null);
         }
 
-        StudentParticipation participation = participationService.startExercise(quizExercise, principal.getName());
+        StudentParticipation participation = participationService.startExercise(quizExercise, user);
         participation.setExercise(quizExercise);
 
         // update and save submission
@@ -112,17 +116,7 @@ public class QuizSubmissionResource {
         quizExercise.setQuizPointStatistic(null);
         quizExercise.setCourse(null);
 
-        participation = participationService.findOneWithEagerResults(participation.getId());
-
-        // TODO: document the following logic and potentially improve it, it looks weird
-        if (participation.getResults().size() == 0) {
-            // the user has not participated before
-            participation.addResult(result);
-            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/exercise/" + quizExercise.getId() + "/participation", participation);
-        }
-        else {
-            messagingService.broadcastNewResult(result.getParticipation(), result);
-        }
+        messagingService.broadcastNewResult(result.getParticipation(), result);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);
     }

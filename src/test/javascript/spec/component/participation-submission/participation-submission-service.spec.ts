@@ -10,7 +10,7 @@ import { SubmissionService } from 'app/entities/submission/submission.service';
 import { TextSubmission } from 'app/entities/text-submission';
 import { Participation } from 'app/entities/participation';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
-import { IWebsocketService } from 'app/core';
+import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
