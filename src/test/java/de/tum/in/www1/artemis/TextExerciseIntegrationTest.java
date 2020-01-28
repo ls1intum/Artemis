@@ -91,9 +91,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
 
-        request.post("/api/text-exercises/", textExercise, HttpStatus.CREATED);
-
-        TextExercise newTextExercise = textExerciseRepository.findByCourseId(course.getId()).get(1);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
@@ -111,9 +109,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
 
-        request.put("/api/text-exercises/", textExercise, HttpStatus.OK);
-
-        TextExercise updatedTextExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
