@@ -891,6 +891,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback", feedbacks, Result.class, httpStatus, params);
+        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/assessment", feedbacks, Result.class, httpStatus, params);
     }
 }
