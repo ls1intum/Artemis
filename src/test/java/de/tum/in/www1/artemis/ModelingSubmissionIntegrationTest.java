@@ -430,7 +430,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
 
-        ModelingSubmission receivedSubmission = request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.OK, ModelingSubmission.class);
+        ModelingSubmission receivedSubmission = request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-submission", HttpStatus.OK,
+                ModelingSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
@@ -442,7 +443,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // students can only see their own models
         submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student2");
-        request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
+        request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-submission", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
@@ -453,11 +454,11 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         participation.setStudent(user);
         participation.setExercise(null);
         StudentParticipation studentParticipation = studentParticipationRepository.save(participation);
-        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+        request.get("/api/participations/" + studentParticipation.getId() + "/latest-submission", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
 
         participation.setExercise(textExercise);
         studentParticipation = studentParticipationRepository.save(participation);
-        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+        request.get("/api/participations/" + studentParticipation.getId() + "/latest-submission", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
 
     @Test
@@ -465,7 +466,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getSubmissionForModelingEditor_emptySubmission() throws Exception {
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
-        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-submission", HttpStatus.OK, ModelingSubmission.class);
         assertThat(returnedSubmission).as("new submission is created").isNotNull();
     }
 
@@ -515,7 +516,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
         database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
 
-        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-submission", HttpStatus.OK, ModelingSubmission.class);
         assertThat(returnedSubmission.getResult()).as("the result is not sent to the client if the assessment is not finished").isNull();
     }
 
