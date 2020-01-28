@@ -18,7 +18,7 @@
                   "tsConfig": "tsconfig.json",
                   "assets": [
                       "./src/main/webapp/favicon.ico",
-                      "./src/main/webapp/images/**.*"
+                      "./src/main/webapp/content"
                   ],
                   "styles": [
                       "src/main/webapp/content/scss/global.scss"
