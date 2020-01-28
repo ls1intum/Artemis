@@ -125,8 +125,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
         checkDetailsHidden(returnedSubmission, true);
 
-        submission = ModelFactory.generateModelingSubmission(validModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), submission);
+        returnedSubmission.setModel(validModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), returnedSubmission, returnedSubmission.getId());
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -142,8 +143,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         checkDetailsHidden(returnedSubmission, true);
 
         String validActivityModel = database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
-        submission = ModelFactory.generateModelingSubmission(validActivityModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), submission);
+        returnedSubmission.setModel(validActivityModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), returnedSubmission, returnedSubmission.getId());
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -159,8 +161,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         checkDetailsHidden(returnedSubmission, true);
 
         String validObjectModel = database.loadFileFromResources("test-data/model-submission/object-model.json");
-        submission = ModelFactory.generateModelingSubmission(validObjectModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), submission);
+        returnedSubmission.setModel(validObjectModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), returnedSubmission, returnedSubmission.getId());
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -176,8 +179,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         checkDetailsHidden(returnedSubmission, true);
 
         String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
-        submission = ModelFactory.generateModelingSubmission(validUseCaseModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), submission);
+        returnedSubmission.setModel(validUseCaseModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission, returnedSubmission.getId());
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -190,15 +194,16 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
 
-        submission = ModelFactory.generateModelingSubmission(validModel, false);
-        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+        returnedSubmission.setModel(validModel);
+        returnedSubmission.setSubmitted(false);
+        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions/" + returnedSubmission.getId(), returnedSubmission, ModelingSubmission.class,
+                HttpStatus.OK);
 
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
 
-        submission = ModelFactory.generateModelingSubmission(validModel, true);
-        modelingSubmissionRepo.save(submission);
-
-        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions/" + returnedSubmission.getId(), returnedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
         StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
         assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
@@ -527,20 +532,20 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void submitExercise_afterDueDate_forbidden() throws Exception {
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationService.save(afterDueDateParticipation);
-        request.put("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
+        request.post("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+        request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
     }
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
         submittedSubmission.setModel(validModel);
-        submittedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
+        submittedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
                 HttpStatus.OK);
 
         final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
@@ -554,7 +559,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
         participationService.save(afterDueDateParticipation);
 
-        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+        request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
@@ -571,8 +576,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         return request.postWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
     }
 
-    private ModelingSubmission performUpdateOnModelSubmission(Long exerciseId, ModelingSubmission submission) throws Exception {
-        return request.putWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+    private ModelingSubmission performUpdateOnModelSubmission(Long exerciseId, ModelingSubmission submission, long submissionId) throws Exception {
+        return request.putWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions/" + submissionId, submission, ModelingSubmission.class, HttpStatus.OK);
     }
 
     private ModelingSubmission generateSubmittedSubmission() {

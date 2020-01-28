@@ -96,7 +96,7 @@ public class ModelingSubmissionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+        modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -122,7 +122,7 @@ public class ModelingSubmissionResource {
 
         // Check that the modeling submission id is correct
         modelingSubmissionService.existsById(submissionId);
-        if (!modelingSubmission.getId().equals(submissionId)) {
+        if (modelingSubmission.getId() == null || !modelingSubmission.getId().equals(submissionId)) {
             throw new EntityNotFoundException("The updated modeling submission doesn't match the given id" + submissionId);
         }
 
