@@ -30,7 +30,7 @@ public class GuidedTourConfiguration {
         return this.tours;
     }
 
-    public void setTours(List<HashMap<String, String>> tours) {
+    public void setTours(List<Map<String, String>> tours) {
         this.tours = tours;
     }
 
