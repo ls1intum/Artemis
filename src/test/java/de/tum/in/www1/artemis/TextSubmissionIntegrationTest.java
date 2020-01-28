@@ -112,6 +112,20 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getAllTextSubmissions_assessedByTutorForStudent() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllTextSubmissions_notAssessedByTutorForTutor() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", HttpStatus.FORBIDDEN, TextSubmission.class);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
         textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
