@@ -160,4 +160,16 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getAssessmentAsStudent() throws Exception {
+        FileUploadExercise fileUploadExerciseAfterAssessmentDate = (FileUploadExercise) exerciseRepo.findAll().get(2);
+
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExerciseAfterAssessmentDate, fileUploadSubmission, "student1", "tutor1");
+
+        Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
+    }
+
 }
