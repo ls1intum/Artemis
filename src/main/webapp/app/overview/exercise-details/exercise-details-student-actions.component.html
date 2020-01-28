@@ -198,6 +198,7 @@
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>
+        <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
@@ -206,7 +207,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
         <ng-template #popContent>

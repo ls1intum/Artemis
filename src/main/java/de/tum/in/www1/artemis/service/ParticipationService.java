@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -253,7 +254,24 @@ public class ParticipationService {
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation();
+                var programmingExercise = (ProgrammingExercise) exercise;
+                var programmingParticipation = new ProgrammingExerciseStudentParticipation();
+                // Note: we need a repository, otherwise the student cannot click resume.
+                programmingParticipation = copyRepository(programmingParticipation);
+                programmingParticipation = configureRepository(programmingParticipation);
+                programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+                participation = programmingParticipation;
+                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                    // restrict access for the student
+                    try {
+                        versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                                programmingParticipation.getStudent().getLogin());
+                    }
+                    catch (VersionControlException e) {
+                        log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId()
+                                + " for student repository with participation id " + programmingParticipation.getId() + ": " + e.getMessage());
+                    }
+                }
             }
             else {
                 participation = new StudentParticipation();

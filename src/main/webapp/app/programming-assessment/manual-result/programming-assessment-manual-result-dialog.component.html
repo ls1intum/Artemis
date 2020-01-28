@@ -1,7 +1,7 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isLoading; else loadingContainer">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span *ngIf="!result.id; else dialogTitleWithResult" jhiTranslate="artemisApp.result.createManual">Create manual result </span>
+            <span *ngIf="!result?.id; else dialogTitleWithResult" jhiTranslate="artemisApp.result.createManual">Create manual result </span>
             <ng-template #dialogTitleWithResult>
                 <span *ngIf="!complaint" jhiTranslate="artemisApp.result.updateManual">Update manual result</span>
                 <span
@@ -19,7 +19,7 @@
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
-    <div class="modal-body">
+    <div *ngIf="result" class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <jhi-alert></jhi-alert>
         <div *ngIf="isOpenForSubmission" class="alert alert-warning">
@@ -40,7 +40,7 @@
             ></jhi-programming-assessment-repo-export>
             <a
                 class="ml-2"
-                href="{{ this.participation.repositoryUrl }}"
+                href="{{ this.participation?.repositoryUrl }}"
                 target="_blank"
                 rel="noopener noreferrer"
                 jhiTranslate="artemisApp.tutorExerciseDashboard.programmingExercise.goToRepo"
@@ -144,8 +144,11 @@
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary" *ngIf="!result?.completionDate">
             <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-danger" *ngIf="result?.completionDate && canOverride">
+            <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
         </button>
     </div>
 </form>

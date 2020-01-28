@@ -155,6 +155,7 @@ export class ResultComponent implements OnInit, OnChanges {
                 return ResultTemplateStatus.SUBMITTED;
             } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
                 // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
+                // TODO handle external submissions with new status "External"
                 return ResultTemplateStatus.LATE;
             } else {
                 // Submission is not in due time of exercise and there is actually no feedback for the submission or the feedback should not be displayed yet.

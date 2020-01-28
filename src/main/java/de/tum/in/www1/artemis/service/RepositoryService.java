@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -51,14 +51,13 @@ public class RepositoryService {
      * @param repository VCS repository to get files for.
      * @return a map of files with the information if they are a file or a folder.
      */
-    @SuppressWarnings("unchecked")
-    public HashMap<String, FileType> getFiles(Repository repository) {
-        Iterator itr = gitService.listFilesAndFolders(repository).entrySet().iterator();
+    public Map<String, FileType> getFiles(Repository repository) {
+        var iterator = gitService.listFilesAndFolders(repository).entrySet().iterator();
 
-        HashMap<String, FileType> fileList = new HashMap<>();
+        Map<String, FileType> fileList = new HashMap<>();
 
-        while (itr.hasNext()) {
-            HashMap.Entry<File, FileType> pair = (HashMap.Entry) itr.next();
+        while (iterator.hasNext()) {
+            Map.Entry<File, FileType> pair = (Map.Entry<File, FileType>) iterator.next();
             fileList.put(pair.getKey().toString(), pair.getValue());
         }
 

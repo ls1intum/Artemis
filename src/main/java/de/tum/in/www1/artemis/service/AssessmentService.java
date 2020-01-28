@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,7 +17,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
-abstract class AssessmentService {
+@Service
+public class AssessmentService {
 
     private final ComplaintResponseService complaintResponseService;
 
@@ -28,20 +32,17 @@ abstract class AssessmentService {
 
     private final ResultService resultService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final SubmissionRepository submissionRepository;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            AuthorizationCheckService authCheckService, SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
-        this.authCheckService = authCheckService;
         this.submissionRepository = submissionRepository;
     }
 
@@ -61,6 +62,7 @@ abstract class AssessmentService {
      * complaint. The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
      *
      * @param originalResult   the original assessment that was complained about
+     * @param exercise         the exercise to which the result belongs
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
@@ -92,6 +94,31 @@ abstract class AssessmentService {
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(originalResult);
+    }
+
+    /**
+     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
+     * or if an instructor overrides it.
+     *
+     * If the result does not yet exist or is not yet submitted, this method returns true
+     *
+     * @param existingResult the existing result in case the result is updated (submitted or overridden)
+     * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
+     * @param user the user who initiates a request
+     * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
+     * @return true of the the given user can override a potentially existing result
+     */
+    public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+        // if the assessor is null, the user is allowed to save / submit / override the existing result
+        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
+        if (existingResult.getCompletionDate() == null) {
+            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+            return isAssessor || isAtLeastInstructor;
+        }
+        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        var assessmentDueDate = exercise.getAssessmentDueDate();
+        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
     }
 
     /**
@@ -130,15 +157,6 @@ abstract class AssessmentService {
         final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
         if (generalFeedbackCount > 1) {
             throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
-        }
-    }
-
-    /**
-     * Tutors are not allowed to override an assessment after the assessment due date. Instructors can submit assessments at any time.
-     */
-    void checkAssessmentDueDate(Exercise exercise) {
-        if (exercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new BadRequestAlertException("The assessment due date is already over.", "assessment", "assessmentDueDateOver");
         }
     }
 
