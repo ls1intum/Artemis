@@ -15,21 +15,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -127,13 +122,15 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> updateModelingExercise(@PathVariable Long exerciseId, @RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
-        if (exerciseId == null) {
-            return createModelingExercise(modelingExercise);
-        }
 
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
+        }
+
+        // Check that the modeling exercise id is correct
+        if (!modelingExerciseRepository.existsById(exerciseId) || !exerciseId.equals(modelingExercise.getId())) {
+            throw new EntityNotFoundException("No modeling exercise with the id: " + exerciseId + "was found");
         }
 
         // As persisting is cascaded for example submissions we have to set the reference to the exercise in the
