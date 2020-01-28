@@ -641,7 +641,7 @@ public class UserService {
     }
 
     /**
-     * Delete a given guided tour setting of the currently logged in user
+     * Delete a given guided tour setting of the currently logged in user (e.g. when the user restarts a guided tutorial)
      * @param guidedTourSettingsKey the key of the guided tour setting that should be deleted
      * @return the updated user object without the deleted guided tour setting
      */

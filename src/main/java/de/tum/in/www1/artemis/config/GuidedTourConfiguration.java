@@ -16,7 +16,7 @@ public class GuidedTourConfiguration {
 
     private String courseShortName = "";
 
-    private List<HashMap<String, String>> tours = new ArrayList<>();
+    private List<Map<String, String>> tours = new ArrayList<>();
 
     public GuidedTourConfiguration() {
 
@@ -26,7 +26,7 @@ public class GuidedTourConfiguration {
      * Get the list of of the mapping tourKey -> exerciseIdentifier from the info.guided-tour configuration in the application.yml file
      * @return List of mappings of tourKey -> exerciseIdentifier
      */
-    public List<HashMap<String, String>> getTours() {
+    public List<Map<String, String>> getTours() {
         return this.tours;
     }
 

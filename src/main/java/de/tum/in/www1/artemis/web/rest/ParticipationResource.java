@@ -600,7 +600,8 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tours.
+     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a tutorial)
+     * Please note: all users can delete their own participation when it belongs to a guided tutorial
      *
      * @param participationId the participationId of the participation to delete
      * @param deleteBuildPlan True, if the build plan should also get deleted
