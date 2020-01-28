@@ -119,7 +119,7 @@ public class ModelingExerciseResource {
      */
     @PutMapping("/modeling-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingExercise> updateModelingExercise(@PathVariable Long exerciseId, @RequestBody ModelingExercise modelingExercise,
+    public ResponseEntity<ModelingExercise> updateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
 
@@ -129,8 +129,9 @@ public class ModelingExerciseResource {
         }
 
         // Check that the modeling exercise id is correct
-        if (!modelingExerciseRepository.existsById(exerciseId) || !exerciseId.equals(modelingExercise.getId())) {
-            throw new EntityNotFoundException("No modeling exercise with the id: " + exerciseId + "was found");
+        modelingExerciseService.existsById(exerciseId);
+        if (!modelingExercise.getId().equals(exerciseId)) {
+            throw new EntityNotFoundException("The updated modeling exercise doesn't match the given id" + exerciseId);
         }
 
         // As persisting is cascaded for example submissions we have to set the reference to the exercise in the

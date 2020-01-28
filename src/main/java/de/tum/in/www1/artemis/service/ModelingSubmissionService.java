@@ -386,4 +386,10 @@ public class ModelingSubmissionService extends SubmissionService {
     public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
         return modelingSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
+
+    public void existsById(long submissionId) {
+        if (!modelingSubmissionRepository.existsById(submissionId)) {
+            throw new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist");
+        }
+    }
 }

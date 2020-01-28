@@ -105,24 +105,29 @@ public class ModelingSubmissionResource {
      * submitting modeling submissions. The submit specific handling occurs in the ModelingSubmissionService.save() function.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
+     * @param submissionId       the id of the submission which needs to be updated
      * @param principal          the current user principal
      * @param modelingSubmission the modelingSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission, or with status 400 (Bad Request) if the modelingSubmission is not valid, or
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
      */
-    @PutMapping("/exercises/{exerciseId}/modeling-submissions")
+    @PutMapping("/exercises/{exerciseId}/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @PathVariable long submissionId, Principal principal,
+            @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
 
-        if (modelingSubmission.getId() == null) {
-            return createModelingSubmission(exerciseId, principal, modelingSubmission);
+        // Check that the modeling submission id is correct
+        modelingSubmissionService.existsById(submissionId);
+        if (!modelingSubmission.getId().equals(submissionId)) {
+            throw new EntityNotFoundException("The updated modeling submission doesn't match the given id" + submissionId);
         }
+
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+        modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
