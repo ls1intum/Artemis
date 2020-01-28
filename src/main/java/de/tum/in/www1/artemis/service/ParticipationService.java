@@ -254,35 +254,44 @@ public class ParticipationService {
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
-                var programmingExercise = (ProgrammingExercise) exercise;
-                var programmingParticipation = new ProgrammingExerciseStudentParticipation();
-                // Note: we need a repository, otherwise the student cannot click resume.
-                programmingParticipation = copyRepository(programmingParticipation);
-                programmingParticipation = configureRepository(programmingParticipation);
-                programmingParticipation = configureRepositoryWebHook(programmingParticipation);
-                participation = programmingParticipation;
-                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
-                    // restrict access for the student
-                    try {
-                        versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
-                                programmingParticipation.getStudent().getLogin());
-                    }
-                    catch (VersionControlException e) {
-                        log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId()
-                                + " for student repository with participation id " + programmingParticipation.getId() + ": " + e.getMessage());
-                    }
-                }
+                participation = new ProgrammingExerciseStudentParticipation();
             }
             else {
                 participation = new StudentParticipation();
             }
+            participation.setInitializationState(UNINITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setStudent(user);
+
+            participation = save(participation);
         }
         else {
             participation = optionalStudentParticipation.get();
         }
+
+        // setup repository in case of programming exercise
+        if (exercise instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            // Note: we need a repository, otherwise the student cannot click resume.
+            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = configureRepository(programmingParticipation);
+            programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+            participation = programmingParticipation;
+            if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                // restrict access for the student
+                try {
+                    versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                            programmingParticipation.getStudent().getLogin());
+                }
+                catch (VersionControlException e) {
+                    log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
+                            + programmingParticipation.getId() + ": " + e.getMessage());
+                }
+            }
+        }
+
         participation.setInitializationState(FINISHED);
         participation = save(participation);
 
