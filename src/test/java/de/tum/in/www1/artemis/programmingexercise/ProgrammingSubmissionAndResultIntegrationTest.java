@@ -489,7 +489,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
 
         Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
-        List<HashMap<String, Object>> changes = (List<HashMap<String, Object>>) requestBodyMap.get("changes");
+        List<Map<String, Object>> changes = (List<Map<String, Object>>) requestBodyMap.get("changes");
         changes.get(0).put("toHash", TEST_COMMIT);
 
         // Api should return ok.
