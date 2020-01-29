@@ -146,7 +146,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @GetMapping("/exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<Result> getExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
@@ -177,7 +177,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
     @PutMapping("/modeling-submissions/{submissionId}/assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
+    public ResponseEntity<Object> saveModelingAssessment(@PathVariable long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
@@ -239,7 +239,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
     @PutMapping("/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable Long submissionId, @RequestBody List<Feedback> feedbacks) {
+    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(submissionId);
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();

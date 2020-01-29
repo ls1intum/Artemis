@@ -87,7 +87,7 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ return 201 CREATED with location header instead of ModelingSubmission
     // TODO MJ merge with update
-    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
@@ -330,7 +330,7 @@ public class ModelingSubmissionResource {
      */
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable Long participationId) {
+    public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         ModelingExercise modelingExercise;
 
