@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriteria;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
@@ -58,17 +57,6 @@ public class GradingInstructionService {
     public GradingInstruction findOne(long gradingInstructionId) {
         return gradingInstructionRepository.findById(gradingInstructionId)
                 .orElseThrow(() -> new EntityNotFoundException("Grading Instruction with gradingInstructionId  " + gradingInstructionId + " does not exist!"));
-    }
-
-    /**
-     * Finds all Grading Instructions for a given Exercise
-     *
-     * @param exercise corresponding exercise
-     * @return a List of all Grading Instructions for the given exercise
-     */
-
-    public List<GradingInstruction> findAllForExercise(Exercise exercise) {
-        return gradingInstructionRepository.findByExerciseId(exercise.getId());
     }
 
     /**

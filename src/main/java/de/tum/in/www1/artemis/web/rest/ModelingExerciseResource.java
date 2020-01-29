@@ -96,6 +96,8 @@ public class ModelingExerciseResource {
             return responseFailure;
         }
 
+        exerciseService.mapExerciseToCriteria(modelingExercise);
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
@@ -140,6 +142,8 @@ public class ModelingExerciseResource {
         if (modelingExercise.getExampleSubmissions() != null) {
             modelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(modelingExercise));
         }
+
+        exerciseService.mapExerciseToCriteria(modelingExercise);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         if (notificationText != null) {

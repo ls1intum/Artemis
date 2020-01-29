@@ -70,4 +70,14 @@ public class GradingCriteriaService {
         return gradingCriteriaRepository.findByExerciseId(exercise.getId());
     }
 
+    /**
+     * Get all programming exercise criteria belonging to exercise  with eager criteria.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of criteria belonging to exercise
+     */
+    public List<GradingCriteria> findByExerciseIdWithEagerGradingCriteria(Long exerciseId) {
+        return gradingCriteriaRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+    }
+
 }

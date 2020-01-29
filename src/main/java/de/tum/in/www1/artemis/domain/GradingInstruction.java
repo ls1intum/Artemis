@@ -8,6 +8,8 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * A Structured Grading Instruction.
  */
@@ -19,9 +21,6 @@ public class GradingInstruction implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne
-    private Exercise exercise;
 
     // the score students get if this grading instruction is applicable
     @Column(name = "credits")
@@ -44,7 +43,8 @@ public class GradingInstruction implements Serializable {
     @Column(name = "usage_count")
     private int usageCount;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
     private GradingCriteria gradingCriteria;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -80,19 +80,6 @@ public class GradingInstruction implements Serializable {
     public GradingInstruction usageCount(int usageCount) {
         this.usageCount = usageCount;
         return this;
-    }
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public GradingInstruction exercise(Exercise exercise) {
-        this.exercise = exercise;
-        return this;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
     }
 
     public String getInstructionDescription() {
@@ -169,8 +156,7 @@ public class GradingInstruction implements Serializable {
 
     @Override
     public String toString() {
-        return "GradingInstruction{" + "id=" + getId() + ", exercise='" + getExercise() + ", criteria='" + getGradingCriteria() + "'" + ", credits='" + getCredits() + "'"
-                + ", gradingScale='" + getGradingScale() + "'" + ", instructionDescription='" + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'"
-                + ", usageCount='" + getUsageCount() + "'" + '}';
+        return "GradingInstruction{" + "id=" + getId() + "'" + ", credits='" + getCredits() + "'" + ", gradingScale='" + getGradingScale() + "'" + ", instructionDescription='"
+                + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'" + ", usageCount='" + getUsageCount() + "'" + '}';
     }
 }

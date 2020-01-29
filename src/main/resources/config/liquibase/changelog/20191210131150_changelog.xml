@@ -10,10 +10,8 @@
             <column name="instruction_description" type="LONGTEXT"/>
             <column name="feedback" type="LONGTEXT"/>
             <column name="usage_count" type="INT"/>
-            <column name="exercise_id" type="BIGINT"/>
             <column name="grading_criteria_id" type="BIGINT"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="grading_instruction" constraintName="fk_grading_instruction_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise"/>
         <addForeignKeyConstraint baseColumnNames="grading_criteria_id" baseTableName="grading_instruction" constraintName="fk_grading_instruction_grading_criteria_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="grading_criteria"/>
     </changeSet>
 </databaseChangeLog>

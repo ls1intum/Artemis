@@ -105,10 +105,9 @@ public abstract class Exercise implements Serializable {
     private Course course;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
+    private List<GradingCriteria> gradingCriteria = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -803,28 +802,28 @@ public abstract class Exercise implements Serializable {
         this.presentationScoreEnabled = presentationScoreEnabled;
     }
 
-    public List<GradingInstruction> getStructuredGradingInstructions() {
-        return structuredGradingInstructions;
+    public List<GradingCriteria> getGradingCriteria() {
+        return gradingCriteria;
     }
 
-    public Exercise structuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
-        this.structuredGradingInstructions = structuredGradingInstructions;
+    public Exercise gradingCriteria(List<GradingCriteria> gradingCriteria) {
+        this.gradingCriteria = gradingCriteria;
         return this;
     }
 
-    public Exercise addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
-        this.structuredGradingInstructions.add(structuredGradingInstruction);
-        structuredGradingInstruction.setExercise(this);
+    public Exercise addGradingCriteria(GradingCriteria gradingCriteria) {
+        this.gradingCriteria.add(gradingCriteria);
+        gradingCriteria.setExercise(this);
         return this;
     }
 
-    public Exercise removeStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
-        this.structuredGradingInstructions.remove(structuredGradingInstruction);
-        structuredGradingInstruction.setExercise(null);
+    public Exercise removeGradingCriteria(GradingCriteria gradingCriteria) {
+        this.gradingCriteria.remove(gradingCriteria);
+        gradingCriteria.setExercise(null);
         return this;
     }
 
-    public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
-        this.structuredGradingInstructions = structuredGradingInstructions;
+    public void setGradingCriteria(List<GradingCriteria> gradingCriteria) {
+        this.gradingCriteria = gradingCriteria;
     }
 }
