@@ -230,6 +230,8 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
      * or if there is a complaint that was not yet accepted or rejected
      */
     writable() {
+        // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
+        // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
         return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined);
     }
 }
