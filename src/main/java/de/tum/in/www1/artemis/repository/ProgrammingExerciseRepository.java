@@ -59,10 +59,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
 
-    @EntityGraph(attributePaths = "course")
-    @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp where tp.id = :#{#participationId} or sp.id = :#{#participationId}")
-    Optional<ProgrammingExercise> findOneByTemplateParticipationIdOrSolutionParticipationId(@Param("participationId") Long participationId);
-
     @Query("select pe from ProgrammingExercise pe where pe.course.instructorGroupName in :groups and pe.shortName is not null and (pe.title like %:partialTitle% or pe.course.title like %:partialCourseTitle%)")
     Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
             @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
