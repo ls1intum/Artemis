@@ -114,6 +114,13 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1")
+    public void testGetAssessmentBySubmissionId_notFound() throws Exception {
+        saveModelingSubmission();
+        request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.NOT_FOUND, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     public void testGetAssessmentBySubmissionId_assessmentNotFinished_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(false);
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -737,6 +744,11 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
         assertThat(storedResult.getAssessmentType()).as("result type is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
+    }
+
+    private void saveModelingSubmission() throws Exception {
+        modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
     }
 
     private void saveModelingSubmissionAndAssessment(boolean submitAssessment) throws Exception {
