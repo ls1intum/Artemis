@@ -273,17 +273,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (!this.currentTourStep) {
             return false;
         }
-        switch (direction) {
-            case Direction.HORIZONTAL: {
-                return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
-            }
-            case Direction.VERTICAL: {
-                return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
-            }
-            default: {
-                return false;
-            }
-        }
+        return !this.currentTourStep.highlightSelector || this.elementInViewport(this.getSelectedElement(), direction);
     }
 
     /**
