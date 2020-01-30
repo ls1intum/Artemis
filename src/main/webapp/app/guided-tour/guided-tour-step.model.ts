@@ -17,12 +17,8 @@ export abstract class TourStep {
     /** Permission to view step, if no permission is set then the tour step is visible to ROLE_USER
      * Possible inputs: 'ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA' */
     permission?: string[];
-    /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
-    userInteractionEvent?: UserInteractionEvent;
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;
-    /** Enables the automatic display of the next step after a user interaction */
-    triggerNextStep?: boolean;
 }
 
 export class TextTourStep extends TourStep {
@@ -63,7 +59,19 @@ export class VideoTourStep extends TextTourStep {
     }
 }
 
-export class ModelingTaskTourStep extends TextTourStep {
+export class UserInterActionTourStep extends TextTourStep {
+    /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
+    userInteractionEvent: UserInteractionEvent;
+    /** Enables the automatic display of the next step after a user interaction */
+    triggerNextStep?: boolean;
+
+    constructor(tourStep: UserInterActionTourStep) {
+        super(tourStep);
+        Object.assign(this, tourStep);
+    }
+}
+
+export class ModelingTaskTourStep extends UserInterActionTourStep {
     /** Modeling task that has to be completed during this step */
     modelingTask: GuidedTourModelingTask;
 

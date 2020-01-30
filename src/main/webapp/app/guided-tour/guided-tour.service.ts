@@ -10,7 +10,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
-import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import {TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep} from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
@@ -450,7 +450,7 @@ export class GuidedTourService {
             return;
         }
 
-        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
 
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
             const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
