@@ -4,9 +4,6 @@ import { GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
     highlightSelector?: string;
-    /** Selector for the node that should listen to DOM changes during user interactions to define if the next step is ready
-     *  Is especially important for UserInteractionEvent.CLICK steps since the next step after the click interaction will be triggered automatically */
-    clickEventListenerSelector?: string;
     /** The position where the tour step will appear next to the selected element */
     orientation?: Orientation | OrientationConfiguration[] | undefined;
     /** Action that happens when the step is opened */

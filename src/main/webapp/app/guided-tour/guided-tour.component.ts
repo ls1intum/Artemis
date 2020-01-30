@@ -137,7 +137,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Subscribe to userInteractionFinished to determine if the user interaction has been done
+     * Subscribe to userInteractionFinished to determine if the user interaction has been executed
      */
     private subscribeToUserInteractionState(): void {
         // Check availability after first subscribe call since the router event been triggered already
@@ -354,6 +354,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Returns true if the current tour step is an instance of VideoTourStep
+     */
     public isVideoTourStep(): boolean {
         return this.currentTourStep instanceof VideoTourStep;
     }
@@ -527,17 +530,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Get element for the current tour step event listener selector
-     * @return selected element for the event listener or null
-     */
-    private getClickEventListenerSelector(): HTMLElement | null {
-        if (!this.currentTourStep || !this.currentTourStep.clickEventListenerSelector) {
-            return null;
-        }
-        return document.querySelector(this.currentTourStep.clickEventListenerSelector);
-    }
-
-    /**
      * Calculate max width adjustment for tour step
      * @return {number} maxWidthAdjustmentForTourStep
      */
@@ -622,10 +614,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
             if (this.currentTourStep && this.currentTourStep.userInteractionEvent && !isResizeOrScroll) {
-                const clickEventListenerElement = this.getClickEventListenerSelector();
-                if (clickEventListenerElement) {
-                    selectedElement = clickEventListenerElement;
-                }
                 if (this.currentTourStep.modelingTask) {
                     this.guidedTourService.enableUserInteraction(selectedElement, this.currentTourStep.userInteractionEvent, this.currentTourStep.modelingTask.umlName);
                 } else {
@@ -656,7 +644,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         // Observe alerts and update the highlight element position if necessary
         if (selectedElement && alertElement) {
             this.guidedTourService
-                .observeMutations(document.querySelector('.alerts'), { childList: true })
+                .observeMutations(alertElement, { childList: true })
                 .pipe(take(1))
                 .subscribe(mutation => {
                     this.scrollToAndSetElement();

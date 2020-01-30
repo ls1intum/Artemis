@@ -109,14 +109,10 @@ export class GuidedTourService {
             .pipe(debounceTime(200))
             .subscribe(() => {
                 if (this.currentTour && this.deviceService.isDesktop()) {
+                    // Show resize tour step if the window size falls below the defined minimum tour size, except for VideoTourSteps
                     if (this.tourMinimumScreenSize >= window.innerWidth && !(this.currentTour.steps[this.currentTourStepIndex] instanceof VideoTourStep)) {
                         this.onResizeMessage = true;
-                        this.guidedTourCurrentStepSubject.next(
-                            new TextTourStep({
-                                headlineTranslateKey: 'tour.resize.headline',
-                                contentTranslateKey: 'tour.resize.content',
-                            }),
-                        );
+                        this.guidedTourCurrentStepSubject.next(new TextTourStep({ headlineTranslateKey: 'tour.resize.headline', contentTranslateKey: 'tour.resize.content' }));
                     } else {
                         if (this.onResizeMessage) {
                             this.onResizeMessage = false;
@@ -956,6 +952,7 @@ export class GuidedTourService {
 
         let exerciseMatches: boolean;
         let settingsKey = '';
+
         if (guidedTour) {
             settingsKey = guidedTour.settingsKey;
         } else {

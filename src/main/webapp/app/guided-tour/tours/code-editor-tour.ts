@@ -58,7 +58,6 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-updating-result .text-success',
-            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
             contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
             hintTranslateKey: 'tour.programmingExercise.buildStatus.hint',
