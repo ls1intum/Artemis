@@ -12,8 +12,6 @@ export abstract class TourStep {
     closeAction?: () => void;
     /** Disables this step for the tour so that it won't be shown */
     disableStep?: boolean;
-    /** Adds some padding for things like sticky headers when scrolling to an element */
-    scrollAdjustment?: number;
     /** Adds padding around tour highlighting in pixels, this overwrites the default for this step. Is not dependent on useHighlightPadding being true */
     highlightPadding?: number;
     /** Permission to view step, if no permission is set then the tour step is visible to ROLE_USER

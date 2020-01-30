@@ -877,12 +877,10 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour): Exercise | null {
-        if (!course || !course.exercises || !this.guidedTourMapping) {
+        if (!course || !course.exercises || !this.isGuidedTourAvailableForCourse(course)) {
             return null;
         }
-        if (!this.isGuidedTourAvailableForCourse(course)) {
-            return null;
-        }
+
         const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
         if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
@@ -899,9 +897,6 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
-        if (!this.guidedTourMapping) {
-            return null;
-        }
         const courseForTour = courses.find(course => this.isGuidedTourAvailableForCourse(course));
         if (courseForTour) {
             this.enableTour(guidedTour);
@@ -916,14 +911,14 @@ export class GuidedTourService {
      * @param exercise which can contain the needed exercise for the tour
      * @param guidedTour that should be enabled
      */
-    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (!exercise.course) {
-            return;
-        }
-        if (this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour): Exercise | null {
+        if (!exercise.course || !this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
+            return null;
+        } else {
             this.enableTour(guidedTour);
             this.currentExercise = exercise;
             this.currentCourse = exercise.course;
+            return exercise;
         }
     }
 
