@@ -88,4 +88,10 @@ public class GuidedTourSetting implements Serializable {
     public void setUser(User user) {
         this.user = user;
     }
+
+    @Override
+    public String toString() {
+        return "GuidedTourSetting{" + "id=" + id + ", guidedTourKey='" + guidedTourKey + '\'' + ", guidedTourStep=" + guidedTourStep + ", guidedTourState=" + guidedTourState
+                + ", user=" + user + '}';
+    }
 }
