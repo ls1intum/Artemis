@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 
 /**
@@ -37,8 +38,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     private final WebsocketMessagingService messagingService;
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService, UserService userService,
-            FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService) {
-        super(authCheckService, userService);
+            FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService,
+            ExerciseService exerciseService, ResultRepository resultRepository) {
+        super(authCheckService, userService, exerciseService, fileUploadSubmissionService, fileUploadAssessmentService, resultRepository);
         this.fileUploadAssessmentService = fileUploadAssessmentService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
@@ -94,16 +96,22 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             @RequestBody List<Feedback> feedbacks) {
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        User user = userService.getUserWithGroupsAndAuthorities();
         long exerciseId = studentParticipation.getExercise().getId();
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
         checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
 
-        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks, fileUploadExercise);
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
+        if (!isAllowedToCreateOrOverrideResult(fileUploadSubmission, fileUploadExercise, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
+
+        Result result = fileUploadAssessmentService.saveAssessment(fileUploadSubmission, feedbacks);
         if (submit) {
             result = fileUploadAssessmentService.submitAssessment(result.getId(), fileUploadExercise, fileUploadSubmission.getSubmissionDate());
         }
         // remove information about the student for tutors to ensure double-blind assessment
-        if (!authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
+        if (!isAtLeastInstructor) {
             ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
@@ -151,25 +159,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/file-upload-submissions/{submissionId}/cancel-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
-        log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResult(submissionId);
-        if (fileUploadSubmission.getResult() == null) {
-            // if there is no result everything is fine
-            return ResponseEntity.ok().build();
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
-        checkAuthorization(fileUploadExercise, user);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(fileUploadSubmission.getResult().getAssessor().getId()))) {
-            // tutors cannot cancel the assessment of other tutors (only instructors can)
-            return forbidden();
-        }
-        fileUploadAssessmentService.cancelAssessmentOfSubmission(fileUploadSubmission);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
+        return super.cancelAssessment(submissionId);
     }
 
     @Override

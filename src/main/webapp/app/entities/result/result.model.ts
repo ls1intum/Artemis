@@ -1,4 +1,4 @@
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared';
 import { Feedback } from '../feedback';
 import { Submission } from '../submission';

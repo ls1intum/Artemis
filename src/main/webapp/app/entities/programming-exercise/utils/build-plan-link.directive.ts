@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostBinding, Input, OnInit, Renderer2 } from '@angular/core';
+import { Directive, HostBinding, HostListener, Input, OnInit } from '@angular/core';
 import { take, tap } from 'rxjs/operators';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/layouts';
@@ -10,21 +10,23 @@ import { ProfileInfo } from 'app/layouts';
  * @param projectKey The project key of the programming exercise
  * @param buildPlanId The ID of the build plan for which to construct the URL
  */
-export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string) => {
-    return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
+export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | null => {
+    if (template && projectKey && buildPlanId) {
+        return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
+    }
+
+    return null;
 };
 
 @Directive({ selector: 'a[jhiBuildPlanLink]' })
 export class BuildPlanLinkDirective implements OnInit {
-    @Input() projectKey: string;
-    @Input() buildPlanId: string;
-
     @HostBinding('attr.href')
-    linkTemplate: string;
-    @HostBinding('attr.target')
-    readonly target = '_blank';
-    @HostBinding('attr.rel')
-    readonly rel = 'noopener noreferrer';
+    readonly href = '';
+
+    private participationBuildPlanId: string;
+    private exerciseProjectKey: string;
+    private templateLink: string;
+    private linkToBuildPlan: string | null;
 
     constructor(private profileService: ProfileService) {}
 
@@ -34,9 +36,30 @@ export class BuildPlanLinkDirective implements OnInit {
             .pipe(
                 take(1),
                 tap((info: ProfileInfo) => {
-                    this.linkTemplate = createBuildPlanUrl(info.buildPlanURLTemplate, this.projectKey, this.buildPlanId);
+                    this.templateLink = info.buildPlanURLTemplate;
+                    this.linkToBuildPlan = createBuildPlanUrl(info.buildPlanURLTemplate, this.exerciseProjectKey, this.participationBuildPlanId);
                 }),
             )
             .subscribe();
+    }
+
+    @Input()
+    set projectKey(key: string) {
+        this.exerciseProjectKey = key;
+        this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
+    }
+
+    @Input()
+    set buildPlanId(planId: string) {
+        this.participationBuildPlanId = planId;
+        this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
+    }
+
+    @HostListener('click', ['$event'])
+    openBuildPlanLink($event: any) {
+        $event.preventDefault();
+        if (this.linkToBuildPlan) {
+            window.open(this.linkToBuildPlan);
+        }
     }
 }

@@ -46,4 +46,18 @@ public class GuidedTourSettingsResource {
         User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);
         return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
     }
+
+    /**
+     * DELETE /guided-tour-settings/:settingsKey : delete guided tour setting of the current user
+     * @param settingsKey the guided tour settings key that of the setting that should be deleted
+     * @return the guided tour settings
+     */
+    @DeleteMapping("/guided-tour-settings/{settingsKey}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<GuidedTourSetting>> deleteGuidedTourSetting(@PathVariable String settingsKey) {
+        log.debug("REST request to delete GuidedTourSetting : {}", settingsKey);
+        // Note: there is no explicit permission check here, because every user can delete the guided tour settings, e.g. by restarting a tutorial
+        User currentUser = userService.deleteGuidedTourSetting(settingsKey);
+        return new ResponseEntity<>(currentUser.getGuidedTourSettings(), null, HttpStatus.OK);
+    }
 }

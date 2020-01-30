@@ -7,7 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
