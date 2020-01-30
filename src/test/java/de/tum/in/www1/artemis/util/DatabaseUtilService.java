@@ -281,21 +281,25 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         course1.addExercises(modelingExercise);
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         course1.addExercises(textExercise);
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
 
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course1);
         programmingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(programmingExercise);
         programmingExercise.getCategories().add("Programming");
         course1.addExercises(programmingExercise);
 
@@ -476,14 +480,18 @@ public class DatabaseUtilService {
         return result;
     }
 
-    public List<GradingInstruction> addGradingInstructionsToExercise(Exercise exercise) {
-        GradingInstruction gradingInstruction1 = new GradingInstruction();
-        gradingInstruction1.instructionDescription("(1)just for testing purpose").setExercise(exercise);
-        exercise.addStructuredGradingInstructions(gradingInstruction1);
-        GradingInstruction gradingInstruction2 = new GradingInstruction();
-        gradingInstruction2.instructionDescription("(2)just for testing purpose").setExercise(exercise);
-        exercise.addStructuredGradingInstructions(gradingInstruction2);
-        return exercise.getStructuredGradingInstructions();
+    public List<GradingCriteria> addGradingInstructionsToExercise(Exercise exercise) {
+        GradingCriteria emptyCriteria = ModelFactory.generateGradingCriteria(null);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriteria, 1);
+        emptyCriteria.setStructuredGradingInstructions(instructionWithNoCriteria);
+        GradingCriteria testCriteria = ModelFactory.generateGradingCriteria("test title");
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriteria, 3);
+        testCriteria.setStructuredGradingInstructions(instructions);
+        var criteria = new ArrayList<GradingCriteria>();
+        criteria.add(emptyCriteria);
+        criteria.add(testCriteria);
+        exercise.setGradingCriteria(criteria);
+        return exercise.getGradingCriteria();
     }
 
     public void addCourseWithOneModelingExercise() {

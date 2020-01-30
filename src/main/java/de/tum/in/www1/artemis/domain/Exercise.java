@@ -464,6 +464,7 @@ public abstract class Exercise implements Serializable {
      */
     public void filterSensitiveInformation() {
         setGradingInstructions(null);
+        setGradingCriteria(null);
     }
 
     /**

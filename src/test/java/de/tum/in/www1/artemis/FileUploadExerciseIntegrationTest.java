@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.GradingCriteria;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
@@ -37,6 +40,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Autowired
     FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
+    private List<GradingCriteria> gradingCriteria;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 1, 1);
@@ -53,11 +58,20 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         String filePattern = "Example file pattern";
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(filePattern);
+        gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
+
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class);
 
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
         assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(filePattern);
+        assertThat(receivedFileUploadExercise.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
+        assertThat(receivedFileUploadExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
+
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
+                .isEqualTo("created first instruction with empty criteria for testing");
+
     }
 
     @Test
