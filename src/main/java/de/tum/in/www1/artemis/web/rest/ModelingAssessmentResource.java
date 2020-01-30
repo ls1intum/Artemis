@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
@@ -56,8 +57,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, CompassService compassService,
             ModelingExerciseService modelingExerciseService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionService modelingSubmissionService,
-            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService) {
-        super(authCheckService, userService);
+            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService, ResultRepository resultRepository) {
+        super(authCheckService, userService, exerciseService, modelingSubmissionService, modelingAssessmentService, resultRepository);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
@@ -176,7 +177,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
             @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
     @PutMapping("/modeling-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO MJ changing submitted assessment always produces Conflict
     public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -185,6 +185,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
         long exerciseId = studentParticipation.getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise, user);
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise);
+        if (!isAllowedToCreateOrOverrideResult(modelingSubmission, modelingExercise, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
 
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks, modelingExercise);
 
@@ -294,25 +299,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity cancelAssessment(@PathVariable Long submissionId) {
-        log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResult(submissionId);
-        if (modelingSubmission.getResult() == null) {
-            // if there is no result everything is fine
-            return ResponseEntity.ok().build();
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        checkAuthorization(modelingExercise, user);
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(modelingExercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(modelingSubmission.getResult().getAssessor().getId()))) {
-            // tutors cannot cancel the assessment of other tutors (only instructors can)
-            return forbidden();
-        }
-        modelingAssessmentService.cancelAssessmentOfSubmission(modelingSubmission);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
+        return super.cancelAssessment(submissionId);
     }
 
     @Override

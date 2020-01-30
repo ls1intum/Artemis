@@ -95,12 +95,12 @@ public abstract class RepositoryResource {
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the map of files with an indicator if the file is a file or a folder.
      */
-    public ResponseEntity<HashMap<String, FileType>> getFiles(Long domainId) {
+    public ResponseEntity<Map<String, FileType>> getFiles(Long domainId) {
         log.debug("REST request to files for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
-            HashMap<String, FileType> fileList = repositoryService.getFiles(repository);
+            Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
     }
