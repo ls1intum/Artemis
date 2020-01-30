@@ -22,7 +22,7 @@ A tutorial can have different types of tutorial steps:
 ###### ModelingTaskTourStep
 ![](modeling-task-tour-step.png "ModelingTaskTourStep")
 
-#### Example implementation of a GuidedTour object
+### Example implementation of a GuidedTour object
 In this example, the `GuidedTour` object is created and assigned to the constant `exampleTutorial`, which one can use to embed the tutorial to a component of choice.
 
 ```typescript
@@ -68,15 +68,15 @@ export const exampleTutorial: GuidedTour = {
 ```
 
 ### Mandatory attributes
-1. TextTourStep: The mandatory fields are `headlineTranslateKey` and `contentTranslateKey`.
-2. ImageTourStep: The ImageTourStep extends the TextTourStep and has `imageUrl` as an additional mandatory attribute. 
-3. VideoTourStep: The VideoTourStep extends the TextTourStep and has `videoUrl` as an additional mandatory attribute.
-4. ModelingTaskTourStep: The ModelingTaskTourStep extends the TextTourStep and ha `modelingTask` as an additional mandatory attribute.
+1. `TextTourStep`: The mandatory fields are `headlineTranslateKey` and `contentTranslateKey`.
+2. `ImageTourStep`: The ImageTourStep extends the TextTourStep and has `imageUrl` as an additional mandatory attribute. 
+3. `VideoTourStep`: The VideoTourStep extends the TextTourStep and has `videoUrl` as an additional mandatory attribute.
+4. `ModelingTaskTourStep`: The ModelingTaskTourStep extends the TextTourStep and ha `modelingTask` as an additional mandatory attribute.
 
 ### Optional attributes`
 There are many optional attributes that can be defined for a tour step. These attributes and their definition can be found in the `abstract class TourStep`.
 Below, you can find a list of attributes that are used more often:
-1. `highlightSelector: For the `highlightSelector` you have to enter a CSS selector for the HTML element that you want to highlight for this step.   
+1. `highlightSelector`: For the `highlightSelector` you have to enter a CSS selector for the HTML element that you want to highlight for this step.   
 2. `orientation`: We can define an orientation for every tour step individually. The tour step orientation is used to define the position of the tour step next to highlighted element.
 3. `highlightPadding`: This attribute sets the additional padding around the highlight element.
 4. `userInteractionEvent`: Some steps require user interactions, e.g. certain click events, before the next tour step can be enabled. The supported user interactions are defined in the enum `UserInteractionEvent`. 
