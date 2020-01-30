@@ -9,15 +9,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -70,6 +69,9 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     ParticipationService participationService;
 
     @Autowired
+    ExampleSubmissionService exampleSubmissionService;
+
+    @Autowired
     CompassService compassService;
 
     private ModelingExercise classExercise;
@@ -84,6 +86,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     private Result modelingAssessment;
 
+    private String validModel;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(6, 2, 1);
@@ -92,6 +96,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
         objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+        validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
     @AfterEach
@@ -143,6 +148,19 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test()
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExampleAssessment() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
+        List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/exampleAssessment", feedbackList, Result.class,
+                HttpStatus.OK);
+        assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
+        assertThat(exampleSubmissionService.findById(storedExampleSubmission.getId())).isPresent();
+        request.get("/api/exercise/" + classExercise.getId() + "/submission/" + storedExampleSubmission.getSubmission().getId() + "/modelingExampleAssessment", HttpStatus.OK,
+                Result.class);
     }
 
     @Test
