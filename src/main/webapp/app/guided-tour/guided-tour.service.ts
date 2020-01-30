@@ -10,7 +10,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
-import {TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep} from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
@@ -442,6 +442,7 @@ export class GuidedTourService {
      * Enable a smooth user interaction
      * @param targetNode an HTMLElement of which DOM changes should be observed
      * @param userInteraction the user interaction to complete the tour step
+     * @param modelingTask the modeling task identifier
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string): void {
         this.isUserInteractionFinishedSubject.next(false);

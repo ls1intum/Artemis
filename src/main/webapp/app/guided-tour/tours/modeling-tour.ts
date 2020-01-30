@@ -1,10 +1,5 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import {
-    ImageTourStep,
-    ModelingTaskTourStep,
-    TextTourStep,
-    UserInterActionTourStep
-} from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
