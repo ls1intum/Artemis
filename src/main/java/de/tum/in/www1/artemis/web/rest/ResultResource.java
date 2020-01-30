@@ -19,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -533,29 +532,33 @@ public class ResultResource {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (exercise.getDueDate() == null || exercise.getDueDate().isBefore(ZonedDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported before the exercise due date.");
+        if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                    "External submissions are not supported before the exercise due date.")).build();
         }
+        if (exercise instanceof QuizExercise) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionForQuizExercise",
+                    "External submissions are not supported for Quiz exercises.")).build();
+        }
+
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
         Course course = exercise.getCourse();
-
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No student found for " + studentLogin + " in course " + course.getTitle());
-        }
-        if (exercise instanceof QuizExercise) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported for Quiz exercises.");
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, studentLogin);
         Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
         if (optionalResult.isPresent()) {
-            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "A result already exists for this submission", "resultAlreadyExists"))
-                    .body(optionalResult.get());
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
+                    .build();
         }
 
         // Create a participation and a submitted empty submission if they do not exist yet

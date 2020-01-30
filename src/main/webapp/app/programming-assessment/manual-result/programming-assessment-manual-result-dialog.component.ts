@@ -219,10 +219,19 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     /**
-     * the dialog is readonly if the user is not allowed to override the result
-     * and if there is a complaint that was accepted or rejected
+     * the dialog is readonly, if it is not writable
      */
     readOnly() {
-        return !this.canOverride || (this.complaint !== undefined && this.complaint.accepted !== undefined);
+        return !this.writable();
+    }
+
+    /**
+     * the dialog is writable if the user can override the result
+     * or if there is a complaint that was not yet accepted or rejected
+     */
+    writable() {
+        // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
+        // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
+        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined);
     }
 }
