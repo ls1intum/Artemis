@@ -4,10 +4,13 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +26,13 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -59,6 +64,8 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserService userService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
@@ -69,9 +76,12 @@ public class ResultResource {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final AssessmentService assessmentService;
+
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService, UserService userService,
+            AssessmentService assessmentService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -82,6 +92,8 @@ public class ResultResource {
         this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.assessmentService = assessmentService;
+        this.userService = userService;
     }
 
     /**
@@ -135,7 +147,7 @@ public class ResultResource {
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
         newResult.setSubmission(submission);
-        newResult = resultService.createNewManualResult(newResult, true);
+        newResult = resultService.createNewRatedManualResult(newResult, true);
 
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId() + "/manual-results/" + newResult.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
@@ -155,12 +167,14 @@ public class ResultResource {
     public ResponseEntity<Result> updateProgrammingExerciseManualResult(@PathVariable Long participationId, @RequestBody Result updatedResult) throws URISyntaxException {
         log.debug("REST request to update Result : {}", updatedResult);
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         // make sure that the participation cannot be manipulated on the client side
         updatedResult.setParticipation(participation);
         // TODO: we should basically set the submission here to prevent possible manipulation of the submission
         if (updatedResult.getSubmission() == null) {
             throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
         }
+
         final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
@@ -169,9 +183,35 @@ public class ResultResource {
         if (updatedResult.getId() == null) {
             return createProgrammingExerciseManualResult(participationId, updatedResult);
         }
+        // get the original result with assessor for permission checks below, otherwise the client could override the assessor and the check would not make any sense
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(updatedResult.getId()).get();
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+        if (!isAllowedToOverrideExistingResult(originalResult, exercise, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
 
         updatedResult = resultService.updateManualProgrammingExerciseResult(updatedResult);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedResult.getId().toString())).body(updatedResult);
+    }
+
+    protected boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+
+        // if the assessor is null, the user is allowed to save / submit / override the existing result
+        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
+        if (existingResult.getCompletionDate() == null) {
+            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+            return isAssessor || isAtLeastInstructor;
+        }
+        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        var assessmentDueDate = exercise.getAssessmentDueDate();
+        // NOTE: the following line deviates intentionally from assessmentService.isAllowedToOverrideExistingResult because currently we do not use assessmentDueDate
+        // and tutors should be able to override the created results when the assessmentDueDate is null
+        final var isBeforeAssessmentDueDate = assessmentDueDate == null || ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+
+        // TODO at the moment we use a different logic for migration and compatibility reasons, but basically we should invoke the following method in the future
+        // return assessmentService.isAllowedToOverrideExistingResult(existingResult, exercise, user, isAtLeastInstructor);
     }
 
     /**
@@ -290,14 +330,12 @@ public class ResultResource {
      * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
      * @param exerciseId the id of the exercise for which to retrieve the results
-     * @param withAssessors defines if assessors are loaded from the database for the results
      * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions,
-            @RequestParam(defaultValue = "false") boolean withAssessors) {
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
@@ -309,17 +347,9 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
 
-        List<StudentParticipation> participations;
-        if (withAssessors) {
-            participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
-        }
-        else {
-            participations = participationService.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
-        }
-
+        List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
         for (StudentParticipation participation : participations) {
             // Filter out participations without Students
-            // These participations are used e.g. to store template and solution build plans in programming exercises
             if (participation.getStudent() == null) {
                 continue;
             }
@@ -484,5 +514,63 @@ public class ResultResource {
         log.debug("REST request to create a new example result for submission: {}", submissionId);
         final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /**
+     * Creates a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
+     *
+     * @param exerciseId The exercise ID for which a result should get created
+     * @param studentLogin The student login (username) for which a result should get created
+     * @param result The result to be created
+     * @return The newly created result
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
+            throws URISyntaxException {
+        log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
+
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
+                    "External submissions are not supported before the exercise due date.")).build();
+        }
+        if (exercise instanceof QuizExercise) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionForQuizExercise",
+                    "External submissions are not supported for Quiz exercises.")).build();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
+        Course course = exercise.getCourse();
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
+        }
+
+        // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, studentLogin);
+        Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
+        if (optionalResult.isPresent()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
+                    .build();
+        }
+
+        // Create a participation and a submitted empty submission if they do not exist yet
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
+        Submission submission = participationService.findOneWithEagerSubmissions(participation.getId()).findLatestSubmission().get();
+        result.setParticipation(participation);
+        result.setSubmission(submission);
+
+        // Create a new manual result which can be rated or unrated depending on what was specified in the create form
+        Result savedResult = resultService.createNewManualResult(result, exercise instanceof ProgrammingExercise, result.isRated());
+
+        return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
     }
 }

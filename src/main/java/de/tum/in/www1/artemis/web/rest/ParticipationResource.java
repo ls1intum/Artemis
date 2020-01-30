@@ -8,10 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -27,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -84,10 +82,12 @@ public class ParticipationResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final GuidedTourConfiguration guidedTourConfiguration;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository) {
+            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -100,6 +100,7 @@ public class ParticipationResource {
         this.resultService = resultService;
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
+        this.guidedTourConfiguration = guidedTourConfiguration;
     }
 
     /**
@@ -338,7 +339,7 @@ public class ParticipationResource {
         Result result = new Result();
         result.setParticipation(participation);
         result.setSubmission(textSubmissionWithoutAssessment.get());
-        resultService.createNewManualResult(result, false);
+        resultService.createNewRatedManualResult(result, false);
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 
@@ -586,7 +587,51 @@ public class ParticipationResource {
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtInstructor(participation, user);
+
+        checkAccessPermissionAtLeastInstructor(participation, user);
+
+        String username = participation.getStudent().getFirstName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        auditEventRepository.add(auditEvent);
+        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
+                username, deleteBuildPlan, deleteRepository, principal.getName());
+        participationService.delete(participationId, deleteBuildPlan, deleteRepository);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+    }
+
+    /**
+     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a tutorial)
+     * Please note: all users can delete their own participation when it belongs to a guided tutorial
+     *
+     * @param participationId the participationId of the participation to delete
+     * @param deleteBuildPlan True, if the build plan should also get deleted
+     * @param deleteRepository True, if the repository should also get deleted
+     * @param principal The identity of the user accessing this resource
+     * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
+     */
+    @DeleteMapping("guided-tour/participations/{participationId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
+            @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+
+        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
+            return forbidden();
+        }
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        // Allow all users to delete their own StudentParticipations if it's for a tutorial
+        if (user.getId().equals(participation.getStudent().getId())) {
+            checkAccessPermissionAtLeastStudent(participation, user);
+            if (!guidedTourConfiguration.isExerciseForTutorial(participation.getExercise())) {
+                return forbidden();
+            }
+        }
+        else {
+            return forbidden();
+        }
+
         String username = participation.getStudent().getFirstName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
         auditEventRepository.add(auditEvent);
@@ -610,13 +655,20 @@ public class ParticipationResource {
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationService.findOneStudentParticipation(participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtInstructor(participation, user);
+        checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
     }
 
-    private void checkAccessPermissionAtInstructor(StudentParticipation participation, User user) {
+    private void checkAccessPermissionAtLeastStudent(StudentParticipation participation, User user) {
+        Course course = findCourseFromParticipation(participation);
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+    }
+
+    private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -652,7 +704,7 @@ public class ParticipationResource {
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtInstructor(participation, user);
+        checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = participationService.getSubmissionsWithParticipationId(participationId);
         return ResponseEntity.ok(submissions);
     }
