@@ -114,7 +114,7 @@
     {{ 'artemisApp.exampleSubmission.youNeedToCreate' | translate }}
 </div>
 
-<div class="col-12 mt-3" *ngIf="exercise && !isNewSubmission">
+<div class="col-12 mt-3 text-assessments" *ngIf="exercise && !isNewSubmission">
     <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
     <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.textAssessment.assessInstruction"></div>
     <div class="row">

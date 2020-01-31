@@ -1,5 +1,5 @@
 import { Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
+import { GuidedTourAssessmentTask, GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
 
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
@@ -19,6 +19,8 @@ export abstract class TourStep {
     permission?: string[];
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;
+    /** TODO */
+    pageUrl?: string;
 }
 
 export class TextTourStep extends TourStep {
@@ -76,6 +78,16 @@ export class ModelingTaskTourStep extends UserInterActionTourStep {
     modelingTask: GuidedTourModelingTask;
 
     constructor(tourStep: ModelingTaskTourStep) {
+        super(tourStep);
+        Object.assign(this, tourStep);
+    }
+}
+
+export class AssessmentTaskTourStep extends UserInterActionTourStep {
+    /** Assessment task that has to be completed during this step */
+    assessmentTask: GuidedTourAssessmentTask;
+
+    constructor(tourStep: AssessmentTaskTourStep) {
         super(tourStep);
         Object.assign(this, tourStep);
     }

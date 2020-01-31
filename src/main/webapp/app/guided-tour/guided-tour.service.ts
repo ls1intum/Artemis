@@ -21,6 +21,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
+import { AssessmentObject } from './guided-tour-task.model';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -36,6 +37,7 @@ export class GuidedTourService {
     private onResizeMessage = false;
     private modelingResultCorrect = false;
     public restartIsLoading = false;
+    private assessmentObject = new AssessmentObject(0, 0);
 
     /** Current course and exercise */
     private currentCourse: Course | null = null;
@@ -92,13 +94,10 @@ export class GuidedTourService {
                 this.currentExercise = null;
                 this.currentCourse = null;
             }
-            if (this.availableTourForComponent && event instanceof NavigationEnd) {
-                this.skipTour(false, false);
-                this.guidedTourAvailabilitySubject.next(false);
-            }
-            // resets the cancel or complete tour step when the user navigates to another page
-            if (this.currentTour) {
-                this.resetTour();
+            // TODO check guided tour availability on router navigation
+            if (this.availableTourForComponent && this.currentTour && event instanceof NavigationEnd) {
+                this.guidedTourCurrentStepSubject.next(null);
+                this.checkPageUrl();
             }
         });
 
@@ -121,6 +120,34 @@ export class GuidedTourService {
                     }
                 }
             });
+    }
+
+    private checkPageUrl(attempt = 1) {
+        if (attempt > 20) {
+            this.skipTour();
+            this.guidedTourAvailabilitySubject.next(false);
+            return;
+        }
+
+        if (!this.availableTourForComponent || !this.currentTour) {
+            return setTimeout(() => {
+                this.checkPageUrl(attempt + 1);
+            }, 300);
+        }
+
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
+        const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+
+        if (currentStep && currentStep.userInteractionEvent && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && nextStep && nextStep.pageUrl) {
+            if (this.router.url.match(nextStep.pageUrl)) {
+                this.currentTourStepIndex += 1;
+                this.setPreparedTourStep();
+            } else if (this.currentTour) {
+                this.skipTour();
+                this.guidedTourAvailabilitySubject.next(false);
+                this.resetTour();
+            }
+        }
     }
 
     /**
@@ -289,10 +316,8 @@ export class GuidedTourService {
     /**
      * Trigger callback method if there is one and finish the current guided tour by updating the guided tour settings in the database
      * and calling the reset tour method to remove current tour elements
-     *
-     * @param showCompletedTourStep defines whether the completed tour step should be displayed, the default value is true
      */
-    public finishGuidedTour(showCompletedTourStep = true) {
+    public finishGuidedTour() {
         if (!this.currentTour) {
             return;
         }
@@ -309,9 +334,7 @@ export class GuidedTourService {
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         if (!nextStep) {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.FINISHED);
-            if (showCompletedTourStep) {
-                this.showCompletedTourStep();
-            }
+            this.showCompletedTourStep();
         } else {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
         }
@@ -323,19 +346,17 @@ export class GuidedTourService {
      * @param showCancelHint defines whether the cancel hint should be displayed, the default value is true
      * @param showFinishStep defines whether the completed tour step should be displayed, the default value is true
      */
-    public skipTour(showCancelHint = true, showFinishStep = true): void {
+    public skipTour(): void {
         if (this.currentTour) {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
         }
         if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
-            this.finishGuidedTour(showFinishStep);
+            this.finishGuidedTour();
         } else {
             this.subscribeToAndUpdateGuidedTourSettings(GuidedTourState.STARTED);
-            if (showCancelHint) {
-                this.showCancelHint();
-            }
+            this.showCancelHint();
         }
     }
 
@@ -1049,5 +1070,32 @@ export class GuidedTourService {
             return false;
         }
         return this.getLastSeenTourStepIndex() + 1 - stepNumber === 8;
+    }
+
+    /**
+     * TODO
+     * @param assessments
+     * @param totalScore
+     */
+    public updateAssessmentResult(assessments: number, totalScore: number) {
+        if (!this.currentStep || !this.currentStep.assessmentTask) {
+            return;
+        }
+        this.assessmentObject.assessments = assessments;
+        this.assessmentObject.totalScore = totalScore;
+
+        if (this.isAssessmentCorrect()) {
+            this.enableNextStepClick();
+        }
+    }
+
+    private isAssessmentCorrect(): boolean {
+        const numberOfAssessmentsCorrect = this.assessmentObject.assessments === this.currentStep.assessmentTask.assessmentObject.assessments;
+        const totalScoreCorrect = this.assessmentObject.totalScore === this.currentStep.assessmentTask.assessmentObject.totalScore;
+
+        if (this.currentStep.assessmentTask.assessmentObject.totalScore === 0) {
+            return numberOfAssessmentsCorrect;
+        }
+        return numberOfAssessmentsCorrect && totalScoreCorrect;
     }
 }
