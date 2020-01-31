@@ -301,8 +301,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 const top = calculateTopOffset(element);
                 const height = element.offsetHeight;
                 const tourStep = this.tourStep.nativeElement.getBoundingClientRect();
+                const tourStepPosition = tourStep.top + tourStep.height;
                 const windowHeight = window.innerHeight + window.pageYOffset;
-                elementInViewPort = top >= window.pageYOffset - stepScreenAdjustment && top + height <= windowHeight && tourStep <= windowHeight;
+                elementInViewPort = top >= window.pageYOffset - stepScreenAdjustment && top + height <= windowHeight && tourStepPosition <= windowHeight;
                 break;
             }
         }
