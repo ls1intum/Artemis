@@ -47,17 +47,17 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which are of modeling, text or file upload submission type and have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission) AND submission.participation.exercise.course.id = ?1 AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
-    long countByCourseIdSubmittedBeforeDueDate(long courseId);
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.course.id = :#{#courseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
     /**
      * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which are of modeling, text or file upload submission type and have the submitted flag set to true and the submission date before the exercise due date, or no
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission) AND submission.participation.exercise.id = ?1 AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
-    long countByExerciseIdSubmittedBeforeDueDate(long exerciseId);
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 }
