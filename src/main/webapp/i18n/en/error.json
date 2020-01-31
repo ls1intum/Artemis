@@ -13,6 +13,7 @@
         "resultStringNull": "Error! Result Text is required.",
         "scoreNull": "Error! Score is required.",
         "submissionMissing": "Error! The submission is not connected with the result any more. Your changes were rejected.",
+        "resultAlreadyExists": "A result already exists for this student in this exercise.",
         "scoreAndSuccessfulNotMatching": "Error! Only result with score 100% can be successful.",
         "feedbackTextOrDetailTextNull": "Error! In case feedback is present, feedback text and detail text are mandatory.",
         "quizAlreadyVisible": "The quiz is already visible.",
@@ -21,7 +22,10 @@
         "quizAlreadyOpenForPractice": "The quiz is already open for practice.",
         "unknownAction": "This action cannot be performed.",
         "groupNotFound": "The group you entered was not found.",
+        "studentNotFound": "The student could not be found in this course.",
         "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
-        "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again."
+        "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
+        "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
+        "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises."
     }
 }

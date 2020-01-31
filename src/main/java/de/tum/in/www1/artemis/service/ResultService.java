@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static java.util.Arrays.asList;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -89,17 +90,6 @@ public class ResultService {
     public Result findOne(long id) {
         log.debug("Request to get Result: {}", id);
         return resultRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
-    }
-
-    /**
-     * Get a result from the database by its id together with the associated list of feedback items.
-     *
-     * @param id the id of the result to load from the database
-     * @return the result with feedback list
-     */
-    public Result findOneWithEagerFeedbacks(long id) {
-        log.debug("Request to get Result: {}", id);
-        return resultRepository.findByIdWithEagerFeedbacks(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
     /**
@@ -264,7 +254,7 @@ public class ResultService {
             List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
             result.setFeedbacks(savedFeedbackItems);
         }
-        return createNewManualResult(result, true);
+        return createNewRatedManualResult(result, true);
     }
 
     /**
@@ -272,10 +262,11 @@ public class ResultService {
      *
      * @param result newly created Result
      * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
+     * @param ratedResult override value for rated property of result
      *
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
-    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+    public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
         if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
@@ -284,9 +275,10 @@ public class ResultService {
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
+        result.setCompletionDate(ZonedDateTime.now());
 
-        // manual feedback is always rated
-        result.setRated(true);
+        // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
+        result.setRated(ratedResult);
 
         result.getFeedbacks().forEach(feedback -> {
             feedback.setResult(result);
@@ -311,6 +303,10 @@ public class ResultService {
             websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
         }
         return savedResult;
+    }
+
+    public Result createNewRatedManualResult(Result result, boolean isProgrammingExerciseWithFeedback) {
+        return createNewManualResult(result, isProgrammingExerciseWithFeedback, true);
     }
 
     /**
@@ -445,6 +441,6 @@ public class ResultService {
         final var newResult = new Result();
         newResult.setSubmission(submission);
         newResult.setExampleResult(true);
-        return createNewManualResult(newResult, isProgrammingExerciseWithFeedback);
+        return createNewRatedManualResult(newResult, isProgrammingExerciseWithFeedback);
     }
 }

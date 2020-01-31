@@ -2,26 +2,27 @@
     "artemisApp": {
         "submission": {
             "home": {
-                "title": "Submissions",
-                "createLabel": "Submission erstellen",
-                "createOrEditLabel": "Submission erstellen oder bearbeiten"
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen",
+                "createOrEditLabel": "Einreichung erstellen oder bearbeiten"
             },
-            "created": "Submission erstellt mit ID {{ param }}",
-            "updated": "Submission aktualisiert mit ID {{ param }}",
-            "deleted": "Submission gelöscht mit ID {{ param }}",
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Submission"
+                "title": "Einreichung"
             },
-            "submitted": "Submitted",
-            "submissionDate": "Submission Date",
-            "type": "Type",
+            "submitted": "Eingereicht",
+            "submissionDate": "Einreichungsdatum",
+            "type": "Typ",
             "result": "Ergebnis",
-            "participation": "Participation",
+            "participation": "Teilnahme",
             "lockedSubmissionsLimitReached": "Du hast die maximale Anzahl von unvollständigen Bewertungen in diesem Kurs erreicht. Bitte beende deine offenen Bewertungen, bevor du eine neue beginnen kannst.",
-            "resultTimeout": "Das Ergebnis zu deiner letzten Abgabe ist nicht verfügbar. Bitte gebe deinen Code erneut ab."
+            "resultTimeout": "Das Ergebnis zu deiner letzten Abgabe ist nicht verfügbar. Bitte gebe deinen Code erneut ab.",
+            "createExternal": "Externe Einreichung erstellen"
         }
     }
 }

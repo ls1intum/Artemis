@@ -44,32 +44,32 @@
                 <tr>
                     <th><span jhiTranslate="instructorDashboard.average">Average</span></th>
                     <th></th>
-                    <th>{{ averageNumberOfParticipatedExercises | number: '1.0-1' }} ({{ (averageNumberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1' }}%)</th>
-                    <th>{{ averageNumberOfSuccessfulExercises | number: '1.0-1' }} ({{ (averageNumberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1' }}%)</th>
+                    <th>{{ toLocaleString(averageNumberOfParticipatedExercises) }} ({{ toLocaleString((averageNumberOfParticipatedExercises / exercises.length) * 100) }}%)</th>
+                    <th>{{ toLocaleString(averageNumberOfSuccessfulExercises) }} ({{ toLocaleString((averageNumberOfSuccessfulExercises / exercises.length) * 100) }}%)</th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
-                            {{ averageNumberOfPointsPerExerciseTypes.get(exerciseType)! | number: '1.0-1' }} ({{
-                                (averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100 | number: '1.0-1'
+                            {{ toLocaleString(averageNumberOfPointsPerExerciseTypes.get(exerciseType)!) }} ({{
+                                toLocaleString((averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100)
                             }}%)
                         </th>
                     </ng-container>
-                    <th>{{ averageNumberOfOverallPoints | number: '1.0-1' }} ({{ (averageNumberOfOverallPoints / maxNumberOfOverallPoints) * 100 | number: '1.0-1' }}%)</th>
+                    <th>{{ toLocaleString(averageNumberOfOverallPoints) }} ({{ toLocaleString((averageNumberOfOverallPoints / maxNumberOfOverallPoints) * 100) }}%)</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let student of students | sortBy: predicate:reverse">
                     <td>{{ student.user.name }}</td>
                     <td>{{ student.user.login }}</td>
-                    <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1' }}%)</td>
-                    <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1' }}%)</td>
+                    <td>{{ student.numberOfParticipatedExercises }} ({{ toLocaleString((student.numberOfParticipatedExercises / exercises.length) * 100) }}%)</td>
+                    <td>{{ student.numberOfSuccessfulExercises }} ({{ toLocaleString((student.numberOfSuccessfulExercises / exercises.length) * 100) }}%)</td>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
-                            {{ student.pointsPerExerciseType.get(exerciseType)! | number: '1.0-1' }} ({{
-                                (student.pointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100 | number: '1.0-1'
+                            {{ toLocaleString(student.sumPointsPerExerciseType.get(exerciseType)!) }} ({{
+                                toLocaleString((student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100)
                             }}%)
                         </td>
                     </ng-container>
-                    <td>{{ student.overallPoints | number: '1.0-1' }} ({{ (student.overallPoints / maxNumberOfOverallPoints) * 100 | number: '1.0-1' }}%)</td>
+                    <td>{{ toLocaleString(student.overallPoints) }} ({{ toLocaleString((student.overallPoints / maxNumberOfOverallPoints) * 100) }}%)</td>
                 </tr>
             </tbody>
         </table>

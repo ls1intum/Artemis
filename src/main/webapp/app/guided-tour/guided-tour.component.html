@@ -7,7 +7,7 @@
     <div
         #tourStep
         *ngIf="currentTourStep"
-        class="tour-step tour-{{ currentTourStep.orientation }}"
+        class="tour-step tour-{{ orientation }}"
         [class.page-tour-step]="!currentTourStep.highlightSelector"
         [class.startFade]="startFade"
         [class.video-tour]="isVideoTourStep()"
@@ -118,10 +118,11 @@
                 <button
                     *ngIf="guidedTourService.isCurrentTour(completedTour)"
                     class="restart-button"
-                    [disabled]="guidedTourService.isOnResizeMessage"
-                    (click)="guidedTourService.startTour()"
+                    [disabled]="guidedTourService.isOnResizeMessage || guidedTourService.restartIsLoading"
+                    (click)="guidedTourService.restartTour()"
                 >
-                    <fa-icon icon="play-circle"></fa-icon>
+                    <fa-icon *ngIf="!guidedTourService.restartIsLoading" icon="play-circle"></fa-icon>
+                    <fa-icon class="jhi-btn__loading" *ngIf="guidedTourService.restartIsLoading" icon="circle-notch" [spin]="true" size="sm"></fa-icon>
                     <span jhiTranslate="global.menu.restartTutorial"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">

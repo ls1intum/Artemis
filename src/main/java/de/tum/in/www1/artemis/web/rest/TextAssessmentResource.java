@@ -58,19 +58,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ExampleSubmissionService exampleSubmissionService;
-
-    private final ResultRepository resultRepository;
-
     private final WebsocketMessagingService messagingService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService, ExampleSubmissionService exampleSubmissionService,
-            WebsocketMessagingService messagingService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
-        super(authCheckService, userService);
+            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository) {
+        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
@@ -78,9 +74,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
-        this.exampleSubmissionService = exampleSubmissionService;
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
     }
@@ -99,6 +93,11 @@ public class TextAssessmentResource extends AssessmentResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
 
@@ -124,6 +123,11 @@ public class TextAssessmentResource extends AssessmentResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
 
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
@@ -178,23 +182,8 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
-        TextSubmission submission = textSubmissionService.findOneWithEagerResultAndAssessor(submissionId);
-        if (submission.getResult() == null) {
-            // if there is no result everything is fine
-            return ResponseEntity.ok().build();
-        }
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getResult().getAssessor().getId()))) {
-            // tutors cannot cancel the assessment of other tutors (only instructors can)
-            return forbidden();
-        }
-        textAssessmentService.cancelAssessmentOfSubmission(submission);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        return super.cancelAssessment(submissionId);
     }
 
     /**
@@ -283,7 +272,7 @@ public class TextAssessmentResource extends AssessmentResource {
             result = new Result();
             result.setParticipation(participation);
             result.setSubmission(textSubmission);
-            resultService.createNewManualResult(result, false);
+            resultService.createNewRatedManualResult(result, false);
         }
 
         // Set Submissions and Results of Participation to include requested only
