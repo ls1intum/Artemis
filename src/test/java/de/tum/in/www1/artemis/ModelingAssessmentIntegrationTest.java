@@ -105,13 +105,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetPartialAssessment_notFound() throws Exception {
-        saveModelingSubmission();
-        request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/partial-assessment", HttpStatus.NOT_FOUND, Result.class);
-    }
-
-    @Test
     @WithMockUser(username = "student1")
     public void testGetAssessmentBySubmissionId() throws Exception {
         saveModelingSubmissionAndAssessment(true);
