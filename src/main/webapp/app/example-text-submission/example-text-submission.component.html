@@ -115,8 +115,6 @@
 </div>
 
 <div class="col-12 mt-3 text-assessments" *ngIf="exercise && !isNewSubmission">
-    <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
-    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.textAssessment.assessInstruction"></div>
     <div class="row">
         <div *ngFor="let assessment of assessments; let i = index" class="col-12 col-md-4">
             <jhi-assessment-detail
@@ -127,6 +125,8 @@
             ></jhi-assessment-detail>
         </div>
     </div>
+    <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{ invalidError }}</div>
+    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.textAssessment.assessInstruction"></div>
 </div>
 
 <div class="col-12 text-right" *ngIf="toComplete">

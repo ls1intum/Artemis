@@ -123,7 +123,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
 
             if (this.hasUserPermissionForCurrentTourStep()) {
-                console.log('subscribeToGuidedTourCurrentStepStream');
                 this.scrollToAndSetElement();
                 this.handleTransition();
                 return;
@@ -182,7 +181,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Scroll to and set highlighted element
      */
     private scrollToAndSetElement(): void {
-        console.log('scrollToAndSetElement');
         this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), false);
         this.observeSelectedRectPosition();
 
@@ -617,7 +615,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return selected element as DOMRect or null
      */
     private updateStepLocation(selectedElement: HTMLElement | null, isResizeOrScroll: boolean): DOMRect | null {
-        console.log('update step location, resize or scroll: ', isResizeOrScroll);
         let selectedElementRect = null;
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
@@ -656,7 +653,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 .pipe(take(1))
                 .subscribe(mutation => {
                     if (this.getSelectedElement()) {
-                        console.log('alert');
                         this.scrollToAndSetElement();
                     }
                 });

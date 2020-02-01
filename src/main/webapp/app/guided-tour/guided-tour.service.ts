@@ -123,19 +123,6 @@ export class GuidedTourService {
     }
 
     private checkPageUrl(attempt = 1) {
-        // TODO Anh
-        /*if (attempt > 20) {
-            this.skipTour();
-            this.guidedTourAvailabilitySubject.next(false);
-            return;
-        }*/
-
-        /*if (!this.availableTourForComponent || !this.currentTour) {
-            setTimeout(() => {
-                this.checkPageUrl(attempt + 1);
-            }, 1000);
-            return;
-        }*/
         if (!this.currentTour) {
             return;
         }
@@ -147,6 +134,7 @@ export class GuidedTourService {
             if (this.router.url.match(nextStep.pageUrl)) {
                 this.currentTourStepIndex += 1;
                 setTimeout(() => {
+                    this.resetUserInteractionFinishedState(nextStep);
                     this.setPreparedTourStep();
                 }, 300);
             } else if (this.currentTour) {
@@ -305,10 +293,6 @@ export class GuidedTourService {
         const timeout = currentStep instanceof UserInterActionTourStep ? 500 : 0;
         this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
 
-        if (nextStep instanceof UserInterActionTourStep) {
-            this.isUserInteractionFinishedSubject.next(false);
-        }
-
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
@@ -319,10 +303,22 @@ export class GuidedTourService {
             }
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
+                this.resetUserInteractionFinishedState(nextStep);
                 this.setPreparedTourStep();
             }, timeout);
         } else {
             this.finishGuidedTour();
+        }
+    }
+
+    /**
+     * Resets the user interaction finished state for given tour step
+     * @param tourStep  if the tour step is an instance of UserInterActionTourStep, the user interaction finished state
+     * will be set to false
+     */
+    private resetUserInteractionFinishedState(tourStep: TourStep) {
+        if (tourStep instanceof UserInterActionTourStep) {
+            this.isUserInteractionFinishedSubject.next(false);
         }
     }
 
