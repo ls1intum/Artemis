@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.GradingCriteria;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -33,6 +34,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     ModelingExerciseUtilService modelingExerciseUtilService;
 
     private ModelingExercise classExercise;
+
+    private List<GradingCriteria> gradingCriteria;
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -79,7 +82,15 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetModelingExercise_asTA() throws Exception {
-        request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+        gradingCriteria = database.addGradingInstructionsToExercise(receivedModelingExercise);
+        assertThat(receivedModelingExercise.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
+        assertThat(receivedModelingExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
+
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
+                .isEqualTo("created first instruction with empty criteria for testing");
     }
 
     @Test
@@ -103,7 +114,10 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
-        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.CREATED);
+        ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        gradingCriteria = database.addGradingInstructionsToExercise(receivedModelingExercise);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId(), 1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
