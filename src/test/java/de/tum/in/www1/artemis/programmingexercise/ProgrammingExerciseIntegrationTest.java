@@ -189,6 +189,16 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         // TODO: unzip the files and add some checks
     }
 
+    private RepositoryExportOptionsDTO getOptions() {
+        final var repositoryExportOptions = new RepositoryExportOptionsDTO();
+        repositoryExportOptions.setFilterLateSubmissions(true);
+        repositoryExportOptions.setCombineStudentCommits(true);
+        repositoryExportOptions.setAddStudentName(true);
+        repositoryExportOptions.setNormalizeCodeStyle(true);
+        repositoryExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now());
+        return repositoryExportOptions;
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete() throws Exception {
@@ -410,13 +420,24 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    private RepositoryExportOptionsDTO getOptions() {
-        final var repositoryExportOptions = new RepositoryExportOptionsDTO();
-        repositoryExportOptions.setFilterLateSubmissions(true);
-        repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAddStudentName(true);
-        repositoryExportOptions.setNormalizeCodeStyle(true);
-        repositoryExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now());
-        return repositoryExportOptions;
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_courseNotSet_badRequest() throws Exception {
+        programmingExercise.setCourse(null);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_templateIDDoesnotExist_notFound() throws Exception {
+        programmingExercise.setId(123L);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.NOT_FOUND);
     }
 }

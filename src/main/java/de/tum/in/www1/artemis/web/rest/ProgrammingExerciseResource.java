@@ -257,11 +257,10 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
-        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
-
         if (sourceExerciseId < 0 || newExercise.getCourse() == null) {
-            return notFound();
+            return badRequest();
         }
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
 
         final var user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(newExercise.getCourse(), user)) {
@@ -279,8 +278,6 @@ public class ProgrammingExerciseResource {
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
         try {
-            // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
-            // an import as the source exercise might still have this trigger.
             programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
