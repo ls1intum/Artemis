@@ -1040,8 +1040,20 @@ public class DatabaseUtilService {
      * @return  created example submission
      */
     public ExampleSubmission generateExampleSubmission(String model, Exercise exercise, boolean flagAsExampleSubmission) {
+        return generateExampleSubmission(model, exercise, flagAsExampleSubmission, false);
+    }
+
+    /**
+     * Generates an example submission for a given model and exercise
+     * @param model given uml model for the example submission
+     * @param exercise exercise for which the example submission is created
+     * @param flagAsExampleSubmission true if the submission is an example submission
+     * @param usedForTutorial true if the example submission is used for tutorial
+     * @return  created example submission
+     */
+    public ExampleSubmission generateExampleSubmission(String model, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, false);
         submission.setExampleSubmission(flagAsExampleSubmission);
-        return ModelFactory.generateExampleSubmission(submission, exercise, false);
+        return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
     }
 }
