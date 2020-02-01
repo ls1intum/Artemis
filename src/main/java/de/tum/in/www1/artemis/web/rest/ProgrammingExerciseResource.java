@@ -146,10 +146,6 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
-        if (programmingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The programming exercise is not set", "programmingExerciseNotSet")).body(null);
-        }
-
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
         }
@@ -183,12 +179,6 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
-                    .body(null);
-        }
-
-        // Check if course shortname is set
-        if (course.getShortName() == null || course.getShortName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
                     .body(null);
         }
 

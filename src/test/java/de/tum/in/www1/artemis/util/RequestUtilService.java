@@ -56,10 +56,13 @@ public class RequestUtilService {
         return post(path, body, expectedStatus, MediaType.APPLICATION_JSON, true);
     }
 
-    public <T> URI post(String path, T body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(contentType).content(jsonBody).with(csrf()))
-                .andExpect(status().is(expectedStatus.value())).andReturn();
+    public URI post(String path, Object body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation) throws Exception {
+        String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
+        var requestBuilder = MockMvcRequestBuilders.post(new URI(path)).contentType(contentType);
+        if (jsonBody != null) {
+            requestBuilder = requestBuilder.content(jsonBody);
+        }
+        MvcResult res = mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (withLocation && !expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
@@ -160,10 +163,14 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
-    public <T> void put(String path, T body, HttpStatus expectedStatus) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
-                .andExpect(status().is(expectedStatus.value()));
+    public void put(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
+        var requestBuilder = MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON);
+        if (jsonBody != null) {
+            requestBuilder = requestBuilder.content(jsonBody);
+        }
+
+        mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value()));
     }
 
     public void putAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
