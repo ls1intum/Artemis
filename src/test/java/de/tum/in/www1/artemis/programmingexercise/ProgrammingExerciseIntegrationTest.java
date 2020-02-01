@@ -398,6 +398,18 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_bambooProjectAlreadyExists_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
+        bambooRequestMockProvider.mockCheckIfProjectExists(programmingExercise, true);
+
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
     private RepositoryExportOptionsDTO getOptions() {
         final var repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setFilterLateSubmissions(true);

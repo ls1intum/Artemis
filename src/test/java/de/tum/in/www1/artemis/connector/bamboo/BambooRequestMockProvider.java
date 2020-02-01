@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -89,12 +88,16 @@ public class BambooRequestMockProvider {
         mockServer.reset();
     }
 
-    public void mockCheckIfProjectExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+    public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
         final var bambooSearchDTO = new BambooProjectSearchDTO();
-        bambooSearchDTO.setSize(0);
-        bambooSearchDTO.setSearchResults(new ArrayList<>());
+        final var searchResult = new BambooProjectSearchDTO.SearchResultDTO();
+        final var foundProject = new BambooProjectDTO();
+        foundProject.setProjectName(exercise.getProjectName() + (exists ? "" : "abc"));
+        searchResult.setSearchEntity(foundProject);
+        bambooSearchDTO.setSize(1);
+        bambooSearchDTO.setSearchResults(List.of(searchResult));
 
         mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));

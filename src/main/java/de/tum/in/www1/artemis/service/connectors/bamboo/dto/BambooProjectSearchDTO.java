@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BambooProjectSearchDTO {
 
     private int size;
@@ -24,6 +27,7 @@ public class BambooProjectSearchDTO {
         this.searchResults = searchResults;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class SearchResultDTO {
 
         private BambooProjectDTO searchEntity;
