@@ -431,7 +431,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const totalStepHeight = this.selectedElementRect.height > tourStep.height ? this.selectedElementRect.height : tourStep.height;
 
             if (this.isBottom()) {
-                positionAdjustment = stepScreenAdjustment - 15;
+                positionAdjustment = stepScreenAdjustment;
             } else {
                 positionAdjustment = totalStepHeight - window.innerHeight - stepScreenAdjustment;
             }
@@ -441,6 +441,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 topPosition = window.scrollY + tourStep.top - 15;
             } else {
                 topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
+                topPosition = topPosition < 15 ? 0 : topPosition + 15;
             }
         }
         return topPosition;

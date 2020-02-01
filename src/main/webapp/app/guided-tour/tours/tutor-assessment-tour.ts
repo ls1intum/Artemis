@@ -13,6 +13,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.LEFT,
             permission: ['ROLE_TA'],
+            pageUrl: '/course'
         }),
         new UserInterActionTourStep({
             highlightSelector: '.tutor-dashboard.guided-tour',
