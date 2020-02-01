@@ -17,36 +17,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class GradingCriteriaService {
 
-    private final Logger log = LoggerFactory.getLogger(GradingInstructionService.class);
+    private final Logger log = LoggerFactory.getLogger(GradingCriteriaService.class);
 
     private final GradingCriteriaRepository gradingCriteriaRepository;
 
     public GradingCriteriaService(GradingCriteriaRepository gradingCriteriaRepository) {
         this.gradingCriteriaRepository = gradingCriteriaRepository;
     }
-
-    /**
-     * Save a grading criteria.
-     *
-     * @param gradingCriteria the entity to save
-     * @return the persisted entity
-     */
-    public GradingCriteria save(GradingCriteria gradingCriteria) {
-        log.debug("Request to save Grading Criteria : {}", gradingCriteria);
-        return gradingCriteriaRepository.save(gradingCriteria);
-
-    }
-
-    /**
-     * Delete the grading criteria by id.
-     * @param gradingCriteria the grading instruction to be deleted
-     */
-
-    public void delete(GradingCriteria gradingCriteria) {
-        log.info("GradingInstructionService.Request to delete Grading Instruction : {}", gradingCriteria.getId());
-        gradingCriteriaRepository.delete(gradingCriteria);
-    }
-
     /**
      * Get one grading criteria by gradingCriteriaId.
      *
@@ -58,20 +35,8 @@ public class GradingCriteriaService {
         return gradingCriteriaRepository.findById(gradingCriteriaId)
                 .orElseThrow(() -> new EntityNotFoundException("Grading Criteria with gradingCriteriaId  " + gradingCriteriaId + " does not exist!"));
     }
-
     /**
-     * Finds all Grading Criteria for a given Exercise
-     *
-     * @param exercise corresponding exercise
-     * @return a List of all Grading Criteria for the given exercise
-     */
-
-    public List<GradingCriteria> findAllForExercise(Exercise exercise) {
-        return gradingCriteriaRepository.findByExerciseId(exercise.getId());
-    }
-
-    /**
-     * Get all programming exercise criteria belonging to exercise  with eager criteria.
+     * Get all exercise criteria belonging to exercise  with eager criteria.
      *
      * @param exerciseId the id of exercise
      * @return the list of criteria belonging to exercise
