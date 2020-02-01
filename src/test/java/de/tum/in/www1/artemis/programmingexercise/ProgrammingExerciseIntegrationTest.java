@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISES;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +28,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -47,6 +53,12 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
+    @Autowired
+    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     ProgrammingExercise programmingExercise;
 
@@ -234,6 +246,57 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         final var path = Endpoints.ROOT + Endpoints.COMBINE_COMMITS.replace("{exerciseId}", "" + programmingExercise.getId());
         request.put(path, Void.class, HttpStatus.OK);
         // TODO add more assertions, when we use actual git repos
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_REPOSITORY_URL);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_BUILD_PLAN_ID);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercisei_invalidSolutionRepository_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_REPOSITORY_URL);
     }
 
     private RepositoryExportOptionsDTO getOptions() {

@@ -113,25 +113,23 @@ public class ProgrammingExerciseResource {
      */
     private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
         if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.template.build.plan.id", "The Template Build Plan ID seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID, "The Template Build Plan ID seems to be invalid."))
                     .body(null);
         }
         if (exercise.getTemplateRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getTemplateRepositoryUrlAsUrl())) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.template.repository.url", "The Template Repository URL seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL, "The Template Repository URL seems to be invalid."))
                     .body(null);
         }
         if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.solution.build.plan.id", "The Solution Build Plan ID seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID, "The Solution Build Plan ID seems to be invalid."))
                     .body(null);
         }
         if (exercise.getSolutionRepositoryUrl() != null && !versionControlService.get().repositoryUrlIsValid(exercise.getSolutionRepositoryUrlAsUrl())) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.solution.repository.url", "The Solution Repository URL seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL, "The Solution Repository URL seems to be invalid."))
                     .body(null);
         }
         return null;
@@ -747,6 +745,20 @@ public class ProgrammingExerciseResource {
         public static final String TEST_CASE_STATE = PROGRAMMING_EXERCISE + "/test-case-state";
 
         private Endpoints() {
+        }
+    }
+
+    public static final class ErrorKeys {
+
+        public static final String INVALID_TEMPLATE_REPOSITORY_URL = "invalid.template.repository.url";
+
+        public static final String INVALID_SOLUTION_REPOSITORY_URL = "invalid.solution.repository.url";
+
+        public static final String INVALID_TEMPLATE_BUILD_PLAN_ID = "invalid.template.build.plan.id";
+
+        public static final String INVALID_SOLUTION_BUILD_PLAN_ID = "invalid.solution.build.plan.id";
+
+        private ErrorKeys() {
         }
     }
 }

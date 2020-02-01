@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,6 +28,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class RequestUtilService {
+
+    @Value("${jhipster.clientApp.name}")
+    private String APPLICATION_NAME;
 
     private MockMvc mvc;
 
@@ -160,6 +164,16 @@ public class RequestUtilService {
         String jsonBody = mapper.writeValueAsString(body);
         mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
                 .andExpect(status().is(expectedStatus.value()));
+    }
+
+    public void putAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
+        final var jsonBody = mapper.writeValueAsString(body);
+        final var response = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
+                .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
+
+        final var fullErrorKey = "error." + expectedErrorKey;
+        final var errorHeader = "X-" + APPLICATION_NAME + "-error";
+        assertThat(response.getHeader(errorHeader)).isEqualTo(fullErrorKey);
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {

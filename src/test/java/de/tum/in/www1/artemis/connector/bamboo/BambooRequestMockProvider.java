@@ -258,4 +258,10 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
+
+    public void mockBuildPlanIsValid(final String buildPlanId, final boolean isValid) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan/").pathSegment(buildPlanId).build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
+    }
 }

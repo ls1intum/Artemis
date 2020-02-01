@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.connectors.VcsUtil;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketCloneDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;
@@ -159,5 +160,13 @@ public class BitbucketRequestMockProvider {
 
         mockServer.expect(requestTo(protectBranchPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
                 .andExpect(content().contentType("application/vnd.atl.bitbucket.bulk+json")).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRepositoryUrlIsValid(final URL repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
+        final var repositoryName = VcsUtil.getRepositorySlugFromUrl(repositoryUrl);
+        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).pathSegment("repos")
+                .pathSegment(repositoryName).build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
     }
 }
