@@ -144,7 +144,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         String testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         String solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
         bambooRequestMockProvider.mockCheckIfProjectExists(exercise);
-        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise);
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
