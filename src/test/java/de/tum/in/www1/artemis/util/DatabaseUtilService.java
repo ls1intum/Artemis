@@ -259,6 +259,13 @@ public class DatabaseUtilService {
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
+    public void addTeachingAssistant(final String taGroup, final String taName) {
+        var ta = ModelFactory.generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
+        ta = userRepo.save(ta);
+
+        assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+    }
+
     public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);

@@ -461,4 +461,42 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         options.setExportAllStudents(true);
         request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + 1 + ""), HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
+        programmingExercise.setPackageName(null);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.BAD_REQUEST, String.class);
+
+        programmingExercise.setPackageName("ab");
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
+        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + 1 + ""), HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutoralt1", roles = "TA")
+    public void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
+        database.addTeachingAssistant("other-tutors", "tutoralt");
+        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+    }
 }
