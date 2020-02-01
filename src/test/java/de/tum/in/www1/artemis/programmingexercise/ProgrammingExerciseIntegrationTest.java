@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -439,5 +440,25 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void importProgrammingExercise_templateIDDoesnotExist_notFound() throws Exception {
         programmingExercise.setId(123L);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
+    }
+
+    @NotNull
+    private String getDefaultAPIEndpointForExportRepos() {
+        return ROOT + EXPORT_SUBMISSIONS_BY_STUDENT.replace("{exerciseId}", programmingExercise.getId() + "").replace("{studentIds}", "1,2,3");
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
+        final var options = getOptions();
+        options.setExportAllStudents(true);
+        request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
 }

@@ -501,10 +501,10 @@ public class ProgrammingExerciseResource {
      * POST /programming-exercises/:exerciseId/export-repos-by-student-logins/:studentIds : sends all submissions from studentlist as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
-     * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @param studentIds the IDs of the students for whom to zip the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
-     * @throws IOException if submissions can't be zippedRequestBody
+     * @throws IOException if something during the zip process went wrong
      */
     @PostMapping(Endpoints.EXPORT_SUBMISSIONS_BY_STUDENT)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -513,11 +513,6 @@ public class ProgrammingExerciseResource {
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (Optional.ofNullable(programmingExercise).isEmpty()) {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
-            return badRequest();
-        }
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
@@ -537,7 +532,7 @@ public class ProgrammingExerciseResource {
         List<String> studentList = new ArrayList<>();
         if (!repositoryExportOptions.isExportAllStudents()) {
             studentIds = studentIds.replaceAll(" ", "");
-            studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+            studentList = Arrays.asList(studentIds.split(","));
         }
 
         // Select the participations that should be exported
