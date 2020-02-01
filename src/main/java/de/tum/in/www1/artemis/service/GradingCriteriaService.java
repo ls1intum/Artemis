@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriteria;
 import de.tum.in.www1.artemis.repository.GradingCriteriaRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -24,6 +23,7 @@ public class GradingCriteriaService {
     public GradingCriteriaService(GradingCriteriaRepository gradingCriteriaRepository) {
         this.gradingCriteriaRepository = gradingCriteriaRepository;
     }
+
     /**
      * Get one grading criteria by gradingCriteriaId.
      *
@@ -35,6 +35,7 @@ public class GradingCriteriaService {
         return gradingCriteriaRepository.findById(gradingCriteriaId)
                 .orElseThrow(() -> new EntityNotFoundException("Grading Criteria with gradingCriteriaId  " + gradingCriteriaId + " does not exist!"));
     }
+
     /**
      * Get all exercise criteria belonging to exercise  with eager criteria.
      *
