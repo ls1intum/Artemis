@@ -129,7 +129,9 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
-     * @throws Exception If anything goes wrong
+     * @throws InterruptedException If something during the communication with the remote Git repository went wrong
+     * @throws GitAPIException If something during the communication with the remote Git repositroy went wrong
+     * @throws IOException If the template files couldn't be read
      */
     @Transactional
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
@@ -204,7 +206,7 @@ public class ProgrammingExerciseService {
     }
 
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
-            throws IOException, InterruptedException, GitAPIException {
+            throws IOException, GitAPIException, InterruptedException {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
         String templatePath = "classpath:templates/" + programmingLanguage;
