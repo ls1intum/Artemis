@@ -123,16 +123,21 @@ export class GuidedTourService {
     }
 
     private checkPageUrl(attempt = 1) {
-        if (attempt > 20) {
+        // TODO Anh
+        /*if (attempt > 20) {
             this.skipTour();
             this.guidedTourAvailabilitySubject.next(false);
             return;
-        }
+        }*/
 
-        if (!this.availableTourForComponent || !this.currentTour) {
-            return setTimeout(() => {
+        /*if (!this.availableTourForComponent || !this.currentTour) {
+            setTimeout(() => {
                 this.checkPageUrl(attempt + 1);
-            }, 300);
+            }, 1000);
+            return;
+        }*/
+        if (!this.currentTour) {
+            return;
         }
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
@@ -141,7 +146,9 @@ export class GuidedTourService {
         if (currentStep && currentStep.userInteractionEvent && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && nextStep && nextStep.pageUrl) {
             if (this.router.url.match(nextStep.pageUrl)) {
                 this.currentTourStepIndex += 1;
-                this.setPreparedTourStep();
+                setTimeout(() => {
+                    this.setPreparedTourStep();
+                }, 300);
             } else if (this.currentTour) {
                 this.skipTour();
                 this.guidedTourAvailabilitySubject.next(false);
@@ -292,9 +299,15 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
+
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        const timeout = currentStep instanceof UserInterActionTourStep ? 500 : 0;
         this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
+
+        if (nextStep instanceof UserInterActionTourStep) {
+            this.isUserInteractionFinishedSubject.next(false);
+        }
 
         if (currentStep.closeAction) {
             currentStep.closeAction();
@@ -307,7 +320,7 @@ export class GuidedTourService {
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 this.setPreparedTourStep();
-            });
+            }, timeout);
         } else {
             this.finishGuidedTour();
         }
@@ -466,8 +479,6 @@ export class GuidedTourService {
      * @param modelingTask the modeling task identifier
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string): void {
-        this.isUserInteractionFinishedSubject.next(false);
-
         if (!this.currentTour) {
             return;
         }

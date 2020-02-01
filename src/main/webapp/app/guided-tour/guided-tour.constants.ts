@@ -35,7 +35,7 @@ export enum UserInteractionEvent {
     ACE_EDITOR = 'ace-editor',
     WAIT_FOR_SELECTOR = 'wait-for-selector',
     MODELING = 'modeling',
-    ASSESS_SUBMISSION = 'assess-submission'
+    ASSESS_SUBMISSION = 'assess-submission',
 }
 
 export enum Direction {

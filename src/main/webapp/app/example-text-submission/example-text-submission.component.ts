@@ -71,7 +71,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private artemisMarkdown: ArtemisMarkdown,
         private resultService: ResultService,
         private $window: WindowRef,
-        private guidedTourService: GuidedTourService
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {

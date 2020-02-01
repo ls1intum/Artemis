@@ -103,7 +103,7 @@
     </div>
 
     <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
-        <button class="btn btn-primary" (click)="readInstruction()">
+        <button class="btn btn-primary instructions-button" (click)="readInstruction()">
             <span *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
                 {{ 'artemisApp.tutorExerciseDashboard.readAndUnderstood' | translate }}
             </span>
@@ -132,7 +132,12 @@
                 <div class="col-6" *ngIf="stats.toReview.total > 0">
                     <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.reviewSubmissions' | translate }} ({{ stats.toReview.done }} / {{ stats.toReview.total }})</p>
 
-                    <button *ngIf="stats.toReview.done < stats.toReview.total" class="btn btn-primary" (click)="openExampleSubmission(nextExampleSubmissionId, true, false)">
+                    <button
+                        *ngIf="stats.toReview.done < stats.toReview.total"
+                        class="btn btn-primary review-example-submission"
+                        [class.guided-tour]="exercise === exerciseForGuidedTour"
+                        (click)="openExampleSubmission(nextExampleSubmissionId, true, false)"
+                    >
                         <span *ngIf="stats.toReview.done <= 0; else elseBlockSubmissionSForTutorialButton">
                             {{ 'artemisApp.tutorExerciseDashboard.start' | translate }}
                         </span>
@@ -154,7 +159,12 @@
 
                 <div class="col-6" *ngIf="stats.toAssess.total > 0 && stats.toReview.done >= stats.toReview.total">
                     <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.tutorialSubmissions' | translate }} ({{ stats.toAssess.done }} / {{ stats.toAssess.total }})</p>
-                    <button *ngIf="stats.toAssess.done < stats.toAssess.total" class="btn btn-primary" (click)="openExampleSubmission(nextExampleSubmissionId, false, true)">
+                    <button
+                        *ngIf="stats.toAssess.done < stats.toAssess.total"
+                        class="btn btn-primary assess-example-submission"
+                        [class.guided-tour]="exercise === exerciseForGuidedTour"
+                        (click)="openExampleSubmission(nextExampleSubmissionId, false, true)"
+                    >
                         <span *ngIf="stats.toAssess.done <= 0; else elseBlockSubmissionsForReviewButton">
                             {{ 'artemisApp.tutorExerciseDashboard.start' | translate }}
                         </span>

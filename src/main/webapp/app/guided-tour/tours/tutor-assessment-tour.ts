@@ -54,7 +54,7 @@ export const tutorAssessmentTour: GuidedTour = {
             headlineTranslateKey: 'tour.tutorCourseDashboard.gradingProcess.headline',
             contentTranslateKey: 'tour.tutorCourseDashboard.gradingProcess.content',
             highlightPadding: 10,
-            orientation: Orientation.TOPLEFT,
+            orientation: Orientation.TOP,
             permission: ['ROLE_TA'],
         }),
         new UserInterActionTourStep({

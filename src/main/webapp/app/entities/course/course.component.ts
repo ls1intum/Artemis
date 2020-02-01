@@ -30,7 +30,12 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     courseForGuidedTour: Course | null;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager, private guidedTourService: GuidedTourService) {
+    constructor(
+        private courseService: CourseService,
+        private jhiAlertService: JhiAlertService,
+        private eventManager: JhiEventManager,
+        private guidedTourService: GuidedTourService,
+    ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;

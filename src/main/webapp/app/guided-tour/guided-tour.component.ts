@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
-import { take } from 'rxjs/internal/operators';
+import { take, debounceTime } from 'rxjs/internal/operators';
 
 import { Orientation, OverlayPosition, UserInteractionEvent, Direction } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
@@ -123,6 +123,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
 
             if (this.hasUserPermissionForCurrentTourStep()) {
+                console.log('subscribeToGuidedTourCurrentStepStream');
                 this.scrollToAndSetElement();
                 this.handleTransition();
                 return;
@@ -149,7 +150,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToResizeEvent() {
         this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            if (this.getSelectedElement()) {
+                this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            }
         });
     }
 
@@ -158,7 +161,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToScrollEvent() {
         this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            if (this.getSelectedElement()) {
+                this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            }
         });
     }
 
@@ -177,6 +182,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Scroll to and set highlighted element
      */
     private scrollToAndSetElement(): void {
+        console.log('scrollToAndSetElement');
         this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), false);
         this.observeSelectedRectPosition();
 
@@ -303,7 +309,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 const tourStep = this.tourStep.nativeElement.getBoundingClientRect();
                 const tourStepPosition = tourStep.top + tourStep.height;
                 const windowHeight = window.innerHeight + window.pageYOffset;
-                elementInViewPort = top >= window.pageYOffset - stepScreenAdjustment && top + height <= windowHeight && tourStepPosition <= windowHeight;
+                elementInViewPort = top >= window.pageYOffset - stepScreenAdjustment && top + height + 10 <= windowHeight && tourStepPosition <= windowHeight;
                 break;
             }
         }
@@ -611,6 +617,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return selected element as DOMRect or null
      */
     private updateStepLocation(selectedElement: HTMLElement | null, isResizeOrScroll: boolean): DOMRect | null {
+        console.log('update step location, resize or scroll: ', isResizeOrScroll);
         let selectedElementRect = null;
         if (selectedElement) {
             selectedElementRect = selectedElement.getBoundingClientRect() as DOMRect;
@@ -648,7 +655,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 .observeMutations(alertElement, { childList: true })
                 .pipe(take(1))
                 .subscribe(mutation => {
-                    this.scrollToAndSetElement();
+                    if (this.getSelectedElement()) {
+                        console.log('alert');
+                        this.scrollToAndSetElement();
+                    }
                 });
         }
     }
