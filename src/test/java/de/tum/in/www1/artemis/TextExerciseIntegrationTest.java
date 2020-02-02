@@ -141,6 +141,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void getTextExerciseAsStudent() throws Exception {
         final Course course = database.addCourseWithOneTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
+        request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testTriggerAutomaticAssessment() throws Exception {
+        final Course course = database.addCourseWithOneTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        request.postWithoutLocation("/api/text-exercises/" + textExercise.getId() + "/trigger-automatic-assessment", null, HttpStatus.OK, null);
     }
 }
