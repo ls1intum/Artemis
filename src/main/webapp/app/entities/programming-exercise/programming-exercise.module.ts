@@ -7,7 +7,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 import { ArtemisModePickerModule } from 'app/components/exercise/mode-picker/mode-picker.module';
-import { ArtemisTeamScopePickerModule } from 'app/components/exercise/team-scope-picker/team-scope-picker.module';
 import { ArtemisResultModule } from 'app/entities/result';
 import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
@@ -46,7 +45,6 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         ArtemisModePickerModule,
-        ArtemisTeamScopePickerModule,
         // Programming exercise sub modules.
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseStatusModule,

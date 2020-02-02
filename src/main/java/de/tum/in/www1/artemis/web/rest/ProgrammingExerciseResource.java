@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -35,9 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.TeamScope;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -225,23 +222,6 @@ public class ProgrammingExerciseResource {
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score is invalid", "maxscoreInvalid")).body(null);
-        }
-
-        // Check that team scope is not set if exercise mode is not "team"
-        if (programmingExercise.getMode() != ExerciseMode.TEAM) {
-            if (programmingExercise.getTeamScope() != null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Team scope can't be set for non-team exercises.", "teamscopeSet")).body(null);
-            }
-        }
-
-        // Check if team scope is set if exercise mode is "team"
-        if (programmingExercise.getMode() == ExerciseMode.TEAM) {
-            if (programmingExercise.getTeamScope() == null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The team scope is not set", "teamscopeNotSet")).body(null);
-            }
-            if (!EnumUtils.isValidEnum(TeamScope.class, programmingExercise.getTeamScope().name())) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The team scope is invalid", "teamscopeInvalid")).body(null);
-            }
         }
 
         programmingExercise.generateAndSetProjectKey();

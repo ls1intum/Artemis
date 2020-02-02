@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Exercise, ExerciseMode, TeamScope } from 'app/entities/exercise';
+import { Exercise, ExerciseMode } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-mode-picker',
@@ -20,15 +20,6 @@ export class ModePickerComponent {
      */
     setMode(mode: ExerciseMode) {
         this.exercise.mode = mode;
-        this.updateTeamScope(mode);
         this.ngModelChange.emit();
-    }
-
-    private updateTeamScope(mode: ExerciseMode) {
-        if (mode === ExerciseMode.TEAM) {
-            this.exercise.teamScope = this.exercise.teamScope || TeamScope.EXERCISE;
-        } else {
-            this.exercise.teamScope = null;
-        }
     }
 }
