@@ -378,7 +378,7 @@ public class QuizExerciseResource {
         }
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
+        Course course = courseService.findOne(originalQuizExercise.getCourse().getId());
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
