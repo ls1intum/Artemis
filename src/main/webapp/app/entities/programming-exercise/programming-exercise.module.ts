@@ -6,7 +6,6 @@ import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
-import { ArtemisModePickerModule } from 'app/components/exercise/mode-picker/mode-picker.module';
 import { ArtemisResultModule } from 'app/entities/result';
 import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor';
@@ -32,6 +31,7 @@ import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exe
 import { programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
 import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
+import { ArtemisTeamConfigFormGroupModule } from 'app/components/exercise/team-config-form-group/team-config-form-group.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute];
 
@@ -44,7 +44,6 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
-        ArtemisModePickerModule,
         // Programming exercise sub modules.
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseStatusModule,
@@ -62,6 +61,7 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         IntellijModule,
         ProgrammingExerciseUtilsModule,
         ArtemisAssessmentSharedModule,
+        ArtemisTeamConfigFormGroupModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
