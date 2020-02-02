@@ -195,7 +195,6 @@ public class DatabaseUtilService {
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
-        userRepo.deleteAll();
 
         assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         assertThat(gradingInstructionRepo.findAll()).as("grading instructions data has been cleared").isEmpty();
