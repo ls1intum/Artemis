@@ -71,7 +71,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 2, 1);
+        database.addUsers(2, 2, 1);
         course = database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -249,6 +249,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
+    @WithMockUser(value = "student2", roles = "USER")
+    public void getDataForTextEditor_asOtherStudent() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, Participation.class);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getDataForTextEditor_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -259,6 +267,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
         assertThat(participation.getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getDataForTextEditor_submissionWithoutResult() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
     }
 
     private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
