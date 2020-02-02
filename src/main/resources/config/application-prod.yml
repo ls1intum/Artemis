@@ -139,5 +139,5 @@ info:
             - programming_exercise_fail_tour: 'tutorial'
             - programming_exercise_success_tour: 'tutorial'
     orion-versions:
-        from: 1.0.0-rc.1
-        to: 1.0.0-rc.1
+        from: 1.0.0-rc.2
+        to: 1.0.0-rc.2
