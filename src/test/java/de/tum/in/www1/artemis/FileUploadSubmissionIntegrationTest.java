@@ -269,8 +269,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void getSubmissionByID() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionByID_asTA() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission  = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
@@ -278,5 +278,17 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(receivedSubmission.getId().equals(submissionID));
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getSubmissionByID_asStudent() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission  = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        long submissionID = fileUploadSubmission.getId();
+        FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.FORBIDDEN, FileUploadSubmission.class);
+
+        assertThat(receivedSubmission).isNull();
     }
 }
