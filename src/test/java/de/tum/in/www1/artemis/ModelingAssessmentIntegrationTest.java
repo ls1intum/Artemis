@@ -155,11 +155,11 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public void testGetExampleAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/exampleAssessment", feedbackList, Result.class,
+        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
                 HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionService.findById(storedExampleSubmission.getId())).isPresent();
-        request.get("/api/exercise/" + classExercise.getId() + "/submission/" + storedExampleSubmission.getSubmission().getId() + "/modelingExampleAssessment", HttpStatus.OK,
+        request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
     }
 
