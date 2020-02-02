@@ -25,7 +25,6 @@ import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-te
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../../mocks/mock-feature-toggle-service';
-import { stringifyCircular } from 'app/shared/util/utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -126,14 +125,14 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatus()).to.be.equal(ParticipationStatus.INACTIVE);
+        expect(comp.participationStatus(comp.exercise)).to.be.equal(ParticipationStatus.INACTIVE);
         expect(startExerciseStub).to.have.been.calledOnce;
         participationSubject.next(initPart);
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatus()).to.be.equal(ParticipationStatus.INITIALIZED);
+        expect(comp.participationStatus(comp.exercise)).to.be.equal(ParticipationStatus.INITIALIZED);
 
         fixture.destroy();
         flush();
