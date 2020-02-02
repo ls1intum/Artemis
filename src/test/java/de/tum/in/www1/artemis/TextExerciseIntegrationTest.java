@@ -12,13 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -34,10 +33,16 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     RequestUtilService request;
 
     @Autowired
+    ExerciseRepository exerciseRepository;
+
+    @Autowired
     TextExerciseRepository textExerciseRepository;
 
     @Autowired
     TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    ExampleSubmissionRepository exampleSubmissionRepo;
 
     @BeforeEach
     public void initTestCase() {
@@ -102,12 +107,22 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void updateTextExercise() throws Exception {
         final Course course = database.addCourseWithOneTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExercise = (TextExercise) exerciseRepository.findByIdWithEagerExampleSubmissions(textExercise.getId()).get();
 
+        // update certain attributes of text exercise
         String title = "Updated Text Exercise";
         DifficultyLevel difficulty = DifficultyLevel.HARD;
-
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
+
+        // add example submission to exercise
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
+        textSubmissionRepository.save(textSubmission);
+        ExampleSubmission exampleSubmission = new ExampleSubmission();
+        exampleSubmission.setSubmission(textSubmission);
+        exampleSubmission.setExercise(textExercise);
+        exampleSubmissionRepo.save(exampleSubmission);
+        textExercise.addExampleSubmission(exampleSubmission);
 
         TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
 
