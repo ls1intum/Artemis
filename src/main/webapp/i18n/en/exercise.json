@@ -49,6 +49,10 @@
                 "individual": "Individual",
                 "team": "Team"
             },
+            "teamAssignmentConfig": {
+                "teamSize": "Team Size",
+                "teamSizeTooltip": "Stipulation regarding the minimum and maximum number of students per team."
+            },
             "categories": "Categories",
             "participations": "Participations",
             "exportNames": "Export Names",

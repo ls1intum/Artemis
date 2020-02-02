@@ -7,6 +7,7 @@ import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -62,6 +63,7 @@ export abstract class Exercise implements BaseEntity {
     public assessmentType: AssessmentType;
     public difficulty: DifficultyLevel | null;
     public mode: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
+    public teamAssignmentConfig: TeamAssignmentConfig | null;
     public categories: string[];
     public type: ExerciseType;
 
