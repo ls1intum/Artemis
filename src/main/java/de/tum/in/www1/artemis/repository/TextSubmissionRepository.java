@@ -52,6 +52,6 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @param exerciseId the Id of the exercise
      * @return List of Text Submissions
      */
-    @EntityGraph(attributePaths = { "blocks", "blocks.cluster", "result", "participation", "participation.submissions" })
+    @EntityGraph(attributePaths = { "blocks", "result", "participation" })
     List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(Long exerciseId);
 }

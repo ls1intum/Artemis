@@ -69,7 +69,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(1, 2, 1);
-        course = database.addCourseWithOneTextExerciseDueDateReached();
+        course = database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepo.save(textExercise);
@@ -120,6 +120,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     public void saveTextAssessment_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
@@ -139,6 +140,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     public void submitTextAssessment_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
@@ -335,6 +337,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
+    }
+
+    private void exerciseDueDatePassed() {
+        database.updateExerciseDueDate(textExercise.getId(), ZonedDateTime.now().minusHours(2));
     }
 
     private void assessmentDueDatePassed() {
