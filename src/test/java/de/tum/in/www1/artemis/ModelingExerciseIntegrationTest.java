@@ -116,7 +116,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
-        // The PUT request basically forwards to POST in case the modeling exercise id is not yet set.
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
 
         ModelingExercise modelingExerciseWithSubmission = modelingExerciseUtilService.addExampleSubmission(createdModelingExercise);
