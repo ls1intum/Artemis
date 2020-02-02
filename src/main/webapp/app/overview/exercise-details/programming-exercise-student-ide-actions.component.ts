@@ -129,16 +129,16 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         this.courseExerciseService
             .resumeProgrammingExercise(this.courseId, this.exercise.id)
             .pipe(
-                catchError(error => {
-                    console.log('Error: ' + error);
-                    this.jhiAlertService.error('artemisApp.exerciseActions.resumeExercise', { error });
-                    return error;
-                }),
                 filter(Boolean),
                 tap((participation: StudentParticipation) => {
                     participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
                     this.exercise.studentParticipations = [participation];
                     this.exercise.participationStatus = participationStatus(this.exercise);
+                }),
+                catchError(error => {
+                    console.log('Error: ' + error);
+                    this.jhiAlertService.error('artemisApp.exerciseActions.resumeExercise', { error });
+                    return error;
                 }),
             )
             .finally(() => (this.exercise.loading = false))
