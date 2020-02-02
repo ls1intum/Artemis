@@ -56,6 +56,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.inProduction = profileInfo.inProduction;
             }
         });
+
         this.subscribeForGuidedTourAvailability();
 
         // The current user is needed to hide menu items for not logged in users.
