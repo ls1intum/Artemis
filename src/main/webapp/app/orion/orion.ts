@@ -64,4 +64,4 @@ export interface Window {
     artemisClientConnector: ArtemisClientConnector;
 }
 
-export const isOrion = window.navigator.userAgent.includes('Orion');
+export const isOrion = window.navigator.userAgent.includes('Orion') || window.navigator.userAgent.includes('IntelliJ');
