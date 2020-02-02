@@ -30,6 +30,9 @@ import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
+    CourseRepository courseRepo;
+
+    @Autowired
     ExerciseRepository exerciseRepo;
 
     @Autowired
@@ -68,7 +71,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 2, 1);
+        database.addUsers(2, 2, 1);
         course = database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -107,6 +110,25 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
                 .isEqualTo(textSubmission.getId());
         assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void retrieveParticipationForLockedSubmission() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor2");
+        Result result = textSubmission.getResult();
+        result.setCompletionDate(null); // assessment is still in progress for this test
+        resultRepo.save(result);
+        StudentParticipation participation = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.BAD_REQUEST, StudentParticipation.class);
+        assertThat(participation).as("participation is locked and should not be returned").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void retrieveParticipationForNonExistingSubmission() throws Exception {
+        StudentParticipation participation = request.get("/api/text-assessments/submission/345395769256365", HttpStatus.BAD_REQUEST, StudentParticipation.class);
+        assertThat(participation).as("participation should not be found").isNull();
     }
 
     @Test
@@ -196,6 +218,24 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getResultWithPredefinedTextblocksForNonTextExercise() throws Exception {
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourse());
+        exerciseRepo.save(fileUploadExercise);
+
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        database.addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, "student1", "tutor1", new ArrayList<Feedback>());
+
+        request.get("/api/exercise/" + fileUploadExercise.getId() + "/participation-without-assessment", HttpStatus.BAD_REQUEST, Participation.class);
+
+        Result result = request.get("/api/text-assessments/result/" + fileUploadSubmission.getParticipation().getResults().iterator().next().getId() + "/with-textblocks",
+                HttpStatus.BAD_REQUEST, Result.class);
+
+        assertThat(result).as("no result should be returned when exercise is not a text exercise").isNull();
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void getDataForTextEditor_assessorHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -209,6 +249,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
+    @WithMockUser(value = "student2", roles = "USER")
+    public void getDataForTextEditor_asOtherStudent() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, Participation.class);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getDataForTextEditor_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
@@ -219,6 +267,46 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
         assertThat(participation.getStudent()).as("student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getDataForTextEditor_submissionWithoutResult() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.addTextSubmission(textExercise, textSubmission, "student1");
+        request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+    }
+
+    private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission.setExampleSubmission(isExample);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
+
+        Result result = request.get("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId() + "/example-result", expectedStatus,
+                Result.class);
+
+        if (expectedStatus == HttpStatus.OK) {
+            assertThat(result).as("result found").isNotNull();
+            assertThat(result.getSubmission().getId()).as("result for correct submission").isEqualTo(textSubmission.getId());
+        }
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getExampleResultForTutorAsStudent() throws Exception {
+        getExampleResultForTutor(HttpStatus.FORBIDDEN, true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getExampleResultForTutorAsTutor() throws Exception {
+        getExampleResultForTutor(HttpStatus.OK, true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
+        getExampleResultForTutor(HttpStatus.NOT_FOUND, false);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
