@@ -1,6 +1,6 @@
 import { Exercise } from '../exercise';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { Team } from 'app/entities/team';
+import { Team } from 'app/entities/team/team.model';
 
 export class TeamParticipation extends Participation {
     public team: Team;
