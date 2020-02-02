@@ -113,6 +113,9 @@
                                         [(ngModel)]="programmingExercise.teamAssignmentConfig.minTeamSize"
                                         #minTeamSize="ngModel"
                                     />
+                                    <div class="input-group-append">
+                                        <label class="input-group-text" for="field_maxTeamSize">Max</label>
+                                    </div>
                                     <input
                                         name="maxTeamSize"
                                         id="field_maxTeamSize"
@@ -124,9 +127,6 @@
                                         [(ngModel)]="programmingExercise.teamAssignmentConfig.maxTeamSize"
                                         #maxTeamSize="ngModel"
                                     />
-                                    <div class="input-group-append">
-                                        <label class="input-group-text" for="field_maxTeamSize">Max</label>
-                                    </div>
                                 </div>
                                 <ng-container *ngFor="let e of minTeamSize.errors! | keyvalue | removekeys: ['required']">
                                     <div *ngIf="minTeamSize.invalid && (minTeamSize.dirty || minTeamSize.touched)" class="alert alert-danger">
