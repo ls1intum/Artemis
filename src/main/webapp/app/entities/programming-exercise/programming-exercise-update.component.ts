@@ -5,7 +5,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Observable, Subject } from 'rxjs';
 import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { ExerciseCategory, ExerciseMode, ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
@@ -24,9 +24,13 @@ import { FeatureToggle } from 'app/feature-toggle';
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     FeatureToggle = FeatureToggle;
+
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
     readonly C = ProgrammingLanguage.C;
+
+    readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;
+    readonly TEAM = ExerciseMode.TEAM;
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
