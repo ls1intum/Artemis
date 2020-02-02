@@ -101,7 +101,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.applyFiltersAndOrder();
         });
 
-        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
+        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
     }
 
     ngOnDestroy(): void {

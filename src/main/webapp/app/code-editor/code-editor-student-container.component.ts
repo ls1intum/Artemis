@@ -86,7 +86,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                 .subscribe(
                     () => {
                         this.loadingParticipation = false;
-                        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour);
+                        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
                     err => {
                         this.participationCouldNotBeFetched = true;

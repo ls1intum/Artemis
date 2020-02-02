@@ -912,9 +912,10 @@ export class GuidedTourService {
      * Enable a given tour for the component that calls this method and make the start tour button in the navigation bar availability
      * by setting the guidedTourAvailability to true
      *
-     * @param guidedTour
+     * @param guidedTour that should be enabled for the current component
+     * @param init - if true - enables the display of the guided tour on the first visit, this parameter is used for guided tours which navigate through multiple component pages
      */
-    private enableTour(guidedTour: GuidedTour) {
+    private enableTour(guidedTour: GuidedTour, init: boolean) {
         /**
          * Set timeout so that the reset of the previous guided tour on the navigation end can be processed first
          * to prevent ExpressionChangedAfterItHasBeenCheckedError
@@ -924,7 +925,7 @@ export class GuidedTourService {
             this.guidedTourAvailabilitySubject.next(true);
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
             // Only start tour automatically if the user has never seen it before
-            if (!hasStartedOrFinishedTour) {
+            if (!hasStartedOrFinishedTour && init) {
                 this.currentTour = this.availableTourForComponent;
                 this.startTour();
             }
@@ -935,15 +936,16 @@ export class GuidedTourService {
      * Check if the course and exercise for the tour are available on the course-exercise component
      * @param course for which the guided tour availability should be checked
      * @param guidedTour that should be enabled
+     * @param init - if true - enables the display of the guided tour on the first visit, this parameter is used for guided tours which navigate through multiple component pages
      */
-    public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour): Exercise | null {
+    public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour, init: boolean): Exercise | null {
         if (!course || !course.exercises || !this.isGuidedTourAvailableForCourse(course)) {
             return null;
         }
 
         const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
         if (exerciseForGuidedTour) {
-            this.enableTour(guidedTour);
+            this.enableTour(guidedTour, init);
             this.currentCourse = course;
             this.currentExercise = exerciseForGuidedTour;
             return exerciseForGuidedTour;
@@ -955,11 +957,12 @@ export class GuidedTourService {
      * Check if the course list contains the course for which the tour is available
      * @param courses which can contain the needed course for the tour
      * @param guidedTour that should be enabled
+     * @param init - if true - enables the display of the guided tour on the first visit, this parameter is used for guided tours which navigate through multiple component pages
      */
-    public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
+    public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour, init: boolean): Course | null {
         const courseForTour = courses.find(course => this.isGuidedTourAvailableForCourse(course));
         if (courseForTour) {
-            this.enableTour(guidedTour);
+            this.enableTour(guidedTour, init);
             this.currentCourse = courseForTour;
             return courseForTour;
         }
@@ -970,12 +973,13 @@ export class GuidedTourService {
      * Check if the exercise list contains the exercise for which the tour is available
      * @param exercise which can contain the needed exercise for the tour
      * @param guidedTour that should be enabled
+     * @param init - if true - enables the display of the guided tour on the first visit, this parameter is used for guided tours which navigate through multiple component pages
      */
-    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour): Exercise | null {
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour, init: boolean): Exercise | null {
         if (!exercise.course || !this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
             return null;
         } else {
-            this.enableTour(guidedTour);
+            this.enableTour(guidedTour, init);
             this.currentExercise = exercise;
             this.currentCourse = exercise.course;
             return exercise;
@@ -1111,9 +1115,9 @@ export class GuidedTourService {
     }
 
     /**
-     * TODO
-     * @param assessments
-     * @param totalScore
+     * Checks the assessment result and enables the next step click if correct
+     * @param assessments   current number of assessments
+     * @param totalScore    current total score of the assessment
      */
     public updateAssessmentResult(assessments: number, totalScore: number) {
         if (!this.currentStep || !this.currentStep.assessmentTask) {
@@ -1127,6 +1131,9 @@ export class GuidedTourService {
         }
     }
 
+    /**
+     * Returns true if the number of assessments and its total score match with the given assessment task object
+     */
     private isAssessmentCorrect(): boolean {
         const numberOfAssessmentsCorrect = this.assessmentObject.assessments === this.currentStep.assessmentTask.assessmentObject.assessments;
         const totalScoreCorrect = this.assessmentObject.totalScore === this.currentStep.assessmentTask.assessmentObject.totalScore;

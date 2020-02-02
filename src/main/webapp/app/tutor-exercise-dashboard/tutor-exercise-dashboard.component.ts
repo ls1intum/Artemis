@@ -155,7 +155,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                         break;
                 }
 
-                this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour);
+                this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {

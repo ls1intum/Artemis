@@ -179,7 +179,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-            this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour);
+            this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 
         if (this.isNewSubmission) {

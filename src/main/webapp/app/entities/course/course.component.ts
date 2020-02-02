@@ -45,7 +45,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
-                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour);
+                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );

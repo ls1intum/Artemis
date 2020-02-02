@@ -81,7 +81,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.unfinishedExercises = unfinishedExercises;
                     // sort exercises by type to get a better overview in the dashboard
                     this.exercises = this.unfinishedExercises.sort((a, b) => (a.type > b.type ? 1 : b.type > a.type ? -1 : 0));
-                    this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour);
+                    this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
                 }
             },
             (response: string) => this.onError(response),
