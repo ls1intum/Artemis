@@ -540,7 +540,7 @@ public class ProgrammingExerciseResource {
 
         List<String> studentList = new ArrayList<>();
         if (!repositoryExportOptions.isExportAllStudents()) {
-            studentIds = studentIds.replaceAll(" ", "");
+            studentIds = studentIds.replaceAll("\\s", "");
             studentList = Arrays.asList(studentIds.split(","));
         }
 
