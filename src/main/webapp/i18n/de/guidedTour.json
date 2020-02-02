@@ -18,7 +18,7 @@
         "completed": {
             "headline": "Herzlichen Glückwunsch 🎉",
             "content": "Du hast das Tutorial erfolreich beendet. Du kannst dieses Tutorial jetzt wiederholen, indem du auf <tt>Tutorial wiederholen</tt> klickst.",
-            "hint": "Bitte beachte, dass die gelöste Aufgaben - wenn vorhanden - im Rahmen des Tutorials immer zurückgesetzt werden."
+            "hint": "Bitte beachte, dass die gelöste Aufgabe - wenn vorhanden - im Rahmen des Tutorials immer zurückgesetzt wird. Du wirst auf die Übersichtsseite weitergeleitet und kannst die Aufgabe nochmal neu starten."
         },
         "clickHint": {
             "text": "Klicke auf das Element um die Tour fortzusetzen."

@@ -604,11 +604,8 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
-        const guidedTourMapping = {
-            courseShortName: '',
-            tours: [{ '': '' }],
-        } as GuidedTourMapping;
-        spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+        const guidedTourMapping = {} as GuidedTourMapping;
+        spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };

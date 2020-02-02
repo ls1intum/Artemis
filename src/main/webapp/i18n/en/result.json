@@ -34,6 +34,8 @@
             "viewManual": "View manual result",
             "invalidScore": "Score is required and should be a number between 0 and 100.",
             "resultStringRequired": "Result text is required.",
+            "studentLogin": "Student Login",
+            "studentLoginRequired": "Student login is required.",
             "exerciseStillOpen": "Exercise is still open for submissions!",
             "studentOverride": "The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.",
             "addFeedback": "Add new Feedback",

@@ -19,10 +19,8 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService,
-            SubmissionRepository submissionRepository) {
-        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, authCheckService,
-                submissionRepository);
+            StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionRepository submissionRepository) {
+        super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
     }
@@ -67,11 +65,6 @@ public class TextAssessmentService extends AssessmentService {
 
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
-
-        // check the assessment due date if the user tries to override an existing submitted result
-        if (result.getCompletionDate() != null) {
-            checkAssessmentDueDate(textExercise);
-        }
 
         User user = userService.getUser();
         result.setAssessor(user);

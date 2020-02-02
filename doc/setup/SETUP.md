@@ -21,16 +21,18 @@ artemis:
     repo-clone-path: ./repos/
     repo-download-clone-path: ./repos-download/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
-    ldap:     # note: this section is optional
-        url: <url>
-        user-dn: <user-dn>
-        password: <password>
-        base: <base>
-    jira:
-        url: https://jira.ase.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
-        admin-group-name: tumuser
+    user-management:
+        use-external: true
+        external:
+            url: https://jira.ase.in.tum.de
+            user: <username>    # e.g. ga12abc
+            password: <password>
+            admin-group-name: tumuser
+        ldap:
+            url: <url>
+            user-dn: <user-dn>
+            password: <password>
+            base: <base>
     version-control:
         url: https://bitbucket.ase.in.tum.de
         user: <username>    # e.g. ga12abc
@@ -84,6 +86,9 @@ artemis:
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
         secret: null
+info:
+    contact: artemis.in@tum.de
+    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
 ```
 Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
 Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged. 
@@ -133,6 +138,14 @@ yarn start
 This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
 
 For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular). For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
+
+### Customize your Artemis instance
+
+You can define the following custom assets for Artemis to be used instead of the TUM defaults:
+* The logo next to the "Artemis" heading on the navbar &#8594; `${artemisRunDirectory}/public/images/logo.png`
+* The privacy statement HTML &#8594; `${artemisRunDirectory}/public/content/privacy_statement.html`
+* The contact email address in the `application-{prod,artemis}.yml` configuration file under the key `info.contact`
+* The imprint link in the `application-{prod,artemis}.yml` configuration file under the key `info.imprint`
 
 ### Alternative: Using docker-compose
 
