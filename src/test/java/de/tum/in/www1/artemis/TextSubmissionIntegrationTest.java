@@ -75,6 +75,18 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getOwnTextSubmission() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+
+        TextSubmission textSubmission = request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
+
+        assertThat(textSubmission).as("text submission without assessment was found").isNotNull();
+        assertThat(textSubmission.getId()).as("correct text submission was found").isEqualTo(this.textSubmission.getId());
+        assertThat(textSubmission.getText()).as("text of text submission is correct").isEqualTo(this.textSubmission.getText());
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllTextSubmissions_studentHiddenForTutor() throws Exception {
         textSubmission = database.addTextSubmissionWithResultAndAssessor(textExerciseAfterDueDate, textSubmission, "student1", "tutor1");
@@ -97,6 +109,20 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getAllTextSubmissions_assessedByTutorForStudent() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllTextSubmissions_notAssessedByTutorForTutor() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
