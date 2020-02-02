@@ -255,7 +255,15 @@ public class DatabaseUtilService {
     public void addInstructor(final String instructorGroup, final String instructorName) {
         var instructor = ModelFactory.generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1).get(0);
         instructor = userRepo.save(instructor);
+
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
+    }
+
+    public void addTeachingAssistant(final String taGroup, final String taName) {
+        var ta = ModelFactory.generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
+        ta = userRepo.save(ta);
+
+        assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
     public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
@@ -407,7 +415,7 @@ public class DatabaseUtilService {
         participation.setBuildPlanId(buildPlanId);
         participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
-        participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
@@ -418,7 +426,7 @@ public class DatabaseUtilService {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.TEMPLATE.getName());
-        participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
@@ -430,7 +438,7 @@ public class DatabaseUtilService {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.getProjectKey() + "-" + BuildPlanType.SOLUTION.getName());
-        participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourse().getShortName(), repoName));
+        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);

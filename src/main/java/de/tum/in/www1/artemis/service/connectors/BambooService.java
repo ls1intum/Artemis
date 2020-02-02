@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.apache.http.HttpException;
@@ -876,34 +877,28 @@ public class BambooService implements ContinuousIntegrationService {
     public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        ResponseEntity<Map> response = null;
         try {
-            response = restTemplate.exchange(
-                    BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey,
-                    HttpMethod.GET,
-                    entity,
-                    Map.class);
+            restTemplate.exchange(
+                    BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, entity, Map.class);
             log.warn("Bamboo project " + projectKey + " already exists");
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         } catch (HttpClientErrorException e) {
             log.debug("Bamboo project " + projectKey + " does not exit");
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 //only if this is the case, we additionally check that the project name is unique
-                response = restTemplate.exchange(
+                final var response = restTemplate.exchange(
                         BAMBOO_SERVER_URL + "/rest/api/latest/search/projects?searchTerm=" + projectName,
-                        HttpMethod.GET,
-                        entity,
-                        Map.class);
-                if ((Integer) response.getBody().get("size") != 0) {
-                    List<Object> ciProjects = (List<Object>) response.getBody().get("searchResults");
-                    for (Object ciProject : ciProjects) {
-                        String ciProjectName = (String) ((Map) ((Map) ciProject).get("searchEntity")).get("projectName");
-                        if (ciProjectName.equalsIgnoreCase(projectName)) {
-                            log.warn("Bamboo project with name" + projectName + " already exists");
-                            return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
-                        }
+                        HttpMethod.GET, entity, BambooProjectSearchDTO.class);
+                if (response.getBody().getSize() > 0) {
+                    final var exists = response.getBody().getSearchResults().stream()
+                            .map(BambooProjectSearchDTO.SearchResultDTO::getSearchEntity)
+                            .anyMatch(project -> project.getProjectName().equalsIgnoreCase(projectName));
+                    if (exists) {
+                        log.warn("Bamboo project with name" + projectName + " already exists");
+                        return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
                     }
                 }
+
                 return null;
             }
         }
