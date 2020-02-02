@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
-import { take, debounceTime } from 'rxjs/internal/operators';
-
+import { take } from 'rxjs/internal/operators';
 import { Orientation, OverlayPosition, UserInteractionEvent, Direction } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,8 +17,8 @@ import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontall
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
 
-    // Sets the width of all tour step elements.
     // TODO automatically determine optimal width of tour step
+    // Sets the width of all tour step elements.
     public tourStepWidth = 550;
     // Sets the minimal width of all tour step elements.
     public minimalTourStepWidth = 500;

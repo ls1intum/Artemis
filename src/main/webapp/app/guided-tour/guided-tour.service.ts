@@ -94,7 +94,7 @@ export class GuidedTourService {
                 this.currentExercise = null;
                 this.currentCourse = null;
             }
-            // TODO check guided tour availability on router navigation
+            // Checks the guided tour availability on router navigation during an active tutorial
             if (this.availableTourForComponent && this.currentTour && event instanceof NavigationEnd) {
                 this.guidedTourCurrentStepSubject.next(null);
                 this.checkPageUrl();
@@ -441,16 +441,46 @@ export class GuidedTourService {
     /**
      * Get the last step that the user visited during the given tour
      */
-    public getLastSeenTourStepIndex(): number {
+    public getLastSeenTourStepIndex(init?: boolean): number {
         if (!this.availableTourForComponent) {
             return 0;
         }
-        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
-        if (tourSetting.length === 1) {
-            const lastSeenTourStep = tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep : 0;
-            return lastSeenTourStep !== 0 ? lastSeenTourStep : -1;
+        const tourSettings = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
+
+        if (tourSettings.length === 0) {
+            return 0;
         }
-        return tourSetting.length === 1 && tourSetting[0].guidedTourStep !== this.getFilteredTourSteps().length ? tourSetting[0].guidedTourStep - 1 : 0;
+
+        if (this.hasValidTourStepNumber(tourSettings)) {
+            const lastSeenTourStep = init ? this.determineTourStepForComponent() : tourSettings[0].guidedTourStep;
+            return lastSeenTourStep && lastSeenTourStep !== 0 ? lastSeenTourStep : -1;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     *
+     * @param tourSettings
+     */
+    private hasValidTourStepNumber(tourSettings: GuidedTourSetting[]): boolean {
+        return tourSettings[0].guidedTourStep <= this.getFilteredTourSteps().length;
+    }
+
+    /**
+     *
+     */
+    private determineTourStepForComponent(): number | null {
+        const stepForComponent = this.availableTourForComponent!.steps.filter(tourStep => {
+            const match = tourStep.pageUrl ? (this.router.url.match(tourStep.pageUrl) as RegExpMatchArray) : [];
+            if (match && tourStep.pageUrl && this.router.url.endsWith(match[0])) {
+                return match;
+            }
+        });
+        if (stepForComponent) {
+            return this.availableTourForComponent!.steps.indexOf(stepForComponent[0]);
+        }
+        return null;
     }
 
     /**
@@ -619,7 +649,8 @@ export class GuidedTourService {
 
         // Filter tour steps according to permissions
         this.currentTour.steps = this.getFilteredTourSteps();
-        this.currentTourStepIndex = this.getLastSeenTourStepIndex();
+        this.currentTourStepIndex = this.getLastSeenTourStepIndex(true);
+        console.log('currentTourStepIndex: ', this.currentTourStepIndex);
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
