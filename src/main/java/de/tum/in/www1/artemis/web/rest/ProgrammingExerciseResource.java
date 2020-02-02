@@ -284,6 +284,9 @@ public class ProgrammingExerciseResource {
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
         try {
+            // We have removed the automatic build trigger from test to base for new programming exercises.
+            // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
+            // The importBuildPlans method includes this process
             programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
