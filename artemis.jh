@@ -205,6 +205,11 @@ entity Team {
     image String
 }
 
+entity TeamAssignmentConfig {
+    minTeamSize Integer
+    maxTeamSize Integer
+}
+
 entity Participation (participation) {
     repositoryUrl String,
     buildPlanId String,
@@ -522,6 +527,7 @@ relationship OneToOne {
     ProgrammingExercise{solutionParticipation} to Participation,
     ModelAssessmentConflict{causingConflictingResult} to ConflictingResult,
     ModelAssessmentConflict{updatedFeedback} to Feedback,
+    TeamAssignmentConfig{exercise} to Exercise{teamAssignmentConfig},
 }
 
 relationship ManyToOne {

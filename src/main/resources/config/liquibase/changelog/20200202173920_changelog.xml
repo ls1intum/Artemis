@@ -28,14 +28,26 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <createTable tableName="team_assignment_config">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT"/>
+            <column name="min_team_size" type="INT" defaultValue="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_team_size" type="INT"/>
+        </createTable>
         <createIndex indexName="fk_participation_team_id" tableName="participation">
             <column name="team_id"/>
         </createIndex>
         <addPrimaryKey columnNames="team_id, student_id" tableName="team_student"/>
         <addUniqueConstraint columnNames="team_id, exercise_id, initialization_state" constraintName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation"/>
+        <addUniqueConstraint columnNames="exercise_id" constraintName="UC_TEAM_ASSIGNMENT_CONFIG_EXERCISE_ID_COL" tableName="team_assignment_config"/>
         <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="team_student" constraintName="fk_team_student_team_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="team"/>
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="team_student" constraintName="fk_team_student_student_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="team" constraintName="fk_team_exercise_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
         <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="participation" constraintName="fk_participation_team_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="team"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="team_assignment_config" constraintName="fk_team_assignment_config_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise"/>
     </changeSet>
 </databaseChangeLog>

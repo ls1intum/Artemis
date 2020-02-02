@@ -98,6 +98,11 @@ public abstract class Exercise implements Serializable {
     @Column(name = "mode")
     private ExerciseMode mode;
 
+    @OneToOne(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private TeamAssignmentConfig teamAssignmentConfig;
+
     @Nullable
     @Column(name = "presentation_score_enabled")
     private Boolean presentationScoreEnabled = false;
@@ -316,6 +321,19 @@ public abstract class Exercise implements Serializable {
 
     public void setMode(ExerciseMode mode) {
         this.mode = mode;
+    }
+
+    public TeamAssignmentConfig getTeamAssignmentConfig() {
+        return teamAssignmentConfig;
+    }
+
+    public Exercise teamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
+        this.teamAssignmentConfig = teamAssignmentConfig;
+        return this;
+    }
+
+    public void setTeamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
+        this.teamAssignmentConfig = teamAssignmentConfig;
     }
 
     public Set<String> getCategories() {
