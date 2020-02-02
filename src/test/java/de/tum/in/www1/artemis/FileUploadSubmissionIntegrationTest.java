@@ -275,7 +275,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         fileUploadSubmission  = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
         long submissionID = fileUploadSubmission.getId();
-        FileUploadSubmission receivedSubmission = request.get("/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
+        FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(receivedSubmission.getId().equals(submissionID));
     }
