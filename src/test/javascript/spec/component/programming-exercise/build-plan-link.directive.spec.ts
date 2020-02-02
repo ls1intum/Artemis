@@ -64,12 +64,18 @@ describe('BuildPlanLinkDirective', () => {
     });
 
     it('should inject the correct build plan URL', fakeAsync(() => {
+        const open = stub(window, 'open');
+        window.open = open;
+
         fixture.detectChanges();
         tick();
 
-        const linkEl = debugElement.query(By.css('a'));
-        expect(linkEl.attributes['href']).to.be.equal(correctBuildPlan);
-        expect(linkEl.attributes['target']).to.be.equal('_blank');
-        expect(linkEl.attributes['rel']).to.be.equal('noopener noreferrer');
+        const link = debugElement.query(By.css('a'));
+        link.triggerEventHandler('click', { preventDefault: () => {} });
+
+        fixture.detectChanges();
+        tick();
+
+        expect(open).to.be.calledOnce;
     }));
 });

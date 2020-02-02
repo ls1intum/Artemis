@@ -76,10 +76,6 @@ export class ModelingAssessmentService {
         return this.http.get<number[]>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`);
     }
 
-    getPartialAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/partial-assessment`).map(res => this.convertResult(res));
-    }
-
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
     }

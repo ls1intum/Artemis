@@ -69,41 +69,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * GET modeling-submissions/:submissionId/partial-assessment : get a partial assessment for modeling submission
-     *
-     * @param submissionId id of the submission
-     * @return partial assessment for specified submission
-     */
-    @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')") // TODO MJ better path
-    // "/modeling-submissions/{submissionId}/result"?
-    // TODO MJ merge with getAssessmentBySubmissionId() ?
-    // Note: This endpoint is currently not used and not fully tested after migrating UML models and modeling
-    // submissions from file system to database.
-    public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
-        checkAuthorization(modelingExercise, user);
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
-            List<Feedback> partialFeedbackAssessment = compassService.getPartialAssessment(participation.getExercise().getId(), submission);
-            Result result = submission.getResult();
-            if (result != null) {
-                result.getFeedbacks().clear();
-                result.getFeedbacks().addAll(partialFeedbackAssessment);
-                return ResponseEntity.ok(result);
-            }
-            else {
-                return notFound();
-            }
-        }
-        else {
-            return notFound();
-        }
-    }
-
-    /**
      * Get the result of the modeling submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
      * to retrieve the assessment if he is not a student of the corresponding course, the submission is not his submission, the result is not finished or the assessment due date of
      * the corresponding exercise is in the future (or not set).
