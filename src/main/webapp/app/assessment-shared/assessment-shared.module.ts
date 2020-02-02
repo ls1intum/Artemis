@@ -14,6 +14,7 @@ import { AssessmentFiltersComponent } from 'app/assessment-shared/assessment-fil
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExternalSubmissionDialogComponent } from 'app/assessment-shared/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionButtonComponent } from 'app/assessment-shared/external-submission/external-submission-button.component';
+import { AssessmentWarningComponent } from 'app/assessment-shared/assessment-warning/assessment-warning.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule, ArtemisSharedComponentModule],
@@ -25,18 +26,21 @@ import { ExternalSubmissionButtonComponent } from 'app/assessment-shared/externa
         ScoreDisplayComponent,
         AssessmentDetailComponent,
         AssessmentFiltersComponent,
+        AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
         ExternalSubmissionDialogComponent,
     ],
-    entryComponents: [ExternalSubmissionDialogComponent],
     exports: [
         AssessmentLayoutComponent,
         AssessmentGeneralFeedbackComponent,
         ScoreDisplayComponent,
         AssessmentDetailComponent,
         AssessmentFiltersComponent,
+        AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
     ],
+    entryComponents: [ExternalSubmissionDialogComponent],
+
     providers: [JhiAlertService],
 })
 export class ArtemisAssessmentSharedModule {}

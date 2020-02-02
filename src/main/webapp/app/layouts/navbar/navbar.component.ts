@@ -109,4 +109,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
     getImageUrl(): string | null {
         return this.accountService.getImageUrl();
     }
+
+    /**
+     * Determine the label for initiating the guided tour based on the last seen tour step
+     */
+    guidedTourInitLabel(): string {
+        switch (this.guidedTourService.getLastSeenTourStepIndex()) {
+            case -1: {
+                return 'global.menu.restartTutorial';
+            }
+            case 0: {
+                return 'global.menu.startTutorial';
+            }
+            default: {
+                return 'global.menu.continueTutorial';
+            }
+        }
+    }
 }

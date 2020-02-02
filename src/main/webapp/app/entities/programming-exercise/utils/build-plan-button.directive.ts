@@ -6,10 +6,10 @@ import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/buil
 
 @Directive({ selector: 'button[jhiBuildPlanButton], jhi-button[jhiBuildPlanButton]' })
 export class BuildPlanButtonDirective implements OnInit {
-    @Input() projectKey: string;
-    @Input() buildPlanId: string;
-
-    private linkToBuildPlan: string;
+    private participationBuildPlanId: string;
+    private exerciseProjectKey: string;
+    private linkToBuildPlan: string | null;
+    private templateLink: string;
 
     constructor(private profileService: ProfileService) {}
 
@@ -19,7 +19,8 @@ export class BuildPlanButtonDirective implements OnInit {
             .pipe(
                 take(1),
                 tap((info: ProfileInfo) => {
-                    this.linkToBuildPlan = createBuildPlanUrl(info.buildPlanURLTemplate, this.projectKey, this.buildPlanId);
+                    this.templateLink = info.buildPlanURLTemplate;
+                    this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
                 }),
             )
             .subscribe();
@@ -27,6 +28,20 @@ export class BuildPlanButtonDirective implements OnInit {
 
     @HostListener('click')
     onClick() {
-        window.open(this.linkToBuildPlan);
+        if (this.linkToBuildPlan) {
+            window.open(this.linkToBuildPlan);
+        }
+    }
+
+    @Input()
+    set projectKey(key: string) {
+        this.exerciseProjectKey = key;
+        this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
+    }
+
+    @Input()
+    set buildPlanId(planId: string) {
+        this.participationBuildPlanId = planId;
+        this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
     }
 }
