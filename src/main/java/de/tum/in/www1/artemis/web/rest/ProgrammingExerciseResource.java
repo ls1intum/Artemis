@@ -223,7 +223,7 @@ public class ProgrammingExerciseResource {
         String projectName = programmingExercise.getProjectName();
         boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Project does not exist in VCS: " + projectKey, "vcsProjectExists")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Project already exists in VCS: " + projectName, "vcsProjectExists")).body(null);
         }
 
         String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
