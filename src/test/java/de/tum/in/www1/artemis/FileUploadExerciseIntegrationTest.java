@@ -17,6 +17,9 @@ import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
@@ -82,6 +85,28 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
         request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.OK);
 
-        assertThat(exerciseRepo.findAll().isEmpty()).isTrue();
+        assertThat(exerciseRepo.findAll().isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateFileUploadExercise() throws Exception {
+        database.addCourseWithTwoFileUploadExercise();
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
+
+        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        assertThat(receivedFileUploadExercise.getDueDate().equals(ZonedDateTime.now().plusDays(10)));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllFileUploadExercisesForCourse() throws Exception {
+        database.addCourseWithTwoFileUploadExercise();
+        long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures().get(0).getId();
+
+        FileUploadExercise receivedFileUploadExercises = request.get("/courses/"+ courseID + "/file-upload-exercises", HttpStatus.OK, FileUploadExercise.class);
+
+        //assertThat(receivedFileUploadExercises.size() == courseRepo.findAllActiveWithEagerExercisesAndLectures().get(0).getExercises().size());
     }
 }

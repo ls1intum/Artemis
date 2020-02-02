@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import de.tum.in.www1.artemis.domain.File;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -265,5 +266,17 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         if (isStudent) {
             assertThat(submission.getResult()).isNull();
         }
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getSubmissionByID() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission  = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        long submissionID = fileUploadSubmission.getId();
+        FileUploadSubmission receivedSubmission = request.get("/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
+
+        assertThat(receivedSubmission.getId().equals(submissionID));
     }
 }
