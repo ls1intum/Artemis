@@ -35,12 +35,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
-    @EntityGraph(attributePaths = { "submissions", "submissions.result" })
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join r.assessor where participation.exercise.id = :#{#exerciseId}")
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
     /**
