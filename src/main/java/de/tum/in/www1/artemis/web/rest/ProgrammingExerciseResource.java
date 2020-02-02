@@ -182,6 +182,12 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
+        // Check if course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid"))
+                    .body(null);
+        }
+
         // Check if exercise shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
