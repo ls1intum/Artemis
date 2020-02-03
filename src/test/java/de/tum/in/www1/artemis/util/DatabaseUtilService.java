@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import liquibase.pro.packaged.L;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -266,6 +267,16 @@ public class DatabaseUtilService {
         ta = userRepo.save(ta);
 
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+    }
+    public Lecture createCourseWithLecture(){
+        Course course =  ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        Lecture lecture = new Lecture();
+        lecture.setDescription("Test Lecture");
+        lecture.setCourse(course);
+        courseRepo.save(course);
+        //lectureRepo.save(lecture);
+        return lecture;
     }
 
     public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
