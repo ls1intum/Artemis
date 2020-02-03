@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NavigationStart, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router, RoutesRecognized } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { fromEvent, Observable, Subject } from 'rxjs';
-import { filter, map, flatMap, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
+import { filter, flatMap, map, pairwise, switchMap } from 'rxjs/operators';
 import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -32,11 +32,11 @@ export class GuidedTourService {
     public currentTour: GuidedTour | null = null;
 
     /** Helper variables */
+    public restartIsLoading = false;
     private currentTourStepIndex = 0;
     private availableTourForComponent: GuidedTour | null;
     private onResizeMessage = false;
     private modelingResultCorrect = false;
-    public restartIsLoading = false;
     private assessmentObject = new AssessmentObject(0, 0);
 
     /** Current course and exercise */
@@ -49,6 +49,8 @@ export class GuidedTourService {
     private isUserInteractionFinishedSubject = new Subject<boolean>();
     private transformSubject = new Subject<number>();
     private checkModelingComponentSubject = new Subject<string | null>();
+    private isBackPageNavigation = new BehaviorSubject<boolean>(false);
+    private previousRoutePath = new BehaviorSubject<string>('');
 
     /** Variables for the dot navigation */
     public maxDots = 10;
@@ -56,7 +58,7 @@ export class GuidedTourService {
     private transformXIntervalNext = -26;
     private transformXIntervalPrev = 26;
 
-    // Guided tour course and exercise mapping
+    /** Guided tour course and exercise mapping */
     public guidedTourMapping: GuidedTourMapping | null;
 
     constructor(
@@ -73,6 +75,8 @@ export class GuidedTourService {
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
      */
     public init() {
+        this.previousRoutePath.next(location.href);
+
         // Retrieve the guided tour setting from the account service after the user is logged in
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
@@ -87,6 +91,15 @@ export class GuidedTourService {
             }
         });
 
+        this.router.events
+            .pipe(
+                filter(e => e instanceof RoutesRecognized),
+                pairwise(),
+            )
+            .subscribe((event: any[]) => {
+                this.previousRoutePath.next(event[0].urlAfterRedirects);
+            });
+
         // Reset guided tour availability on router navigation
         this.router.events.subscribe(event => {
             // Reset currentExercise and currentCourse for every page
@@ -94,10 +107,13 @@ export class GuidedTourService {
                 this.currentExercise = null;
                 this.currentCourse = null;
             }
+
             // Checks the guided tour availability on router navigation during an active tutorial
-            if (this.availableTourForComponent && this.currentTour && event instanceof NavigationEnd) {
-                this.guidedTourCurrentStepSubject.next(null);
-                this.checkPageUrl();
+            if (event instanceof NavigationEnd) {
+                if (this.availableTourForComponent && this.currentTour) {
+                    this.guidedTourCurrentStepSubject.next(null);
+                    this.checkNextTourStepOnNavigation();
+                }
             }
         });
 
@@ -122,7 +138,7 @@ export class GuidedTourService {
             });
     }
 
-    private checkPageUrl(attempt = 1) {
+    private checkNextTourStepOnNavigation() {
         if (!this.currentTour) {
             return;
         }
@@ -130,17 +146,25 @@ export class GuidedTourService {
         const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
 
-        if (currentStep && currentStep.userInteractionEvent && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && nextStep && nextStep.pageUrl) {
-            if (this.router.url.match(nextStep.pageUrl)) {
-                this.currentTourStepIndex += 1;
-                setTimeout(() => {
-                    this.resetUserInteractionFinishedState(nextStep);
-                    this.setPreparedTourStep();
-                }, 300);
-            } else if (this.currentTour) {
-                this.skipTour();
-                this.guidedTourAvailabilitySubject.next(false);
-                this.resetTour();
+        if (this.isBackPageNavigation.value) {
+            setTimeout(() => {
+                if (currentStep.userInteractionEvent) {
+                    this.resetUserInteractionFinishedState(currentStep);
+                }
+                this.setPreparedTourStep();
+            }, 300);
+        } else {
+            if (currentStep && currentStep.userInteractionEvent && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && nextStep && nextStep.pageUrl) {
+                if (this.router.url.match(nextStep.pageUrl)) {
+                    this.currentTourStepIndex += 1;
+                    setTimeout(() => {
+                        this.resetUserInteractionFinishedState(nextStep);
+                        this.setPreparedTourStep();
+                    }, 300);
+                } else if (this.currentTour) {
+                    this.guidedTourAvailabilitySubject.next(false);
+                    this.skipTour();
+                }
             }
         }
     }
@@ -260,6 +284,7 @@ export class GuidedTourService {
             return;
         }
 
+        this.isBackPageNavigation.next(false);
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
         this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex - 1);
@@ -267,13 +292,21 @@ export class GuidedTourService {
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
+
+        if (currentStep.pageUrl && currentStep.pageUrl !== this.previousRoutePath.value) {
+            this.isBackPageNavigation.next(true);
+            this.router.navigate([this.previousRoutePath.value.toString()]).then();
+        }
+
         if (previousStep) {
             this.currentTourStepIndex--;
             if (previousStep.action) {
                 previousStep.action();
             }
             setTimeout(() => {
-                this.setPreparedTourStep();
+                if (!this.isBackPageNavigation.value) {
+                    this.setPreparedTourStep();
+                }
             });
         } else {
             this.resetTour();
@@ -292,6 +325,7 @@ export class GuidedTourService {
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
         const timeout = currentStep instanceof UserInterActionTourStep ? 500 : 0;
         this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
+        this.isBackPageNavigation.next(false);
 
         if (currentStep.closeAction) {
             currentStep.closeAction();
@@ -351,15 +385,16 @@ export class GuidedTourService {
 
     /**
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
-     *
-     * @param showCancelHint defines whether the cancel hint should be displayed, the default value is true
-     * @param showFinishStep defines whether the completed tour step should be displayed, the default value is true
      */
     public skipTour(): void {
         if (this.currentTour) {
             if (this.currentTour.skipCallback) {
                 this.currentTour.skipCallback(this.currentTourStepIndex);
             }
+        }
+        if (this.currentTour === cancelTour || this.currentTour === completedTour) {
+            this.resetTour();
+            return;
         }
         if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
             this.finishGuidedTour();
@@ -650,7 +685,6 @@ export class GuidedTourService {
         // Filter tour steps according to permissions
         this.currentTour.steps = this.getFilteredTourSteps();
         this.currentTourStepIndex = this.getLastSeenTourStepIndex(true);
-        console.log('currentTourStepIndex: ', this.currentTourStepIndex);
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
