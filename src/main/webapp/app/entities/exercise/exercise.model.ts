@@ -85,6 +85,7 @@ export abstract class Exercise implements BaseEntity {
     // helper attributes
     public isAtLeastTutor = false; // default value
     public isAtLeastInstructor = false; // default value
+    public teamMode = false; // default value
     public assessmentDueDateError = false;
     public dueDateError = false;
     public loading: boolean;
