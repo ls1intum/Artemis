@@ -24,7 +24,7 @@
                 "error": "Could not create team. Please try again."
             },
             "updateTeam": {
-                "label": "Update team",
+                "label": "Edit team",
                 "error": "Could not update team. Please try again."
             },
             "removeTeam": {
