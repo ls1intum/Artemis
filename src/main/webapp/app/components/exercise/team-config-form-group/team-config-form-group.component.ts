@@ -21,8 +21,11 @@ export class TeamConfigFormGroupComponent implements OnInit {
     }
 
     onExerciseModeChange(mode: ExerciseMode) {
-        this.config = new TeamAssignmentConfig();
-        this.exercise.teamAssignmentConfig = mode === ExerciseMode.TEAM ? new TeamAssignmentConfig() : null;
+        if (mode === ExerciseMode.TEAM) {
+            this.applyCurrentConfig();
+        } else {
+            this.exercise.teamAssignmentConfig = null;
+        }
     }
 
     updateMinTeamSize(minTeamSize: number) {
