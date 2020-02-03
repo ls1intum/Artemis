@@ -1,0 +1,28 @@
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span jhiTranslate="artemisApp.team.createTeam.label">Create team</span>
+            ({{ exercise.title }})
+        </h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <jhi-alert></jhi-alert>
+        <div class="form-group">
+            <h4 class="control-label" jhiTranslate="artemisApp.team.name">Name</h4>
+            <input type="text" required class="form-control" name="teamName" id="teamName" [(ngModel)]="team.name" #teamName="ngModel" />
+            <span class="text-danger" *ngIf="teamName?.errors?.required && (teamName?.dirty || teamName?.touched)" jhiTranslate="artemisApp.team.nameRequired">
+                Name is required.
+            </span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+    </div>
+</form>

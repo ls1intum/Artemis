@@ -16,8 +16,13 @@
                 "title": "Team"
             },
             "name": "Name",
+            "nameRequired": "Name is required.",
             "image": "Image",
             "students": "Students",
+            "createTeam": {
+                "label": "Create team",
+                "error": "Could not create team. Please try again."
+            },
             "removeTeam": {
                 "label": "Remove team",
                 "error": "Could not remove team. Please try again."

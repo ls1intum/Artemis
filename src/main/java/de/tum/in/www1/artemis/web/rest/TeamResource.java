@@ -70,7 +70,8 @@ public class TeamResource {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(team.getExercise(), user)) {
+        Exercise exercise = exerciseService.findOne(team.getExercise().getId());
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
         Team result = teamRepository.save(team);
@@ -94,7 +95,8 @@ public class TeamResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(team.getExercise(), user)) {
+        Exercise exercise = exerciseService.findOne(team.getExercise().getId());
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
         Team result = teamRepository.save(team);
@@ -117,7 +119,7 @@ public class TeamResource {
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         Team team = optionalTeam.get();
-        Exercise exercise = team.getExercise();
+        Exercise exercise = exerciseService.findOne(team.getExercise().getId());
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && !team.hasStudent(user)) {
             return forbidden();
         }
@@ -158,7 +160,8 @@ public class TeamResource {
             return ResponseEntity.notFound().build();
         }
         Team team = optionalTeam.get();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(team.getExercise(), user)) {
+        Exercise exercise = exerciseService.findOne(team.getExercise().getId());
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
         teamRepository.delete(team);

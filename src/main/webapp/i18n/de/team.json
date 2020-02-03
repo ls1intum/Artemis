@@ -16,8 +16,17 @@
                 "title": "Team"
             },
             "name": "Name",
+            "nameRequired": "Name ist erforderlich.",
             "image": "Bild",
-            "students": "Studenten"
+            "students": "Studenten",
+            "createTeam": {
+                "label": "Erstelle Team",
+                "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
+            },
+            "removeTeam": {
+                "label": "Entferne Team",
+                "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
+            }
         }
     }
 }
