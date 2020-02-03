@@ -349,7 +349,7 @@ public class ResultResource {
 
         List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
         for (StudentParticipation participation : participations) {
-            // Filter out participations without Students
+            // Filter out participations without students
             if (participation.getStudent() == null) {
                 continue;
             }
