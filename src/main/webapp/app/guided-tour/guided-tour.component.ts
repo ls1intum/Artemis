@@ -124,6 +124,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             if (this.hasUserPermissionForCurrentTourStep()) {
                 this.scrollToAndSetElement();
                 this.handleTransition();
+                this.guidedTourService.isBackPageNavigation.next(false);
                 return;
             }
             this.selectedElementRect = null;
