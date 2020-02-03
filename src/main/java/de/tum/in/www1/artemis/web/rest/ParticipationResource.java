@@ -204,6 +204,14 @@ public class ParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         if (exercise instanceof ProgrammingExercise) {
+
+            // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
+            var pExercise = (ProgrammingExercise) exercise;
+            if ((pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
+                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+                return forbidden();
+            }
+
             participation = participationService.resumeExercise(participation);
             // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
             participation = participationService.performEmptyCommit(participation);
@@ -214,6 +222,7 @@ public class ParticipationResource {
                         .body(participation);
             }
         }
+        // error case
         log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
         if (participation != null && participation.getExercise() != null) {
