@@ -8,7 +8,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +27,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -38,6 +38,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     ExerciseRepository exerciseRepo;
+
     @Autowired
     CourseRepository courseRepository;
 
@@ -379,7 +380,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username= "tutor1", roles= "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintById() throws Exception {
         complaintRepo.save(complaint);
         request.get("/api/complaints/" + complaint.getId(), HttpStatus.OK, Complaint.class);
