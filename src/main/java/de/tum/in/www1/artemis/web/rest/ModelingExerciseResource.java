@@ -96,6 +96,11 @@ public class ModelingExerciseResource {
             return responseFailure;
         }
 
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (modelingExercise.getTeamAssignmentConfig() != null) {
+            modelingExercise.getTeamAssignmentConfig().setExercise(modelingExercise);
+        }
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
@@ -139,6 +144,12 @@ public class ModelingExerciseResource {
         // example submissions. Otherwise the connection between exercise and example submissions would be lost.
         if (modelingExercise.getExampleSubmissions() != null) {
             modelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(modelingExercise));
+        }
+
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (modelingExercise.getTeamAssignmentConfig() != null) {
+            modelingExercise.getTeamAssignmentConfig().setExercise(modelingExercise);
         }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);

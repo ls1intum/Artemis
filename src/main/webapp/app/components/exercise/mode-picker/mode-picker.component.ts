@@ -11,7 +11,7 @@ export class ModePickerComponent {
     readonly TEAM = ExerciseMode.TEAM;
 
     @Input() exercise: Exercise;
-    @Output() ngModelChange = new EventEmitter();
+    @Output() ngModelChange = new EventEmitter<ExerciseMode>();
 
     /**
      * @function setMode
@@ -21,7 +21,7 @@ export class ModePickerComponent {
     setMode(mode: ExerciseMode) {
         if (mode !== this.exercise.mode) {
             this.exercise.mode = mode;
-            this.ngModelChange.emit();
+            this.ngModelChange.emit(mode);
         }
     }
 }

@@ -155,6 +155,12 @@ public class ProgrammingExerciseService {
         setupExerciseTemplate(programmingExercise, user, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
 
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (programmingExercise.getTeamAssignmentConfig() != null) {
+            programmingExercise.getTeamAssignmentConfig().setExercise(programmingExercise);
+        }
+
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -256,6 +262,12 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (programmingExercise.getTeamAssignmentConfig() != null) {
+            programmingExercise.getTeamAssignmentConfig().setExercise(programmingExercise);
+        }
+
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: should the call `scheduleExerciseIfRequired` not be moved into the service?
@@ -557,6 +569,11 @@ public class ProgrammingExerciseService {
             throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
         }
         programmingExercise.setProblemStatement(problemStatement);
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (programmingExercise.getTeamAssignmentConfig() != null) {
+            programmingExercise.getTeamAssignmentConfig().setExercise(programmingExercise);
+        }
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
@@ -707,6 +724,11 @@ public class ProgrammingExerciseService {
     }
 
     public ProgrammingExercise save(ProgrammingExercise programmingExercise) {
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (programmingExercise.getTeamAssignmentConfig() != null) {
+            programmingExercise.getTeamAssignmentConfig().setExercise(programmingExercise);
+        }
         return programmingExerciseRepository.save(programmingExercise);
     }
 

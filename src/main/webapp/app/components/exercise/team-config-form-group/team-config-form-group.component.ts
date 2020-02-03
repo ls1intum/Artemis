@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseMode } from 'app/entities/exercise';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
 import { cloneDeep } from 'lodash';
@@ -13,7 +13,6 @@ export class TeamConfigFormGroupComponent implements OnInit {
     readonly TEAM = ExerciseMode.TEAM;
 
     @Input() exercise: Exercise;
-    @Output() ngModelChange = new EventEmitter();
 
     config: TeamAssignmentConfig;
 
@@ -24,21 +23,19 @@ export class TeamConfigFormGroupComponent implements OnInit {
     onExerciseModeChange(mode: ExerciseMode) {
         this.config = new TeamAssignmentConfig();
         this.exercise.teamAssignmentConfig = mode === ExerciseMode.TEAM ? new TeamAssignmentConfig() : null;
-        this.ngModelChange.emit();
     }
 
     updateMinTeamSize(minTeamSize: number) {
         this.config.maxTeamSize = Math.max(this.config.maxTeamSize, minTeamSize);
-        this.emitCurrentConfig();
+        this.applyCurrentConfig();
     }
 
     updateMaxTeamSize(maxTeamSize: number) {
         this.config.minTeamSize = Math.min(this.config.minTeamSize, maxTeamSize);
-        this.emitCurrentConfig();
+        this.applyCurrentConfig();
     }
 
-    private emitCurrentConfig() {
+    private applyCurrentConfig() {
         this.exercise.teamAssignmentConfig = cloneDeep(this.config);
-        this.ngModelChange.emit();
     }
 }

@@ -120,6 +120,11 @@ public class TextExerciseResource {
             return forbidden();
         }
 
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (textExercise.getTeamAssignmentConfig() != null) {
+            textExercise.getTeamAssignmentConfig().setExercise(textExercise);
+        }
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(textExercise);
@@ -153,6 +158,11 @@ public class TextExerciseResource {
         TextExercise textExerciseBeforeUpdate = textExerciseService.findOne(textExercise.getId());
         if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
             return forbidden();
+        }
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (textExercise.getTeamAssignmentConfig() != null) {
+            textExercise.getTeamAssignmentConfig().setExercise(textExercise);
         }
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));

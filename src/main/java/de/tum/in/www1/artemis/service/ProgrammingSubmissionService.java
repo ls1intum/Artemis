@@ -507,6 +507,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
+        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
+        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
+        if (programmingExercise.getTeamAssignmentConfig() != null) {
+            programmingExercise.getTeamAssignmentConfig().setExercise(programmingExercise);
+        }
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         // Send a websocket message about the new state to the client.
         websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
