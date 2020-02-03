@@ -6,15 +6,6 @@ import { AssessmentObject, GuidedTourAssessmentTask } from 'app/guided-tour/guid
 export const tutorAssessmentTour: GuidedTour = {
     settingsKey: 'tutor_assessment_tour',
     steps: [
-        new TextTourStep({
-            highlightSelector: '.exercise-button.guided-tour',
-            headlineTranslateKey: 'tour.courseAdministration.exerciseButton.headline',
-            contentTranslateKey: 'tour.courseAdministration.exerciseButton.content',
-            highlightPadding: 10,
-            orientation: Orientation.LEFT,
-            permission: ['ROLE_TA'],
-            pageUrl: '/course',
-        }),
         new UserInterActionTourStep({
             highlightSelector: '.tutor-dashboard.guided-tour',
             headlineTranslateKey: 'tour.courseAdministration.tutorCourseDashboardButton.headline',
@@ -22,6 +13,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.LEFT,
             permission: ['ROLE_TA'],
+            pageUrl: '/course',
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
         // new page

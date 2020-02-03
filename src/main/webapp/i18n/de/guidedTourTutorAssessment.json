@@ -1,91 +1,87 @@
 {
     "tour": {
         "courseAdministration": {
-            "exerciseButton": {
-                "headline": "Exercise Overview",
-                "content": "If you click on <tt>Exercise</tt> you will get an overview of all exercises of this course."
-            },
             "tutorCourseDashboardButton": {
-                "headline": "Tutor Course Dashboard",
-                "content": "If you navigate to the <tt>Tutor Course Dashboard</tt> you will be able to get an overview of several student submission and grade them."
+                "headline": "Tutor Kurs Dashboard",
+                "content": "Im <tt>Tutor Kurs Dashboard</tt> kannst du die Studentenabgaben einsehen und bewerten."
             }
         },
         "tutorCourseDashboard": {
             "overview": {
-                "headline": "Overview",
-                "content": "Here you can see an overview of your assessments, complaints and feedback requests."
+                "headline": "Übersicht",
+                "content": "Hier findest du die Statistiken über deine <tt>Bewertungen</tt> und die <tt>Beschwerden</tt> und <tt>Feedbackanfragen</tt> über deine Bewertungen."
             },
             "showFinished": {
-                "headline": "Show Finished Exercises",
-                "content": "In order to see all exercises, just tick the checkbox <tt>Show finished exercises</tt>."
+                "headline": "Beendete Übungen anzeigen",
+                "content": "Beendete Übungen werden nicht initial in der unteren Tabelle angezeigt. Um alle Übungen, einschließlich der beendeten, anzuzeigen, musst du die Checkbox <tt>Beendete Übungen anzeigen</tt> selektieren."
             },
             "exerciseTable": {
-                "headline": "Exercise Table",
-                "content": "This table displays all exercises of this course."
+                "headline": "Tabelle aller Übungen",
+                "content": "Diese Tabelle listet alle Übungen des aktuellen Kurses auf und zeigt Informationen zum <tt>Aufgabentyp</tt>, <tt>Titel der Übung</tt>, <tt>Status</tt> deines Bewertungsprozesses und das <tt>Fälligkeitsdatum</tt> der Übung und der Bewertung."
             },
             "gradingProcess": {
-                "headline": "Grading Process",
-                "content": "This graph visualizes your current grading process. You can hover over these nodes to find out more about the grading process steps after this tutorial."
+                "headline": "Bewertungsprozess",
+                "content": "Dieser Graph visualisiert deinen aktuellen Bewertungsprozess und markiert alle Knoten in grün, wenn der dazugehörige Prozessschritt erledigt ist: <ol><li>Lese die Bewertungsanleitung</li><li>Übe an Beispieleinreichungen (wenn vorhanden)</li><li>Bewerte Studenteneinreichungen</li><li>Evaluiere die Beschwerden und Feedbackanfragen der Studenten</li></ol>"
             },
             "exerciseDashboardButton": {
-                "headline": "Exercise Dashboard",
-                "content": "Let's head over to the exercise dashboard to view the exercise details and student submissions."
+                "headline": "Aufgaben Dashboard",
+                "content": "Nun gehen wir ins Aufgaben Dashboard und schauen uns die Aufgabendetails und Studentenabgaben an."
             }
         },
         "tutorExerciseDashboard": {
             "instructions": {
-                "headline": "Instructions",
-                "content": "This section contains the <tt>Problem statement</tt>, <tt>Example solution</tt> and <tt>Grading instructions</tt> of the exercise. Please read through them carefully and then proceed to the next step."
+                "headline": "Anleitung",
+                "content": "Dieser Abschnitt enthält die <tt>Aufgabenstellung</tt>, <tt>Beispiel Lösung</tt> und <tt>Bewertungsanweisungen</tt> der Übung. Bitte lies sie dir genau durch und fahre mit dem nächsten Schritt fort."
             },
             "instructionsButton": {
-                "headline": "Confirm instructions",
-                "content": "Click on this button and confirm only after you have read and understood the instructions."
+                "headline": "Bestätigung",
+                "content": "Klicke auf diesen Button und bestätige, dass du die Anleitung gelesen und verstanden hast."
             },
             "reviewExampleSubmission": {
-                "headline": "Review Example Submission",
-                "content": "Click here to see how a submission could look like."
+                "headline": "Beispielabgaben ansehen",
+                "content": "Klick hier um eine Beispielabgabe für eine Textaufgabe und dessen Bewertung anzusehen."
             },
             "assessExampleSubmission": {
-                "headline": "Assess Example Submission",
-                "content": "Click here to work on your first assessment."
+                "headline": "Beispielabgabe bewerten",
+                "content": "Klick hier um an deiner ersten Bewertung für eine Textaufgabe zu arbeiten."
             },
             "submissionsAndComplaints": {
-                "headline": "Student submission",
-                "content": "The student submissions will be displayed here."
+                "headline": "Studentenabgaben",
+                "content": "Die Studentenabgaben, die bewertet werden müssen, werden nach dem Fälligkeitsdatum der Übung hier angezeigt."
             }
         },
         "exampleReview": {
             "reviewSubmission": {
-                "headline": "Review Example Submission",
-                "content": "This is an example submission where three text blocks are already marked for assessment."
+                "headline": "Beispielabgabe",
+                "content": "Das ist eine Beispielaufgabe, bei der bereits drei Textblöcke zur Bewertung markiert wurden."
             },
             "reviewAssessment": {
-                "headline": "Review Example Assessment",
-                "content": "This is an example assessment of the submission. Each text block is is graded with one score."
+                "headline": "Beispielbewertung",
+                "content": "Das ist eine Beispielbewertung der Abgabe. Jeder markierte Textblock wurde mit der Punktzahlt '1' bewertet."
             },
             "confirm": {
-                "headline": "Confirm",
-                "content": "Confirm if you have read and understood the example."
+                "headline": "Bestätigen",
+                "content": "Bestätige, wenn du das Beispiel gelesen und verstanden hast."
             }
         },
         "exampleAssessment": {
             "addAssessment": {
-                "headline": "Assess Example Submission",
-                "content": "Now you can start assessing this text exercise.",
-                "task": "Mark the text of the three patterns and click on the <tt>Assess</tt> button."
+                "headline": "Beispielabgabe bewerten",
+                "content": "In diesem Schritt fängst du mit der Bewertung der Abgabe an. Befolge dafür die folgende Anleitung:",
+                "task": "Markiere den Text eines Software Patterns und klicke auf <tt>Bewerten</tt>. Wiederhole diesen Schritt für die übrigen zwei Patterns. Am Ende solltest du drei markierte Textblöcke haben."
             },
             "addScore": {
-                "headline": "Add Score",
-                "content": "Here you can add a score and additional feedback for each assessment element.",
-                "task": "Add one score for each pattern."
+                "headline": "Punktzahl hinzufügen",
+                "content": "Nun kannst du für jedes Bewertungselement eine Punktzahl und Feedbacktext hinterlegen.",
+                "task": "Gib jedem Bewertungselement die Punktzahl '1'."
             },
             "submit": {
-                "headline": "Submit Assessment",
-                "content": "Now you can submit your assessment"
+                "headline": "Bewertung einreichen",
+                "content": "Jetzt kannst du deine Bewertung einreichen."
             },
             "back": {
-                "headline": "Complete Assessment Tour",
-                "content": "Navigate back to the exercise dashboard to complete your tour."
+                "headline": "Tutorial für Beispielbewertungen abschließen",
+                "content": "Navigiere zum Aufgaben Dashboard zurück um dieses Tutorial abzuschließen."
             }
         }
     }
