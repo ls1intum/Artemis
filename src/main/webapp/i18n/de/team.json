@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "participation": {
+            "home": {
+                "title": "Teams",
+                "createLabel": "Team erstellen",
+                "createOrEditLabel": "Team erstellen oder bearbeiten"
+            },
+            "created": "Team erstellt mit ID {{ param }}",
+            "updated": "Team von {{ param }} aktualisiert",
+            "deleted": "Team von {{ param }} gelöscht",
+            "delete": {
+                "question": "Soll die Team von <strong>{{ name }}</strong> wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Team"
+            }
+        }
+    }
+}

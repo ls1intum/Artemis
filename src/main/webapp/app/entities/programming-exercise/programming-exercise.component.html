@@ -193,6 +193,15 @@
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                                 </button>
+                                <button
+                                    type="submit"
+                                    *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
+                                    [routerLink]="['/exercise', programmingExercise.id, 'teams']"
+                                    class="btn btn-primary btn-sm mr-1"
+                                >
+                                    <fa-icon [icon]="'users'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                                </button>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <button

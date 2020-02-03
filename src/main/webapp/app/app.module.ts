@@ -21,6 +21,7 @@ import { ArtemisConnectionNotificationModule } from 'app/layouts/connection-noti
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisLegalModule } from 'app/legal';
 import { ArtemisParticipationModule } from 'app/entities/participation/participation.module';
+import { ArtemisTeamModule } from 'app/entities/team/team.module';
 import { ArtemisProgrammingSubmissionModule } from 'app/programming-submission';
 import { ArtemisOverviewModule } from 'app/overview';
 import { ArtemisAccountModule } from 'app/account/account.module';
@@ -64,6 +65,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
         GuidedTourModule,
         ArtemisLegalModule,
         ArtemisParticipationModule.forRoot(),
+        ArtemisTeamModule.forRoot(),
         ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
         ArtemisAccountModule,
