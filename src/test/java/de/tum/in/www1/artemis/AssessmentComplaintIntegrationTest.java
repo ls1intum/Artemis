@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     ExerciseRepository exerciseRepo;
+    @Autowired
+    CourseRepository courseRepository;
 
     @Autowired
     RequestUtilService request;
@@ -375,6 +378,13 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         request.getList("/api/complaints", HttpStatus.FORBIDDEN, ComplaintResponse.class, params);
     }
 
+    @Test
+    @WithMockUser(username= "tutor1", roles= "TA")
+    public void getComplaintById() throws Exception {
+        complaintRepo.save(complaint);
+        request.get("/api/complaints/" + complaint.getId(), HttpStatus.OK, Complaint.class);
+    }
+
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
         assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
         Result storedFeedbackResult = new Result();
@@ -429,6 +439,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             // TODO check exercise type specific sensitive attributes
+            assertThat(modelingExercise.getSampleSolutionModel()).as("Exercise only contains title and ID").isNull();
+            assertThat(modelingExercise.getSampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
         }
     }
 
