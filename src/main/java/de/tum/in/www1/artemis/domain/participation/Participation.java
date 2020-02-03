@@ -8,6 +8,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "P")
+@DiscriminatorOptions(force = true)
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
