@@ -23,6 +23,10 @@
                 "label": "Erstelle Team",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
+            "updateTeam": {
+                "label": "Bearbeite Team",
+                "error": "Das Team konnte nicht bearbeitet werden. Bitte versuche es nochmal."
+            },
             "removeTeam": {
                 "label": "Entferne Team",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."

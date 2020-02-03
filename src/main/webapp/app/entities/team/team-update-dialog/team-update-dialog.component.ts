@@ -9,13 +9,13 @@ import { TeamService } from 'app/entities/team/team.service';
 import { Team } from 'app/entities/team/team.model';
 
 @Component({
-    selector: 'jhi-team-create-dialog',
-    templateUrl: './team-create-dialog.component.html',
+    selector: 'jhi-team-update-dialog',
+    templateUrl: './team-update-dialog.component.html',
 })
-export class TeamCreateDialogComponent {
+export class TeamUpdateDialogComponent {
+    @Input() team: Team;
     @Input() exercise: Exercise;
 
-    team: Team = new Team();
     isSaving = false;
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
@@ -26,10 +26,16 @@ export class TeamCreateDialogComponent {
 
     save() {
         this.team.exercise = this.exercise;
-        this.subscribeToSaveResponse(this.teamService.create(this.team));
+
+        if (this.team.id !== undefined) {
+            this.subscribeToSaveResponse(this.teamService.update(this.team));
+        } else {
+            this.subscribeToSaveResponse(this.teamService.create(this.team));
+        }
     }
 
     private subscribeToSaveResponse(team: Observable<HttpResponse<Team>>) {
+        this.isSaving = true;
         team.subscribe(
             res => this.onSaveSuccess(res),
             () => this.onSaveError(),

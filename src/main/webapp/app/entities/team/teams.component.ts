@@ -7,12 +7,15 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/entities/team/team.model';
 import { TeamService } from 'app/entities/team/team.service';
+import { ButtonSize } from 'app/shared/components';
 
 @Component({
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
 })
 export class TeamsComponent implements OnInit, OnDestroy {
+    ButtonSize = ButtonSize;
+
     teams: Team[] = [];
     filteredTeamsSize = 0;
     paramSub: Subscription;
