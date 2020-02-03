@@ -96,6 +96,10 @@ public class Team implements Serializable {
         return students;
     }
 
+    public boolean hasStudent(User user) {
+        return students.contains(user);
+    }
+
     public Team students(Set<User> users) {
         this.students = users;
         return this;
@@ -137,6 +141,6 @@ public class Team implements Serializable {
 
     @Override
     public String toString() {
-        return "Team{" + "id=" + getId() + ", name='" + getName() + "'" + ", image='" + getImage() + "'" + "}";
+        return "Team{" + "id=" + getId() + ", name='" + getName() + "'" + ", students='" + getStudents() + "'" + "}";
     }
 }

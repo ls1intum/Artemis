@@ -104,6 +104,11 @@ public abstract class Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;
 
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<Team> teams = new HashSet<>();
+
     @Nullable
     @Column(name = "presentation_score_enabled")
     private Boolean presentationScoreEnabled = false;
@@ -335,6 +340,31 @@ public abstract class Exercise implements Serializable {
 
     public void setTeamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
         this.teamAssignmentConfig = teamAssignmentConfig;
+    }
+
+    public Set<Team> getTeams() {
+        return teams;
+    }
+
+    public Exercise teams(Set<Team> teams) {
+        this.teams = teams;
+        return this;
+    }
+
+    public Exercise addTeam(Team team) {
+        this.teams.add(team);
+        team.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeTeam(Team team) {
+        this.teams.remove(team);
+        team.setExercise(null);
+        return this;
+    }
+
+    public void setTeams(Set<Team> teams) {
+        this.teams = teams;
     }
 
     public Set<String> getCategories() {
