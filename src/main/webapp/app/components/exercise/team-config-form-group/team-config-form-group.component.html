@@ -27,7 +27,8 @@
                         max="99"
                         required
                         class="form-control input-number-short"
-                        [(ngModel)]="exercise.teamAssignmentConfig.minTeamSize"
+                        [(ngModel)]="config.minTeamSize"
+                        (ngModelChange)="updateMinTeamSize($event)"
                         #minTeamSize="ngModel"
                     />
                     <div class="input-group-append">
@@ -41,7 +42,8 @@
                         max="99"
                         required
                         class="form-control input-number-short"
-                        [(ngModel)]="exercise.teamAssignmentConfig.maxTeamSize"
+                        [(ngModel)]="config.maxTeamSize"
+                        (ngModelChange)="updateMaxTeamSize($event)"
                         #maxTeamSize="ngModel"
                     />
                 </div>
