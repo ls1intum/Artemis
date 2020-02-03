@@ -149,7 +149,11 @@
 
                     <ul *ngIf="stats.toReview.done >= stats.toReview.total">
                         <li *ngFor="let exampleSubmission of exampleSubmissionsToReview; let i = index">
-                            <button class="btn btn-link" (click)="openExampleSubmission(exampleSubmission.id, true, false)">
+                            <button
+                                class="btn btn-link review-example-submission"
+                                [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                (click)="openExampleSubmission(exampleSubmission.id, true, false)"
+                            >
                                 {{ 'artemisApp.tutorExerciseDashboard.reviewExampleSubmission' | translate }} {{ i + 1 }}
                             </button>
                             <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
@@ -176,7 +180,11 @@
 
                     <ul *ngIf="stats.toAssess.done >= stats.toAssess.total">
                         <li *ngFor="let exampleSubmission of exampleSubmissionsToAssess; let i = index">
-                            <button class="btn btn-link" (click)="openExampleSubmission(exampleSubmission.id, false, true)">
+                            <button
+                                class="btn btn-link assess-example-submission"
+                                [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                (click)="openExampleSubmission(exampleSubmission.id, false, true)"
+                            >
                                 {{ 'artemisApp.tutorExerciseDashboard.assessExampleSubmission' | translate }} {{ i + 1 }}
                             </button>
                             <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
