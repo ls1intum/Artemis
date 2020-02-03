@@ -99,7 +99,7 @@ public abstract class Exercise implements Serializable {
     @Column(name = "mode")
     private ExerciseMode mode;
 
-    @Formula("mode = 'TEAM'")
+    @Formula("mode = \"TEAM\"")
     private boolean teamMode;
 
     // TODO: switch to lazy?

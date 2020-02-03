@@ -14,7 +14,10 @@
             },
             "detail": {
                 "title": "Team"
-            }
+            },
+            "name": "Name",
+            "image": "Bild",
+            "students": "Studenten"
         }
     }
 }

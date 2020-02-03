@@ -1,3 +1,78 @@
 <div>
-    Teams
+    <div class="d-flex">
+        <div class="mb-3">
+            <h2>
+                <span>{{ exercise?.title }} - </span>{{ filteredTeamsSize }} <span jhiTranslate="artemisApp.team.home.title">Teams</span>
+            </h2>
+        </div>
+    </div>
+    <jhi-alert></jhi-alert>
+    <jhi-data-table
+        [isLoading]="isLoading"
+        entityType="team"
+        [allEntities]="teams"
+        entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+        searchPlaceholderTranslation="artemisApp.exercise.searchForTeams"
+        [searchFields]="['name']"
+        [searchTextFromEntity]="searchTextFromTeam"
+        [searchResultFormatter]="searchResultFormatter"
+        (entitiesSizeChange)="handleTeamsSizeChange($event)"
+    >
+        <ng-template let-settings="settings" let-controls="controls">
+            <ngx-datatable
+                class="bootstrap"
+                [limit]="settings.limit"
+                [sortType]="settings.sortType"
+                [columnMode]="settings.columnMode"
+                [headerHeight]="settings.headerHeight"
+                [footerHeight]="settings.footerHeight"
+                [rowHeight]="settings.rowHeight"
+                [rows]="settings.rows"
+                [rowClass]="settings.rowClass"
+                [scrollbarH]="settings.scrollbarH"
+            >
+                <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
+                                ID
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <a routerLink="/team/{{ value }}">{{ value }}</a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="name" [minWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name">
+                                Name
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [minWidth]="350">
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <div class="text-right">
+                            <div class="btn-group">
+                                <button (click)="removeTeam(value)" class="btn btn-danger btn-sm mr-1">
+                                    <fa-icon [icon]="'file-powerpoint'"></fa-icon>
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.team.removeTeam.label">Remove team</span>
+                                </button>
+                            </div>
+                        </div>
+                    </ng-template>
+                </ngx-datatable-column>
+            </ngx-datatable>
+        </ng-template>
+    </jhi-data-table>
 </div>
