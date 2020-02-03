@@ -20,17 +20,23 @@ export class TeamConfigFormGroupComponent implements OnInit {
         this.config = this.exercise.teamAssignmentConfig || new TeamAssignmentConfig();
     }
 
+    onExerciseModeChange(mode: ExerciseMode) {
+        this.config = new TeamAssignmentConfig();
+        this.exercise.teamAssignmentConfig = mode === ExerciseMode.TEAM ? this.config : null;
+        this.ngModelChange.emit();
+    }
+
     updateMinTeamSize(minTeamSize: number) {
         this.config.maxTeamSize = Math.max(this.config.maxTeamSize, minTeamSize);
-        this.emitModelChange();
+        this.emitCurrentConfig();
     }
 
     updateMaxTeamSize(maxTeamSize: number) {
         this.config.minTeamSize = Math.min(this.config.minTeamSize, maxTeamSize);
-        this.emitModelChange();
+        this.emitCurrentConfig();
     }
 
-    private emitModelChange() {
+    private emitCurrentConfig() {
         this.exercise.teamAssignmentConfig = this.config;
         this.ngModelChange.emit();
     }
