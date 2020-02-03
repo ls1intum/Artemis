@@ -8,7 +8,8 @@ import { Feedback } from 'app/entities/feedback';
 import { Result, ResultService } from 'app/entities/result';
 import { ProgrammingExercise } from '../../programming-exercise.model';
 import { RepositoryFileService } from 'app/entities/repository';
-import { hasParticipationChanged, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { hasParticipationChanged, Participation } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
@@ -181,7 +182,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
         this.participationSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
-            .pipe(filter(participation => !!participation))
+            .pipe(filter(result => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
                 this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);

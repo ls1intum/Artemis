@@ -54,77 +54,8 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         return this;
     }
 
-    /**
-     * Add new short answer spot to current spot list and add the associated AnswerCounter implicitly
-     *
-     * @param shortAnswerSpot to be added to spot list
-     * @return this ShortAnswerQuestion object
-     */
-    public ShortAnswerQuestion addSpots(ShortAnswerSpot shortAnswerSpot) {
-        this.spots.add(shortAnswerSpot);
-        shortAnswerSpot.setQuestion(this);
-        // if a spot was added then add the associated AnswerCounter implicitly
-        ((ShortAnswerQuestionStatistic) getQuizQuestionStatistic()).addSpot(shortAnswerSpot);
-        return this;
-    }
-
-    /**
-     * Remove short answer spot from current spot list and remove remove the associated SpotCounter implicitly
-     *
-     * @param shortAnswerSpot to be removed
-     * @return this ShortAnswerQuestion object
-     */
-    public ShortAnswerQuestion removeSpots(ShortAnswerSpot shortAnswerSpot) {
-        // if an spot was removed then remove the associated SpotCounter implicitly
-        if (getQuizQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
-            ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) getQuizQuestionStatistic();
-            ShortAnswerSpotCounter spotCounterToDelete = null;
-            for (ShortAnswerSpotCounter spotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
-                if (shortAnswerSpot.equals(spotCounter.getSpot())) {
-                    spotCounter.setSpot(null);
-                    spotCounterToDelete = spotCounter;
-                }
-            }
-            shortAnswerStatistic.getShortAnswerSpotCounters().remove(spotCounterToDelete);
-        }
-        this.spots.remove(shortAnswerSpot);
-        shortAnswerSpot.setQuestion(null);
-        return this;
-    }
-
-    /**
-     * Add a list of short answer spots to the current spot list and to the the short answer statistics.
-     * AnswerCounters without any ShortAnswerSpot will be removed in this process.
-     *
-     * @param shortAnswerSpots list of short answer spots to be added
-     */
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
-        ShortAnswerQuestionStatistic shortAnswerStatistic;
-        if (getQuizQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
-            shortAnswerStatistic = (ShortAnswerQuestionStatistic) getQuizQuestionStatistic();
-        }
-        else {
-            shortAnswerStatistic = new ShortAnswerQuestionStatistic();
-            setQuizQuestionStatistic(shortAnswerStatistic);
-        }
         this.spots = shortAnswerSpots;
-
-        // if a spot was added then add the associated spotCounter implicitly
-        for (ShortAnswerSpot spot : getSpots()) {
-            shortAnswerStatistic.addSpot(spot);
-        }
-
-        // if an spot was removed then remove the associated spotCounters implicitly
-        Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
-        for (ShortAnswerSpotCounter spotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
-            if (spotCounter.getId() != null) {
-                if (!(shortAnswerSpots.contains(spotCounter.getSpot()))) {
-                    spotCounter.setSpot(null);
-                    spotCounterToDelete.add(spotCounter);
-                }
-            }
-        }
-        shortAnswerStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
     }
 
     public List<ShortAnswerSolution> getSolutions() {
@@ -435,13 +366,10 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
         return "ShortAnswerQuestion{" + "id=" + getId() + "}";
     }
 
-    /**
-     * Constructor. 1. generate associated ShortAnswerQuestionStatistic implicitly
-     */
-    public ShortAnswerQuestion() {
-        // create associated QuizStatistic implicitly
-        ShortAnswerQuestionStatistic shortAnswerStatistic = new ShortAnswerQuestionStatistic();
-        setQuizQuestionStatistic(shortAnswerStatistic);
-        shortAnswerStatistic.setQuizQuestion(this);
+    @Override
+    public QuizQuestion copyQuestionId() {
+        var question = new ShortAnswerQuestion();
+        question.setId(getId());
+        return question;
     }
 }

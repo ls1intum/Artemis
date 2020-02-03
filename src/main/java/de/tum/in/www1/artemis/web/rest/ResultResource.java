@@ -4,35 +4,33 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -41,7 +39,7 @@ import io.github.jhipster.web.util.ResponseUtil;
  * REST controller for managing Result.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -51,8 +49,8 @@ public class ResultResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.bamboo.authentication-token}")
-    private String CI_AUTHENTICATION_TOKEN = "";
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
 
     private final ResultRepository resultRepository;
 
@@ -64,27 +62,31 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserService userService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService messagingService;
 
     private final LtiService ltiService;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate, ProgrammingSubmissionService programmingSubmissionService) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserService userService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, ResultRepository resultRepository,
+            WebsocketMessagingService messagingService, ProgrammingSubmissionService programmingSubmissionService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.userService = userService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
         this.ltiService = ltiService;
         this.programmingSubmissionService = programmingSubmissionService;
     }
@@ -111,9 +113,9 @@ public class ResultResource {
 
         // make sure that the participation cannot be manipulated on the client side
         newResult.setParticipation(participation);
-        final var exercise = participation.getExercise();
+        final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !areManualResultsAllowed(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
             return forbidden();
         }
         if (!(participation instanceof ProgrammingExerciseStudentParticipation)) {
@@ -140,7 +142,7 @@ public class ResultResource {
         ProgrammingSubmission submission = programmingSubmissionService.createSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) participation,
                 SubmissionType.MANUAL);
         newResult.setSubmission(submission);
-        newResult = resultService.createNewManualResult(newResult, true);
+        newResult = resultService.createNewRatedManualResult(newResult, true);
 
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId() + "/manual-results/" + newResult.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newResult.getId().toString())).body(newResult);
@@ -162,9 +164,13 @@ public class ResultResource {
         final var participation = participationService.findOneWithEagerResultsAndCourse(participationId);
         // make sure that the participation cannot be manipulated on the client side
         updatedResult.setParticipation(participation);
-        final var exercise = participation.getExercise();
+        // TODO: we should basically set the submission here to prevent possible manipulation of the submission
+        if (updatedResult.getSubmission() == null) {
+            throw new BadRequestAlertException("The submission is not connected to the result.", ENTITY_NAME, "submissionMissing");
+        }
+        final var exercise = (ProgrammingExercise) participation.getExercise();
         final var course = exercise.getCourse();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !areManualResultsAllowed(exercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null) || !exercise.areManualResultsAllowed()) {
             return forbidden();
         }
         if (updatedResult.getId() == null) {
@@ -190,7 +196,7 @@ public class ResultResource {
     @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
-        if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+        if (token == null || !token.equals(ARTEMIS_AUTHENTICATION_TOKEN_VALUE)) {
             log.info("Cancelling request with invalid token {}", token);
             return forbidden(); // Only allow endpoint when using correct token
         }
@@ -228,7 +234,7 @@ public class ResultResource {
             log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(), result.get().getSubmission(),
                     result.get().getParticipation());
             // notify user via websocket
-            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result.get());
+            messagingService.broadcastNewResult((Participation) participation, result.get());
 
             // TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
             // if (participation.isLti()) {
@@ -287,116 +293,22 @@ public class ResultResource {
         }
     }
 
-    private boolean areManualResultsAllowed(final Exercise exerciseToBeChecked) {
-        // Only allow manual results for programming exercises if option was enabled and due dates have passed
-        if (exerciseToBeChecked instanceof ProgrammingExercise) {
-            final var exercise = (ProgrammingExercise) exerciseToBeChecked;
-            final var relevantDueDate = exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null ? exercise.getBuildAndTestStudentSubmissionsAfterDueDate()
-                    : exercise.getDueDate();
-            return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
-        }
-
-        return true;
-    }
-
     /**
-     * GET /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results for "id" participation.
+     * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
-     * @param courseId        only included for API consistency, not actually used
-     * @param exerciseId      only included for API consistency, not actually used
-     * @param participationId the id of the participation for which to retrieve the results
-     * @param showAllResults defines if all results should be shown
-     * @param ratedOnly defines if only rated results should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, @PathVariable Long participationId,
-            @RequestParam(defaultValue = "true") boolean showAllResults, @RequestParam(defaultValue = "false") boolean ratedOnly) {
-        log.debug("REST request to get Results for Participation : {}", participationId);
-
-        List<Result> results = new ArrayList<>();
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
-
-        // TODO: temporary workaround for problems with the relationship between exercise and participations / templateParticipation / solutionParticipation
-        if (participation.getExercise() == null) {
-            Exercise exercise = exerciseService.findOne(exerciseId);
-            participation.setExercise(exercise);
-        }
-
-        if (!Hibernate.isInitialized(participation.getExercise())) {
-            participation.setExercise((Exercise) Hibernate.unproxy(participation.getExercise()));
-        }
-        if (participation.getStudent() == null && participation.getExercise() != null) {
-            if (!Hibernate.isInitialized(participation.getExercise().getCourse())) {
-                participation.getExercise().setCourse((Course) Hibernate.unproxy(participation.getExercise().getCourse()));
-            }
-            // If the student is null, then participation is a template/solution participation -> check for instructor role
-            if (!authCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
-                return forbidden();
-            }
-        }
-        else {
-            if (!authCheckService.isOwnerOfParticipation(participation)) {
-                Course course = participation.getExercise().getCourse();
-                if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-                    return forbidden();
-                }
-            }
-        }
-
-        // if exercise is quiz => only give out results if quiz is over
-        if (participation.getExercise() instanceof QuizExercise) {
-            QuizExercise quizExercise = (QuizExercise) participation.getExercise();
-            if (quizExercise.shouldFilterForStudents()) {
-                // return empty list
-                return ResponseEntity.ok().body(results);
-            }
-        }
-        if (showAllResults) {
-            if (ratedOnly) {
-                results = resultRepository.findByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true);
-            }
-            else {
-                results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
-            }
-        }
-        else {
-            if (ratedOnly) {
-                results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).map(Arrays::asList).orElse(new ArrayList<>());
-            }
-            else {
-                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).map(Arrays::asList).orElse(new ArrayList<>());
-            }
-
-        }
-        // remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setExercise(null);
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
-        });
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
-     * GET /courses/:courseId/exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
-     *
-     * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the results
      * @param withAssessors defines if assessors are loaded from the database for the results
      * @param withSubmissions defines if submissions are loaded from the database for the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
+    @GetMapping(value = "exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withSubmissions, @RequestParam(defaultValue = "false") boolean withAssessors) {
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions,
+            @RequestParam(defaultValue = "false") boolean withAssessors) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         Course course = exercise.getCourse();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
@@ -500,7 +412,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);
@@ -564,5 +475,72 @@ public class ResultResource {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
         return ResponseUtil.wrapOrNotFound(result);
+    }
+
+    /**
+     * Creates a new example result for the provided example submission ID.
+     *
+     * @param submissionId The submission ID for which an example result should get created
+     * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
+     * @return The newly created result
+     */
+    @PostMapping("/submissions/{submissionId}/example-result")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createExampleResult(@PathVariable long submissionId,
+            @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
+        log.debug("REST request to create a new example result for submission: {}", submissionId);
+        final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    /**
+     * Creates a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
+     *
+     * @param exerciseId The exercise ID for which a result should get created
+     * @param studentLogin The student login (username) for which a result should get created
+     * @param result The result to be created
+     * @return The newly created result
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
+            throws URISyntaxException {
+        log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
+
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<User> student = userService.getUserWithAuthoritiesByLogin(studentLogin);
+        Course course = exercise.getCourse();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No student found for " + studentLogin + " in course " + course.getTitle());
+        }
+        if (exercise instanceof QuizExercise) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "External submissions are not supported for Quiz exercises.");
+        }
+
+        // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, studentLogin);
+        Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
+        if (optionalResult.isPresent()) {
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "A result already exists for this submission", "resultAlreadyExists"))
+                    .body(optionalResult.get());
+        }
+
+        // Create a participation and a submitted empty submission if they do not exist yet
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
+        Submission submission = participationService.findOneWithEagerSubmissions(participation.getId()).findLatestSubmission().get();
+        result.setParticipation(participation);
+        result.setSubmission(submission);
+
+        // Create a new manual result which can be rated or unrated depending on what was specified in the create form
+        Result savedResult = resultService.createNewManualResult(result, exercise instanceof ProgrammingExercise, result.isRated());
+
+        return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
     }
 }

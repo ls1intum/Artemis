@@ -15,7 +15,7 @@
                 "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
             },
             "reset": {
-                "question": "Soll das Quiz {{ title }} wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+                "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnehmer, Ergebnisse und Statistiken gelöscht werden, aber die Fragen des Quizzes bestehen bleiben. Dann kannst du das Quiz erneut starten."
             },
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",

@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -56,12 +55,15 @@ public class ModelingExerciseResource {
 
     private final ModelingExerciseService modelingExerciseService;
 
+    private final ExerciseService exerciseService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final CompassService compassService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, ModelingExerciseService modelingExerciseService, GroupNotificationService groupNotificationService, CompassService compassService) {
+            CourseService courseService, ModelingExerciseService modelingExerciseService, GroupNotificationService groupNotificationService, CompassService compassService,
+            ExerciseService exerciseService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.userService = userService;
@@ -69,6 +71,7 @@ public class ModelingExerciseResource {
         this.authCheckService = authCheckService;
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
+        this.exerciseService = exerciseService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -86,11 +89,12 @@ public class ModelingExerciseResource {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new modelingExercise cannot already have an ID")).body(null);
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new modeling exercise cannot already have an ID")).body(null);
         }
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null)
+        if (responseFailure != null) {
             return responseFailure;
+        }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
@@ -102,12 +106,7 @@ public class ModelingExerciseResource {
     private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist"))
-                    .body(null);
-        }
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
         return null;
@@ -132,8 +131,9 @@ public class ModelingExerciseResource {
         }
 
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null)
+        if (responseFailure != null) {
             return responseFailure;
+        }
 
         // As persisting is cascaded for example submissions we have to set the reference to the exercise in the
         // example submissions. Otherwise the connection between exercise and example submissions would be lost.
@@ -183,7 +183,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
-        if (!modelingExercise.isPresent()) {
+        if (modelingExercise.isEmpty()) {
             return notFound();
         }
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
@@ -207,10 +207,6 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> getCompassStatisticForExercise(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        if (!authCheckService.isAdmin()) {
-            throw new AccessForbiddenException("Insufficient permission for exercise: " + modelingExercise);
-        }
-
         compassService.printStatistic(modelingExercise.getId());
 
         // TODO: In the future, this endpoint should return the statistics to the client as well.
@@ -221,15 +217,15 @@ public class ModelingExerciseResource {
     /**
      * GET /modeling-exercises/:id : get the "id" modelingExercise.
      *
-     * @param id the id of the modelingExercise to retrieve
+     * @param exerciseId the id of the modelingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/modeling-exercises/{id}")
+    @GetMapping("/modeling-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long id) {
-        log.debug("REST request to get ModelingExercise : {}", id);
+    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get ModelingExercise : {}", exerciseId);
         // TODO CZ: provide separate endpoint GET /modeling-exercises/{id}/withExampleSubmissions and load exercise without example submissions here
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissions(id);
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
@@ -245,12 +241,19 @@ public class ModelingExerciseResource {
     @DeleteMapping("/modeling-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete ModelingExercise : {}", exerciseId);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findById(exerciseId).get();
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
+        log.info("REST request to delete ModelingExercise : {}", exerciseId);
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
+        if (modelingExercise.isEmpty()) {
+            return notFound();
+        }
+        Course course = modelingExercise.get().getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        modelingExerciseService.delete(exerciseId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
+        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        exerciseService.logDeletion(modelingExercise.get(), course, user);
+        exerciseService.delete(exerciseId, false, false);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.get().getTitle())).build();
     }
 }

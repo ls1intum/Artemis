@@ -11,6 +11,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 
 /**
  * A ExampleSubmission.

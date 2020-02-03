@@ -99,7 +99,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
-    long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long exerciseId, boolean rated);
+    @Query(value = "SELECT COUNT(DISTINCT p) FROM Participation p left join p.results r WHERE p.exercise.id = :exerciseId  AND r.assessor IS NOT NULL AND r.rated=TRUE AND r.completionDate IS NOT NULL")
+    long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(attributePaths = { "feedbacks" })
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);

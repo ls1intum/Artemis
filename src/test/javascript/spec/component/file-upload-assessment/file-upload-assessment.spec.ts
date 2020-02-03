@@ -30,7 +30,7 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission'
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
-import { ModelingAssessmentModule } from 'app/modeling-assessment';
+import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { TranslateModule } from '@ngx-translate/core';
 
 chai.use(sinonChai);

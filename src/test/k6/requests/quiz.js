@@ -3,7 +3,7 @@ import { fail, sleep } from 'k6';
 import { nextWSSubscriptionId, randomArrayValue } from "../util/utils.js";
 
 export function getQuizQuestions(artemis, courseId, exerciseId) {
-    const res = artemis.get(PARTICIPATION(courseId, exerciseId));
+    const res = artemis.get(PARTICIPATION(exerciseId));
     if (res[0].status !== 200) {
         fail('ERROR: Could not get quiz information (' + res[0].status + ')! response was + ' + res[0].body);
     }

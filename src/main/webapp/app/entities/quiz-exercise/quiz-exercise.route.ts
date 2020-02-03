@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -10,9 +10,8 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExerciseComponent } from './quiz-exercise.component';
 import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
 import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
-import { QuizExerciseResetPopupComponent } from './quiz-exercise-reset-dialog.component';
-import { QuizReEvaluateComponent } from 'app/quiz/re-evaluate';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { QuizReEvaluateComponent } from 'app/quiz/re-evaluate';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseResolve implements Resolve<QuizExercise> {
@@ -93,21 +92,5 @@ export const quizExerciseRoute: Routes = [
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
-
-export const quizExercisePopupRoute: Routes = [
-    {
-        path: 'quiz-exercise/:id/reset',
-        component: QuizExerciseResetPopupComponent,
-        resolve: {
-            quizExercise: QuizExerciseResolve,
-        },
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup',
     },
 ];

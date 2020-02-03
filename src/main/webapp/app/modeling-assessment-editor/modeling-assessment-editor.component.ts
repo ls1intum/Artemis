@@ -79,6 +79,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then(user => {
             this.userId = user!.id!;
         });
+        // TODO: we should check if the user is an instructor in the actual exercise behind the submission
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe(params => {
@@ -315,8 +316,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id).subscribe(
-            (result: Result) => {
-                this.result = result;
+            response => {
+                this.result = response.body!;
+                // reconnect
+                this.result.participation!.results = [this.result];
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },

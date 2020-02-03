@@ -13,6 +13,12 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
      * If the normal [disabled] directive of Angular would be used, the HostBinding in this directive would always enable the element if the feature is active.
      */
     @Input() overwriteDisabled: boolean | null;
+    /**
+     * Condition to check even before checking for the feature toggle. If true, the feature toggle won't get checked.
+     * This can be useful e.g. if you use the same button for different features (like our delete button) and only want
+     * to check the toggle for programming exercises
+     */
+    @Input() skipFeatureToggle: boolean;
     private featureActive = true;
 
     private featureToggleActiveSubscription: Subscription;
@@ -27,7 +33,7 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
                 .pipe(
                     // Disable the element if the feature is inactive.
                     tap(active => {
-                        this.featureActive = active;
+                        this.featureActive = this.skipFeatureToggle || active;
                     }),
                 )
                 .subscribe();

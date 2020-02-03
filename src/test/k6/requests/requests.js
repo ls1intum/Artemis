@@ -101,7 +101,7 @@ export function login(username, password) {
     }];
     res = http.batch(req);
     // A new XSRF Token is needed now, we have to extract it from the cookies
-    const xsrftoken = res[0].headers['Set-Cookie'].match('XSRF-TOKEN=(.*); path=\/(; secure)?')[1];
+    const xsrftoken = res[0].headers['Set-Cookie'].match('(.*XSRF-TOKEN=)([a-z0-9]+[a-z0-9\\-]+[a-z0-9]+)(;.*)')[2];
 
     return new Artemis(authToken, xsrftoken);
 }

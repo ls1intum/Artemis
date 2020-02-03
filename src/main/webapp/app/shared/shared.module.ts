@@ -9,11 +9,12 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
-    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective, SecureLinkDirective],
+    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective, ResizeableContainerComponent, SecureLinkDirective],
     providers: [FileService, FileUploaderService, DatePipe, CacheableImageService, DeleteDialogService],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -27,6 +28,7 @@ import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
+        ResizeableContainerComponent,
         SecureLinkDirective,
     ],
 })

@@ -3,9 +3,10 @@ import * as chai from 'chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, Subject } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
-import { Participation, ParticipationWebsocketService } from '../../../../main/webapp/app/entities/participation';
+import { Participation } from '../../../../main/webapp/app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { IWebsocketService } from '../../../../main/webapp/app/core';
+import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
 import { Result } from '../../../../main/webapp/app/entities/result';
 
 chai.use(sinonChai);
@@ -74,7 +75,7 @@ describe('ParticipationWebsocketService', () => {
 
         expect(participationWebsocketService.cachedParticipations.size).to.equal(0);
 
-        expect(participationWebsocketService.openWebsocketConnections.size).to.equal(1);
+        expect(participationWebsocketService.openWebsocketSubscriptions.size).to.equal(1);
 
         expect(participationWebsocketService.resultObservables.size).to.equal(1);
         expect(participationWebsocketService.resultObservables.get(participation.id)).to.exist;

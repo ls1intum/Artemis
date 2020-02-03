@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
@@ -9,16 +9,23 @@ import { Result } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { ExerciseType } from 'app/entities/exercise';
+import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
 })
-export class ProgrammingExerciseDetailComponent implements OnInit {
-    ParticipationType = ParticipationType;
+export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
+    readonly ActionType = ActionType;
+    readonly ParticipationType = ParticipationType;
+    readonly FeatureToggle = FeatureToggle;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -26,18 +33,25 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
+    gradingInstructions: SafeHtml | null;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(programmingExercise.course);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(programmingExercise.course);
 
@@ -53,6 +67,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 this.loadingTemplateParticipationResults = false;
             });
         });
+    }
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -73,13 +91,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         window.history.back();
     }
 
-    squashTemplateCommits() {
-        this.programmingExerciseService.squashTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
+    combineTemplateCommits() {
+        this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
             () => {
-                this.jhiAlertService.success('artemisApp.programmingExercise.squashTemplateCommitsSuccess');
+                this.jhiAlertService.success('artemisApp.programmingExercise.combineTemplateCommitsSuccess');
             },
             () => {
-                this.jhiAlertService.error('artemisApp.programmingExercise.squashTemplateCommitsError');
+                this.jhiAlertService.error('artemisApp.programmingExercise.combineTemplateCommitsError');
             },
         );
     }
@@ -96,6 +114,25 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
                 const jhiAlert = this.jhiAlertService.error(errorMessage);
                 jhiAlert.msg = errorMessage;
             },
+        );
+    }
+
+    /**
+     * Cleans up programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     * @param $event contains additional checks from the dialog
+     */
+    cleanupProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
+        return this.exerciseService.cleanup(programmingExerciseId, $event.deleteRepositories).subscribe(
+            () => {
+                if ($event.deleteRepositories) {
+                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
+                } else {
+                    this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
+                }
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
 }

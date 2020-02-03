@@ -1,41 +1,33 @@
 import { Injectable } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { from, Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
+import { from } from 'rxjs';
+import { JhiAlertService } from 'ng-jhipster';
 
-/**
- * Data that will be passed to the delete dialog component
- */
-export class DeleteDialogData {
-    // title of the entity we want to delete
-    entityTitle: string;
-
-    // i18n key, that will be translated
-    deleteQuestion: string;
-
-    // i18n key, if undefined no safety check will take place (input name of the entity)
-    deleteConfirmationText?: string;
-
-    // object with check name as a key and i18n key as a value, check names will be used for the return statement
-    additionalChecks?: { [key: string]: string };
-}
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
     modalRef: NgbModalRef | null;
 
-    constructor(private modalService: NgbModal) {}
+    constructor(private modalService: NgbModal, public jhiAlertService: JhiAlertService) {}
 
     /**
-     * Opens delete dialog and returns a result after dialog is closed
+     * Opens delete dialog
      * @param deleteDialogData data that is used in dialog
      */
-    openDeleteDialog(deleteDialogData: DeleteDialogData): Observable<any> {
+    openDeleteDialog(deleteDialogData: DeleteDialogData): void {
+        this.jhiAlertService.clear();
         this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
         this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
         this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
         this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
         this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
-        return from(this.modalRef.result).pipe(finalize(() => (this.modalRef = null)));
+        this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
+        this.modalRef.componentInstance.delete = deleteDialogData.delete;
+        this.modalRef.componentInstance.dialogError = deleteDialogData.dialogError;
+        from(this.modalRef.result).subscribe(
+            () => (this.modalRef = null),
+            () => {},
+        );
     }
 }

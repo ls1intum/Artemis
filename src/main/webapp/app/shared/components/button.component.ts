@@ -27,7 +27,9 @@ export enum ButtonSize {
     template: `
         <button
             [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
+            [type]="shouldSubmit ? 'submit' : 'button'"
             ngbTooltip="{{ tooltip | translate }}"
+            container="body"
             (click)="onClick.emit($event)"
             [jhiFeatureToggle]="featureToggle"
             [overwriteDisabled]="disabled || isLoading"
@@ -50,6 +52,8 @@ export class ButtonComponent {
     @Input() disabled = false;
     @Input() isLoading = false;
     @Input() featureToggle: FeatureToggle; // Disable by feature toggle.
+
+    @Input() shouldSubmit = true;
 
     @Output() onClick = new EventEmitter<MouseEvent>();
 }

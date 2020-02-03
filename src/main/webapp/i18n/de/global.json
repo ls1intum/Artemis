@@ -171,6 +171,7 @@
             "dashboard": "Dashboard",
             "edit": "Bearbeiten",
             "editInEditor": "In Editor bearbeiten",
+            "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "editLink": "Link bearbeiten",
             "generate": "Generieren",
@@ -203,11 +204,13 @@
             "exerciseDashboard": "Aufgaben Dashboard",
             "newResult": "Neues Ergebnis",
             "updateResult": "Ergebnis bearbeiten",
+            "viewResult": "Ergebnis anzeigen",
             "cleanupBuildPlan": "Build Plan aufräumen",
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
-            "manageHints": "Verwalte Hinweise"
+            "manageHints": "Verwalte Hinweise",
+            "addExternalSubmission": "Externe Einreichung anlegen"
         },
         "detail": {
             "field": "Feld",

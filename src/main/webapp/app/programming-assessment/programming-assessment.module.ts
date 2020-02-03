@@ -10,9 +10,11 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { FormsModule } from '@angular/forms';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, FormsModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, FormsModule, FeatureToggleModule, ArtemisComplaintsForTutorModule],
     declarations: [
         ProgrammingAssessmentManualResultButtonComponent,
         ProgrammingAssessmentManualResultDialogComponent,

@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { SubmissionType } from 'app/entities/submission';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';

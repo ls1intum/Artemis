@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
 import { ArtemisSharedModule } from 'app/shared';
-import { NotificationComponent, notificationRoute, NotificationService } from './';
+import { NotificationComponent, notificationRoute } from './';
 import { RouterModule } from '@angular/router';
 
 @NgModule({
@@ -9,6 +9,5 @@ import { RouterModule } from '@angular/router';
     declarations: [NotificationComponent],
     entryComponents: [NotificationComponent],
     exports: [],
-    providers: [NotificationService],
 })
 export class ArtemisNotificationModule {}

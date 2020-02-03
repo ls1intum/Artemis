@@ -8,6 +8,7 @@ import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
@@ -21,6 +22,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     @Input() participationIdList: number[];
     @Input() studentIdList: string; // TODO: Should be a list and not a comma separated string.
     @Input() singleStudentMode = false;
+    readonly FeatureToggle = FeatureToggle;
     exercise: Exercise;
     exportInProgress: boolean;
     repositoryExportOptions: RepositoryExportOptions;
@@ -42,8 +44,8 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             filterLateSubmissions: false,
             filterLateSubmissionsDate: null,
             addStudentName: true,
-            squashAfterInstructor: true,
-            normalizeCodeStyle: true,
+            combineStudentCommits: false,
+            normalizeCodeStyle: false, // disabled by default because it is rather unstable
         };
         this.exerciseService
             .find(this.exerciseId)

@@ -6,39 +6,28 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <div class="text-right">
-                <!--                <div class="btn-group flex-btn-group-container">-->
-                <button
-                    type="submit"
-                    *ngIf="programmingExercise.isAtLeastInstructor"
-                    routerLink="/exercise/{{ programmingExercise.id }}/hints"
-                    class="btn btn-info btn-sm mr-1 mb-1"
-                >
+                <jhi-external-submission class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
+                <button type="submit" *ngIf="programmingExercise.isAtLeastInstructor" routerLink="/exercise/{{ programmingExercise.id }}/hints" class="btn btn-info btn-sm mr-1">
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
                 </button>
+                <jhi-programming-assessment-repo-export [exerciseId]="programmingExercise.id" class="mr-1"></jhi-programming-assessment-repo-export>
                 <button
-                    type="submit"
                     *ngIf="programmingExercise.isAtLeastInstructor"
-                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/archive' } }]"
-                    replaceUrl="true"
-                    queryParamsHandling="merge"
-                    class="btn btn-danger btn-sm mr-1 mb-1"
-                >
-                    <fa-icon [icon]="'archive'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
-                </button>
-                <button
-                    type="submit"
-                    *ngIf="programmingExercise.isAtLeastInstructor"
-                    [routerLink]="['/', { outlets: { popup: 'exercise/' + programmingExercise.id + '/cleanup' } }]"
-                    replaceUrl="true"
-                    queryParamsHandling="merge"
-                    class="btn btn-danger btn-sm mr-1 mb-1"
+                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                    jhiDeleteButton
+                    [actionType]="ActionType.Cleanup"
+                    [entityTitle]="programmingExercise.title"
+                    deleteQuestion="instructorDashboard.cleanup.question"
+                    (delete)="cleanupProgrammingExercise(programmingExercise.id, $event)"
+                    [dialogError]="dialogError$"
+                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                    [additionalChecks]="{
+                        deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
+                    }"
                 >
                     <fa-icon [icon]="'eraser'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>
                 </button>
-                <!--                </div>-->
             </div>
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
@@ -94,12 +83,10 @@
                         ><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">{{ programmingExercise.testRepositoryUrl }}</a></span
                     >
                 </dd>
-
-                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
-                        ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.templateParticipation.buildPlanId }}" target="_blank">{{
+                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.templateParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey">{{
                             programmingExercise.templateParticipation.buildPlanId
                         }}</a></span
                     >
@@ -107,7 +94,7 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
-                        ><a href="https://bamboobruegge.in.tum.de/browse/{{ programmingExercise.solutionParticipation.buildPlanId }}" target="_blank">{{
+                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey">{{
                             programmingExercise.solutionParticipation.buildPlanId
                         }}</a></span
                     >
@@ -193,6 +180,10 @@
                         [participation]="programmingExercise.templateParticipation"
                     ></jhi-programming-exercise-instructions>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
+                <dd class="editor-outline-background">
+                    <span [innerHTML]="gradingInstructions"></span>
+                </dd>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info mr-1">
@@ -203,13 +194,13 @@
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
             <span class="mr-1">
-                <button type="button" (click)="squashTemplateCommits()" class="btn btn-secondary">
-                    <span jhiTranslate="artemisApp.programmingExercise.squashTemplateCommits">Squash Template Commits</span>
+                <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="combineTemplateCommits()" class="btn btn-secondary">
+                    <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
                 </button>
-                <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.squashTemplateCommitsWarning' | translate }}"></fa-icon>
+                <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | translate }}"></fa-icon>
             </span>
             <span *ngIf="programmingExercise.programmingLanguage == JAVA" class="mr-1">
-                <button type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
+                <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary">
                     <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                 </button>
                 <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | translate }}"></fa-icon>

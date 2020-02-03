@@ -49,7 +49,7 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | translate }}</a
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.assessor.firstName">
+                    <th jhiSortBy="result.assessor.name">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | translate }}</a
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -57,7 +57,7 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | translate }}</a
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.firstName" *ngIf="hasStudentInformation">
+                    <th jhiSortBy="student.name" *ngIf="hasStudentInformation">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | translate }}</a
                         ><fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -91,7 +91,7 @@
                     </td>
 
                     <td>
-                        <span>{{ complaint.result?.assessor?.firstName }} {{ complaint.result?.assessor?.lastName }}</span>
+                        <span>{{ complaint.result?.assessor?.name }}</span>
                     </td>
 
                     <td *ngIf="hasStudentInformation">
@@ -99,7 +99,7 @@
                     </td>
 
                     <td *ngIf="hasStudentInformation">
-                        <span>{{ complaint.student?.firstName }} {{ complaint.student?.lastName }}</span>
+                        <span>{{ complaint.student?.name }}</span>
                     </td>
 
                     <td>

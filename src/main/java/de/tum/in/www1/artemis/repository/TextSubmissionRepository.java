@@ -18,10 +18,18 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 @Repository
 public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
 
-    List<TextSubmission> findByIdIn(List<Long> textSubmissionsId);
+    @Query("select distinct submission from TextSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.result result left join fetch result.assessor left join fetch submission.blocks where submission.id = :#{#submissionId}")
+    Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessorAndBlocks(@Param("submissionId") Long submissionId);
 
     @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<TextSubmission> findByIdWithEagerResultAndAssessor(@Param("submissionId") Long submissionId);
+
+    /**
+     * @param submissionId the submission id we are interested in
+     * @return the submission with its feedback and assessor
+     */
+    @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    Optional<TextSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
      * @param courseId the course id we are interested in

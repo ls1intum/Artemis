@@ -1,13 +1,14 @@
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextExerciseComponent } from './text-exercise.component';
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 import { TextExercise } from './text-exercise.model';
 import { Injectable } from '@angular/core';
 import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';

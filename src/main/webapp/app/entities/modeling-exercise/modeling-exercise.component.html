@@ -91,6 +91,7 @@
                                 deleteQuestion="artemisApp.exercise.delete.question"
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                 (delete)="deleteModelingExercise(modelingExercise.id)"
+                                [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>

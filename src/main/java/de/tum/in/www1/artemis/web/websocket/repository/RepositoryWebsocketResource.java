@@ -25,6 +25,8 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -42,7 +44,7 @@ public class RepositoryWebsocketResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<GitService> gitService;
+    private final GitService gitService;
 
     private final UserService userService;
 
@@ -58,10 +60,9 @@ public class RepositoryWebsocketResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            SimpMessageSendingOperations messagingTemplate, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+    public RepositoryWebsocketResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService, SimpMessageSendingOperations messagingTemplate,
+            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
+            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -114,7 +115,7 @@ public class RepositoryWebsocketResource {
         // Git repository must be available to update a file
         Repository repository;
         try {
-            repository = gitService.get().getOrCheckoutRepository(programmingExerciseParticipation);
+            repository = gitService.getOrCheckoutRepository(programmingExerciseParticipation);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
@@ -143,7 +144,7 @@ public class RepositoryWebsocketResource {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         String testRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
         VcsRepositoryUrl testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(exercise.getProjectKey(), testRepoName);
         String topic = "/topic/test-repository/" + exerciseId + "/files";
@@ -203,7 +204,7 @@ public class RepositoryWebsocketResource {
      * @throws IOException
      */
     private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
-        Optional<File> file = gitService.get().getFileByName(repository, submission.getFileName());
+        Optional<File> file = gitService.getFileByName(repository, submission.getFileName());
 
         if (file.isEmpty()) {
             throw new IOException("File could not be found.");

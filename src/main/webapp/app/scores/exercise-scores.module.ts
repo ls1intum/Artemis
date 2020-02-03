@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { UserRouteAccessService } from 'app/core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { ArtemisSharedModule } from 'app/shared';
 import { MomentModule } from 'ngx-moment';
@@ -12,6 +12,9 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ExerciseScoresPopupService } from 'app/scores';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/components/data-table/data-table.module';
+import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 
 const ENTITY_STATES = [
     {
@@ -35,7 +38,10 @@ const ENTITY_STATES = [
         SortByModule,
         FormDateTimePickerModule,
         NgxDatatableModule,
+        ArtemisDataTableModule,
         ArtemisProgrammingAssessmentModule,
+        FeatureToggleModule,
+        ProgrammingExerciseUtilsModule,
     ],
     declarations: [ExerciseScoresComponent],
     entryComponents: [ExerciseScoresComponent],

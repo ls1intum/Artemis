@@ -1,4 +1,4 @@
-<h2>{{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}</h2>
+<h3>{{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}</h3>
 <div class="col-12 px-0 mt-2">
     <div class="alert alert-info" *ngIf="handled">
         {{
@@ -39,12 +39,22 @@
             <textarea class="col-12 px-1" rows="4" maxlength="2000" [(ngModel)]="complaintResponse.responseText" [readonly]="handled" [disabled]="handled"></textarea>
             <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end">
                 <div class="col-12 col-lg-6">
-                    <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | translate }}">
+                    <button
+                        type="button"
+                        class="btn btn-success btn-block"
+                        (click)="respondToComplaint(true)"
+                        title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | translate }}"
+                    >
                         {{ 'artemisApp.complaintResponse.updateAssessment' | translate }}
                     </button>
                 </div>
                 <div class="col-12 col-lg-6">
-                    <button class="btn btn-danger btn-block" (click)="respondToComplaint(false)" title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | translate }}">
+                    <button
+                        type="button"
+                        class="btn btn-danger btn-block"
+                        (click)="respondToComplaint(false)"
+                        title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | translate }}"
+                    >
                         {{ 'artemisApp.complaintResponse.rejectComplaint' | translate }}
                     </button>
                 </div>
@@ -52,7 +62,12 @@
 
             <div *ngIf="!complaint.accepted && complaint.complaintType === ComplaintType.MORE_FEEDBACK" class="row justify-content-end">
                 <div class="col-12">
-                    <button class="btn btn-success btn-block" (click)="respondToComplaint(true)" title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | translate }}">
+                    <button
+                        type="button"
+                        class="btn btn-success btn-block"
+                        (click)="respondToComplaint(true)"
+                        title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | translate }}"
+                    >
                         {{ 'artemisApp.moreFeedbackResponse.provideFeedback' | translate }}
                     </button>
                 </div>

@@ -1,10 +1,12 @@
+
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -130,7 +132,7 @@ public class ExampleSubmissionResource {
         log.debug("REST request to delete ExampleSubmission : {}", id);
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
 
-        if (!exampleSubmission.isPresent()) {
+        if (exampleSubmission.isEmpty()) {
             throw new EntityNotFoundException("ExampleSubmission with " + id + " was not found!");
         }
 

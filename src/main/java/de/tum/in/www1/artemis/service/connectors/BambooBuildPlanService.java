@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
@@ -45,41 +46,36 @@ import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
-import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
-import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.exception.ContinousIntegrationBuildPlanException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 
 @Service
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
-    @Value("${artemis.bamboo.user}")
+    @Value("${artemis.continuous-integration.user}")
     private String BAMBOO_USER;
 
-    @Value("${artemis.bamboo.password}")
-    private String BAMBOO_PASSWORD;
-
-    @Value("${artemis.bamboo.url}")
-    private URL BAMBOO_SERVER_URL;
-
-    @Value("${artemis.jira.admin-group-name}")
+    @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
     @Value("${server.url}")
     private URL SERVER_URL;
 
-    @Value("${artemis.bamboo.vcs-application-link-name}")
+    @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String VCS_APPLICATION_LINK_NAME;
 
     private final ResourceLoader resourceLoader;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader) {
+    private final BambooServer bambooServer;
+
+    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer) {
         this.resourceLoader = resourceLoader;
+        this.bambooServer = bambooServer;
     }
 
     /**
@@ -96,9 +92,6 @@ public class BambooBuildPlanService {
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName)
                 .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns()));
-
-        UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
-        BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
         bambooServer.publish(plan);
 
@@ -167,7 +160,7 @@ public class BambooBuildPlanService {
         return new VcsCheckoutTask().description("Checkout Default Repository").checkoutItems(
                 new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath),
                 new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath) // NOTE: this path needs to be specified in the Maven
-                                                                                                                             // pom.xml in the Tests Repo
+        // pom.xml in the Tests Repo
         );
     }
 
@@ -187,17 +180,20 @@ public class BambooBuildPlanService {
                 .changeDetection(new VcsChangeDetection());
     }
 
-    private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, String teachingAssistantGroupName, String instructorGroupName,
+    private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, String instructorGroupName,
             String adminGroupName) {
-        return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(
-                new Permissions().userPermissions(BAMBOO_USER, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
-                        .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
-                        .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
-                        .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW));
+        var permissions = new Permissions().userPermissions(BAMBOO_USER, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
+                .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
+                .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+        if (teachingAssistantGroupName != null) {
+            permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW);
+        }
+        return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns) {
-        final var directoryPattern = "classpath:buildscripts/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+        final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
+                + "*.sh";
         try {
             final var scriptResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern);
             // Have to use foreach because of possible IOException
@@ -218,7 +214,7 @@ public class BambooBuildPlanService {
             return scriptContents.entrySet().stream().map(script -> new ScriptTask().description(script.getKey()).inlineBody(script.getValue())).collect(Collectors.toList());
         }
         catch (IOException e) {
-            throw new ContinousIntegrationBuildPlanException("Unable to load template build plans", e);
+            throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);
         }
     }
 }

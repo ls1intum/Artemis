@@ -2,7 +2,7 @@
     "artemisApp": {
         "fileUploadAssessment": {
             "editorTitle": "Assessment Editor for File Upload Exercise {{ title }}",
-            "submissionFile": "Submission File",
+            "submissionFile": "Download Submission File",
             "notFound": "We haven't found any new file upload submission without an assessment, please go back.",
             "addFeedback": "Add new Feedback",
             "assessInstruction": "Please, click the \"Add new Feedback\" button.",

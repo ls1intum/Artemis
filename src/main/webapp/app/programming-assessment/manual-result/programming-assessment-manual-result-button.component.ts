@@ -5,8 +5,10 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
 import { Result } from 'app/entities/result';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { Subscription } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { filter } from 'rxjs/operators';
+import { cloneDeep } from 'lodash';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',
@@ -16,7 +18,7 @@ import { filter } from 'rxjs/operators';
             [btnType]="ButtonType.WARNING"
             [btnSize]="ButtonSize.SMALL"
             [icon]="'asterisk'"
-            [title]="latestResult ? 'entity.action.updateResult' : 'entity.action.newResult'"
+            [title]="latestResult ? (latestResult.hasComplaint ? 'entity.action.viewResult' : 'entity.action.updateResult') : 'entity.action.newResult'"
             (onClick)="openManualResultDialog($event)"
         ></jhi-button>
     `,
@@ -25,9 +27,9 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     @Input() participationId: number;
-    @Output() onResultCreated = new EventEmitter<Result>();
+    @Output() onResultModified = new EventEmitter<Result>();
     @Input() latestResult?: Result | null;
-    private ngbModalRef: NgbModalRef | null;
+    @Input() exercise: ProgrammingExercise;
 
     latestResultSubscription: Subscription;
 
@@ -63,11 +65,13 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
 
     openManualResultDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participationId = this.participationId;
-        modalRef.componentInstance.result = this.latestResult;
+        modalRef.componentInstance.result = cloneDeep(this.latestResult);
+        modalRef.componentInstance.exercise = this.exercise;
+        modalRef.componentInstance.onResultModified.subscribe(($event: Result) => this.onResultModified.emit($event));
         modalRef.result.then(
-            result => this.onResultCreated.emit(result),
+            result => this.onResultModified.emit(result),
             () => {},
         );
     }

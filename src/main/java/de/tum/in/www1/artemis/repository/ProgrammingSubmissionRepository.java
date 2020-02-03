@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
@@ -43,8 +42,10 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     List<ProgrammingSubmission> findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(Long participationId);
 
     @EntityGraph(attributePaths = "result")
-    @Query("select distinct s from Submission s where s.id = :#{#submissionId}")
-    ProgrammingSubmission findByIdWithEagerResult(@Param("submissionId") Long submissionId);
+    Optional<ProgrammingSubmission> findWithEagerResultById(Long submissionId);
+
+    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor" })
+    Optional<ProgrammingSubmission> findWithEagerResultAssessorFeedbackById(long submissionId);
 
     Optional<ProgrammingSubmission> findByResultId(long resultId);
 }

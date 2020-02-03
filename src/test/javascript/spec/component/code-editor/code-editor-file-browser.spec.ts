@@ -4,7 +4,7 @@ import { MockComponent } from 'ng-mocks';
 import { CookieService } from 'ngx-cookie';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';

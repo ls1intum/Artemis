@@ -1,10 +1,14 @@
 <form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="entity.delete.title">Confirm delete operation</h4>
+        <h4 class="modal-title" [ngSwitch]="actionType">
+            <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.delete.title">Confirm delete operation</span>
+            <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.reset.title">Confirm reset operation</span>
+            <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>
+        </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
-        <jhi-alert-error></jhi-alert-error>
+        <jhi-alert></jhi-alert>
         <p [jhiTranslate]="deleteQuestion" [translateValues]="{ title: entityTitle }">Are you sure you want to delete?</p>
         <div *ngIf="additionalChecks">
             <div *ngFor="let checkKey of objectKeys(additionalChecks)">
@@ -24,8 +28,17 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" class="btn btn-danger" [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle)">
-            <fa-icon [icon]="'times'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span>
+        <button
+            type="submit"
+            class="btn btn-danger"
+            [style.cursor]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle) || submitDisabled ? 'not-allowed' : 'pointer'"
+            [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle) || submitDisabled"
+            [ngSwitch]="actionType"
+        >
+            <fa-icon [icon]="'times'"></fa-icon>&nbsp;
+            <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
+            <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
+            <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>
         </button>
     </div>
 </form>

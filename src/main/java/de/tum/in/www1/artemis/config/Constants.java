@@ -32,8 +32,6 @@ public final class Constants {
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
-    public static final String FILEPATH_COMPASS = "compass";
-
     public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
@@ -47,6 +45,10 @@ public final class Constants {
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
+
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
+
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
 
@@ -93,12 +95,23 @@ public final class Constants {
 
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
 
-    public static final int MAX_COMPLAINT_TIME_WEEKS = 3;
+    // NOTE: this has to be the same as in complaint.constants.ts on the client
+    public static final int MAX_COMPLAINT_TIME_WEEKS = 1;
 
     // Currently 10s.
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
+
+    public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
+
+    public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
+
+    public static final String DELETE_COURSE = "DELETE_COURSE";
+
+    public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
+
+    public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
     private Constants() {
     }

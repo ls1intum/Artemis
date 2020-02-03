@@ -1,41 +1,65 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { Observable, Subscription } from 'rxjs';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
 })
-export class DeleteDialogComponent implements OnInit {
+export class DeleteDialogComponent implements OnInit, OnDestroy {
+    readonly actionTypes = ActionType;
+    private dialogErrorSubscription: Subscription;
+    dialogError: Observable<string>;
+    @Output() delete: EventEmitter<{ [key: string]: boolean }>;
+    submitDisabled: boolean;
     confirmEntityName: string;
     entityTitle: string;
     deleteQuestion: string;
     deleteConfirmationText: string;
     additionalChecks?: { [key: string]: string };
     additionalChecksValues: { [key: string]: boolean } = {};
+    actionType: ActionType;
 
     // used by *ngFor in the template
     objectKeys = Object.keys;
 
-    constructor(public activeModal: NgbActiveModal) {}
+    constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit(): void {
+        this.dialogErrorSubscription = this.dialogError.subscribe((errorMessage: string) => {
+            if (errorMessage === '') {
+                this.clear();
+            } else {
+                this.submitDisabled = false;
+                this.jhiAlertService.error(errorMessage);
+            }
+        });
         if (this.additionalChecks) {
             this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.dialogErrorSubscription) {
+            this.dialogErrorSubscription.unsubscribe();
         }
     }
 
     /**
      * Closes the dialog
      */
-    clear() {
+    clear(): void {
         this.activeModal.dismiss();
     }
 
     /**
-     * Closes the dialog with a 'confirm' message, so the user of the service can use this message to delete the entity
+     * Emits delete event and passes additional checks from the dialog
      */
-    confirmDelete() {
-        this.activeModal.close(this.additionalChecksValues);
+    confirmDelete(): void {
+        this.submitDisabled = true;
+        this.delete.emit(this.additionalChecksValues);
     }
 }

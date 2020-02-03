@@ -8,14 +8,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.*;
 
 /**
@@ -29,26 +28,21 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "fileUploadAssessment";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final FileUploadAssessmentService fileUploadAssessmentService;
 
     private final FileUploadExerciseService fileUploadExerciseService;
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService messagingService;
 
-    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService,
-            FileUploadExerciseService fileUploadExerciseService, UserService userService, FileUploadSubmissionService fileUploadSubmissionService,
-            SimpMessageSendingOperations messagingTemplate) {
+    public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, FileUploadAssessmentService fileUploadAssessmentService, UserService userService,
+            FileUploadExerciseService fileUploadExerciseService, FileUploadSubmissionService fileUploadSubmissionService, WebsocketMessagingService messagingService) {
         super(authCheckService, userService);
-
         this.fileUploadAssessmentService = fileUploadAssessmentService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadSubmissionService = fileUploadSubmissionService;
-        this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
     }
 
     /**
@@ -114,13 +108,13 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
                 || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
     }
 
     /**
-     * Update an assessment after a complaint was accepted. After the result is updated accordingly,
+     * Update an assessment after a complaint was accepted.
      *
      * @param submissionId     the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
@@ -131,11 +125,12 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
         FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
-        checkAuthorization(fileUploadExercise, userService.getUserWithGroupsAndAuthorities());
+        checkAuthorization(fileUploadExercise, user);
 
         Result result = fileUploadAssessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getResult(), fileUploadExercise, assessmentUpdate);
 
@@ -163,8 +158,14 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        if (!userService.getUser().getId().equals(fileUploadSubmission.getResult().getAssessor().getId())) {
-            // you cannot cancel the assessment of other tutors
+        User user = userService.getUserWithGroupsAndAuthorities();
+        StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
+        FileUploadExercise fileUploadExercise = fileUploadExerciseService.findOne(exerciseId);
+        checkAuthorization(fileUploadExercise, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
+        if (!(isAtLeastInstructor || userService.getUser().getId().equals(fileUploadSubmission.getResult().getAssessor().getId()))) {
+            // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }
         fileUploadAssessmentService.cancelAssessmentOfSubmission(fileUploadSubmission);

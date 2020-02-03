@@ -26,13 +26,6 @@ export class ProgrammingExerciseService {
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
-    create(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convertDataFromClient(programmingExercise);
-        return this.http
-            .post<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.convertDataFromClient(programmingExercise);
         return this.http
@@ -44,8 +37,8 @@ export class ProgrammingExerciseService {
         return this.http.get(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
     }
 
-    squashTemplateRepositoryCommits(exerciseId: number) {
-        return this.http.put(this.resourceUrl + '/' + exerciseId + '/squash-template-commits', { responseType: 'text' });
+    combineTemplateRepositoryCommits(exerciseId: number) {
+        return this.http.put(this.resourceUrl + '/' + exerciseId + '/combine-template-commits', { responseType: 'text' });
     }
 
     /**
@@ -74,7 +67,7 @@ export class ProgrammingExerciseService {
     updateProblemStatement(programmingExerciseId: number, problemStatement: string, req?: any) {
         const options = createRequestOption(req);
         return this.http
-            .patch<ProgrammingExercise>(`${this.resourceUrl}-problem`, { exerciseId: programmingExerciseId, problemStatement }, { params: options, observe: 'response' })
+            .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, problemStatement, { params: options, observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 

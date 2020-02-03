@@ -16,6 +16,7 @@
                     <th></th>
                     <th jhiSortBy="langKey"><span jhiTranslate="userManagement.langKey">Lang Key</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th><span jhiTranslate="userManagement.profiles">Profiles</span></th>
+                    <th><span>Groups</span></th>
                     <th jhiSortBy="createdDate"><span jhiTranslate="userManagement.createdDate">Created Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="lastModifiedBy"><span jhiTranslate="userManagement.lastModifiedBy">Last Modified By</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="lastModifiedDate"><span jhiTranslate="userManagement.lastModifiedDate">Last Modified Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
@@ -47,6 +48,11 @@
                             <span class="badge badge-info">{{ authority }}</span>
                         </div>
                     </td>
+                    <td>
+                        <div *ngFor="let group of user.groups">
+                            <span class="badge badge-info">{{ group }}</span>
+                        </div>
+                    </td>
                     <td>{{ user.createdDate | date: 'dd/MM/yy HH:mm' }}</td>
                     <td>{{ user.lastModifiedBy }}</td>
                     <td>{{ user.lastModifiedDate | date: 'dd/MM/yy HH:mm' }}</td>
@@ -65,6 +71,7 @@
                                 [entityTitle]="user.login"
                                 deleteQuestion="userManagement.delete.question"
                                 (delete)="deleteUser(user.login)"
+                                [dialogError]="dialogError$"
                                 [disabled]="currentAccount.login === user.login"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>

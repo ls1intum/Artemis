@@ -32,15 +32,12 @@
             [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
-        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
+        <jhi-collapsable-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-collapsable-assessment-instructions>
     </div>
 
     <div class="row mt-3">
         <div class="col-md-6">
-            <h4 jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
-            <div>
-                <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateFeedback()"></textarea>
-            </div>
+            <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
         </div>
         <div class="col-md-6" *ngIf="(hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate">
             <h4 jhiTranslate="modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>

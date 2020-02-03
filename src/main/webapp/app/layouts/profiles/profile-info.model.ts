@@ -8,4 +8,7 @@ export class ProfileInfo {
     sentry?: { dsn: string };
     features: ActiveFeatureToggles;
     guidedTourMapping?: GuidedTourMapping;
+    buildPlanURLTemplate: string;
+    imprint: string;
+    contact: string;
 }

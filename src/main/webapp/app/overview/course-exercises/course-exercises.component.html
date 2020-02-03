@@ -1,7 +1,7 @@
 <div class="row">
-    <div class="col-12 col-md-8">
+    <div class="col-12 col-lg-8">
         <div class="mt-3 position-relative" *ngIf="course">
-            <div class="exercise-controls flex d-sm-block" *ngIf="course?.exercises.length > 0">
+            <div class="exercise-controls" *ngIf="course?.exercises.length > 0">
                 <div class="d-flex align-items-center mr-2">
                     <label class="d-flex align-items-center mb-0 mr-2">
                         <input type="checkbox" [checked]="activeFilters.has(filterType.OVERDUE)" (change)="toggleFilters([filterType.OVERDUE])" />

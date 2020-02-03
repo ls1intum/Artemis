@@ -1,5 +1,6 @@
 import { BaseEntity } from 'app/shared';
 import { DragAndDropQuestion } from '../drag-and-drop-question';
+import { generate } from 'app/quiz/edit/temp-id';
 
 export class DragItem implements BaseEntity {
     public id: number;
@@ -9,5 +10,7 @@ export class DragItem implements BaseEntity {
     public question: DragAndDropQuestion;
     public invalid = false; // default value
 
-    constructor() {}
+    constructor() {
+        this.tempID = generate();
+    }
 }

@@ -8,10 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 abstract class AssessmentService {
@@ -19,6 +19,8 @@ abstract class AssessmentService {
     private final ComplaintResponseService complaintResponseService;
 
     private final ComplaintRepository complaintRepository;
+
+    protected final FeedbackRepository feedbackRepository;
 
     protected final ResultRepository resultRepository;
 
@@ -28,14 +30,19 @@ abstract class AssessmentService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+    private final SubmissionRepository submissionRepository;
+
+    public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
+            AuthorizationCheckService authCheckService, SubmissionRepository submissionRepository) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
+        this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
+        this.submissionRepository = submissionRepository;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -45,8 +52,7 @@ abstract class AssessmentService {
         double totalScore = calculateTotalScore(calculatedScore, maxScore);
         result.setScore(totalScore, maxScore);
         result.setResultString(totalScore, maxScore);
-        resultRepository.save(result);
-        return result;
+        return resultRepository.save(result);
     }
 
     /**
@@ -58,6 +64,7 @@ abstract class AssessmentService {
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
+    // NOTE: transactional makes sense here because we change multiple objects in the database and the changes might be invalid in case, one save operation fails
     @Transactional
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdate assessmentUpdate) {
         if (assessmentUpdate.getFeedbacks() == null || assessmentUpdate.getComplaintResponse() == null) {
@@ -78,7 +85,10 @@ abstract class AssessmentService {
 
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
-        originalResult.evaluateFeedback(exercise.getMaxScore());
+        if (!(exercise instanceof ProgrammingExercise)) {
+            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here!
+            originalResult.evaluateFeedback(exercise.getMaxScore());
+        }
         // Note: This also saves the feedback objects in the database because of the 'cascade =
         // CascadeType.ALL' option.
         return resultRepository.save(originalResult);
@@ -90,14 +100,25 @@ abstract class AssessmentService {
      *
      * @param submission the submission for which the current assessment should be canceled
      */
-    @Transactional
+    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
         participation.removeResult(result);
-        studentParticipationRepository.save(participation);
+        feedbackRepository.deleteByResult_Id(result.getId());
         resultRepository.deleteById(result.getId());
+    }
+
+    /**
+     * Finds the example result for the given submission ID. The submission has to be an example submission
+     *
+     * @param submissionId The ID of the submission for which the result should be fetched
+     * @return The example result, which is linked to the submission
+     */
+    public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
+        return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
@@ -124,5 +145,15 @@ abstract class AssessmentService {
     private double calculateTotalScore(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
+    }
+
+    /**
+     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
+     *
+     * @param assessments the List of Feedback
+     * @return the total score
+     */
+    protected Double calculateTotalScore(List<Feedback> assessments) {
+        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }

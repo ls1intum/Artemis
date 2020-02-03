@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.lang.Integer.compare;
 import static java.util.stream.Collectors.toList;
 
 import java.text.BreakIterator;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ public class TextBlockService {
     private static final String LINE_SEPARATOR = "\\n";
 
     private static final int LINE_SEPARATOR_LENGTH = LINE_SEPARATOR.length();
+
+    public static final Comparator<TextBlock> compareByStartIndexReversed = (TextBlock first, TextBlock second) -> compare(second.getStartIndex(), first.getStartIndex());
 
     /**
      * Splits TextSubmission for a given Result into TextBlocks and saves them in the TextSubmission

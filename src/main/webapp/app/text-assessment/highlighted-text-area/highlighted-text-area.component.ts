@@ -55,7 +55,7 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
              * (2) feedback.reference contains a text block id.
              * Matching for ids is done in the `TextAssessmentComponent` and `this.blocks[currentIndex]` is only defined for case (2).
              */
-            const replacementString: string = this.blocks[currentIndex] ? this.blocks[currentIndex]!.text : assessment.reference;
+            const replacementString: string = this.blocks && this.blocks[currentIndex] ? this.blocks[currentIndex]!.text : assessment.reference;
 
             return content.replace(replacementString, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${replacementString}</span>`);
         }, this.submissionTextWithHtmlLinebreaks);

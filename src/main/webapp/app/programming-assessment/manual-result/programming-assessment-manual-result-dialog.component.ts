@@ -1,41 +1,58 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from '../../entities/result/result.model';
+import { Result } from 'app/entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
-import { Feedback, FeedbackType } from '../../entities/feedback';
+import { Feedback, FeedbackType } from '../../entities/feedback/feedback.model';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationService } from 'app/entities/participation';
-import { catchError, tap } from 'rxjs/operators';
+import { ParticipationService } from 'app/entities/participation/participation.service';
+import { catchError, tap, filter } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
 import { SCORE_PATTERN } from 'app/app.constants';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
     templateUrl: './programming-assessment-manual-result-dialog.component.html',
 })
 export class ProgrammingAssessmentManualResultDialogComponent implements OnInit {
-    SCORE_PATTERN = SCORE_PATTERN;
+    readonly SCORE_PATTERN = SCORE_PATTERN;
+    readonly ComplaintType = ComplaintType;
+
     @Input() participationId: number;
     @Input() result: Result;
-    participation: StudentParticipation;
+    @Input() exercise: ProgrammingExercise;
+    @Output() onResultModified = new EventEmitter<Result>();
+
+    participation: ProgrammingExerciseStudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
     isOpenForSubmission = false;
+    userId: number;
+    isAssessor: boolean;
+    complaint: Complaint;
+    resultModified: boolean;
 
     constructor(
         private participationService: ParticipationService,
         private manualResultService: ProgrammingAssessmentManualResultService,
-        public activeModal: NgbActiveModal,
+        private activeModal: NgbActiveModal,
         private datePipe: DatePipe,
         private eventManager: JhiEventManager,
         private alertService: JhiAlertService,
         private resultService: ResultService,
+        private complaintService: ComplaintService,
+        private accountService: AccountService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnInit() {
@@ -48,6 +65,11 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     initializeForResultUpdate() {
+        // Used to check if the assessor is the current user
+        this.accountService.identity().then(user => {
+            this.userId = user!.id!;
+            this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
+        });
         if (this.result.feedbacks) {
             this.feedbacks = this.result.feedbacks;
         } else {
@@ -61,17 +83,25 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 )
                 .subscribe(() => (this.isLoading = false));
         }
-        this.participation = this.result.participation! as StudentParticipation;
+        if (this.result.hasComplaint) {
+            this.getComplaint(this.result.id);
+        }
+        // TODO: the participation needs additional information
+        this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
     }
 
     initializeForResultCreation() {
         this.isLoading = true;
         this.result = this.manualResultService.generateInitialManualResult();
+        this.getParticipation();
+    }
+
+    getParticipation() {
         this.participationService
             .find(this.participationId)
             .pipe(
                 tap(({ body: participation }) => {
-                    this.participation = participation!;
+                    this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
                     this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
                 }),
@@ -87,6 +117,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     }
 
     clear() {
+        if (this.resultModified) {
+            this.onResultModified.emit(this.result);
+        }
         this.activeModal.dismiss('cancel');
     }
 
@@ -107,7 +140,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
         result.subscribe(
             res => this.onSaveSuccess(res),
-            err => this.onSaveError(),
+            () => this.onSaveError(),
         );
     }
 
@@ -129,5 +162,47 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.feedbacks.length > 0) {
             this.feedbacks.pop();
         }
+    }
+
+    private getComplaint(id: number): void {
+        this.complaintService
+            .findByResultId(id)
+            .pipe(filter(res => !!res.body))
+            .subscribe(
+                res => {
+                    this.complaint = res.body!;
+                },
+                (err: HttpErrorResponse) => {
+                    this.alertService.error(err.message);
+                },
+            );
+    }
+
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        this.manualResultService.updateAfterComplaint(this.feedbacks, complaintResponse, this.result, this.result!.submission!.id).subscribe(
+            (result: Result) => {
+                this.result = result;
+                this.resultModified = true;
+                this.jhiAlertService.clear();
+                this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+            },
+            () => {
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
+            },
+        );
+    }
+
+    /**
+     * the dialog is readonly if there is a complaint that was accepted or rejected
+     */
+    readOnly() {
+        return this.complaint !== undefined && this.complaint.accepted !== undefined;
     }
 }

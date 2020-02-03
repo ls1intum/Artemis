@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/code-editor/file-browser/code-editor-file-browser-node.component';

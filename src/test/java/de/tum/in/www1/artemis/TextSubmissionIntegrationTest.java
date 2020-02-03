@@ -10,18 +10,17 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
@@ -29,12 +28,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class TextSubmissionIntegrationTest {
+public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
@@ -124,7 +118,7 @@ public class TextSubmissionIntegrationTest {
         textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.addTextSubmissionWithResultAndAssessor(textExerciseAfterDueDate, textSubmission, "student1", "tutor1");
 
-        Exercise returnedExercise = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/results", HttpStatus.OK, Exercise.class);
+        Exercise returnedExercise = request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/details", HttpStatus.OK, Exercise.class);
 
         assertThat(returnedExercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessor()).as("assessor is null").isNull();
     }
@@ -176,5 +170,15 @@ public class TextSubmissionIntegrationTest {
         participationRepository.save(afterDueDateParticipation);
 
         request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteTextSubmissionWithTextBlocks() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseBeforeDueDate, textSubmission, "student1");
+        final List<TextBlock> blocks = List.of(ModelFactory.generateTextBlock(0, 9), ModelFactory.generateTextBlock(10, 19), ModelFactory.generateTextBlock(20, 29));
+        database.addTextBlocksToTextSubmission(blocks, textSubmission);
+
+        request.delete("/api/submissions/" + textSubmission.getId(), HttpStatus.OK);
     }
 }

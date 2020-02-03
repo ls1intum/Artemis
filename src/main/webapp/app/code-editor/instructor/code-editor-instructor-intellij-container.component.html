@@ -1,0 +1,95 @@
+<jhi-alert></jhi-alert>
+<nav *ngIf="loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED" class="card">
+    <div class="card-body">
+        <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
+            <fa-icon icon="circle-notch" spin="true"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.fetchingParticipation">
+                Your participation is being loaded...
+            </span>
+        </span>
+        <span *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED">
+            <fa-icon icon="times-circle" class="text-danger"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
+        </span>
+    </div>
+</nav>
+<ng-container *ngIf="exercise">
+    <div class="h-100">
+        <div class="d-flex align-items-center justify-content-end mb-1">
+            <jhi-updating-result
+                *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
+                [exercise]="exercise"
+                [participation]="selectedParticipation"
+                [showUngradedResults]="true"
+                [showTestNames]="true"
+                [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
+                [short]="true"
+                class="mr-2"
+            ></jhi-updating-result>
+        </div>
+        <div class="d-flex align-items-center justify-content-end mr-2 mb-3">
+            <jhi-programming-exercise-instructor-exercise-status
+                class="mr-2"
+                [exercise]="exercise"
+                [templateParticipation]="exercise?.templateParticipation"
+                [solutionParticipation]="exercise?.solutionParticipation"
+            ></jhi-programming-exercise-instructor-exercise-status>
+            <div ngbDropdown class="d-inline-block mr-2">
+                <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
+                <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                    <button
+                        [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUrl"
+                        (click)="selectTemplateParticipation()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.TEMPLATE ? '#3e8acc' : 'transparent'"
+                    >
+                        <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo">Template Repository</span>
+                    </button>
+                    <button
+                        [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUrl"
+                        (click)="selectSolutionParticipation()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
+                        jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
+                    >
+                        <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo">Solution Repository 2</span>
+                    </button>
+                    <button
+                        [disabled]="!exercise"
+                        (click)="selectTestRepository()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                        jhiTranslate="artemisApp.editor.repoSelect.testRepo"
+                    >
+                        Test Repository
+                    </button>
+                </div>
+            </div>
+            <jhi-programming-exercise-student-trigger-build-button
+                class="mr-3"
+                *ngIf="selectedRepository !== REPOSITORY.TEST"
+                [exercise]="exercise"
+                [participation]="selectedParticipation"
+                [btnSize]="ButtonSize.MEDIUM"
+            ></jhi-programming-exercise-student-trigger-build-button>
+            <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id" class="mr-2"></jhi-exercise-hint-student>
+            <jhi-ide-button class="ml-1" [buttonLoading]="intellijState.building" buttonLabel="{{ 'artemisApp.editor.submit' | translate }}" (click)="submit()"> </jhi-ide-button>
+            <jhi-ide-button
+                *ngIf="selectedRepository !== REPOSITORY.TEST"
+                class="ml-1"
+                [buttonLoading]="intellijState.building"
+                buttonLabel="{{ 'artemisApp.editor.intellij.testLocally' | translate }}"
+                (click)="buildLocally()"
+            ></jhi-ide-button>
+        </div>
+        <jhi-programming-exercise-editable-instructions
+            *ngIf="exercise"
+            class="instructions-intellij"
+            [(exercise)]="exercise"
+            [(participation)]="selectedParticipation"
+            [templateParticipation]="exercise.templateParticipation"
+            [enableResize]="false"
+        >
+        </jhi-programming-exercise-editable-instructions>
+    </div>
+</ng-container>

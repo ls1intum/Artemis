@@ -5,16 +5,14 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -28,14 +26,11 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final FeedbackRepository feedbackRepository;
-
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseService programmingExerciseService,
-            FeedbackRepository feedbackRepository, ProgrammingSubmissionService programmingSubmissionService) {
+            ProgrammingSubmissionService programmingSubmissionService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -70,15 +65,16 @@ public class ProgrammingExerciseTestCaseService {
     @Transactional
     public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
             throws EntityNotFoundException, IllegalAccessException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithTestCases(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTestCasesById(exerciseId);
         Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
 
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
         for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
             Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream()
                     .filter(testCase -> testCase.getId().equals(programmingExerciseTestCaseDTO.getId())).findFirst();
-            if (!matchingTestCaseOpt.isPresent())
+            if (matchingTestCaseOpt.isEmpty()) {
                 continue;
+            }
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
             matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
@@ -134,7 +130,6 @@ public class ProgrammingExerciseTestCaseService {
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
 
         if (testCasesToSave.size() > 0) {
-            // TODO: This fails with a TransientObject exception in our tests (because the result is not saved?)
             testCaseRepository.saveAll(testCasesToSave);
             return true;
         }

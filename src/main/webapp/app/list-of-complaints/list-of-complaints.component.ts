@@ -2,13 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { ExerciseType } from 'app/entities/exercise';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -38,6 +41,7 @@ export class ListOfComplaintsComponent implements OnInit {
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -47,7 +51,10 @@ export class ListOfComplaintsComponent implements OnInit {
             this.tutorId = Number(queryParams['tutorId']);
         });
         this.route.data.subscribe(data => (this.complaintType = data.complaintType));
+        this.loadComplaints();
+    }
 
+    loadComplaints() {
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
 
         if (this.tutorId) {
@@ -98,6 +105,17 @@ export class ListOfComplaintsComponent implements OnInit {
             route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
+        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+            const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+            modalRef.componentInstance.participationId = studentParticipation.id;
+            modalRef.componentInstance.exercise = exercise;
+            modalRef.componentInstance.result = cloneDeep(complaint.result);
+            modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
+            modalRef.result.then(
+                _ => this.loadComplaints(),
+                () => {},
+            );
+            return;
         }
         this.router.navigate([route!]);
     }

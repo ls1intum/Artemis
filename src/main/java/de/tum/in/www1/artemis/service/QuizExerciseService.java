@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.*;
@@ -31,8 +32,6 @@ public class QuizExerciseService {
 
     private final ShortAnswerMappingRepository shortAnswerMappingRepository;
 
-    private final ParticipationService participationService;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ResultRepository resultRepository;
@@ -46,14 +45,13 @@ public class QuizExerciseService {
     private final ObjectMapper objectMapper;
 
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
+            ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
             MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
-        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -71,14 +69,82 @@ public class QuizExerciseService {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
         // fix references in all drag and drop and short answer questions (step 1/2)
-        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            if (quizQuestion instanceof MultipleChoiceQuestion) {
+                var multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
+                var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic();
+                if (quizQuestionStatistic == null) {
+                    quizQuestionStatistic = new MultipleChoiceQuestionStatistic();
+                    multipleChoiceQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                }
+
+                for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {
+                    quizQuestionStatistic.addAnswerOption(answerOption);
+                }
+
+                // if an answerOption was removed then remove the associated AnswerCounters implicitly
+                Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
+                for (AnswerCounter answerCounter : quizQuestionStatistic.getAnswerCounters()) {
+                    if (answerCounter.getId() != null) {
+                        if (!(multipleChoiceQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
+                            answerCounter.setAnswer(null);
+                            answerCounterToDelete.add(answerCounter);
+                        }
+                    }
+                }
+                quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion) {
+                var dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                var quizQuestionStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
+                if (quizQuestionStatistic == null) {
+                    quizQuestionStatistic = new DragAndDropQuestionStatistic();
+                    dragAndDropQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                }
+
+                for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
+                    quizQuestionStatistic.addDropLocation(dropLocation);
+                }
+
+                // if a dropLocation was removed then remove the associated AnswerCounters implicitly
+                Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
+                for (DropLocationCounter dropLocationCounter : quizQuestionStatistic.getDropLocationCounters()) {
+                    if (dropLocationCounter.getId() != null) {
+                        if (!(dragAndDropQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
+                            dropLocationCounter.setDropLocation(null);
+                            dropLocationCounterToDelete.add(dropLocationCounter);
+                        }
+                    }
+                }
+                quizQuestionStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
+
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndices(dragAndDropQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion) {
-                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                var shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                var quizQuestionStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
+                if (quizQuestionStatistic == null) {
+                    quizQuestionStatistic = new ShortAnswerQuestionStatistic();
+                    shortAnswerQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                }
+
+                for (var spot : shortAnswerQuestion.getSpots()) {
+                    quizQuestionStatistic.addSpot(spot);
+                }
+
+                // if a spot was removed then remove the associated spotCounters implicitly
+                Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
+                for (ShortAnswerSpotCounter spotCounter : quizQuestionStatistic.getShortAnswerSpotCounters()) {
+                    if (spotCounter.getId() != null) {
+                        if (!(shortAnswerQuestion.getSpots().contains(spotCounter.getSpot()))) {
+                            spotCounter.setSpot(null);
+                            spotCounterToDelete.add(spotCounter);
+                        }
+                    }
+                }
+                quizQuestionStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
+
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
             }
@@ -196,18 +262,6 @@ public class QuizExerciseService {
     }
 
     /**
-     * Delete the quiz exercise by id.
-     *
-     * @param id the id of the entity
-     */
-    public void delete(Long id) {
-        log.debug("Request to delete Exercise : {}", id);
-        // delete all participations belonging to this quiz
-        participationService.deleteAllByExerciseId(id, false, false);
-        quizExerciseRepository.deleteById(id);
-    }
-
-    /**
      * adjust existing results if an answer or and question was deleted and recalculate the scores
      *
      * @param quizExercise the changed quizExercise.
@@ -272,16 +326,6 @@ public class QuizExerciseService {
     }
 
     /**
-     * Check if the current user is allowed to see the given exercise
-     * 
-     * @param quizExercise the exercise to check permissions for
-     * @return true, if the user has the required permissions, false otherwise
-     */
-    public boolean userIsAllowedToSeeExercise(QuizExercise quizExercise) {
-        return authCheckService.isAllowedToSeeExercise(quizExercise, null);
-    }
-
-    /**
      * get the view for students in the given quiz
      * 
      * @param quizExercise the quiz to get the view for
@@ -325,7 +369,7 @@ public class QuizExerciseService {
                 }
             }
 
-            // replace drop location
+            // drop location index
             DropLocation dropLocation = mapping.getDropLocation();
             boolean dropLocationFound = false;
             for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {

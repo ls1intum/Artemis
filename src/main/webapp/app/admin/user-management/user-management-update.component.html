@@ -59,6 +59,52 @@
                         </small>
                     </div>
                 </div>
+                <div class="form-check mb-2">
+                    <div class="d-flex align-items-center">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="randomPassword"
+                            id="randomPassword"
+                            (change)="shouldRandomizePassword($event)"
+                            checked
+                            #editPassword
+                        />
+                        <label class="form-check-label" for="randomPassword" [jhiTranslate]="user.id ? 'userManagement.keepPassword' : 'userManagement.randomPassword'"
+                            >Random password / Keep old password</label
+                        >
+                    </div>
+                </div>
+                <div class="form-group" [hidden]="editPassword.checked">
+                    <input
+                        type="password"
+                        class="form-control"
+                        name="password"
+                        id="password"
+                        placeholder="{{ 'global.menu.account.password' | translate }}"
+                        minlength="4"
+                        maxlength="100"
+                        #password="ngModel"
+                        [(ngModel)]="user.password"
+                    />
+                    <div *ngIf="password.dirty && password.invalid">
+                        <small class="form-text text-danger" *ngIf="password.errors?.maxlength" [translateValues]="{ max: 50 }" jhiTranslate="userManagement.passwordConstraints">
+                            The password has to contain 4-100 characters!
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="userManagement.groups">Groups</label>
+                    <tag-input
+                        name="groups"
+                        [(ngModel)]="user.groups"
+                        [theme]="'bootstrap'"
+                        [modelAsStrings]="true"
+                        [placeholder]="'userManagement.addGroup' | translate"
+                        [secondaryPlaceholder]="'userManagement.enterGroup' | translate"
+                    >
+                    </tag-input>
+                </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="userManagement.email">Email</label>
                     <input type="email" class="form-control" name="email" #emailInput="ngModel" [(ngModel)]="user.email" minlength="5" required maxlength="254" email />

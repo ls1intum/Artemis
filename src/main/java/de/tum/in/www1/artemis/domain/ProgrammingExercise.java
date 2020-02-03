@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -448,6 +450,16 @@ public class ProgrammingExercise extends Exercise {
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
         super.filterSensitiveInformation();
+    }
+
+    /**
+     * Check if manual results are allowed for the exercise
+     * @return true if manual results are allowed, false otherwise
+     */
+    public boolean areManualResultsAllowed() {
+        // Only allow manual results for programming exercises if option was enabled and due dates have passed;
+        final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
+        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 
     @Override

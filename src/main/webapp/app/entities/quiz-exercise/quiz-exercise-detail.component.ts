@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, On
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';

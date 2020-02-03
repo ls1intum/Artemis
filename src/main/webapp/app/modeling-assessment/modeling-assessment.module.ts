@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { ModelingAssessmentComponent } from 'app/modeling-assessment/modeling-assessment.component';
-import { ScoreDisplayComponent } from './score-display/score-display.component';
 import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 
 @NgModule({
-    declarations: [ModelingAssessmentComponent, ScoreDisplayComponent],
-    exports: [ModelingAssessmentComponent, ScoreDisplayComponent],
-    imports: [ArtemisSharedModule],
+    declarations: [ModelingAssessmentComponent],
+    exports: [ModelingAssessmentComponent],
+    imports: [ArtemisSharedModule, ArtemisAssessmentSharedModule],
 })
 export class ModelingAssessmentModule {}

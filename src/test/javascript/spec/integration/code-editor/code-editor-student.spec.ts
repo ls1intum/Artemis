@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -40,8 +40,10 @@ import {
     MockSyncStorage,
 } from '../../mocks';
 import { Result, ResultService } from 'app/entities/result';
-import { Participation, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise';
+import { Participation, StudentParticipation } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';
@@ -57,6 +59,8 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../utils/general.utils';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../mocks/mock-websocket.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -108,6 +112,9 @@ describe('CodeEditorStudentIntegration', () => {
                 DeviceDetectorService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -115,9 +122,7 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: CodeEditorSessionService, useClass: MockCodeEditorSessionService },
-                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
-                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],

@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, isStartExerciseAvailable, ParticipationStatus } from 'app/entities/exercise';
 import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { IntelliJState } from 'app/intellij/intellij';
@@ -10,6 +10,7 @@ import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/feature-toggle';
+import { stringifyCircular } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -119,10 +120,8 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
      */
     importIntoIntelliJ() {
-        const title = this.exercise.title;
-        const id = this.exercise.id;
         const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
-        this.javaBridge.clone(repo, title, id, this.courseId);
+        this.javaBridge.clone(repo, stringifyCircular(this.exercise));
     }
 
     /**
@@ -131,5 +130,21 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     submitChanges() {
         this.javaBridge.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
+    }
+
+    get canImport(): boolean {
+        const notOpenedOrInstructor = this.ideState.inInstructorView || this.ideState.opened !== this.exercise.id;
+
+        return this.hasInitializedParticipation() && notOpenedOrInstructor;
+    }
+
+    get canSubmit(): boolean {
+        const openedAndNotInstructor = !this.ideState.inInstructorView && this.ideState.opened === this.exercise.id;
+
+        return this.hasInitializedParticipation() && openedAndNotInstructor;
+    }
+
+    private hasInitializedParticipation(): boolean {
+        return this.exercise.studentParticipations && this.participationStatus() === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
     }
 }

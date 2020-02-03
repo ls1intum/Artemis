@@ -1,0 +1,52 @@
+<!--region LEFT SIDE-->
+<div class="left card">
+    <div class="card-header bg-primary text-white">
+        <ng-content select="span[left-header]"></ng-content>
+        <span class="flex-fill"></span>
+        <ng-content select="jhi-score-display[left-header]"></ng-content>
+    </div>
+    <div class="left-body card-body">
+        <ng-content select="[left-body]"></ng-content>
+    </div>
+</div>
+<!--endregion LEFT SIDE-->
+
+<!--region RIGHT SIDE-->
+<ng-container *ngIf="collapsed; then collapsedBody; else expandedBody"></ng-container>
+
+<ng-template #expandedBody>
+    <div class="expanded right">
+        <div class="draggable-left">
+            <fa-icon icon="grip-lines-vertical"></fa-icon>
+        </div>
+        <div class="card">
+            <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
+                <h3 class="card-title">
+                    <div class="mr-1">
+                        <ng-content select="fa-icon[right-header]"></ng-content>
+                    </div>
+                    <ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>
+                </h3>
+                <fa-icon icon="chevron-right"></fa-icon>
+            </div>
+            <div class="card-body">
+                <ng-content select="[right-body]"></ng-content>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #collapsedBody>
+    <div class="collapsed right text-white bg-primary" (click)="collapsed = !collapsed">
+        <fa-icon icon="chevron-left"></fa-icon>
+        <div class="header">
+            <ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>
+        </div>
+        <fa-icon icon="chevron-left"></fa-icon>
+    </div>
+</ng-template>
+
+<ng-template #rightHeaderSpan>
+    <ng-content select="span[right-header]"></ng-content>
+</ng-template>
+<!--endregion RIGHT SIDE-->

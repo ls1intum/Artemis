@@ -53,6 +53,7 @@
                                 [entityTitle]="notification.id"
                                 deleteQuestion="artemisApp.notificationManagement.delete.question"
                                 (delete)="deleteNotification(notification.id)"
+                                [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>

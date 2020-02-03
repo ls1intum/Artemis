@@ -58,8 +58,8 @@
         </div>
         <div class="checkbox">
             <label class="control-label">
-                <input type="checkbox" name="squashAfterInstructor" [(ngModel)]="this.repositoryExportOptions.squashAfterInstructor" />
-                <strong jhiTranslate="artemisApp.programmingExercise.export.squashAfterInstructor">Squash all changes after instructor into one commit</strong>
+                <input type="checkbox" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
+                <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits">Combine all changes after instructor into one commit</strong>
             </label>
         </div>
         <div class="checkbox">
@@ -76,7 +76,12 @@
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="!participationIdList && !studentIdList && !this.repositoryExportOptions.exportAllStudents && !exportInProgress" class="btn btn-default">
+        <button
+            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            type="submit"
+            [disabled]="!participationIdList && !studentIdList && !this.repositoryExportOptions.exportAllStudents && !exportInProgress"
+            class="btn btn-default"
+        >
             <span *ngIf="this.exportInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
         </button>

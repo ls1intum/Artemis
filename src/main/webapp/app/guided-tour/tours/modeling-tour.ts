@@ -50,7 +50,6 @@ export const modelingTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-modeling-submission .submission-button',
-            clickEventListenerSelector: '.alerts',
             headlineTranslateKey: 'tour.modelingExercise.submit.headline',
             contentTranslateKey: 'tour.modelingExercise.submit.content',
             hintTranslateKey: 'tour.modelingExercise.submit.hint',

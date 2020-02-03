@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,43 +16,29 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.connectors.BambooService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
-public class ResultServiceIntegrationTest {
-
-    @MockBean
-    BambooService continuousIntegrationServiceMock;
+public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ResultService resultService;
@@ -63,7 +53,7 @@ public class ResultServiceIntegrationTest {
     SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
     UserRepository userRepo;
@@ -77,14 +67,9 @@ public class ResultServiceIntegrationTest {
     @Autowired
     ResultRepository resultRepository;
 
-    @MockBean
-    GitService gitService;
-
     private ProgrammingExercise programmingExercise;
 
     private SolutionProgrammingExerciseParticipation solutionParticipation;
-
-    private TemplateProgrammingExerciseParticipation templateParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
@@ -97,7 +82,6 @@ public class ResultServiceIntegrationTest {
         programmingExercise = programmingExerciseRepository.findAll().get(0);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        templateParticipation = programmingExercise.getTemplateParticipation();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 
         database.addCourseWithOneModelingExercise();
@@ -133,7 +117,7 @@ public class ResultServiceIntegrationTest {
 
         Object requestDummy = new Object();
 
-        when(continuousIntegrationServiceMock.onBuildCompletedNew(solutionParticipation, requestDummy)).thenReturn(result);
+        doReturn(result).when(continuousIntegrationService).onBuildCompletedNew(solutionParticipation, requestDummy);
         resultService.processNewProgrammingExerciseResult(solutionParticipation, requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
@@ -203,11 +187,23 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "student1", roles = "INSTRUCTOR")
     public void programmingExerciseManualResultNew_noManualReviewsAllowed_forbidden() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        final var result = ModelFactory.generateResult(true, 1);
+        result.setParticipation(programmingExerciseStudentParticipation);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setSubmission(programmingSubmission);
+
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
+    public void programmingExerciseManualResultNew_noManualReviewsWithoutSubmission_badRequest() throws Exception {
         final var result = ModelFactory.generateResult(true, 1);
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
+        request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
@@ -285,6 +281,8 @@ public class ResultServiceIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void updateManualProgrammingExerciseResult() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -303,6 +301,7 @@ public class ResultServiceIntegrationTest {
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
         result = resultRepository.save(result);
+        result.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
         result.setFeedbacks(feedbacks.subList(0, 1));

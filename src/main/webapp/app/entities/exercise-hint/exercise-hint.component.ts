@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
+import { onError } from 'app/utils/global.utils';
 
 @Component({
     selector: 'jhi-exercise-hint',
@@ -17,12 +18,15 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;
 
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
     paramSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,
         protected exerciseHintService: ExerciseHintService,
-        protected jhiAlertService: JhiAlertService,
+        private jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
     ) {}
 
@@ -42,6 +46,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             this.paramSub.unsubscribe();
         }
         this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
     }
 
     /**
@@ -58,7 +63,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                 (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
                 },
-                (res: HttpErrorResponse) => this.onError(res.message),
+                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
     }
 
@@ -84,12 +89,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
+                this.dialogErrorSource.next('');
             },
-            error => this.onError(error),
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
-    }
-
-    protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage, null, undefined);
     }
 }

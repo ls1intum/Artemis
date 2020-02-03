@@ -211,12 +211,12 @@ describe('ProgrammingSubmissionService', () => {
         const exerciseId = 10;
         const submissionState: ExerciseSubmissionState = {};
         // @ts-ignore
-        const fetchLatestPendingSubmissionByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.withArgs(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`).returns(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState;
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe(state => (receivedSubmissionState = state));
-        expect(fetchLatestPendingSubmissionByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
         expect(receivedSubmissionState).to.deep.equal(submissionState);
     });
 
@@ -228,12 +228,12 @@ describe('ProgrammingSubmissionService', () => {
             2: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 2 },
         };
         // @ts-ignore
-        const fetchLatestPendingSubmissionByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.withArgs(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`).returns(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState;
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe(state => (receivedSubmissionState = state));
-        expect(fetchLatestPendingSubmissionByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
         expect(receivedSubmissionState).to.deep.equal(expectedSubmissionState);
     });
 
@@ -249,12 +249,12 @@ describe('ProgrammingSubmissionService', () => {
             {},
         );
         // @ts-ignore
-        const fetchLatestPendingSubmissionByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionByExerciseId');
+        const fetchLatestPendingSubmissionsByExerciseIdSpy = spy(submissionService, 'fetchLatestPendingSubmissionsByExerciseId');
         httpGetStub.withArgs(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`).returns(of(submissionState));
 
         let receivedSubmissionState: ExerciseSubmissionState;
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe(state => (receivedSubmissionState = state));
-        expect(fetchLatestPendingSubmissionByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
+        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
         expect(receivedSubmissionState).to.deep.equal(expectedSubmissionState);
 
         let resultEta: number;

@@ -4,8 +4,11 @@ import { TextSubmission, TextSubmissionService } from 'app/entities/text-submiss
 import { ActivatedRoute } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise';
 import { DifferencePipe } from 'ngx-moment';
+import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result';
+import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
+import { Submission } from 'app/entities/submission';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -14,16 +17,23 @@ import { Result } from 'app/entities/result';
 export class TextAssessmentDashboardComponent implements OnInit {
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
+    filteredSubmissions: TextSubmission[] = [];
     busy = false;
     predicate = 'id';
     reverse = false;
+
+    private cancelConfirmationText: string;
 
     constructor(
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
+        private assessmentsService: TextAssessmentsService,
         private momentDiff: DifferencePipe,
-    ) {}
+        private translateService: TranslateService,
+    ) {
+        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+    }
 
     async ngOnInit() {
         this.busy = true;
@@ -60,8 +70,13 @@ export class TextAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
+                this.filteredSubmissions = submissions;
                 this.busy = false;
             });
+    }
+
+    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
+        this.filteredSubmissions = filteredSubmissions as TextSubmission[];
     }
 
     public durationString(completionDate: Date, initializationDate: Date) {
@@ -73,5 +88,17 @@ export class TextAssessmentDashboardComponent implements OnInit {
             return `artemisApp.AssessmentType.${result.assessmentType}`;
         }
         return 'artemisApp.AssessmentType.null';
+    }
+
+    /**
+     * Cancel the current assessment and reload the submissions to reflect the change.
+     */
+    cancelAssessment(submission: Submission) {
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            this.assessmentsService.cancelAssessment(this.exercise.id, submission.id).subscribe(() => {
+                this.getSubmissions();
+            });
+        }
     }
 }

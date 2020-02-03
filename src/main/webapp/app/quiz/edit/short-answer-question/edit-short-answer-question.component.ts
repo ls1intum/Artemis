@@ -249,7 +249,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // setup spots
         for (const spotID of spotParts) {
             const spot = new ShortAnswerSpot();
-            spot.tempID = TempID.generate();
             spot.width = 15;
 
             // Assign existing ID if available
@@ -264,7 +263,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         for (const solutionText of solutionParts) {
             // Find the box (text in-between the parts)
             const solution = new ShortAnswerSolution();
-            solution.tempID = TempID.generate();
             solution.text = solutionText[1].trim();
 
             // Assign existing ID if available
@@ -434,7 +432,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.question.solutions = [];
         }
         const solution = new ShortAnswerSolution();
-        solution.tempID = TempID.generate();
         solution.text = 'Please enter here your text';
         this.question.solutions.push(solution);
         this.questionEditorText = this.generateMarkdown();

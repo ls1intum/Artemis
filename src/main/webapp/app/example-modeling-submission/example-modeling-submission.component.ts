@@ -15,7 +15,7 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
-import { ModelingAssessmentComponent } from 'app/modeling-assessment';
+import { ModelingAssessmentComponent } from 'app/modeling-assessment/modeling-assessment.component';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 
 @Component({

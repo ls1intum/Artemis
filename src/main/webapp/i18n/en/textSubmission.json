@@ -15,7 +15,8 @@
             "detail": {
                 "title": "Text Submission"
             },
-            "text": "Text"
+            "text": "Text",
+            "view": "View submission"
         }
     }
 }

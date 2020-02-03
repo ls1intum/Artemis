@@ -8,15 +8,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
@@ -26,12 +20,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExerciseHintResource;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class ExerciseHintIntegrationTest {
+public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ExerciseHintResource exerciseHintResource;
@@ -101,6 +90,7 @@ public class ExerciseHintIntegrationTest {
     public void getHintForAnExerciseAsAnInstructor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
+        request.get("/api/exercise-hints/" + 0l, HttpStatus.NOT_FOUND, ExerciseHint.class);
     }
 
     @Test
@@ -125,9 +115,11 @@ public class ExerciseHintIntegrationTest {
     public void createHintAsInstructor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
         request.post("/api/exercise-hints/", exerciseHint, HttpStatus.CREATED);
-
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         assertThat(exerciseHints).hasSize(4);
+
+        exerciseHint.setExercise(null);
+        request.post("/api/exercise-hints/", exerciseHint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -153,7 +145,7 @@ public class ExerciseHintIntegrationTest {
 
         exerciseHint.setContent(newContent);
         request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
-
+        request.put("/api/exercise-hints/" + 0l, exerciseHint, HttpStatus.BAD_REQUEST);
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
     }
@@ -171,4 +163,13 @@ public class ExerciseHintIntegrationTest {
         assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteHintAsInstructor() throws Exception {
+        ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
+        request.delete("/api/exercise-hints/" + 0l, HttpStatus.NOT_FOUND);
+        request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
+        List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
+        request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
+    }
 }

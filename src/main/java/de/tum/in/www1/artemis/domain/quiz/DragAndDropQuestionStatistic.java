@@ -96,7 +96,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic implemen
         DropLocationCounter dropLocationCounter = new DropLocationCounter();
         dropLocationCounter.setDropLocation(dropLocation);
         addDropLocationCounters(dropLocationCounter);
-
     }
 
     /**

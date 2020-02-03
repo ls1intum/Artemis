@@ -49,6 +49,7 @@
                                 [entityTitle]="exerciseHint.title"
                                 deleteQuestion="artemisApp.exerciseHint.delete.question"
                                 (delete)="deleteExerciseHint(exerciseHint.id)"
+                                [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
                             </button>

@@ -14,7 +14,7 @@
                 <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | translate }}</label>
             </div>
 
-            <button (click)="upsertExampleTextSubmission()" class="btn btn-primary col-6">
+            <button (click)="createUpdateExampleTextSubmission()" class="btn btn-primary col-6">
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span *ngIf="isNewSubmission">{{ 'artemisApp.exampleSubmission.createNewSubmission' | translate }}</span>
                 <span *ngIf="!isNewSubmission">{{ 'artemisApp.exampleSubmission.updateTextSubmission' | translate }}</span>

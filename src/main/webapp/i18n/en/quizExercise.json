@@ -15,7 +15,7 @@
                 "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!"
             },
             "reset": {
-                "question": "Are you sure you want to reset the quiz {{ title }}? This action can NOT be undone!"
+                "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all student participations, results and statistics will be deleted, but the questions of the quiz remain. Then you can start the quiz again."
             },
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",

@@ -3,7 +3,8 @@ import { filter, tap, catchError } from 'rxjs/operators';
 import { Subscription, of } from 'rxjs';
 import { compose, head, orderBy } from 'lodash/fp';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { hasParticipationChanged, InitializationState, Participation, ParticipationWebsocketService } from 'app/entities/participation';
+import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { SubmissionType } from 'app/entities/submission';
@@ -117,7 +118,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(
-                filter((result: Result | null) => !!result),
+                filter(result => !!result),
                 tap((result: Result) => {
                     this.lastResultIsManual = !!result && result.assessmentType === AssessmentType.MANUAL;
                 }),

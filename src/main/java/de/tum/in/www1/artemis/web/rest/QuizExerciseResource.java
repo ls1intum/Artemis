@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -41,7 +42,11 @@ public class QuizExerciseResource {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final UserService userService;
+
     private final CourseService courseService;
+
+    private final ExerciseService exerciseService;
 
     private final QuizStatisticService quizStatisticService;
 
@@ -53,14 +58,16 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            QuizScheduleService quizScheduleService) {
+            QuizScheduleService quizScheduleService, ExerciseService exerciseService, UserService userService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
+        this.userService = userService;
         this.courseService = courseService;
         this.quizStatisticService = quizStatisticService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.quizScheduleService = quizScheduleService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -81,17 +88,13 @@ public class QuizExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
@@ -125,17 +128,13 @@ public class QuizExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
@@ -252,7 +251,7 @@ public class QuizExerciseResource {
      *
      * @param quizExerciseId     the id of the quiz exercise to start
      * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
-     * @return the response entity with status 204 if quiz was started, appropriate error code otherwise
+     * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -332,23 +331,22 @@ public class QuizExerciseResource {
     @DeleteMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
-        log.debug("REST request to delete QuizExercise : {}", quizExerciseId);
-
+        log.info("REST request to delete QuizExercise : {}", quizExerciseId);
         Optional<QuizExercise> quizExercise = quizExerciseService.findById(quizExerciseId);
         if (quizExercise.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return notFound();
         }
-
         Course course = quizExercise.get().getCourse();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-
-        quizExerciseService.delete(quizExerciseId);
+        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        exerciseService.logDeletion(quizExercise.get(), course, user);
+        exerciseService.delete(quizExerciseId, false, false);
         quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
         quizScheduleService.clearQuizData(quizExerciseId);
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExerciseId.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.get().getTitle())).build();
     }
 
     /**
@@ -381,11 +379,6 @@ public class QuizExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(quizExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }

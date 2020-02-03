@@ -13,10 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import io.github.jhipster.config.JHipsterConstants;
@@ -42,13 +41,12 @@ public class AutomaticBuildPlanCleanupService {
     /**
      *  Cleans up all build plans
      */
-    // TODO: remove transactional here
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
-    @Transactional
     public void cleanupBuildPlans() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             // only execute this on production server, i.e. when the prod profile is active
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
 
@@ -74,19 +72,26 @@ public class AutomaticBuildPlanCleanupService {
                 continue;
             }
 
-            if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())
-                    && participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+            if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())) {
+                var programmingExercise = participation.getProgrammingExercise();
 
-                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
-                    // we don't clean up plans that will definitely be executed in the future
-                    continue;
+                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+                    if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
+                        // we don't clean up plans that will definitely be executed in the future
+                        continue;
+                    }
+
+                    // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
+                    // and the students repos will be locked anyways.
+                    if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
+                        participationsWithBuildPlanToDelete.add(participation);
+                        countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
+                        continue;
+                    }
                 }
 
-                // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
-                // and the students repos will be locked anyways.
-                if (participation.getProgrammingExercise().getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
-                    participationsWithBuildPlanToDelete.add(participation);
-                    countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
+                if (programmingExercise.isPublishBuildPlanUrl() == Boolean.TRUE) {
+                    // this was an exercise where students needed to configure the build plan, therefore we should not clean it up
                     continue;
                 }
             }

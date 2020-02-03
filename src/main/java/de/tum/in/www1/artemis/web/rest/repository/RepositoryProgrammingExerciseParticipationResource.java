@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -32,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
@@ -40,7 +42,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
@@ -49,12 +51,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet)
-            throws IOException, InterruptedException, IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws InterruptedException, IllegalAccessException, GitAPIException {
         Participation participation = participationService.findParticipation(participationId);
         // Error case 1: The participation is not from a programming exercise.
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
+        }
         // Error case 2: The user does not have permissions to push into the repository.
         boolean hasPermissions = participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
         if (!hasPermissions) {
@@ -65,22 +67,24 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
-        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
     @Override
     URL getRepositoryUrl(Long participationId) throws IllegalArgumentException {
         Participation participation = participationService.findParticipation(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
+        }
         return ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
     }
 
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
         Participation participation = participationService.findParticipation(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation))
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
+        }
         return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
     }
 
@@ -179,7 +183,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getBuildPlanId());
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }

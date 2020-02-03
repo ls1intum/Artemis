@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ProgrammingExercise, ProgrammingExerciseImportComponent, ProgrammingExercisePagingService, ProgrammingLanguage } from 'app/entities/programming-exercise';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise';
+import { ProgrammingExercisePagingService } from 'app/entities/programming-exercise/services/programming-exercise-paging.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { Course } from 'app/entities/course';
@@ -8,8 +9,6 @@ import { SearchResult } from 'app/components/table';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { MockProgrammingExercisePagingService } from '../../mocks';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SinonStub, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { ArtemisSharedCommonModule } from 'app/shared';
@@ -17,8 +16,9 @@ import { SortByModule } from 'app/components/pipes';
 import { DifferencePipe } from 'ngx-moment';
 import { ButtonComponent } from 'app/shared/components';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/feature-toggle';
+import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
+import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

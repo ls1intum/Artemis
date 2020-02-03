@@ -2,20 +2,21 @@
     "artemisApp": {
         "fileUploadSubmission": {
             "home": {
-                "title": "File Upload Submissions",
-                "createLabel": "File Upload Submission erstellen",
-                "createOrEditLabel": "File Upload Submission erstellen oder bearbeiten"
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen",
+                "createOrEditLabel": "Einreichung erstellen oder bearbeiten"
             },
-            "created": "File Upload Submission erstellt mit ID {{ param }}",
-            "updated": "File Upload Submission aktualisiert mit ID {{ param }}",
-            "deleted": "File Upload Submission gelöscht mit ID {{ param }}",
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll File Upload Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "File Upload Submission"
+                "title": "Einreichung"
             },
-            "filePath": "File Path",
+            "view": "Einreichung ansehen",
+            "filePath": "Dateipfad",
             "feedbackResult": "Du hast {{ credits }} Punkt(e)",
             "feedbackResultDetail": "mit folgendem Feedback: {{ detailText }}",
             "confirmSubmission": "Bist du sicher, dass du abgeben möchtest? Du kannst deine Antwort nicht mehr bearbeiten, bis du eine Bewertung erhältst!",

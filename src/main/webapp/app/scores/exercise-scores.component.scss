@@ -1,11 +1,16 @@
-@import '~@swimlane/ngx-datatable/index.css';
-@import '~@swimlane/ngx-datatable/themes/bootstrap.scss';
-@import '~@swimlane/ngx-datatable/assets/icons.css';
+.exercise-scores-filter-toolbar {
+    /*
+      Window width required for same-line display of filters and buttons by site language:
+        - English: 1400px
+        - German: 1870px
+     */
+    @media (min-width: 1400px) {
+        html[lang='en'] & {
+            float: left;
+        }
+    }
 
-.datatable-icon-right {
-    color: white !important;
-}
-
-.loading-container {
-    height: 40vh;
+    @media (min-width: 1870px) {
+        float: left;
+    }
 }

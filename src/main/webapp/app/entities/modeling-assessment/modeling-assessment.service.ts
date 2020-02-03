@@ -9,6 +9,7 @@ import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
+import * as moment from 'moment';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -51,13 +52,15 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
-    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
         };
-        return this.http.post<Result>(url, assessmentUpdate).map(res => this.convertResult(res));
+        return this.http
+            .put<Result>(url, assessmentUpdate, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     getAssessment(submissionId: number): Observable<Result> {
@@ -83,6 +86,27 @@ export class ModelingAssessmentService {
 
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
+    private convertResponse(res: EntityResponseType): EntityResponseType {
+        let result = this.convertItemFromServer(res.body!);
+        result = this.convertResult(result);
+
+        if (result.completionDate) {
+            result.completionDate = moment(result.completionDate);
+        }
+        if (result.submission && result.submission.submissionDate) {
+            result.submission.submissionDate = moment(result.submission.submissionDate);
+        }
+        if (result.participation && result.participation.initializationDate) {
+            result.participation.initializationDate = moment(result.participation.initializationDate);
+        }
+
+        return res.clone({ body: result });
+    }
+
+    private convertItemFromServer(result: Result): Result {
+        return Object.assign({}, result);
     }
 
     /**

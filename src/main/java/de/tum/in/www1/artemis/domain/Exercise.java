@@ -18,6 +18,9 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -144,7 +147,13 @@ public abstract class Exercise implements Serializable {
     private Long numberOfComplaintsTransient;
 
     @Transient
+    private Long numberOfOpenComplaintsTransient;
+
+    @Transient
     private Long numberOfMoreFeedbackRequestsTransient;
+
+    @Transient
+    private Long numberOfOpenMoreFeedbackRequestsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -568,6 +577,14 @@ public abstract class Exercise implements Serializable {
         // remove the unnecessary inner course attribute
         setCourse(null);
 
+        // remove the problem statement, which is loaded in the exercise details call
+        setProblemStatement(null);
+
+        if (this instanceof ProgrammingExercise) {
+            var programmingExercise = (ProgrammingExercise) this;
+            programmingExercise.setTestRepositoryUrl(null);
+        }
+
         // get user's participation for the exercise
         StudentParticipation participation = participations != null ? findRelevantParticipation(participations) : null;
 
@@ -654,13 +671,31 @@ public abstract class Exercise implements Serializable {
         }
 
         if (submissionsWithRatedResult.size() > 0) {
-            return submissionsWithRatedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            if (submissionsWithRatedResult.size() == 1) {
+                return submissionsWithRatedResult.get(0);
+            }
+            else { // this means with have more than one submission, we want the one with the last submission date
+                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            }
         }
         else if (submissionsWithUnratedResult.size() > 0) {
-            return submissionsWithUnratedResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            if (submissionsWithUnratedResult.size() == 1) {
+                return submissionsWithUnratedResult.get(0);
+            }
+            else { // this means with have more than one submission, we want the one with the last submission date
+                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            }
         }
         else if (submissionsWithoutResult.size() > 0) {
-            return submissionsWithoutResult.stream().max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            if (submissionsWithoutResult.size() == 1) {
+                return submissionsWithoutResult.get(0);
+            }
+            else { // this means with have more than one submission, we want the one with the last submission date
+                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+            }
         }
         return null;
     }
@@ -725,12 +760,28 @@ public abstract class Exercise implements Serializable {
         this.numberOfComplaintsTransient = numberOfComplaints;
     }
 
+    public Long getNumberOfOpenComplaints() {
+        return numberOfOpenComplaintsTransient;
+    }
+
+    public void setNumberOfOpenComplaints(Long numberOfOpenComplaintsTransient) {
+        this.numberOfOpenComplaintsTransient = numberOfOpenComplaintsTransient;
+    }
+
     public Long getNumberOfMoreFeedbackRequests() {
         return numberOfMoreFeedbackRequestsTransient;
     }
 
     public void setNumberOfMoreFeedbackRequests(Long numberOfMoreFeedbackRequests) {
         this.numberOfMoreFeedbackRequestsTransient = numberOfMoreFeedbackRequests;
+    }
+
+    public Long getNumberOfOpenMoreFeedbackRequests() {
+        return numberOfOpenMoreFeedbackRequestsTransient;
+    }
+
+    public void setNumberOfOpenMoreFeedbackRequests(Long numberOfOpenMoreFeedbackRequests) {
+        this.numberOfOpenMoreFeedbackRequestsTransient = numberOfOpenMoreFeedbackRequests;
     }
 
     public boolean isReleased() {

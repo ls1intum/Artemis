@@ -12,6 +12,7 @@
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnis Text ist erforderlich.",
         "scoreNull": "Fehler! Eine Bewertung is erforderlich.",
+        "submissionMissing": "Fehler! Die Abgabe ist nicht mehr mit dem Ergebnis verknüpft. Deine Änderungen wurden abgelehnt.",
         "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnise mit 100% kann erfolgreich sein.",
         "feedbackTextOrDetailTextNull": "Fehler! Wenn Feedback vorhanden ist, müssen der Feedback Text und die Feedback Details ausgefüllt werden.",
         "quizAlreadyVisible": "Das Quiz ist bereits sichtbar.",
@@ -19,6 +20,8 @@
         "quizNotEndedYet": "Das Quiz hat noch nicht geendet.",
         "quizAlreadyOpenForPractice": "Das Quiz ist bereits zur Übung geöffnet.",
         "unknownAction": "Diese Aktion kann nicht durchgeführt werden.",
-        "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden."
+        "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden.",
+        "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
+        "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut."
     }
 }

@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export/programming-assessment-repo-export-dialog.component';
+import { FeatureToggle } from 'app/feature-toggle';
 
 @Component({
     selector: 'jhi-programming-assessment-repo-export',
@@ -10,6 +11,8 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-
             [disabled]="!exerciseId"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
+            [shouldSubmit]="false"
+            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [icon]="'download'"
             [title]="'instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
@@ -19,6 +22,7 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-
 export class ProgrammingAssessmentRepoExportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
+    readonly FeatureToggle = FeatureToggle;
 
     @Input() exerciseId: number;
     @Input() participationIdList: number[];

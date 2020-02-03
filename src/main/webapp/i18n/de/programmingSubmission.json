@@ -2,18 +2,18 @@
     "artemisApp": {
         "programmingSubmission": {
             "home": {
-                "title": "Programming Submissions",
-                "createLabel": "Programming Submission erstellen",
-                "createOrEditLabel": "Programming Submission erstellen oder bearbeiten"
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen",
+                "createOrEditLabel": "Einreichung erstellen oder bearbeiten"
             },
-            "created": "Programming Submission erstellt mit ID {{ param }}",
-            "updated": "Programming Submission aktualisiert mit ID {{ param }}",
-            "deleted": "Programming Submission gelöscht mit ID {{ param }}",
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Programming Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Programming Submission"
+                "title": "Einreichung"
             },
             "commitHash": "Commit Hash"
         }

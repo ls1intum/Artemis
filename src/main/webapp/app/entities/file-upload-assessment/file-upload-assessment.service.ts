@@ -6,6 +6,7 @@ import { Result } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { ComplaintResponse } from 'app/entities/complaint-response';
 import { buildUrlWithParams } from 'app/utils/global.utils';
+import * as moment from 'moment';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -25,13 +26,15 @@ export class FileUploadAssessmentsService {
         return this.http.put<Result>(url, feedbacks);
     }
 
-    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<Result> {
+    updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
         };
-        return this.http.put<Result>(url, assessmentUpdate);
+        return this.http
+            .put<Result>(url, assessmentUpdate, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     getAssessment(submissionId: number): Observable<Result> {
@@ -40,5 +43,25 @@ export class FileUploadAssessmentsService {
 
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
+    private convertResponse(res: EntityResponseType): EntityResponseType {
+        const result = this.convertItemFromServer(res.body!);
+
+        if (result.completionDate) {
+            result.completionDate = moment(result.completionDate);
+        }
+        if (result.submission && result.submission.submissionDate) {
+            result.submission.submissionDate = moment(result.submission.submissionDate);
+        }
+        if (result.participation && result.participation.initializationDate) {
+            result.participation.initializationDate = moment(result.participation.initializationDate);
+        }
+
+        return res.clone({ body: result });
+    }
+
+    private convertItemFromServer(result: Result): Result {
+        return Object.assign({}, result);
     }
 }

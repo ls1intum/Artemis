@@ -17,12 +17,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivi
 import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLActivityNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram.UMLControlFlow;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
 @ExtendWith(MockitoExtension.class)
 class SimilarityDetectorTest {

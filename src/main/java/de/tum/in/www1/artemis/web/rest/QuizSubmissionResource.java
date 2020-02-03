@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,11 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -38,34 +36,42 @@ public class QuizSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final UserService userService;
+
     private final QuizExerciseService quizExerciseService;
 
     private final QuizSubmissionService quizSubmissionService;
 
     private final ParticipationService participationService;
 
+    private final WebsocketMessagingService messagingService;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final AuthorizationCheckService authCheckService;
+
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
+        this.messagingService = messagingService;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
-     * POST /courses/:courseId/exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
+     * POST /exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
      *
-     * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation
      * @param principal      the current user principal
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/submissions/practice")
+    @PostMapping("/exercises/{exerciseId}/submissions/practice")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> submitForPractice(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, Principal principal, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
         // recreate pointers back to submission in each submitted answer
@@ -84,18 +90,20 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
-        if (!quizExerciseService.userIsAllowedToSeeExercise(quizExercise)) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             return ResponseEntity.status(403)
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
 
-        StudentParticipation participation = participationService.startExercise(quizExercise, principal.getName());
-        participation.setExercise(quizExercise);
         if (!quizExercise.isEnded() || !quizExercise.isIsOpenForPractice()) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet."))
                     .body(null);
         }
+
+        StudentParticipation participation = participationService.startExercise(quizExercise, user);
+        participation.setExercise(quizExercise);
 
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
@@ -108,28 +116,21 @@ public class QuizSubmissionResource {
         quizExercise.setQuizPointStatistic(null);
         quizExercise.setCourse(null);
 
-        if (Hibernate.isInitialized(participation.getResults()) && participation.getResults().size() == 0) {
-            participation.addResult(result);
-            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/exercise/" + quizExercise.getId() + "/participation", participation);
-        }
-        else {
-            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
-        }
+        messagingService.broadcastNewResult(result.getParticipation(), result);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);
     }
 
     /**
-     * POST /courses/:courseId/exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode. Note that in this case, nothing will be saved in database.
+     * POST /exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode. Note that in this case, nothing will be saved in database.
      *
-     * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
-    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/submissions/preview")
+    @PostMapping("exercises/{exerciseId}/submissions/preview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> submitForPreview(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
         if (quizSubmission.getId() != null) {

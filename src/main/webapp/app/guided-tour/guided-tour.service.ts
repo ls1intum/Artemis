@@ -5,7 +5,7 @@ import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged, take } from 'rxjs/internal/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
@@ -295,12 +295,13 @@ export class GuidedTourService {
             return;
         }
 
-        if (this.isCurrentTour(completedTour)) {
-            this.resetTour();
-        }
-
         if (this.currentTour.completeCallback) {
             this.currentTour.completeCallback();
+        }
+
+        if (this.isCurrentTour(completedTour)) {
+            this.resetTour();
+            return;
         }
 
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
@@ -452,15 +453,16 @@ export class GuidedTourService {
             let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
 
             if (userInteraction === UserInteractionEvent.CLICK) {
-                /** The first DOM mutation on the click event listener triggers the enableNextStepClick() call */
-                this.observeMutations(targetNode, options)
-                    .pipe(take(1))
-                    .subscribe(() => {
+                targetNode.addEventListener(
+                    'click',
+                    () => {
                         this.enableNextStepClick();
                         if (currentStep.triggerNextStep) {
                             this.nextStep();
                         }
-                    });
+                    },
+                    false,
+                );
             } else if (userInteraction === UserInteractionEvent.ACE_EDITOR) {
                 /** We observe any added or removed lines in the .ace_text-layer node and trigger enableNextStepClick() */
                 targetNode = document.querySelector('.ace_text-layer') as HTMLElement;
@@ -519,7 +521,7 @@ export class GuidedTourService {
      * @param target    target node of an HTMLElement of which DOM changes should be observed
      * @param options   the configuration options for the mutation observer
      */
-    private observeMutations = (target: any, options: MutationObserverInit) =>
+    public observeMutations = (target: any, options: MutationObserverInit) =>
         new Observable<MutationRecord>(subscribe => {
             const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {

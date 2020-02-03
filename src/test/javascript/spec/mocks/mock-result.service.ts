@@ -8,7 +8,6 @@ export class MockResultService implements IResultService {
     delete = (id: number) => of();
     find = (id: number) => of();
     findBySubmissionId = (submissionId: number) => of();
-    findResultsForParticipation = (courseId: number, exerciseId: number, participationId: number, req?: any) => of();
     getFeedbackDetailsForResult = (resultId: number) => of();
     getResultsForExercise = (courseId: number, exerciseId: number, req?: any) => of();
     update = (result: Result) => of();

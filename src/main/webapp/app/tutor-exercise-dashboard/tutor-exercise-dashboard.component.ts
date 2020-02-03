@@ -1,32 +1,36 @@
 import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService } from '../entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { User } from '../core';
+import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TextSubmissionService } from 'app/entities/text-submission';
-import { ExampleSubmission } from 'app/entities/example-submission';
+import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { TextExercise } from 'app/entities/text-exercise';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint } from 'app/entities/complaint';
-import { Submission } from 'app/entities/submission';
-import { ModelingSubmissionService } from 'app/entities/modeling-submission';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Complaint } from 'app/entities/complaint/complaint.model';
+import { Submission } from 'app/entities/submission/submission.model';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { Observable, of, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { ProgrammingSubmissionService } from 'app/programming-submission';
+import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { Result } from 'app/entities/result/result.model';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
+import { cloneDeep } from 'lodash';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -36,6 +40,7 @@ export interface ExampleSubmissionQueryParams {
 @Component({
     selector: 'jhi-courses',
     templateUrl: './tutor-exercise-dashboard.component.html',
+    styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [JhiAlertService, CourseService],
 })
 export class TutorExerciseDashboardComponent implements OnInit {
@@ -50,8 +55,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
     numberOfSubmissions = 0;
     numberOfAssessments = 0;
     numberOfComplaints = 0;
+    numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
+    numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
     totalAssessmentPercentage = 0;
     tutorAssessmentPercentage = 0;
@@ -64,18 +71,15 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
     exampleSolutionModel: UMLModel;
-    complaints: Complaint[];
-    moreFeedbackRequests: Complaint[];
+    complaints: Complaint[] = [];
+    moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
 
     formattedGradingInstructions: SafeHtml | null;
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
 
-    readonly ExerciseType_TEXT = ExerciseType.TEXT;
-    readonly ExerciseType_MODELING = ExerciseType.MODELING;
-    readonly ExerciseType_FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly ExerciseType_PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly ExerciseType = ExerciseType;
 
     stats = {
         toReview: {
@@ -109,6 +113,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private router: Router,
         private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -189,7 +194,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
+                this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
                 const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
@@ -365,6 +372,31 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 break;
         }
         this.router.navigate([route]);
+    }
+
+    private openManualResultDialog(result: Result) {
+        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.participationId = result.participation!.id;
+        modalRef.componentInstance.result = cloneDeep(result);
+        modalRef.componentInstance.exercise = this.exercise;
+        modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
+        modalRef.result.then(
+            _ => this.loadAll(),
+            () => {},
+        );
+        return;
+    }
+
+    /**
+     * Show complaint depending on the exercise type
+     * @param complaint that we want to show
+     */
+    viewComplaint(complaint: Complaint) {
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            this.openManualResultDialog(complaint.result);
+        } else {
+            this.openAssessmentEditor(complaint.result.submission!.id, false);
+        }
     }
 
     asProgrammingExercise(exercise: Exercise) {

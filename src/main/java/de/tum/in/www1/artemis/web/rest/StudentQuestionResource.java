@@ -15,14 +15,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.StudentQuestion;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing StudentQuestion.
@@ -40,6 +40,10 @@ public class StudentQuestionResource {
 
     private final StudentQuestionRepository studentQuestionRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final LectureRepository lectureRepository;
+
     private final StudentQuestionService studentQuestionService;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -48,13 +52,15 @@ public class StudentQuestionResource {
 
     GroupNotificationService groupNotificationService;
 
-    public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService,
-            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService) {
+    public StudentQuestionResource(StudentQuestionRepository studentQuestionRepository, GroupNotificationService groupNotificationService, LectureRepository lectureRepository,
+            StudentQuestionService studentQuestionService, AuthorizationCheckService authorizationCheckService, UserService userService, ExerciseRepository exerciseRepository) {
         this.studentQuestionRepository = studentQuestionRepository;
         this.studentQuestionService = studentQuestionService;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
+        this.exerciseRepository = exerciseRepository;
+        this.lectureRepository = lectureRepository;
     }
 
     /**
@@ -104,41 +110,60 @@ public class StudentQuestionResource {
     }
 
     /**
-     * GET /student-questions/:id : get the "id" studentQuestion.
+     * GET /exercises/{exerciseId}/student-questions : get all student questions for exercise.
      *
-     * @param id the id of the studentQuestion to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the studentQuestion, or with status 404 (Not Found)
-     */
-    @GetMapping("/student-questions/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
-    public ResponseEntity<StudentQuestion> getStudentQuestion(@PathVariable Long id) {
-        log.debug("REST request to get StudentQuestion : {}", id);
-        Optional<StudentQuestion> studentQuestion = studentQuestionRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(studentQuestion);
-    }
-
-    /**
-     * GET /studentQuestions : get all student questions for exercise.
-     *
-     * @param lectureId  the lecture that the student questions belong to
      * @param exerciseId the exercise that the student questions belong to
      * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
      */
-    @GetMapping("/student-questions")
+    @GetMapping("exercises/{exerciseId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: there are no security checks here. The API endpoint should at least include the course id
-    public ResponseEntity<List<StudentQuestion>> getAllQuestions(@RequestParam(value = "lecture", required = false) Long lectureId,
-            @RequestParam(value = "exercise", required = false) Long exerciseId) {
-        List<StudentQuestion> studentQuestions = null;
-        if (exerciseId != null) {
-            studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
+    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForExercise(@PathVariable Long exerciseId) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        else if (lectureId != null) {
-            studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);
+        if (!authorizationCheckService.isAtLeastStudentForExercise(exercise.get(), user)) {
+            return forbidden();
         }
+        List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForExercise(exerciseId);
+        hideSensitiveInformation(studentQuestions);
 
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
+    }
+
+    /**
+     *
+     * GET /lectures/{lectureId}/student-questions : get all student questions for exercise.
+     * @param lectureId the lecture that the student questions belong to
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
+     */
+    @GetMapping("lectures/{lectureId}/student-questions")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long lectureId) {
+        final User user = userService.getUserWithGroupsAndAuthorities();
+        Optional<Lecture> lecture = lectureRepository.findById(lectureId);
+        if (lecture.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + lectureId + " does not exist!");
+        }
+        if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
+            return forbidden();
+        }
+        List<StudentQuestion> studentQuestions = studentQuestionService.findStudentQuestionsForLecture(lectureId);
+        hideSensitiveInformation(studentQuestions);
+
+        return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
+    }
+
+    private void hideSensitiveInformation(List<StudentQuestion> studentQuestions) {
+        for (StudentQuestion question : studentQuestions) {
+            question.setExercise(null);
+            question.setLecture(null);
+            question.setAuthor(question.getAuthor().copyBasicUser());
+            for (StudentQuestionAnswer answer : question.getAnswers()) {
+                answer.setAuthor(answer.getAuthor().copyBasicUser());
+            }
+        }
     }
 
     /**

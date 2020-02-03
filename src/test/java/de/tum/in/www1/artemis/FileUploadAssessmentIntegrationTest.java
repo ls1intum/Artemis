@@ -8,18 +8,13 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -27,12 +22,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class FileUploadAssessmentIntegrationTest {
+public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     CourseRepository courseRepo;
@@ -71,7 +61,7 @@ public class FileUploadAssessmentIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 2, 0);
+        database.addUsers(1, 2, 1);
         database.addCourseWithTwoFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
     }
@@ -140,11 +130,34 @@ public class FileUploadAssessmentIntegrationTest {
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void cancelAssessment() throws Exception {
+    private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
-        request.put("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/cancel-assessment", null, HttpStatus.OK);
+        database.addFeedbacksToResult(fileUploadSubmission.getResult());
+        request.put("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void cancelOwnAssessmentAsStudent() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cancelOwnAssessmentAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
     }
 }

@@ -19,6 +19,12 @@ public class ProgrammingSubmission extends Submission implements Serializable {
     @Column(name = "commit_hash")
     private String commitHash;
 
+    @Column(name = "build_failed")
+    private boolean buildFailed;
+
+    @Column(name = "build_artifact")
+    private boolean buildArtifact;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getCommitHash() {
@@ -35,28 +41,41 @@ public class ProgrammingSubmission extends Submission implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    public boolean isBuildFailed() {
+        return buildFailed;
+    }
+
+    public void setBuildFailed(boolean buildFailed) {
+        this.buildFailed = buildFailed;
+    }
+
+    public boolean isBuildArtifact() {
+        return buildArtifact;
+    }
+
+    public void setBuildArtifact(boolean buildArtifact) {
+        this.buildArtifact = buildArtifact;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
+        if (this == o)
             return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof ProgrammingSubmission))
             return false;
-        }
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) o;
-        if (programmingSubmission.getId() == null || getId() == null) {
+        if (!super.equals(o))
             return false;
-        }
-        return Objects.equals(getId(), programmingSubmission.getId());
+        ProgrammingSubmission that = (ProgrammingSubmission) o;
+        return buildFailed == that.buildFailed && buildArtifact == that.buildArtifact && Objects.equals(commitHash, that.commitHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getId());
+        return Objects.hash(super.hashCode(), commitHash, buildFailed, buildArtifact);
     }
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "id=" + getId() + ", commitHash='" + getCommitHash() + "'" + "}";
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
     }
 }

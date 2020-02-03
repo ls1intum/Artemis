@@ -118,9 +118,6 @@ public class LectureResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
@@ -139,15 +136,14 @@ public class LectureResource {
         log.debug("REST request to get Lecture : {}", id);
         Optional<Lecture> lecture = lectureRepository.findById(id);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!lecture.isPresent()) {
+        if (lecture.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Course course = lecture.get().getCourse();
-        if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user)
-                && !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
-        lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get()));
+        lecture = Optional.of(lectureService.filterActiveAttachments(lecture.get(), user));
         return ResponseUtil.wrapOrNotFound(lecture);
     }
 

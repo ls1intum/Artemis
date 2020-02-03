@@ -31,16 +31,15 @@ export class StudentQuestionService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    find(studentQuestionId: number): Observable<EntityResponseType> {
+    findQuestionsForExercise(exerciseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<StudentQuestion>(`${this.resourceUrl}/${studentQuestionId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .get<StudentQuestion[]>(`api/exercises/${exerciseId}/student-questions`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
+    findQuestionsForLecture(lectureId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<StudentQuestion[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .get<StudentQuestion[]>(`api/lectures/${lectureId}/student-questions`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 

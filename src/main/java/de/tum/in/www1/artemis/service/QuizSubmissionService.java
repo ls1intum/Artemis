@@ -5,10 +5,10 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
@@ -58,7 +58,7 @@ public class QuizSubmissionService {
 
         // create and save result
         Result result = new Result().participation(participation);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         result.setSubmission(quizSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -69,7 +69,11 @@ public class QuizSubmissionService {
         quizSubmission.setResult(result);
         quizSubmission.setParticipation(participation);
         quizSubmissionRepository.save(quizSubmission);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
+
+        // result.submission and result.participation.exercise.quizQuestions turn into proxy objects after saving, so we need to set it again to prevent problems later on
+        result.setSubmission(quizSubmission);
+        result.setParticipation(participation);
 
         // add result to statistics
         QuizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);

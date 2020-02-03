@@ -7,7 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -139,11 +141,6 @@ public class TextSubmissionResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
 
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
@@ -194,9 +191,6 @@ public class TextSubmissionResource {
 
         // remove unnecessary data from the REST response
         textSubmissions.forEach(submission -> {
-            if (submission.getResult() != null && submission.getResult().getAssessor() != null) {
-                submission.getResult().getAssessor().setGroups(null);
-            }
             if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
                 submission.getParticipation().setExercise(null);
             }
@@ -216,7 +210,7 @@ public class TextSubmissionResource {
     @Transactional(readOnly = true)
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();

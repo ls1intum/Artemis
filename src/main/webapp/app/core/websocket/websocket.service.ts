@@ -8,6 +8,7 @@ import { CSRFService } from 'app/core/auth/csrf.service';
 import { Client, Subscription as StompSubscription, over, VERSIONS, ConnectionHeaders } from 'webstomp-client';
 import { WindowRef } from 'app/core/websocket/window.service';
 import * as SockJS from 'sockjs-client';
+import { timer } from 'rxjs';
 
 export interface IWebsocketService {
     stompFailureCallback(): void;
@@ -25,11 +26,11 @@ export interface IWebsocketService {
 @Injectable({ providedIn: 'root' })
 export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     stompClient: Client | null;
-    subscribers: { [key: string]: StompSubscription } = {};
     connection: Promise<void>;
     connectedPromise: Function;
-    myListeners: { [key: string]: Observable<any> } = {};
-    listenerObservers: { [key: string]: Observer<any> } = {};
+    subscribers = new Map<string, StompSubscription>();
+    myListeners = new Map<string, Observable<any>>();
+    listenerObservers = new Map<string, Observer<any>>();
     alreadyConnectedOnce = false;
     private subscription: Subscription | null;
     shouldReconnect = false;
@@ -38,13 +39,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     consecutiveFailedAttempts = 0;
     connecting = false;
 
-    constructor(
-        private router: Router,
-        private authServerProvider: AuthServerProvider,
-        private $window: WindowRef,
-        // tslint:disable-next-line: no-unused-variable
-        private csrfService: CSRFService,
-    ) {
+    private logTimers: Subscription[] = [];
+
+    constructor(private router: Router, private authServerProvider: AuthServerProvider, private $window: WindowRef, private csrfService: CSRFService) {
         this.connection = this.createConnection();
     }
 
@@ -104,15 +101,13 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         // nowadays all modern browsers support websockets and workarounds are not necessary any more and might only lead to problems
         const socket = new SockJS(url, undefined, { transports: 'websocket' });
         const options = {
-            heartbeat: { outgoing: 25000, incoming: 25000 },
-            // Note: at the moment, debug is activated, in the future we might want to deactivate it again
-            // debug: false,
+            heartbeat: { outgoing: 10000, incoming: 20000 },
+            debug: false,
             protocols: ['v12.stomp'],
         };
         this.stompClient = over(socket, options);
-        // Note: at the moment, debugging is activated, in the future we might want to deactivate it again
-        // deactivate websocket debugging
-        // this.stompClient.debug = function(str) {};
+        // Note: at the moment, debugging is deactivated to prevent console log statements
+        this.stompClient.debug = function(str) {};
         const headers = <ConnectionHeaders>{};
         headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 
@@ -127,14 +122,17 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 this.consecutiveFailedAttempts = 0;
                 if (this.alreadyConnectedOnce) {
                     // (re)connect to all existing channels
-                    if (Object.keys(this.myListeners).length !== 0) {
-                        for (const channel in this.myListeners) {
-                            if (this.myListeners.hasOwnProperty(channel)) {
-                                this.subscribers[channel] = this.stompClient!.subscribe(channel, data => {
-                                    this.listenerObservers[channel].next(JSON.parse(data.body));
-                                });
-                            }
-                        }
+                    if (this.myListeners.size !== 0) {
+                        this.myListeners.forEach((listener, channel) => {
+                            this.subscribers.set(
+                                channel,
+                                this.stompClient!.subscribe(channel, data => {
+                                    if (this.listenerObservers.has(channel)) {
+                                        this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
+                                    }
+                                }),
+                            );
+                        });
                     }
                 } else {
                     this.alreadyConnectedOnce = true;
@@ -147,12 +145,28 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                     });
                 }
                 this.sendActivity();
+
+                // Setup periodic logs of websocket connection numbers
+                this.logTimers.push(
+                    timer(0, 10000).subscribe(x => {
+                        console.log('\n\n');
+                        console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
+                        // this.subscribers.forEach((sub, topic) => console.log(topic));
+
+                        // console.log(`Listeners (${this.myListeners.size}): `, this.myListeners.values());
+                        // this.myListeners.forEach((sub, topic) => console.log(topic));
+
+                        // console.log(`Observers (${this.listenerObservers.size}): `, this.listenerObservers.values());
+                        // this.listenerObservers.forEach((sub, topic) => console.log(topic));
+                    }),
+                );
             },
             this.stompFailureCallback.bind(this),
         );
     }
 
     disconnect() {
+        this.logTimers.forEach(logTimer => logTimer.unsubscribe());
         this.connection = this.createConnection();
         Object.keys(this.myListeners).forEach(listener => this.unsubscribe(listener), this);
         if (this.stompClient) {
@@ -167,10 +181,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     receive(channel: string): Observable<any> {
-        if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
-            this.myListeners[channel] = this.createListener(channel);
+        if (channel != null && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
+            this.myListeners.set(channel, this.createListener(channel));
         }
-        return this.myListeners[channel];
+        return this.myListeners.get(channel)!;
     }
 
     sendActivity() {
@@ -197,27 +211,32 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
     subscribe(channel: string) {
         this.connection.then(() => {
-            if (channel != null && (!Object.keys(this.myListeners).length || !this.myListeners.hasOwnProperty(channel))) {
-                this.myListeners[channel] = this.createListener(channel);
+            if (channel != null && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
+                this.myListeners.set(channel, this.createListener(channel));
             }
-            this.subscribers[channel] = this.stompClient!.subscribe(channel, data => {
-                this.listenerObservers[channel].next(JSON.parse(data.body));
-            });
+            this.subscribers.set(
+                channel,
+                this.stompClient!.subscribe(channel, data => {
+                    if (this.listenerObservers.has(channel)) {
+                        this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
+                    }
+                }),
+            );
         });
     }
 
     unsubscribe(channel: string) {
-        if (this && this.subscribers && this.subscribers[channel]) {
-            this.subscribers[channel].unsubscribe();
-        }
-        if (this && channel != null && this.myListeners != null && (!Object.keys(this.myListeners).length || this.myListeners.hasOwnProperty(channel))) {
-            this.myListeners[channel] = this.createListener(channel);
+        if (this && this.subscribers && this.subscribers.has(channel)) {
+            this.subscribers.get(channel)!.unsubscribe();
+            this.subscribers.delete(channel);
+            this.myListeners.delete(channel);
+            this.listenerObservers.delete(channel);
         }
     }
 
     private createListener<T>(channel: string): Observable<T> {
         return new Observable((observer: Observer<T>) => {
-            this.listenerObservers[channel] = observer;
+            this.listenerObservers.set(channel, observer);
         });
     }
 

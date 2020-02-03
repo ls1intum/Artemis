@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from '../shared';
-import { UserRouteAccessService } from '../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { HomeComponent } from '../home';
 import { MomentModule } from 'ngx-moment';
 import { JhiMainComponent } from '../layouts';

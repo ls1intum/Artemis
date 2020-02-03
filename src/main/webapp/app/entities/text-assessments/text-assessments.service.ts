@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result';
 import { StudentParticipation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
@@ -30,8 +31,8 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    public updateAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/after-complaint`;
+    public updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
+        const url = `${this.resourceUrl}/text-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
             complaintResponse,
@@ -51,12 +52,15 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    public getFeedbackDataForExerciseSubmission(exerciseId: number, submissionId: number): Observable<StudentParticipation> {
-        return this.http.get<StudentParticipation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
+    public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
+        return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`).pipe(
+            // Wire up Result and Submission
+            tap((sp: StudentParticipation) => (sp.submissions[0].result = sp.results[0])),
+        );
     }
 
-    public getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/exampleAssessment`);
+    public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
+        return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
     }
 
     getParticipationForSubmissionWithoutAssessment(exerciseId: number) {
@@ -64,19 +68,19 @@ export class TextAssessmentsService {
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Result = this.convertItemFromServer(res.body!);
+        const result = this.convertItemFromServer(res.body!);
 
-        if (body.completionDate) {
-            body.completionDate = moment(body.completionDate);
+        if (result.completionDate) {
+            result.completionDate = moment(result.completionDate);
         }
-        if (body.submission && body.submission.submissionDate) {
-            body.submission.submissionDate = moment(body.submission.submissionDate);
+        if (result.submission && result.submission.submissionDate) {
+            result.submission.submissionDate = moment(result.submission.submissionDate);
         }
-        if (body.participation && body.participation.initializationDate) {
-            body.participation.initializationDate = moment(body.participation.initializationDate);
+        if (result.participation && result.participation.initializationDate) {
+            result.participation.initializationDate = moment(result.participation.initializationDate);
         }
 
-        return res.clone({ body });
+        return res.clone({ body: result });
     }
 
     private convertItemFromServer(result: Result): Result {

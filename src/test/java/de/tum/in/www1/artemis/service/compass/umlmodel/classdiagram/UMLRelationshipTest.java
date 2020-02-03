@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_TYPE_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

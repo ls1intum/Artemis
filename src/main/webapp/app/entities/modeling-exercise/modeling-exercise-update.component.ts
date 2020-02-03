@@ -7,14 +7,15 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { Course, CourseService } from '../course';
+import { Course } from '../course';
+import { CourseService } from 'app/entities/course/course.service';
 
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',

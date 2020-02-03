@@ -6,6 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
+import { throwError } from 'rxjs';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;

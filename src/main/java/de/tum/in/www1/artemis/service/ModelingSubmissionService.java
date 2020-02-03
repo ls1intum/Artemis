@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,6 +14,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -36,11 +36,9 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
             ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
-            StudentParticipationRepository studentParticipationRepository, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultService = resultService;
@@ -48,7 +46,6 @@ public class ModelingSubmissionService extends SubmissionService {
         this.compassService = compassService;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -61,16 +58,16 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     @Transactional(readOnly = true)
     public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
-            Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
-            if (submission.isPresent()) {
-                if (submittedOnly && !submission.get().isSubmitted()) {
+            Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+            if (optionalSubmission.isPresent()) {
+                if (submittedOnly && !optionalSubmission.get().isSubmitted()) {
                     // filter out non submitted submissions if the flag is set to true
                     continue;
                 }
-                submissions.add(submission.get());
+                submissions.add((ModelingSubmission) optionalSubmission.get());
             }
             // avoid infinite recursion
             participation.getExercise().setStudentParticipations(null);
@@ -100,13 +97,13 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get a modeling submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     * Get a modeling submission of the given exercise that still needs to be assessed, assign the automatic result of Compass to it and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param modelingExercise the exercise the submission should belong to
      * @return a locked modeling submission that needs an assessment
      */
     @Transactional
-    public ModelingSubmission getLockedModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
+    public ModelingSubmission lockModelingSubmissionWithoutResult(ModelingExercise modelingExercise) {
         ModelingSubmission modelingSubmission = getModelingSubmissionWithoutManualResult(modelingExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         modelingSubmission = assignAutomaticResultToSubmission(modelingSubmission);
@@ -145,15 +142,17 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // otherwise return a random submission that is not manually assessed or an empty optional if there is none
-        List<ModelingSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId()).stream()
-                .map(StudentParticipation::findLatestModelingSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
 
-        Random r = new Random();
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        Random random = new Random();
+        var submissionWithoutResult = (ModelingSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        return Optional.of(submissionWithoutResult);
     }
 
     /**
@@ -168,6 +167,7 @@ public class ModelingSubmissionService extends SubmissionService {
         // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
         List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
 
+        // TODO: properly load the submissions with all required data from the database without using @Transactional
         return results.stream().map(result -> {
             Submission submission = result.getSubmission();
             ModelingSubmission modelingSubmission = new ModelingSubmission();
@@ -191,7 +191,6 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param username           the name of the corresponding user
      * @return the saved modelingSubmission entity
      */
-    @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise.getId(),
                 username);
@@ -217,21 +216,20 @@ public class ModelingSubmissionService extends SubmissionService {
         participation.addSubmissions(modelingSubmission);
 
         if (modelingSubmission.isSubmitted()) {
-            notifyCompass(modelingSubmission, modelingExercise);
+            try {
+                notifyCompass(modelingSubmission, modelingExercise);
+            }
+            catch (Exception ex) {
+                log.error(ex.getMessage(), ex);
+            }
             participation.setInitializationState(InitializationState.FINISHED);
-            // We remove all unfinished results here as they should not be sent to the client. Note, that the reference to the unfinished results will not get removed in the
-            // database by saving the participation to the DB below since the results are not persisted with the participation.
-            participation.setResults(
-                    participation.getResults().stream().filter(result -> result.getCompletionDate() != null && result.getAssessor() != null).collect(Collectors.toSet()));
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
         }
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
-            Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();
-            if (optionalModelingSubmission.isPresent()) {
-                modelingSubmission = optionalModelingSubmission.get();
+            Optional<Submission> optionalSubmission = savedParticipation.findLatestSubmission();
+            if (optionalSubmission.isPresent()) {
+                modelingSubmission = (ModelingSubmission) optionalSubmission.get();
             }
         }
 
@@ -261,7 +259,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 
@@ -305,9 +303,9 @@ public class ModelingSubmissionService extends SubmissionService {
         result.setSubmission(submission);
         submission.setResult(result);
         if (submission.getParticipation() != null) {
-            submission.getParticipation().addResult(result);
+            result.setParticipation(submission.getParticipation());
         }
-        resultRepository.save(result);
+        result = resultRepository.save(result);
         modelingSubmissionRepository.save(submission);
         return result;
     }

@@ -8,7 +8,9 @@ export const options = {
     maxRedirects: 0,
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
-    setupTimeout: '60s'
+    rps: 4,
+    setupTimeout: '90s',
+    teardownTimeout: '90s'
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;
@@ -32,6 +34,9 @@ export function setup() {
     // Create new exercise
     exerciseId = createExercise(artemis, courseId);
 
+    // Wait some time for builds to finish and test results to come in
+    sleep(15);
+
     return { exerciseId: exerciseId, courseId: courseId };
 }
 
@@ -44,8 +49,10 @@ export default function (data) {
     const exerciseId = data.exerciseId;
     const courseId = data.courseId;
 
-    // Wait some time for builds to finish and test results to come in
-    sleep(15);
+    // Delay so that not all users start at the same time, batches of 3 users per second
+    const startTime = new Date().getTime();
+    const delay = Math.floor(__VU / 3);
+    sleep(delay * 3);
 
     group('Participate in Programming Exercise', function() {
         let participationId = startExercise(artemis, courseId, exerciseId);
@@ -58,16 +65,19 @@ export default function (data) {
             simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, buildErrorContent);
             simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
         }
+
+        const delta = (new Date().getTime() - startTime) / 1000;
+        sleep(__ENV.TIMEOUT - delta);
     });
 
     return data;
 }
 
 export function teardown(data) {
-    const artemis = login(adminUsername, adminPassword);
-    const courseId = data.courseId;
-    const exerciseId = data.exerciseId;
+   const artemis = login(adminUsername, adminPassword);
+   const courseId = data.courseId;
+   const exerciseId = data.exerciseId;
 
-    deleteExercise(artemis, exerciseId);
-    deleteCourse(artemis, courseId);
+   deleteExercise(artemis, exerciseId);
+   deleteCourse(artemis, courseId);
 }

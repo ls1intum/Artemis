@@ -2,20 +2,21 @@
     "artemisApp": {
         "textSubmission": {
             "home": {
-                "title": "Text Submissions",
-                "createLabel": "Text Submission erstellen",
-                "createOrEditLabel": "Text Submission erstellen oder bearbeiten"
+                "title": "Einreichungen",
+                "createLabel": "Einreichung erstellen",
+                "createOrEditLabel": "Einreichung erstellen oder bearbeiten"
             },
-            "created": "Text Submission erstellt mit ID {{ param }}",
-            "updated": "Text Submission aktualisiert mit ID {{ param }}",
-            "deleted": "Text Submission gelöscht mit ID {{ param }}",
+            "created": "Einreichung erstellt mit ID {{ param }}",
+            "updated": "Einreichung aktualisiert mit ID {{ param }}",
+            "deleted": "Einreichung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Text Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Einreichung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Text Submission"
+                "title": "Einreichung"
             },
-            "text": "Text"
+            "text": "Text",
+            "view": "Einreichung ansehen"
         }
     }
 }
