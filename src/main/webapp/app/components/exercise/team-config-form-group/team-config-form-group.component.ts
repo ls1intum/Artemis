@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { Exercise, ExerciseMode } from 'app/entities/exercise';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-team-config-form-group',
@@ -22,7 +23,7 @@ export class TeamConfigFormGroupComponent implements OnInit {
 
     onExerciseModeChange(mode: ExerciseMode) {
         this.config = new TeamAssignmentConfig();
-        this.exercise.teamAssignmentConfig = mode === ExerciseMode.TEAM ? this.config : null;
+        this.exercise.teamAssignmentConfig = mode === ExerciseMode.TEAM ? new TeamAssignmentConfig() : null;
         this.ngModelChange.emit();
     }
 
@@ -37,7 +38,7 @@ export class TeamConfigFormGroupComponent implements OnInit {
     }
 
     private emitCurrentConfig() {
-        this.exercise.teamAssignmentConfig = this.config;
+        this.exercise.teamAssignmentConfig = cloneDeep(this.config);
         this.ngModelChange.emit();
     }
 }
