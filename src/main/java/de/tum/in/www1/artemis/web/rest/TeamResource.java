@@ -83,7 +83,7 @@ public class TeamResource {
      *
      * @param team the team to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
-     *         Server Error) if the team couldn't be updated
+     * Server Error) if the team couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/teams")
@@ -99,24 +99,6 @@ public class TeamResource {
         }
         Team result = teamRepository.save(team);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
-    }
-
-    /**
-     * GET /exercises/:exerciseId/teams : get all the teams of an exercise for the exercise administration page
-     *
-     * @param exerciseId the exerciseId of the exercise for which all teams should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of teams in body
-     */
-    @GetMapping(value = "/exercises/{exerciseId}/teams")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<Team>> getTeamsForExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
-        return ResponseEntity.ok().body(teamRepository.findAllByExerciseId(exerciseId));
     }
 
     /**
@@ -140,6 +122,24 @@ public class TeamResource {
             return forbidden();
         }
         return ResponseEntity.ok().body(team);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/teams : get all the teams of an exercise for the exercise administration page
+     *
+     * @param exerciseId the exerciseId of the exercise for which all teams should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of teams in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/teams")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<Team>> getTeamsForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(teamRepository.findAllByExerciseId(exerciseId));
     }
 
     /**
