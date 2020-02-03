@@ -764,16 +764,24 @@ public class ProgrammingExerciseService {
     /**
      * @param exerciseId the exercise we are interested in
      * @return the number of programming submissions which should be assessed
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    public long countSubmissions(Long exerciseId) {
-        return programmingExerciseRepository.countSubmissions(exerciseId);
+    public long countSubmissionsByExerciseIdSubmitted(Long exerciseId) {
+        long start = System.currentTimeMillis();
+        var count = programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId);
+        log.debug("countSubmissionsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
+        return count;
     }
 
     /**
      * @param courseId the course we are interested in
-     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of programming submissions which should be assessed, so we ignore exercises with only automatic assessment
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return programmingExerciseRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    public long countSubmissionsByCourseIdSubmitted(Long courseId) {
+        long start = System.currentTimeMillis();
+        var count = programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
+        log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
+        return count;
     }
 }
