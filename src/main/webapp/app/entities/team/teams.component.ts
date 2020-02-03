@@ -56,18 +56,15 @@ export class TeamsComponent implements OnInit, OnDestroy {
         });
     }
 
-    createTeam = (team: Team) => {
-        this.teamService.create(team).subscribe(
-            () => {},
-            () => {
-                this.jhiAlertService.error('artemisApp.team.createTeam.error');
-            },
-        );
-    };
+    onTeamUpdate() {
+        this.loadAll();
+    }
 
     removeTeam = (team: Team) => {
         this.teamService.delete(team.id).subscribe(
-            () => {},
+            () => {
+                this.loadAll();
+            },
             () => {
                 this.jhiAlertService.error('artemisApp.team.removeTeam.error');
             },
