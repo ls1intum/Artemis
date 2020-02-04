@@ -360,7 +360,7 @@ public class CourseResource {
         for (Exercise exercise : interestingExercises) {
             long numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissions(exercise.getId());
+                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
             }
             else {
                 numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
@@ -409,7 +409,7 @@ public class CourseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseService.countSubmissionsToAssessByCourseId(courseId);
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         final long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -489,7 +489,7 @@ public class CourseResource {
         for (Exercise exercise : interestingExercises) {
             long numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissions(exercise.getId());
+                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
             }
             else {
                 numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
@@ -546,7 +546,7 @@ public class CourseResource {
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
         final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseService.countSubmissionsToAssessByCourseId(courseId);
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));

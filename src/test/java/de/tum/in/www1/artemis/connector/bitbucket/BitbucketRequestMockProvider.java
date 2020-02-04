@@ -23,12 +23,15 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.connectors.VcsUtil;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketCloneDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketProjectDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;
 
 @Component
@@ -57,20 +60,6 @@ public class BitbucketRequestMockProvider {
 
     public void reset() {
         mockServer.reset();
-    }
-
-    public void mockCheckIfProjectExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
-        final var projectKey = exercise.getProjectKey();
-        final var projectName = exercise.getProjectName();
-        final var bitbucketSearchDTO = new BitbucketSearchDTO();
-        bitbucketSearchDTO.setSize(0);
-        bitbucketSearchDTO.setSearchResults(new ArrayList<>());
-
-        mockServer.expect(ExpectedCount.once(), requestTo(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.NOT_FOUND));
-        final var projectSearchPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").queryParam("name", projectName);
-        mockServer.expect(ExpectedCount.once(), requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bitbucketSearchDTO)).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException, URISyntaxException {
@@ -159,5 +148,28 @@ public class BitbucketRequestMockProvider {
 
         mockServer.expect(requestTo(protectBranchPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
                 .andExpect(content().contentType("application/vnd.atl.bitbucket.bulk+json")).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRepositoryUrlIsValid(final URL repositoryUrl, final String projectKey, final boolean isValid) throws URISyntaxException {
+        final var repositoryName = VcsUtil.getRepositorySlugFromUrl(repositoryUrl);
+        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).pathSegment("repos")
+                .pathSegment(repositoryName).build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
+    }
+
+    public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws JsonProcessingException, URISyntaxException {
+        final var existsUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
+        final var uniqueUri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").queryParam("name", exercise.getProjectName()).build()
+                .toUri();
+        final var searchResults = new BitbucketSearchDTO<BitbucketProjectDTO>();
+        final var foundProject = new BitbucketProjectDTO();
+        foundProject.setName(exercise.getProjectName() + (exists ? "" : "abc"));
+        searchResults.setSearchResults(List.of(foundProject));
+        searchResults.setSize(1);
+
+        mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
+        mockServer.expect(requestTo(uniqueUri)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(searchResults)));
     }
 }

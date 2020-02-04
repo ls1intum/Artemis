@@ -190,7 +190,7 @@ public class ExerciseResource {
         long numberOfSubmissions;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = programmingExerciseService.countSubmissions(exerciseId);
+            numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId);
         }
         else {
             numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);

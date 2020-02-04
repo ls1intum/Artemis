@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,6 +28,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class RequestUtilService {
+
+    @Value("${jhipster.clientApp.name}")
+    private String APPLICATION_NAME;
 
     private MockMvc mvc;
 
@@ -52,10 +56,13 @@ public class RequestUtilService {
         return post(path, body, expectedStatus, MediaType.APPLICATION_JSON, true);
     }
 
-    public <T> URI post(String path, T body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(contentType).content(jsonBody).with(csrf()))
-                .andExpect(status().is(expectedStatus.value())).andReturn();
+    public URI post(String path, Object body, HttpStatus expectedStatus, MediaType contentType, boolean withLocation) throws Exception {
+        String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
+        var requestBuilder = MockMvcRequestBuilders.post(new URI(path)).contentType(contentType);
+        if (jsonBody != null) {
+            requestBuilder = requestBuilder.content(jsonBody);
+        }
+        MvcResult res = mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (withLocation && !expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
@@ -156,10 +163,24 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
-    public <T> void put(String path, T body, HttpStatus expectedStatus) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
-                .andExpect(status().is(expectedStatus.value()));
+    public void put(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = body != null ? mapper.writeValueAsString(body) : null;
+        var requestBuilder = MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON);
+        if (jsonBody != null) {
+            requestBuilder = requestBuilder.content(jsonBody);
+        }
+
+        mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value()));
+    }
+
+    public void putAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
+        final var jsonBody = mapper.writeValueAsString(body);
+        final var response = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).with(csrf()))
+                .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
+
+        final var fullErrorKey = "error." + expectedErrorKey;
+        final var errorHeader = "X-" + APPLICATION_NAME + "-error";
+        assertThat(response.getHeader(errorHeader)).isEqualTo(fullErrorKey);
     }
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
