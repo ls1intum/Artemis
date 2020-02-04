@@ -13,12 +13,12 @@ export class StudentSearchComponent {
     @Input() course: Course;
 
     @Output() selectStudent = new EventEmitter<User>();
+    @Output() searching = new EventEmitter<boolean>();
+    @Output() searchFailed = new EventEmitter<boolean>();
 
     users: User[] = [];
 
     searchText: string;
-    searching = false;
-    searchFailed = false;
 
     constructor(private userService: UserService) {}
 
@@ -40,7 +40,8 @@ export class StudentSearchComponent {
         return text$.pipe(
             debounceTime(200),
             distinctUntilChanged(),
-            tap(() => (this.searching = true)),
+            tap(() => this.searchFailed.emit(false)),
+            tap(() => this.searching.emit(true)),
             switchMap(login => {
                 if (login.length < 3) {
                     return of([]);
@@ -49,14 +50,13 @@ export class StudentSearchComponent {
                     .searchInCourse(this.course, login)
                     .pipe(map(usersResponse => usersResponse.body!))
                     .pipe(
-                        tap(() => (this.searchFailed = false)),
                         catchError(() => {
-                            this.searchFailed = true;
+                            this.searchFailed.emit(true);
                             return of([]);
                         }),
                     );
             }),
-            tap(() => (this.searching = false)),
+            tap(() => this.searching.emit(false)),
         );
     };
 }

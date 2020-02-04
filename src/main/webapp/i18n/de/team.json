@@ -20,6 +20,9 @@
             "image": "Bild",
             "students": "Studenten",
             "searchForStudent": "Suche Studenten nach Login",
+            "studentSearch": {
+                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen."
+            },
             "createTeam": {
                 "label": "Erstelle Team",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."

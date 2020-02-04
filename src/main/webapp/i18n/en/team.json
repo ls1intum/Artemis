@@ -20,6 +20,9 @@
             "image": "Image",
             "students": "Students",
             "searchForStudent": "Search for student by login",
+            "studentSearch": {
+                "failed": "Search failed. Please try again."
+            },
             "createTeam": {
                 "label": "Create team",
                 "error": "Could not create team. Please try again."

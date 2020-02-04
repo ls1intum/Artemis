@@ -21,6 +21,9 @@ export class TeamUpdateDialogComponent implements OnInit {
     pendingTeam: Team;
     isSaving = false;
 
+    searchingStudents = false;
+    searchingStudentsFailed = false;
+
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
     ngOnInit(): void {
