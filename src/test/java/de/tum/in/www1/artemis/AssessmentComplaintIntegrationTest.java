@@ -445,7 +445,15 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
                 assertThat(modelingExercise.getSampleSolutionModel()).as("Exercise only contains title and ID").isNull();
                 assertThat(modelingExercise.getSampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
             }
-
+            if (exercise instanceof TextExercise) {
+                TextExercise textExercise = (TextExercise) exercise;
+                assertThat(textExercise.getSampleSolution()).as("Exercise only contains title and ID").isNull();
+                assertThat(textExercise.getExampleSubmissions()).as("Exercise only contains title and ID").isNull();
+            }
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                assertThat(programmingExercise.getProgrammingLanguage()).as("Exercise only contains title and ID").isNull();
+            }
         }
     }
 

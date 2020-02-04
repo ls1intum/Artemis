@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,11 +53,22 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLectureForCourseWithPermission() throws Exception {
+        database.createCourseWithLecture(true);
+        List<Lecture> savedLecture = lectureRepo.findAll();
+        Course course = savedLecture.get(0).getCourse();
+        List<Lecture> receivedLecture = request.getList("/api/courses/" + course.getId() + "/lectures", HttpStatus.OK, Lecture.class);
+        assertThat(savedLecture.get(0).getId()).isEqualTo(receivedLecture.get(0).getId());
+        assertThat(savedLecture).isEqualTo(receivedLecture);
+    }
+
+    @Test
     @WithMockUser(roles = "USER")
     public void getLectureForCourseNoPermission() throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
         Course course = lectureRepo.findAll().get(0).getCourse();
-        request.get("/api/courses/" + course.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
+        request.getList("/api/courses/" + course.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
     }
 
     @Test
