@@ -57,18 +57,24 @@ export class TeamsComponent implements OnInit, OnDestroy {
         });
     }
 
-    onTeamUpdate() {
-        this.loadAll();
+    /**
+     * Called when a team has been added or was updated by UpdateTeamDialogComponent
+     *
+     * @param team Team that was added or updated
+     */
+    onTeamUpdate(team: Team) {
+        this.upsertTeam(team);
     }
 
+    /**
+     * Deleted the provided team on the server and then removes it from the component state.
+     *
+     * @param team Team that should be removed
+     */
     removeTeam = (team: Team) => {
         this.teamService.delete(team.id).subscribe(
-            () => {
-                this.loadAll();
-            },
-            () => {
-                this.jhiAlertService.error('artemisApp.team.removeTeam.error');
-            },
+            () => this.deleteTeam(team),
+            () => this.jhiAlertService.error('artemisApp.team.removeTeam.error'),
         );
     };
 
@@ -100,4 +106,28 @@ export class TeamsComponent implements OnInit, OnDestroy {
     searchTextFromTeam = (team: Team): string => {
         return team.name;
     };
+
+    /**
+     * If team does not yet exists in teams, it is appended.
+     * If team already exists in teams, it is updated.
+     *
+     * @param team Team that is added or updated
+     */
+    private upsertTeam(team: Team) {
+        const index = this.teams.findIndex(t => t.id === team.id);
+        if (index === -1) {
+            this.teams = [...this.teams, team];
+        } else {
+            this.teams = Object.assign([], this.teams, { [index]: team });
+        }
+    }
+
+    /**
+     * Deleted an existing team from teams.
+     *
+     * @param team Team that is deleted
+     */
+    private deleteTeam(team: Team) {
+        this.teams = this.teams.filter(t => t.id !== team.id);
+    }
 }

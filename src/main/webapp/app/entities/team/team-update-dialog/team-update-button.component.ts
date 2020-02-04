@@ -25,7 +25,7 @@ export class TeamUpdateButtonComponent {
     @Input() exercise: Exercise;
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
 
-    @Output() save: EventEmitter<void> = new EventEmitter();
+    @Output() save: EventEmitter<Team> = new EventEmitter();
 
     constructor(private modalService: NgbModal) {}
 
@@ -36,7 +36,7 @@ export class TeamUpdateButtonComponent {
         modalRef.componentInstance.exercise = this.exercise;
 
         modalRef.result.then(
-            () => this.save.emit(),
+            (team: Team) => this.save.emit(team),
             () => {},
         );
     }
