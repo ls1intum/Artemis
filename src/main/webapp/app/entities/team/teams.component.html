@@ -80,7 +80,7 @@
 
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350" [maxWidth]="500">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="text-right">
+                        <div class="w-100 text-right">
                             <jhi-team-update-button class="mr-1" [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
                             <button (click)="removeTeam(value)" class="btn btn-danger btn-sm">
                                 <fa-icon [icon]="'trash-alt'"></fa-icon>

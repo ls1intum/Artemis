@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ParticipationService } from 'app/entities/participation/participation.service';
@@ -13,6 +13,7 @@ import { ButtonSize } from 'app/shared/components';
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
     styleUrls: ['./teams.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TeamsComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
