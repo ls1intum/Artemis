@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.authentication;
 
+import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -45,7 +46,7 @@ public class InternalAuthenticationIntegrationTest extends AuthenticationIntegra
         super.setUp();
 
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1").get();
-        final var encrPassword = userService.passwordEncoder().encode("0000");
+        final var encrPassword = userService.passwordEncoder().encode(USER_PASSWORD);
         student.setPassword(encrPassword);
         userRepository.save(student);
         ltiLaunchRequest.setLis_person_contact_email_primary(student.getEmail());
@@ -65,7 +66,7 @@ public class InternalAuthenticationIntegrationTest extends AuthenticationIntegra
     public void authenticateAfterLtiRequest_success() throws Exception {
         super.launchLtiRequest_authViaEmail_success();
 
-        final var auth = new TestingAuthenticationToken(student.getLogin(), "0000");
+        final var auth = new TestingAuthenticationToken(student.getLogin(), USER_PASSWORD);
         final var authResponse = artemisInternalAuthenticationProvider.authenticate(auth);
 
         assertThat(authResponse.getCredentials().toString()).isEqualTo(student.getPassword());

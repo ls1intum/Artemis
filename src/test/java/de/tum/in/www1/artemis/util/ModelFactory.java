@@ -13,6 +13,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
 public class ModelFactory {
 
+    public static final String USER_PASSWORD = "0000";
+
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
         lecture.setStartDate(startDate);
@@ -107,7 +109,7 @@ public class ModelFactory {
     public static User generateActivatedUser(String login) {
         User user = new User();
         user.setLogin(login);
-        user.setPassword("0000");
+        user.setPassword(USER_PASSWORD);
         user.setFirstName(login + "First");
         user.setLastName(login + "Last");
         user.setEmail(login + "@test.de");
