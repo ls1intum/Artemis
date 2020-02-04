@@ -35,6 +35,15 @@
     }
 }
 
-.remove-student-link {
+.student-name {
+    flex-grow: 1;
+    width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-remove-link {
+    display: block;
     cursor: pointer;
 }

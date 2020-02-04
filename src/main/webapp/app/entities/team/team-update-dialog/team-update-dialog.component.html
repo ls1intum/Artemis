@@ -36,9 +36,9 @@
                     <div class="list-group-item-index">
                         {{ i + 1 }}
                     </div>
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ student.firstName }} {{ student.lastName }}
-                        <fa-icon class="remove-student-link ml-2" [icon]="'trash-alt'" (click)="onRemoveStudent(student)"></fa-icon>
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
+                        <fa-icon class="student-remove-link ml-4" [icon]="'trash-alt'" (click)="onRemoveStudent(student)"></fa-icon>
                     </div>
                 </li>
             </ul>
