@@ -673,7 +673,7 @@ export class GuidedTourService {
      * Start or restart the guided tour based on the last seen tour step
      */
     public initGuidedTour(): void {
-        switch (this.getLastSeenTourStepIndex()) {
+        switch (this.getLastSeenTourStepIndex(true)) {
             case -1: {
                 this.restartTour();
                 break;
@@ -719,10 +719,6 @@ export class GuidedTourService {
 
     /** Resets participation and enables the restart of the current tour */
     public restartTour() {
-        if (!this.availableTourForComponent) {
-            return;
-        }
-
         /** Reset exercise participation */
         if (this.currentExercise && this.currentExercise.exampleSubmissions && this.currentExercise.exampleSubmissions.length !== 0) {
             this.restartIsLoading = true;
@@ -1021,12 +1017,13 @@ export class GuidedTourService {
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour, init: boolean): Course | null {
         const courseForTour = courses.find(course => this.isGuidedTourAvailableForCourse(course));
-        if (courseForTour) {
-            this.enableTour(guidedTour, init);
-            this.currentCourse = courseForTour;
-            return courseForTour;
+        if (!courseForTour) {
+            return null;
         }
-        return null;
+
+        this.enableTour(guidedTour, init);
+        this.currentCourse = courseForTour;
+        return courseForTour;
     }
 
     /**
@@ -1038,12 +1035,12 @@ export class GuidedTourService {
     public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour, init: boolean): Exercise | null {
         if (!exercise.course || !this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
             return null;
-        } else {
-            this.enableTour(guidedTour, init);
-            this.currentExercise = exercise;
-            this.currentCourse = exercise.course;
-            return exercise;
         }
+
+        this.enableTour(guidedTour, init);
+        this.currentExercise = exercise;
+        this.currentCourse = exercise.course;
+        return exercise;
     }
 
     /**
