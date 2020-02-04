@@ -22,8 +22,8 @@ export class TeamUpdateDialogComponent {
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
     onAddStudent(student: User) {
+        this.team.students = this.team.students || [];
         this.team.students.push(student);
-        console.log('team students:', this.team.students);
     }
 
     clear() {

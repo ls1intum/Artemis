@@ -15,14 +15,20 @@ export class StudentSearchComponent {
     @Output() selectStudent = new EventEmitter<User>();
 
     users: User[] = [];
+
+    searchText: string;
     searching = false;
     searchFailed = false;
 
     constructor(private userService: UserService) {}
 
     onAutocompleteSelect = (student: User) => {
-        console.log('selected student', student);
+        this.searchText = '';
         this.selectStudent.emit(student);
+    };
+
+    searchInputFormatter = () => {
+        return this.searchText;
     };
 
     searchResultFormatter = (student: User) => {

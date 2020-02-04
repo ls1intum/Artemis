@@ -7,7 +7,7 @@ export class Team implements BaseEntity {
     public name: string;
     public image: string;
     public exercise: Exercise;
-    public students: User[];
+    public students: User[] = []; // default value
 
     constructor() {}
 }

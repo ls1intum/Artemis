@@ -19,6 +19,9 @@
         <div class="form-group">
             <h4 class="control-label" jhiTranslate="artemisApp.team.students">Students</h4>
             <jhi-student-search [course]="exercise.course" (selectStudent)="onAddStudent($event)"></jhi-student-search>
+            <ul class="mt-3">
+                <li *ngFor="let student of team.students">{{ student.firstName }} {{ student.lastName }}</li>
+            </ul>
         </div>
     </div>
     <div class="modal-footer">
