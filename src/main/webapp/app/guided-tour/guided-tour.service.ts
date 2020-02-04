@@ -294,6 +294,7 @@ export class GuidedTourService {
             if (previousStep.action) {
                 previousStep.action();
             }
+            // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 if (!this.isBackPageNavigation.value) {
                     this.setPreparedTourStep();
@@ -867,7 +868,7 @@ export class GuidedTourService {
     private setPreparedTourStep(): void {
         const preparedTourStep = this.getPreparedTourStep();
         if (preparedTourStep) {
-            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+            this.guidedTourCurrentStepSubject.next(preparedTourStep);
         } else {
             this.nextStep();
         }
@@ -974,7 +975,6 @@ export class GuidedTourService {
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
             // Only start tour automatically if the user has never seen it before
             if (!hasStartedOrFinishedTour && init) {
-                this.currentTour = this.availableTourForComponent;
                 this.startTour();
             }
         }, 500);
