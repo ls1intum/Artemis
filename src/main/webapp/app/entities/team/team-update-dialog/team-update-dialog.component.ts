@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
@@ -14,21 +14,28 @@ import { User } from 'app/core/user/user.model';
     templateUrl: './team-update-dialog.component.html',
     styleUrls: ['./team-update-dialog.component.scss'],
 })
-export class TeamUpdateDialogComponent {
+export class TeamUpdateDialogComponent implements OnInit {
     @Input() team: Team;
     @Input() exercise: Exercise;
 
+    pendingTeam: Team;
     isSaving = false;
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
+    ngOnInit(): void {
+        this.pendingTeam = { ...this.team };
+    }
+
     onAddStudent(student: User) {
-        this.team.students = this.team.students || [];
-        this.team.students.push(student);
+        if (!this.pendingTeam.students) {
+            this.pendingTeam.students = [];
+        }
+        this.pendingTeam.students.push(student);
     }
 
     onRemoveStudent(student: User) {
-        this.team.students = this.team.students.filter(user => user.id !== student.id);
+        this.pendingTeam.students = this.pendingTeam.students.filter(user => user.id !== student.id);
     }
 
     clear() {
@@ -36,12 +43,12 @@ export class TeamUpdateDialogComponent {
     }
 
     save() {
-        this.team.exercise = this.exercise;
+        this.team = { ...this.pendingTeam };
 
         if (this.team.id !== undefined) {
             this.subscribeToSaveResponse(this.teamService.update(this.team));
         } else {
-            this.subscribeToSaveResponse(this.teamService.create(this.team));
+            this.subscribeToSaveResponse(this.teamService.create(this.exercise, this.team));
         }
     }
 

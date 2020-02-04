@@ -38,42 +38,40 @@ public class TeamResource {
 
     private final TeamRepository teamRepository;
 
-    private final TeamService teamService;
-
     private final ExerciseService exerciseService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final UserService userService;
 
-    public TeamResource(TeamRepository teamRepository, TeamService teamService, ExerciseService exerciseService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+    public TeamResource(TeamRepository teamRepository, ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService) {
         this.teamRepository = teamRepository;
-        this.teamService = teamService;
         this.exerciseService = exerciseService;
         this.userService = userService;
         this.authCheckService = authCheckService;
     }
 
     /**
-     * POST /teams : Create a new team.
+     * POST /exercises/{exerciseId}/teams : Create a new team for an exercise.
      *
      * @param team the team to create
+     * @param exerciseId the exercise id for which to create a team
      * @return the ResponseEntity with status 201 (Created) and with body the new team, or with status 400 (Bad Request) if the team already has an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/teams")
+    @PostMapping("/exercises/{exerciseId}/teams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> createTeam(@RequestBody Team team) throws URISyntaxException {
+    public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", team);
         if (team.getId() != null) {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(team.getExercise().getId());
+        Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+        team.setExercise(exercise);
         Team result = teamRepository.save(team);
         return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -94,11 +92,16 @@ public class TeamResource {
         if (team.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
+        Optional<Team> existingTeam = teamRepository.findById(team.getId());
+        if (existingTeam.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(team.getExercise().getId());
+        Exercise exercise = exerciseService.findOne(existingTeam.get().getExercise().getId());
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+        team.setExercise(exercise);
         Team result = teamRepository.save(team);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
     }
