@@ -240,6 +240,7 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex - 1);
 
         if (currentStep.closeAction) {
             currentStep.closeAction();
@@ -251,7 +252,6 @@ export class GuidedTourService {
             }
             setTimeout(() => {
                 this.setPreparedTourStep();
-                this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex - 1);
             });
         } else {
             this.resetTour();
@@ -267,6 +267,7 @@ export class GuidedTourService {
         }
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
+        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
 
         if (currentStep.closeAction) {
             currentStep.closeAction();
@@ -279,7 +280,6 @@ export class GuidedTourService {
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 this.setPreparedTourStep();
-                this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
             });
         } else {
             this.finishGuidedTour();
@@ -866,7 +866,6 @@ export class GuidedTourService {
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
             // Only start tour automatically if the user has never seen it before
             if (!hasStartedOrFinishedTour) {
-                this.currentTour = this.availableTourForComponent;
                 this.startTour();
             }
         }, 500);
