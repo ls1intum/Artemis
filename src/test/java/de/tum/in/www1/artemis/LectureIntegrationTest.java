@@ -37,7 +37,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
         database.resetDatabase();
     }
 
-    @Testg
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLectureWithPermission() throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);

@@ -440,8 +440,12 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             // TODO check exercise type specific sensitive attributes
-            assertThat(modelingExercise.getSampleSolutionModel()).as("Exercise only contains title and ID").isNull();
-            assertThat(modelingExercise.getSampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
+            if (exercise instanceof ModelingExercise) {
+                ModelingExercise modelingExercise = (ModelingExercise) exercise;
+                assertThat(modelingExercise.getSampleSolutionModel()).as("Exercise only contains title and ID").isNull();
+                assertThat(modelingExercise.getSampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
+            }
+
         }
     }
 
