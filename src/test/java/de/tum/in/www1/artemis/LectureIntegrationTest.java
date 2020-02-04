@@ -37,11 +37,10 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
         database.resetDatabase();
     }
 
-    @Test
+    @Testg
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLectureWithPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
-        lectureRepo.save(lecture);
+        Lecture lecture = database.createCourseWithLecture(true);
         Lecture savedLecture = lectureRepo.findAll().get(0);
 
         Lecture receivedLecture = request.get("/api/lectures/" + lecture.getId(), HttpStatus.OK, Lecture.class);
@@ -54,8 +53,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(roles = "USER")
     public void getLectureForCourseNoPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
-        lectureRepo.save(lecture);
+        Lecture lecture = database.createCourseWithLecture(true);
         Course course = lectureRepo.findAll().get(0).getCourse();
         request.get("/api/courses/" + course.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
     }
@@ -63,14 +61,14 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(roles = "USER")
     public void createLectureNoPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
+        Lecture lecture = database.createCourseWithLecture(false);
         request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createLectureWithPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
+        Lecture lecture = database.createCourseWithLecture(false);
         Lecture receivedLecture = request.postWithResponseBody("/api/lectures", lecture, Lecture.class);
 
         assertThat(receivedLecture).isNotNull();
@@ -82,16 +80,17 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateLectureWithPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
-        lectureRepo.save(lecture);
-        request.putWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.OK);
+        Lecture lecture = database.createCourseWithLecture(true);
+        lecture.setDescription("UPDATE");
+        Lecture receivedLecture = request.putWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.OK);
+        assertThat(receivedLecture.getDescription()).isEqualTo("UPDATE");
+
     }
 
     @Test
     @WithMockUser(roles = "USER")
     public void updateLectureNoPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
-        lectureRepo.save(lecture);
+        Lecture lecture = database.createCourseWithLecture(true);
         request.putWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.FORBIDDEN);
 
     }
@@ -99,8 +98,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteLectureWithPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
-        lectureRepo.save(lecture);
+        Lecture lecture = database.createCourseWithLecture(true);
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
         assertThat(lectureRepo.findAll().isEmpty()).isTrue();
 
@@ -109,8 +107,15 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(roles = "USER")
     public void deleteLectureNoPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
-        lectureRepo.save(lecture);
+        Lecture lecture = database.createCourseWithLecture(true);
+        request.delete("/api/lectures/" + lecture.getId(), HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
+    @WithMockUser(roles = "TA")
+    public void deleteLectureNoPermissionAsTutor() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.FORBIDDEN);
 
     }

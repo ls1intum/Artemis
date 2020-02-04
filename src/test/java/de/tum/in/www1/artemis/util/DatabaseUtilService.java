@@ -268,14 +268,16 @@ public class DatabaseUtilService {
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
-    public Lecture createCourseWithLecture() {
+    public Lecture createCourseWithLecture(boolean saveLecture) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
         courseRepo.save(course);
-        // lectureRepo.save(lecture);
+        if (saveLecture) {
+            lectureRepo.save(lecture);
+        }
         return lecture;
     }
 
