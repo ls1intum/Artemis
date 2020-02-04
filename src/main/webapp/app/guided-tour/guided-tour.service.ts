@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NavigationEnd, NavigationStart, Router, RoutesRecognized } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
-import { filter, flatMap, map, pairwise, switchMap } from 'rxjs/operators';
+import { filter, flatMap, map, switchMap } from 'rxjs/operators';
 import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -22,6 +22,7 @@ import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
+import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -71,6 +72,7 @@ export class GuidedTourService {
         private deviceService: DeviceDetectorService,
         private profileService: ProfileService,
         private participationService: ParticipationService,
+        private tutorParticipationService: TutorParticipationService,
     ) {}
 
     /**
@@ -139,9 +141,7 @@ export class GuidedTourService {
 
         if (this.isBackPageNavigation.value) {
             setTimeout(() => {
-                if (currentStep.userInteractionEvent) {
-                    this.resetUserInteractionFinishedState(currentStep);
-                }
+                this.resetUserInteractionFinishedState(currentStep);
                 this.setPreparedTourStep();
             }, 300);
         } else {
@@ -711,6 +711,7 @@ export class GuidedTourService {
             if (currentStep.pageUrl) {
                 this.pageUrls.set(currentStep.pageUrl, this.router.url);
             }
+            this.resetUserInteractionFinishedState(currentStep);
             this.setPreparedTourStep();
             this.calculateTranslateValue(currentStep);
         }
@@ -722,7 +723,18 @@ export class GuidedTourService {
             return;
         }
 
-        if (this.currentCourse && this.currentExercise) {
+        /** Reset exercise participation */
+        if (this.currentExercise && this.currentExercise.exampleSubmissions && this.currentExercise.exampleSubmissions.length !== 0) {
+            this.restartIsLoading = true;
+            // @ts-ignore
+            this.tutorParticipationService.deleteTutorParticipationInExampleSubmissionForGuidedTour(this.currentExercise)
+                .pipe( map(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)) )
+                .subscribe(() => {
+                    this.router.navigateByUrl('/course').then(() => {
+                        this.restartIsLoading = false;
+                    });
+            });
+        } else if (this.currentCourse && this.currentExercise) {
             this.restartIsLoading = true;
             const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
             this.participationService
@@ -736,7 +748,7 @@ export class GuidedTourService {
                 )
                 .subscribe(
                     () => {
-                        this.navigateToCourseOverview();
+                        this.navigateToCourseOverview(this.currentCourse!.id);
                     },
                     () => {
                         // start tour in case the participation was deleted otherwise
@@ -752,8 +764,8 @@ export class GuidedTourService {
     /**
      * Navigate to course overview after resetting an exercise participation
      */
-    private navigateToCourseOverview() {
-        this.router.navigateByUrl(`/overview/${this.currentCourse!.id}/exercises`).then(() => {
+    private navigateToCourseOverview(courseId: number) {
+        this.router.navigateByUrl(`/overview/${courseId}/exercises`).then(() => {
             location.reload();
         });
 

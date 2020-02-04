@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,6 +22,9 @@ public interface TutorParticipationRepository extends JpaRepository<TutorPartici
 
     @EntityGraph(attributePaths = "trainedExampleSubmissions")
     TutorParticipation findByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
+
+    @EntityGraph(attributePaths = "trainedExampleSubmissions")
+    TutorParticipation findWithEagerExampleSubmissionByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
 
     Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId);
 

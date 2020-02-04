@@ -12,8 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -40,12 +42,18 @@ public class TutorParticipationResource {
 
     private final UserService userService;
 
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    private final GuidedTourConfiguration guidedTourConfiguration;
+
     public TutorParticipationResource(TutorParticipationService tutorParticipationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService,
-            UserService userService) {
+            UserService userService, ExampleSubmissionRepository exampleSubmissionRepository, GuidedTourConfiguration guidedTourConfiguration) {
         this.tutorParticipationService = tutorParticipationService;
         this.exerciseService = exerciseService;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.guidedTourConfiguration = guidedTourConfiguration;
     }
 
     /**
@@ -101,11 +109,32 @@ public class TutorParticipationResource {
         TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
 
         // Avoid infinite recursion for JSON
-        resultTutorParticipation.getTrainedExampleSubmissions().forEach(trainedExampleSubmissioin -> {
-            trainedExampleSubmissioin.setTutorParticipations(null);
-            trainedExampleSubmissioin.setExercise(null);
+        resultTutorParticipation.getTrainedExampleSubmissions().forEach(trainedExampleSubmission -> {
+            trainedExampleSubmission.setTutorParticipations(null);
+            trainedExampleSubmission.setExercise(null);
         });
 
         return ResponseEntity.ok().body(resultTutorParticipation);
+    }
+
+    /**
+     *
+     * @param exerciseId
+     * @return
+     */
+    @DeleteMapping(value = "guided-tour/exercises/{exerciseId}/exampleSubmission")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
+        log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
+        Exercise exercise = this.exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        // Allow all users to delete their own StudentParticipations if it's for a tutorial
+        if (!authorizationCheckService.isAtLeastStudentForExercise(exercise, user) || !guidedTourConfiguration.isExerciseForTutorial(exercise)) {
+            return forbidden();
+        }
+
+        tutorParticipationService.removeTutorParticipations(exercise, user);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }
 }
