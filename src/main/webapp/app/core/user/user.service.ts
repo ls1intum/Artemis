@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/shared';
 import { User } from 'app/core/user/user.model';
 import { SERVER_API_URL } from 'app/app.constants';
+import { Course } from 'app/entities/course';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -22,6 +23,10 @@ export class UserService {
 
     find(login: string): Observable<HttpResponse<User>> {
         return this.http.get<User>(`${this.resourceUrl}/${login}`, { observe: 'response' });
+    }
+
+    searchInCourse(course: Course, login: string): Observable<HttpResponse<User[]>> {
+        return this.http.get<User[]>(`${SERVER_API_URL}api/courses/${course.id}/users?login=${login}`, { observe: 'response' });
     }
 
     query(req?: any): Observable<HttpResponse<User[]>> {

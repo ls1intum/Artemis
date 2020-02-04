@@ -19,6 +19,7 @@
             "nameRequired": "Name is required.",
             "image": "Image",
             "students": "Students",
+            "searchForStudent": "Search for student by login",
             "createTeam": {
                 "label": "Create team",
                 "error": "Could not create team. Please try again."

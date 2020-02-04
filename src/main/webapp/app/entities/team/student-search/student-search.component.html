@@ -1,0 +1,9 @@
+<input
+    id="typeahead-basic"
+    type="text"
+    class="form-control"
+    [placeholder]="'artemisApp.team.searchForStudent' | translate"
+    (selectItem)="onAutocompleteSelect($event.item)"
+    [ngbTypeahead]="onSearch"
+    [resultFormatter]="searchResultFormatter"
+/>

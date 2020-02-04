@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserMinimalDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
@@ -518,6 +519,16 @@ public class UserService {
      */
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAllWithGroups(pageable).map(UserDTO::new);
+    }
+
+    /**
+     * Search for users by login in course
+     * @param course Course in which to search students
+     * @param login Login by which to search students
+     * @return users whose login matched
+     */
+    public List<UserMinimalDTO> searchByLoginInCourse(Course course, String login) {
+        return userRepository.searchByLoginInGroup(course.getStudentGroupName(), login).stream().map(UserMinimalDTO::new).collect(Collectors.toList());
     }
 
     /**

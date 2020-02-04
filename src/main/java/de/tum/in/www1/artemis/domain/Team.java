@@ -141,6 +141,6 @@ public class Team implements Serializable {
 
     @Override
     public String toString() {
-        return "Team{" + "id=" + getId() + ", name='" + getName() + "'" + ", students='" + getStudents() + "'" + "}";
+        return "Team{" + "id=" + getId() + ", name='" + getName() + "'" + ", image='" + getImage() + "'" + "}";
     }
 }

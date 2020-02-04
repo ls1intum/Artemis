@@ -50,6 +50,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAllInGroup(String groupName);
 
     @EntityGraph(attributePaths = { "groups" })
+    @Query("select user from User user where :#{#groupName} member user.groups and user.login like :#{#login}%")
+    List<User> searchByLoginInGroup(String groupName, String login);
+
+    @EntityGraph(attributePaths = { "groups" })
     @Query("select user from User user")
     Page<User> findAllWithGroups(Pageable pageable);
 

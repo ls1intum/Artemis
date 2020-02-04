@@ -19,6 +19,7 @@
             "nameRequired": "Name ist erforderlich.",
             "image": "Bild",
             "students": "Studenten",
+            "searchForStudent": "Suche Studenten nach Login",
             "createTeam": {
                 "label": "Erstelle Team",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."

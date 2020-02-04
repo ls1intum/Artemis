@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -18,15 +20,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserMinimalDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -71,11 +78,18 @@ public class UserResource {
 
     private final UserService userService;
 
+    private final CourseService courseService;
+
+    private final AuthorizationCheckService authCheckService;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserResource(UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+    public UserResource(UserRepository userRepository, UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.courseService = courseService;
+        this.authCheckService = authCheckService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
@@ -162,6 +176,29 @@ public class UserResource {
         final Page<UserDTO> page = userService.getAllManagedUsers(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET /courses/:courseId/users : get all users for a given course.
+     *
+     * @param courseId the courseId of the course for which to search users
+     * @param login the login by which to search users
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @GetMapping("/courses/{courseId}/users")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<UserMinimalDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("login") String login) {
+        log.debug("REST request to search Users for login {}  in course with id : {}", login, courseId);
+        // restrict result size by only allowing reasonable searches
+        if (login.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'login' must be three characters or longer.");
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseService.findOne(courseId);
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(userService.searchByLoginInCourse(course, login));
     }
 
     /** @return a string list of the all of the roles */
