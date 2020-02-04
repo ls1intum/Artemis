@@ -250,7 +250,10 @@ export class GuidedTourService {
             if (previousStep.action) {
                 previousStep.action();
             }
-            this.setPreparedTourStep();
+            // Usually an action is opening something so we need to give it time to render.
+            setTimeout(() => {
+                this.setPreparedTourStep();
+            });
         } else {
             this.resetTour();
         }
@@ -275,7 +278,10 @@ export class GuidedTourService {
             if (nextStep.action) {
                 nextStep.action();
             }
-            this.setPreparedTourStep();
+            // Usually an action is opening something so we need to give it time to render.
+            setTimeout(() => {
+                this.setPreparedTourStep();
+            });
         } else {
             this.finishGuidedTour();
         }
@@ -753,14 +759,12 @@ export class GuidedTourService {
      * Set the next prepared tour step
      */
     private setPreparedTourStep(): void {
-        setTimeout(() => {
-            const preparedTourStep = this.getPreparedTourStep();
-            if (preparedTourStep) {
-                this.guidedTourCurrentStepSubject.next(preparedTourStep);
-            } else {
-                this.nextStep();
-            }
-        });
+        const preparedTourStep = this.getPreparedTourStep();
+        if (preparedTourStep) {
+            this.guidedTourCurrentStepSubject.next(preparedTourStep);
+        } else {
+            this.nextStep();
+        }
     }
 
     /**
