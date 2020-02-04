@@ -7,6 +7,7 @@ import { ParticipationService } from 'app/entities/participation/participation.s
 import { Exercise } from 'app/entities/exercise';
 import { TeamService } from 'app/entities/team/team.service';
 import { Team } from 'app/entities/team/team.model';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-team-update-dialog',
@@ -19,6 +20,11 @@ export class TeamUpdateDialogComponent {
     isSaving = false;
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
+
+    onAddStudent(student: User) {
+        this.team.students.push(student);
+        console.log('team students:', this.team.students);
+    }
 
     clear() {
         this.activeModal.dismiss('cancel');
