@@ -24,14 +24,6 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.tab-item.lectures',
-            headlineTranslateKey: 'tour.courseExerciseOverview.lectures.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.lectures.content',
-            highlightPadding: 10,
-            orientation: Orientation.RIGHT,
-            skipStepIfNoSelector: true,
-        }),
-        new TextTourStep({
             highlightSelector: '.tab-item.statistics',
             headlineTranslateKey: 'tour.courseExerciseOverview.statistics.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.statistics.content',
