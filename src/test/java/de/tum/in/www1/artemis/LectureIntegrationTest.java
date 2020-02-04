@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.domain.Course;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -57,7 +57,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
         Lecture lecture = database.createCourseWithLecture();
         lectureRepo.save(lecture);
         Course course = lectureRepo.findAll().get(0).getCourse();
-        request.get("/api/courses/"+course.getId()+"/lectures", HttpStatus.FORBIDDEN, Lecture.class);
+        request.get("/api/courses/" + course.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
     }
 
     @Test
