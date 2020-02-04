@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.tum.in.www1.artemis.domain.Course;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,15 +51,6 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
 
     }
 
-    /**
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLectureForCourseWithPermission() throws Exception {
-        Lecture lecture = database.createCourseWithLecture();
-        lectureRepo.save(lecture);
-        Course course = lectureRepo.findAll().get(0).getCourse();
-         request.get("/api/courses/"+course.getId()+"/lectures", HttpStatus.OK, Lecture.class);
-    }
     @Test
     @WithMockUser(roles = "USER")
     public void getLectureForCourseNoPermission() throws Exception {
@@ -67,7 +59,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationTest {
         Course course = lectureRepo.findAll().get(0).getCourse();
         request.get("/api/courses/"+course.getId()+"/lectures", HttpStatus.FORBIDDEN, Lecture.class);
     }
-    **/
+
     @Test
     @WithMockUser(roles = "USER")
     public void createLectureNoPermission() throws Exception {
