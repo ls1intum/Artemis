@@ -8,6 +8,7 @@ import { Exercise } from 'app/entities/exercise';
 import { TeamService } from 'app/entities/team/team.service';
 import { Team } from 'app/entities/team/team.model';
 import { User } from 'app/core/user/user.model';
+import { cloneDeep } from 'lodash';
 
 @Component({
     selector: 'jhi-team-update-dialog',
@@ -27,7 +28,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
     ngOnInit(): void {
-        this.pendingTeam = { ...this.team };
+        this.pendingTeam = cloneDeep(this.team);
     }
 
     onAddStudent(student: User) {
@@ -46,7 +47,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     save() {
-        this.team = { ...this.pendingTeam };
+        this.team = cloneDeep(this.pendingTeam);
 
         if (this.team.id !== undefined) {
             this.subscribeToSaveResponse(this.teamService.update(this.team));

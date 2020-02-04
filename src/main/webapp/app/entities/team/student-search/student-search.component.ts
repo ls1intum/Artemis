@@ -18,17 +18,17 @@ export class StudentSearchComponent {
 
     users: User[] = [];
 
-    searchText: string;
+    inputDisplayValue: string;
 
     constructor(private userService: UserService) {}
 
     onAutocompleteSelect = (student: User) => {
-        this.searchText = '';
+        this.inputDisplayValue = '';
         this.selectStudent.emit(student);
     };
 
     searchInputFormatter = () => {
-        return this.searchText;
+        return this.inputDisplayValue;
     };
 
     searchResultFormatter = (student: User) => {
@@ -42,12 +42,12 @@ export class StudentSearchComponent {
             distinctUntilChanged(),
             tap(() => this.searchFailed.emit(false)),
             tap(() => this.searching.emit(true)),
-            switchMap(login => {
-                if (login.length < 3) {
+            switchMap(loginOrName => {
+                if (loginOrName.length < 3) {
                     return of([]);
                 }
                 return this.userService
-                    .searchInCourse(this.course, login)
+                    .searchInCourse(this.course, loginOrName)
                     .pipe(map(usersResponse => usersResponse.body!))
                     .pipe(
                         catchError(() => {

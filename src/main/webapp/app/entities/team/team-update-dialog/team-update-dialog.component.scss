@@ -11,6 +11,18 @@
 .list-group--students {
     max-width: 450px;
 
+    .list-group-item-container {
+        &:not(:last-child) {
+            margin-bottom: 0.15rem;
+        }
+
+        &:nth-child(even) {
+            .list-group-item {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+        }
+    }
+
     .list-group-item-index {
         font-size: 1.1rem;
         margin-left: 1.5rem;
@@ -20,12 +32,6 @@
 
     .list-group-item {
         flex-grow: 1;
-    }
-
-    .list-group-item-container:nth-child(even) {
-        .list-group-item {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
     }
 }
 

@@ -522,13 +522,13 @@ public class UserService {
     }
 
     /**
-     * Search for users by login in course
+     * Search for users by login or name in course
      * @param course Course in which to search students
-     * @param login Login by which to search students
+     * @param loginOrName Login or name by which to search students
      * @return users whose login matched
      */
-    public List<UserMinimalDTO> searchByLoginInCourse(Course course, String login) {
-        return userRepository.searchByLoginInGroup(course.getStudentGroupName(), login).stream().map(UserMinimalDTO::new).collect(Collectors.toList());
+    public List<UserMinimalDTO> searchByLoginOrNameInCourse(Course course, String loginOrName) {
+        return userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName).stream().map(UserMinimalDTO::new).collect(Collectors.toList());
     }
 
     /**

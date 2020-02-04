@@ -25,8 +25,8 @@ export class UserService {
         return this.http.get<User>(`${this.resourceUrl}/${login}`, { observe: 'response' });
     }
 
-    searchInCourse(course: Course, login: string): Observable<HttpResponse<User[]>> {
-        return this.http.get<User[]>(`${SERVER_API_URL}api/courses/${course.id}/users?login=${login}`, { observe: 'response' });
+    searchInCourse(course: Course, loginOrName: string): Observable<HttpResponse<User[]>> {
+        return this.http.get<User[]>(`${SERVER_API_URL}api/courses/${course.id}/users?loginOrName=${loginOrName}`, { observe: 'response' });
     }
 
     query(req?: any): Observable<HttpResponse<User[]>> {

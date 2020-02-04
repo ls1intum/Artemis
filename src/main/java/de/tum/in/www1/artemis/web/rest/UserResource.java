@@ -182,23 +182,23 @@ public class UserResource {
      * GET /courses/:courseId/users : get all users for a given course.
      *
      * @param courseId the courseId of the course for which to search users
-     * @param login the login by which to search users
+     * @param loginOrName the login or name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("/courses/{courseId}/users")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<UserMinimalDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("login") String login) {
-        log.debug("REST request to search Users for login {}  in course with id : {}", login, courseId);
+    public ResponseEntity<List<UserMinimalDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {
+        log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);
         // restrict result size by only allowing reasonable searches
-        if (login.length() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'login' must be three characters or longer.");
+        if (loginOrName.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(userService.searchByLoginInCourse(course, login));
+        return ResponseEntity.ok().body(userService.searchByLoginOrNameInCourse(course, loginOrName));
     }
 
     /** @return a string list of the all of the roles */

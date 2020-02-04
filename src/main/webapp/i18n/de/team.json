@@ -19,7 +19,7 @@
             "nameRequired": "Name ist erforderlich.",
             "image": "Bild",
             "students": "Studenten",
-            "searchForStudent": "Suche Studenten nach Login",
+            "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen."
             },
