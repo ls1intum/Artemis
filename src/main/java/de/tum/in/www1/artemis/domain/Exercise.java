@@ -11,7 +11,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
-import org.hibernate.annotations.Formula;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -98,9 +97,6 @@ public abstract class Exercise implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "mode")
     private ExerciseMode mode;
-
-    @Formula("mode = \"TEAM\"")
-    private boolean teamMode;
 
     // TODO: switch to lazy?
     @OneToOne(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -333,10 +329,6 @@ public abstract class Exercise implements Serializable {
         this.mode = mode;
     }
 
-    public boolean isTeamMode() {
-        return teamMode;
-    }
-
     public TeamAssignmentConfig getTeamAssignmentConfig() {
         return teamAssignmentConfig;
     }
@@ -511,6 +503,10 @@ public abstract class Exercise implements Serializable {
             return Boolean.FALSE;
         }
         return ZonedDateTime.now().isAfter(getDueDate());
+    }
+
+    public Boolean isTeamMode() {
+        return mode == ExerciseMode.TEAM;
     }
 
     /**
