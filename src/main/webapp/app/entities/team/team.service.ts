@@ -30,7 +30,7 @@ export class TeamService implements ITeamService {
     }
 
     update(team: Team): Observable<TeamResponse> {
-        return this.http.put<Team>(`${this.resourceUrl}/${team.id}`, team, { observe: 'response' });
+        return this.http.put<Team>(this.resourceUrl, team, { observe: 'response' });
     }
 
     find(id: number): Observable<TeamResponse> {
