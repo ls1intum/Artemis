@@ -23,6 +23,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
+import { CourseService } from 'app/entities/course/course.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -73,6 +74,7 @@ export class GuidedTourService {
         private profileService: ProfileService,
         private participationService: ParticipationService,
         private tutorParticipationService: TutorParticipationService,
+        private courseService: CourseService,
     ) {}
 
     /**
@@ -723,13 +725,14 @@ export class GuidedTourService {
         if (this.currentExercise && this.currentExercise.exampleSubmissions && this.currentExercise.exampleSubmissions.length !== 0) {
             this.restartIsLoading = true;
             // @ts-ignore
-            this.tutorParticipationService.deleteTutorParticipationInExampleSubmissionForGuidedTour(this.currentExercise)
-                .pipe( map(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)) )
+            this.tutorParticipationService
+                .deleteTutorParticipationInExampleSubmissionForGuidedTour(this.currentExercise)
+                .pipe(map(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)))
                 .subscribe(() => {
                     this.router.navigateByUrl('/course').then(() => {
                         this.restartIsLoading = false;
                     });
-            });
+                });
         } else if (this.currentCourse && this.currentExercise) {
             this.restartIsLoading = true;
             const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;

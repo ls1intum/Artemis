@@ -118,9 +118,10 @@ public class TutorParticipationResource {
     }
 
     /**
-     *
-     * @param exerciseId
-     * @return
+     * DELETE guided-tour/exercises/:exerciseId/exampleSubmission: delete the tutor participation for example submissions of the "exerciseId" exercise for guided tutorials (e.g. when restarting a tutorial)
+     * Please note: all tutors can delete their own tutor participation participation for example submissions when it belongs to a guided tutorial
+     * @param exerciseId    the exercise id which has example submissions and tutor participations
+     * @return  the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
     @DeleteMapping(value = "guided-tour/exercises/{exerciseId}/exampleSubmission")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")

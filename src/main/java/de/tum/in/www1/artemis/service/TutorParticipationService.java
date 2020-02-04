@@ -213,9 +213,9 @@ public class TutorParticipationService {
     }
 
     /**
-     *
-     * @param exercise
-     * @param user
+     * This method emoves the tutor participation for the example submission of an exercise
+     * @param exercise  the exercise to which the example submission and tutor participation are linked to
+     * @param user  the user for which the tutor participation should be removed
      */
     public void removeTutorParticipations(Exercise exercise, User user) {
         if (!tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(exercise.getId(), user.getId())) {
