@@ -49,7 +49,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="name" [minWidth]="200">
+                <ngx-datatable-column prop="name" [minWidth]="100" [width]="150" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name">
@@ -63,7 +63,22 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="350">
+                <ngx-datatable-column prop="" [minWidth]="500" [width]="600">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper">
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students">
+                                Students
+                            </span>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <ul class="list-group list-group-horizontal">
+                            <li class="list-group-item student-group-item" *ngFor="let student of value.students">{{ student.firstName }} {{ student.lastName }}</li>
+                        </ul>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [minWidth]="350" [width]="350" [maxWidth]="500">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="text-right">
                             <jhi-team-update-button class="mr-1" [exercise]="exercise" [team]="value"></jhi-team-update-button>

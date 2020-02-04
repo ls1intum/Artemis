@@ -141,7 +141,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(teamRepository.findAllByExerciseId(exerciseId));
+        return ResponseEntity.ok().body(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId));
     }
 
     /**

@@ -12,6 +12,7 @@ import { ButtonSize } from 'app/shared/components';
 @Component({
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
+    styleUrls: ['./teams.component.scss'],
 })
 export class TeamsComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;

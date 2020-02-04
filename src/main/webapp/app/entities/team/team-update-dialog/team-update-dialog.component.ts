@@ -12,6 +12,7 @@ import { User } from 'app/core/user/user.model';
 @Component({
     selector: 'jhi-team-update-dialog',
     templateUrl: './team-update-dialog.component.html',
+    styleUrls: ['./team-update-dialog.component.scss'],
 })
 export class TeamUpdateDialogComponent {
     @Input() team: Team;
@@ -24,6 +25,10 @@ export class TeamUpdateDialogComponent {
     onAddStudent(student: User) {
         this.team.students = this.team.students || [];
         this.team.students.push(student);
+    }
+
+    onRemoveStudent(student: User) {
+        this.team.students = this.team.students.filter(user => user.id !== student.id);
     }
 
     clear() {
