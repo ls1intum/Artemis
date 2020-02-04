@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
 import java.util.*;
@@ -42,7 +43,6 @@ public class TextAssessmentUtilityService {
             final double expectedValue = calculateExpectation(textCluster).getAsDouble();
 
             return OptionalDouble.of(allAssessedBlocks.stream()
-
                     // Calculate the variance of each random variable
                     .mapToDouble(block -> {
                         if (getCreditsOfTextBlock(block).isPresent() && calculateScoreCoveragePercentage(block).isPresent()) {
@@ -52,12 +52,10 @@ public class TextAssessmentUtilityService {
                     })
                     // Sum them up to get the final value
                     .reduce(0.0, Double::sum));
-
         }
         catch (NoSuchElementException exception) {
             return OptionalDouble.empty();
         }
-
     }
 
     /**
@@ -84,7 +82,6 @@ public class TextAssessmentUtilityService {
         catch (NoSuchElementException exception) {
             return OptionalDouble.empty();
         }
-
     }
 
     /**
@@ -121,7 +118,6 @@ public class TextAssessmentUtilityService {
 
             return OptionalDouble.of(creditedBlocks / (double) allBlocksInCluster.size());
         }
-
         return OptionalDouble.empty();
     }
 
@@ -179,7 +175,6 @@ public class TextAssessmentUtilityService {
 
             return OptionalDouble.of(scoringSum / (double) allBlocksInCluster.size());
         }
-
         return OptionalDouble.empty();
     }
 
@@ -245,24 +240,6 @@ public class TextAssessmentUtilityService {
     }
 
     /**
-     * Getter for the textCluster size of a text textCluster
-     * @param textCluster textCluster for which the size should be returned
-     * @return {Integer} size of the textCluster
-     */
-    public Integer getClusterSize(TextCluster textCluster) {
-        return textCluster.size();
-    }
-
-    /**
-     * Returns the size of the textCluster of a text block
-     * @param textBlock textBlock for which the textCluster size should be determined
-     * @return {Integer} size of the text textCluster
-     */
-    public Integer getClusterSize(TextBlock textBlock) {
-        return textBlock.getCluster().size();
-    }
-
-    /**
      * Returns the credits of a text block as an optional depending on wether a text block has credits
      * @param block {TextBlock} text block for which the credits are returned
      * @return {Optional<Double>} credits of the text block as Double Object in an Optional Wrapper
@@ -302,7 +279,7 @@ public class TextAssessmentUtilityService {
 
         final List<TextBlock> assessedBlocks = getAssessedBlocks(textCluster);
 
-        if (getCreditsOfTextBlock(textBlock).isPresent() || assessedBlocks.size() < 1) {
+        if (getCreditsOfTextBlock(textBlock).isPresent() || assessedBlocks.size() < 1 || textCluster == null) {
             return OptionalDouble.empty();
         }
 
@@ -323,14 +300,12 @@ public class TextAssessmentUtilityService {
                     // blocks
                     .mapToDouble(blockIterator -> ((1 / Math.abs(textCluster.distanceBetweenBlocks(textBlock, blockIterator))) / totalWeight)
                             * getCreditsOfTextBlock(blockIterator).getAsDouble())
-
                     .sum();
-
             // Get upper range threshold for wether the score matches the expectation
-            final OptionalDouble upperRange = OptionalDouble.of(calculateExpectation(textCluster).getAsDouble() + calculateStandardDeviation(textCluster, 5).getAsDouble());
+            final OptionalDouble upperRange = OptionalDouble.of(calculateExpectation(textCluster).getAsDouble() + calculateStandardDeviation(textCluster, 3).getAsDouble());
 
             // Get lower range threshold for wether the score matches the expectation
-            final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).getAsDouble() - calculateStandardDeviation(textCluster, 5).getAsDouble());
+            final OptionalDouble lowerRange = OptionalDouble.of(calculateExpectation(textCluster).getAsDouble() - calculateStandardDeviation(textCluster, 3).getAsDouble());
 
             // Verify if weighted score lies in range interval
             if (weightedScore < upperRange.getAsDouble() && weightedScore > lowerRange.getAsDouble()) {
@@ -344,19 +319,27 @@ public class TextAssessmentUtilityService {
     }
 
     /**
-     * Calculates the confidence score of each textBlock which is to be assessed based on Christian Ziegners Master's thesis
-     * @param textBlock textBlock for which each confidence score is determined
-     * @return Confidence score in a DoubleOptional wrapper or empty if it is non-existent
+     * Rounds a score to the closest given score in a text cluster
+     * This workaround is needed, since no concrete grading scales are given
+     * @param textBlock text block which should receive the suggested score
+     * @param suggestedScore suggested score which should be rounded
+     * @return OptionalDouble of the "closest" score or Empty
      */
-    public OptionalDouble calculateConfidence(TextBlock textBlock) {
+    public OptionalDouble roundScore(TextBlock textBlock, double suggestedScore) {
+        final TextCluster cluster = textBlock.getCluster();
 
-        try {
-            // Divide number of text blocks with the same credits by the total number of assessed text blocks in a cluster
-            return OptionalDouble.of(calculateScoreCoveragePercentage(textBlock).getAsDouble() / calculateCoveragePercentage(textBlock.getCluster()).getAsDouble());
+        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(cluster);
+
+        HashSet<Double> givenScores = new HashSet<Double>();
+
+        // Will never throw a NoSuchElementException since getAssessedBlocks() already takes care of it
+        allAssessedBlocks.stream().forEach(block -> givenScores.add(getCreditsOfTextBlock(block).getAsDouble()));
+
+        final Optional<Double> roundedScore = givenScores.stream().min(comparing(score -> Math.abs(suggestedScore - score)));
+
+        if (roundedScore.isPresent()) {
+            return OptionalDouble.of(roundedScore.get());
         }
-        catch (NoSuchElementException exception) {
-            return OptionalDouble.empty();
-        }
+        return OptionalDouble.empty();
     }
-
 }

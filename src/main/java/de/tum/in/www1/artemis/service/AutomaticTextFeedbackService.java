@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
 import java.util.*;
@@ -34,7 +33,7 @@ public class AutomaticTextFeedbackService {
     public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository) {
         this.feedbackService = feedbackService;
         this.textBlockRepository = textBlockRepository;
-        this.textAssessmentUtilityService = new TextAssessmentUtilityService(feedbackService);
+        this.textAssessmentUtilityService = new TextAssessmentUtilityService(this.feedbackService);
     }
 
     /**
@@ -57,25 +56,18 @@ public class AutomaticTextFeedbackService {
 
             // if TextBlock is part of a textCluster, we try to find an existing Feedback Element
             if (textCluster != null) {
-                // Find all Feedbacks for other Blocks in Cluster.
-                final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
-                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(textCluster);
+                try {
+                    final OptionalDouble suggestedScore = textAssessmentUtilityService.calculateScore(block);
 
-                if (feedbackForTextExerciseInCluster.size() != 0) {
-                    final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
+                    final OptionalDouble roundedScore = textAssessmentUtilityService.roundScore(block, suggestedScore.getAsDouble());
 
-                            // Filter all other blocks in the textCluster for those with Feedback
-                            .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
-
-                            // Find the closest block
-                            .min(comparing(element -> textCluster.distanceBetweenBlocks(block, element)));
-
-                    if (mostSimilarBlockInClusterWithFeedback.isPresent()
-                            && textCluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
-                        final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
-                        return newFeedback.credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText()).type(FeedbackType.AUTOMATIC);
-
-                    }
+                    // Here would be the spot for the REST call to the confidence service
+                    // Detail Text left blank on purpose (for now)
+                    return newFeedback.credits(roundedScore.getAsDouble()).type(FeedbackType.AUTOMATIC).detailText("");
+                }
+                catch (NoSuchElementException exception) {
+                    // Do nothing since we will request manual feedback
+                    // return newFeedback.credits(0d).type(FeedbackType.MANUAL);
                 }
             }
             return newFeedback.credits(0d).type(FeedbackType.MANUAL);
