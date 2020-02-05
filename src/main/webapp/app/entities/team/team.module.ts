@@ -8,13 +8,13 @@ import { ArtemisDataTableModule } from 'app/components/data-table/data-table.mod
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TeamUpdateButtonComponent } from 'app/entities/team/team-update-dialog/team-update-button.component';
 import { TeamUpdateDialogComponent } from 'app/entities/team/team-update-dialog/team-update-dialog.component';
-import { StudentSearchComponent } from 'app/entities/team/student-search/student-search.component';
+import { TeamStudentSearchComponent } from 'app/entities/team/team-student-search/team-student-search.component';
 
 const ENTITY_STATES = [...teamRoute];
 
 @NgModule({
     imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule],
-    declarations: [TeamsComponent, TeamUpdateButtonComponent, TeamUpdateDialogComponent, StudentSearchComponent],
+    declarations: [TeamsComponent, TeamUpdateButtonComponent, TeamUpdateDialogComponent, TeamStudentSearchComponent],
     exports: [TeamUpdateButtonComponent],
     entryComponents: [TeamsComponent, TeamUpdateDialogComponent],
 })

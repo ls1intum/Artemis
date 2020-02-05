@@ -8,9 +8,9 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
- * A minimal DTO representing a user.
+ * A DTO representing a user returned by searching for a student to add to a team.
  */
-public class UserMinimalDTO {
+public class TeamSearchUserDTO {
 
     private Long id;
 
@@ -28,16 +28,17 @@ public class UserMinimalDTO {
     @Size(max = 50)
     private String lastName;
 
-    public UserMinimalDTO() {
+    private boolean isAssignedToTeam;
+
+    public TeamSearchUserDTO() {
         // Empty constructor needed for Jackson.
     }
 
-    public UserMinimalDTO(User user) {
+    public TeamSearchUserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName());
     }
 
-    public UserMinimalDTO(Long id, String login, String name, String firstName, String lastName) {
-
+    public TeamSearchUserDTO(Long id, String login, String name, String firstName, String lastName) {
         this.id = id;
         this.login = login;
         this.name = name;
@@ -85,8 +86,17 @@ public class UserMinimalDTO {
         this.lastName = lastName;
     }
 
+    public boolean isAssignedToTeam() {
+        return isAssignedToTeam;
+    }
+
+    public void setIsAssignedToTeam(boolean isAssignedToTeam) {
+        this.isAssignedToTeam = isAssignedToTeam;
+    }
+
     @Override
     public String toString() {
-        return "UserMinimalDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + "}";
+        return "TeamSearchUserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", isAssignedToTeam='" + isAssignedToTeam
+                + "}";
     }
 }

@@ -25,15 +25,17 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.dto.UserMinimalDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -80,15 +82,18 @@ public class UserResource {
 
     private final CourseService courseService;
 
+    private final ExerciseService exerciseService;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserResource(UserRepository userRepository, UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+    public UserResource(UserRepository userRepository, UserService userService, CourseService courseService, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.courseService = courseService;
+        this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
@@ -179,15 +184,17 @@ public class UserResource {
     }
 
     /**
-     * GET /courses/:courseId/users : get all users for a given course.
+     * GET /courses/:courseId/exercises/:exerciseId/team-search-users : get all users for a given course.
      *
      * @param courseId the courseId of the course for which to search users
+     * @param exerciseId the exerciseId of the exercise for which to search users to join a team
      * @param loginOrName the login or name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/courses/{courseId}/users")
+    @GetMapping("/courses/{courseId}/exercises/{exerciseId}/team-search-users")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<UserMinimalDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {
+    public ResponseEntity<List<TeamSearchUserDTO>> searchUsersInCourse(@PathVariable Long courseId, @PathVariable Long exerciseId,
+            @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);
         // restrict result size by only allowing reasonable searches
         if (loginOrName.length() < 3) {
@@ -198,7 +205,8 @@ public class UserResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(userService.searchByLoginOrNameInCourse(course, loginOrName));
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        return ResponseEntity.ok().body(userService.searchByLoginOrNameInCourseForExerciseTeam(course, exercise, loginOrName));
     }
 
     /** @return a string list of the all of the roles */

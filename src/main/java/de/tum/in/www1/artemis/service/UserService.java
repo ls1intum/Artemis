@@ -24,21 +24,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.dto.UserMinimalDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
@@ -60,6 +58,8 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final TeamRepository teamRepository;
+
     private final AuthorityRepository authorityRepository;
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
@@ -72,9 +72,10 @@ public class UserService {
 
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository) {
+    public UserService(UserRepository userRepository, TeamRepository teamRepository, AuthorityRepository authorityRepository, CacheManager cacheManager,
+            Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository) {
         this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
@@ -524,11 +525,17 @@ public class UserService {
     /**
      * Search for users by login or name in course
      * @param course Course in which to search students
+     * @param exercise Exercise in which the student might be added to a team
      * @param loginOrName Login or name by which to search students
      * @return users whose login matched
      */
-    public List<UserMinimalDTO> searchByLoginOrNameInCourse(Course course, String loginOrName) {
-        return userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName).stream().map(UserMinimalDTO::new).collect(Collectors.toList());
+    public List<TeamSearchUserDTO> searchByLoginOrNameInCourseForExerciseTeam(Course course, Exercise exercise, String loginOrName) {
+        List<User> users = userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName);
+        List<TeamSearchUserDTO> teamSearchUsers = users.stream().map(TeamSearchUserDTO::new).collect(Collectors.toList());
+        // Annotate whether the user is already assigned to a team for the given exercise
+        // TODO: swap n+1 db queries with only 1 or 2 queries?
+        teamSearchUsers.forEach(user -> user.setIsAssignedToTeam(teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()));
+        return teamSearchUsers;
     }
 
     /**

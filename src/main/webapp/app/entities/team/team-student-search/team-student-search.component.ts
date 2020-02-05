@@ -4,13 +4,15 @@ import { Observable, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
-    selector: 'jhi-student-search',
-    templateUrl: './student-search.component.html',
+    selector: 'jhi-team-student-search',
+    templateUrl: './team-student-search.component.html',
 })
-export class StudentSearchComponent {
+export class TeamStudentSearchComponent {
     @Input() course: Course;
+    @Input() exercise: Exercise;
 
     @Output() selectStudent = new EventEmitter<User>();
     @Output() searching = new EventEmitter<boolean>();
@@ -47,7 +49,7 @@ export class StudentSearchComponent {
                     return of([]);
                 }
                 return this.userService
-                    .searchInCourse(this.course, loginOrName)
+                    .searchInCourseForExerciseTeam(this.course, this.exercise, loginOrName)
                     .pipe(map(usersResponse => usersResponse.body!))
                     .pipe(
                         catchError(() => {

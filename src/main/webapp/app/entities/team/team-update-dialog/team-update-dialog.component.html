@@ -24,13 +24,14 @@
                     >Search failed. Please try again.</span
                 >
             </div>
-            <jhi-student-search
+            <jhi-team-student-search
                 [course]="exercise.course"
+                [exercise]="exercise"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"
                 (searchFailed)="searchingStudentsFailed = $event"
             >
-            </jhi-student-search>
+            </jhi-team-student-search>
             <ul class="list-group list-group--students my-3">
                 <li *ngFor="let student of pendingTeam.students; index as i" class="list-group-item-container d-flex align-items-center">
                     <div class="list-group-item-index">
