@@ -743,7 +743,7 @@ export class GuidedTourService {
                 this.router.navigateByUrl('/course').then(() => {
                     this.restartIsLoading = false;
                 });
-            })
+            });
         } else if (this.currentCourse && this.currentExercise) {
             this.restartIsLoading = true;
             const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
