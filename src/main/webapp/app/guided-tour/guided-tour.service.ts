@@ -133,6 +133,9 @@ export class GuidedTourService {
             });
     }
 
+    /**
+     * Checks and prepares the next tour step on navigation for multi-page tours
+     */
     private checkNextTourStepOnNavigation() {
         if (!this.currentTour) {
             return;
@@ -141,12 +144,14 @@ export class GuidedTourService {
         const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
 
+        // Prepares previous tour step for backward navigation
         if (this.isBackPageNavigation.value) {
             setTimeout(() => {
                 this.resetUserInteractionFinishedState(currentStep);
                 this.setPreparedTourStep();
             }, 300);
         } else {
+            // Prepares next tour step
             if (currentStep && currentStep.userInteractionEvent && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && nextStep && nextStep.pageUrl) {
                 if (this.router.url.match(nextStep.pageUrl)) {
                     this.currentTourStepIndex += 1;
@@ -156,6 +161,7 @@ export class GuidedTourService {
                         this.setPreparedTourStep();
                     }, 300);
                 } else if (this.currentTour) {
+                    // Ends guided tour if the navigation is done through a multi-page tutorial
                     this.guidedTourAvailabilitySubject.next(false);
                     this.skipTour();
                 }
@@ -469,6 +475,7 @@ export class GuidedTourService {
 
     /**
      * Get the last step that the user visited during the given tour
+     * @param init  true if the last seen tour step for initiating a tour should be returned
      */
     public getLastSeenTourStepIndex(init?: boolean): number {
         if (!this.availableTourForComponent) {
@@ -482,6 +489,9 @@ export class GuidedTourService {
 
         if (this.hasValidTourStepNumber(tourSettings)) {
             const lastSeenTourStep = init ? this.determineTourStepForComponent() : tourSettings[0].guidedTourStep;
+            /** If the user has seen the tour already, then set the last seen tour step to -1
+             *  to enable the restart of the tour instead of just starting it
+             */
             return lastSeenTourStep && lastSeenTourStep !== 0 ? lastSeenTourStep : -1;
         } else {
             return 0;
@@ -489,8 +499,9 @@ export class GuidedTourService {
     }
 
     /**
-     *
-     * @param tourSettings
+     * Determines if the tour step stored in the database is valid for the current tour
+     * It might be that tour steps have been removed in the mean time
+     * @param tourSettings  the tour setting that is stored for the current tour
      */
     private hasValidTourStepNumber(tourSettings: GuidedTourSetting[]): boolean {
         return tourSettings[0].guidedTourStep <= this.getFilteredTourSteps().length;
@@ -512,6 +523,9 @@ export class GuidedTourService {
         return null;
     }
 
+    /**
+     * This is a helper method to determine the previous step location for backward navigation in a multi-page tour
+     */
     private determinePreviousStepLocation(): string {
         if (!this.availableTourForComponent) {
             return this.router.url;
