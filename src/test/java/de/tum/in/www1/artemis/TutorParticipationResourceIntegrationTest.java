@@ -1,5 +1,16 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -9,17 +20,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import java.util.ArrayList;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationTest {
 
