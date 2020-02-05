@@ -45,7 +45,11 @@ export class TutorParticipationService {
         return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/exampleSubmission`, exampleSubmission, { observe: 'response' });
     }
 
-    deleteTutorParticipationInExampleSubmissionForGuidedTour(exercise: Exercise) {
+    /**
+     * Deletes the tutor participation of the current user for the guided tour
+     * @param exercise  exercise with tutor participation
+     */
+    deleteTutorParticipationForGuidedTour(exercise: Exercise) {
         if (exercise.course && this.accountService.isAtLeastTutorInCourse(exercise.course)) {
             return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/exampleSubmission`);
         }

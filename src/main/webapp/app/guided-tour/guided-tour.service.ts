@@ -738,15 +738,12 @@ export class GuidedTourService {
         /** Reset exercise participation */
         if (this.currentExercise && this.currentExercise.exampleSubmissions && this.currentExercise.exampleSubmissions.length !== 0) {
             this.restartIsLoading = true;
-            // @ts-ignore
-            this.tutorParticipationService
-                .deleteTutorParticipationInExampleSubmissionForGuidedTour(this.currentExercise)
-                .pipe(map(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)))
-                .subscribe(() => {
-                    this.router.navigateByUrl('/course').then(() => {
-                        this.restartIsLoading = false;
-                    });
+            this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentExercise);
+            this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
+                this.router.navigateByUrl('/course').then(() => {
+                    this.restartIsLoading = false;
                 });
+            })
         } else if (this.currentCourse && this.currentExercise) {
             this.restartIsLoading = true;
             const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
