@@ -104,7 +104,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
         result.subscribe(
             (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }
 
@@ -122,9 +122,14 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.previousState();
     }
 
-    private onSaveError() {
+    private onSaveError(error: HttpErrorResponse) {
+        const errorMessage = error.headers.get('X-artemisApp-alert')!;
+        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+        const jhiAlert = this.jhiAlertService.error(errorMessage);
+        jhiAlert.msg = errorMessage;
         this.isSaving = false;
     }
+
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
