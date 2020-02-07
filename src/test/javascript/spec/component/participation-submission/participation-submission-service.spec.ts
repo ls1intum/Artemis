@@ -11,6 +11,7 @@ import { TextSubmission } from 'app/entities/text-submission';
 import { Participation } from 'app/entities/participation';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
+import { HttpResponse } from '@angular/common/http';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,6 +38,7 @@ describe('SubmissionService', () => {
     } as TextSubmission;
 
     const url = `api/participations/${participation.id}/submissions`;
+    const getResponse = { ok: true, body: [submission] as Submission[] } as HttpResponse<Submission[]>;
 
     beforeEach(async(() => {
         httpService = new MockHttpService();
@@ -51,7 +53,7 @@ describe('SubmissionService', () => {
         participationSubject = new Subject();
         receiveSubmissionSubject = new Subject();
         receiveStub.withArgs(url).returns(receiveSubmissionSubject);
-        getStub.withArgs(`${submissionService.resourceUrlParticipation}/${participation.id}/submissions`).returns(of(submission));
+        getStub.withArgs(`${submissionService.resourceUrlParticipation}/${participation.id}/submissions`).returns(of(getResponse));
     }));
 
     afterEach(() => {
@@ -65,7 +67,7 @@ describe('SubmissionService', () => {
         let testSubmission;
         submissionService
             .findAllSubmissionsOfParticipation(participation.id)
-            .pipe(tap(submission => (testSubmission = submission)))
+            .pipe(tap(res => (testSubmission = res.body![0])))
             .subscribe();
         expect(getStub).to.have.been.calledOnce;
         expect(getStub.args[0][0]).to.equal('undefined' + url);
