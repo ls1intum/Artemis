@@ -369,6 +369,7 @@ public class DatabaseUtilService {
         Result result2 = ModelFactory.generateResult(true, 12);
         Result result3 = ModelFactory.generateResult(false, 0);
         result1.assessor(getUserByLogin("tutor1"));
+        result1.completionDate(ZonedDateTime.now());
 
         result1 = resultRepo.save(result1);
         result2 = resultRepo.save(result2);
@@ -381,6 +382,9 @@ public class DatabaseUtilService {
         participation1 = participationRepo.save(participation1);
         participation2 = participationRepo.save(participation2);
         participation3 = participationRepo.save(participation3);
+
+        result1.setParticipation(participation1);
+        resultRepo.save(result1);
 
         modelingSubmission1.setParticipation(participation1);
         textSubmission.setParticipation(participation1);
