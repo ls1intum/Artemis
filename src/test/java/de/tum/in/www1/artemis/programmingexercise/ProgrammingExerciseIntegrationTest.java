@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +28,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -47,6 +53,12 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
+    @Autowired
+    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     ProgrammingExercise programmingExercise;
 
@@ -178,6 +190,16 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         // TODO: unzip the files and add some checks
     }
 
+    private RepositoryExportOptionsDTO getOptions() {
+        final var repositoryExportOptions = new RepositoryExportOptionsDTO();
+        repositoryExportOptions.setFilterLateSubmissions(true);
+        repositoryExportOptions.setCombineStudentCommits(true);
+        repositoryExportOptions.setAddStudentName(true);
+        repositoryExportOptions.setNormalizeCodeStyle(true);
+        repositoryExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now());
+        return repositoryExportOptions;
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete() throws Exception {
@@ -236,13 +258,245 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         // TODO add more assertions, when we use actual git repos
     }
 
-    private RepositoryExportOptionsDTO getOptions() {
-        final var repositoryExportOptions = new RepositoryExportOptionsDTO();
-        repositoryExportOptions.setFilterLateSubmissions(true);
-        repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAddStudentName(true);
-        repositoryExportOptions.setNormalizeCodeStyle(true);
-        repositoryExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now());
-        return repositoryExportOptions;
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_REPOSITORY_URL);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_BUILD_PLAN_ID);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercisei_invalidSolutionRepository_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
+
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_REPOSITORY_URL);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
+        request.post(ROOT + SETUP, null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_exerciseIDIsNull_badRequest() throws Exception {
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_courseIsNull_badRequest() throws Exception {
+        request.post(ROOT + SETUP, new ProgrammingExercise(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        programmingExercise.setId(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_titleNull_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("abc?=§ ``+##");
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_shortNameIsNull_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName("asdb ³¼²½¼³`` ");
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setProgrammingLanguage(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName("..asd. ß?");
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setPackageName(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setMaxScore(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_vcsProjectAlreadyExists_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, true);
+
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_bambooProjectAlreadyExists_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
+        bambooRequestMockProvider.mockCheckIfProjectExists(programmingExercise, true);
+
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_courseNotSet_badRequest() throws Exception {
+        programmingExercise.setCourse(null);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_templateIDDoesnotExist_notFound() throws Exception {
+        programmingExercise.setId(123L);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
+    }
+
+    @NotNull
+    private String getDefaultAPIEndpointForExportRepos() {
+        return ROOT + EXPORT_SUBMISSIONS_BY_STUDENT.replace("{exerciseId}", programmingExercise.getId() + "").replace("{studentIds}", "1,2,3");
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
+        final var options = getOptions();
+        options.setExportAllStudents(true);
+        request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + 1 + ""), HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    public void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
+        programmingExercise.setPackageName(null);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.BAD_REQUEST, String.class);
+
+        programmingExercise.setPackageName("ab");
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
+        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + 1 + ""), HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutoralt1", roles = "TA")
+    public void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
+        database.addTeachingAssistant("other-tutors", "tutoralt");
+        request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
     }
 }
