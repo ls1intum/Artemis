@@ -71,7 +71,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 2, 1);
+        database.addUsers(2, 2, 1);
         course = database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(0);
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -220,7 +220,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         database.addFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, "student1", "tutor1", new ArrayList<Feedback>());
 
-        request.get("/api/exercise/" + fileUploadExercise.getId() + "/participation-without-assessment", HttpStatus.BAD_REQUEST, Participation.class);
+        request.get("/api/exercises/" + fileUploadExercise.getId() + "/text-submission-without-assessment", HttpStatus.BAD_REQUEST, Participation.class);
 
         Result result = request.get("/api/text-assessments/result/" + fileUploadSubmission.getParticipation().getResults().iterator().next().getId() + "/with-textblocks",
                 HttpStatus.BAD_REQUEST, Result.class);
