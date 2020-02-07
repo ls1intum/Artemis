@@ -257,7 +257,7 @@ public class CourseResource {
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
+        log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
@@ -382,7 +382,7 @@ public class CourseResource {
                 numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
             else if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+                numberOfSubmissions += programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
             }
 
             long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
@@ -429,7 +429,7 @@ public class CourseResource {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         Long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId) + modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId)
-                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId) + programmingExerciseService.countSubmissionsToAssessByCourseId(courseId);
+                + fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         Long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -518,7 +518,7 @@ public class CourseResource {
                 numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
             }
             else if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+                numberOfSubmissions += programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
             }
 
             long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
@@ -575,7 +575,7 @@ public class CourseResource {
         long numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByCourseId(courseId);
         numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByCourseId(courseId);
-        numberOfSubmissions += programmingExerciseService.countSubmissionsToAssessByCourseId(courseId);
+        numberOfSubmissions += programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));

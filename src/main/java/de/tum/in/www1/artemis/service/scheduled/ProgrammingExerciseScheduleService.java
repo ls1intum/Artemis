@@ -63,6 +63,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             return;
         }
         SecurityUtils.setAuthorizationObject();
+        // TODO: also take exercises with manual assessments into account here
         List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
                 .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
         programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
@@ -76,6 +77,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @Override
     public void scheduleExerciseIfRequired(ProgrammingExercise exercise) {
+        // TODO: also take exercises with manual assessments into account here
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null || exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now())) {
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
@@ -85,6 +87,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleExercise(ProgrammingExercise exercise) {
+        // TODO: there is small logic error here. When build and run test date is after the due date, the lock operation might be executed even if it is not necessary.
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, lockStudentRepositories(exercise.getId()));
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
         log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
@@ -172,7 +175,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             catch (Exception e) {
                 log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                        + studentParticipation.getId());
+                        + studentParticipation.getId() + ": " + e.getMessage());
                 failedLockOperations.add(programmingExerciseStudentParticipation);
             }
             index++;

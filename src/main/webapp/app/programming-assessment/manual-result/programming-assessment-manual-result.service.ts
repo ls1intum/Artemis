@@ -56,7 +56,6 @@ export class ProgrammingAssessmentManualResultService {
 
     generateInitialManualResult() {
         const newResult = new Result();
-        newResult.completionDate = moment();
         newResult.successful = true;
         newResult.score = 100;
         return newResult;
