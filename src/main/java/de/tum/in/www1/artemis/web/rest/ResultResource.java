@@ -274,7 +274,7 @@ public class ResultResource {
             // }
             // handles new results and sends them to LTI consumers
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
+                ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
             }
             log.info("The new result for {} was saved successfully", planKey);
         }
@@ -349,7 +349,7 @@ public class ResultResource {
 
         List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
         for (StudentParticipation participation : participations) {
-            // Filter out participations without Students
+            // Filter out participations without students
             if (participation.getStudent() == null) {
                 continue;
             }
