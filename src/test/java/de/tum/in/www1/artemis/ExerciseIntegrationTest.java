@@ -57,6 +57,21 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Autowired
     TutorParticipationRepository tutorParticipationRepo;
 
+    @Autowired
+    TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository;
+
+    @Autowired
+    TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository;
+
+    @Autowired
+    TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepository;
+
+    @Autowired
+    TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository;
+
+    @Autowired
+    TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository;
+
     @BeforeEach
     public void init() {
         database.addUsers(10, 5, 1);
@@ -285,6 +300,12 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                 }
                 if (exercise instanceof ModelingExercise) {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                    var tutorLeaderboardEntry = stats.getTutorLeaderboardEntries().stream().filter(entry -> database.getUserByLogin("tutor1").getId().equals(entry.getUserId()))
+                            .findFirst().get();
+                    assertThat(tutorLeaderboardEntry.getNumberOfTutorComplaints()).isNotNull();
+                    assertThat(tutorLeaderboardEntry.getNumberOfTutorMoreFeedbackRequests()).isNotNull();
+                    assertThat(tutorLeaderboardEntry.getNumberOfAcceptedComplaints()).isNotNull();
+                    assertThat(tutorLeaderboardEntry.getNumberOfAnsweredMoreFeedbackRequests()).isNotNull();
                 }
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);

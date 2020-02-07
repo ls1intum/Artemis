@@ -368,6 +368,7 @@ public class DatabaseUtilService {
         Result result1 = ModelFactory.generateResult(true, 10);
         Result result2 = ModelFactory.generateResult(true, 12);
         Result result3 = ModelFactory.generateResult(false, 0);
+        result1.assessor(getUserByLogin("tutor1"));
 
         result1 = resultRepo.save(result1);
         result2 = resultRepo.save(result2);
@@ -388,7 +389,7 @@ public class DatabaseUtilService {
         submissionRepository.save(modelingSubmission1);
         submissionRepository.save(modelingSubmission2);
         submissionRepository.save(textSubmission);
-
+        addComplaintOnResult(user, result1, ComplaintType.COMPLAINT);
         return Arrays.asList(course1, course2);
     }
 
@@ -986,6 +987,11 @@ public class DatabaseUtilService {
             Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
+    }
+
+    public void addComplaintOnResult(User student, Result result, ComplaintType complaintType) {
+        Complaint complaint = new Complaint().student(student).result(result).complaintType(complaintType);
+        complaintRepo.save(complaint);
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
