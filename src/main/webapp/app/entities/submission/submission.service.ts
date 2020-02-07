@@ -9,6 +9,7 @@ import { createRequestOption } from 'app/shared';
 import { Result } from 'app/entities/result';
 import { Submission } from 'app/entities/submission';
 import { Participation } from 'app/entities/participation';
+import { filter, map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -28,7 +29,18 @@ export class SubmissionService {
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .pipe(
+                map(res => this.convertDateArrayFromServer(res)),
+                filter(res => !!res.body),
+                tap(res =>
+                    res.body!.forEach(submission => {
+                        // reconnect results to submissions
+                        if (submission.result) {
+                            submission.result.submission = submission;
+                        }
+                    }),
+                ),
+            );
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
