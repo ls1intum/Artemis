@@ -246,7 +246,7 @@ public class CourseResource {
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
+        log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))

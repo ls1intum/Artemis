@@ -279,7 +279,7 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result = resultRepository.save(result);
-        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getName());
     }
 
     /**

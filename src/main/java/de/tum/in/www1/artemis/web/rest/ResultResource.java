@@ -274,7 +274,7 @@ public class ResultResource {
             // }
             // handles new results and sends them to LTI consumers
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
+                ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
             }
             log.info("The new result for {} was saved successfully", planKey);
         }
