@@ -705,6 +705,16 @@ public class ParticipationService {
     }
 
     /**
+     * Get all programming exercise participations belonging to exercise with eager submissions.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
+    }
+
+    /**
      * Get all programming exercise participations belonging to exercise with eager results.
      *
      * @param exerciseId the id of exercise
@@ -712,6 +722,16 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
         return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
+    }
+
+    /**
+     * Get all programming exercise participations belonging to exercise with eager submissions and latest result.
+     *
+     * @param exerciseId the id of exercise
+     * @return the list of programming exercise participations belonging to exercise
+     */
+    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsAndLatestResult(Long exerciseId) {
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsAndLatestResult(exerciseId);
     }
 
     /**
