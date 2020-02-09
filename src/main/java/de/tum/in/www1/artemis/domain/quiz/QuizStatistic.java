@@ -7,6 +7,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
+@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizStatistic implements Serializable {

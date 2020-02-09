@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
-public class ProgrammingSubmissionService {
+public class ProgrammingSubmissionService extends SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
@@ -69,13 +69,12 @@ public class ProgrammingSubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SubmissionService submissionService;
-
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
+            GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
+            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, SubmissionService submissionService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository) {
+        super(submissionRepository, userService, authCheckService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -87,7 +86,6 @@ public class ProgrammingSubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.submissionService = submissionService;
         this.resultRepository = resultRepository;
     }
 
@@ -606,9 +604,5 @@ public class ProgrammingSubmissionService {
     public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
         return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    public void hideDetails(ProgrammingSubmission submission, User user) {
-        submissionService.hideDetails(submission, user);
     }
 }

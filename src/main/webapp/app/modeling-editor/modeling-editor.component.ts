@@ -31,7 +31,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
-        this.subscribeForUMLModelReset();
         this.guidedTourService.checkModelingComponent().subscribe(key => {
             if (key) {
                 this.assessModelForGuidedTour(key, this.getCurrentModel());
@@ -124,30 +123,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
-    }
-
-    /**
-     * Resets the UML model for the guided tour by removing the elements, relationships and assessments
-     * @param umlModel the model that should be reset
-     */
-    private resetUMLModelForGuidedTour(umlModel: UMLModel): void {
-        if (umlModel) {
-            umlModel.elements = [];
-            umlModel.relationships = [];
-            umlModel.assessments = [];
-        }
-        this.initializeApollonEditor();
-    }
-
-    /**
-     * Subscribes to the guided tour service
-     */
-    private subscribeForUMLModelReset() {
-        this.guidedTourService.resetUMLModel().subscribe(reset => {
-            if (reset) {
-                this.resetUMLModelForGuidedTour(this.umlModel);
-            }
-        });
     }
 
     /**

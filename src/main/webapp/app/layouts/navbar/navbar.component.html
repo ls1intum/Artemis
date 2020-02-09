@@ -170,20 +170,7 @@
                             <h6 class="dropdown-header" jhiTranslate="global.menu.guidedTutorial">Guided Tutorial</h6>
                         </li>
                         <li>
-                            <a
-                                *ngIf="this.guidedTourService.getLastSeenTourStepIndex() === 0"
-                                class="dropdown-item guided-tour"
-                                jhiTranslate="global.menu.startTutorial"
-                                (click)="this.guidedTourService.startTour()"
-                                >Start tutorial</a
-                            >
-                            <a
-                                *ngIf="this.guidedTourService.getLastSeenTourStepIndex() !== 0"
-                                class="dropdown-item guided-tour"
-                                jhiTranslate="global.menu.continueTutorial"
-                                (click)="this.guidedTourService.startTour()"
-                                >Continue tutorial</a
-                            >
+                            <a class="dropdown-item guided-tour" [jhiTranslate]="this.guidedTourInitLabel()" (click)="this.guidedTourService.initGuidedTour()">Start tutorial</a>
                         </li>
                     </ng-template>
                     <!-- only display guided tour to ADMIN for now -->

@@ -25,7 +25,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "1.8.0"
+    id "com.google.cloud.tools.jib" version "2.0.0"
     id "com.gorylenko.gradle-git-properties"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
@@ -37,7 +37,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.10.1"
+version = "3.10.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=12
@@ -172,7 +172,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.14'
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.15'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r"
@@ -183,8 +183,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
     implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring:1.7.29"
-    implementation "io.sentry:sentry-logback:1.7.29"
+    implementation "io.sentry:sentry-spring:1.7.30"
+    implementation "io.sentry:sentry-logback:1.7.30"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
@@ -232,7 +232,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-data"
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security:spring-security-messaging"
-    implementation "io.jsonwebtoken:jjwt-api"
+    implementation "io.jsonwebtoken:jjwt-api:0.11.0"
     runtimeOnly "io.jsonwebtoken:jjwt-impl"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson"
     implementation ("io.springfox:springfox-swagger2") {
@@ -257,12 +257,12 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
-    testImplementation "org.assertj:assertj-core:3.14.0"
+    testImplementation "org.assertj:assertj-core:3.15.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
-    testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.0'
-    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.0'
+    testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
+    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
     testImplementation "org.mockito:mockito-core:3.2.4"
     testImplementation "org.mockito:mockito-junit-jupiter:3.2.4"
     testImplementation "org.hamcrest:hamcrest-library:2.2"

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
@@ -18,7 +18,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Path localPath;
 
-    private HashMap<File, FileType> filesAndFolders;
+    private Map<File, FileType> filesAndFolders;
 
     private Collection<File> files;
 
@@ -68,11 +68,11 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         this.localPath = localPath;
     }
 
-    public HashMap<File, FileType> getContent() {
+    public Map<File, FileType> getContent() {
         return filesAndFolders;
     }
 
-    public void setContent(HashMap<File, FileType> filesAndFolders) {
+    public void setContent(Map<File, FileType> filesAndFolders) {
         this.filesAndFolders = filesAndFolders;
     }
 

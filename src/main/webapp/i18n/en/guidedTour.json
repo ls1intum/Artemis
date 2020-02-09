@@ -18,7 +18,7 @@
         "completed": {
             "headline": "Congratulations 🎉",
             "content": "You have successfully completed the tutorial. You can restart the tutorial by clicking on <tt>Restart tutorial</tt>.",
-            "hint": "Please note that any tutorial exercise - if available - will be reset once you restart the tutorial."
+            "hint": "Please note that any tutorial exercise - if available - will be reset once you restart the tutorial. You will be then directed to the exercise overview page and have to start the exercise again."
         },
         "clickHint": {
             "text": "Click on the highlighted element to proceed with the tour."

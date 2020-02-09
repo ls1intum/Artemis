@@ -17,6 +17,10 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisSharedModule } from 'app/shared';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
+import { MockCookieService, MockSyncStorage } from '../../mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { CookieService } from 'ngx-cookie';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,13 +38,16 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule, TranslateModule.forRoot()],
+                imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule, TranslateModule.forRoot()],
                 declarations: [FileUploadExerciseDetailComponent],
                 providers: [
                     JhiLanguageHelper,
                     JhiAlertService,
                     { provide: ActivatedRoute, useValue: route },
                     { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: CookieService, useClass: MockCookieService },
                 ],
             })
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
