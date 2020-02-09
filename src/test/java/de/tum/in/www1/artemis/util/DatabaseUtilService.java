@@ -53,7 +53,7 @@ public class DatabaseUtilService {
     private static Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
-    GradingCriteriaRepository gradingCriteriaRepo;
+    GradingCriterionRepository gradingCriterionRepo;
 
     @Autowired
     GradingInstructionRepository gradingInstructionRepo;
@@ -188,7 +188,7 @@ public class DatabaseUtilService {
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
-        gradingCriteriaRepo.deleteAll();
+        gradingCriterionRepo.deleteAll();
         gradingInstructionRepo.deleteAll();
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
@@ -480,16 +480,18 @@ public class DatabaseUtilService {
         return result;
     }
 
-    public List<GradingCriteria> addGradingInstructionsToExercise(Exercise exercise) {
-        GradingCriteria emptyCriteria = ModelFactory.generateGradingCriteria(null);
-        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriteria, 1);
-        emptyCriteria.setStructuredGradingInstructions(instructionWithNoCriteria);
-        GradingCriteria testCriteria = ModelFactory.generateGradingCriteria("test title");
-        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriteria, 3);
-        testCriteria.setStructuredGradingInstructions(instructions);
-        var criteria = new ArrayList<GradingCriteria>();
-        criteria.add(emptyCriteria);
-        criteria.add(testCriteria);
+    public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
+        GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        emptyCriterion.setExercise(exercise);
+        emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+        GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        testCriterion.setStructuredGradingInstructions(instructions);
+        testCriterion.setExercise(exercise);
+        var criteria = new ArrayList<GradingCriterion>();
+        criteria.add(emptyCriterion);
+        criteria.add(testCriterion);
         exercise.setGradingCriteria(criteria);
         return exercise.getGradingCriteria();
     }

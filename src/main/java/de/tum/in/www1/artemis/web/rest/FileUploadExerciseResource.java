@@ -80,8 +80,6 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
 
-        exerciseService.mapExerciseToCriteria(fileUploadExercise);
-
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
@@ -109,7 +107,6 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        exerciseService.mapExerciseToCriteria(fileUploadExercise);
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);

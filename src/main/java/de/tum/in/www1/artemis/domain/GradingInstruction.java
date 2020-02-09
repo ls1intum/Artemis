@@ -8,8 +8,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 /**
  * A Structured Grading Instruction.
  */
@@ -44,8 +42,7 @@ public class GradingInstruction implements Serializable {
     private int usageCount;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("exercise")
-    private GradingCriteria gradingCriteria;
+    private GradingCriterion gradingCriterion;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -121,17 +118,17 @@ public class GradingInstruction implements Serializable {
         this.feedback = feedback;
     }
 
-    public GradingCriteria getGradingCriteria() {
-        return gradingCriteria;
+    public GradingCriterion getGradingCriterion() {
+        return gradingCriterion;
     }
 
-    public GradingInstruction gradingCriteria(GradingCriteria gradingCriteria) {
-        this.gradingCriteria = gradingCriteria;
+    public GradingInstruction gradingCriteria(GradingCriterion gradingCriterion) {
+        this.gradingCriterion = gradingCriterion;
         return this;
     }
 
-    public void setGradingCriteria(GradingCriteria gradingCriteria) {
-        this.gradingCriteria = gradingCriteria;
+    public void setGradingCriterion(GradingCriterion gradingCriterion) {
+        this.gradingCriterion = gradingCriterion;
     }
 
     @Override

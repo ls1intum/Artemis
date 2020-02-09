@@ -337,21 +337,4 @@ public class ExerciseService {
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
     }
 
-    /**
-     * Map parent instances of Criteria and SGI, so that JPA can assign correct foreign keys
-     *
-     * @param exercise Exercise with criteria
-     */
-    public void mapExerciseToCriteria(Exercise exercise) {
-        if (exercise.getGradingCriteria() != null) {
-            exercise.getGradingCriteria().forEach(criteria -> {
-                criteria.setExercise(exercise);
-                if (criteria.getStructuredGradingInstructions() != null) {
-                    criteria.getStructuredGradingInstructions().forEach(sgi -> {
-                        sgi.setGradingCriteria(criteria);
-                    });
-                }
-            });
-        }
-    }
 }

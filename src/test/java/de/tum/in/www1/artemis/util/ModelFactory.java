@@ -188,17 +188,17 @@ public class ModelFactory {
         return course;
     }
 
-    public static GradingCriteria generateGradingCriteria(String title) {
-        var criterion = new GradingCriteria();
+    public static GradingCriterion generateGradingCriterion(String title) {
+        var criterion = new GradingCriterion();
         criterion.setTitle(title);
         return criterion;
     }
 
-    public static List<GradingInstruction> generateGradingInstructions(GradingCriteria criterion, int numberOfTestInstructions) {
+    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions) {
         var instructions = new ArrayList<GradingInstruction>();
         var exampleInstruction1 = new GradingInstruction();
         while (numberOfTestInstructions > 0) {
-            exampleInstruction1.setGradingCriteria(criterion);
+            exampleInstruction1.setGradingCriterion(criterion);
             exampleInstruction1.setCredits(0.5);
             exampleInstruction1.setGradingScale("good test");
             exampleInstruction1.setInstructionDescription("created first instruction with empty criteria for testing");

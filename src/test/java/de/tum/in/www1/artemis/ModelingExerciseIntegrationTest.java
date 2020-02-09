@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.GradingCriteria;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -35,7 +35,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
 
     private ModelingExercise classExercise;
 
-    private List<GradingCriteria> gradingCriteria;
+    private List<GradingCriterion> gradingCriteria;
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -114,10 +114,10 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
         ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        gradingCriteria = database.addGradingInstructionsToExercise(receivedModelingExercise);
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(receivedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(receivedModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId(), 1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
@@ -130,6 +130,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
         // The PUT request basically forwards to POST in case the modeling exercise id is not yet set.
         ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
 
@@ -140,6 +141,39 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
         request.put("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateModelingExerciseCriteria_asInstructor() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
+
+        modelingExercise.getGradingCriteria().get(1).setTitle("UPDATE");
+        ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("UPDATE");
+
+        // If the grading criteria are deleted then their instructions should also be deleted
+        modelingExercise.setGradingCriteria(null);
+        createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.getGradingCriteria().size()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateModelingExerciseInstructions_asInstructor() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
+
+        modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).setInstructionDescription("UPDATE");
+        ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).getInstructionDescription()).isEqualTo("UPDATE");
+
+        modelingExercise.getGradingCriteria().get(1).setStructuredGradingInstructions(null);
+        createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.getGradingCriteria().size()).isGreaterThan(0);
+        assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).isEqualTo(null);
     }
 
     @Test

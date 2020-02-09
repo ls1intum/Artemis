@@ -107,7 +107,7 @@ public abstract class Exercise implements Serializable {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<GradingCriteria> gradingCriteria = new ArrayList<>();
+    private List<GradingCriterion> gradingCriteria = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -803,28 +803,38 @@ public abstract class Exercise implements Serializable {
         this.presentationScoreEnabled = presentationScoreEnabled;
     }
 
-    public List<GradingCriteria> getGradingCriteria() {
+    public List<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
     }
 
-    public Exercise gradingCriteria(List<GradingCriteria> gradingCriteria) {
+    public Exercise gradingCriteria(List<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
+        if (gradingCriteria != null) {
+            this.gradingCriteria.forEach(gradingCriterion -> {
+                gradingCriterion.setExercise(this);
+            });
+        }
         return this;
     }
 
-    public Exercise addGradingCriteria(GradingCriteria gradingCriteria) {
-        this.gradingCriteria.add(gradingCriteria);
-        gradingCriteria.setExercise(this);
+    public Exercise addGradingCriteria(GradingCriterion gradingCriterion) {
+        this.gradingCriteria.add(gradingCriterion);
+        gradingCriterion.setExercise(this);
         return this;
     }
 
-    public Exercise removeGradingCriteria(GradingCriteria gradingCriteria) {
-        this.gradingCriteria.remove(gradingCriteria);
-        gradingCriteria.setExercise(null);
+    public Exercise removeGradingCriteria(GradingCriterion gradingCriterion) {
+        this.gradingCriteria.remove(gradingCriterion);
+        gradingCriterion.setExercise(null);
         return this;
     }
 
-    public void setGradingCriteria(List<GradingCriteria> gradingCriteria) {
+    public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
+        if (gradingCriteria != null) {
+            this.gradingCriteria.forEach(gradingCriterion -> {
+                gradingCriterion.setExercise(this);
+            });
+        }
     }
 }

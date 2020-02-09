@@ -74,13 +74,13 @@ public class ExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final GradingCriteriaService gradingCriteriaService;
+    private final GradingCriterionService gradingCriterionService;
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
             ComplaintResponseRepository complaintResponseRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
             ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseService programmingExerciseService, GradingCriteriaService gradingCriteriaService) {
+            ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -95,7 +95,7 @@ public class ExerciseResource {
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
-        this.gradingCriteriaService = gradingCriteriaService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -326,7 +326,7 @@ public class ExerciseResource {
 
         if (exercise != null) {
             List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
-            List<GradingCriteria> gradingCriteria = gradingCriteriaService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setStudentParticipations(new HashSet<>());
             exercise.setGradingCriteria(gradingCriteria);
             for (StudentParticipation participation : participations) {

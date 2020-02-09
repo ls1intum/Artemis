@@ -13,19 +13,19 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * A  Grading Criteria that consists of structured grading instructions.
+ * A  Grading Criterion that consists of structured grading instructions.
  */
 @Entity
-@Table(name = "grading_criteria")
+@Table(name = "grading_criterion")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class GradingCriteria implements Serializable {
+public class GradingCriterion implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "gradingCriteria", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JsonIgnoreProperties(value = "gradingCriteria", allowSetters = true)
+    @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "gradingCriterion")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
 
@@ -48,7 +48,7 @@ public class GradingCriteria implements Serializable {
         return title;
     }
 
-    public GradingCriteria title(String title) {
+    public GradingCriterion title(String title) {
         this.title = title;
         return this;
     }
@@ -61,32 +61,37 @@ public class GradingCriteria implements Serializable {
         return structuredGradingInstructions;
     }
 
-    public GradingCriteria structuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
-        this.structuredGradingInstructions = structuredGradingInstructions;
+    public GradingCriterion structuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
+        setStructuredGradingInstructions(structuredGradingInstructions);
         return this;
     }
 
-    public GradingCriteria addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
+    public GradingCriterion addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.add(structuredGradingInstruction);
-        structuredGradingInstruction.setGradingCriteria(this);
+        structuredGradingInstruction.setGradingCriterion(this);
         return this;
     }
 
-    public GradingCriteria removeStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
+    public GradingCriterion removeStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.remove(structuredGradingInstruction);
-        structuredGradingInstruction.setGradingCriteria(null);
+        structuredGradingInstruction.setGradingCriterion(null);
         return this;
     }
 
     public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
+        if (structuredGradingInstructions != null) {
+            this.structuredGradingInstructions.forEach(structuredGradingInstruction -> {
+                structuredGradingInstruction.setGradingCriterion(this);
+            });
+        }
     }
 
     public Exercise getExercise() {
         return exercise;
     }
 
-    public GradingCriteria exercise(Exercise exercise) {
+    public GradingCriterion exercise(Exercise exercise) {
         this.exercise = exercise;
         return this;
     }
@@ -103,11 +108,11 @@ public class GradingCriteria implements Serializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        GradingCriteria gradingCriteria = (GradingCriteria) o;
-        if (gradingCriteria.getId() == null || getId() == null) {
+        GradingCriterion gradingCriterion = (GradingCriterion) o;
+        if (gradingCriterion.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(getId(), gradingCriteria.getId());
+        return Objects.equals(getId(), gradingCriterion.getId());
     }
 
     @Override
@@ -117,6 +122,6 @@ public class GradingCriteria implements Serializable {
 
     @Override
     public String toString() {
-        return "GradingCriteria{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", GradingInstructions='" + getStructuredGradingInstructions() + '}';
+        return "GradingCriterion{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", GradingInstructions='" + getStructuredGradingInstructions() + '}';
     }
 }

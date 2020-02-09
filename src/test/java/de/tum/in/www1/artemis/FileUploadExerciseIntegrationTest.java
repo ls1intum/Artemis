@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.GradingCriteria;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
@@ -40,7 +40,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Autowired
     FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
-    private List<GradingCriteria> gradingCriteria;
+    private List<GradingCriterion> gradingCriteria;
 
     @BeforeEach
     public void initTestCase() {
