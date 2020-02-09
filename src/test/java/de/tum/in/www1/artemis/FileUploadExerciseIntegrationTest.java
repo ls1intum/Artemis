@@ -79,7 +79,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
-            .isEqualTo("created first instruction with empty criteria for testing");
+                .isEqualTo("created first instruction with empty criteria for testing");
     }
 
     @Test
