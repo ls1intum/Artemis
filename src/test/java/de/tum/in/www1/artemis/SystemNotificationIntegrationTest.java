@@ -30,6 +30,8 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Autowired
     SystemNotificationRepository systemNotificationRepo;
 
+    private SystemNotification systemNotification;
+
     @BeforeEach
     @Sql({ "/h2/custom-functions.sql" })
     public void initTestCase() {
@@ -44,11 +46,13 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         // Generate an active system notification
         SystemNotification systemNotificationActive = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
         systemNotificationRepo.save(systemNotificationActive);
+
+        systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
     }
 
     @AfterEach
     public void resetDatabase() {
-        database.resetDatabase();
+        systemNotificationRepo.deleteAll();
     }
 
     @Test
@@ -65,14 +69,15 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateSystemNotification() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
-        request.post("/api/system-notifications", systemNotification, HttpStatus.CREATED);
+        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
+
+        assertThat(systemNotificationRepo.findById(response.getId())).as("Saved system notification").isNotNull();
+        assertThat(systemNotificationRepo.existsById(response.getId())).as("Saved notification exists").isTrue();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateSystemNotification_BadRequest() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
         systemNotification.setId(1L);
         request.post("/api/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
@@ -80,7 +85,6 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(roles = "USER")
     public void testCreateSystemNotification_Forbidden() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
         systemNotification.setId(1L);
         request.post("/api/system-notifications", systemNotification, HttpStatus.FORBIDDEN);
     }
@@ -88,11 +92,13 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateSystemNotification() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
         systemNotification.setId(1L);
         systemNotificationRepo.save(systemNotification);
         systemNotification.setText("updated text");
-        request.put("/api/system-notifications", systemNotification, HttpStatus.OK);
+        SystemNotification response = request.putWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class, HttpStatus.OK);
+        assertThat(response.getText()).as("response has updated text").isEqualTo("updated text");
+        assertThat(response.getId()).as("response same id").isEqualTo(1L);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId()).get()).as("repository contains updated notification").isEqualTo(response);
     }
 
     @Test
@@ -105,22 +111,24 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllSystemNotifications() throws Exception {
-        request.get("/api/system-notifications", HttpStatus.OK, List.class);
+        List<SystemNotification> response = request.get("/api/system-notifications", HttpStatus.OK, List.class);
+        assertThat(response.isEmpty()).as("system notification are present").isFalse();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testGetSystemNotification() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
-        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class, HttpStatus.CREATED);
-        request.get("/system-notifications/" + response.getId() + 1, HttpStatus.NOT_FOUND, SystemNotification.class);
+        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
+        assertThat(systemNotificationRepo.findById(response.getId()).get()).as("system notification is not null").isNotNull();
+        request.get("/api/system-notifications/" + response.getId(), HttpStatus.OK, SystemNotification.class);
+        request.get("/api/system-notifications/" + response.getId() + 1, HttpStatus.NOT_FOUND, SystemNotification.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testDeleteSystemNotification() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
-        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class, HttpStatus.CREATED);
-        request.delete("/system-notifications/" + response.getId() + 1, HttpStatus.NOT_FOUND);
+        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
+        assertThat(systemNotificationRepo.findById(response.getId()).get()).as("system notification is not null").isNotNull();
+        request.delete("/api/system-notifications/" + response.getId(), HttpStatus.OK);
     }
 }
