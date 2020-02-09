@@ -56,6 +56,10 @@ public final class Constants {
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 
+    public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
+
+    public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
+
     public static final String TUM_USERNAME_REGEX = "^([a-z]{2}\\d{2}[a-z]{3})";
 
     public static final Pattern TUM_USERNAME_PATTERN = Pattern.compile(TUM_USERNAME_REGEX);

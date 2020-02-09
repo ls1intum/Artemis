@@ -4,7 +4,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 
 describe('Component Tests', () => {

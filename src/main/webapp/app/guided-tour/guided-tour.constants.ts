@@ -10,18 +10,11 @@ export enum Orientation {
     BOTTOM = 'bottom',
     BOTTOMLEFT = 'bottom-left',
     BOTTOMRIGHT = 'bottom-right',
-    CENTER = 'center',
     LEFT = 'left',
     RIGHT = 'right',
     TOP = 'top',
     TOPLEFT = 'top-left',
     TOPRIGHT = 'top-right',
-}
-
-/* Link type of the link within the tour step content */
-export enum LinkType {
-    LINK,
-    BUTTON,
 }
 
 export enum GuidedTourState {
@@ -38,8 +31,17 @@ export enum OverlayPosition {
 }
 
 export enum UserInteractionEvent {
+    /** Listen for click events */
     CLICK = 'click',
+    /** Observe added or removed lines in the code editor */
     ACE_EDITOR = 'ace-editor',
+    /** Wait for the highlight element of the next tour step to be shown in the DOM */
     WAIT_FOR_SELECTOR = 'wait-for-selector',
+    /** Observe and assess the given modeling task in the Apollon editor */
     MODELING = 'modeling',
+}
+
+export enum Direction {
+    VERTICAL = 'vertical',
+    HORIZONTAL = 'horizontal',
 }

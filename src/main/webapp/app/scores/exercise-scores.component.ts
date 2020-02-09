@@ -19,8 +19,6 @@ import { FeatureToggle } from 'app/feature-toggle';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { ProfileInfo } from 'app/layouts';
-import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
 import { SubmissionExerciseType } from 'app/entities/submission';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
@@ -107,9 +105,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     getResults() {
         return this.resultService
             .getResultsForExercise(this.exercise.id, {
-                ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
-                withAssessors: this.exercise.type === ExerciseType.MODELING,
             })
             .pipe(
                 tap((res: HttpResponse<Result[]>) => {

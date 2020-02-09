@@ -29,6 +29,7 @@
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
             },
             "dashboard": {
+                "warning": "Achtung: der Abgabetermin ist noch nicht abgelaufen und Studenten dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {

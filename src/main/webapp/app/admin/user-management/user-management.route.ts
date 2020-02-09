@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Resolve, Route, RouterStateSnapshot } from '@an
 import { JhiResolvePagingParams } from 'ng-jhipster';
 
 import { UserManagementComponent, UserManagementDetailComponent, UserManagementUpdateComponent } from 'app/admin';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 
 @Injectable({ providedIn: 'root' })
