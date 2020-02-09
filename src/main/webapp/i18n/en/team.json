@@ -34,6 +34,9 @@
             "removeTeam": {
                 "label": "Remove team",
                 "error": "Could not remove team. Please try again."
+            },
+            "errors": {
+                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
             }
         }
     }

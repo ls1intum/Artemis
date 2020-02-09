@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { Exercise } from 'app/entities/exercise';
@@ -25,10 +25,23 @@ export class TeamUpdateDialogComponent implements OnInit {
     searchingStudents = false;
     searchingStudentsFailed = false;
 
+    studentErrors = {};
+
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
     ngOnInit(): void {
         this.pendingTeam = cloneDeep(this.team);
+    }
+
+    hasConflictingTeam(student: User) {
+        return student.login && Object.keys(this.studentErrors).includes(student.login);
+    }
+
+    getConflictingTeam(student: User) {
+        if (!student.login) {
+            return null;
+        }
+        return this.studentErrors[student.login];
     }
 
     onAddStudent(student: User) {
@@ -60,7 +73,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         this.isSaving = true;
         team.subscribe(
             res => this.onSaveSuccess(res),
-            () => this.onSaveError(),
+            error => this.onSaveError(error),
         );
     }
 
@@ -69,7 +82,10 @@ export class TeamUpdateDialogComponent implements OnInit {
         this.isSaving = false;
     }
 
-    onSaveError() {
+    onSaveError(httpErrorResponse: HttpErrorResponse) {
         this.isSaving = false;
+        console.log('httpErrorResponse', httpErrorResponse);
+        const { studentLogin, teamId } = httpErrorResponse.error.params;
+        this.studentErrors[studentLogin] = teamId;
     }
 }

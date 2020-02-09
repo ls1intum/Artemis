@@ -37,9 +37,13 @@
                     <div class="list-group-item-index">
                         {{ i + 1 }}
                     </div>
-                    <div class="list-group-item d-flex align-items-center">
+                    <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
                         <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
                         <fa-icon class="student-remove-link ml-4" [icon]="'trash-alt'" (click)="onRemoveStudent(student)"></fa-icon>
+                    </div>
+                    <div class="list-group-item-error" *ngIf="hasConflictingTeam(student)">
+                        <fa-icon class="mr-1" [icon]="'exclamation-triangle'"></fa-icon>
+                        Already assigned to team {{ getConflictingTeam(student) }}.
                     </div>
                 </li>
             </ul>

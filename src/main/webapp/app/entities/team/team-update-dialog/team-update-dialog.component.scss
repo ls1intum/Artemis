@@ -1,3 +1,5 @@
+@import '../../../../content/scss/bootstrap-variables';
+
 .student-search-searching {
     position: relative;
     top: 1px;
@@ -12,6 +14,8 @@
     max-width: 450px;
 
     .list-group-item-container {
+        position: relative;
+
         &:not(:last-child) {
             margin-bottom: 0.15rem;
         }
@@ -32,6 +36,18 @@
 
     .list-group-item {
         flex-grow: 1;
+
+        &.has-error {
+            background-color: #f8d7da;
+        }
+    }
+
+    .list-group-item-error {
+        width: 280px;
+        position: absolute;
+        left: 100%;
+        margin-left: 2rem;
+        color: $danger;
     }
 }
 

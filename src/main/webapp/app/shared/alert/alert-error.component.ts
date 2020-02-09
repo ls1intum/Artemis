@@ -33,6 +33,10 @@ export class JhiAlertErrorComponent implements OnDestroy {
                     break;
 
                 case 400:
+                    console.log('httpErrorResponse', httpErrorResponse);
+                    if (httpErrorResponse.error !== '' && httpErrorResponse.error.skipAlert) {
+                        break;
+                    }
                     const arr = httpErrorResponse.headers.keys();
                     let errorHeader = null;
                     let entityKey = null;
@@ -94,7 +98,11 @@ export class JhiAlertErrorComponent implements OnDestroy {
     }
 
     addErrorAlert(message: string, key?: string, data?: any) {
-        key = key && key !== null ? key : message;
+        key = key ? key : message;
+
+        console.log('key', key);
+        console.log('params', data);
+
         this.alerts.push(
             this.alertService.addAlert(
                 {

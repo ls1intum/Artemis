@@ -31,12 +31,14 @@ public class TeamResource {
 
     private final Logger log = LoggerFactory.getLogger(TeamResource.class);
 
-    private static final String ENTITY_NAME = "team";
+    public static final String ENTITY_NAME = "team";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final TeamRepository teamRepository;
+
+    private final TeamService teamService;
 
     private final ExerciseService exerciseService;
 
@@ -44,8 +46,10 @@ public class TeamResource {
 
     private final UserService userService;
 
-    public TeamResource(TeamRepository teamRepository, ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService) {
+    public TeamResource(TeamRepository teamRepository, TeamService teamService, ExerciseService exerciseService, UserService userService,
+            AuthorizationCheckService authCheckService) {
         this.teamRepository = teamRepository;
+        this.teamService = teamService;
         this.exerciseService = exerciseService;
         this.userService = userService;
         this.authCheckService = authCheckService;
@@ -71,8 +75,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        team.setExercise(exercise);
-        Team result = teamRepository.save(team);
+        Team result = teamService.save(exercise, team);
         return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -101,8 +104,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        team.setExercise(exercise);
-        Team result = teamRepository.save(team);
+        Team result = teamService.save(exercise, team);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
     }
 
