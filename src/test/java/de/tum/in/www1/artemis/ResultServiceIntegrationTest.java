@@ -498,4 +498,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         result = database.addFeedbacksToResult(result);
         request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.FORBIDDEN, Result.class);
     }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testDeleteResult() throws Exception {
+        Result result = database.addResultToParticipation(studentParticipation);
+        result = database.addFeedbacksToResult(result);
+        request.delete("/api/results/" + result.getId(), HttpStatus.OK);
+        assertThat(resultRepository.existsById(result.getId())).isFalse();
+        request.delete("api/results/" + result.getId(), HttpStatus.NOT_FOUND);
+    }
 }
