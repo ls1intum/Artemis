@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@Sql({ "/h2/custom-functions.sql" })
 public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
@@ -50,6 +49,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @Sql({ "/h2/custom-functions.sql" })
     public void getActiveSystemNotification() throws Exception {
         // Do the actual request that is tested here.
         SystemNotification systemNotification = request.get("/api/system-notifications/active-notification", HttpStatus.OK, SystemNotification.class);
