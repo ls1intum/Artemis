@@ -55,12 +55,6 @@ public class DatabaseUtilService {
     private static Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
-    GradingCriterionRepository gradingCriterionRepo;
-
-    @Autowired
-    GradingInstructionRepository gradingInstructionRepo;
-
-    @Autowired
     CourseRepository courseRepo;
 
     @Autowired
@@ -190,8 +184,6 @@ public class DatabaseUtilService {
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
-        gradingCriterionRepo.deleteAll();
-        gradingInstructionRepo.deleteAll();
         exerciseRepo.deleteAll();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
         attachmentRepo.deleteAll();
@@ -199,7 +191,6 @@ public class DatabaseUtilService {
         courseRepo.deleteAll();
 
         assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
-        assertThat(gradingInstructionRepo.findAll()).as("grading instructions data has been cleared").isEmpty();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
