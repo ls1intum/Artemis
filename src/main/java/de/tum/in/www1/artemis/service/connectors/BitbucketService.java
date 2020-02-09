@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -33,6 +34,8 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketProjectDTO;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketSearchDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Service
@@ -467,10 +470,9 @@ public class BitbucketService extends AbstractVersionControlService {
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        ResponseEntity<Map> response = null;
         try {
             // first check that the project key is unique
-            response = restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey, HttpMethod.GET, entity, Map.class);
+            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey, HttpMethod.GET, entity, Map.class);
             log.warn("Bitbucket project with key " + projectKey + " already exists");
             return true;
         }
@@ -479,18 +481,18 @@ public class BitbucketService extends AbstractVersionControlService {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
 
-                response = restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects?name=" + projectName, HttpMethod.GET, entity, Map.class);
+                final var response = restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects?name=" + projectName, HttpMethod.GET, entity,
+                        new ParameterizedTypeReference<BitbucketSearchDTO<BitbucketProjectDTO>>() {
+                        });
 
-                if ((Integer) response.getBody().get("size") != 0) {
-                    List<Object> vcsProjects = (List<Object>) response.getBody().get("values");
-                    for (Object vcsProject : vcsProjects) {
-                        String vcsProjectName = (String) ((Map) vcsProject).get("name");
-                        if (vcsProjectName.equalsIgnoreCase(projectName)) {
-                            log.warn("Bitbucket project with name" + projectName + " already exists");
-                            return true;
-                        }
+                if (response.getBody().getSize() > 0) {
+                    final var exists = response.getBody().getSearchResults().stream().anyMatch(project -> project.getName().equalsIgnoreCase(projectName));
+                    if (exists) {
+                        log.warn("Bitbucket project with name" + projectName + " already exists");
+                        return true;
                     }
                 }
+
                 return false;
             }
         }

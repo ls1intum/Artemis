@@ -202,7 +202,7 @@ public class ExerciseResource {
             numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
         }
         else if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+            numberOfSubmissions += programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
         }
         stats.setNumberOfSubmissions(numberOfSubmissions);
 

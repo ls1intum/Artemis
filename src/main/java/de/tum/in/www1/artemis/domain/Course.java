@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.MANUAL;
-import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC;
+import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.*;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -461,9 +460,7 @@ public class Course implements Serializable {
 
     @JsonIgnore
     public Set<Exercise> getInterestingExercisesForAssessmentDashboards() {
-        return getExercises().stream()
-                .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
-                        || (exercise instanceof ProgrammingExercise && (exercise.getAssessmentType().equals(SEMI_AUTOMATIC) || exercise.getAssessmentType().equals(MANUAL))))
-                .collect(Collectors.toSet());
+        return getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
+                || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
     }
 }

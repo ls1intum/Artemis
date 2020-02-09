@@ -553,7 +553,7 @@ public class QuizExercise extends Exercise implements Serializable {
                 // check if a quizQuestion is set invalid or if the scoringType has changed
                 // if true an update of the Statistics and Results is necessary
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary || (quizQuestion.isInvalid() && originalQuizQuestion.isInvalid() == null)
-                        || (quizQuestion.isInvalid() && !originalQuizQuestion.isInvalid()) || !quizQuestion.getScoringType().equals(originalQuizQuestion.getScoringType());
+                        || (quizQuestion.isInvalid() && !originalQuizQuestion.isInvalid()) || !Objects.equals(quizQuestion.getScoringType(), originalQuizQuestion.getScoringType());
 
                 // check if the quizQuestion-changes make an update of the statistics and results necessary
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary || quizQuestion.isUpdateOfResultsAndStatisticsNecessary(originalQuizQuestion);
