@@ -2,8 +2,19 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 import de.tum.in.www1.artemis.domain.modeling.ConflictingResult;
 import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -14,16 +25,6 @@ import de.tum.in.www1.artemis.service.ModelAssessmentConflictService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import org.springframework.http.HttpStatus;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
-import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -102,7 +103,7 @@ public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractS
     }
 
     @Test
-    @WithMockUser(username="instructor1",roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllConflicts_OK() throws Exception {
         assertThat(userService.getUserWithGroupsAndAuthorities().getGroups()).contains("instructor");
         assertThat(modelingExercise.getCourse()).isEqualTo(course);
@@ -119,7 +120,7 @@ public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractS
     @Test
     @WithMockUser(value = "student1", roles = "INSTRUCTOR")
     public void testEscalateConflicts_FORBIDDEN() throws Exception {
-        request.put("/api/model-assessment-conflicts/" + modelAssessmentConflict.getId() + "/escalate", null, HttpStatus.FORBIDDEN );
+        request.put("/api/model-assessment-conflicts/" + modelAssessmentConflict.getId() + "/escalate", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -128,7 +129,7 @@ public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractS
         assertThat(modelAssessmentConflictRepository.findAll().isEmpty()).as("modeling assessment conflict repository is not empty").isFalse();
         assertThat(modelAssessmentConflictRepository.findById(modelAssessmentConflict.getId()).get()).as("model assessment conflict is saved").isNotNull();
         assertThat(conflictService.getExerciseOfConflict(modelAssessmentConflict.getId())).as("conflict has exercise").isNotNull();
-        request.put("/api/model-assessment-conflicts/" + modelAssessmentConflict.getId() + "/escalate", null, HttpStatus.OK );
+        request.put("/api/model-assessment-conflicts/" + modelAssessmentConflict.getId() + "/escalate", null, HttpStatus.OK);
     }
 
     @Test
