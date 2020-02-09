@@ -1,7 +1,9 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span jhiTranslate="artemisApp.team.createTeam.label">Create team</span>
+            <span [jhiTranslate]="pendingTeam.id ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'">
+                {{ pendingTeam.id ? 'Update Team' : 'Create Team' }}
+            </span>
             ({{ exercise.title }})
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
@@ -20,9 +22,9 @@
             <div class="d-flex align-items-end mb-2">
                 <h4 class="control-label mb-0 mr-2" jhiTranslate="artemisApp.team.students">Students</h4>
                 <fa-icon class="student-search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
-                <span *ngIf="searchingStudentsFailed" class="student-search-failed text-muted" jhiTranslate="artemisApp.team.studentSearch.failed"
-                    >Search failed. Please try again.</span
-                >
+                <span *ngIf="searchingStudentsFailed" class="student-search-failed text-muted" jhiTranslate="artemisApp.team.studentSearch.failed">
+                    Search failed. Please try again.
+                </span>
             </div>
             <jhi-team-student-search
                 [course]="exercise.course"
