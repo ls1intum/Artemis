@@ -476,4 +476,26 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         Result result = database.addResultToParticipation(studentParticipation);
         request.get("/api/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetLatestResultWithFeedbacks() throws Exception {
+        Result result = database.addResultToParticipation(studentParticipation);
+        result.setCompletionDate(ZonedDateTime.now().minusHours(10));
+        Result latestResult = database.addResultToParticipation(studentParticipation);
+        latestResult.setCompletionDate(ZonedDateTime.now());
+        result = database.addFeedbacksToResult(result);
+        latestResult = database.addFeedbacksToResult(latestResult);
+        Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.OK, Result.class);
+        assertThat(returnedResult).isNotNull();
+        assertThat(returnedResult).isEqualTo(latestResult);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetLatestResultWithFeedbacks_asStudent() throws Exception {
+        Result result = database.addResultToParticipation(studentParticipation);
+        result = database.addFeedbacksToResult(result);
+        request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.FORBIDDEN, Result.class);
+    }
 }
