@@ -36,12 +36,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     GroupNotificationRepository groupNotificationRepository;
 
     @Autowired
-    GroupNotificationService groupNotificationService;
-
-    @Autowired
-    SingleUserNotificationService singleUserNotificationService;
-
-    @Autowired
     SingleUserNotificationRepository singleUserNotificationRepository;
 
     @Autowired
@@ -52,9 +46,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     UserRepository userRepository;
-
-    @Autowired
-    NotificationService notificationService;
 
     @Autowired
     SystemNotificationRepository systemNotificationRepository;
@@ -97,6 +88,16 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
         GroupNotification response = request.postWithResponseBody("/api/notifications", groupNotification, GroupNotification.class, HttpStatus.CREATED);
         assertThat(response.getTarget()).as("response same target").isEqualTo(groupNotification.getTarget());
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR")
+    public void testCreateNotification_asInstructor_BAD_REQUEST() throws Exception {
+        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), "Title", "Notification Text", null, type);
+        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
+        groupNotification.setId(1L);
+        request.post("/api/notifications", groupNotification, HttpStatus.BAD_REQUEST);
     }
 
     @Test
