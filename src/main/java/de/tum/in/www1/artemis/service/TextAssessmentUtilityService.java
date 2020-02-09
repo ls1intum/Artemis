@@ -16,10 +16,10 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 @Profile("automaticText")
 public class TextAssessmentUtilityService {
 
-    private static FeedbackService feedbackService;
+    private final FeedbackService feedbackService;
 
     public TextAssessmentUtilityService(FeedbackService feedbackService) {
-        TextAssessmentUtilityService.feedbackService = feedbackService;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -105,23 +105,6 @@ public class TextAssessmentUtilityService {
     }
 
     /**
-     * Calculates the coverage percentage of how  many text blocks in a textCluster are present
-     *
-     * @param textCluster textCluster for which the coverage percentage is calculated
-     * @return OptionalDouble containing the percentage of blocks which are assessed
-     */
-    public OptionalDouble calculateCoveragePercentage(TextCluster textCluster) {
-        if (textCluster != null) {
-            final List<TextBlock> allBlocksInCluster = textCluster.getBlocks().parallelStream().collect(toList());
-
-            final double creditedBlocks = (double) allBlocksInCluster.stream().filter(block -> (getCreditsOfTextBlock(block).isPresent())).count();
-
-            return OptionalDouble.of(creditedBlocks / (double) allBlocksInCluster.size());
-        }
-        return OptionalDouble.empty();
-    }
-
-    /**
      * Calculates the coverage percentage of a textCluster with the same score as a given text block
      *
      * @param textBlock text block for which its textClusters score coverage percentage is determined
@@ -175,67 +158,6 @@ public class TextAssessmentUtilityService {
 
             return OptionalDouble.of(scoringSum / (double) allBlocksInCluster.size());
         }
-        return OptionalDouble.empty();
-    }
-
-    /**
-     * Gets the max score of a text textCluster
-     * @param textCluster textCluster for which the max is calculated
-     * @return OptionalDouble containing the median score if present or empty
-     */
-    public OptionalDouble getMaxScore(TextCluster textCluster) {
-
-        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
-
-        if (allAssessedBlocks.size() > 0) {
-            return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).getAsDouble()).reduce(Math::max);
-        }
-
-        return OptionalDouble.empty();
-    }
-
-    /**
-     * Gets the median score of a textCluster
-     * @param textCluster textCluster for which the median is calculated
-     * @return OptionalDouble containing the median score if present or empty
-     */
-    public OptionalDouble getMedianScore(TextCluster textCluster) {
-
-        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
-
-        try {
-            final double[] textBlockArray = allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).getAsDouble()).toArray();
-
-            Arrays.sort(textBlockArray);
-
-            if (textBlockArray.length > 0) {
-                return OptionalDouble.of(textBlockArray[(textBlockArray.length / 2) - 1]);
-            }
-        }
-        catch (NoSuchElementException exception) {
-            return OptionalDouble.empty();
-        }
-
-        return OptionalDouble.empty();
-    }
-
-    /**
-     * Gets the minimum score of a text textCluster
-     * @param textCluster textCluster for which the minimum is calculated
-     * @return OptionalDouble containing the minimum score if present or empty
-     */
-    public OptionalDouble getMinimumScore(TextCluster textCluster) {
-
-        final List<TextBlock> allAssessedBlocks = getAssessedBlocks(textCluster);
-        try {
-            if (allAssessedBlocks.size() > 0) {
-                return allAssessedBlocks.stream().mapToDouble(block -> getCreditsOfTextBlock(block).getAsDouble()).reduce(Math::min);
-            }
-        }
-        catch (NoSuchElementException exception) {
-            return OptionalDouble.empty();
-        }
-
         return OptionalDouble.empty();
     }
 

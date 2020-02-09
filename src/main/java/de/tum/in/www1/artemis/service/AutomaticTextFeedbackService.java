@@ -30,10 +30,10 @@ public class AutomaticTextFeedbackService {
 
     private final TextAssessmentUtilityService textAssessmentUtilityService;
 
-    public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository) {
+    public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository, TextAssessmentUtilityService textAssessmentUtilityService) {
         this.feedbackService = feedbackService;
         this.textBlockRepository = textBlockRepository;
-        this.textAssessmentUtilityService = new TextAssessmentUtilityService(this.feedbackService);
+        this.textAssessmentUtilityService = textAssessmentUtilityService;
     }
 
     /**
@@ -62,6 +62,7 @@ public class AutomaticTextFeedbackService {
                     final OptionalDouble roundedScore = textAssessmentUtilityService.roundScore(block, suggestedScore.getAsDouble());
 
                     // Here would be the spot for the REST call to the confidence service
+
                     // Detail Text left blank on purpose (for now)
                     return newFeedback.credits(roundedScore.getAsDouble()).type(FeedbackType.AUTOMATIC).detailText("");
                 }

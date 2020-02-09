@@ -277,7 +277,6 @@ public class TextAssessmentResource extends AssessmentResource {
             if (!isAtLeastInstructorForExercise && assessor != null && !assessor.getLogin().equals(user.getLogin()) && result.getCompletionDate() == null) {
                 throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
             }
-
         }
         else {
             result = new Result();
