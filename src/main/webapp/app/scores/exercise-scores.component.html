@@ -161,7 +161,7 @@
 
                 <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="110" [width]="120">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper text-center" (click)="controls.onSort('submissionCount')">
+                        <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
                             <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('submissionCount')"></fa-icon>
                         </span>
