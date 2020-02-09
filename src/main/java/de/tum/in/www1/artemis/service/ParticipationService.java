@@ -705,16 +705,6 @@ public class ParticipationService {
     }
 
     /**
-     * Get all programming exercise participations belonging to exercise with eager submissions.
-     *
-     * @param exerciseId the id of exercise
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
-    }
-
-    /**
      * Get all programming exercise participations belonging to exercise with eager results.
      *
      * @param exerciseId the id of exercise
@@ -722,16 +712,6 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
         return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
-    }
-
-    /**
-     * Get all programming exercise participations belonging to exercise with eager submissions and results.
-     *
-     * @param exerciseId the id of exercise
-     * @return the list of programming exercise participations belonging to exercise
-     */
-    public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsAndResults(Long exerciseId) {
-        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsAndResults(exerciseId);
     }
 
     /**
@@ -1032,5 +1012,22 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param exerciseId the id of the exercise for which to consider participations
+     * @return the number of submissions per participation in the given exercise
+     */
+    public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(Long exerciseId) {
+        List<Object[]> submissionCountObjects = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        Map<Long, Integer> map = new HashMap<Long, Integer>();
+        submissionCountObjects.forEach(submissionCountObject -> {
+            Long participationId = (Long) submissionCountObject[0];
+            Integer submissionCount = ((Long) submissionCountObject[1]).intValue();
+            map.put(participationId, submissionCount);
+        });
+        return map;
     }
 }

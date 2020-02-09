@@ -35,9 +35,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") Long exerciseId);
-
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
 
@@ -53,9 +50,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      */
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(id) from participation.results) or result is null)")
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
-
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions left join fetch participation.results where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}")
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
@@ -116,4 +110,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
     List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
+
+    /**
+     * Count the number of submissions for each participation in a given exercise.
+     *
+     * @param exerciseId the id of the exercise for which to consider participations
+     * @return the number of submissions per participation
+     */
+    @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.exercise.id = :#{#exerciseId} group by participation.id")
+    List<Object[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") Long exerciseId);
 }

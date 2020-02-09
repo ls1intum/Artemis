@@ -305,17 +305,15 @@ public class ParticipationResource {
 
         List<StudentParticipation> participations;
         if (withLatestResult) {
-            participations = participationService.findByExerciseIdWithEagerSubmissionsAndResults(exerciseId);
+            participations = participationService.findByExerciseIdWithLatestResult(exerciseId);
         }
         else {
-            participations = participationService.findByExerciseIdWithEagerSubmissions(exerciseId);
+            participations = participationService.findByExerciseId(exerciseId);
         }
         participations = participations.stream().filter(participation -> participation.getStudent() != null).collect(Collectors.toList());
-        participations.forEach(participation -> {
-            participation.setSubmissionCount(participation.getSubmissions().size());
-            participation.setResults(Set.of(participation.findLatestResult()));
-            participation.setSubmissions(null); // submissions not needed
-        });
+
+        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
     }
