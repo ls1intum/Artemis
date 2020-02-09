@@ -541,4 +541,16 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         submissionRepository.save(modelingSubmission);
         request.postWithResponseBody("/api/submissions/" + modelingSubmission.getId() + "/example-result", exampleSubmission, Result.class, HttpStatus.CREATED);
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateResultForExternalSubmission() throws Exception {
+        var now = ZonedDateTime.now();
+        var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        modelingExerciseRepository.save(modelingExercise);
+        Result result = new Result();
+        result.setRated(false);
+        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class, HttpStatus.CREATED);
+    }
 }
