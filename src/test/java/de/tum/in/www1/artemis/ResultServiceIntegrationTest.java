@@ -26,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -78,6 +79,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Autowired
     ResultRepository resultRepository;
+
+    @Autowired
+    SubmissionRepository submissionRepository;
 
     private Course course;
 
@@ -521,5 +525,20 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         Result result = database.addResultToSubmission(textSubmission);
         Result returnedResult = request.get("/api/results/submission/" + textSubmission.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isEqualTo(result);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateExampleResult() throws Exception {
+        var now = ZonedDateTime.now();
+        var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        modelingExerciseRepository.save(modelingExercise);
+        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
+        exampleSubmission = database.addExampleSubmission(exampleSubmission);
+        modelingSubmission.setExampleSubmission(true);
+        submissionRepository.save(modelingSubmission);
+        request.postWithResponseBody("/api/submissions/" + modelingSubmission.getId() + "/example-result", exampleSubmission, Result.class, HttpStatus.CREATED);
     }
 }
