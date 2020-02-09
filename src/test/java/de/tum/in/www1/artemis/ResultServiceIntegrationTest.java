@@ -336,7 +336,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetResultForProgrammingExercise() throws Exception {
+    public void testGetResultsForProgrammingExercise() throws Exception {
         var now = ZonedDateTime.now();
 
         for (int i = 1; i <= 10; i++) {
@@ -359,7 +359,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetResultForQuizExercise() throws Exception {
+    public void testGetResultsForQuizExercise() throws Exception {
         var now = ZonedDateTime.now();
 
         QuizExercise quizExercise = database.createQuiz(course, now.minusMinutes(5), now.minusMinutes(2));
@@ -386,7 +386,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetResultForModelingExercise() throws Exception {
+    public void testGetResultsForModelingExercise() throws Exception {
         var now = ZonedDateTime.now();
         for (int i = 1; i <= 10; i++) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
@@ -409,7 +409,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetResultForTextExercise() throws Exception {
+    public void testGetResultsForTextExercise() throws Exception {
         var now = ZonedDateTime.now();
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
         course.addExercises(textExercise);
@@ -436,7 +436,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetResultForFileUploadExercise() throws Exception {
+    public void testGetResultsForFileUploadExercise() throws Exception {
         var now = ZonedDateTime.now();
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
         course.addExercises(fileUploadExercise);
@@ -458,5 +458,22 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
         assertThat(results).hasSize(5);
         // TODO: check additional values
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetResult() throws Exception {
+        Result result = database.addResultToParticipation(studentParticipation);
+        result = database.addFeedbacksToResult(result);
+        Result returnedResult = request.get("/api/results/" + result.getId(), HttpStatus.OK, Result.class);
+        assertThat(returnedResult).isNotNull();
+        assertThat(returnedResult).isEqualTo(result);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetResult_asStudent() throws Exception {
+        Result result = database.addResultToParticipation(studentParticipation);
+        request.get("/api/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 }
