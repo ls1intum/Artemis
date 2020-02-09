@@ -68,6 +68,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     public void initTestCase() throws Exception {
         database.addUsers(1, 1, 1);
         database.addCourseWithOneTextExercise();
+        systemNotificationRepository.deleteAll();
         exercise = exerciseRepo.findAll().get(0);
     }
 
