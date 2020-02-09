@@ -1,5 +1,8 @@
 @import '../../../../content/scss/bootstrap-variables';
 
+$error-text-color: $danger;
+$error-bg-color: #f8d7da;
+
 .student-search-searching {
     position: relative;
     top: 1px;
@@ -23,6 +26,10 @@
         &:nth-child(even) {
             .list-group-item {
                 background-color: rgba(0, 0, 0, 0.05);
+
+                &.has-error {
+                    background-color: darken($error-bg-color, 5%);
+                }
             }
         }
     }
@@ -38,7 +45,7 @@
         flex-grow: 1;
 
         &.has-error {
-            background-color: #f8d7da;
+            background-color: $error-bg-color;
         }
     }
 
@@ -47,7 +54,7 @@
         position: absolute;
         left: 100%;
         margin-left: 2rem;
-        color: $danger;
+        color: $error-text-color;
     }
 }
 

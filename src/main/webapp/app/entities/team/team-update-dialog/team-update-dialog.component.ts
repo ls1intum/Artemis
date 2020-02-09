@@ -25,7 +25,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     searchingStudents = false;
     searchingStudentsFailed = false;
 
-    studentErrors = {};
+    studentTeamConflicts = [];
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
@@ -34,14 +34,16 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     hasConflictingTeam(student: User) {
-        return student.login && Object.keys(this.studentErrors).includes(student.login);
+        return this.findStudentTeamConflict(student) !== undefined;
     }
 
     getConflictingTeam(student: User) {
-        if (!student.login) {
-            return null;
-        }
-        return this.studentErrors[student.login];
+        const conflict = this.findStudentTeamConflict(student);
+        return conflict ? conflict['teamId'] : null;
+    }
+
+    private findStudentTeamConflict(student: User) {
+        return this.studentTeamConflicts.find(c => c['studentLogin'] === student.login);
     }
 
     onAddStudent(student: User) {
@@ -84,8 +86,16 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     onSaveError(httpErrorResponse: HttpErrorResponse) {
         this.isSaving = false;
-        console.log('httpErrorResponse', httpErrorResponse);
-        const { studentLogin, teamId } = httpErrorResponse.error.params;
-        this.studentErrors[studentLogin] = teamId;
+
+        const { errorKey, params } = httpErrorResponse.error;
+
+        switch (errorKey) {
+            case 'studentsAlreadyAssignedToTeams':
+                const { conflicts } = params;
+                this.studentTeamConflicts = conflicts;
+                break;
+            default:
+                break;
+        }
     }
 }
