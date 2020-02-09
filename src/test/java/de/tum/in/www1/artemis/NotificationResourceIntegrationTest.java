@@ -1,30 +1,27 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
-
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import org.springframework.test.context.jdbc.Sql;
 
-import static org.junit.Assert.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationTest {
-
-    Exercise exercise;
 
     @Autowired
     ExerciseRepository exerciseRepo;
@@ -65,6 +62,8 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     SystemNotificationService systemNotificationService;
 
+    private Exercise exercise;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(1, 1, 1);
@@ -75,6 +74,8 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     @AfterEach
     public void tearDown() throws Exception {
         database.resetDatabase();
+        systemNotificationRepository.deleteAll();
+        notificationRepository.deleteAll();
     }
 
     @Test
@@ -92,7 +93,9 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
         GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        request.post("/api/notifications", groupNotification, HttpStatus.CREATED);
+
+        GroupNotification response = request.postWithResponseBody("/api/notifications", groupNotification, GroupNotification.class, HttpStatus.CREATED);
+        assertThat(response.getTarget()).as("response same target").isEqualTo(groupNotification.getTarget());
     }
 
     @Test
@@ -103,11 +106,12 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         notificationRepository.save(groupNotification);
         List<Notification> notificationResponse = request.get("/api/notifications", HttpStatus.OK, List.class);
-        assertEquals(notificationResponse.size(),1);
+        assertThat(notificationResponse.size()).as("response length is 1").isEqualTo(1);
     }
 
     @Test
-    @WithMockUser(username ="instructor1", roles = "INSTRUCTOR")
+    @Sql({ "/h2/custom-functions.sql" })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetSystemNotifications() throws Exception {
         SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().minusDays(1));
         systemNotificationRepository.save(systemNotification);
@@ -120,20 +124,30 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         User author = userService.getUserWithGroupsAndAuthorities();
         User recipient = userService.getUserWithGroupsAndAuthorities();
 
-        SingleUserNotification singleUserNotification = new SingleUserNotification(recipient, author , "title", "text");
+        SingleUserNotification singleUserNotification = new SingleUserNotification(recipient, author, "title", "text");
         singleUserNotificationRepository.save(singleUserNotification);
 
-        request.get("/api/notifications/for-user", HttpStatus.INTERNAL_SERVER_ERROR, List.class);
+        List<SystemNotification> response = request.get("/api/notifications/for-user", HttpStatus.OK, List.class);
+        assertThat(response.isEmpty()).as("response is not empty").isFalse();
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR")
-    public void testUpdateNotification_asInstructor() throws Exception {
+    public void testUpdateNotification_asInstructor_OK() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
         GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), "Title", "Notification Text", null, type);
         groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
         groupNotification.setId(1L);
         request.put("/api/notifications", groupNotification, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR")
+    public void testUpdateNotification_asInstructor_BAD_REQUEST() throws Exception {
+        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
+        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), "Title", "Notification Text", null, type);
+        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
+        request.putWithResponseBody("/api/notifications", groupNotification, GroupNotification.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
