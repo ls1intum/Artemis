@@ -508,4 +508,18 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         assertThat(resultRepository.existsById(result.getId())).isFalse();
         request.delete("api/results/" + result.getId(), HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetResultForSubmission() throws Exception {
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
+        course.addExercises(textExercise);
+        textExerciseRepository.save(textExercise);
+        TextSubmission textSubmission = new TextSubmission();
+        database.addSubmission(textExercise, textSubmission, "student1");
+        Result result = database.addResultToSubmission(textSubmission);
+        Result returnedResult = request.get("/api/results/submission/" + textSubmission.getId(), HttpStatus.OK, Result.class);
+        assertThat(returnedResult).isEqualTo(result);
+    }
 }
