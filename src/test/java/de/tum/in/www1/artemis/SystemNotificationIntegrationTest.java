@@ -92,12 +92,11 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateSystemNotification() throws Exception {
-        systemNotification.setId(1L);
         systemNotificationRepo.save(systemNotification);
-        systemNotification.setText("updated text");
+        String updatedText = "updated text";
+        systemNotification.setText(updatedText);
         SystemNotification response = request.putWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class, HttpStatus.OK);
-        assertThat(response.getText()).as("response has updated text").isEqualTo("updated text");
-        assertThat(response.getId()).as("response same id").isEqualTo(1L);
+        assertThat(response.getText()).as("response has updated text").isEqualTo(updatedText);
         assertThat(systemNotificationRepo.findById(systemNotification.getId()).get()).as("repository contains updated notification").isEqualTo(response);
     }
 
