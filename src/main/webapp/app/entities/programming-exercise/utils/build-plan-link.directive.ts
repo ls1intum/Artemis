@@ -1,7 +1,7 @@
 import { Directive, HostBinding, HostListener, Input, OnInit } from '@angular/core';
 import { take, tap } from 'rxjs/operators';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 
 /**
  * Creates the build pan URL for the given template URL.

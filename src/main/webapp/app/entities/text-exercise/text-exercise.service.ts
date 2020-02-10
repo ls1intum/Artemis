@@ -4,8 +4,8 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
 import { TextExercise } from './text-exercise.model';
-import { createRequestOption } from 'app/shared';
-import { ExerciseService } from 'app/entities/exercise';
+import { createRequestOption } from 'app/shared/util/request-util';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;

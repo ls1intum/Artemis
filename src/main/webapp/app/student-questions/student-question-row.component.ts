@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { StudentQuestion, StudentQuestionService } from 'app/entities/student-question';
 import { User } from 'app/core/user/user.model';
-import { StudentQuestionAnswer, StudentQuestionAnswerService } from 'app/entities/student-question-answer';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
-import { fileUploadAssessmentRoutes } from 'app/file-upload-assessment/file-upload-assessment.route';
+import { StudentQuestion } from 'app/entities/student-question/student-question.model';
+import { StudentQuestionAnswer } from 'app/entities/student-question-answer/student-question-answer.model';
+import { StudentQuestionService } from 'app/entities/student-question/student-question.service';
+import { StudentQuestionAnswerService } from 'app/entities/student-question-answer/student-question-answer.service';
 
 export interface StudentQuestionAction {
     name: QuestionActionName;

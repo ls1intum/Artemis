@@ -5,13 +5,13 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-import { ComplaintsComponent } from 'app/complaints';
 import { TranslateModule } from '@ngx-translate/core';
+import { ComplaintsComponent } from 'app/complaints/complaints.component';
 
 const expect = chai.expect;
 describe('ComplaintsComponent', () => {

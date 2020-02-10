@@ -1,14 +1,14 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
 import { catchError, map, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { getIcon, getIconTooltip } from 'app/entities/exercise';
-import { ResultService } from 'app/entities/result';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { getIcon, getIconTooltip } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',

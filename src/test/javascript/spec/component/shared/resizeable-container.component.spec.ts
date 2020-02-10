@@ -1,7 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ArtemisSharedLibsModule } from 'app/shared';
+import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 
 describe('ResizeableContainerComponent', () => {
     let component: ResizeableContainerComponent;

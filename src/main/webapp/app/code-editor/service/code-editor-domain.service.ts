@@ -1,12 +1,14 @@
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { Injectable, OnDestroy } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { DomainParticipationChange, DomainType } from 'app/code-editor/service';
-import { SolutionProgrammingExerciseParticipation, StudentParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 
 export type DomainParticipationChange = [DomainType.PARTICIPATION, StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation];
 export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];

@@ -1,8 +1,7 @@
-import { LOCALE_ID, NgModule, ErrorHandler } from '@angular/core';
+import { ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
-import { RepositoryInterceptor } from 'app/entities/repository';
 import { AuthInterceptor } from 'app/blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from 'app/blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/blocks/interceptor/errorhandler.interceptor';
@@ -22,6 +21,7 @@ import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { CookieModule } from 'ngx-cookie';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
+import { RepositoryInterceptor } from 'app/entities/repository/repository.service';
 
 @NgModule({
     imports: [

@@ -5,14 +5,11 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
-import { ArtemisResultModule, Result } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule, FileUploaderService } from 'app/shared';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
-import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
@@ -24,20 +21,25 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { fileUploadSubmissionRoute } from 'app/file-upload-submission/file-upload-submission.route';
 import { FileUploadSubmissionComponent } from 'app/file-upload-submission/file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
-import { ArtemisComplaintsModule } from 'app/complaints';
-import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
-import { StudentParticipation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
+import { stub } from 'sinon';
 import { FileUploadResultComponent } from 'app/file-upload-submission/file-upload-result/file-upload-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { stub } from 'sinon';
 import * as moment from 'moment';
 import { of } from 'rxjs';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor/complaints-for-tutor.component';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -110,7 +112,6 @@ describe('FileUploadSubmissionComponent', () => {
         expect(comp.acceptedFileExtensions.replace(/\./g, '')).to.be.equal(fileUploadExercise.filePattern);
         expect(comp.fileUploadExercise).to.be.equal(fileUploadExercise);
         expect(comp.isAfterAssessmentDueDate).to.be.true;
-        expect(comp.numberOfAllowedComplaints).to.be.undefined;
 
         const maxScore = debugElement.query(By.css('div p strong'));
         expect(maxScore).to.exist;
@@ -150,7 +151,7 @@ describe('FileUploadSubmissionComponent', () => {
         let submitFileButton = debugElement.query(By.css('jhi-button'));
         spyOn(fileUploaderService, 'uploadFile').and.returnValue(Promise.resolve({ path: 'test' }));
         submitFileButton.nativeElement.click();
-        comp.submission.submitted = true;
+        comp.submission!.submitted = true;
         comp.result = new Result();
         fixture.detectChanges();
 
@@ -180,7 +181,7 @@ describe('FileUploadSubmissionComponent', () => {
         // check that properties are set properly
         expect(jhiErrorSpy.callCount).to.be.equal(1);
         expect(comp.submissionFile).to.be.undefined;
-        expect(comp.submission.filePath).to.be.undefined;
+        expect(comp.submission!.filePath).to.be.undefined;
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
@@ -207,7 +208,7 @@ describe('FileUploadSubmissionComponent', () => {
         // check that properties are set properly
         expect(jhiErrorSpy.callCount).to.be.equal(1);
         expect(comp.submissionFile).to.be.undefined;
-        expect(comp.submission.filePath).to.be.undefined;
+        expect(comp.submission!.filePath).to.be.undefined;
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));

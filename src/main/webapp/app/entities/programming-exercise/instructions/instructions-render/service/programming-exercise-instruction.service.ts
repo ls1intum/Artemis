@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { isLegacyResult } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 
 export enum TestCaseState {

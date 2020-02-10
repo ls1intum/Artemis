@@ -5,12 +5,13 @@ import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
-import { EditorMode } from 'app/markdown-editor';
-import { KatexCommand } from 'app/markdown-editor/commands';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
+import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
+import { Course } from 'app/entities/course/course.model';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',

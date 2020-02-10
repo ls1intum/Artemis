@@ -1,16 +1,18 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, isStartExerciseAvailable, ParticipationStatus } from 'app/entities/exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { IntelliJState } from 'app/intellij/intellij';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ActivatedRoute } from '@angular/router';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
 import { stringifyCircular } from 'app/shared/util/utils';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Exercise, ParticipationStatus } from 'app/entities/exercise/exercise.model';
+import { isStartExerciseAvailable } from 'app/entities/exercise/exercise-utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',

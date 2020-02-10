@@ -10,17 +10,17 @@ import { By } from '@angular/platform-browser';
 
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { FileUploadExerciseService } from 'app/entities/file-upload-exercise';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 import { MockCookieService, MockSyncStorage } from '../../mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie';
+import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

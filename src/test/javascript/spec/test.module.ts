@@ -54,10 +54,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
             provide: Router,
             useClass: MockRouter,
         },
-        // {
-        //     provide: Principal,
-        //     useClass: MockPrincipal,
-        // },
         {
             provide: AccountService,
             useClass: MockAccountService,

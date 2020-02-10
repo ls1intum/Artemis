@@ -4,7 +4,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from './exercise.model';
 import { ExerciseLtiConfigurationService, ExerciseService } from './exercise.service';
-import { LtiConfiguration } from 'app/entities/lti-configuration';
+import { LtiConfiguration } from 'app/entities/lti-configuration/lti-configuration.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExercisePopupService {

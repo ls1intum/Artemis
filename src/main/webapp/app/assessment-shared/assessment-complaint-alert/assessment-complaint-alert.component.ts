@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 
 /**
  * This shows an alert, notifying the assessor on possible complaints at the bottom of the page.

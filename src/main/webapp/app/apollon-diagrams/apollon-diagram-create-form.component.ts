@@ -2,7 +2,8 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
+import { ApollonDiagramService } from 'app/entities/apollon-diagram/apollon-diagram.service';
+import { ApollonDiagram } from 'app/entities/apollon-diagram/apollon-diagram.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-create-form',

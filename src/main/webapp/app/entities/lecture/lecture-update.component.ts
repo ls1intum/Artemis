@@ -4,11 +4,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { LectureService } from './lecture.service';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
 import { Lecture } from 'app/entities/lecture/lecture.model';
-import { KatexCommand } from 'app/markdown-editor/commands';
-import { EditorMode } from 'app/markdown-editor';
+import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
+import { Course } from 'app/entities/course/course.model';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 @Component({
     selector: 'jhi-lecture-update',

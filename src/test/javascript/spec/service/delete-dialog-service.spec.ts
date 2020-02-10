@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../test.module';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

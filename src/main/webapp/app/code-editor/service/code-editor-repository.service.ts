@@ -4,11 +4,11 @@ import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
-import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service';
-import { CommitState } from 'app/code-editor';
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { CommitState } from 'app/code-editor/model/commit-state.model';
+import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',

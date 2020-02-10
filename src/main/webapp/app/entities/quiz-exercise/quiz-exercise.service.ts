@@ -4,9 +4,9 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
 import { QuizExercise } from './quiz-exercise.model';
-import { ExerciseService } from 'app/entities/exercise';
-import { QuizQuestion } from 'app/entities/quiz-question';
-import { createRequestOption } from 'app/shared';
+import { createRequestOption } from 'app/shared/util/request-util';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { QuizQuestion } from 'app/entities/quiz-question/quiz-question.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -110,7 +110,7 @@ export class QuizExerciseService {
         // Make list of questions which we need to export,
         const questions: QuizQuestion[] = [];
         for (const question of quizQuestions) {
-            if (exportAll === true || question.exportQuiz === true) {
+            if (exportAll || question.exportQuiz) {
                 delete question.quizQuestionStatistic;
                 delete question.exercise;
                 questions.push(question);
@@ -131,7 +131,7 @@ export class QuizExerciseService {
      */
     downloadFile(blob: Blob) {
         // Different browsers require different code to download file,
-        if (window.navigator.msSaveOrOpenBlob) {
+        if (window.navigator.appVersion.toString().indexOf('.NET') > 0) {
             // IE & Edge
             window.navigator.msSaveBlob(blob, 'quiz.json');
         } else {
@@ -150,7 +150,7 @@ export class QuizExerciseService {
     /**
      * Start the given quiz-exercise immediately
      *
-     * @param quizExerciseId the quiz exercise id to start
+     * @param quizExercise the quiz exercise id to start
      */
     statusForQuiz(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {

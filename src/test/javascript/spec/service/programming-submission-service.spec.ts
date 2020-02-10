@@ -5,7 +5,7 @@ import { BehaviorSubject, of, Subject } from 'rxjs';
 import { range as _range } from 'lodash';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
+import { MockParticipationWebsocketService } from '../mocks';
 import { MockHttpService } from '../mocks/mock-http.service';
 import {
     ExerciseSubmissionState,
@@ -15,11 +15,11 @@ import {
 } from 'app/programming-submission/programming-submission.service';
 import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
-import { Submission } from 'app/entities/submission';
-import { Result } from 'app/entities/result';
-import { StudentParticipation } from 'app/entities/participation';
+import { Result } from 'app/entities/result/result.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
+import { Submission } from 'app/entities/submission/submission.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

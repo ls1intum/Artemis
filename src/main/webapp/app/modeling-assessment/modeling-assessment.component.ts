@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, O
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback } from 'app/entities/feedback/feedback.model';
 import * as $ from 'jquery';
 
 @Component({

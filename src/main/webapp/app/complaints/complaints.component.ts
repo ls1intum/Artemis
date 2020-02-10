@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
 import { filter } from 'rxjs/operators';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 
 @Component({
     selector: 'jhi-complaint-form',

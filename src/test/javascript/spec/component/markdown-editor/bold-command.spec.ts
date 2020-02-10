@@ -4,8 +4,9 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
 import { AceEditorModule } from 'ng2-ace-editor';
-import { BoldCommand } from 'app/markdown-editor/commands';
-import { ArtemisMarkdownEditorModule, MarkdownEditorComponent } from 'app/markdown-editor';
+import { BoldCommand } from 'app/markdown-editor/commands/bold.command';
+import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
+import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;

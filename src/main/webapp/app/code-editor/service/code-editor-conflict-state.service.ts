@@ -1,8 +1,9 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable, OnDestroy } from '@angular/core';
-import { DomainDependent, DomainService, DomainType } from 'app/code-editor/service';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
+import { DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 
 export enum GitConflictState {
     CHECKOUT_CONFLICT = 'CHECKOUT_CONFLICT',

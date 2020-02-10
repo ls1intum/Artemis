@@ -5,14 +5,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
-import { ITEMS_PER_PAGE } from 'app/shared';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
 import { onError } from 'app/utils/global.utils';
 import { Subject } from 'rxjs';
+import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { SystemNotificationService } from 'app/entities/system-notification/system-notification.service';
 
 @Component({
     selector: 'jhi-notification-mgmt',

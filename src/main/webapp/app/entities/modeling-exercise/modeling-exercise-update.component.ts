@@ -1,21 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-
 import { Observable } from 'rxjs/Observable';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { Course } from '../course';
 import { CourseService } from 'app/entities/course/course.service';
-
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
-import { KatexCommand } from 'app/markdown-editor/commands';
-import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
+import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
+import { Course } from 'app/entities/course/course.model';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',

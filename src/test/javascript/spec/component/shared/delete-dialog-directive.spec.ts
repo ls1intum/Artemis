@@ -1,10 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { DebugElement, Component } from '@angular/core';
+import { Component, DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { JhiAlertComponent } from 'app/shared';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
@@ -15,6 +14,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { JhiAlertComponent } from 'app/shared/alert/alert.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

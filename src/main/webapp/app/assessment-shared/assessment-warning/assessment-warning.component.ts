@@ -1,6 +1,7 @@
-import { Component, SimpleChanges, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import * as moment from 'moment';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+
 /*
 Warn instructors in the assessment and submission page
 if the due date is not over yet as they are allowed to assess submissions there

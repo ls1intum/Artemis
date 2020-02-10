@@ -5,12 +5,12 @@ import { of, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as sinonChai from 'sinon-chai';
 import { MockHttpService } from '../../mocks/mock-http.service';
-import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
 import { SubmissionService } from 'app/entities/submission/submission.service';
-import { TextSubmission } from 'app/entities/text-submission';
-import { Participation } from 'app/entities/participation';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission/submission.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

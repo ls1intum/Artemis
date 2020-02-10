@@ -1,12 +1,10 @@
 import { NgModule } from '@angular/core';
-
 import { RouterModule } from '@angular/router';
-
-import { ArtemisSharedModule } from '../shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor/modeling-editor.module';
 import { ExampleModelingSolutionComponent } from 'app/example-modeling-solution/example-modeling-solution.component';
 import { exampleModelingSolutionRoute } from 'app/example-modeling-solution/example-modeling-solution.route';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const ENTITY_STATES = [...exampleModelingSolutionRoute];
 

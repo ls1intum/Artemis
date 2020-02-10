@@ -4,8 +4,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseService } from 'app/entities/course/course.service';
-import { CourseExerciseService } from 'app/entities/course/course.service';
+import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';

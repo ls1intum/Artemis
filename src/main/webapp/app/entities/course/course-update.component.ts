@@ -14,7 +14,7 @@ import { CourseService } from './course.service';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { CachingStrategy } from 'app/shared';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
 
 @Component({
     selector: 'jhi-course-update',

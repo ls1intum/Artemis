@@ -5,10 +5,11 @@ import { Observable } from 'rxjs/Observable';
 import { omit as _omit } from 'lodash';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { ProgrammingExercise } from '../programming-exercise.model';
-import { createRequestOption } from 'app/shared';
-import { ExerciseService } from 'app/entities/exercise';
-import { SolutionProgrammingExerciseParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
+import { createRequestOption } from 'app/shared/util/request-util';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;

@@ -6,9 +6,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
-import { QuizQuestion } from '../quiz-question';
-import { Course } from '../course';
 import { CourseService } from 'app/entities/course/course.service';
+import { QuizQuestion } from 'app/entities/quiz-question/quiz-question.model';
+import { Course } from 'app/entities/course/course.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',

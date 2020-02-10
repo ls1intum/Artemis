@@ -7,9 +7,9 @@ import { JhiAlertService } from 'ng-jhipster';
 import { TutorGroupService } from './tutor-group.service';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
-import { TutorGroup } from 'app/entities/tutor-group';
+import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
+import { Course } from 'app/entities/course/course.model';
 
 @Component({
     selector: 'jhi-tutor-group-update',

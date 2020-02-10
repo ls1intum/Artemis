@@ -4,9 +4,10 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
 import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
-import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
+import { JhiAlertComponent } from 'app/shared/alert/alert.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;

@@ -1,19 +1,21 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
-import { QuizExercise } from 'app/entities/quiz-exercise';
-import { StudentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { AccountService } from 'app/core/auth/account.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { participationStatus } from 'app/entities/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-course-exercise-row',

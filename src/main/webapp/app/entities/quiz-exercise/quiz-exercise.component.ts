@@ -11,7 +11,6 @@ import { CourseService } from 'app/entities/course/course.service';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-exercise',

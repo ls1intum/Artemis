@@ -4,14 +4,14 @@ import { Subscription } from 'rxjs';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
 import { User } from 'app/core/user/user.model';
-import { Lecture } from 'app/entities/lecture';
+import { Lecture } from 'app/entities/lecture/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NotificationService } from 'app/entities/notification/notification.service';
 import { Notification } from 'app/entities/notification/notification.model';
-import { ITEMS_PER_PAGE } from 'app/shared';
-import { SystemNotification } from 'app/entities/system-notification';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
+import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'jhi-notification',

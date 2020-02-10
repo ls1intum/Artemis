@@ -1,8 +1,7 @@
 import { ErrorHandler, Injectable } from '@angular/core';
 import { captureException, init } from '@sentry/browser';
 import { VERSION } from 'app/app.constants';
-import { ProfileInfo } from 'app/layouts';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
@@ -41,8 +40,9 @@ export class SentryErrorHandler extends ErrorHandler {
             super.handleError(error);
             return;
         }
-
-        captureException(error.originalError || error);
+        if (SentryErrorHandler.environment !== 'local') {
+            captureException(error.originalError || error);
+        }
         super.handleError(error);
     }
 }

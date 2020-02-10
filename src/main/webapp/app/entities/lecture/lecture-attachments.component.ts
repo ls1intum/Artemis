@@ -1,12 +1,13 @@
-import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Lecture } from 'app/entities/lecture';
-import { Attachment, AttachmentService, AttachmentType } from 'app/entities/attachment';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Lecture } from 'app/entities/lecture/lecture.model';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import * as moment from 'moment';
-import { FileService } from 'app/shared';
 import { Subject } from 'rxjs';
+import { FileService } from 'app/shared/http/file.service';
+import { Attachment, AttachmentType } from 'app/entities/attachment/attachment.model';
+import { AttachmentService } from 'app/entities/attachment/attachment.service';
 
 @Component({
     selector: 'jhi-lecture-attachments',

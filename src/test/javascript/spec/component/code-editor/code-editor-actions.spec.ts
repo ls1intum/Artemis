@@ -1,4 +1,3 @@
-/* tslint:disable:no-unused-expression */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie';
@@ -12,8 +11,6 @@ import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash';
 
 import { AceEditorModule } from 'ng2-ace-editor';
-import { CodeEditorActionsComponent, CodeEditorConflictStateService, CommitState, EditorState } from 'app/code-editor';
-import { CommitState, EditorState } from 'app/code-editor/model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
@@ -22,6 +19,10 @@ import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-servic
 
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
+import { CommitState } from 'app/code-editor/model/commit-state.model';
+import { EditorState } from 'app/code-editor/model/editor-state.model';
+import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

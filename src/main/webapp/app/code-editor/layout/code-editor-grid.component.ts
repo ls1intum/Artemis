@@ -5,7 +5,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { WindowRef } from 'app/core/websocket/window.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
+import { CodeEditorGridService, ResizeType } from 'app/code-editor/service/code-editor-grid.service';
 
 @Component({
     selector: 'jhi-code-editor-grid',

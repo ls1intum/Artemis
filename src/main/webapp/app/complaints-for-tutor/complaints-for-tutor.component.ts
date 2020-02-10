@@ -3,8 +3,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',

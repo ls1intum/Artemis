@@ -3,8 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 import { ApollonDiagramCreateFormComponent } from 'app/apollon-diagrams/apollon-diagram-create-form.component';
+import { ApollonDiagramService } from 'app/entities/apollon-diagram/apollon-diagram.service';
+import { ApollonDiagram } from 'app/entities/apollon-diagram/apollon-diagram.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',

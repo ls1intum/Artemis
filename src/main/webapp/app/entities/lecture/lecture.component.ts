@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
-import { Lecture } from 'app/entities/lecture';
+import { Lecture } from 'app/entities/lecture/lecture.model';
 import { ActivatedRoute } from '@angular/router';
 import { onError } from 'app/utils/global.utils';
 

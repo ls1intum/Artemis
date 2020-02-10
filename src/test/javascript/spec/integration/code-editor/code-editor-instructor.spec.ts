@@ -11,16 +11,7 @@ import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
-import {
-    ArtemisCodeEditorModule,
-    CodeEditorBuildLogService,
-    CodeEditorRepositoryFileService,
-    CodeEditorRepositoryService,
-    CodeEditorSessionService,
-    DomainService,
-    DomainType,
-} from 'app/code-editor';
+import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import {
     MockActivatedRoute,
@@ -35,14 +26,6 @@ import {
     MockResultService,
     MockSyncStorage,
 } from '../../mocks';
-import { Result, ResultService } from 'app/entities/result';
-import {
-    ParticipationService,
-    ProgrammingExerciseStudentParticipation,
-    SolutionProgrammingExerciseParticipation,
-    TemplateProgrammingExerciseParticipation,
-} from 'app/entities/participation';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
@@ -56,11 +39,25 @@ import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instruct
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { MockCourseExerciseService } from '../../mocks/mock-course-exercise.service';
+import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
+import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService, DomainType } from 'app/code-editor/service/code-editor-repository.service';
+import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
+import { ResultService } from 'app/entities/result/result.service';
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { ArtemisCodeEditorModule } from 'app/code-editor/code-editor.module';
+import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('CodeEditorInstructorIntegration', () => {
+    // needed to make sure ace is defined
+    ace.acequire('ace/ext/modelist');
     let container: CodeEditorInstructorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorContainerComponent>;
     let containerDebugElement: DebugElement;
@@ -147,7 +144,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
                 getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(new Result());
                 findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
 
                 routeSubject = new Subject<Params>();
@@ -188,7 +185,7 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsStub.restore();
         getLatestResultWithFeedbacksStub.restore();
 
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(new Result());
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();
@@ -215,7 +212,10 @@ describe('CodeEditorInstructorIntegration', () => {
             templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
-        exercise.studentParticipations = exercise.studentParticipations.map(p => ({ ...p, exercise }));
+        exercise.studentParticipations = exercise.studentParticipations.map(p => {
+            p.exercise = exercise;
+            return p;
+        });
         exercise.templateParticipation = { ...exercise.templateParticipation, programmingExercise: exercise };
         exercise.solutionParticipation = { ...exercise.solutionParticipation, programmingExercise: exercise };
 

@@ -1,9 +1,8 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { async, TestBed, ComponentFixture } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ActivatedRouteSnapshot, Route } from '@angular/router';
-import { CourseExerciseDetailsComponent } from 'app/overview';
 import { ArtemisTestModule } from '../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../mocks/mock-translate.service';
@@ -17,6 +16,7 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Mutable } from '../helpers/mutable';
 import { mockedActivatedRouteSnapshot } from '../helpers/mock-activated-route-snapshot';
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

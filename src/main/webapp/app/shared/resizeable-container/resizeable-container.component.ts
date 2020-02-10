@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, Input, HostBinding } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
 import interact from 'interactjs';
 
 /**

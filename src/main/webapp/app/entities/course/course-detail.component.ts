@@ -6,7 +6,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { CachingStrategy } from 'app/shared';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
 
 @Component({
     selector: 'jhi-course-detail',

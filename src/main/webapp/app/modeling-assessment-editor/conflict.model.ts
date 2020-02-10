@@ -1,10 +1,9 @@
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { Moment } from 'moment';
 
 export class Conflict {
     id: number;
     causingConflictingResult: ConflictingResult;
-    state: EscalationState;
     creationDate: Moment;
     resolutionDate: Moment;
     resultsInConflict: ConflictingResult[];
@@ -20,11 +19,8 @@ export class ConflictingResult {
     }
 }
 
-export enum EscalationState {
+export enum ConflictResolutionState {
     UNHANDLED,
-    ESCALATED_TO_TUTORS_IN_CONFLICT,
-    ESCALATED_TO_INSTRUCTOR,
-    RESOLVED_BY_CAUSER,
-    RESOLVED_BY_OTHER_TUTORS,
-    RESOLVED_BY_INSTRUCTOR,
+    ESCALATED,
+    RESOLVED,
 }

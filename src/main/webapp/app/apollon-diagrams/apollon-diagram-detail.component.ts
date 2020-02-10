@@ -4,9 +4,10 @@ import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
-import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
+import { ApollonDiagramService } from 'app/entities/apollon-diagram/apollon-diagram.service';
+import { ApollonDiagram } from 'app/entities/apollon-diagram/apollon-diagram.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',

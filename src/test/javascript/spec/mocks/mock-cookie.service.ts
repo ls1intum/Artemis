@@ -6,11 +6,11 @@ export class MockCookieService implements ICookieService {
     }
 
     getAll(): Object {
-        return undefined;
+        return {};
     }
 
     getObject(key: string): Object {
-        return undefined;
+        return {};
     }
 
     put(key: string, value: string, options?: CookieOptions): void {}

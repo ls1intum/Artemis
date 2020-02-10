@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
-import { SortByModule } from 'app/components/pipes';
+import { SortByModule } from 'app/components/pipes/sort-by.module';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { ListOfComplaintsComponent } from 'app/list-of-complaints';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { DifferencePipe } from 'ngx-moment';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mock-route.service';
+import { ListOfComplaintsComponent } from 'app/list-of-complaints/list-of-complaints.component';
 
 describe('ListOfComplaintsComponent', () => {
     let comp: ListOfComplaintsComponent;

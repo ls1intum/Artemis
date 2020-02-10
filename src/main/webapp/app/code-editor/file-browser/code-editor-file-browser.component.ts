@@ -3,15 +3,20 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
-import { WindowRef } from 'app/core/websocket/window.service';
-import { CodeEditorFileBrowserDeleteComponent, CodeEditorStatusComponent, CommitState, EditorState, GitConflictState } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { CodeEditorConflictStateService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service';
 import { textFileExtensions } from './text-files.json';
+import { WindowRef } from 'app/core/websocket/window.service';
+import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
+import { CommitState } from 'app/code-editor/model/commit-state.model';
+import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
+import { EditorState } from 'app/code-editor/model/editor-state.model';
+import { CodeEditorStatusComponent } from 'app/code-editor/status/code-editor-status.component';
+import { CodeEditorFileBrowserDeleteComponent } from 'app/code-editor/file-browser/code-editor-file-browser-delete';
+import { IFileDeleteDelegate } from 'app/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -19,7 +24,7 @@ import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.
     styleUrls: ['./code-editor-file-browser.scss'],
     providers: [NgbModal, WindowRef],
 })
-export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit {
+export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit, IFileDeleteDelegate {
     CommitState = CommitState;
     FileType = FileType;
 
@@ -82,7 +87,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     /** Resizable constants **/
     resizableMinWidth = 100;
-    resizableMaxWidth = 800;
     interactResizable: Interactable;
 
     gitConflictState: GitConflictState;
@@ -205,7 +209,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * @function onFileDeleted
      * @desc Emmiter function for when a file was deleted; notifies the parent component
-     * @param statusChange
+     * @param fileChange
      */
     onFileDeleted(fileChange: FileChange) {
         this.handleFileChange(fileChange);
@@ -232,7 +236,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
     }
 
-    toggleTreeCompress($event: any) {
+    toggleTreeCompress() {
         this.compressFolders = !this.compressFolders;
         this.setupTreeview();
     }
@@ -240,7 +244,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * @function setupTreeView
      * @desc Processes the file array, compresses it and then transforms it to a TreeViewItem
-     * @param files: Provided repository files by parent editor component
      */
     setupTreeview() {
         let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
@@ -351,7 +354,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param $event
-     * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any) {
         this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });

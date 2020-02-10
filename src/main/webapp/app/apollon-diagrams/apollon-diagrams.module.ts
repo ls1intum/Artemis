@@ -6,9 +6,9 @@ import { ApollonDiagramDetailComponent } from './apollon-diagram-detail.componen
 import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
 import { apollonDiagramsRoutes } from './apollon-diagrams.route';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
-import { ArtemisSharedModule } from '../shared';
-import { ArtemisResultModule } from '../entities/result';
-import { SortByModule } from 'app/components/pipes';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { SortByModule } from 'app/components/pipes/sort-by.module';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 

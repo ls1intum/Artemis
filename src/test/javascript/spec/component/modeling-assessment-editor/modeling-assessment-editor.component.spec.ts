@@ -4,10 +4,9 @@ import { JhiAlertService } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
-import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mock-activated-route-query-param-map';
-import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
 import { Mutable } from '../../helpers/mutable';
 import { BehaviorSubject } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -17,8 +16,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mock-account.service';
 import { AssessmentLayoutComponent } from 'app/assessment-shared/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor/modeling-assessment-editor.component';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;

@@ -3,8 +3,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { ModelingExerciseService } from 'app/entities/modeling-exercise';
-import { ModelingStatistic } from 'app/entities/modeling-statistic';
+import { ModelingStatistic } from 'app/entities/modeling-statistic/modeling-statistic.model';
+import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
