@@ -46,11 +46,17 @@ export class TeamUpdateDialogComponent implements OnInit {
         return this.studentTeamConflicts.find(c => c['studentLogin'] === student.login);
     }
 
+    private isStudentAlreadyInPendingTeam(student: User) {
+        return this.pendingTeam.students.find(s => s.id === student.id) !== undefined;
+    }
+
     onAddStudent(student: User) {
         if (!this.pendingTeam.students) {
             this.pendingTeam.students = [];
         }
-        this.pendingTeam.students.push(student);
+        if (!this.isStudentAlreadyInPendingTeam(student)) {
+            this.pendingTeam.students.push(student);
+        }
     }
 
     onRemoveStudent(student: User) {
