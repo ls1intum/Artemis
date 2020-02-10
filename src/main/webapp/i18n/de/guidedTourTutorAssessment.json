@@ -47,7 +47,7 @@
             },
             "submissionsAndComplaints": {
                 "headline": "Studentenabgaben",
-                "content": "Die Studentenabgaben, die bewertet werden müssen, werden nach dem Fälligkeitsdatum der Übung hier angezeigt."
+                "content": "Die Studentenabgaben, die bewertet werden müssen, werden nach dem Fälligkeitsdatum der Übung hier angezeigt. Wir haben den Button <tt>Neue Bewertung starten</tt> hier deaktiviert, da das Dashboard nur für Tutorialzwecke genutzt wird."
             }
         },
         "exampleReview": {
