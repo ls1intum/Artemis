@@ -270,18 +270,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
-        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-
-        User tutor = (userRepo.findOneByLogin("tutor1")).get();
-        Set<String> groups = new HashSet<>();
-        groups.add(course.getTeachingAssistantGroupName());
-        tutor.setGroups(groups);
-        userRepo.save(tutor);
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
 
         Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
@@ -300,21 +289,26 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
+        var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
+
+        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
+        result.setParticipation(participation);
+
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+
+        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void updateManualProgrammingExerciseResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
-        Course course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
-        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-
-        User tutor = (userRepo.findOneByLogin("tutor1")).get();
-        Set<String> groups = new HashSet<>();
-        groups.add(course.getTeachingAssistantGroupName());
-        tutor.setGroups(groups);
-        userRepo.save(tutor);
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
 
         Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
@@ -334,6 +328,33 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
         assertThat(response.getResultString()).isEqualTo(result.getResultString());
         assertThat(response.getSubmission()).isEqualTo(result.getSubmission());
+        assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
+        assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void updateManualProgrammingExerciseResult_newResult() throws Exception {
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
+        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+
+        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
+        result.setParticipation(participation);
+        result.setSubmission(programmingSubmission);
+
+        // Remove feedbacks, change text and score.
+        result.setFeedbacks(feedbacks.subList(0, 1));
+        result.setResultString("Changed text");
+        result.setScore(77L);
+
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+
+        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.CREATED);
+        assertThat(response.getResultString()).isEqualTo(result.getResultString());
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
     }
@@ -575,6 +596,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         result.setRated(false);
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student11", result, Result.class,
                 HttpStatus.BAD_REQUEST);
+    }
 
+    private ProgrammingExerciseStudentParticipation setParticipationForProgrammingExercise(AssessmentType assessmentType) {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setAssessmentType(assessmentType);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        return database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
     }
 }
