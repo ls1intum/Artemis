@@ -91,13 +91,13 @@ public abstract class Participation implements Serializable, ParticipationInterf
      */
     @Transient
     @JsonProperty
-    private Integer submissionCount;
+    private int submissionCount;
 
-    public Integer getSubmissionCount() {
+    public int getSubmissionCount() {
         return submissionCount;
     }
 
-    public void setSubmissionCount(Integer submissionCount) {
+    public void setSubmissionCount(int submissionCount) {
         this.submissionCount = submissionCount;
     }
 

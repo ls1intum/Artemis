@@ -1021,11 +1021,11 @@ public class ParticipationService {
      * @return the number of submissions per participation in the given exercise
      */
     public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(Long exerciseId) {
-        List<Long[]> submissionCountResults = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        List<long[]> submissionCountResults = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
         Map<Long, Integer> map = new HashMap<Long, Integer>();
         submissionCountResults.forEach(submissionCountResult -> {
             Long participationId = submissionCountResult[0];
-            Integer submissionCount = submissionCountResult[1].intValue();
+            Integer submissionCount = Math.toIntExact(submissionCountResult[1]);
             map.put(participationId, submissionCount);
         });
         return map;

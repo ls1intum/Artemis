@@ -168,9 +168,9 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="text-center">
-                            <div *ngIf="exercise.isAtLeastInstructor; else displayTextOnly">
-                                <a routerLink="/participation/{{ value.id }}/submissions">{{ value.submissionCount }}</a>
-                            </div>
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="/participation/{{ value.id }}/submissions">
+                                {{ value.submissionCount }}
+                            </a>
                             <ng-template #displayTextOnly>
                                 {{ value.submissionCount }}
                             </ng-template>
