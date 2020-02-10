@@ -27,10 +27,29 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     studentTeamConflicts = [];
 
+    ignoreTeamSizeRecommendation = false;
+
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
     ngOnInit(): void {
         this.pendingTeam = cloneDeep(this.team);
+    }
+
+    get config() {
+        return this.exercise.teamAssignmentConfig!;
+    }
+
+    get showIgnoreTeamSizeRecommendationOption() {
+        return !this.recommendedTeamSize;
+    }
+
+    get teamSizeViolationUnconfirmed() {
+        return this.showIgnoreTeamSizeRecommendationOption && !this.ignoreTeamSizeRecommendation;
+    }
+
+    private get recommendedTeamSize() {
+        const pendingTeamSize = this.pendingTeam.students.length;
+        return pendingTeamSize >= this.config.minTeamSize && pendingTeamSize <= this.config.maxTeamSize;
     }
 
     hasConflictingTeam(student: User) {
@@ -68,6 +87,10 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     save() {
+        if (this.teamSizeViolationUnconfirmed) {
+            return;
+        }
+
         this.team = cloneDeep(this.pendingTeam);
 
         if (this.team.id !== undefined) {

@@ -1,6 +1,6 @@
 {
     "artemisApp": {
-        "participation": {
+        "team": {
             "home": {
                 "title": "Teams",
                 "createLabel": "Team erstellen",
@@ -23,6 +23,9 @@
             "studentSearch": {
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen."
             },
+            "teamSizeNote": "Empfohlene Team-Größe:",
+            "teamSizeUnit": "Studenten",
+            "ignoreTeamSizeRecommendation": "Fortfahren gegen Empfehlung",
             "createTeam": {
                 "label": "Erstelle Team",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."

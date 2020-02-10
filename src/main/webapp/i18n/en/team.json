@@ -23,6 +23,9 @@
             "studentSearch": {
                 "failed": "Search failed. Please try again."
             },
+            "teamSizeNote": "Recommended team size:",
+            "teamSizeUnit": "students",
+            "ignoreTeamSizeRecommendation": "Proceed against recommendation",
             "createTeam": {
                 "label": "Create team",
                 "error": "Could not create team. Please try again."

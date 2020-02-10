@@ -49,13 +49,36 @@
                     </div>
                 </li>
             </ul>
+            <div class="alert mt-3" [class.alert-info]="!showIgnoreTeamSizeRecommendationOption" [class.alert-warning]="showIgnoreTeamSizeRecommendationOption" role="alert">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="font-weight-bold" jhiTranslate="artemisApp.team.teamSizeNote">Recommended team size:</span>
+                        {{ config.minTeamSize }} - {{ config.maxTeamSize }}
+                        <span jhiTranslate="artemisApp.team.teamSizeUnit">students</span>
+                    </div>
+                    <div *ngIf="showIgnoreTeamSizeRecommendationOption" class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            value=""
+                            id="ignoreTeamSizeRecommendation"
+                            [(ngModel)]="ignoreTeamSizeRecommendation"
+                            [ngModelOptions]="{ standalone: true }"
+                        />
+                        <label class="form-check-label" for="ignoreTeamSizeRecommendation">
+                            <span jhiTranslate="artemisApp.team.ignoreTeamSizeRecommendation">Proceed against recommendation</span>
+                            <fa-icon class="ml-1" [icon]="'exclamation-triangle'"></fa-icon>
+                        </label>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
+        <button type="submit" [disabled]="editForm.invalid || isSaving || teamSizeViolationUnconfirmed" class="btn btn-primary">
             <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>

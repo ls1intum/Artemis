@@ -70,3 +70,9 @@ $error-bg-color: #f8d7da;
     display: block;
     cursor: pointer;
 }
+
+.modal-footer {
+    button[disabled] {
+        cursor: not-allowed;
+    }
+}
