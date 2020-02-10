@@ -530,8 +530,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCreateExampleResult() throws Exception {
-        var now = ZonedDateTime.now();
-        var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
         var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
@@ -552,5 +550,31 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         Result result = new Result();
         result.setRated(false);
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateResultForExternalSubmission_quizExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        var quizExercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), course);
+        course.addExercises(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+        Result result = new Result();
+        result.setRated(false);
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateResultForExternalSubmission_studentNotInTheCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        course.addExercises(modelingExercise);
+        modelingExerciseRepository.save(modelingExercise);
+        Result result = new Result();
+        result.setRated(false);
+        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student11", result, Result.class,
+                HttpStatus.BAD_REQUEST);
+
     }
 }
