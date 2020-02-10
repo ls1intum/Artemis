@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 public class UserJWTIntegrationTest extends AbstractSpringIntegrationTest {
 
-    private static final String USERNAME = "student1";
+    private static final String USERNAME = "student2";
 
     @Autowired
     private DatabaseUtilService database;
@@ -43,6 +43,7 @@ public class UserJWTIntegrationTest extends AbstractSpringIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
+        database.addUsers(1, 1, 1);
         String encryptedPassword = userService.passwordEncoder().encode(USER_PASSWORD);
         User user = ModelFactory.generateActivatedUser(USERNAME, encryptedPassword);
         userRepository.save(user);
