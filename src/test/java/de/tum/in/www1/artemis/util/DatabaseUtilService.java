@@ -516,7 +516,7 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneTextExerciseDueDateReached() {
+    public void addCourseWithOneTextExerciseDueDateReached() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course);
         course.addExercises(textExercise);
@@ -527,7 +527,6 @@ public class DatabaseUtilService {
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
-        return course;
     }
 
     public void addCourseWithOneModelingAndOneTextExercise() {
