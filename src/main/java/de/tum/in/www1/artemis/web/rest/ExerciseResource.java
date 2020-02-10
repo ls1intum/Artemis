@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,11 +74,13 @@ public class ExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
             ComplaintResponseRepository complaintResponseRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
             ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -96,6 +95,7 @@ public class ExerciseResource {
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -326,9 +326,9 @@ public class ExerciseResource {
 
         if (exercise != null) {
             List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
-
+            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setStudentParticipations(new HashSet<>());
-
+            exercise.setGradingCriteria(gradingCriteria);
             for (StudentParticipation participation : participations) {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));
