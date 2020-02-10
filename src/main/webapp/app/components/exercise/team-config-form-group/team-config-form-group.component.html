@@ -3,7 +3,7 @@
         <div class="col-auto">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.mode">Mode</label>
-                <jhi-help-icon placement="top" text="artemisApp.exercise.modeTooltip"></jhi-help-icon>
+                <jhi-help-icon placement="top auto" text="artemisApp.exercise.modeTooltip"></jhi-help-icon>
             </div>
             <div>
                 <jhi-mode-picker [exercise]="exercise" (ngModelChange)="onExerciseModeChange($event)"></jhi-mode-picker>
