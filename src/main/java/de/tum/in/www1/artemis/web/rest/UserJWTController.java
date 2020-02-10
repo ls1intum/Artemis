@@ -73,6 +73,9 @@ public class UserJWTController {
 
         private String idToken;
 
+        JWTToken() {
+        }
+
         JWTToken(String idToken) {
             this.idToken = idToken;
         }

@@ -106,10 +106,10 @@ public class ModelFactory {
         return generatedUsers;
     }
 
-    public static User generateActivatedUser(String login) {
+    public static User generateActivatedUser(String login, String password) {
         User user = new User();
         user.setLogin(login);
-        user.setPassword(USER_PASSWORD);
+        user.setPassword(password);
         user.setFirstName(login + "First");
         user.setLastName(login + "Last");
         user.setEmail(login + "@test.de");
@@ -118,6 +118,10 @@ public class ModelFactory {
         user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
         return user;
+    }
+
+    public static User generateActivatedUser(String login) {
+        return generateActivatedUser(login, USER_PASSWORD);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
