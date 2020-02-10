@@ -79,11 +79,6 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
-        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
-        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
-        if (fileUploadExercise.getTeamAssignmentConfig() != null) {
-            fileUploadExercise.getTeamAssignmentConfig().setExercise(fileUploadExercise);
-        }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
@@ -110,11 +105,6 @@ public class FileUploadExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
-        }
-        // As persisting is cascaded for the team assignment config we have to set the reference to the exercise in the
-        // team assignment config. Otherwise the connection between exercise and team assignment config would be lost.
-        if (fileUploadExercise.getTeamAssignmentConfig() != null) {
-            fileUploadExercise.getTeamAssignmentConfig().setExercise(fileUploadExercise);
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         if (notificationText != null) {

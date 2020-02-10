@@ -98,8 +98,7 @@ public abstract class Exercise implements Serializable {
     @Column(name = "mode")
     private ExerciseMode mode;
 
-    // TODO: switch to lazy?
-    @OneToOne(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;

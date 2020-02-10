@@ -1,12 +1,7 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
     <changeSet id="20200202173920" author="madwau">
-        <addColumn tableName="exercise">
-            <column name="mode" defaultValue="INDIVIDUAL" type="varchar(255)" afterColumn="difficulty">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
-        <addColumn tableName="participation">
+                <addColumn tableName="participation">
             <column name="team_id" type="BIGINT" afterColumn="student_id"/>
         </addColumn>
         <createTable tableName="team">
@@ -38,6 +33,12 @@
             </column>
             <column name="max_team_size" type="INT"/>
         </createTable>
+        <addColumn tableName="exercise">
+            <column name="mode" defaultValue="INDIVIDUAL" type="varchar(255)" afterColumn="difficulty">
+                <constraints nullable="false"/>
+            </column>
+            <column name="team_assignment_config_id" type="BIGINT"/>
+        </addColumn>
         <createIndex indexName="fk_participation_team_id" tableName="participation">
             <column name="team_id"/>
         </createIndex>
@@ -48,6 +49,6 @@
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="team_student" constraintName="fk_team_student_student_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="team" constraintName="fk_team_exercise_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
         <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="participation" constraintName="fk_participation_team_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="team"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="team_assignment_config" constraintName="fk_team_assignment_config_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="exercise"/>
+        <addForeignKeyConstraint baseColumnNames="team_assignment_config_id" baseTableName="exercise" constraintName="fk_exercise_team_assignment_config_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="team_assignment_config"/>
     </changeSet>
 </databaseChangeLog>

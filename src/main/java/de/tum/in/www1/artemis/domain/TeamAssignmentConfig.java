@@ -26,8 +26,7 @@ public class TeamAssignmentConfig implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(unique = true)
+    @OneToOne(mappedBy = "teamAssignmentConfig", fetch = FetchType.LAZY, optional = false)
     @JsonIgnoreProperties("teamAssignmentConfig")
     private Exercise exercise;
 

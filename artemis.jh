@@ -527,7 +527,7 @@ relationship OneToOne {
     ProgrammingExercise{solutionParticipation} to Participation,
     ModelAssessmentConflict{causingConflictingResult} to ConflictingResult,
     ModelAssessmentConflict{updatedFeedback} to Feedback,
-    TeamAssignmentConfig{exercise} to Exercise{teamAssignmentConfig},
+    Exercise{teamAssignmentConfig} to TeamAssignmentConfig{exercise},
 }
 
 relationship ManyToOne {
