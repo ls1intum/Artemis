@@ -454,8 +454,6 @@ public class ParticipationService {
         // Note: the repository webhook already exists so we don't need to set it up again
         participation.setInitializationState(INITIALIZED);
         participation = save(participation);
-        // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
-        // because in notifyPush we only filter out empty commits when the state is already initialized
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
