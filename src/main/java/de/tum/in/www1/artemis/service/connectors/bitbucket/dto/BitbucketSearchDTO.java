@@ -6,12 +6,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BitbucketSearchDTO {
+public class BitbucketSearchDTO<T> {
 
     private int size;
 
     @JsonProperty("values")
-    private List<Object> searchResults;
+    private List<T> searchResults;
 
     public int getSize() {
         return size;
@@ -21,11 +21,11 @@ public class BitbucketSearchDTO {
         this.size = size;
     }
 
-    public List<Object> getSearchResults() {
+    public List<T> getSearchResults() {
         return searchResults;
     }
 
-    public void setSearchResults(List<Object> searchResults) {
+    public void setSearchResults(List<T> searchResults) {
         this.searchResults = searchResults;
     }
 }

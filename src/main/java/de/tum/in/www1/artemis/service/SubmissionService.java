@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -17,6 +19,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class SubmissionService {
+
+    private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
     protected SubmissionRepository submissionRepository;
 
@@ -125,7 +129,9 @@ public class SubmissionService {
         }
 
         result.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(result);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result = resultRepository.save(result);
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getName());
         return result;
     }
 }
