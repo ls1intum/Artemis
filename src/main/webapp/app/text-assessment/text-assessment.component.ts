@@ -361,6 +361,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
         if (!this.participation.results) {
             this.participation.results = [this.result];
+        } else {
+            this.result = this.participation.results[0];
         }
         if (this.result.hasComplaint) {
             this.getComplaint();
