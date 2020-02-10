@@ -1,4 +1,5 @@
 import { BaseEntity } from 'app/shared';
+import { StructuredGradingCriterion } from 'app/structured-grading-criterion/structured-grading-criterion.model';
 
 export class StructuredGradingInstructionModel implements BaseEntity {
     id: number;
@@ -7,5 +8,5 @@ export class StructuredGradingInstructionModel implements BaseEntity {
     public instructionDescription: string;
     public feedback: string;
     public usageCount?: number;
-    public criterion: Criterion;
+    public criterion: StructuredGradingCriterion;
 }
