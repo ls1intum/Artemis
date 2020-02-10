@@ -28,7 +28,7 @@ $error-bg-color: #f8d7da;
                 background-color: rgba(0, 0, 0, 0.05);
 
                 &.has-error {
-                    background-color: darken($error-bg-color, 5%);
+                    background-color: darken($error-bg-color, 8%);
                 }
             }
         }
